@@ -1,4 +1,6 @@
-# Omarchy
+# Omarchy 7 Ultimate
+
+a throw back to the greatest os - built on the newest linux distro
 
 Omarchy is a beautiful, fun & agentic Linux distribution by DHH.
 
