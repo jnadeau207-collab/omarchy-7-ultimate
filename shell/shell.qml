@@ -1151,6 +1151,11 @@ ShellRoot {
       return "ok"
     }
 
+    function restoreNormal(address: string): string {
+      shell.windowService.restoreNormal(address)
+      return "ok"
+    }
+
     function toggleMaximize(address: string): string {
       shell.windowService.toggleMaximize(address)
       return "ok"
