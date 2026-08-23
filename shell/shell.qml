@@ -1172,6 +1172,11 @@ ShellRoot {
       return "ok"
     }
 
+    function close(address: string): string {
+      shell.windowService.close(address)
+      return "ok"
+    }
+
     function closeActive(): string {
       shell.windowService.closeActive()
       return "ok"
@@ -1181,6 +1186,15 @@ ShellRoot {
       shell.windowService.cycleNext()
       shell.summon("omarchy.ultimate-task-switcher", "{}")
       return "ok"
+    }
+
+    function cycleSnapshot(): string {
+      var svc = shell.windowService
+      return JSON.stringify({
+        list: svc && svc.cycleList ? svc.cycleList : [],
+        index: svc ? svc.cycleIndex : 0,
+        cycling: !!(svc && svc.cycling)
+      })
     }
 
     function cyclePrev(): string {
