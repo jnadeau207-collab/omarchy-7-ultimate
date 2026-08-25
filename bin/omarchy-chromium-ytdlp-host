@@ -98,9 +98,15 @@ download_url() {
   # path and the title. The title is JSON-encoded so metadata cannot forge a record,
   # and the file is named after it: yt-dlp strips control characters from a filename
   # with or without --restrict-filenames, so a record is still only ever one line.
-  local line pct intpct last="" er nowms lastms=0 title="" filepath="" resolved
+  # Stderr is discarded: a forged line there must not count as success. Process
+  # substitution cannot surface yt-dlp's exit, so the wrapper prints a sentinel
+  # after it exits and we require that status to be 0.
+  local line pct intpct last="" er nowms lastms=0 title="" filepath="" resolved ytdlp_status=""
   while IFS= read -r line; do
     case $line in
+    __OMARCHY_YTDLP_STATUS__:*)
+      ytdlp_status=${line#__OMARCHY_YTDLP_STATUS__:}
+      ;;
     OMARCHY_PROG*)
       pct=${line#OMARCHY_PROG$'\t'}
       intpct=${pct%%.*}
@@ -128,12 +134,13 @@ download_url() {
     --paths "$DOWNLOAD_DIR" -o '%(title)s.%(ext)s' \
     --print $'after_move:OMARCHY_FILE\t%(filepath)s' \
     --print $'after_move:OMARCHY_TITLE\t%(title)j' \
-    -- "$url" 2>&1)
+    -- "$url" 2>/dev/null
+    printf '__OMARCHY_YTDLP_STATUS__:%s\n' "$?"
+  )
 
   osd_close
 
-  # after_move only prints on a successful download+move, so a captured path == success.
-  if [[ -n $filepath ]]; then
+  if [[ $ytdlp_status == 0 && -n $filepath ]]; then
     [[ -n $title ]] || title=$(title_from_file "$filepath")
     ((${#title} > 50)) && title="${title:0:50}…" # keep the toast compact
 
