@@ -15,6 +15,7 @@
 #include "src/xwayland/XSurface.hpp"
 #include "src/managers/fullscreen/FullscreenController.hpp"
 #include "src/managers/eventLoop/EventLoopManager.hpp"
+#include "src/layout/LayoutManager.hpp"
 #include "src/config/shared/actions/ConfigActions.hpp"
 #include "src/desktop/rule/windowRule/WindowRuleEffectContainer.hpp"
 #include "src/helpers/MiscFunctions.hpp"
@@ -288,15 +289,35 @@ static CBox compositorFrameBox(PHLWINDOW w, const CBox& rect) {
 // direct write by shifting back 12px and shrinking 24px after a few seconds.
 // These are the same actions behind hl.dsp.window.resize/move, proven stable on
 // metal for both the transformed position and surface size.
-static void dispatchCompositorBox(PHLWINDOW w, const CBox& box) {
+static bool dispatchCompositorBox(PHLWINDOW w, const CBox& box) {
   if (!w)
-    return;
+    return false;
   const bool wasApplying = g_inPluginApply;
   g_inPluginApply        = true;
   w->finishAnimation();
-  (void)Config::Actions::resize(Vector2D{box.w, box.h}, false, w);
-  (void)Config::Actions::move(Vector2D{box.x, box.y}, false, w);
+  bool applied = true;
+  if (Fullscreen::controller()->isFullscreen(w)) {
+    // Config::Actions::resize/move use these exact layout-target deltas but
+    // reject every fullscreen mode up front. FSMODE_MAXIMIZED still needs the
+    // dispatcher/configure semantics; bypass only that precondition. This path
+    // is never used for FSMODE_FULLSCREEN (F11).
+    auto target = w->layoutTarget();
+    if (!target) {
+      applied = false;
+    } else {
+      g_layoutManager->resizeTarget(Vector2D{box.w, box.h} - w->size(Desktop::View::IGeometric::GEOMETRIC_GOAL), target);
+      g_layoutManager->moveTarget(Vector2D{box.x, box.y} - w->position(Desktop::View::IGeometric::GEOMETRIC_GOAL), target);
+      const auto goal = w->size(Desktop::View::IGeometric::GEOMETRIC_GOAL);
+      if (goal.x > 1 && goal.y > 1)
+        w->setHidden(false);
+    }
+  } else {
+    const auto resized = Config::Actions::resize(Vector2D{box.w, box.h}, false, w);
+    const auto moved   = Config::Actions::move(Vector2D{box.x, box.y}, false, w);
+    applied            = resized.has_value() && moved.has_value();
+  }
   g_inPluginApply = wasApplying;
+  return applied;
 }
 
 static void applyChromiumMaximizedBox(PHLWINDOW w) {
@@ -311,7 +332,7 @@ static void applyChromiumMaximizedBox(PHLWINDOW w) {
   if (std::abs(pos.x - target.x) < 1 && std::abs(pos.y - target.y) < 1 && std::abs(size.x - target.w) < 1 &&
       std::abs(size.y - target.h) < 1)
     return;
-  dispatchCompositorBox(w, target);
+  (void)dispatchCompositorBox(w, target);
 }
 
 static bool isUncorrectedDefaultFloat(PHLWINDOW w);
@@ -395,7 +416,7 @@ static void restoreFloatOnScreen(PHLWINDOW w) {
   if (std::abs(cur.x - target.x) < 1 && std::abs(cur.y - target.y) < 1 && std::abs(csz.x - target.w) < 1 &&
       std::abs(csz.y - target.h) < 1)
     return;
-  dispatchCompositorBox(w, target);
+  (void)dispatchCompositorBox(w, target);
 }
 
 static void applyRequestedMinimize(PHLWINDOWREF ref, std::optional<bool> want) {
@@ -521,7 +542,7 @@ static void applyDefaultFloat(PHLWINDOW w) {
   if (rect.w <= 0 || rect.h <= 0)
     return;
   (void)Config::Actions::floatWindow(Config::Actions::TOGGLE_ACTION_ENABLE, w);
-  dispatchCompositorBox(w, compositorFrameBox(w, rect));
+  (void)dispatchCompositorBox(w, compositorFrameBox(w, rect));
 }
 
 // Hyprland arms FSMODE_MAXIMIZED on first map so SSD clients hide CSD. Chrome

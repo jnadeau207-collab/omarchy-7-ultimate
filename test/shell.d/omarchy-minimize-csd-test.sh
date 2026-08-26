@@ -52,12 +52,20 @@ fi
 if ! grep -A20 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'clearFakeMapMaximize(ref.lock())'; then
   fail "the settled Chromium default resize must queue correction after one-shot map callbacks"
 fi
-grep -Fq 'static void dispatchCompositorBox' "$cpp" \
+grep -Fq 'static bool dispatchCompositorBox' "$cpp" \
   || fail "native Chromium geometry must use dispatcher-equivalent actions"
 grep -Fq 'Config::Actions::resize(Vector2D{box.w, box.h}, false, w)' "$cpp" \
   || fail "native Chromium geometry must configure surface size through the resize action"
 grep -Fq 'Config::Actions::move(Vector2D{box.x, box.y}, false, w)' "$cpp" \
   || fail "native Chromium geometry must configure position through the move action"
+grep -Fq '#include "src/layout/LayoutManager.hpp"' "$cpp" \
+  || fail "maximized Chromium geometry needs Hyprland's layout-target dispatcher path"
+grep -Fq 'g_layoutManager->resizeTarget' "$cpp" \
+  || fail "FSMODE_MAXIMIZED must bypass only the public resize action's fullscreen rejection"
+grep -Fq 'g_layoutManager->moveTarget' "$cpp" \
+  || fail "FSMODE_MAXIMIZED must update the layout goal position, not direct-set the box"
+grep -Fq 'Desktop::View::IGeometric::GEOMETRIC_GOAL' "$cpp" \
+  || fail "maximized dispatcher deltas must be calculated from Hyprland's geometry goal"
 if grep -Fq 'w->setBox(' "$cpp"; then
   fail "omarchy-minimize must not use direct setBox for XDG geometry"
 fi
