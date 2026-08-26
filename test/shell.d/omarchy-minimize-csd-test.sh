@@ -52,8 +52,18 @@ fi
 if ! grep -A20 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'clearFakeMapMaximize(ref.lock())'; then
   fail "the settled Chromium default resize must queue correction after one-shot map callbacks"
 fi
-grep -Fq 'w->setBox(compositorFrameBox(w, rect))' "$cpp" \
-  || fail "fresh Chromium defaults must get an unclipped compositor box"
+grep -Fq 'static void dispatchCompositorBox' "$cpp" \
+  || fail "native Chromium geometry must use dispatcher-equivalent actions"
+grep -Fq 'Config::Actions::resize(Vector2D{box.w, box.h}, false, w)' "$cpp" \
+  || fail "native Chromium geometry must configure surface size through the resize action"
+grep -Fq 'Config::Actions::move(Vector2D{box.x, box.y}, false, w)' "$cpp" \
+  || fail "native Chromium geometry must configure position through the move action"
+if grep -Fq 'w->setBox(' "$cpp"; then
+  fail "omarchy-minimize must not use direct setBox for XDG geometry"
+fi
+if ! grep -A8 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'g_inPluginApply'; then
+  fail "dispatcher resize events must not overwrite the logical saved float mid-apply"
+fi
 grep -Fq 'applyChromiumMaximizedBox' "$cpp" \
   || fail "Chromium CSD maximize must cover the visible work area without clipping"
 grep -Fq 'if (live && isMaximizedNow(live))' "$cpp" \
