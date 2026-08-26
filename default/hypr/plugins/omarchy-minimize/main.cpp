@@ -251,13 +251,59 @@ static CBox monitorWork(PHLWINDOW w) {
   return mon->m_reservedArea.apply(CBox(mon->m_position, mon->m_size));
 }
 
+// Chromium's Wayland CSD paints its visible frame 12px right/down from the
+// compositor box while keeping the right/bottom edge at the box boundary. Keep
+// every saved and clamped rectangle in visible-frame coordinates and transform
+// exactly once at compositor egress. GTK CSD clients do not have this inset.
+static constexpr double CHROMIUM_FRAME_INSET = 12.0;
+static const std::regex CHROMIUM_FRAME_CLASS{
+  R"((google-)?chrom(e|ium)|brave-browser|microsoft-edge|vivaldi-stable|helium)", std::regex::icase};
+
+static bool usesChromiumFrame(PHLWINDOW w) {
+  return w && std::regex_search(w->m_class, CHROMIUM_FRAME_CLASS);
+}
+
+static CBox visibleFrameRect(PHLWINDOW w, const CBox& box) {
+  if (!usesChromiumFrame(w))
+    return box;
+  return CBox(Vector2D{box.x + CHROMIUM_FRAME_INSET, box.y + CHROMIUM_FRAME_INSET},
+              Vector2D{std::max(1.0, box.w - CHROMIUM_FRAME_INSET), std::max(1.0, box.h - CHROMIUM_FRAME_INSET)});
+}
+
+static CBox compositorFrameBox(PHLWINDOW w, const CBox& rect) {
+  if (!usesChromiumFrame(w))
+    return rect;
+  return CBox(Vector2D{rect.x - CHROMIUM_FRAME_INSET, rect.y - CHROMIUM_FRAME_INSET},
+              Vector2D{rect.w + CHROMIUM_FRAME_INSET, rect.h + CHROMIUM_FRAME_INSET});
+}
+
+static void applyChromiumMaximizedBox(PHLWINDOW w) {
+  if (!usesChromiumFrame(w) || !isMaximizedNow(w))
+    return;
+  const auto work = monitorWork(w);
+  if (work.w <= 0 || work.h <= 0)
+    return;
+  const auto target = compositorFrameBox(w, work);
+  const auto pos    = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+  const auto size   = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+  if (std::abs(pos.x - target.x) < 1 && std::abs(pos.y - target.y) < 1 && std::abs(size.x - target.w) < 1 &&
+      std::abs(size.y - target.h) < 1)
+    return;
+  w->finishAnimation();
+  w->setBox(target);
+  damageWindow(w);
+}
+
 static void saveNormalFloat(PHLWINDOW w) {
   if (!w || w->isHidden())
     return;
   if (isMaximizedNow(w) || isCoveringFullscreen(w))
     return;
-  const auto pos  = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-  const auto size = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+  const auto raw = CBox(w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT),
+                        w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT));
+  const auto box  = visibleFrameRect(w, raw);
+  const auto pos  = Vector2D{box.x, box.y};
+  const auto size = Vector2D{box.w, box.h};
   if (size.x < 64 || size.y < 64)
     return;
   const auto work = monitorWork(w);
@@ -285,8 +331,10 @@ static void restoreFloatOnScreen(PHLWINDOW w) {
     pos  = it->second.pos;
     size = it->second.size;
   } else {
-    pos  = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-    size = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+    const auto box = visibleFrameRect(w, CBox(w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT),
+                                              w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT)));
+    pos            = Vector2D{box.x, box.y};
+    size           = Vector2D{box.w, box.h};
   }
   if (size.x > work.w)
     size.x = work.w;
@@ -305,12 +353,14 @@ static void restoreFloatOnScreen(PHLWINDOW w) {
     pos.y = work.y + work.h - size.y;
   if (pos.y < work.y + bar)
     pos.y = work.y + bar;
-  const auto cur = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-  const auto csz = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-  if (std::abs(cur.x - pos.x) < 1 && std::abs(cur.y - pos.y) < 1 && std::abs(csz.x - size.x) < 1 && std::abs(csz.y - size.y) < 1)
+  const auto target = compositorFrameBox(w, CBox(pos, size));
+  const auto cur    = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+  const auto csz    = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+  if (std::abs(cur.x - target.x) < 1 && std::abs(cur.y - target.y) < 1 && std::abs(csz.x - target.w) < 1 &&
+      std::abs(csz.y - target.h) < 1)
     return;
   w->finishAnimation();
-  w->setBox(CBox(pos, size));
+  w->setBox(target);
 }
 
 static void applyRequestedMinimize(PHLWINDOWREF ref, std::optional<bool> want) {
@@ -331,6 +381,8 @@ static void applyRequestedMaximize(PHLWINDOWREF ref, std::optional<bool> want) {
     w->m_suppressNextMaximize = false;
     // Hyprland's own handler may already have maxed the surface. Still tell
     // Chrome so it relayouts the CSD frame to the work area.
+    if (isMaximizedNow(w))
+      applyChromiumMaximizedBox(w);
     if (isMaximizedNow(w) || isCoveringFullscreen(w))
       restoreCsdCaption(w);
     return;
@@ -342,15 +394,19 @@ static void applyRequestedMaximize(PHLWINDOWREF ref, std::optional<bool> want) {
   if (isMaximizedNow(w) == *want) {
     if (!*want)
       restoreFloatOnScreen(w);
-    else
+    else {
+      applyChromiumMaximizedBox(w);
       restoreCsdCaption(w);
+    }
     return;
   }
   g_inPluginApply = true;
   w->finishAnimation();
   setMaximized(w, *want);
   g_inPluginApply = false;
-  if (!*want) {
+  if (*want) {
+    applyChromiumMaximizedBox(w);
+  } else {
     restoreFloatOnScreen(w);
     w->m_suppressNextMaximize = true;
   }
@@ -389,9 +445,11 @@ static bool coversWorkArea(PHLWINDOW w) {
   const auto work = monitorWork(w);
   if (work.w <= 0)
     return false;
-  const auto pos  = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-  const auto size = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-  return std::abs(size.x - work.w) <= 16 && size.y >= work.h - 48 && pos.x <= work.x + 8 && pos.y <= work.y + 8;
+  const auto box = visibleFrameRect(w, CBox(w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT),
+                                            w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT)));
+  const double edgeTolerance = usesChromiumFrame(w) ? CHROMIUM_FRAME_INSET + 4.0 : 8.0;
+  return std::abs(box.w - work.w) <= 16 && box.h >= work.h - 48 && box.x <= work.x + edgeTolerance &&
+      box.y <= work.y + edgeTolerance;
 }
 
 static void applyDefaultFloat(PHLWINDOW w) {
@@ -410,7 +468,7 @@ static void applyDefaultFloat(PHLWINDOW w) {
   if (pos.y < work.y)
     pos.y = work.y;
   w->finishAnimation();
-  w->setBox(CBox(pos, size));
+  w->setBox(compositorFrameBox(w, CBox(pos, size)));
 }
 
 // Hyprland arms FSMODE_MAXIMIZED on first map so SSD clients hide CSD. Chrome
@@ -803,8 +861,18 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     PHLWINDOWREF ref = w;
     later([ref]() {
       auto live = ref.lock();
-      if (live && !isMaximizedNow(live) && !isCoveringFullscreen(live))
-        restoreFloatOnScreen(live);
+      if (live && isMaximizedNow(live))
+        applyChromiumMaximizedBox(live);
+      else if (live && !isCoveringFullscreen(live)) {
+        const auto work = monitorWork(live);
+        const auto box  = visibleFrameRect(live, CBox(live->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT),
+                                                      live->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT)));
+        // Hyprland normally restores its pre-maximize box itself. Intervene
+        // only if the maximized/off-screen box survived. A newer explicit
+        // snap is valid geometry and must win this idle callback.
+        if (coversWorkArea(live) || (work.h > 0 && box.y < work.y))
+          restoreFloatOnScreen(live);
+      }
     });
   });
   g_onUpdateRules = Event::bus()->m_events.window.updateRules.listen([](PHLWINDOW w) { watchWindow(w); });
