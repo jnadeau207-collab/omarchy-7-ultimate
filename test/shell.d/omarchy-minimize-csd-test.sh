@@ -49,6 +49,9 @@ fi
 if ! grep -A12 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'isUncorrectedDefaultFloat(w)'; then
   fail "map-time resize must not save the uncorrected Chromium default before idle correction"
 fi
+if ! grep -A20 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'clearFakeMapMaximize(ref.lock())'; then
+  fail "the settled Chromium default resize must queue correction after one-shot map callbacks"
+fi
 grep -Fq 'w->setBox(compositorFrameBox(w, rect))' "$cpp" \
   || fail "fresh Chromium defaults must get an unclipped compositor box"
 grep -Fq 'applyChromiumMaximizedBox' "$cpp" \

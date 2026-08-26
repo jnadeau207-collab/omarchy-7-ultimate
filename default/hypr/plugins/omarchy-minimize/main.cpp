@@ -302,6 +302,7 @@ static void applyChromiumMaximizedBox(PHLWINDOW w) {
 }
 
 static bool isUncorrectedDefaultFloat(PHLWINDOW w);
+static void clearFakeMapMaximize(PHLWINDOW w);
 
 static void saveNormalFloat(PHLWINDOW w) {
   if (!w || w->isHidden())
@@ -311,8 +312,14 @@ static void saveNormalFloat(PHLWINDOW w) {
   // Map-time resize events can arrive after the watcher attaches but before
   // clearFakeMapMaximize's idle callback. Do not preserve the untransformed
   // centered default and thereby block its one-time correction.
-  if (isUncorrectedDefaultFloat(w))
+  if (isUncorrectedDefaultFloat(w)) {
+    // On Hyprland 0.56 the final rule-set 1200x740 geometry can arrive after
+    // every create/open/openLate idle callback. Let the settled resize event
+    // queue the same signature-idempotent correction on the next idle.
+    PHLWINDOWREF ref = w;
+    later([ref]() { clearFakeMapMaximize(ref.lock()); });
     return;
+  }
   const auto raw = CBox(w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT),
                         w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT));
   const auto box  = visibleFrameRect(w, raw);
