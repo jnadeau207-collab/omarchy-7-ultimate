@@ -43,6 +43,9 @@ grep -Fq 'static bool isUncorrectedDefaultFloat' "$cpp" \
   || fail "fresh normal Chrome maps must recognize the untransformed centered default"
 grep -Fq '!g_savedFloat.contains(key) && isUncorrectedDefaultFloat(w)' "$cpp" \
   || fail "fresh normal Chrome must be transformed without overriding remembered placements"
+if ! grep -A12 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'isUncorrectedDefaultFloat(w)'; then
+  fail "map-time resize must not save the uncorrected Chromium default before idle correction"
+fi
 grep -Fq 'w->setBox(compositorFrameBox(w, rect))' "$cpp" \
   || fail "fresh Chromium defaults must get an unclipped compositor box"
 grep -Fq 'applyChromiumMaximizedBox' "$cpp" \
