@@ -301,10 +301,17 @@ static void applyChromiumMaximizedBox(PHLWINDOW w) {
   damageWindow(w);
 }
 
+static bool isUncorrectedDefaultFloat(PHLWINDOW w);
+
 static void saveNormalFloat(PHLWINDOW w) {
   if (!w || w->isHidden())
     return;
   if (isMaximizedNow(w) || isCoveringFullscreen(w))
+    return;
+  // Map-time resize events can arrive after the watcher attaches but before
+  // clearFakeMapMaximize's idle callback. Do not preserve the untransformed
+  // centered default and thereby block its one-time correction.
+  if (isUncorrectedDefaultFloat(w))
     return;
   const auto raw = CBox(w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT),
                         w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT));
