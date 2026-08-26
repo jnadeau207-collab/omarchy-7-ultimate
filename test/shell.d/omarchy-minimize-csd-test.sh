@@ -58,24 +58,18 @@ grep -Fq 'Config::Actions::resize(Vector2D{box.w, box.h}, false, w)' "$cpp" \
   || fail "native Chromium geometry must configure surface size through the resize action"
 grep -Fq 'Config::Actions::move(Vector2D{box.x, box.y}, false, w)' "$cpp" \
   || fail "native Chromium geometry must configure position through the move action"
-grep -Fq '#include "src/layout/LayoutManager.hpp"' "$cpp" \
-  || fail "maximized Chromium geometry needs Hyprland's layout-target dispatcher path"
-grep -Fq 'g_layoutManager->resizeTarget' "$cpp" \
-  || fail "FSMODE_MAXIMIZED must bypass only the public resize action's fullscreen rejection"
-grep -Fq 'g_layoutManager->moveTarget' "$cpp" \
-  || fail "FSMODE_MAXIMIZED must update the layout goal position, not direct-set the box"
-grep -Fq 'Desktop::View::IGeometric::GEOMETRIC_GOAL' "$cpp" \
-  || fail "maximized dispatcher deltas must be calculated from Hyprland's geometry goal"
+if grep -Fq 'applyChromiumMaximizedBox' "$cpp"; then
+  fail "actual Chrome maximize paints edge-to-edge and must keep Hyprland's raw work-area geometry"
+fi
+if grep -Fq 'src/layout/LayoutManager.hpp' "$cpp"; then
+  fail "normal Chromium frame correction must not bypass fullscreen layout ownership"
+fi
 if grep -Fq 'w->setBox(' "$cpp"; then
   fail "omarchy-minimize must not use direct setBox for XDG geometry"
 fi
 if ! grep -A8 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'g_inPluginApply'; then
   fail "dispatcher resize events must not overwrite the logical saved float mid-apply"
 fi
-grep -Fq 'applyChromiumMaximizedBox' "$cpp" \
-  || fail "Chromium CSD maximize must cover the visible work area without clipping"
-grep -Fq 'if (live && isMaximizedNow(live))' "$cpp" \
-  || fail "fullscreen events must reapply Chromium maximize geometry after Hyprland settles"
 grep -Fq 'if (coversWorkArea(live) || (work.h > 0 && box.y < work.y))' "$cpp" \
   || fail "fullscreen-exit recovery must not overwrite a newer explicit snap"
 grep -Fq 'work.y + bar' "$cpp" \

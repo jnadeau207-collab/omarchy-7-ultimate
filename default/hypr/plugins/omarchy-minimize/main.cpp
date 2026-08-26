@@ -15,7 +15,6 @@
 #include "src/xwayland/XSurface.hpp"
 #include "src/managers/fullscreen/FullscreenController.hpp"
 #include "src/managers/eventLoop/EventLoopManager.hpp"
-#include "src/layout/LayoutManager.hpp"
 #include "src/config/shared/actions/ConfigActions.hpp"
 #include "src/desktop/rule/windowRule/WindowRuleEffectContainer.hpp"
 #include "src/helpers/MiscFunctions.hpp"
@@ -272,14 +271,14 @@ static bool usesChromiumFrame(PHLWINDOW w) {
 }
 
 static CBox visibleFrameRect(PHLWINDOW w, const CBox& box) {
-  if (!usesChromiumFrame(w))
+  if (!usesChromiumFrame(w) || isMaximizedNow(w) || isCoveringFullscreen(w))
     return box;
   return CBox(Vector2D{box.x + CHROMIUM_FRAME_INSET, box.y + CHROMIUM_FRAME_INSET},
               Vector2D{std::max(1.0, box.w - CHROMIUM_FRAME_INSET), std::max(1.0, box.h - CHROMIUM_FRAME_INSET)});
 }
 
 static CBox compositorFrameBox(PHLWINDOW w, const CBox& rect) {
-  if (!usesChromiumFrame(w))
+  if (!usesChromiumFrame(w) || isMaximizedNow(w) || isCoveringFullscreen(w))
     return rect;
   return CBox(Vector2D{rect.x - CHROMIUM_FRAME_INSET, rect.y - CHROMIUM_FRAME_INSET},
               Vector2D{rect.w + CHROMIUM_FRAME_INSET, rect.h + CHROMIUM_FRAME_INSET});
@@ -295,44 +294,10 @@ static bool dispatchCompositorBox(PHLWINDOW w, const CBox& box) {
   const bool wasApplying = g_inPluginApply;
   g_inPluginApply        = true;
   w->finishAnimation();
-  bool applied = true;
-  if (Fullscreen::controller()->isFullscreen(w)) {
-    // Config::Actions::resize/move use these exact layout-target deltas but
-    // reject every fullscreen mode up front. FSMODE_MAXIMIZED still needs the
-    // dispatcher/configure semantics; bypass only that precondition. This path
-    // is never used for FSMODE_FULLSCREEN (F11).
-    auto target = w->layoutTarget();
-    if (!target) {
-      applied = false;
-    } else {
-      g_layoutManager->resizeTarget(Vector2D{box.w, box.h} - w->size(Desktop::View::IGeometric::GEOMETRIC_GOAL), target);
-      g_layoutManager->moveTarget(Vector2D{box.x, box.y} - w->position(Desktop::View::IGeometric::GEOMETRIC_GOAL), target);
-      const auto goal = w->size(Desktop::View::IGeometric::GEOMETRIC_GOAL);
-      if (goal.x > 1 && goal.y > 1)
-        w->setHidden(false);
-    }
-  } else {
-    const auto resized = Config::Actions::resize(Vector2D{box.w, box.h}, false, w);
-    const auto moved   = Config::Actions::move(Vector2D{box.x, box.y}, false, w);
-    applied            = resized.has_value() && moved.has_value();
-  }
+  const auto resized = Config::Actions::resize(Vector2D{box.w, box.h}, false, w);
+  const auto moved   = Config::Actions::move(Vector2D{box.x, box.y}, false, w);
   g_inPluginApply = wasApplying;
-  return applied;
-}
-
-static void applyChromiumMaximizedBox(PHLWINDOW w) {
-  if (!usesChromiumFrame(w) || !isMaximizedNow(w))
-    return;
-  const auto work = monitorWork(w);
-  if (work.w <= 0 || work.h <= 0)
-    return;
-  const auto target = compositorFrameBox(w, work);
-  const auto pos    = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-  const auto size   = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
-  if (std::abs(pos.x - target.x) < 1 && std::abs(pos.y - target.y) < 1 && std::abs(size.x - target.w) < 1 &&
-      std::abs(size.y - target.h) < 1)
-    return;
-  (void)dispatchCompositorBox(w, target);
+  return resized.has_value() && moved.has_value();
 }
 
 static bool isUncorrectedDefaultFloat(PHLWINDOW w);
@@ -437,8 +402,6 @@ static void applyRequestedMaximize(PHLWINDOWREF ref, std::optional<bool> want) {
     w->m_suppressNextMaximize = false;
     // Hyprland's own handler may already have maxed the surface. Still tell
     // Chrome so it relayouts the CSD frame to the work area.
-    if (isMaximizedNow(w))
-      applyChromiumMaximizedBox(w);
     if (isMaximizedNow(w) || isCoveringFullscreen(w))
       restoreCsdCaption(w);
     return;
@@ -450,19 +413,15 @@ static void applyRequestedMaximize(PHLWINDOWREF ref, std::optional<bool> want) {
   if (isMaximizedNow(w) == *want) {
     if (!*want)
       restoreFloatOnScreen(w);
-    else {
-      applyChromiumMaximizedBox(w);
+    else
       restoreCsdCaption(w);
-    }
     return;
   }
   g_inPluginApply = true;
   w->finishAnimation();
   setMaximized(w, *want);
   g_inPluginApply = false;
-  if (*want) {
-    applyChromiumMaximizedBox(w);
-  } else {
+  if (!*want) {
     restoreFloatOnScreen(w);
     w->m_suppressNextMaximize = true;
   }
@@ -949,9 +908,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     PHLWINDOWREF ref = w;
     later([ref]() {
       auto live = ref.lock();
-      if (live && isMaximizedNow(live))
-        applyChromiumMaximizedBox(live);
-      else if (live && !isCoveringFullscreen(live)) {
+      if (live && !isMaximizedNow(live) && !isCoveringFullscreen(live)) {
         const auto work = monitorWork(live);
         const auto box  = visibleFrameRect(live, CBox(live->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT),
                                                       live->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT)));
