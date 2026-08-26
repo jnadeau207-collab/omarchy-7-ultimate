@@ -26,6 +26,11 @@ grep -Fq 'restoreFloatOnScreen' "$cpp" \
   || fail "CSD unmaximize must put the remembered float back on the work area immediately"
 grep -Fq 'CHROMIUM_FRAME_INSET = 12.0' "$cpp" \
   || fail "native CSD geometry must use the measured Chromium frame inset"
+grep -Fq 'cls.find("chrome")' "$cpp" \
+  || fail "native Chromium frame matching must use a deterministic class check"
+if grep -Fq 'std::regex_search(w->m_class, CHROMIUM_FRAME_CLASS)' "$cpp"; then
+  fail "a dedicated Chromium std::regex matcher crashes Hyprland during live-window plugin hydration"
+fi
 grep -Fq 'static CBox visibleFrameRect' "$cpp" \
   || fail "native compositor ingress must normalize Chromium to visible-frame coordinates"
 grep -Fq 'static CBox compositorFrameBox' "$cpp" \

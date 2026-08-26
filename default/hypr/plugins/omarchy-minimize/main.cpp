@@ -256,11 +256,18 @@ static CBox monitorWork(PHLWINDOW w) {
 // every saved and clamped rectangle in visible-frame coordinates and transform
 // exactly once at compositor egress. GTK CSD clients do not have this inset.
 static constexpr double CHROMIUM_FRAME_INSET = 12.0;
-static const std::regex CHROMIUM_FRAME_CLASS{
-  R"((google-)?chrom(e|ium)|brave-browser|microsoft-edge|vivaldi-stable|helium)", std::regex::icase};
 
 static bool usesChromiumFrame(PHLWINDOW w) {
-  return w && std::regex_search(w->m_class, CHROMIUM_FRAME_CLASS);
+  if (!w)
+    return false;
+  // Copy before normalizing: window state can change while plugin event hooks
+  // run. A dedicated std::regex matcher here crashed Hyprland in
+  // std::__detail::_Executor during watchAllWindows on the live metal box.
+  auto cls = w->m_class;
+  std::transform(cls.begin(), cls.end(), cls.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  return cls.find("chrome") != std::string::npos || cls.find("chromium") != std::string::npos ||
+      cls.find("brave-browser") != std::string::npos || cls.find("microsoft-edge") != std::string::npos ||
+      cls.find("vivaldi-stable") != std::string::npos || cls.find("helium") != std::string::npos;
 }
 
 static CBox visibleFrameRect(PHLWINDOW w, const CBox& box) {
