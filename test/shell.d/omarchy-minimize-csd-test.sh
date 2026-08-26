@@ -41,8 +41,11 @@ grep -Fq 'const auto target = compositorFrameBox(w, CBox(pos, size))' "$cpp" \
   || fail "restored floats must write transformed compositor geometry"
 grep -Fq 'static bool isUncorrectedDefaultFloat' "$cpp" \
   || fail "fresh normal Chrome maps must recognize the untransformed centered default"
-grep -Fq '!g_savedFloat.contains(key) && isUncorrectedDefaultFloat(w)' "$cpp" \
-  || fail "fresh normal Chrome must be transformed without overriding remembered placements"
+grep -Fq 'if (isUncorrectedDefaultFloat(w))' "$cpp" \
+  || fail "fresh normal Chrome must transform the exact uncorrected map signature"
+if ! grep -A10 'if (isUncorrectedDefaultFloat(w))' "$cpp" | grep -Fq 'g_savedFloat.erase(key)'; then
+  fail "class-empty map-time resize state must not block the later Chromium correction"
+fi
 if ! grep -A12 '^static void saveNormalFloat(PHLWINDOW w) {' "$cpp" | grep -Fq 'isUncorrectedDefaultFloat(w)'; then
   fail "map-time resize must not save the uncorrected Chromium default before idle correction"
 fi
