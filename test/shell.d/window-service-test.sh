@@ -169,6 +169,9 @@ grep -Fq 'root._isPlacedSnap(root._placedKind[target])' "$ws" \
   || fail "queued unmaximize restores must not overwrite a newer explicit snap"
 grep -Fq 'root.restoreFloatRetryTimer.stop()' "$ws" \
   || fail "placing a snap must cancel both pending normal-restore timers"
+if ! grep -A12 '^  function maximize(address)' "$ws" | grep -Fq 'if (root.isMaximized(target))'; then
+  fail "Maximize must be idempotent when Chrome's native CSD button already set FSMODE_MAXIMIZED"
+fi
 grep -Fq 'function _compositorAddresses' "$ws" || fail "saveLayout reads live hyprctl clients, not stale Quickshell toplevels"
 grep -Fq '_layoutSavedAt' "$ws" || fail "saveLayout must not let FileView reload a stale layout over the just-saved one"
 if awk '
@@ -372,6 +375,9 @@ assertEqual(m.usesWaylandCsd({ class: 'google-chrome' }), true, 'Google Chrome u
 assertEqual(m.usesChromiumFrame({ class: 'google-chrome' }), true, 'Chrome needs the frame-inset compensation')
 assertEqual(m.usesChromiumFrame({ class: 'chromium' }), true, 'Chromium needs the frame-inset compensation')
 assertEqual(m.usesChromiumFrame({ class: 'brave-browser' }), true, 'Brave needs the frame-inset compensation')
+assertEqual(m.usesChromiumFrame({ class: 'microsoft-edge' }), true, 'Edge needs the frame-inset compensation')
+assertEqual(m.usesChromiumFrame({ class: 'vivaldi-stable' }), true, 'Vivaldi needs the frame-inset compensation')
+assertEqual(m.usesChromiumFrame({ class: 'helium' }), true, 'Helium needs the frame-inset compensation')
 assertEqual(m.usesChromiumFrame({ class: 'org.gnome.Nautilus' }), false, 'Nautilus paints its frame on the box we give it')
 assertEqual(m.usesChromiumFrame({ class: 'foot' }), false, 'foot paints its frame on the box we give it')
 const wantRect = { x: 300, y: 200, width: 900, height: 600 }
