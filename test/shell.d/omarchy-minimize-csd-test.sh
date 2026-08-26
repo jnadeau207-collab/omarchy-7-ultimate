@@ -24,6 +24,24 @@ if grep -A2 'g_onUpdateRules' "$cpp" | grep -Fq 'onCsdMapped'; then
 fi
 grep -Fq 'restoreFloatOnScreen' "$cpp" \
   || fail "CSD unmaximize must put the remembered float back on the work area immediately"
+grep -Fq 'CHROMIUM_FRAME_INSET = 12.0' "$cpp" \
+  || fail "native CSD geometry must use the measured Chromium frame inset"
+grep -Fq 'static CBox visibleFrameRect' "$cpp" \
+  || fail "native compositor ingress must normalize Chromium to visible-frame coordinates"
+grep -Fq 'static CBox compositorFrameBox' "$cpp" \
+  || fail "native compositor egress must transform Chromium exactly once"
+grep -Fq 'const auto box  = visibleFrameRect(w, raw)' "$cpp" \
+  || fail "saved normal floats must store logical visible-frame geometry"
+grep -Fq 'const auto target = compositorFrameBox(w, CBox(pos, size))' "$cpp" \
+  || fail "restored floats must write transformed compositor geometry"
+grep -Fq 'w->setBox(compositorFrameBox(w, CBox(pos, size)))' "$cpp" \
+  || fail "fresh Chromium maps must get an unclipped compositor box"
+grep -Fq 'applyChromiumMaximizedBox' "$cpp" \
+  || fail "Chromium CSD maximize must cover the visible work area without clipping"
+grep -Fq 'if (live && isMaximizedNow(live))' "$cpp" \
+  || fail "fullscreen events must reapply Chromium maximize geometry after Hyprland settles"
+grep -Fq 'if (coversWorkArea(live) || (work.h > 0 && box.y < work.y))' "$cpp" \
+  || fail "fullscreen-exit recovery must not overwrite a newer explicit snap"
 grep -Fq 'work.y + bar' "$cpp" \
   || fail "SSD restore must leave 32px for hyprbars so caption buttons stay on screen"
 grep -Fq 'saveNormalFloat' "$cpp" \
