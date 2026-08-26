@@ -444,7 +444,7 @@ QtObject {
     var want = root._canonAddr(address)
     if (!/^0x[0-9a-fA-F]+$/.test(want)) return "function() end"
     return (
-      "(function() " +
+      "function() " +
       "local want = \"" + want + "\" " +
       "local function norm(a) return tostring(a or \"\"):gsub(\"^address:\", \"\") end " +
       "local hit = nil " +
@@ -464,7 +464,7 @@ QtObject {
       "else " +
       "hl.dispatch(hl.dsp.window.bring_to_top({ window = \"address:\" .. want })) " +
       "hl.dispatch(hl.dsp.focus({ window = \"address:\" .. want })) " +
-      "end end)()"
+      "end end"
     )
   }
 
