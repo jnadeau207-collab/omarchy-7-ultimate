@@ -172,6 +172,12 @@ grep -Fq 'root.restoreFloatRetryTimer.stop()' "$ws" \
 if ! grep -A12 '^  function maximize(address)' "$ws" | grep -Fq 'if (root.isMaximized(target))'; then
   fail "Maximize must be idempotent when Chrome's native CSD button already set FSMODE_MAXIMIZED"
 fi
+if ! grep -A12 '^  function maximize(address)' "$ws" | grep -Fq 'root._finish("maximize", target, root._noop())'; then
+  fail "an idempotent Maximize must report changed false and must not invent an undo"
+fi
+if ! grep -A10 '^  function snapTo(address, side)' "$ws" | grep -Fq 'return root._finish("snapTo", target, root._noop())'; then
+  fail "chooser Maximize on an already-maximized window must report an honest no-op"
+fi
 grep -Fq 'function _compositorAddresses' "$ws" || fail "saveLayout reads live hyprctl clients, not stale Quickshell toplevels"
 grep -Fq '_layoutSavedAt' "$ws" || fail "saveLayout must not let FileView reload a stale layout over the just-saved one"
 if awk '

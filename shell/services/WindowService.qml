@@ -987,7 +987,7 @@ QtObject {
     // action. Keep that action idempotent so it cannot manufacture a
     // fullscreen-exit event that restores the previous float a moment later.
     if (root.isMaximized(target))
-      return root._finish("maximize", target, root._ok(), { verb: "restoreNormal", address: target })
+      return root._finish("maximize", target, root._noop())
     var geom = root._monitorGeom(target)
     if (!geom.width || !geom.height) return root._finish("maximize", target, root._err("No monitor", "The window's monitor geometry is unavailable.", ""))
     root._rememberNormal(target)
@@ -1133,7 +1133,10 @@ QtObject {
   function snapTo(address, side) {
     var target = root._addr(address)
     if (!target) return root._finish("snapTo", address, root._err("No window", "There is no window to snap.", ""))
-    root._applySnapKind(target, String(side || ""))
+    var kind = String(side || "")
+    if (kind === "max" && root.isMaximized(target))
+      return root._finish("snapTo", target, root._noop())
+    root._applySnapKind(target, kind)
     return root._finish("snapTo", target, root._ok(), { verb: "restoreNormal", address: target })
   }
 
