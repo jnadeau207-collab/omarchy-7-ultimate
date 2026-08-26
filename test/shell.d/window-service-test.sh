@@ -408,6 +408,17 @@ let cycledChrome = visibleChrome
 for (let i = 0; i < 2; i++)
   cycledChrome = m.frameRect(m.frameBox(cycledChrome, { class: 'google-chrome' }), { class: 'google-chrome' })
 assertDeepEqual(cycledChrome, visibleChrome, 'two Chromium restore cycles do not drift or grow')
+const maximizedChrome = { x: 0, y: 0, width: 1920, height: 1032 }
+assertDeepEqual(
+  m.frameRect(maximizedChrome, { class: 'google-chrome', fullscreen: 1 }),
+  maximizedChrome,
+  'actual Chromium maximize keeps raw work-area geometry because its frame paints edge-to-edge'
+)
+assertDeepEqual(
+  m.frameRect({ x: 0, y: 0, width: 1920, height: 1080 }, { class: 'google-chrome', fullscreen: 2 }),
+  { x: 0, y: 0, width: 1920, height: 1080 },
+  'Chromium F11 keeps raw output geometry'
+)
 assertDeepEqual(m.parseClientsSnapshot('[]', 0), [], 'a successful empty clients snapshot is a valid startup baseline')
 assertEqual(m.parseClientsSnapshot('', 1), null, 'failed hyprctl with empty output does not complete hydration')
 assertEqual(m.parseClientsSnapshot('', 0), null, 'successful but missing output does not invent an empty baseline')

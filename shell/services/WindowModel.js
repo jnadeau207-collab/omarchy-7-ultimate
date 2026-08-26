@@ -72,12 +72,10 @@ function hyprbarsSnapInset(win) {
 // Chromium paints its visible frame CHROMIUM_FRAME_INSET px right and down of
 // the box the compositor hands it, then runs past the far edge and is clipped
 // there. A box sized to the rect we want therefore shows desktop along the left
-// and top and cuts the right and bottom — measured on metal, maximized at
-// [0,0] 1920x1032: wallpaper at x=0..10, frame from x=12, frame still painting
-// at x=1919 with the close glyph only 11px from the edge. It happens in every
-// configuration (CSD or hyprbars SSD, with or without WaylandWindowDecorations,
-// custom_chrome_frame either way) and at every size, maximized included. GTK CSD
-// clients such as Nautilus do not do it.
+// and top and cuts the right and bottom. It happens in normal floating and
+// snapped Chrome across CSD/SSD and flag combinations. Actual compositor
+// maximize and F11 paint edge-to-edge and must keep their raw geometry. GTK CSD
+// clients such as Nautilus do not need the inset either.
 //
 // Expanding the box by the inset puts the visible frame exactly on the rect we
 // asked for: box [288,188 912x612] paints frame 300..1199, the requested
@@ -92,6 +90,7 @@ function usesChromiumFrame(win) {
 }
 
 function chromiumFrameInset(win) {
+  if (Number(win && win.fullscreen || 0) > 0) return 0
   return usesChromiumFrame(win) ? CHROMIUM_FRAME_INSET : 0
 }
 
