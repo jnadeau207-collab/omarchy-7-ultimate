@@ -109,6 +109,38 @@ function frameBox(rect, win) {
   }
 }
 
+// Convert the compositor box back to the visible-frame coordinates used by
+// WindowService state. This is the inverse of frameBox: stored placements,
+// normal bounds, and saved layouts must never accumulate another inset on
+// every maximize/restore cycle.
+function frameRect(box, win) {
+  var inset = chromiumFrameInset(win)
+  if (!inset || !box || !box.width || !box.height) return box
+  return {
+    x: Number(box.x) + inset,
+    y: Number(box.y) + inset,
+    width: Math.max(1, Number(box.width) - inset),
+    height: Math.max(1, Number(box.height) - inset),
+    monitor: box.monitor
+  }
+}
+
+// A startup client baseline is valid only after hyprctl exits successfully and
+// returns an actual JSON array. In particular, failed/empty output must not be
+// confused with the valid empty snapshot [] used to classify the next client
+// as newly mapped.
+function parseClientsSnapshot(text, exitCode) {
+  if (Number(exitCode) !== 0) return null
+  var raw = String(text || "").trim()
+  if (!raw) return null
+  try {
+    var value = JSON.parse(raw)
+    return Array.isArray(value) ? value : null
+  } catch (e) {
+    return null
+  }
+}
+
 function windowMatchesPin(win, pin) {
   var app = windowAppId(win)
   var pinId = normalizeId(pin && (pin.id || pin.desktopId))
@@ -670,6 +702,8 @@ if (typeof module !== "undefined") {
     usesChromiumFrame: usesChromiumFrame,
     chromiumFrameInset: chromiumFrameInset,
     frameBox: frameBox,
+    frameRect: frameRect,
+    parseClientsSnapshot: parseClientsSnapshot,
     hyprbarsSnapInset: hyprbarsSnapInset,
     windowMatchesPin: windowMatchesPin,
     parsePins: parsePins,

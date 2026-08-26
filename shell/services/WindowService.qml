@@ -48,6 +48,7 @@ QtObject {
   property var _knownAddresses: ({})
   property var _lastRect: ({})
   property var _lastAppId: ({})
+  property bool _clientsSnapshotReady: false
   property int _cascadeIndex: 0
   property bool _placementsReady: false
   property bool _placingRect: false
@@ -207,6 +208,7 @@ QtObject {
       if (!c || !c.address) continue
       addr = root._canonAddr(c.address)
       fs = Number(c.fullscreen || 0)
+      var current = root._logicalClientRect(c)
       var prev = rects[addr]
       var prevFs = prev ? Number(prev.fullscreen || 0) : 0
       if (prevFs === 0 && fs === 1 && prev && Number(prev.width) > 0) {
@@ -224,23 +226,13 @@ QtObject {
           delete kinds[addr]
           kindsChanged = true
         }
-        root._queueFloatRestore(addr)
-      } else if (fs === 0 && c.hidden !== true && root._knownAddresses[addr] && c.at) {
+        if (!root._isPlacedSnap(kinds[addr])) root._queueFloatRestore(addr)
+      } else if (fs === 0 && c.hidden !== true && root._knownAddresses[addr] && current) {
         var areaNow = WindowModel.workArea(root._monitorGeom(addr))
-        if (areaNow.width && Number(c.at[1]) < areaNow.y)
+        if (areaNow.width && Number(current.y) < areaNow.y)
           root._queueFloatRestore(addr)
       }
-      if (c.at && c.size && Number(c.size[0]) > 0) {
-        rects[addr] = {
-          x: Number(c.at[0] || 0),
-          y: Number(c.at[1] || 0),
-          width: Number(c.size[0]),
-          height: Number(c.size[1]),
-          fullscreen: fs,
-          minimized: c.hidden === true,
-          monitor: String(c.monitor || "")
-        }
-      }
+      if (current) rects[addr] = current
       // CSD maximize never calls WindowService.maximize(), so record the
       // compositor bit here or placement will treat the address as new.
       if (fs === 1 && kinds[addr] !== "max") {
@@ -276,24 +268,19 @@ QtObject {
 
   function _hydrateIfNeeded() {
     if (root._placementsReady) return
-    var list = root._addresses()
+    // Only a successful hyprctl snapshot can define the startup baseline. An
+    // empty snapshot is valid and means the first later client is new; the
+    // default [] before parsing (or after a parse failure) is not evidence.
+    if (!root._clientsSnapshotReady) return
+    var clients = root.clientsIpc || []
     var init = ({})
     var i
     var addr
-    if (list.length === 0) {
-      var clients = root.clientsIpc || []
-      if (clients.length === 0) return
-      for (i = 0; i < clients.length; i++) {
-        if (!clients[i] || !clients[i].address) continue
-        addr = root._canonAddr(clients[i].address)
-        if (addr) init[addr] = true
-      }
-    } else {
-      for (i = 0; i < list.length; i++) init[list[i]] = true
+    for (i = 0; i < clients.length; i++) {
+      if (!clients[i] || !clients[i].address) continue
+      addr = root._canonAddr(clients[i].address)
+      if (addr) init[addr] = true
     }
-    var n = 0
-    for (addr in init) n++
-    if (n === 0) return
     root._knownAddresses = init
     root._placementsReady = true
   }
@@ -412,8 +399,8 @@ QtObject {
       var remembered = key && root.placements[key] && root.placements[key].width ? root.placements[key] : null
       if (remembered && geom && geom.width && (WindowModel.isSnapped(remembered, geom, 8, 32) || WindowModel.isSnapped(remembered, geom, 8, 0) || WindowModel.coversWorkArea(remembered, geom)))
         remembered = null
-      // Lua already sizes CSD to 1200×740 so min/max stay on the caption.
-      // Placing 880×560 here clips those buttons off the right.
+      // The native CSD plugin owns fresh-map sizing and applies Chromium's
+      // compositor-frame transform. Do not apply it again during hydration.
       if (csd && !remembered) {
         known[addr] = true
         continue
@@ -524,21 +511,31 @@ QtObject {
     var at = ipc.at || (client && client.at) || [0, 0]
     var size = ipc.size || (client && client.size) || [0, 0]
     var hidden = (client && client.hidden === true) || ipc.hidden === true
+    var initialClass = String(ipc.initialClass || (client && client.initialClass) || "")
     var fullscreen = 0
     if (ipc.fullscreen != null && ipc.fullscreen !== "")
       fullscreen = Number(ipc.fullscreen)
     else if (client && client.fullscreen != null)
       fullscreen = Number(client.fullscreen)
+    var logical = root._logicalClientRect({
+      at: at,
+      size: size,
+      class: cls,
+      initialClass: initialClass,
+      fullscreen: fullscreen,
+      hidden: hidden,
+      monitor: mon ? String(mon.name || "") : ""
+    }) || { x: 0, y: 0, width: 0, height: 0 }
     return {
       address: address,
       title: String(hypr.title || ipc.title || ""),
       appId: cls,
       class: cls,
-      initialClass: String(ipc.initialClass || (client && client.initialClass) || ""),
-      x: Number(at[0] || 0),
-      y: Number(at[1] || 0),
-      width: Number(size[0] || 0),
-      height: Number(size[1] || 0),
+      initialClass: initialClass,
+      x: logical.x,
+      y: logical.y,
+      width: logical.width,
+      height: logical.height,
       mapped: ipc.mapped !== false,
       floating: ipc.floating === true,
       fullscreen: fullscreen,
@@ -555,8 +552,7 @@ QtObject {
     if (!c) return null
     var address = root._canonAddr(c.address)
     if (!address) return null
-    var at = c.at || [0, 0]
-    var size = c.size || [0, 0]
+    var logical = root._logicalClientRect(c) || { x: 0, y: 0, width: 0, height: 0 }
     var ws = c.workspace || {}
     var hidden = c.hidden === true || !!root._minimized[address]
     return {
@@ -565,10 +561,10 @@ QtObject {
       appId: String(c.class || ""),
       class: String(c.class || ""),
       initialClass: String(c.initialClass || c.class || ""),
-      x: Number(at[0] || 0),
-      y: Number(at[1] || 0),
-      width: Number(size[0] || 0),
-      height: Number(size[1] || 0),
+      x: logical.x,
+      y: logical.y,
+      width: logical.width,
+      height: logical.height,
       mapped: c.mapped !== false,
       floating: c.floating === true,
       fullscreen: Number(c.fullscreen || 0),
@@ -698,6 +694,11 @@ QtObject {
     if (k === "" || k === "float" || k === "normal") delete next[target]
     else next[target] = k
     root._placedKind = next
+    if (root._isPlacedSnap(k) && root._pendingFloatRestore === target) {
+      root._pendingFloatRestore = ""
+      if (root.restoreFloatTimer) root.restoreFloatTimer.stop()
+      if (root.restoreFloatRetryTimer) root.restoreFloatRetryTimer.stop()
+    }
   }
 
   function _isPlacedSnap(kind) {
@@ -739,20 +740,31 @@ QtObject {
     return WindowModel.hyprbarsSnapInset({ class: cls, appId: cls })
   }
 
+  // hyprctl and Quickshell report the compositor's raw box. Everything above
+  // this boundary uses the visible frame as its coordinate system, so state can
+  // round-trip through the one outgoing _frameBox transform without drift.
+  function _logicalClientRect(c) {
+    if (!c || !c.at || !c.size || Number(c.size[0]) <= 0 || Number(c.size[1]) <= 0) return null
+    var rect = WindowModel.frameRect({
+      x: Number(c.at[0] || 0),
+      y: Number(c.at[1] || 0),
+      width: Number(c.size[0]),
+      height: Number(c.size[1]),
+      monitor: String(c.monitor || "")
+    }, { class: c.class, appId: c.initialClass || c.class, initialClass: c.initialClass })
+    rect.fullscreen = Number(c.fullscreen || 0)
+    rect.minimized = c.hidden === true
+    return rect
+  }
+
   function _clientRect(address) {
     var ipc = root._clientIpc(address)
-    if (!ipc || !ipc.at || !ipc.size || Number(ipc.size[0]) <= 0 || Number(ipc.size[1]) <= 0) {
+    var rect = root._logicalClientRect(ipc)
+    if (!rect) {
       root.lastError = "compositor client geometry is unavailable"
       return null
     }
-    return {
-      x: Number(ipc.at[0] || 0),
-      y: Number(ipc.at[1] || 0),
-      width: Number(ipc.size[0]),
-      height: Number(ipc.size[1]),
-      fullscreen: Number(ipc.fullscreen || 0),
-      minimized: ipc.hidden === true
-    }
+    return rect
   }
 
   function _rememberNormal(address) {
@@ -1029,6 +1041,10 @@ QtObject {
 
   function _restoreFloatOnScreen(target, force) {
     if (!target || root._placingRect) return
+    // A snap dispatched after unmaximize is newer explicit geometry. The
+    // fullscreen-event and polling retries must not overwrite it with the old
+    // normal float.
+    if (root._isPlacedSnap(root._placedKind[target])) return
     var rec = root._clientRect(target)
     if (!force) {
       if (root._placedKind[target] === "max" || root._placedKind[target] === "full") return
@@ -1078,7 +1094,8 @@ QtObject {
       width: Number(rec.width) || 880,
       height: Number(rec.height) || 560
     }, root._monitorGeom(target), root._hyprbarsInset(target))
-    root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(bounds.x)) + ", y = " + Math.round(Number(bounds.y)) + ", relative = false, " + root._luaWindow(target) + " })")
+    var box = root._frameBox(target, bounds)
+    root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(box.x)) + ", y = " + Math.round(Number(box.y)) + ", relative = false, " + root._luaWindow(target) + " })")
     return root._finish("moveTo", target, root._ok())
   }
 
@@ -1093,9 +1110,10 @@ QtObject {
       width: Number(w),
       height: Number(h)
     }, root._monitorGeom(target), root._hyprbarsInset(target))
-    root._dispatchLua("hl.dsp.window.resize({ x = " + Math.round(Number(bounds.width)) + ", y = " + Math.round(Number(bounds.height)) + ", relative = false, " + root._luaWindow(target) + " })")
+    var box = root._frameBox(target, bounds)
+    root._dispatchLua("hl.dsp.window.resize({ x = " + Math.round(Number(box.width)) + ", y = " + Math.round(Number(box.height)) + ", relative = false, " + root._luaWindow(target) + " })")
     if (Math.round(Number(bounds.x)) !== Math.round(Number(rec.x) || 0) || Math.round(Number(bounds.y)) !== Math.round(Number(rec.y) || 0))
-      root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(bounds.x)) + ", y = " + Math.round(Number(bounds.y)) + ", relative = false, " + root._luaWindow(target) + " })")
+      root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(box.x)) + ", y = " + Math.round(Number(box.y)) + ", relative = false, " + root._luaWindow(target) + " })")
     return root._finish("resizeTo", target, root._ok())
   }
 
@@ -1514,11 +1532,12 @@ QtObject {
       id: clientsStdout
       waitForEnd: true
     }
-    onExited: {
-      try {
-        var list = JSON.parse(clientsStdout.text || "[]")
-        if (Array.isArray(list)) root.clientsIpc = list
-      } catch (e) {
+    onExited: function(exitCode) {
+      var list = WindowModel.parseClientsSnapshot(clientsStdout.text, exitCode)
+      if (list !== null) {
+        root._clientsSnapshotReady = true
+        root.clientsIpc = list
+        root._hydrateIfNeeded()
       }
       clientsRestart.restart()
     }

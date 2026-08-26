@@ -153,7 +153,22 @@ grep -Fq 'function _noteFocus' "$ws" || fail "focus verbs record the compositor 
 grep -Fq 'root._noteFocus(target)' "$ws" || fail "focus and activate call _noteFocus"
 grep -Fq 'Date.now() - root._focusedAt' "$ws" || fail "_activeAddress prefers a just-focused address over a stale activated flag"
 grep -Fq '_lastCycleAddress' "$ws" || fail "commitCycle keeps the highlighted address if the overlay closes first"
-grep -Fq 'csd && !remembered' "$ws" || fail "placement must not shrink CSD clients to 880 and clip caption buttons"
+grep -Fq 'native CSD plugin owns fresh-map sizing' "$ws" \
+  || fail "WindowService must not double-transform fresh CSD geometry owned by the native plugin"
+grep -Fq 'property bool _clientsSnapshotReady: false' "$ws" \
+  || fail "placement hydration must distinguish a valid empty startup snapshot from no snapshot"
+grep -Fq 'root._clientsSnapshotReady = true' "$ws" \
+  || fail "a successful clients parse must complete placement hydration even when the list is empty"
+grep -Fq 'WindowModel.parseClientsSnapshot(clientsStdout.text, exitCode)' "$ws" \
+  || fail "placement hydration must reject failed or missing hyprctl output"
+grep -Fq 'root._logicalClientRect(c)' "$ws" \
+  || fail "compositor client boxes are normalized before WindowService stores them"
+grep -Fq 'var box = root._frameBox(target, bounds)' "$ws" \
+  || fail "direct move and resize verbs transform logical rectangles at compositor egress"
+grep -Fq 'root._isPlacedSnap(root._placedKind[target])' "$ws" \
+  || fail "queued unmaximize restores must not overwrite a newer explicit snap"
+grep -Fq 'root.restoreFloatRetryTimer.stop()' "$ws" \
+  || fail "placing a snap must cancel both pending normal-restore timers"
 grep -Fq 'function _compositorAddresses' "$ws" || fail "saveLayout reads live hyprctl clients, not stale Quickshell toplevels"
 grep -Fq '_layoutSavedAt' "$ws" || fail "saveLayout must not let FileView reload a stale layout over the just-saved one"
 if awk '
@@ -365,6 +380,26 @@ assertEqual(chromeBox.x, 288, 'Chromium box starts an inset left of the wanted r
 assertEqual(chromeBox.y, 188, 'Chromium box starts an inset above the wanted rect')
 assertEqual(chromeBox.width, 912, 'Chromium box is an inset wider so the frame is not cut')
 assertEqual(chromeBox.height, 612, 'Chromium box is an inset taller so the frame is not cut')
+const liveChromeBox = m.frameBox({ x: 360, y: 146, width: 1200, height: 740 }, { class: 'google-chrome' })
+assertDeepEqual(
+  liveChromeBox,
+  { x: 348, y: 134, width: 1212, height: 752 },
+  'fresh centered Chrome gets a larger compositor box without moving its visible frame'
+)
+const visibleChrome = m.frameRect(liveChromeBox, { class: 'google-chrome' })
+assertDeepEqual(
+  visibleChrome,
+  { x: 360, y: 146, width: 1200, height: 740 },
+  'Chromium compositor ingress returns to visible-frame coordinates'
+)
+let cycledChrome = visibleChrome
+for (let i = 0; i < 2; i++)
+  cycledChrome = m.frameRect(m.frameBox(cycledChrome, { class: 'google-chrome' }), { class: 'google-chrome' })
+assertDeepEqual(cycledChrome, visibleChrome, 'two Chromium restore cycles do not drift or grow')
+assertDeepEqual(m.parseClientsSnapshot('[]', 0), [], 'a successful empty clients snapshot is a valid startup baseline')
+assertEqual(m.parseClientsSnapshot('', 1), null, 'failed hyprctl with empty output does not complete hydration')
+assertEqual(m.parseClientsSnapshot('', 0), null, 'successful but missing output does not invent an empty baseline')
+assertEqual(m.parseClientsSnapshot('{"error":true}', 0), null, 'non-array client JSON does not complete hydration')
 assertEqual(m.frameBox(wantRect, { class: 'foot' }).x, 300, 'other clients keep the rect they asked for')
 assertEqual(m.frameBox(wantRect, { class: 'foot' }).width, 900, 'other clients keep their width')
 assert(m.windowMatchesPin({ class: 'chromium' }, { id: 'google-chrome' }), 'Chromium still lights the Chrome pin')
