@@ -459,11 +459,10 @@ static bool coversWorkArea(PHLWINDOW w) {
       box.y <= work.y + edgeTolerance;
 }
 
-static void applyDefaultFloat(PHLWINDOW w) {
+static CBox defaultFloatRect(PHLWINDOW w) {
   const auto work = monitorWork(w);
-  if (work.w <= 0)
-    return;
-  (void)Config::Actions::floatWindow(Config::Actions::TOGGLE_ACTION_ENABLE, w);
+  if (work.w <= 0 || work.h <= 0)
+    return {};
   Vector2D size{1200, 740};
   if (size.x > work.w)
     size.x = work.w;
@@ -474,8 +473,28 @@ static void applyDefaultFloat(PHLWINDOW w) {
     pos.x = work.x;
   if (pos.y < work.y)
     pos.y = work.y;
+  return CBox(pos, size);
+}
+
+static bool isUncorrectedDefaultFloat(PHLWINDOW w) {
+  if (!usesChromiumFrame(w))
+    return false;
+  const auto expected = defaultFloatRect(w);
+  if (expected.w <= 0 || expected.h <= 0)
+    return false;
+  const auto pos  = w->position(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+  const auto size = w->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+  return std::abs(pos.x - expected.x) < 1 && std::abs(pos.y - expected.y) < 1 && std::abs(size.x - expected.w) < 1 &&
+      std::abs(size.y - expected.h) < 1;
+}
+
+static void applyDefaultFloat(PHLWINDOW w) {
+  const auto rect = defaultFloatRect(w);
+  if (rect.w <= 0 || rect.h <= 0)
+    return;
+  (void)Config::Actions::floatWindow(Config::Actions::TOGGLE_ACTION_ENABLE, w);
   w->finishAnimation();
-  w->setBox(compositorFrameBox(w, CBox(pos, size)));
+  w->setBox(compositorFrameBox(w, rect));
 }
 
 // Hyprland arms FSMODE_MAXIMIZED on first map so SSD clients hide CSD. Chrome
@@ -485,9 +504,18 @@ static void applyDefaultFloat(PHLWINDOW w) {
 static void clearFakeMapMaximize(PHLWINDOW w) {
   if (!w || !isCsdWindow(w) || !w->m_isMapped || g_inPluginApply)
     return;
-  if (!isMaximizedNow(w) && !coversWorkArea(w))
-    return;
   const auto key = reinterpret_cast<uintptr_t>(w.get());
+  if (!isMaximizedNow(w) && !coversWorkArea(w)) {
+    // Hyprland 0.56 can map Chrome directly at the logical centered default,
+    // with no fake maximized state to clear. Transform that exact signature.
+    // The corrected raw box no longer matches, making create/open/openLate
+    // callbacks idempotent while remembered/custom placements stay untouched.
+    if (!g_savedFloat.contains(key) && isUncorrectedDefaultFloat(w)) {
+      applyDefaultFloat(w);
+      restoreCsdCaption(w);
+    }
+    return;
+  }
   if (g_savedFloat.contains(key))
     return;
   g_inPluginApply = true;
