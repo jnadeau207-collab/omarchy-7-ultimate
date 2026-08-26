@@ -284,6 +284,21 @@ static CBox compositorFrameBox(PHLWINDOW w, const CBox& rect) {
               Vector2D{rect.w + CHROMIUM_FRAME_INSET, rect.h + CHROMIUM_FRAME_INSET});
 }
 
+// CWindow::setBox is not dispatcher-equivalent for XDG CSD. Chrome acks that
+// direct write by shifting back 12px and shrinking 24px after a few seconds.
+// These are the same actions behind hl.dsp.window.resize/move, proven stable on
+// metal for both the transformed position and surface size.
+static void dispatchCompositorBox(PHLWINDOW w, const CBox& box) {
+  if (!w)
+    return;
+  const bool wasApplying = g_inPluginApply;
+  g_inPluginApply        = true;
+  w->finishAnimation();
+  (void)Config::Actions::resize(Vector2D{box.w, box.h}, false, w);
+  (void)Config::Actions::move(Vector2D{box.x, box.y}, false, w);
+  g_inPluginApply = wasApplying;
+}
+
 static void applyChromiumMaximizedBox(PHLWINDOW w) {
   if (!usesChromiumFrame(w) || !isMaximizedNow(w))
     return;
@@ -296,9 +311,7 @@ static void applyChromiumMaximizedBox(PHLWINDOW w) {
   if (std::abs(pos.x - target.x) < 1 && std::abs(pos.y - target.y) < 1 && std::abs(size.x - target.w) < 1 &&
       std::abs(size.y - target.h) < 1)
     return;
-  w->finishAnimation();
-  w->setBox(target);
-  damageWindow(w);
+  dispatchCompositorBox(w, target);
 }
 
 static bool isUncorrectedDefaultFloat(PHLWINDOW w);
@@ -306,6 +319,8 @@ static void clearFakeMapMaximize(PHLWINDOW w);
 
 static void saveNormalFloat(PHLWINDOW w) {
   if (!w || w->isHidden())
+    return;
+  if (g_inPluginApply)
     return;
   if (isMaximizedNow(w) || isCoveringFullscreen(w))
     return;
@@ -380,8 +395,7 @@ static void restoreFloatOnScreen(PHLWINDOW w) {
   if (std::abs(cur.x - target.x) < 1 && std::abs(cur.y - target.y) < 1 && std::abs(csz.x - target.w) < 1 &&
       std::abs(csz.y - target.h) < 1)
     return;
-  w->finishAnimation();
-  w->setBox(target);
+  dispatchCompositorBox(w, target);
 }
 
 static void applyRequestedMinimize(PHLWINDOWREF ref, std::optional<bool> want) {
@@ -507,8 +521,7 @@ static void applyDefaultFloat(PHLWINDOW w) {
   if (rect.w <= 0 || rect.h <= 0)
     return;
   (void)Config::Actions::floatWindow(Config::Actions::TOGGLE_ACTION_ENABLE, w);
-  w->finishAnimation();
-  w->setBox(compositorFrameBox(w, rect));
+  dispatchCompositorBox(w, compositorFrameBox(w, rect));
 }
 
 // Hyprland arms FSMODE_MAXIMIZED on first map so SSD clients hide CSD. Chrome
