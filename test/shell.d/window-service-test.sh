@@ -41,6 +41,17 @@ grep -Fq 'compositor refused focus' "$ws" || fail "focus failure is reported, ne
 grep -Fq 'hl.get_windows' "$ws" || fail "focus looks up a live compositor window, not only an address handle"
 grep -Fq 'function _focusLiveLua' "$ws" || fail "focus builds a live-window Lua lookup"
 grep -Fq 'function _focusDispatch' "$ws" || fail "activate and focus share one live-window dispatch"
+if awk '
+  $0 ~ /function _focusLiveLua\(/ { infn = 1 }
+  infn && /"function\(\) " \+/ { closure = 1 }
+  infn && /end\)\(\)"/ { iife = 1 }
+  infn && /^  function / && $0 !~ /function _focusLiveLua\(/ { infn = 0 }
+  END { exit closure && !iife ? 0 : 1 }
+' "$ws"; then
+  :
+else
+  fail "focus must pass a dispatcher closure to Hyprland.dispatch, not invoke it first"
+fi
 grep -Fq 'lastError = "Focus failed"' "$ws" || fail "focus failure sets lastError as a string title"
 if grep -Fq 'lastError = { title:' "$ws"; then
   fail "lastError is a string property; do not assign a JS object to it"
