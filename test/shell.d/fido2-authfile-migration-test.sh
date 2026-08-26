@@ -145,8 +145,17 @@ else
 fi
 
 setup="$ROOT/bin/omarchy-setup-security-fido2"
-grep -Fq 'sudo install -o root -g root -m 644' "$setup" ||
-  fail "FIDO2 setup installs the mapping root-owned instead of mv"
+# The mapping must never be published by moving a caller-owned file: mv
+# preserves ownership, which would leave PAM trusting a user-writable path.
+# The stage is created by root (mktemp), filled by piping pamu2fcfg into it
+# (tee), made root-owned and PAM-readable (chmod 644), and published
+# atomically with -T so it can never replace a directory.
+grep -Fq 'pamu2fcfg | sudo tee' "$setup" ||
+  fail "FIDO2 setup streams the mapping straight into the privileged stage"
+grep -Fq 'sudo chmod 644' "$setup" ||
+  fail "FIDO2 setup makes the published mapping root-owned and PAM-readable"
+grep -Fq 'sudo mv -Tf' "$setup" ||
+  fail "FIDO2 setup publishes the root-owned stage atomically"
 if grep -Fq '/tmp/fido2' "$setup"; then
   fail "FIDO2 setup must not stage credentials through a predictable /tmp path"
 fi
