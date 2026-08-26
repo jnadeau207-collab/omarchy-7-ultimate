@@ -983,6 +983,11 @@ QtObject {
   function maximize(address) {
     var target = root._addr(address)
     if (!target) return root._finish("maximize", address, root._err("No window", "There is no window to maximize.", ""))
+    // The native CSD button can win before the snap chooser sends its Maximize
+    // action. Keep that action idempotent so it cannot manufacture a
+    // fullscreen-exit event that restores the previous float a moment later.
+    if (root.isMaximized(target))
+      return root._finish("maximize", target, root._ok(), { verb: "restoreNormal", address: target })
     var geom = root._monitorGeom(target)
     if (!geom.width || !geom.height) return root._finish("maximize", target, root._err("No monitor", "The window's monitor geometry is unavailable.", ""))
     root._rememberNormal(target)
