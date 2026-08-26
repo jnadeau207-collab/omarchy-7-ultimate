@@ -751,7 +751,12 @@ QtObject {
       width: Number(c.size[0]),
       height: Number(c.size[1]),
       monitor: String(c.monitor || "")
-    }, { class: c.class, appId: c.initialClass || c.class, initialClass: c.initialClass })
+    }, {
+      class: c.class,
+      appId: c.initialClass || c.class,
+      initialClass: c.initialClass,
+      fullscreen: Number(c.fullscreen || 0)
+    })
     rect.fullscreen = Number(c.fullscreen || 0)
     rect.minimized = c.hidden === true
     return rect
