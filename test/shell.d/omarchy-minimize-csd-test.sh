@@ -39,8 +39,12 @@ grep -Fq 'const auto box  = visibleFrameRect(w, raw)' "$cpp" \
   || fail "saved normal floats must store logical visible-frame geometry"
 grep -Fq 'const auto target = compositorFrameBox(w, CBox(pos, size))' "$cpp" \
   || fail "restored floats must write transformed compositor geometry"
-grep -Fq 'w->setBox(compositorFrameBox(w, CBox(pos, size)))' "$cpp" \
-  || fail "fresh Chromium maps must get an unclipped compositor box"
+grep -Fq 'static bool isUncorrectedDefaultFloat' "$cpp" \
+  || fail "fresh normal Chrome maps must recognize the untransformed centered default"
+grep -Fq '!g_savedFloat.contains(key) && isUncorrectedDefaultFloat(w)' "$cpp" \
+  || fail "fresh normal Chrome must be transformed without overriding remembered placements"
+grep -Fq 'w->setBox(compositorFrameBox(w, rect))' "$cpp" \
+  || fail "fresh Chromium defaults must get an unclipped compositor box"
 grep -Fq 'applyChromiumMaximizedBox' "$cpp" \
   || fail "Chromium CSD maximize must cover the visible work area without clipping"
 grep -Fq 'if (live && isMaximizedNow(live))' "$cpp" \
