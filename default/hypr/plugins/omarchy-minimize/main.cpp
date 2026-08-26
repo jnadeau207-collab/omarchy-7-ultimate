@@ -517,7 +517,12 @@ static void clearFakeMapMaximize(PHLWINDOW w) {
     // with no fake maximized state to clear. Transform that exact signature.
     // The corrected raw box no longer matches, making create/open/openLate
     // callbacks idempotent while remembered/custom placements stay untouched.
-    if (!g_savedFloat.contains(key) && isUncorrectedDefaultFloat(w)) {
+    if (isUncorrectedDefaultFloat(w)) {
+      // create can attach the resize watcher before Hyprland publishes the
+      // class. That class-empty event may save this raw default as though it
+      // were already corrected. The exact open/openLate signature is more
+      // authoritative than that stale map-time save.
+      g_savedFloat.erase(key);
       applyDefaultFloat(w);
       restoreCsdCaption(w);
     }
