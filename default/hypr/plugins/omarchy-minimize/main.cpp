@@ -57,6 +57,9 @@ extern "C" {
 
 static HANDLE PHANDLE = nullptr;
 static std::unordered_set<uintptr_t> g_chromiumWindows;
+static std::unordered_map<uintptr_t, CBox> g_chromiumDamageBoxes;
+static constexpr double CHROMIUM_FRAME_INSET = 12.0;
+static bool usesChromiumFrame(PHLWINDOW w);
 
 static CFunctionHook* g_getTexBoxHook = nullptr;
 static constexpr const char* GET_TEX_BOX_SIGNATURE = "_ZN19CSurfacePassElement9getTexBoxEv";
@@ -121,6 +124,60 @@ static void damageWindow(PHLWINDOW w) {
   g_pHyprRenderer->damageWindow(w, true);
   if (auto m = w->m_monitor.lock())
     g_pHyprRenderer->damageMonitor(m);
+}
+
+// The Chromium frame quad intentionally overhangs the compositor window box.
+// Hyprland's normal damage path only covers getFullWindowBoundingBox(), so a
+// moving/resizing window can leave the old 12px perimeter in the damage ring.
+// Damage the old and new overhang boxes together while animations advance.
+static CBox chromiumDamageBox(PHLWINDOW w) {
+  if (!w)
+    return {};
+
+  auto box = w->getFullWindowBoundingBox();
+  box.expand(CHROMIUM_FRAME_INSET + 2.0);
+  if (w->m_workspace && w->m_workspace->m_renderOffset->isBeingAnimated())
+    box.translate(w->m_workspace->m_renderOffset->value());
+  box.translate(w->m_floatingOffset);
+  return box;
+}
+
+static void damageChromiumTransition(PHLWINDOW w) {
+  if (!w || !g_pHyprRenderer || !usesChromiumFrame(w) || !w->m_isMapped)
+    return;
+
+  const auto key = reinterpret_cast<uintptr_t>(w.get());
+  const auto now = chromiumDamageBox(w);
+  const auto previous = g_chromiumDamageBoxes.find(key);
+  if (previous != g_chromiumDamageBoxes.end())
+    g_pHyprRenderer->damageBox(previous->second);
+  g_pHyprRenderer->damageBox(now);
+  g_chromiumDamageBoxes[key] = now;
+}
+
+static void damageChromiumAnimations() {
+  if (!g_pHyprRenderer)
+    return;
+
+  std::unordered_set<uintptr_t> seen;
+  for (auto& w : Desktop::windowState()->windows()) {
+    if (!w || !w->m_isMapped || !usesChromiumFrame(w))
+      continue;
+
+    const auto key = reinterpret_cast<uintptr_t>(w.get());
+    seen.insert(key);
+    if (w->positionAnimation()->isBeingAnimated() || w->sizeAnimation()->isBeingAnimated())
+      damageChromiumTransition(w);
+    else if (!g_chromiumDamageBoxes.contains(key))
+      g_chromiumDamageBoxes[key] = chromiumDamageBox(w);
+  }
+
+  for (auto it = g_chromiumDamageBoxes.begin(); it != g_chromiumDamageBoxes.end();) {
+    if (!seen.contains(it->first))
+      it = g_chromiumDamageBoxes.erase(it);
+    else
+      ++it;
+  }
 }
 
 static void setMinimized(PHLWINDOW w, bool minimized) {
@@ -194,6 +251,7 @@ static CHyprSignalListener                     g_onOpenLate;
 static CHyprSignalListener                     g_onDestroy;
 static CHyprSignalListener                     g_onFullscreen;
 static CHyprSignalListener                     g_onUpdateRules;
+static CHyprSignalListener                     g_onTick;
 static Desktop::Rule::CWindowRuleEffectContainer::storageType g_nobarEffectIdx = 0;
 static bool                                    g_inPluginApply = false;
 
@@ -278,7 +336,6 @@ static CBox monitorWork(PHLWINDOW w) {
 // compositor box and extends through the far edge. Keep every saved and
 // clamped rectangle in visible-frame coordinates and expand the compositor box
 // by the same inset at egress. GTK CSD clients do not have this inset.
-static constexpr double CHROMIUM_FRAME_INSET = 12.0;
 
 static bool usesChromiumFrame(PHLWINDOW w) {
   if (!w)
@@ -974,6 +1031,10 @@ static void watchWindow(PHLWINDOW w) {
     g_chromiumWindows.insert(key);
   else
     g_chromiumWindows.erase(key);
+  if (usesChromiumFrame(w) && w->m_isMapped)
+    g_chromiumDamageBoxes[key] = chromiumDamageBox(w);
+  else
+    g_chromiumDamageBoxes.erase(key);
   MinWatch   watch;
   bool       attached = false;
   PHLWINDOWREF ref    = w;
@@ -988,7 +1049,11 @@ static void watchWindow(PHLWINDOW w) {
     watch.xwm  = xwm->m_events.stateChanged.listen([ref]() { applyRequestedState(ref); });
     attached   = true;
   }
-  watch.resize = w->m_events.resize.listen([ref]() { saveNormalFloat(ref.lock()); });
+  watch.resize = w->m_events.resize.listen([ref]() {
+    auto live = ref.lock();
+    saveNormalFloat(live);
+    damageChromiumTransition(live);
+  });
   g_watches.insert_or_assign(key, std::move(watch));
   (void)attached;
 
@@ -1039,8 +1104,10 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
       g_watches.erase(key);
       g_savedFloat.erase(key);
       g_chromiumWindows.erase(key);
+      g_chromiumDamageBoxes.erase(key);
     }
   });
+  g_onTick = Event::bus()->m_events.tick.listen([]() { damageChromiumAnimations(); });
   g_onFullscreen = Event::bus()->m_events.window.fullscreen.listen([](PHLWINDOW w) {
     syncCsdMaximizedState(w);
     PHLWINDOWREF ref = w;
@@ -1076,10 +1143,12 @@ APICALL EXPORT void PLUGIN_EXIT() {
   g_watches.clear();
   g_savedFloat.clear();
   g_chromiumWindows.clear();
+  g_chromiumDamageBoxes.clear();
   g_onCreate      = {};
   g_onOpen        = {};
   g_onOpenLate    = {};
   g_onDestroy     = {};
   g_onFullscreen  = {};
   g_onUpdateRules = {};
+  g_onTick        = {};
 }
