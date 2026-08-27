@@ -10,15 +10,20 @@ Item {
   property real value: 0
   property bool indeterminate: false
   property string tone: "accent"
+  property var semanticProfile: null
+  property string accessibleName: "Progress"
 
-  readonly property color _tone: tone === "danger" ? Tokens.state.danger
-    : tone === "success" ? Tokens.state.success
-    : tone === "warning" ? Tokens.state.warning
-    : tone === "info" ? Tokens.state.info
-    : Tokens.accent.primary
+  readonly property color _tone: Semantics.toneColor(tone, semanticProfile)
+  readonly property bool _animate: indeterminate && visible
+    && Semantics.duration(semanticProfile, 1100) > 0
 
   implicitWidth: 24
   implicitHeight: 24
+
+  Accessible.role: Accessible.ProgressBar
+  Accessible.name: Semantics.text(semanticProfile, accessibleName)
+  Accessible.description: Semantics.accessibleProgress(
+    Semantics.text(semanticProfile, accessibleName), value, indeterminate)
 
   // Track + value arc drawn as a conic-ish approximation: a full ring at
   // low alpha with an arc segment on top. Canvas is the honest tool here.
@@ -39,7 +44,8 @@ Item {
       ctx.lineWidth = lw
       ctx.lineCap = "round"
 
-      ctx.strokeStyle = Qt.rgba(Tokens.text.primary.r, Tokens.text.primary.g, Tokens.text.primary.b, 0.15)
+      var trackColor = root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
+      ctx.strokeStyle = Qt.rgba(trackColor.r, trackColor.g, trackColor.b, 0.15)
       ctx.beginPath()
       ctx.arc(cx, cy, r, 0, Math.PI * 2)
       ctx.stroke()
@@ -47,7 +53,7 @@ Item {
       ctx.strokeStyle = root._tone
       ctx.beginPath()
       if (root.indeterminate) {
-        var head = spin.phase * Math.PI * 2
+        var head = (root._animate ? spin.phase : 0.25) * Math.PI * 2
         ctx.arc(cx, cy, r, start + head, start + head + Math.PI * 0.75)
       } else {
         var frac = Math.max(0.001, Math.min(1, root.value))
@@ -62,13 +68,14 @@ Item {
       function onValueChanged() { canvas.requestPaint() }
       function onIndeterminateChanged() { canvas.requestPaint() }
       function onToneChanged() { canvas.requestPaint() }
+      function onSemanticProfileChanged() { canvas.requestPaint() }
     }
 
     RotationAnimation on rotation {
-      running: root.indeterminate && root.visible
+      running: root._animate
       from: 0
       to: 360
-      duration: 1100
+      duration: Semantics.duration(root.semanticProfile, 1100)
       loops: Animation.Infinite
     }
 
@@ -76,7 +83,7 @@ Item {
     SequentialAnimation {
       id: spin
       property real phase: 0.25
-      running: root.indeterminate && root.visible
+      running: root._animate
       loops: Animation.Infinite
       onPhaseChanged: canvas.requestPaint()
       NumberAnimation {
@@ -84,7 +91,7 @@ Item {
         property: "phase"
         from: 0
         to: 1
-        duration: 1100
+        duration: Semantics.duration(root.semanticProfile, 1100)
       }
     }
   }

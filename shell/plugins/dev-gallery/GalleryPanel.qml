@@ -1860,7 +1860,7 @@ Item {
               root.focusSection = "quality-matrix"
               root.selectedIndex = 0
             }
-            onHasCursorChanged: if (hasCursor) root.ensureCursorVisible(this)
+            onHasCursorChanged: if (hasCursor) root.ensureCursorVisible(qualityMatrix.focusAnchor)
           }
 
           // ---- Ultimate kit --------------------------------------------------

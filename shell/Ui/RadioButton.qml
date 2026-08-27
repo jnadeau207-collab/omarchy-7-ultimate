@@ -9,12 +9,15 @@ Item {
 
   property bool checked: false
   property string label: ""
+  property real labelMaximumWidth: 0
   property string group: ""
+  property var semanticProfile: null
+  property string accessibleDescription: ""
   property bool hasCursor: false
   property bool focusable: false
 
-  property color foreground: Tokens.text.primary
-  property color accent: Tokens.accent.primary
+  property color foreground: semanticProfile ? semanticProfile.textPrimary : Tokens.text.primary
+  property color accent: semanticProfile ? semanticProfile.accent : Tokens.accent.primary
 
   signal toggled()
   signal hovered(bool isHovered)
@@ -24,16 +27,24 @@ Item {
   Keys.onSpacePressed: if (focusable) root.toggled()
 
   readonly property bool hot: mouse.containsMouse || hasCursor
-  readonly property int circleSize: Math.max(16, Math.round(Style.font.body * 1.25))
+  readonly property int circleSize: Math.max(16, Math.round(Semantics.font(semanticProfile, Style.font.body) * 1.25))
   readonly property int dotSize: Math.max(6, Math.round(circleSize * 0.45))
 
   implicitWidth: circle.implicitWidth
-  implicitHeight: circle.implicitHeight
+  implicitHeight: Math.max(circle.implicitHeight, semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+
+  Accessible.role: Accessible.RadioButton
+  Accessible.name: Semantics.text(semanticProfile, label)
+  Accessible.description: accessibleDescription !== "" ? accessibleDescription
+    : Semantics.text(semanticProfile, checked ? "Selected" : "Not selected")
+  Accessible.onPressAction: {
+    if (root.enabled) root.toggled()
+  }
 
   Row {
     id: circle
     anchors.verticalCenter: parent.verticalCenter
-    spacing: Style.space(8)
+    spacing: Semantics.metric(root.semanticProfile, Style.space(8))
 
     BorderSurface {
       width: root.circleSize
@@ -42,7 +53,9 @@ Item {
       color: mouse.pressed && !root.checked ? Util.alpha(root.accent, 0.18)
         : root.hot && !root.checked ? Util.alpha(root.foreground, 0.08)
         : "transparent"
-      borderSpec: Border.controlSpec(root.checked ? "selected" : (root.hot || (root.focusable && root.activeFocus) ? "hover-cursor" : "normal"), root.foreground, root.accent)
+      borderSpec: root.semanticProfile && root.semanticProfile.highContrast && root.focusable && root.activeFocus
+        ? Border.flat(root.semanticProfile.focusRing, root.semanticProfile.focusWidth)
+        : Border.controlSpec(root.checked ? "selected" : (root.hot || (root.focusable && root.activeFocus) ? "hover-cursor" : "normal"), root.foreground, root.accent)
 
       Rectangle {
         width: root.dotSize
@@ -52,17 +65,19 @@ Item {
         visible: root.checked
         color: root.accent
 
-        Behavior on scale { NumberAnimation { duration: Tokens.motion.fast } }
+        Behavior on scale { NumberAnimation { duration: Semantics.duration(root.semanticProfile, Tokens.motion.fast) } }
       }
     }
 
     Text {
       id: labelText
       visible: root.label !== ""
-      text: root.label
+      text: Semantics.text(root.semanticProfile, root.label)
+      width: root.labelMaximumWidth > 0 ? root.labelMaximumWidth : implicitWidth
       color: root.foreground
       font.family: Style.font.family
-      font.pixelSize: Style.font.body
+      font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
+      wrapMode: Text.WordWrap
     }
   }
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "quality-v0",
   "assessmentId": "qt-quickshell-atspi-feasibility-v0",
-  "capturedAt": "2026-08-26T21:12:14-04:00",
+  "capturedAt": "2026-08-27T00:13:56-04:00",
   "referenceId": "metal-omarchy-2026-08-26",
   "tooling": {
     "status": "available",
@@ -16,9 +16,20 @@
       "id": "shell",
       "implementation": "present",
       "status": "blocked",
-      "source": "shell/shell.qml and shell/plugins/dev-gallery/QualityMatrix.qml",
+      "source": "shell/Commons/Semantics.qml, shared shell/Ui controls, and shell/plugins/dev-gallery/QualityMatrix.qml",
       "requiredSemantics": ["name", "role", "value", "action"],
-      "evidence": "Before the compositor incident, AT-SPI exposed an application named quickshell with zero children. After Quickshell restoration, the desktop traversal did not expose quickshell at all. The metal Qt Accessible attached type also rejects a value property; the gallery therefore carries numeric state in its accessible description as an explicit fallback, not as value-interface proof.",
+      "evidence": "After the executable semantic gallery and shared control attachments were loaded on metal, Python GI Atspi traversal exposed applications xdg-desktop-portal-gtk, udiskie, and quickshell; every application reported zero children. Source-level name, role, description, and action attachments are therefore present but not observable by an assistive client. The metal Qt Accessible attached type also rejects a value property; progress carries numeric state in its accessible description as an explicit fallback, not as value-interface proof.",
+      "latestProbe": {
+        "capturedAt": "2026-08-27T00:13:56-04:00",
+        "host": "metal-omarchy-2026-08-26",
+        "surface": "Omarchy shell – dev gallery, executable quality matrix",
+        "applications": [
+          {"name": "xdg-desktop-portal-gtk", "children": 0},
+          {"name": "udiskie", "children": 0},
+          {"name": "quickshell", "children": 0}
+        ],
+        "result": "blocked-zero-exported-children"
+      },
       "blocker": "Qt/Quickshell Wayland accessibility objects are not exported into the AT-SPI tree, and a numeric AT-SPI value interface has not been implemented. QML Accessible attachments in the gallery therefore cannot yet be observed or validated by an assistive client."
     },
     {

@@ -23,27 +23,32 @@ BorderSurface {
   property string text: ""
   property string iconText: ""
   property string tooltipText: ""
+  property var semanticProfile: null
+  property string accessibleName: _displayText !== "" ? _displayText : tooltipText
+  property string accessibleDescription: tooltipText
 
   // State flags (see comment above for paint priority).
   property bool selected: false
   property bool active: false
   property bool hasCursor: false
   property bool focusable: false
+  property bool forceFocusVisible: false
   property bool bordered: false
 
   // Colors. Defaults track the theme; per-instance overrides are honored.
-  property color foreground: Color.foreground
+  property color foreground: semanticProfile ? semanticProfile.textPrimary : Color.foreground
   property color background: "transparent"
-  property color accent: Color.accent
+  property color accent: semanticProfile ? semanticProfile.accent : Color.accent
 
   // Sizing.
   property string fontFamily: Style.font.family
-  property real fontSize: Style.font.body
-  property real iconSize: Style.font.icon
+  property real fontSize: Semantics.font(semanticProfile, Style.font.body)
+  property real iconSize: Semantics.font(semanticProfile, Style.font.icon)
+  property real textMaximumWidth: 0
   property real iconRotation: 0
   property bool iconSpinning: false
-  property real horizontalPadding: Style.spacing.controlPaddingX
-  property real verticalPadding: Style.spacing.controlPaddingY
+  property real horizontalPadding: Semantics.metric(semanticProfile, Style.spacing.controlPaddingX)
+  property real verticalPadding: Semantics.metric(semanticProfile, Style.spacing.controlPaddingY)
   property bool leftAlign: false
 
   leftPadding: horizontalPadding
@@ -70,15 +75,20 @@ BorderSurface {
   // Reserve the largest border any visual state can paint. Otherwise a
   // borderless idle button grows by a pixel per side on hover/focus and
   // relayouts neighboring controls.
-  implicitWidth: row.implicitWidth + horizontalPadding * 2 + _reservedBorderLeft + _reservedBorderRight
-  implicitHeight: row.implicitHeight + verticalPadding * 2 + _reservedBorderTop + _reservedBorderBottom
+  implicitWidth: Math.max(row.implicitWidth + horizontalPadding * 2 + _reservedBorderLeft + _reservedBorderRight,
+    semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+  implicitHeight: Math.max(row.implicitHeight + verticalPadding * 2 + _reservedBorderTop + _reservedBorderBottom,
+    semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
   radius: Style.cornerRadius
 
   readonly property bool hot: mouseArea.containsMouse || hasCursor
-  readonly property bool _showFocusRing: focusable && activeFocus
+  readonly property string _displayText: Semantics.text(semanticProfile, text)
+  readonly property bool _showFocusRing: focusable && (activeFocus || forceFocusVisible)
   readonly property color _selectedColor: Style.selectedStateColor(root.foreground, root.accent)
   readonly property var _tooltipBorderSpec: Border.localOrSurfaceSpec("tooltip", "border", root.tooltipBorder, Color.tooltip.border, Math.max(1, Style.normalBorderWidth))
-  readonly property var _focusBorderSpec: Border.controlSpec("focus", root.foreground, root.accent)
+  readonly property var _focusBorderSpec: semanticProfile && semanticProfile.highContrast
+    ? Border.flat(semanticProfile.focusRing, semanticProfile.focusWidth)
+    : Border.controlSpec("focus", root.foreground, root.accent)
   readonly property var _hoverBorderSpec: Border.controlSpec("hover-cursor", root.foreground, root.accent)
   readonly property var _selectedBorderSpec: Border.controlSpec("selected", root.foreground, root.accent)
   readonly property var _normalBorderSpec: Border.controlSpec("normal", root.foreground, root.accent)
@@ -125,11 +135,18 @@ BorderSurface {
   // dedicated selected border.
   borderSpec: _borderSpec
 
-  Behavior on color { ColorAnimation { duration: 120 } }
+  Behavior on color { ColorAnimation { duration: Semantics.duration(root.semanticProfile, 120) } }
+
+  Accessible.role: Accessible.Button
+  Accessible.name: accessibleName
+  Accessible.description: accessibleDescription
+  Accessible.onPressAction: {
+    if (root.enabled) root.clicked()
+  }
 
   ToolTip {
     visible: root.tooltipText !== "" && mouseArea.containsMouse
-    text: root.tooltipText
+    text: Semantics.text(root.semanticProfile, root.tooltipText)
     delay: 400
     padding: 0
     background: BorderSurface {
@@ -139,10 +156,10 @@ BorderSurface {
     }
     contentItem: Text {
       textFormat: Text.PlainText
-      text: root.tooltipText
+      text: Semantics.text(root.semanticProfile, root.tooltipText)
       color: root.tooltipForeground
       font.family: root.fontFamily
-      font.pixelSize: Style.font.bodySmall
+      font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
       leftPadding: Border.left(root._tooltipBorderSpec) + Style.spacing.controlPaddingX
       rightPadding: Border.right(root._tooltipBorderSpec) + Style.spacing.controlPaddingX
       topPadding: Border.top(root._tooltipBorderSpec) + Style.spacing.controlPaddingY
@@ -156,7 +173,7 @@ BorderSurface {
     anchors.left: root.leftAlign ? parent.left : undefined
     anchors.leftMargin: root.leftAlign ? root._reservedContentLeftInset : 0
     anchors.horizontalCenter: root.leftAlign ? undefined : parent.horizontalCenter
-    spacing: Style.spacing.controlGap
+    spacing: Semantics.metric(root.semanticProfile, Style.spacing.controlGap)
 
     Text {
       textFormat: Text.PlainText
@@ -174,18 +191,21 @@ BorderSurface {
         to: 360
         duration: 900
         loops: Animation.Infinite
-        running: root.iconSpinning
+        running: root.iconSpinning && Semantics.duration(root.semanticProfile, 900) > 0
       }
     }
 
     Text {
       textFormat: Text.PlainText
       visible: root.text !== ""
-      text: root.text
+      text: root._displayText
+      width: root.textMaximumWidth > 0 ? root.textMaximumWidth : implicitWidth
       color: root.selected ? root._selectedColor : root.foreground
       font.family: root.fontFamily
       font.pixelSize: root.fontSize
       font.bold: root.selected
+      wrapMode: Text.WordWrap
+      horizontalAlignment: root.leftAlign ? Text.AlignLeft : Text.AlignHCenter
       anchors.verticalCenter: parent.verticalCenter
     }
   }
