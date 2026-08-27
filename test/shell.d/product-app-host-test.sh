@@ -273,6 +273,13 @@ mkdir -p "$fake_bin"
 cat >"$fake_bin/qs" <<'SH'
 #!/bin/bash
 
+if [[ $* == *" window focus "* ]]; then
+  printf '%s\n' "$*" >>"$OMARCHY_TEST_LOG/omarchy-shell"
+  printf '%s\n' "${!#}" >"$OMARCHY_TEST_STATE/active.address"
+  printf '{"changed":true,"error":null}\n'
+  exit 0
+fi
+
 if [[ $* == *ultimate-settings.qml* ]]; then
   app=settings
 else
@@ -299,6 +306,9 @@ cat >"$fake_bin/hyprctl" <<'SH'
 
 if [[ ${1:-} == "clients" ]]; then
   printf '[{"address":"0x1","class":"org.omarchy.Settings","initialClass":"org.omarchy.Settings","focusHistoryID":0},{"address":"0x2","class":"org.omarchy.AgentCenter","initialClass":"org.omarchy.AgentCenter","focusHistoryID":0}]\n'
+elif [[ ${1:-} == "activewindow" ]]; then
+  address=$(cat "$OMARCHY_TEST_STATE/active.address" 2>/dev/null || true)
+  printf '{"address":"%s"}\n' "$address"
 else
   printf '%s\n' "$*" >>"$OMARCHY_TEST_LOG/hyprctl"
 fi
@@ -308,6 +318,7 @@ chmod +x "$fake_bin/qs" "$fake_bin/systemd-run" "$fake_bin/hyprctl"
 mkdir -p "$test_tmp/state" "$test_tmp/log"
 : >"$test_tmp/log/systemd-run"
 : >"$test_tmp/log/hyprctl"
+: >"$test_tmp/log/omarchy-shell"
 
 export OMARCHY_TEST_STATE="$test_tmp/state"
 export OMARCHY_TEST_LOG="$test_tmp/log"
@@ -345,6 +356,7 @@ fi
 [[ $(wc -l <"$test_tmp/log/systemd-run") == "$starts_before" ]] || fail "Invalid launch started a service"
 pass "Invalid launches are rejected before process start or IPC"
 
-grep -Fq 'focus({ window = "address:0x1" })' "$test_tmp/log/hyprctl" || fail "Settings focuses its exact compositor app identity"
-grep -Fq 'focus({ window = "address:0x2" })' "$test_tmp/log/hyprctl" || fail "Agent Center focuses its exact compositor app identity"
-pass "Launchers focus only their exact stable compositor identities"
+grep -Fq 'window focus 0x1' "$test_tmp/log/omarchy-shell" || fail "Settings focuses its exact compositor app identity"
+grep -Fq 'window focus 0x2' "$test_tmp/log/omarchy-shell" || fail "Agent Center focuses its exact compositor app identity"
+[[ ! -s $test_tmp/log/hyprctl ]] || fail "Verified WindowService focus avoids the compositor fallback"
+pass "Launchers use verified WindowService focus for exact compositor identities"
