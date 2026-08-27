@@ -53,6 +53,47 @@ def load(name):
         error(f"{name}: schemaVersion must be quality-v0")
     return value
 
+def qml_braces_balanced(text):
+    depth = 0
+    state = "normal"
+    index = 0
+    while index < len(text):
+        char = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if state == "line-comment":
+            if char == "\n":
+                state = "normal"
+        elif state == "block-comment":
+            if char == "*" and following == "/":
+                state = "normal"
+                index += 1
+        elif state in {"single", "double", "backtick"}:
+            delimiter = {"single": "'", "double": '"', "backtick": "`"}[state]
+            if char == "\\":
+                index += 1
+            elif char == delimiter:
+                state = "normal"
+        elif char == "/" and following == "/":
+            state = "line-comment"
+            index += 1
+        elif char == "/" and following == "*":
+            state = "block-comment"
+            index += 1
+        elif char == "'":
+            state = "single"
+        elif char == '"':
+            state = "double"
+        elif char == "`":
+            state = "backtick"
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth < 0:
+                return False
+        index += 1
+    return depth == 0 and state in {"normal", "line-comment"}
+
 if not quality_dir.is_dir():
     error(f"quality contract directory is missing: {quality_dir}")
 
@@ -103,6 +144,8 @@ if not gallery_path.is_file():
     gallery_text = ""
 else:
     gallery_text = gallery_path.read_text(encoding="utf-8")
+    if not qml_braces_balanced(gallery_text):
+        error("gallery QML has unbalanced braces, comments, or strings")
 for state in required_states:
     if f'id: "{state}"' not in gallery_text:
         error(f"gallery QML does not render operation state: {state}")
@@ -112,8 +155,14 @@ for marker in ["Accessible.name", "Accessible.role", "Accessible.value", "Access
 for profile_id in profile_ids:
     if profile_id and profile_id not in gallery_text:
         error(f"gallery QML does not render profile: {profile_id}")
-if not panel_path.is_file() or "QualityMatrix {" not in panel_path.read_text(encoding="utf-8"):
+if not panel_path.is_file():
     error("GalleryPanel.qml must mount QualityMatrix")
+else:
+    panel_text = panel_path.read_text(encoding="utf-8")
+    if "QualityMatrix {" not in panel_text:
+        error("GalleryPanel.qml must mount QualityMatrix")
+    if not qml_braces_balanced(panel_text):
+        error("GalleryPanel.qml has unbalanced braces, comments, or strings")
 
 atspi = documents["atspi-feasibility-v0.json"]
 surface_classes = atspi.get("surfaceClasses", [])

@@ -163,6 +163,16 @@ open(path, "w", encoding="utf-8").write(text.replace('id: "recovery"', 'id: "rec
 PY
 expect_corruption_failure "checker rejects gallery QML missing a contracted state" "$case_dir"
 
+case_dir=$(make_case unbalanced-gallery-panel)
+python3 - "$case_dir/GalleryPanel.qml" <<'PY'
+import sys
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+assert text.rstrip().endswith("}")
+open(path, "w", encoding="utf-8").write(text.rstrip()[:-1] + "\n")
+PY
+expect_corruption_failure "checker rejects an unbalanced gallery panel" "$case_dir"
+
 case_dir=$(make_case dishonest-resolution)
 python3 - "$case_dir/quality/reliability-incidents-v0.json" <<'PY'
 import json
