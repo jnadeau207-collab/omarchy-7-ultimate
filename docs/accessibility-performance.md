@@ -6,11 +6,11 @@ The provisional `quality-v0` contracts under `default/ultimate/quality/` establi
 
 The dev gallery includes a deterministic quality matrix. It renders all eight consequential-operation outcomes: success, no-op, progress, denial, failure, cancel, restart, and recovery. Separate presentation fixtures cover dark and light themes, compact, comfortable, and touch density, 1× through 2× scale, standard and high contrast, full and reduced motion, regular and large text, English, pseudo-localized, and long strings, left-to-right and right-to-left layout, and pointer and keyboard focus. This is pairwise presentation coverage rather than a misleading full Cartesian product.
 
-The gallery fixtures attach semantic names, roles, values, and actions. Those attachments make the intended contract inspectable in source and visible to Qt's accessibility layer when the platform bridge works. They do not make the production shell accessible by themselves.
+The gallery fixtures attach semantic names, roles, and actions. The metal Qt `Accessible` attached type has no `value` property, so numeric state is carried in the accessible description as an explicit fallback while the required AT-SPI value interface remains blocked. The source contract records that distinction; it does not claim that the production shell is accessible.
 
 ## AT-SPI feasibility
 
-AT-SPI tooling is installed and the Python GI bridge initializes on the metal reference. The result is still blocked: before the compositor incident, AT-SPI exposed a `quickshell` application with zero children; after Quickshell restoration, it exposed no Quickshell application. The shell, secure lock, and Polkit surfaces therefore have no assistive-client proof. Graphical OOBE is honestly recorded as missing because the current provisioning experience is terminal based.
+AT-SPI tooling is installed and the Python GI bridge initializes on the metal reference. The result is still blocked: before the compositor incident, AT-SPI exposed a `quickshell` application with zero children; after Quickshell restoration, it exposed no Quickshell application. The shell also lacks a working numeric value interface. The shell, secure lock, and Polkit surfaces therefore have no assistive-client proof. Graphical OOBE is honestly recorded as missing because the current provisioning experience is terminal based.
 
 `test/acceptance.d/ultimate-accessibility-performance-test.sh` is a disposable-VM release gate. Missing tools, missing surface records, missing semantics, blocked feasibility, and absent surfaces are failures, never skips. Do not run it in an active development session.
 

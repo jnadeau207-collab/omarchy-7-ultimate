@@ -32,15 +32,26 @@ import sys
 matrix = json.load(open(sys.argv[1], encoding="utf-8"))
 assert matrix["operationStates"] == ["success", "no-op", "progress", "denial", "failure", "cancel", "restart", "recovery"]
 assert matrix["semanticRequirements"] == ["name", "role", "value", "action"]
+assert matrix["semanticImplementation"] == {
+    "name": "attached",
+    "role": "attached",
+    "value": "description-fallback-blocked",
+    "action": "attached",
+}
 assert matrix["strategy"] == "exhaustive-operation-states-plus-pairwise-presentation-profiles"
 PY
 pass "gallery contract fixes exhaustive states and pairwise presentation coverage"
 
-for marker in 'Accessible.name' 'Accessible.role' 'Accessible.value' 'Accessible.onPressAction'; do
+for marker in 'Accessible.name' 'Accessible.role' 'Accessible.description' 'Accessible.onPressAction'; do
   grep -Fq "$marker" "$gallery" || fail "quality gallery declares semantic $marker"
 done
+if grep -Fq 'Accessible.value' "$gallery"; then
+  fail "quality gallery must not claim the unsupported Accessible.value property"
+fi
+grep -Fq 'Numeric AT-SPI value export is not yet available.' "$gallery" ||
+  fail "quality gallery carries numeric state through its declared fallback"
 grep -Fq 'QualityMatrix {' "$panel" || fail "dev gallery mounts the quality matrix"
-pass "quality gallery declares semantic name, role, value, and action"
+pass "quality gallery declares name, role, action, and an honest blocked value fallback"
 
 if OMARCHY_PATH="$ROOT" bash "$checker" probe-surfaces-once >"$tmp_dir/gate.out" 2>"$tmp_dir/gate.err"; then
   fail "surface probe refuses the active development session"
