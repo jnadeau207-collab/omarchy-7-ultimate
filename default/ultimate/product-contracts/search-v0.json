@@ -1,0 +1,60 @@
+{
+  "$schema": "urn:omarchy:ultimate:product-contracts:search-v0",
+  "schemaVersion": "v0",
+  "contractStatus": "provisional-v0",
+  "resultContract": {
+    "requiredFields": ["id", "source", "provenance", "title", "subtitle", "icon", "action", "secondaryActions", "trust", "destructive", "route", "rank"],
+    "identityRule": "A result id is stable within its source, includes the source namespace, and never derives from display text or list position.",
+    "provenanceRule": "Every result identifies the provider, provider version, source record identity, capture revision, and whether the data is local, installed, indexed, or remote.",
+    "rankingRule": "Providers return local match metadata; the consumer applies one deterministic tie-break sequence and never lets a web result replace a local exact application, route, setting, file, capability, or task match.",
+    "mutationRule": "A normalized mutating action is ineligible unless it references at least one registered capability id and one visible human route and carries trust, destructive, preflight, and recovery metadata."
+  },
+  "providers": [
+    {
+      "id": "search.start-apps",
+      "source": "desktop-entries",
+      "consumers": ["route.surface.omarchy.ultimate-start"],
+      "implementationPaths": ["shell/services/AppLibrary.qml", "shell/services/AppSearch.js", "shell/plugins/ultimate-start/Start.qml"],
+      "availability": "legacy-outside-contract",
+      "normalizedResult": false,
+      "provenance": "partial",
+      "actions": [
+        { "id": "action.start.launch-desktop-entry", "type": "launch", "mutating": false, "eligibleForNormalizedSearch": false, "capabilityIds": [], "humanRoutes": ["route.surface.omarchy.ultimate-start"] }
+      ],
+      "debtIds": ["debt.search.legacy-result-shapes", "debt.identity.heuristic-window-join"]
+    },
+    {
+      "id": "search.run-apps-and-command",
+      "source": "desktop-entries",
+      "consumers": ["route.surface.omarchy.ultimate-run"],
+      "implementationPaths": ["shell/services/AppLibrary.qml", "shell/services/AppSearch.js", "shell/plugins/ultimate-run/Run.qml"],
+      "availability": "legacy-outside-contract",
+      "normalizedResult": false,
+      "provenance": "partial",
+      "actions": [
+        { "id": "action.run.launch-desktop-entry", "type": "launch", "mutating": false, "eligibleForNormalizedSearch": false, "capabilityIds": [], "humanRoutes": ["route.surface.omarchy.ultimate-run"] },
+        { "id": "action.run.execute-command", "type": "legacy-command", "mutating": true, "eligibleForNormalizedSearch": false, "capabilityIds": [], "humanRoutes": ["route.surface.omarchy.ultimate-run"] }
+      ],
+      "debtIds": ["debt.search.legacy-result-shapes", "debt.search.untyped-mutations", "debt.process.consumer-direct-execution"]
+    },
+    {
+      "id": "search.menu-tree",
+      "source": "menu-tree",
+      "consumers": ["route.surface.omarchy.menu"],
+      "implementationPaths": ["shell/plugins/menu/Menu.qml", "shell/plugins/menu/MenuModel.js", "default/omarchy/omarchy-menu.jsonc"],
+      "availability": "legacy-outside-contract",
+      "normalizedResult": false,
+      "provenance": "partial",
+      "actions": [
+        { "id": "action.menu.open-route", "type": "route", "mutating": false, "eligibleForNormalizedSearch": false, "capabilityIds": [], "humanRoutes": ["route.surface.omarchy.menu"] },
+        { "id": "action.menu.execute-command", "type": "legacy-command", "mutating": true, "eligibleForNormalizedSearch": false, "capabilityIds": [], "humanRoutes": ["route.surface.omarchy.menu"] }
+      ],
+      "debtIds": ["debt.search.legacy-result-shapes", "debt.search.untyped-mutations", "debt.process.consumer-direct-execution"]
+    },
+    { "id": "search.settings", "source": "settings", "consumers": ["app.omarchy.ultimate-settings"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.identity.standalone-apps-absent", "debt.search.legacy-result-shapes"] },
+    { "id": "search.desktop", "source": "desktop", "consumers": ["Desktop"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] },
+    { "id": "search.files", "source": "files", "consumers": ["Files"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] },
+    { "id": "search.software", "source": "software", "consumers": ["Software Center"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] },
+    { "id": "search.agent-center", "source": "agent-center", "consumers": ["app.omarchy.agent-center"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.identity.standalone-apps-absent", "debt.search.legacy-result-shapes"] }
+  ]
+}

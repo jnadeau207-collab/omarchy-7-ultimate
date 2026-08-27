@@ -1,0 +1,87 @@
+{
+  "$schema": "urn:omarchy:ultimate:product-contracts:legacy-debt-v0",
+  "schemaVersion": "v0",
+  "contractStatus": "provisional-v0",
+  "debts": [
+    {
+      "id": "debt.invocation.context-missing",
+      "state": "open",
+      "summary": "Shell summon, toggle, and hide accept a plugin id plus opaque JSON but no typed invoking screen, connector/EDID, anchor rectangle, seat, or focus-restoration target.",
+      "impact": "Multi-monitor placement and dismissal behavior depends on component-local or default-screen state and cannot be reproduced by another caller.",
+      "exitCondition": "Every invocation is a typed v0-or-later envelope and VM proofs cover monitor hotplug, reopen placement, anchor selection, seat routing, and focus restoration.",
+      "evidencePaths": ["shell/shell.qml", "shell/services/TransientSurfaceCoordinator.qml"]
+    },
+    {
+      "id": "debt.invocation.first-bar-instance",
+      "state": "open",
+      "summary": "Bar-widget surface summons select the first loaded widget instance instead of the widget on the invoking screen.",
+      "impact": "The same route can open on the wrong monitor when bars exist on more than one screen.",
+      "exitCondition": "The shell resolves a supplied screen identity and anchor to one deterministic per-screen surface owner and preserves that owner across reopen.",
+      "evidencePaths": ["shell/plugins/ultimate-taskbar/Taskbar.qml", "shell/shell.qml"]
+    },
+    {
+      "id": "debt.focus.component-specific",
+      "state": "open",
+      "summary": "Transient focus capture and restoration are component-specific; most surfaces do not retain an explicit restoration target.",
+      "impact": "Dismissal can return focus inconsistently and callers cannot distinguish deliberate click-through from lost focus.",
+      "exitCondition": "All transient routes consume the shared focus-restoration contract and prove close, toggle, launch, click-through, and target-disappearance cases.",
+      "evidencePaths": ["shell/plugins/ultimate-start/Start.qml", "shell/Ui/KeyboardPanel.qml", "shell/services/TransientSurfaceCoordinator.qml"]
+    },
+    {
+      "id": "debt.identity.heuristic-window-join",
+      "state": "open",
+      "summary": "Taskbar identity lowercases desktop ids and compositor classes and then uses substring and Chromium special-case matching.",
+      "impact": "Pins, running groups, icons, recent items, notifications, and app records can split or collide, especially for web apps.",
+      "exitCondition": "A checked application registry joins exact desktop entry, StartupWMClass/app id, launch token, notification identity, and installed record with explicit aliases only.",
+      "evidencePaths": ["shell/services/WindowModel.js", "shell/services/AppLibrary.qml", "default/ultimate/taskbar-pins.json"]
+    },
+    {
+      "id": "debt.identity.standalone-apps-absent",
+      "state": "open",
+      "summary": "Settings is an in-process destination shim and Agent Center is still a bar widget; neither has a standalone application identity, principal, deep-link handler, or single-instance host.",
+      "impact": "Taskbar grouping, reopen placement, authorization, deep links, and agent routing cannot target either product as a normal application.",
+      "exitCondition": "Packaged standalone Settings and Agent Center applications register stable desktop ids, endpoint-bound principals, deep-link routes, single-instance activation, and monitor-aware reopen behavior.",
+      "evidencePaths": ["shell/plugins/ultimate-settings/Settings.qml", "shell/plugins/agents/manifest.json"]
+    },
+    {
+      "id": "debt.search.legacy-result-shapes",
+      "state": "open",
+      "summary": "Start, Run, and the system menu each build private result objects without the normalized identity, provenance, trust, typed action, route, and rank contract.",
+      "impact": "Search sources cannot be safely merged and consumers cannot explain why a result exists or which authority will execute it.",
+      "exitCondition": "All product search producers emit the normalized result schema and golden tests prove stable ranking, provenance, and typed actions across consumers.",
+      "evidencePaths": ["shell/services/AppSearch.js", "shell/plugins/ultimate-start/Start.qml", "shell/plugins/ultimate-run/Run.qml", "shell/plugins/menu/Menu.qml"]
+    },
+    {
+      "id": "debt.search.untyped-mutations",
+      "state": "open",
+      "summary": "Menu search can expose command-backed mutations that have no capability id, normalized preflight, or operation record.",
+      "impact": "A result can bypass the human/agent same-path rule and its provenance does not establish mutation authority.",
+      "exitCondition": "Normalized search imports a mutating action only when it references a registered capability and visible human route; legacy commands remain excluded until converted.",
+      "evidencePaths": ["shell/plugins/menu/Menu.qml", "default/omarchy/omarchy-menu.jsonc"]
+    },
+    {
+      "id": "debt.process.consumer-direct-execution",
+      "state": "open",
+      "summary": "Consumer QML still owns Process, execDetached, raw hyprctl, and command construction at thirty-seven checked source paths.",
+      "impact": "Mutation validation, cancellation, operation identity, authorization, errors, and recovery are fragmented across UI code.",
+      "exitCondition": "The checked direct-execution inventory is empty for consumer UI and every mutation resolves through a typed provider capability.",
+      "evidencePaths": ["shell/plugins/panels/monitor/Panel.qml", "shell/plugins/panels/network/Panel.qml", "shell/plugins/ultimate-run/Run.qml", "shell/plugins/ultimate-start/Start.qml"]
+    },
+    {
+      "id": "debt.process.shared-shell-principal",
+      "state": "open",
+      "summary": "All first-party and enabled third-party QML executes inside one Quickshell process and therefore one shared shell principal.",
+      "impact": "A UI component cannot be treated as an independently authenticated process owner or granted standing consequential authority.",
+      "exitCondition": "Standalone applications and provider endpoints have process/session-bound principals, while the shared shell retains no standing high-risk grants.",
+      "evidencePaths": ["shell/shell.qml", "shell/services/PluginRegistry.qml", "docs/omarchy-shell.md"]
+    },
+    {
+      "id": "debt.ipc.caller-unbound",
+      "state": "open",
+      "summary": "Current Quickshell IPC targets accept calls without an endpoint-bound product principal or typed invocation envelope.",
+      "impact": "Target and method identify code to call but do not establish caller role, route provenance, approval scope, or monitor/focus context.",
+      "exitCondition": "Product mutation and surface routes enter through endpoint/session-bound Fabric principals and typed contracts; heritage IPC is read-only or explicitly legacy.",
+      "evidencePaths": ["bin/omarchy-shell", "shell/shell.qml"]
+    }
+  ]
+}
