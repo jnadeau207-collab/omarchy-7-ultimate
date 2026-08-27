@@ -1,0 +1,259 @@
+#!/bin/bash
+
+# omarchy:summary=Manage the provisional per-user Fabric service lifecycle
+# omarchy:args=<install|refresh|uninstall|prepare-start|verify-package>
+# omarchy:hidden=true
+
+set -euo pipefail
+
+readonly fabric_unit="omarchy-fabric.service"
+readonly expected_package_contract="omarchy.fabric.package/v0"
+
+fail_lifecycle() {
+  echo "omarchy-fabric-service: $1" >&2
+  exit 78
+}
+
+fail_temporary() {
+  echo "omarchy-fabric-service: $1" >&2
+  exit 75
+}
+
+require_session_paths() {
+  [[ -n ${OMARCHY_PATH:-} ]] || fail_lifecycle "OMARCHY_PATH is unavailable; start Fabric inside the Omarchy session"
+  [[ -n ${XDG_RUNTIME_DIR:-} ]] || fail_lifecycle "XDG_RUNTIME_DIR is unavailable; Fabric requires an owner-scoped user session"
+  [[ -n ${HOME:-} ]] || fail_lifecycle "HOME is unavailable; Fabric cannot resolve its durable state directory"
+}
+
+verify_package_contract() {
+  [[ -n ${OMARCHY_PATH:-} ]] || fail_lifecycle "OMARCHY_PATH is unavailable; the Fabric package contract cannot be verified"
+
+  local contract_path="$OMARCHY_PATH/default/fabric/packaging/package-contract"
+  [[ ! -L $contract_path && -f $contract_path ]] ||
+    fail_lifecycle "the Fabric package contract is missing or unsafe at $contract_path; update omarchy and omarchy-settings together"
+
+  local contract_lines=()
+  mapfile -t contract_lines <"$contract_path"
+  (( ${#contract_lines[@]} == 1 )) ||
+    fail_lifecycle "the Fabric package contract is malformed; update omarchy and omarchy-settings together"
+  [[ ${contract_lines[0]} == "$expected_package_contract" ]] ||
+    fail_lifecycle "the Fabric daemon and runtime assets are incompatible (${contract_lines[0]:-unknown}); update omarchy and omarchy-settings together"
+
+  verify_installed_package_pair
+}
+
+verify_installed_package_pair() {
+  [[ $OMARCHY_PATH == "/usr/share/omarchy" ]] || return 0
+
+  local runtime_record
+  local settings_record
+  local expected_settings
+  if runtime_record=$(pacman -Q omarchy-dev 2>/dev/null); then
+    expected_settings="omarchy-settings-dev"
+  elif runtime_record=$(pacman -Q omarchy 2>/dev/null); then
+    expected_settings="omarchy-settings"
+  else
+    fail_lifecycle "the packaged Fabric runtime owner is not installed; reinstall Omarchy"
+  fi
+
+  if ! settings_record=$(pacman -Q "$expected_settings" 2>/dev/null); then
+    fail_lifecycle "$expected_settings is missing; update the Omarchy package pair together"
+  fi
+
+  local runtime_version="${runtime_record#* }"
+  local settings_version="${settings_record#* }"
+  [[ $runtime_version == "$settings_version" ]] ||
+    fail_lifecycle "the installed Fabric package pair is mixed ($runtime_record; $settings_record); update both packages together"
+}
+
+verify_runtime_dependencies() {
+  [[ -x /usr/bin/python3 ]] || fail_lifecycle "the required python runtime is missing; reinstall the omarchy package"
+  [[ -x /usr/bin/bwrap ]] || fail_lifecycle "the required bubblewrap runtime is missing; reinstall the omarchy package"
+  /usr/bin/python3 -c 'import jsonschema' >/dev/null 2>&1 ||
+    fail_lifecycle "the required python-jsonschema runtime is missing; reinstall the omarchy package"
+}
+
+ensure_owner_directory() {
+  local path="$1"
+  local label="$2"
+  local owner
+
+  [[ ! -L $path ]] || fail_lifecycle "$label is a symbolic link: $path"
+  if [[ -e $path ]]; then
+    [[ -d $path ]] || fail_lifecycle "$label is not a directory: $path"
+  else
+    install -d -m 0700 -- "$path"
+  fi
+
+  [[ ! -L $path && -d $path ]] || fail_lifecycle "$label changed while it was being prepared: $path"
+  owner=$(stat -c %u -- "$path")
+  (( owner == $(id -u) )) || fail_lifecycle "$label is not owned by the current user: $path"
+  chmod 0700 -- "$path"
+}
+
+secure_state_file() {
+  local path="$1"
+  local label="$2"
+  local owner
+
+  [[ ! -L $path && -f $path ]] || fail_lifecycle "$label is not a safe regular file: $path"
+  owner=$(stat -c %u -- "$path")
+  (( owner == $(id -u) )) || fail_lifecycle "$label is not owned by the current user: $path"
+  chmod 0600 -- "$path"
+}
+
+resolve_state_directory() {
+  local state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+  printf '%s\n' "$state_root/omarchy/fabric"
+}
+
+prepare_start() {
+  require_session_paths
+  verify_package_contract
+  verify_runtime_dependencies
+
+  local runtime_directory="$XDG_RUNTIME_DIR/omarchy"
+  local state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+  local state_parent="$state_root/omarchy"
+  local state_directory="$state_parent/fabric"
+  local state_file
+
+  ensure_owner_directory "$runtime_directory" "Fabric runtime directory"
+  ensure_owner_directory "$state_parent" "Fabric state parent"
+  ensure_owner_directory "$state_directory" "Fabric state directory"
+
+  for state_file in \
+    "$state_directory/fabric.db" \
+    "$state_directory/fabric.db-wal" \
+    "$state_directory/fabric.db-shm" \
+    "$state_directory"/fabric.db.pre-migrate-*.bak \
+    "$state_directory"/fabric.db.pre-migrate-*.bak.tmp; do
+    [[ -e $state_file || -L $state_file ]] || continue
+    secure_state_file "$state_file" "Fabric database artifact"
+  done
+}
+
+fallback_wants_path() {
+  printf '%s\n' "$HOME/.config/systemd/user/graphical-session.target.wants/$fabric_unit"
+}
+
+enable_for_next_session() {
+  local wants_path
+  wants_path=$(fallback_wants_path)
+  install -d -m 0755 -- "$(dirname "$wants_path")"
+  ln -sfn "/usr/lib/systemd/user/$fabric_unit" "$wants_path"
+  echo "Fabric enabled for the next graphical login; the user systemd manager is unavailable now."
+}
+
+install_service() {
+  [[ -n ${HOME:-} ]] || fail_lifecycle "HOME is unavailable; Fabric cannot enable its user service"
+  verify_package_contract
+  verify_runtime_dependencies
+
+  if systemctl --user daemon-reload; then
+    systemctl --user enable "$fabric_unit"
+    if systemctl --user is-active --quiet graphical-session.target; then
+      systemctl --user start "$fabric_unit"
+    fi
+  else
+    enable_for_next_session
+  fi
+}
+
+refresh_service() {
+  if ! systemctl --user daemon-reload; then
+    verify_package_contract
+    verify_runtime_dependencies
+    if [[ -n ${XDG_RUNTIME_DIR:-} && ! -e $XDG_RUNTIME_DIR/omarchy/fabric.sock && ! -L $XDG_RUNTIME_DIR/omarchy/fabric.sock ]]; then
+      echo "Fabric refresh verified the package and deferred startup to the next graphical login; no runtime socket is present."
+      return 0
+    fi
+    fail_temporary "the user systemd manager could not reload the Fabric unit and a socket may remain; the running daemon state is unknown"
+  fi
+
+  local was_enabled=0
+  if systemctl --user is-enabled --quiet "$fabric_unit"; then
+    was_enabled=1
+  fi
+
+  # Stop first so a package mismatch can never leave the previous daemon
+  # serving against assets that were replaced underneath it.
+  if systemctl --user is-active --quiet "$fabric_unit"; then
+    systemctl --user stop "$fabric_unit" ||
+      fail_temporary "the user systemd manager could not stop Fabric; the running daemon state is unknown"
+  fi
+
+  # Package verification happens after the stop. If an update replaced only
+  # one half, stale code must not continue serving from its old process image.
+  verify_package_contract
+  verify_runtime_dependencies
+
+  if (( was_enabled )) && systemctl --user is-active --quiet graphical-session.target; then
+    systemctl --user start "$fabric_unit"
+  fi
+}
+
+remove_owned_socket() {
+  [[ -n ${XDG_RUNTIME_DIR:-} ]] || return 0
+
+  local socket_path="$XDG_RUNTIME_DIR/omarchy/fabric.sock"
+  local owner
+  [[ -e $socket_path || -L $socket_path ]] || return 0
+  [[ ! -L $socket_path && -S $socket_path ]] || fail_lifecycle "refusing to remove an unsafe Fabric socket path: $socket_path"
+  owner=$(stat -c %u -- "$socket_path")
+  (( owner == $(id -u) )) || fail_lifecycle "refusing to remove a Fabric socket owned by another user: $socket_path"
+  rm -f -- "$socket_path"
+}
+
+uninstall_service() {
+  [[ -n ${HOME:-} ]] || fail_lifecycle "HOME is unavailable; Fabric cannot remove its user enablement"
+
+  if systemctl --user daemon-reload >/dev/null 2>&1; then
+    systemctl --user disable --now "$fabric_unit" >/dev/null ||
+      fail_temporary "the user systemd manager could not stop and disable Fabric; the running daemon state is unknown"
+    systemctl --user reset-failed "$fabric_unit" >/dev/null 2>&1 || true
+    remove_owned_socket
+  else
+    local wants_path
+    wants_path=$(fallback_wants_path)
+    if [[ -L $wants_path ]]; then
+      rm -f -- "$wants_path"
+    elif [[ -e $wants_path ]]; then
+      fail_lifecycle "refusing to remove a non-symlink Fabric enablement path: $wants_path"
+    fi
+    if [[ -n ${XDG_RUNTIME_DIR:-} && ( -e $XDG_RUNTIME_DIR/omarchy/fabric.sock || -L $XDG_RUNTIME_DIR/omarchy/fabric.sock ) ]]; then
+      fail_temporary "Fabric enablement was removed, but its user manager is unavailable and a socket remains; the running daemon state is unknown"
+    fi
+  fi
+
+  echo "Fabric is disabled; durable state and migration backups were preserved in $(resolve_state_directory)."
+}
+
+case "${1:-}" in
+  install)
+    (($# == 1)) || fail_lifecycle "install takes no additional arguments"
+    install_service
+    ;;
+  refresh)
+    (($# == 1)) || fail_lifecycle "refresh takes no additional arguments"
+    refresh_service
+    ;;
+  uninstall)
+    (($# == 1)) || fail_lifecycle "uninstall takes no additional arguments"
+    uninstall_service
+    ;;
+  prepare-start)
+    (($# == 1)) || fail_lifecycle "prepare-start takes no additional arguments"
+    prepare_start
+    ;;
+  verify-package)
+    (($# == 1)) || fail_lifecycle "verify-package takes no additional arguments"
+    verify_package_contract
+    ;;
+  -h|--help)
+    echo "Usage: omarchy-fabric-service <install|refresh|uninstall|prepare-start|verify-package>"
+    ;;
+  *)
+    fail_lifecycle "expected install, refresh, uninstall, prepare-start, or verify-package"
+    ;;
+esac

@@ -5,9 +5,12 @@
 
 set -euo pipefail
 
+"$OMARCHY_PATH/bin/omarchy-fabric-service" verify-package
+
 fabric_python_path="$OMARCHY_PATH/default/fabric"
 if [[ -n ${PYTHONPATH:-} ]]; then
   fabric_python_path+=":$PYTHONPATH"
 fi
 
-exec env PYTHONPATH="$fabric_python_path" python3 -m omarchy_fabric.daemon "$@"
+export PYTHONPATH="$fabric_python_path"
+exec /usr/bin/python3 -m omarchy_fabric.daemon "$@"
