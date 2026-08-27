@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:security-decision-v0",
+  "title": "Structured Fabric policy decision",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "decision",
+    "code",
+    "explanation",
+    "operationId",
+    "principalId"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "decision": { "enum": ["allow", "deny", "consent-required"] },
+    "code": { "$ref": "common-v0.json#/$defs/stableId" },
+    "explanation": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "operationId": { "$ref": "common-v0.json#/$defs/uuid" },
+    "principalId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "grantId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "approvalId": { "$ref": "common-v0.json#/$defs/stableId" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:security-grant-v0",
+  "title": "Scoped Fabric capability grant",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "grantId",
+    "principalId",
+    "principalKind",
+    "capability",
+    "resource",
+    "issuedAt",
+    "expiresAt",
+    "maximumRisk",
+    "persistence",
+    "constraints"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "grantId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "principalId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "principalKind": { "enum": ["shell", "provider", "task"] },
+    "capability": { "$ref": "common-v0.json#/$defs/capabilityId" },
+    "resource": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "$ref": "common-v0.json#/$defs/stableId" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[^/\\\\\\u0000]+$" }
+      },
+      "additionalProperties": false
+    },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "maximumRisk": { "enum": ["low", "consequential", "high"] },
+    "persistence": { "enum": ["session", "duration", "persistent"] },
+    "constraints": {
+      "type": "object",
+      "propertyNames": { "pattern": "^(arguments|context)\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)*$" },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": { "type": ["null", "boolean", "integer", "string"] }
+      }
+    },
+    "taskId": { "$ref": "common-v0.json#/$defs/stableId" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "persistence": { "const": "persistent" } }, "required": ["persistence"] },
+      "then": { "properties": { "maximumRisk": { "not": { "const": "high" } } } }
+    },
+    {
+      "if": { "properties": { "principalKind": { "const": "shell" } }, "required": ["principalKind"] },
+      "then": { "properties": { "maximumRisk": { "const": "low" } }, "not": { "required": ["taskId"] } }
+    },
+    {
+      "if": { "properties": { "principalKind": { "const": "task" } }, "required": ["principalKind"] },
+      "then": { "required": ["taskId"] },
+      "else": { "not": { "required": ["taskId"] } }
+    }
+  ],
+  "additionalProperties": false
+}
