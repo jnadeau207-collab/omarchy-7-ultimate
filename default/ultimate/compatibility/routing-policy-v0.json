@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "v0",
+  "policyId": "compatibility.routing.default",
+  "routeOrder": ["native", "pwa", "known-good-recipe", "game-proton", "isolated-app", "vm"],
+  "unsupportedBehavior": "explain-and-refuse",
+  "permissionExpansion": "reject",
+  "unknownAntiCheat": "unsupported-outside-vm",
+  "recipeTrustKeyIds": ["omarchy-compat-review-v1"],
+  "contractSeedBehavior": "plan-only",
+  "releaseVerifiedAdmission": "external-revision-attestation"
+}

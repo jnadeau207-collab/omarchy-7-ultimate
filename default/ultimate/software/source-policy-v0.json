@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "v0",
+  "policyId": "software.source-policy.default",
+  "acceptedSourceTypes": ["curated", "signed-repo", "flatpak", "reviewed-aur", "appimage", "web-app"],
+  "requirements": {
+    "curated": "verified-release-key",
+    "signed-repo": "verified-repository-key",
+    "flatpak": "verified-summary-key",
+    "reviewed-aur": "pinned-reviewed-snapshot",
+    "appimage": "pinned-digest-and-isolation",
+    "web-app": "reviewed-origin-and-browser-isolation"
+  },
+  "unknownSources": "reject",
+  "contractSeedBehavior": "plan-only",
+  "releaseVerifiedAdmission": "external-revision-attestation"
+}
