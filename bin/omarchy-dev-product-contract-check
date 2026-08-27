@@ -1,0 +1,708 @@
+#!/bin/bash
+
+# omarchy:summary=Validate provisional product invocation and identity contracts
+# omarchy:args=[--root PATH] [--contracts-dir PATH]
+# omarchy:hidden=true
+
+set -euo pipefail
+
+export PYTHONDONTWRITEBYTECODE=1
+
+contract_root=${OMARCHY_PATH:-}
+contracts_dir=""
+
+while (( $# > 0 )); do
+  if [[ $1 == "--root" || $1 == "--contracts-dir" ]]; then
+    option=$1
+    [[ -n ${2:-} ]] || {
+      echo "error: $option requires a path" >&2
+      exit 2
+    }
+    if [[ $option == "--root" ]]; then
+      contract_root=$2
+    else
+      contracts_dir=$2
+    fi
+    shift 2
+  else
+    echo "error: unexpected argument: $1" >&2
+    exit 2
+  fi
+done
+
+if [[ -z $contract_root ]]; then
+  echo "error: OMARCHY_PATH is required (or pass --root PATH)" >&2
+  exit 2
+fi
+
+if [[ -z $contracts_dir ]]; then
+  contracts_dir=$contract_root/default/ultimate/product-contracts
+fi
+
+if ! python -c 'import jsonschema' >/dev/null 2>&1; then
+  echo "error: python-jsonschema is required for product-contract validation; install the python-jsonschema package" >&2
+  exit 2
+fi
+
+python - "$contract_root" "$contracts_dir" <<'PY'
+import configparser
+import json
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
+
+
+root = Path(sys.argv[1]).resolve()
+contracts_dir = Path(sys.argv[2]).resolve()
+errors = []
+
+
+def report(message):
+    errors.append(message)
+
+
+def relative(path):
+    for base in (root, contracts_dir):
+        try:
+            return path.resolve().relative_to(base).as_posix()
+        except ValueError:
+            continue
+    return str(path)
+
+
+def load_json(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        report(f"missing required file: {relative(path)}")
+    except json.JSONDecodeError as exc:
+        report(f"invalid JSON in {relative(path)}: line {exc.lineno}, column {exc.colno}: {exc.msg}")
+    return None
+
+
+def pointer(parts):
+    if not parts:
+        return "$"
+    return "$" + "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts)
+
+
+manifest_specs = {
+    "surfaces-v0.json": "surfaces-v0.schema.json",
+    "invocations-v0.json": "invocations-v0.schema.json",
+    "ipc-v0.json": "ipc-v0.schema.json",
+    "applications-v0.json": "applications-v0.schema.json",
+    "search-v0.json": "search-v0.schema.json",
+    "processes-v0.json": "processes-v0.schema.json",
+    "legacy-debt-v0.json": "legacy-debt-v0.schema.json",
+}
+
+documents = {}
+for manifest_name, schema_name in manifest_specs.items():
+    schema_path = contracts_dir / "schema" / schema_name
+    manifest_path = contracts_dir / manifest_name
+    schema = load_json(schema_path)
+    document = load_json(manifest_path)
+    documents[manifest_name] = document
+    if schema is None or document is None:
+        continue
+    try:
+        Draft202012Validator.check_schema(schema)
+    except Exception as exc:
+        report(f"invalid JSON Schema {relative(schema_path)}: {exc}")
+        continue
+    validator = Draft202012Validator(schema)
+    issues = sorted(validator.iter_errors(document), key=lambda item: list(item.absolute_path))
+    for issue in issues:
+        report(f"{manifest_name} {pointer(issue.absolute_path)}: {issue.message}")
+
+surfaces = documents.get("surfaces-v0.json") or {}
+invocations = documents.get("invocations-v0.json") or {}
+ipc = documents.get("ipc-v0.json") or {}
+applications = documents.get("applications-v0.json") or {}
+search = documents.get("search-v0.json") or {}
+processes = documents.get("processes-v0.json") or {}
+debt = documents.get("legacy-debt-v0.json") or {}
+
+
+def duplicate_values(values, label, fold=False):
+    normalized = [(value.casefold() if fold and isinstance(value, str) else value) for value in values if value]
+    for value, count in sorted(Counter(normalized).items(), key=lambda item: str(item[0])):
+        if count > 1:
+            report(f"duplicate {label}: {value}")
+
+
+debt_entries = debt.get("debts", [])
+debt_ids = {entry.get("id") for entry in debt_entries if isinstance(entry, dict) and entry.get("id")}
+duplicate_values([entry.get("id") for entry in debt_entries if isinstance(entry, dict)], "legacy debt id")
+
+principal_entries = processes.get("principals", [])
+process_entries = processes.get("processes", [])
+component_entries = processes.get("invocationComponents", [])
+principal_ids = {entry.get("id") for entry in principal_entries if isinstance(entry, dict)}
+process_ids = {entry.get("id") for entry in process_entries if isinstance(entry, dict)}
+duplicate_values([entry.get("id") for entry in principal_entries if isinstance(entry, dict)], "principal id")
+duplicate_values([entry.get("id") for entry in process_entries if isinstance(entry, dict)], "process id")
+duplicate_values([entry.get("id") for entry in component_entries if isinstance(entry, dict)], "process component id")
+duplicate_values([entry.get("path") for entry in component_entries if isinstance(entry, dict)], "process component path")
+
+plugin_entries = surfaces.get("plugins", [])
+route_entries = invocations.get("routes", [])
+monitor_entries = invocations.get("monitorSemantics", [])
+focus_entries = invocations.get("focusSemantics", [])
+endpoint_entries = ipc.get("endpoints", [])
+application_entries = applications.get("applications", [])
+provider_entries = search.get("providers", [])
+
+plugin_ids = {entry.get("pluginId") for entry in plugin_entries if isinstance(entry, dict)}
+route_ids = {entry.get("id") for entry in route_entries if isinstance(entry, dict)}
+monitor_ids = {entry.get("id") for entry in monitor_entries if isinstance(entry, dict)}
+focus_ids = {entry.get("id") for entry in focus_entries if isinstance(entry, dict)}
+application_ids = {entry.get("id") for entry in application_entries if isinstance(entry, dict)}
+duplicate_values([entry.get("pluginId") for entry in plugin_entries if isinstance(entry, dict)], "plugin id")
+duplicate_values([entry.get("manifestPath") for entry in plugin_entries if isinstance(entry, dict)], "plugin manifest path")
+duplicate_values([entry.get("id") for entry in route_entries if isinstance(entry, dict)], "surface route id")
+duplicate_values([entry.get("pluginId") for entry in route_entries if isinstance(entry, dict)], "surface route plugin")
+duplicate_values([entry.get("id") for entry in monitor_entries if isinstance(entry, dict)], "monitor semantics id")
+duplicate_values([entry.get("id") for entry in focus_entries if isinstance(entry, dict)], "focus semantics id")
+duplicate_values([entry.get("id") for entry in endpoint_entries if isinstance(entry, dict)], "IPC endpoint id")
+duplicate_values([entry.get("target") for entry in endpoint_entries if isinstance(entry, dict)], "IPC target")
+duplicate_values([entry.get("id") for entry in application_entries if isinstance(entry, dict)], "application id")
+duplicate_values([entry.get("contractPrincipalId") for entry in application_entries if isinstance(entry, dict)], "application contract principal")
+duplicate_values([entry.get("id") for entry in provider_entries if isinstance(entry, dict)], "search provider id")
+
+
+def check_repo_path(path_value, label, must_exist=True):
+    if not isinstance(path_value, str) or not path_value:
+        report(f"{label} has no path")
+        return None
+    candidate = (root / path_value).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        report(f"{label} escapes the repository: {path_value}")
+        return None
+    if must_exist and not candidate.exists():
+        report(f"{label} names a missing path: {path_value}")
+    return candidate
+
+
+for entry in debt_entries:
+    if not isinstance(entry, dict):
+        continue
+    for path_value in entry.get("evidencePaths", []):
+        check_repo_path(path_value, f"legacy debt {entry.get('id')} evidence")
+
+for entry in process_entries:
+    if not isinstance(entry, dict):
+        continue
+    if entry.get("principalId") not in principal_ids:
+        report(f"process {entry.get('id')} has unknown principal: {entry.get('principalId')}")
+    owner_path = entry.get("ownerPath")
+    if owner_path:
+        check_repo_path(owner_path, f"process {entry.get('id')} owner")
+    if entry.get("state") == "present" and not owner_path:
+        report(f"present process {entry.get('id')} has no owner path")
+
+for entry in principal_entries + process_entries + component_entries + plugin_entries + route_entries + monitor_entries + focus_entries + endpoint_entries + application_entries + provider_entries:
+    if not isinstance(entry, dict):
+        continue
+    for debt_id in entry.get("debtIds", []):
+        if debt_id not in debt_ids:
+            report(f"{entry.get('id') or entry.get('pluginId')} has unknown debt reference: {debt_id}")
+
+for entry in plugin_entries:
+    if not isinstance(entry, dict):
+        continue
+    if entry.get("processId") not in process_ids:
+        report(f"plugin {entry.get('pluginId')} has unknown process: {entry.get('processId')}")
+    check_repo_path(entry.get("manifestPath"), f"plugin {entry.get('pluginId')} manifest")
+    route_id = entry.get("invocationRouteId")
+    if route_id is not None and route_id not in route_ids:
+        report(f"plugin {entry.get('pluginId')} has broken invocation route: {route_id}")
+    if entry.get("taskbarApplication"):
+        report(f"hosted plugin {entry.get('pluginId')} falsely claims taskbar application identity")
+
+
+def discover_plugin_manifests():
+    discovered = {}
+    plugin_root = root / "shell/plugins"
+    for path in sorted(plugin_root.rglob("*")):
+        if not path.is_file() or not (path.name == "manifest.json" or path.name.endswith(".manifest.json")):
+            continue
+        data = load_json(path)
+        if not isinstance(data, dict):
+            continue
+        plugin_id = data.get("id")
+        rel = path.relative_to(root).as_posix()
+        if not plugin_id:
+            report(f"plugin manifest has no id: {rel}")
+            continue
+        if plugin_id in discovered:
+            report(f"duplicate discovered plugin id {plugin_id}: {rel}")
+        discovered[plugin_id] = (rel, data, path)
+    return discovered
+
+
+discovered_plugins = discover_plugin_manifests()
+if plugin_ids != set(discovered_plugins):
+    missing = sorted(set(discovered_plugins) - plugin_ids)
+    stale = sorted(plugin_ids - set(discovered_plugins))
+    if missing:
+        report("unregistered first-party plugins: " + ", ".join(missing))
+    if stale:
+        report("stale first-party plugin inventory: " + ", ".join(stale))
+
+plugin_by_id = {entry.get("pluginId"): entry for entry in plugin_entries if isinstance(entry, dict)}
+for plugin_id, (manifest_path, manifest, path) in discovered_plugins.items():
+    inventory = plugin_by_id.get(plugin_id)
+    if not inventory:
+        continue
+    if inventory.get("manifestPath") != manifest_path:
+        report(f"plugin {plugin_id} manifest path changed: source={manifest_path}, inventory={inventory.get('manifestPath')}")
+
+
+def plugin_is_invocable(manifest, path):
+    kinds = manifest.get("kinds", [])
+    if any(kind in kinds for kind in ("panel", "overlay", "menu")):
+        return True
+    if "bar-widget" not in kinds:
+        return False
+    entry = manifest.get("entryPoints", {}).get("barWidget")
+    if not entry:
+        return False
+    qml_path = path.parent / entry
+    if not qml_path.is_file():
+        report(f"plugin {manifest.get('id')} bar widget entry point is missing: {relative(qml_path)}")
+        return False
+    text = qml_path.read_text(encoding="utf-8")
+    inherits_panel = re.search(r"(?m)^Panel\s*\{", text) is not None
+    shaped = all(re.search(pattern, text) for pattern in (
+        r"function\s+open\s*\(",
+        r"function\s+close\s*\(",
+        r"(?:readonly\s+)?property\s+bool\s+opened",
+    ))
+    return inherits_panel or shaped
+
+
+invocable_plugins = {
+    plugin_id for plugin_id, (_, manifest, path) in discovered_plugins.items()
+    if plugin_is_invocable(manifest, path)
+}
+route_plugins = {entry.get("pluginId") for entry in route_entries if isinstance(entry, dict)}
+if route_plugins != invocable_plugins:
+    missing = sorted(invocable_plugins - route_plugins)
+    stale = sorted(route_plugins - invocable_plugins)
+    if missing:
+        report("invocable plugins missing surface routes: " + ", ".join(missing))
+    if stale:
+        report("surface routes falsely claim non-invocable plugins: " + ", ".join(stale))
+
+for entry in route_entries:
+    if not isinstance(entry, dict):
+        continue
+    route_id = entry.get("id")
+    plugin_id = entry.get("pluginId")
+    if plugin_id not in plugin_ids:
+        report(f"surface route {route_id} has unknown plugin: {plugin_id}")
+    if entry.get("monitorSemanticsId") not in monitor_ids:
+        report(f"surface route {route_id} is missing valid monitor semantics")
+    if entry.get("focusSemanticsId") not in focus_ids:
+        report(f"surface route {route_id} is missing valid focus semantics")
+    if entry.get("processId") not in process_ids:
+        report(f"surface route {route_id} has unknown process: {entry.get('processId')}")
+    if set(entry.get("operations", [])) != {"summon", "toggle", "hide"}:
+        report(f"surface route {route_id} does not expose the complete summon/toggle/hide lifecycle")
+    if entry.get("state") == "present-contract":
+        monitor = next((item for item in monitor_entries if item.get("id") == entry.get("monitorSemanticsId")), {})
+        focus = next((item for item in focus_entries if item.get("id") == entry.get("focusSemanticsId")), {})
+        if entry.get("payload") != "typed-invocation-v0" or monitor.get("state") != "contract" or focus.get("state") != "contract":
+            report(f"surface route {route_id} falsely claims contract presence")
+
+required_context = {
+    "invocationId", "screen.logicalId", "screen.connector", "screen.edidHash",
+    "anchorRect", "seatId", "route", "focusRestoration",
+}
+if set(invocations.get("contextContract", {}).get("requiredFields", [])) != required_context:
+    report("invocation context is missing screen, connector/EDID, anchor, seat, route, or focus-restoration semantics")
+
+for entry in monitor_entries:
+    if not isinstance(entry, dict):
+        continue
+    if entry.get("state") == "contract" and not (
+        entry.get("deterministic")
+        and entry.get("acceptsScreenIdentity")
+        and entry.get("acceptsConnector")
+        and entry.get("acceptsEdidHash")
+        and entry.get("acceptsAnchorRect")
+        and entry.get("acceptsSeat")
+    ):
+        report(f"monitor semantics {entry.get('id')} falsely claims the invocation contract")
+    if entry.get("state") != "contract" and not entry.get("debtIds"):
+        report(f"monitor semantics {entry.get('id')} hides unsupported behavior without debt")
+
+for entry in focus_entries:
+    if not isinstance(entry, dict):
+        continue
+    if entry.get("state") == "contract" and not (entry.get("deterministic") and entry.get("capturesTarget") and entry.get("restoresOnDismiss")):
+        report(f"focus semantics {entry.get('id')} falsely claims the invocation contract")
+    if entry.get("state") != "contract" and not entry.get("debtIds"):
+        report(f"focus semantics {entry.get('id')} hides unsupported behavior without debt")
+
+
+def matching_brace(text, start):
+    depth = 0
+    index = start
+    quote = None
+    line_comment = False
+    block_comment = False
+    escape = False
+    while index < len(text):
+        char = text[index]
+        nxt = text[index + 1] if index + 1 < len(text) else ""
+        if line_comment:
+            if char == "\n":
+                line_comment = False
+        elif block_comment:
+            if char == "*" and nxt == "/":
+                block_comment = False
+                index += 1
+        elif quote:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == quote:
+                quote = None
+        elif char == "/" and nxt == "/":
+            line_comment = True
+            index += 1
+        elif char == "/" and nxt == "*":
+            block_comment = True
+            index += 1
+        elif char in ('"', "'"):
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    return None
+
+
+def discover_ipc():
+    found = {}
+    qml_paths = sorted((root / "shell").rglob("*.qml"))
+    for path in qml_paths:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(root).as_posix()
+        has_handler = False
+        for match in re.finditer(r"\bIpcHandler\s*\{", text):
+            has_handler = True
+            open_index = text.find("{", match.start())
+            close_index = matching_brace(text, open_index)
+            if close_index is None:
+                report(f"unterminated IpcHandler in {rel}")
+                continue
+            block = text[open_index:close_index + 1]
+            static = re.search(r"\btarget:\s*\"([^\"]+)\"", block)
+            dynamic = re.search(r"\btarget:\s*root\.ipcTarget\b", block)
+            if static:
+                target = static.group(1)
+                kind = "declared"
+            elif dynamic:
+                source_target = re.search(r"(?m)^\s*ipcTarget:\s*\"([^\"]+)\"", text)
+                if not source_target or not source_target.group(1):
+                    continue
+                target = source_target.group(1)
+                kind = "dynamic-target"
+            else:
+                continue
+            methods = re.findall(r"\bfunction\s+([A-Za-z][A-Za-z0-9]*)\s*\(", block)
+            if target in found:
+                report(f"duplicate live IPC target {target}: {rel} and {found[target]['sourcePath']}")
+            found[target] = {"sourcePath": rel, "methods": methods, "handlerKind": kind}
+        if (
+            not has_handler
+            and re.search(r"(?m)^Panel\s*\{", text)
+            and not re.search(r"(?m)^\s*manageIpc:\s*false\b", text)
+            and (source_target := re.search(r"(?m)^\s*ipcTarget:\s*\"([^\"]+)\"", text))
+            and source_target.group(1)
+        ):
+            target = source_target.group(1)
+            if target in found:
+                report(f"duplicate live IPC target {target}: {rel} and {found[target]['sourcePath']}")
+            found[target] = {
+                "sourcePath": rel,
+                "methods": ["open", "close", "show", "hide", "toggle"],
+                "handlerKind": "inherited-panel",
+            }
+    return found
+
+
+discovered_ipc = discover_ipc()
+inventory_ipc = {entry.get("target"): entry for entry in endpoint_entries if isinstance(entry, dict)}
+if set(discovered_ipc) != set(inventory_ipc):
+    missing = sorted(set(discovered_ipc) - set(inventory_ipc))
+    stale = sorted(set(inventory_ipc) - set(discovered_ipc))
+    if missing:
+        report("unregistered shell IPC targets: " + ", ".join(missing))
+    if stale:
+        report("stale shell IPC target inventory: " + ", ".join(stale))
+
+for target, actual in discovered_ipc.items():
+    entry = inventory_ipc.get(target)
+    if not entry:
+        continue
+    if actual["sourcePath"] != entry.get("sourcePath"):
+        report(f"IPC target {target} source changed: source={actual['sourcePath']}, inventory={entry.get('sourcePath')}")
+    if actual["handlerKind"] != entry.get("handlerKind"):
+        report(f"IPC target {target} handler kind changed: source={actual['handlerKind']}, inventory={entry.get('handlerKind')}")
+    if actual["methods"] != entry.get("methods"):
+        report(f"IPC target {target} methods changed: source={actual['methods']}, inventory={entry.get('methods')}")
+
+for entry in endpoint_entries:
+    if not isinstance(entry, dict):
+        continue
+    check_repo_path(entry.get("sourcePath"), f"IPC endpoint {entry.get('id')} source")
+    if entry.get("processId") not in process_ids:
+        report(f"IPC endpoint {entry.get('id')} has unknown process: {entry.get('processId')}")
+    plugin_id = entry.get("pluginId")
+    if plugin_id is not None and plugin_id not in plugin_ids:
+        report(f"IPC endpoint {entry.get('id')} has unknown plugin: {plugin_id}")
+    duplicate_values([f"{entry.get('target')}.{method}" for method in entry.get("methods", [])], "IPC route")
+
+
+def desktop_group(path):
+    parser = configparser.ConfigParser(interpolation=None, strict=False)
+    parser.optionxform = str
+    try:
+        parser.read(path, encoding="utf-8")
+    except Exception as exc:
+        report(f"invalid desktop entry {relative(path)}: {exc}")
+        return {}
+    return dict(parser["Desktop Entry"]) if parser.has_section("Desktop Entry") else {}
+
+
+launcher_paths = []
+for directory in (root / "applications", root / "default/alacritty", root / "default/applications"):
+    if directory.is_dir():
+        launcher_paths.extend(path for path in directory.glob("*.desktop") if path.is_file())
+launcher_paths = sorted(launcher_paths)
+discovered_launchers = {path.relative_to(root).as_posix(): desktop_group(path) for path in launcher_paths}
+first_party_paths = {
+    entry.get("desktopEntryPath") for entry in application_entries
+    if isinstance(entry, dict) and entry.get("firstParty") and entry.get("desktopEntryPath")
+}
+if set(discovered_launchers) != first_party_paths:
+    missing = sorted(set(discovered_launchers) - first_party_paths)
+    stale = sorted(first_party_paths - set(discovered_launchers))
+    if missing:
+        report("unregistered first-party application launchers: " + ", ".join(missing))
+    if stale:
+        report("stale first-party application launchers: " + ", ".join(stale))
+
+all_desktop_ids = []
+deep_link_schemes = []
+for entry in application_entries:
+    if not isinstance(entry, dict):
+        continue
+    app_id = entry.get("id")
+    for desktop_id in entry.get("desktopIds", []):
+        all_desktop_ids.append(desktop_id.removesuffix(".desktop"))
+    for deep_link in entry.get("deepLinks", []):
+        deep_link_schemes.append(deep_link.get("scheme"))
+    desktop_path = entry.get("desktopEntryPath")
+    if desktop_path:
+        path = check_repo_path(desktop_path, f"application {app_id} desktop entry")
+        if path and path.is_file():
+            group = discovered_launchers.get(desktop_path, desktop_group(path))
+            expected_id = path.stem
+            if expected_id not in entry.get("desktopIds", []):
+                report(f"application {app_id} does not include desktop id {expected_id}")
+            if group.get("Type") != "Application":
+                report(f"application {app_id} desktop entry is not Type=Application")
+            if group.get("Name") and group.get("Name") != entry.get("displayName"):
+                report(f"application {app_id} display name changed: source={group.get('Name')}, inventory={entry.get('displayName')}")
+            startup = group.get("StartupWMClass", "")
+            if startup and startup not in entry.get("compositorMatchers", []):
+                report(f"application {app_id} omits StartupWMClass matcher: {startup}")
+    for evidence in entry.get("evidencePaths", []):
+        check_repo_path(evidence, f"application {app_id} evidence")
+    current_principal = entry.get("currentPrincipalId")
+    if current_principal is not None and current_principal not in principal_ids:
+        report(f"application {app_id} has unknown current principal: {current_principal}")
+    process_id = entry.get("processId")
+    if process_id is not None and process_id not in process_ids:
+        report(f"application {app_id} has unknown process: {process_id}")
+    for human_route in entry.get("humanRoutes", []):
+        if human_route.startswith("route.") and human_route not in route_ids:
+            report(f"application {app_id} has broken human route: {human_route}")
+    availability = entry.get("availability")
+    if availability == "present-contract":
+        if not desktop_path or not current_principal or not process_id or entry.get("taskbar", {}).get("identityJoin") != "stable":
+            report(f"application {app_id} falsely claims stable presence")
+    elif availability == "legacy-unjoined":
+        if not entry.get("debtIds"):
+            report(f"legacy application {app_id} has no explicit identity debt")
+    elif availability == "absent":
+        if current_principal is not None or process_id is not None:
+            report(f"absent application {app_id} falsely claims a live principal or process")
+        if any(link.get("state") == "present" for link in entry.get("deepLinks", [])):
+            report(f"absent application {app_id} falsely claims a present deep link")
+
+duplicate_values(all_desktop_ids, "normalized desktop id", fold=True)
+duplicate_values(deep_link_schemes, "deep-link scheme", fold=True)
+
+pins_path = root / "default/ultimate/taskbar-pins.json"
+pins = load_json(pins_path) or {}
+pin_ids = [entry.get("desktopId") for entry in pins.get("pins", []) if isinstance(entry, dict)]
+inventory_pins = [
+    desktop_id
+    for entry in application_entries if isinstance(entry, dict) and entry.get("taskbar", {}).get("shippedPin")
+    for desktop_id in entry.get("desktopIds", [])
+]
+if set(pin_ids) != set(inventory_pins):
+    missing = sorted(set(pin_ids) - set(inventory_pins))
+    stale = sorted(set(inventory_pins) - set(pin_ids))
+    if missing:
+        report("taskbar pins missing application identity: " + ", ".join(missing))
+    if stale:
+        report("application identities falsely claim shipped pins: " + ", ".join(stale))
+
+
+capability_ids = set()
+capability_dir = root / "default/ultimate/capabilities"
+if capability_dir.is_dir():
+    for path in sorted(capability_dir.glob("*.json")):
+        document = load_json(path)
+        if not isinstance(document, dict):
+            continue
+        for entry in document.get("capabilities", []):
+            if isinstance(entry, dict) and entry.get("id"):
+                capability_ids.add(entry["id"])
+
+required_result_fields = {"id", "source", "provenance", "title", "subtitle", "icon", "action", "secondaryActions", "trust", "destructive", "route", "rank"}
+if set(search.get("resultContract", {}).get("requiredFields", [])) != required_result_fields:
+    report("normalized search result contract is missing identity, provenance, action, trust, route, or rank fields")
+
+all_action_ids = []
+for entry in provider_entries:
+    if not isinstance(entry, dict):
+        continue
+    provider_id = entry.get("id")
+    for implementation_path in entry.get("implementationPaths", []):
+        check_repo_path(implementation_path, f"search provider {provider_id} implementation")
+    availability = entry.get("availability")
+    if availability == "present-contract" and (not entry.get("normalizedResult") or entry.get("provenance") != "complete"):
+        report(f"search provider {provider_id} falsely claims normalized presence")
+    if availability == "legacy-outside-contract" and not entry.get("debtIds"):
+        report(f"legacy search provider {provider_id} has no explicit debt")
+    if availability == "absent" and (entry.get("implementationPaths") or entry.get("normalizedResult")):
+        report(f"absent search provider {provider_id} falsely claims implementation")
+    for action in entry.get("actions", []):
+        action_id = action.get("id")
+        all_action_ids.append(action_id)
+        if action.get("eligibleForNormalizedSearch") and availability != "present-contract":
+            report(f"search action {action_id} is eligible through a non-contract provider")
+        if action.get("mutating") and action.get("eligibleForNormalizedSearch"):
+            if not action.get("capabilityIds"):
+                report(f"mutating search action {action_id} has no capability id")
+            if not action.get("humanRoutes"):
+                report(f"mutating search action {action_id} has no visible human route")
+        for capability_id in action.get("capabilityIds", []):
+            if capability_id not in capability_ids:
+                report(f"search action {action_id} has unknown capability: {capability_id}")
+        for human_route in action.get("humanRoutes", []):
+            if human_route.startswith("route.") and human_route not in route_ids:
+                report(f"search action {action_id} has broken human route: {human_route}")
+duplicate_values(all_action_ids, "search action id")
+
+search_consumer_pattern = re.compile(r"appLibrary\.(?:sortedEntries|visibleEntries)|MenuModel\.searchScore")
+discovered_search_consumers = {
+    path.relative_to(root).as_posix()
+    for path in (root / "shell").rglob("*")
+    if path.is_file() and path.suffix in {".qml", ".js"} and search_consumer_pattern.search(path.read_text(encoding="utf-8"))
+}
+inventory_search_consumers = {
+    path
+    for entry in provider_entries if isinstance(entry, dict) and entry.get("availability") != "absent"
+    for path in entry.get("implementationPaths", [])
+    if path.startswith("shell/plugins/")
+    and (candidate := root / path).is_file()
+    and search_consumer_pattern.search(candidate.read_text(encoding="utf-8"))
+}
+if discovered_search_consumers != inventory_search_consumers:
+    missing = sorted(discovered_search_consumers - inventory_search_consumers)
+    stale = sorted(inventory_search_consumers - discovered_search_consumers)
+    if missing:
+        report("unregistered current search consumers: " + ", ".join(missing))
+    if stale:
+        report("stale current search consumer inventory: " + ", ".join(stale))
+
+
+process_pattern = re.compile(r"\bProcess\s*\{|\b(?:Util|Quickshell)\.execDetached\s*\(|\bHyprland\.dispatch\s*\(")
+discovered_process_paths = {
+    path.relative_to(root).as_posix()
+    for base in (root / "shell/plugins", root / "shell/services")
+    for path in base.rglob("*")
+    if path.is_file() and path.suffix in {".qml", ".js"} and process_pattern.search(path.read_text(encoding="utf-8"))
+}
+inventory_process_paths = {entry.get("path") for entry in component_entries if isinstance(entry, dict)}
+if discovered_process_paths != inventory_process_paths:
+    missing = sorted(discovered_process_paths - inventory_process_paths)
+    stale = sorted(inventory_process_paths - discovered_process_paths)
+    if missing:
+        report("unregistered QML process invocation paths: " + ", ".join(missing))
+    if stale:
+        report("stale QML process invocation inventory: " + ", ".join(stale))
+
+for entry in component_entries:
+    if not isinstance(entry, dict):
+        continue
+    component_id = entry.get("id")
+    check_repo_path(entry.get("path"), f"process component {component_id}")
+    if entry.get("processId") not in process_ids:
+        report(f"process component {component_id} has unknown process: {entry.get('processId')}")
+    if entry.get("componentKind") == "consumer-ui" and entry.get("claimsProcessOwnership"):
+        report(f"consumer UI {component_id} falsely claims process ownership")
+    if entry.get("processRole") == "owner" and not entry.get("claimsProcessOwnership"):
+        report(f"process component {component_id} has owner role without ownership")
+    if entry.get("state") == "typed-provider":
+        if entry.get("componentKind") != "provider" or not entry.get("capabilityIds"):
+            report(f"process component {component_id} falsely claims typed-provider state")
+    if entry.get("state") == "legacy-direct" and not entry.get("debtIds"):
+        report(f"legacy process component {component_id} has no explicit debt")
+    for capability_id in entry.get("capabilityIds", []):
+        if capability_id not in capability_ids:
+            report(f"process component {component_id} has unknown capability: {capability_id}")
+    for human_route in entry.get("humanRoutes", []):
+        if human_route.startswith("route.") and human_route not in route_ids:
+            report(f"process component {component_id} has broken human route: {human_route}")
+
+if errors:
+    unique_errors = sorted(set(errors))
+    for message in unique_errors:
+        print(f"error: {message}", file=sys.stderr)
+    print(f"product contracts invalid: {len(unique_errors)} error(s)", file=sys.stderr)
+    raise SystemExit(1)
+
+first_party_launcher_count = sum(1 for entry in application_entries if entry.get("firstParty") and entry.get("desktopEntryPath"))
+shipped_pin_count = sum(1 for entry in application_entries if entry.get("taskbar", {}).get("shippedPin"))
+absent_app_count = sum(1 for entry in application_entries if entry.get("availability") == "absent")
+legacy_search_count = sum(1 for entry in provider_entries if entry.get("availability") == "legacy-outside-contract")
+absent_search_count = sum(1 for entry in provider_entries if entry.get("availability") == "absent")
+method_count = sum(len(entry.get("methods", [])) for entry in endpoint_entries)
+print(
+    "product contracts valid: "
+    f"{len(plugin_entries)} plugins; {len(route_entries)} surface routes; "
+    f"{len(endpoint_entries)} IPC endpoints/{method_count} methods; "
+    f"{len(application_entries)} applications ({first_party_launcher_count} first-party launchers, {shipped_pin_count} shipped pins, {absent_app_count} planned absent); "
+    f"{len(provider_entries)} search providers ({legacy_search_count} legacy, {absent_search_count} absent); "
+    f"{len(component_entries)} process invocation components; {len(debt_entries)} debt groups"
+)
+PY
