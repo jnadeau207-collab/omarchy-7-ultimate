@@ -14,6 +14,7 @@ from .principal import EndpointPrincipal
 from .types import OperationRequest
 
 _UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+_DEFAULT_MAX_RECORDS = 1024
 
 
 def _utc_now() -> datetime:
@@ -61,9 +62,47 @@ class ApprovalCheck:
 class ApprovalAuthority:
     """Keeps approval records in the authority, never as caller-owned claims."""
 
-    def __init__(self, *, clock: Callable[[], datetime] = _utc_now) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], datetime] = _utc_now,
+        max_records: int = _DEFAULT_MAX_RECORDS,
+    ) -> None:
+        if isinstance(max_records, bool) or not isinstance(max_records, int) or not 1 <= max_records <= 65_536:
+            raise SecurityValidationError(
+                "approval.capacity",
+                "Approval record capacity must be between 1 and 65536.",
+            )
         self._clock = clock
+        self._max_records = max_records
         self._records: dict[str, ApprovalRecord] = {}
+
+    def _prune(self, now: datetime) -> int:
+        removable = [
+            approval_id
+            for approval_id, record in self._records.items()
+            if record.consumed_at is not None or now >= record.expires_at
+        ]
+        for approval_id in removable:
+            del self._records[approval_id]
+        return len(removable)
+
+    def prune(self) -> int:
+        """Remove expired and consumed authority records using the bounded authority clock."""
+
+        now = self._clock()
+        if not _is_aware(now):
+            raise SecurityValidationError("approval.time", "Current time must be timezone-aware.")
+        return self._prune(now)
+
+    def discard(self, approval_id: str) -> bool:
+        """Forget an unbound approval when durable binding fails."""
+
+        return self._records.pop(approval_id, None) is not None
+
+    @property
+    def record_count(self) -> int:
+        return len(self._records)
 
     def issue(
         self,
@@ -76,6 +115,12 @@ class ApprovalAuthority:
         now = self._clock()
         if not _is_aware(now) or not _is_aware(expires_at):
             raise SecurityValidationError("approval.time", "Approval timestamps must be timezone-aware.")
+        self._prune(now)
+        if len(self._records) >= self._max_records:
+            raise SecurityValidationError(
+                "approval.capacity",
+                "Approval authority record capacity is exhausted.",
+            )
         if expires_at <= now or expires_at - now > timedelta(minutes=15):
             raise SecurityValidationError("approval.expiry", "Approval lifetime must be within 15 minutes.")
         if request.principal_id != principal.principal_id or request.session_id != principal.session_id:

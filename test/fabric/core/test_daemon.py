@@ -6,13 +6,17 @@ import socket
 import stat
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 from helper import DaemonProcess, hello, raw_request
 
-from omarchy_fabric.models import MAX_FRAME_BYTES, PROTOCOL_NAME, FabricError
-from omarchy_fabric.daemon import ClientConnection
+from omarchy_fabric.daemon import ClientConnection, DaemonConfig, FabricDaemon
+from omarchy_fabric.models import MAX_FRAME_BYTES, PROTOCOL_NAME, FabricError, RpcRequest
+from omarchy_fabric.security import EndpointAdmission, PrincipalKind, SessionBindingStore
+from omarchy_fabric.security.errors import SecurityValidationError
 
 
 class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
@@ -75,6 +79,73 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(accepted["result"]["version"], 0)
         writer.close()
         await writer.wait_closed()
+
+    async def test_hello_session_issue_failure_is_structured_and_retryable(self) -> None:
+        daemon = FabricDaemon(
+            DaemonConfig(
+                socket_path=Path(self.temporary.name) / "atomic-hello.sock",
+                database_path=Path(self.temporary.name) / "atomic-hello.db",
+            )
+        )
+        connection = SimpleNamespace(
+            connection_id="atomic-hello",
+            hello_complete=False,
+            principal=None,
+        )
+        params = {"client": "atomic-hello", "minVersion": 0, "maxVersion": 0}
+        with mock.patch.object(
+            daemon.session_bindings,
+            "issue",
+            side_effect=SecurityValidationError(
+                "principal.capacity",
+                "Active session capacity is exhausted.",
+            ),
+        ):
+            with self.assertRaises(FabricError) as issue_failure:
+                daemon._hello(connection, params)
+        self.assertEqual(issue_failure.exception.code, "principal.capacity")
+        self.assertFalse(connection.hello_complete)
+        self.assertIsNone(connection.principal)
+        accepted = daemon._hello(connection, params)
+        self.assertEqual(accepted["principal"]["id"], connection.principal.principal_id)
+        self.assertTrue(connection.hello_complete)
+
+    async def test_expired_session_is_denied_before_every_authenticated_dispatch(self) -> None:
+        daemon = FabricDaemon(
+            DaemonConfig(
+                socket_path=Path(self.temporary.name) / "expired-session.sock",
+                database_path=Path(self.temporary.name) / "expired-session.db",
+            )
+        )
+        current = [datetime(2026, 8, 26, 12, 0, tzinfo=timezone.utc)]
+        daemon.session_bindings = SessionBindingStore(clock=lambda: current[0])
+        principal, _credential = daemon.session_bindings.issue(
+            1000,
+            EndpointAdmission("fabric.owner-rpc", PrincipalKind.SHELL),
+        )
+        connection = SimpleNamespace(hello_complete=True, principal=principal)
+        current[0] += timedelta(hours=9)
+        methods = (
+            "version",
+            "health",
+            "provider.list",
+            "events.subscribe",
+            "reference.operation.preflight",
+            "reference.operation.approve",
+            "reference.operation.get",
+            "reference.operation.cancel",
+            "reference.operation.reconcile",
+            "reference.operation.ledger",
+        )
+        for index, method in enumerate(methods):
+            with self.subTest(method=method):
+                with self.assertRaises(FabricError) as expired:
+                    await daemon.dispatch(
+                        connection,
+                        RpcRequest(f"expired-{index}", method, {}),
+                    )
+                self.assertEqual(expired.exception.code, "principal.expired")
+                self.assertEqual(expired.exception.recovery_actions, ("fabric.reconnect",))
 
     async def test_malformed_frame_recovers_and_oversized_frame_closes(self) -> None:
         response, reader, writer = await raw_request(self.daemon.socket_path, b"{broken\n")
