@@ -1,0 +1,414 @@
+#!/bin/bash
+
+# omarchy:hidden=true
+# omarchy:summary=Validate provisional Ultimate quality baselines
+# omarchy:args=[check|probe-surfaces-once]
+
+set -euo pipefail
+
+[[ -n ${OMARCHY_PATH:-} ]] || {
+  echo "OMARCHY_PATH is not set" >&2
+  exit 1
+}
+
+quality_dir=${OMARCHY_QUALITY_DIR:-$OMARCHY_PATH/default/ultimate/quality}
+gallery_qml=${OMARCHY_QUALITY_GALLERY:-$OMARCHY_PATH/shell/plugins/dev-gallery/QualityMatrix.qml}
+gallery_panel=${OMARCHY_QUALITY_GALLERY_PANEL:-$OMARCHY_PATH/shell/plugins/dev-gallery/GalleryPanel.qml}
+command=${1:-check}
+
+check_contracts() {
+  python3 - "$quality_dir" "$gallery_qml" "$gallery_panel" <<'PY'
+import json
+import math
+import pathlib
+import re
+import sys
+
+quality_dir = pathlib.Path(sys.argv[1])
+gallery_path = pathlib.Path(sys.argv[2])
+panel_path = pathlib.Path(sys.argv[3])
+required_files = {
+    "gallery-matrix-v0.json",
+    "atspi-feasibility-v0.json",
+    "reference-hardware-v0.json",
+    "performance-baseline-v0.json",
+    "reliability-incidents-v0.json",
+}
+errors = []
+
+def error(message):
+    errors.append(message)
+
+def load(name):
+    path = quality_dir / name
+    if not path.is_file():
+        error(f"missing contract: {path}")
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        error(f"invalid JSON in {path}: {exc}")
+        return {}
+    if value.get("schemaVersion") != "quality-v0":
+        error(f"{name}: schemaVersion must be quality-v0")
+    return value
+
+if not quality_dir.is_dir():
+    error(f"quality contract directory is missing: {quality_dir}")
+
+present = {path.name for path in quality_dir.glob("*.json")} if quality_dir.is_dir() else set()
+for missing in sorted(required_files - present):
+    error(f"missing required quality contract: {missing}")
+
+documents = {name: load(name) for name in sorted(required_files)}
+serialized = json.dumps(documents, sort_keys=True)
+if re.search(r'"(?:schemaVersion|version)"\s*:\s*"?v?1(?:\.|"|\b)', serialized):
+    error("v1 contracts are forbidden in the provisional quality directory")
+
+matrix = documents["gallery-matrix-v0.json"]
+required_states = ["success", "no-op", "progress", "denial", "failure", "cancel", "restart", "recovery"]
+if matrix.get("operationStates") != required_states:
+    error("gallery operationStates must exactly cover the eight required states in canonical order")
+required_axes = {
+    "theme": ["dark", "light"],
+    "density": ["compact", "comfortable", "touch"],
+    "scale": [1, 1.25, 1.5, 2],
+    "contrast": ["standard", "high"],
+    "motion": ["full", "reduced"],
+    "textSize": ["regular", "large"],
+    "locale": ["en-US", "pseudo", "long"],
+    "direction": ["ltr", "rtl"],
+    "focus": ["pointer", "keyboard"],
+}
+axes = matrix.get("axes", {})
+if set(axes) != set(required_axes):
+    error("gallery axes must exactly match the required accessibility presentation axes")
+for axis, required_values in required_axes.items():
+    if axes.get(axis) != required_values:
+        error(f"gallery axis {axis} must contain {required_values}")
+profiles = matrix.get("renderCases", [])
+profile_ids = [profile.get("id") for profile in profiles if isinstance(profile, dict)]
+if len(profiles) < 4 or len(profile_ids) != len(set(profile_ids)):
+    error("gallery renderCases must contain at least four uniquely named profiles")
+for axis, required_values in required_axes.items():
+    covered = {profile.get(axis) for profile in profiles if isinstance(profile, dict)}
+    missing = [value for value in required_values if value not in covered]
+    if missing:
+        error(f"gallery renderCases do not cover {axis}: {missing}")
+if matrix.get("semanticRequirements") != ["name", "role", "value", "action"]:
+    error("gallery semanticRequirements must exactly cover name, role, value, and action")
+
+if not gallery_path.is_file():
+    error(f"gallery QML is missing: {gallery_path}")
+    gallery_text = ""
+else:
+    gallery_text = gallery_path.read_text(encoding="utf-8")
+for state in required_states:
+    if f'id: "{state}"' not in gallery_text:
+        error(f"gallery QML does not render operation state: {state}")
+for marker in ["Accessible.name", "Accessible.role", "Accessible.value", "Accessible.onPressAction"]:
+    if marker not in gallery_text:
+        error(f"gallery QML is missing semantic marker: {marker}")
+for profile_id in profile_ids:
+    if profile_id and profile_id not in gallery_text:
+        error(f"gallery QML does not render profile: {profile_id}")
+if not panel_path.is_file() or "QualityMatrix {" not in panel_path.read_text(encoding="utf-8"):
+    error("GalleryPanel.qml must mount QualityMatrix")
+
+atspi = documents["atspi-feasibility-v0.json"]
+surface_classes = atspi.get("surfaceClasses", [])
+required_classes = ["shell", "secure-lock", "oobe", "polkit"]
+class_ids = [entry.get("id") for entry in surface_classes if isinstance(entry, dict)]
+if class_ids != required_classes:
+    error("AT-SPI feasibility must explicitly record shell, secure-lock, oobe, and polkit")
+for entry in surface_classes:
+    if not isinstance(entry, dict):
+        error("AT-SPI surface records must be objects")
+        continue
+    status = entry.get("status")
+    implementation = entry.get("implementation")
+    if status not in {"blocked", "missing", "proved"}:
+        error(f"AT-SPI surface {entry.get('id')} has invalid status: {status}")
+    if implementation not in {"present", "missing"}:
+        error(f"AT-SPI surface {entry.get('id')} has invalid implementation state")
+    if status == "proved":
+        proof = entry.get("proof", {})
+        if implementation != "present" or proof.get("result") != "passed" or not proof.get("artifact"):
+            error(f"AT-SPI surface {entry.get('id')} claims proof without passing evidence")
+    else:
+        if not entry.get("blocker") or not entry.get("evidence"):
+            error(f"AT-SPI surface {entry.get('id')} must explain its blocker and evidence")
+if atspi.get("releaseGate", {}).get("status") == "passed" and any(entry.get("status") != "proved" for entry in surface_classes):
+    error("AT-SPI releaseGate cannot pass while a surface is unproved")
+
+reference = documents["reference-hardware-v0.json"]
+provenance = reference.get("provenance", {})
+if not reference.get("referenceId") or not reference.get("capturedAt") or not reference.get("host"):
+    error("reference hardware must identify the reference, host, and capture time")
+if not provenance.get("transport") or not provenance.get("commands"):
+    error("reference hardware provenance requires transport and source commands")
+if not re.fullmatch(r"[0-9a-f]{40}", str(provenance.get("repositoryHead", ""))):
+    error("reference hardware provenance requires a full repository commit")
+hardware = reference.get("hardware", {})
+for field in ["cpu", "memoryBytes", "gpu", "board", "systemDisk"]:
+    if field not in hardware:
+        error(f"reference hardware is missing: {field}")
+if not isinstance(hardware.get("memoryBytes"), int) or hardware.get("memoryBytes", 0) <= 0:
+    error("reference hardware memoryBytes must be a positive integer")
+
+performance = documents["performance-baseline-v0.json"]
+metrics = performance.get("metrics", [])
+required_metrics = {
+    "boot-to-interactive": "ms",
+    "shell-idle-cpu": "percent-one-core",
+    "shell-idle-rss": "bytes",
+    "start-first-paint": "ms",
+    "settings-first-paint": "ms",
+    "files-first-paint": "ms",
+    "search-catalog": "ms-per-query",
+    "operation-event-latency": "ms-round-trip",
+    "animation-frame-pacing": "ms-frame-p95",
+    "battery-idle-power": "watts-average",
+}
+metric_ids = [metric.get("id") for metric in metrics if isinstance(metric, dict)]
+if set(metric_ids) != set(required_metrics) or len(metric_ids) != len(required_metrics):
+    error("performance baseline must contain each required metric exactly once")
+for metric in metrics:
+    if not isinstance(metric, dict):
+        error("performance metrics must be objects")
+        continue
+    metric_id = metric.get("id")
+    if metric.get("unit") != required_metrics.get(metric_id):
+        error(f"performance metric {metric_id} has an invalid or missing unit")
+    threshold = metric.get("threshold")
+    if isinstance(threshold, bool) or not isinstance(threshold, (int, float)) or not math.isfinite(threshold) or threshold <= 0:
+        error(f"performance metric {metric_id} requires a finite positive threshold")
+    if metric.get("direction") != "max" or not metric.get("thresholdBasis"):
+        error(f"performance metric {metric_id} requires max direction and threshold provenance")
+    observation = metric.get("observation", {})
+    status = observation.get("status")
+    value = observation.get("value")
+    if status == "measured":
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            error(f"measured metric {metric_id} requires a finite numeric observation")
+        if not isinstance(observation.get("sampleCount"), int) or observation.get("sampleCount", 0) <= 0 or not observation.get("method"):
+            error(f"measured metric {metric_id} requires sampleCount and method")
+    elif status in {"blocked", "unsupported"}:
+        if value is not None or not observation.get("blocker"):
+            error(f"unmeasured metric {metric_id} must use null value and an explicit blocker")
+    else:
+        error(f"performance metric {metric_id} has invalid observation status: {status}")
+
+incidents = documents["reliability-incidents-v0.json"].get("incidents", [])
+if not incidents:
+    error("reliability register must include the surface-churn incident")
+blocking_incidents = 0
+resolved_incidents = 0
+for incident in incidents:
+    status = incident.get("status")
+    if status == "blocking":
+        blocking_incidents += 1
+    elif status == "resolved":
+        resolved_incidents += 1
+    else:
+        error(f"reliability incident {incident.get('id')} has invalid status: {status}")
+    report = incident.get("crashReport", {})
+    if not re.fullmatch(r"[0-9a-f]{64}", str(report.get("sha256", ""))) or not report.get("signature"):
+        error(f"reliability incident {incident.get('id')} requires a crash signature and SHA-256")
+    if len(incident.get("minimalKnownSequence", [])) < 3:
+        error(f"reliability incident {incident.get('id')} must preserve the minimal known sequence")
+    policy = incident.get("probePolicy", {})
+    if policy.get("disposableVmOnly") is not True or policy.get("maxCyclesPerSurface") != 1:
+        error(f"reliability incident {incident.get('id')} must cap disposable-VM probes at one cycle")
+    if policy.get("stopOnCompositorPidChange") is not True or policy.get("stopOnNewCoredump") is not True:
+        error(f"reliability incident {incident.get('id')} must abort on compositor or coredump change")
+    if status == "resolved":
+        resolution = incident.get("resolution", {})
+        verification = resolution.get("verification", {})
+        commits = resolution.get("fixedByCommits", [])
+        screenshots = verification.get("chromiumScreenshotSha256", {})
+        if not resolution.get("resolvedAt") or not resolution.get("rootCause") or not resolution.get("guard"):
+            error(f"resolved reliability incident {incident.get('id')} requires the root cause, guard, and resolution time")
+        if len(commits) < 1 or any(not re.fullmatch(r"[0-9a-f]{40}", str(commit)) for commit in commits):
+            error(f"resolved reliability incident {incident.get('id')} requires full fix commit hashes")
+        for field in ("deployedRepositoryHead", "pluginSha256"):
+            expected_length = 40 if field == "deployedRepositoryHead" else 64
+            if not re.fullmatch(rf"[0-9a-f]{{{expected_length}}}", str(resolution.get(field, ""))):
+                error(f"resolved reliability incident {incident.get('id')} has invalid {field}")
+        required_counts = {
+            "startCycles": 10,
+            "settingsCycles": 10,
+            "filesLaunches": 1,
+            "maximizeRestoreCloseRaceCycles": 30,
+            "chromiumRestoreCycles": 3,
+        }
+        for field, minimum in required_counts.items():
+            value = verification.get(field)
+            if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
+                error(f"resolved reliability incident {incident.get('id')} requires {field} >= {minimum}")
+        if verification.get("hyprlandPidUnchanged") is not True or verification.get("newCrashReport") is not False or verification.get("newCoredump") is not False:
+            error(f"resolved reliability incident {incident.get('id')} requires a stable compositor and no new crash evidence")
+        if verification.get("latestCrashReportSha256") != report.get("sha256"):
+            error(f"resolved reliability incident {incident.get('id')} does not preserve the original latest crash report")
+        chromium_states = {"fresh-float", "maximize", "restore", "snap-left", "fullscreen", "fullscreen-exit"}
+        if set(verification.get("chromiumStates", [])) != chromium_states:
+            error(f"resolved reliability incident {incident.get('id')} lacks the complete Chromium state proof")
+        if set(screenshots) != chromium_states or any(not re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in screenshots.values()):
+            error(f"resolved reliability incident {incident.get('id')} lacks hashed Chromium screenshots")
+
+if errors:
+    for message in errors:
+        print(f"quality baseline error: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+print(
+    f"quality baseline valid: {len(required_files)} contracts, {len(metrics)} metrics, "
+    f"{len(required_states)} states, {len(profiles)} presentation cases, "
+    f"{len(surface_classes)} AT-SPI classes, {blocking_incidents} blocking/{resolved_incidents} resolved incidents"
+)
+PY
+}
+
+compositor_pid() {
+  pgrep -o -x Hyprland
+}
+
+coredump_fingerprint() {
+  coredumpctl --no-pager --no-legend list 2>/dev/null | sha256sum | awk '{ print $1 }'
+}
+
+probe_surfaces_once() {
+  [[ ${OMARCHY_QUALITY_DISPOSABLE_VM:-} == "1" ]] || {
+    echo "probe-surfaces-once is restricted to a disposable VM" >&2
+    return 1
+  }
+
+  local required
+  for required in hyprctl jq coredumpctl sha256sum pgrep; do
+    command -v "$required" >/dev/null || {
+      echo "required probe tool is missing: $required" >&2
+      return 1
+    }
+  done
+
+  local -r MAX_SURFACE_CYCLES=1
+  local initial_pid initial_coredumps launched_files_pid=""
+  initial_pid=$(compositor_pid) || {
+    echo "Hyprland is not running" >&2
+    return 1
+  }
+  initial_coredumps=$(coredump_fingerprint)
+
+  cleanup_probe() {
+    "$OMARCHY_PATH/bin/omarchy-shell" -q shell hide omarchy.ultimate-start >/dev/null 2>&1 || true
+    "$OMARCHY_PATH/bin/omarchy-shell" -q shell hide omarchy.ultimate-settings >/dev/null 2>&1 || true
+    if [[ -n $launched_files_pid ]]; then
+      kill "$launched_files_pid" >/dev/null 2>&1 || true
+    fi
+  }
+  trap cleanup_probe EXIT INT TERM
+
+  verify_stable() {
+    local current_pid current_coredumps
+    current_pid=$(compositor_pid) || {
+      echo "blocking reliability failure: Hyprland stopped" >&2
+      return 1
+    }
+    current_coredumps=$(coredump_fingerprint)
+    if [[ $current_pid != $initial_pid ]]; then
+      echo "blocking reliability failure: Hyprland PID changed from $initial_pid to $current_pid" >&2
+      return 1
+    fi
+    if [[ $current_coredumps != $initial_coredumps ]]; then
+      echo "blocking reliability failure: a new coredump appeared" >&2
+      return 1
+    fi
+  }
+
+  wait_layer() {
+    local namespace="$1" expectation="$2" attempt found
+    for ((attempt = 1; attempt <= 50; attempt++)); do
+      found=$(hyprctl -j layers | jq -r --arg namespace "$namespace" '[.. | objects | select(.namespace? == $namespace)] | length')
+      if [[ $expectation == "present" ]] && (( found > 0 )); then
+        return 0
+      fi
+      if [[ $expectation == "absent" ]] && (( found == 0 )); then
+        return 0
+      fi
+      sleep 0.1
+    done
+    echo "surface $namespace did not become $expectation" >&2
+    return 1
+  }
+
+  probe_plugin() {
+    local plugin="$1" namespace="$2" cycle
+    for ((cycle = 0; cycle < MAX_SURFACE_CYCLES; cycle++)); do
+      verify_stable || return 1
+      "$OMARCHY_PATH/bin/omarchy-shell" shell hide "$plugin" >/dev/null
+      wait_layer "$namespace" absent
+      "$OMARCHY_PATH/bin/omarchy-shell" shell summon "$plugin" '{}' >/dev/null
+      wait_layer "$namespace" present
+      "$OMARCHY_PATH/bin/omarchy-shell" shell hide "$plugin" >/dev/null
+      wait_layer "$namespace" absent
+      sleep 1
+      verify_stable || return 1
+    done
+  }
+
+  probe_plugin "omarchy.ultimate-start" "omarchy-start"
+  probe_plugin "omarchy.ultimate-settings" "omarchy-settings"
+
+  if hyprctl -j clients | jq -e '[.[] | select((.class // "") | test("nautilus"; "i"))] | length > 0' >/dev/null; then
+    echo "Files probe requires no pre-existing Nautilus window" >&2
+    return 1
+  fi
+  verify_stable
+  "$OMARCHY_PATH/bin/omarchy-launch-nautilus" >/dev/null 2>&1 &
+  launched_files_pid=$!
+  local files_address="" files_pid="" attempt
+  for ((attempt = 1; attempt <= 100; attempt++)); do
+    read -r files_address files_pid < <(hyprctl -j clients | jq -r '[.[] | select((.class // "") | test("nautilus"; "i"))][0] | if . then [.address, (.pid // 0)] | @tsv else "" end')
+    [[ -n $files_address ]] && break
+    sleep 0.1
+  done
+  [[ -n $files_address ]] || {
+    echo "Files did not map during the bounded probe" >&2
+    return 1
+  }
+  verify_stable
+  "$OMARCHY_PATH/bin/omarchy-shell" -q window close "$files_address" >/dev/null 2>&1 || true
+  if [[ -n $files_pid && $files_pid != "0" ]]; then
+    kill "$files_pid" >/dev/null 2>&1 || true
+  fi
+  sleep 1
+  verify_stable
+  cleanup_probe
+  trap - EXIT INT TERM
+  printf 'bounded surface probe passed: one cycle each for Start, Settings, and Files; Hyprland PID %s remained stable\n' "$initial_pid"
+}
+
+case $command in
+  check)
+    (( $# <= 1 )) || {
+      echo "Usage: omarchy-dev-quality-baseline check" >&2
+      exit 1
+    }
+    check_contracts
+    ;;
+  probe-surfaces-once)
+    (( $# <= 1 )) || {
+      echo "Usage: omarchy-dev-quality-baseline probe-surfaces-once" >&2
+      exit 1
+    }
+    check_contracts
+    probe_surfaces_once
+    ;;
+  -h|--help)
+    echo "Usage: omarchy-dev-quality-baseline [check|probe-surfaces-once]"
+    ;;
+  *)
+    echo "Unknown command: $command" >&2
+    exit 1
+    ;;
+esac
