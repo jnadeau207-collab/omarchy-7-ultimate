@@ -4,7 +4,7 @@ Job completeness for Project Ultimate. Names are **jobs**, not a requirement to 
 
 This matrix is the product bar. `WINDOWS_NATIVE_ACCEPTANCE.md` is the forty-task smoke test (necessary, not sufficient; six numbered rows automated, plus unnumbered harness proofs). `AGENT_NATIVE_ACCEPTANCE.md` is the same jobs on the agent path.
 
-Status (tree as of 2026-08-23, metal HDMI-A-1 1920×1080 this session):
+Status (tree audited at `1334ba30` on 2026-08-26; metal windowing baseline HDMI-A-1 1920×1080):
 
 - `missing` — no product surface for the job
 - `plumbing` — Omarchy/system machinery exists; no consumer mouse path that hides the plumbing
@@ -67,4 +67,4 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 
 ## Caption / windowing (not a substitute for the jobs above)
 
-W0 is architecture GO and **agent-reported** product-windowing GO (Hyprland stays; three-button SSD, Files CSD, reopen memory, plugins in the update transaction). Independent review has not certified `687d022b` from a clean checkout. Remaining product surfaces and next-work order: `HANDOFF_NEW_BOX_2026-08-23.md`. Do not treat this matrix as green because snap and Alt+Tab IPC work.
+W0 is architecture and product-windowing GO on the reconciled `1334ba30` metal baseline (Hyprland stays; three-button SSD, Files CSD, reopen memory, update-transaction plugins, Start click-through, and measured Chromium float/maximize/restore/snap/F11 geometry). Independent source review plus direct pointer, pixel, health, and visual inspection are complete. The OS remains rejected because the product jobs above are incomplete; current execution authority is `plans/ultimate-product-completion-program-2026-08-26.md`.
