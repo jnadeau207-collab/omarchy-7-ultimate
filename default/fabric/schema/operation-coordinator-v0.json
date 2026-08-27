@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:operation-coordinator-v0",
+  "title": "Durable Fabric operation coordinator v0",
+  "description": "Closed owner, endpoint, provider, policy, resource, approval, checkpoint, and evidence projections for the non-RPC coordinator foundation.",
+  "$defs": {
+    "stableId": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 256 },
+    "revision": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "provider": {
+      "type": "object",
+      "required": ["id", "version", "fingerprint", "generation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/stableId" },
+        "version": { "$ref": "#/$defs/revision" },
+        "fingerprint": { "$ref": "#/$defs/digest" },
+        "generation": { "type": "integer", "minimum": 1, "maximum": 9223372036854775807 }
+      },
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "required": ["kind", "id", "revision"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/stableId" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[^/\\\\\\u0000]+$" },
+        "revision": { "$ref": "#/$defs/revision" }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "title", "explanation", "retryable", "changeState"],
+      "properties": {
+        "code": { "$ref": "#/$defs/stableId" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "explanation": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "retryable": { "type": "boolean" },
+        "changeState": { "enum": ["none", "unknown"] },
+        "recoveryActions": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "$ref": "#/$defs/stableId" } },
+        "failureType": { "type": "string", "minLength": 1, "maxLength": 160 }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "executor": { "const": "fake" },
+        "applied": { "type": "boolean" },
+        "rolledBack": { "type": "boolean" },
+        "validatedRevision": { "$ref": "#/$defs/revision" },
+        "disposition": { "enum": ["before", "desired", "diverged"] }
+      },
+      "additionalProperties": false
+    },
+    "resourceState": {
+      "type": "object",
+      "required": ["resourceId", "revision", "value"],
+      "properties": {
+        "resourceId": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[^/\\\\\\u0000]+$" },
+        "revision": { "$ref": "#/$defs/revision" },
+        "value": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "string", "maxLength": 256 },
+            {
+              "type": "object",
+              "required": ["partial"],
+              "properties": { "partial": { "const": true } },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "cancelled": { "type": "boolean" },
+        "mutationApplied": { "oneOf": [{ "type": "boolean" }, { "const": "unknown" }] },
+        "rolledBack": { "type": "boolean" },
+        "stateRevision": { "$ref": "#/$defs/revision" },
+        "validated": { "type": "boolean" },
+        "reconciled": { "type": "boolean" },
+        "superseded": { "type": "boolean" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      },
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "object",
+      "required": [
+        "schemaVersion", "operationId", "ownerId", "provider", "action", "capability",
+        "resource", "policyRevision", "bindingDigest", "status", "checkpoint",
+        "cancellationRequested", "eventCount", "lastSequence"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "operationId": { "type": "string", "format": "uuid", "pattern": "^[0-9a-f-]{36}$" },
+        "ownerId": { "$ref": "#/$defs/stableId" },
+        "provider": { "$ref": "#/$defs/provider" },
+        "action": { "$ref": "#/$defs/stableId" },
+        "capability": { "$ref": "#/$defs/stableId" },
+        "resource": { "$ref": "#/$defs/resource" },
+        "policyRevision": { "$ref": "#/$defs/revision" },
+        "bindingDigest": { "$ref": "#/$defs/digest" },
+        "status": { "enum": ["awaiting-approval", "authorized", "running", "interrupted", "reconciling", "rolling-back", "succeeded", "failed", "cancelled", "superseded"] },
+        "checkpoint": { "enum": ["preflight", "approval", "authorized", "applying", "applied", "validating", "rolling-back", "reconciling", "finished"] },
+        "cancellationRequested": { "type": "boolean" },
+        "eventCount": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "lastSequence": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "result": { "$ref": "#/$defs/result" },
+        "error": { "$ref": "#/$defs/error" },
+        "replayed": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "eventPayload": {
+      "type": "object",
+      "properties": {
+        "bindingDigest": { "$ref": "#/$defs/digest" },
+        "approvalId": { "type": "string", "pattern": "^approval\\.[0-9a-f]{32}$" },
+        "requested": { "type": "boolean" },
+        "requiresReconciliation": { "type": "boolean" },
+        "stateRevision": { "$ref": "#/$defs/revision" },
+        "expectedRevision": { "$ref": "#/$defs/revision" },
+        "expectedState": { "$ref": "#/$defs/resourceState" },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "cause": { "$ref": "#/$defs/error" },
+        "error": { "$ref": "#/$defs/error" },
+        "result": { "$ref": "#/$defs/result" },
+        "manualReconciliationRequired": { "type": "boolean" },
+        "observedRevision": { "$ref": "#/$defs/revision" },
+        "index": { "type": "integer", "minimum": 0, "maximum": 1024 }
+      },
+      "additionalProperties": false
+    },
+    "ledgerEntry": {
+      "type": "object",
+      "required": ["sequence", "eventType", "checkpoint", "status", "payload", "previousHash", "eventHash", "createdAt"],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "eventType": { "$ref": "#/$defs/stableId" },
+        "checkpoint": { "enum": ["preflight", "approval", "authorized", "applying", "applied", "validating", "rolling-back", "reconciling", "finished"] },
+        "status": { "enum": ["awaiting-approval", "authorized", "running", "interrupted", "reconciling", "rolling-back", "succeeded", "failed", "cancelled", "superseded"] },
+        "payload": { "$ref": "#/$defs/eventPayload" },
+        "previousHash": { "$ref": "#/$defs/digest" },
+        "eventHash": { "$ref": "#/$defs/digest" },
+        "createdAt": { "type": "string", "format": "date-time", "maxLength": 40 }
+      },
+      "additionalProperties": false
+    },
+    "ledger": {
+      "type": "object",
+      "required": ["schemaVersion", "operationId", "entries", "nextSequence", "hasMore", "headHash", "totalEntries"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "operationId": { "type": "string", "format": "uuid", "pattern": "^[0-9a-f-]{36}$" },
+        "entries": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/ledgerEntry" } },
+        "nextSequence": { "type": "integer", "minimum": 0, "maximum": 1024 },
+        "hasMore": { "type": "boolean" },
+        "headHash": { "$ref": "#/$defs/digest" },
+        "totalEntries": { "type": "integer", "minimum": 1, "maximum": 1024 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/state" },
+    { "$ref": "#/$defs/ledger" }
+  ]
+}

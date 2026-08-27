@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:operation-executor-v0",
+  "title": "Fixed-argv typed operation executor harness v0",
+  "description": "Closed non-privileged executor intent and result contracts. The executable and argv are code-owned and represented only by a template fingerprint.",
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "revision": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,255}$" },
+    "payload": {
+      "type": "object",
+      "required": ["resourceId", "desired"],
+      "properties": {
+        "resourceId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,159}$" },
+        "desired": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "intent": {
+      "type": "object",
+      "required": ["intentId", "templateFingerprint", "payload"],
+      "properties": {
+        "intentId": { "const": "test.settings.set" },
+        "templateFingerprint": { "$ref": "#/$defs/digest" },
+        "payload": { "$ref": "#/$defs/payload" }
+      },
+      "additionalProperties": false
+    },
+    "resourceState": {
+      "type": "object",
+      "required": ["resourceId", "revision", "value"],
+      "properties": {
+        "resourceId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,159}$" },
+        "revision": { "$ref": "#/$defs/revision" },
+        "value": { "oneOf": [{ "type": "boolean" }, { "type": "string", "maxLength": 256 }] }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["executor"],
+      "properties": {
+        "executor": { "const": "fake" },
+        "applied": { "type": "boolean" },
+        "rolledBack": { "type": "boolean" },
+        "disposition": { "enum": ["before", "desired", "diverged"] }
+      },
+      "additionalProperties": false
+    },
+    "applyResult": {
+      "type": "object",
+      "required": ["stateRevision", "expectedState", "evidence"],
+      "properties": {
+        "stateRevision": { "$ref": "#/$defs/revision" },
+        "expectedState": { "$ref": "#/$defs/resourceState" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      },
+      "additionalProperties": false
+    },
+    "reconcileResult": {
+      "type": "object",
+      "required": ["disposition", "stateRevision", "observedState", "evidence"],
+      "properties": {
+        "disposition": { "enum": ["before", "desired", "diverged"] },
+        "stateRevision": { "$ref": "#/$defs/revision" },
+        "observedState": { "$ref": "#/$defs/resourceState" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/intent" },
+    { "$ref": "#/$defs/applyResult" },
+    { "$ref": "#/$defs/reconcileResult" }
+  ]
+}
