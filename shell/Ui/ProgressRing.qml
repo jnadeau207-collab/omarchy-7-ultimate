@@ -78,13 +78,13 @@ Item {
       property real phase: 0.25
       running: root.indeterminate && root.visible
       loops: Animation.Infinite
+      onPhaseChanged: canvas.requestPaint()
       NumberAnimation {
         target: spin
         property: "phase"
         from: 0
         to: 1
         duration: 1100
-        onValueChanged: canvas.requestPaint()
       }
     }
   }
