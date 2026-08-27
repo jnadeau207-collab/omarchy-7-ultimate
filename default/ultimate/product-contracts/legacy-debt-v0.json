@@ -36,6 +36,14 @@
       "evidencePaths": ["shell/services/WindowModel.js", "shell/services/AppLibrary.qml", "default/ultimate/taskbar-pins.json"]
     },
     {
+      "id": "debt.identity.product-principal-unbound",
+      "state": "open",
+      "summary": "Standalone product apps receive separate Fabric sessions, but every same-user RPC client is currently admitted through the shared fabric.owner-rpc endpoint role and the caller-supplied client label carries no authority.",
+      "impact": "Settings and Agent Center cannot yet receive distinct grants or be authenticated as their reserved stable product principals.",
+      "exitCondition": "Daemon-owned endpoint admission binds each packaged product process to its reserved principal without trusting a caller-supplied label, and spoofing tests prove another same-user process cannot claim that role.",
+      "evidencePaths": ["default/fabric/omarchy_fabric/daemon.py", "default/fabric/omarchy_fabric/security/principal.py", "shell/apps/shared/ProductAppHost.qml"]
+    },
+    {
       "id": "debt.search.legacy-result-shapes",
       "state": "open",
       "summary": "Start, Run, and the system menu each build private result objects without the normalized identity, provenance, trust, typed action, route, and rank contract.",
