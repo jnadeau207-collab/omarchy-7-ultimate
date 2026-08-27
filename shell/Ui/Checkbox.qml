@@ -25,8 +25,8 @@ Item {
   readonly property bool hot: mouse.containsMouse || hasCursor
   readonly property int boxSize: Math.max(16, Math.round(Style.font.body * 1.25))
 
-  implicitWidth: box.implicitWidth + (label !== "" ? Style.space(8) + label.implicitWidth : 0)
-  implicitHeight: Math.max(boxSize, label !== "" ? label.implicitHeight : 0)
+  implicitWidth: box.implicitWidth
+  implicitHeight: box.implicitHeight
 
   Row {
     id: box
@@ -37,7 +37,6 @@ Item {
       id: square
       width: root.boxSize
       height: root.boxSize
-      anchors.verticalCenter: parent.verticalCenter
       radius: Math.max(3, Math.round(Style.cornerRadius * 0.5))
       color: root.checked ? root.accent
         : mouse.pressed ? Util.alpha(root.accent, 0.18)
@@ -59,12 +58,12 @@ Item {
     }
 
     Text {
+      id: labelText
       visible: root.label !== ""
       text: root.label
       color: root.foreground
       font.family: Style.font.family
       font.pixelSize: Style.font.body
-      anchors.verticalCenter: parent.verticalCenter
     }
   }
 
