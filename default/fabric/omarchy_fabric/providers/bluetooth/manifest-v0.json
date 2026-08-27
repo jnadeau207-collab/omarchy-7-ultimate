@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "v0",
+  "provider": "bluetooth.provider",
+  "providerVersion": "v0",
+  "minFabricProtocol": 0,
+  "maxFabricProtocol": 0,
+  "capabilities": [
+    "bluetooth.inspect",
+    "bluetooth.audio.pair"
+  ],
+  "actions": {
+    "inspect": {
+      "capability": "bluetooth.inspect",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:bluetooth:inventory-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:bluetooth:inventory-result:v0",
+        "version": "v0"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
+    },
+    "audio.pair": {
+      "capability": "bluetooth.audio.pair",
+      "mode": "operation",
+      "risk": "consequential",
+      "effects": [
+        "mutating",
+        "network"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:bluetooth:operation-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:bluetooth:operation-result:v0",
+        "version": "v0"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:bluetooth:operation-preflight:v0",
+        "version": "v0"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:bluetooth:operation-state:v0",
+        "version": "v0"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
+    }
+  }
+}

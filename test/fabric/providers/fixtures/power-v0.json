@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "v0",
+  "profiles": "performance\t0\nbalanced\t1\npower-saver\t0\n",
+  "source": "b true\n",
+  "battery": "percentage\t87%\nstate\tdischarging\nrate\t8.4W\nsize\t58Wh\ntime\t4h 12m\ncycles\t123\nthreshold\t80%\n"
+}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "v0",
+  "provider": "power.provider",
+  "providerVersion": "v0",
+  "minFabricProtocol": 0,
+  "maxFabricProtocol": 0,
+  "capabilities": [
+    "power.inspect",
+    "power.profile.set"
+  ],
+  "actions": {
+    "inspect": {
+      "capability": "power.inspect",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:power:inventory-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:power:inventory-result:v0",
+        "version": "v0"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
+    },
+    "profile.set": {
+      "capability": "power.profile.set",
+      "mode": "operation",
+      "risk": "low",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:power:operation-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:power:operation-result:v0",
+        "version": "v0"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:power:operation-preflight:v0",
+        "version": "v0"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:power:operation-state:v0",
+        "version": "v0"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
+    }
+  }
+}
