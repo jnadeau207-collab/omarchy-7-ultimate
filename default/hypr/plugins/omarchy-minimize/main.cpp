@@ -16,6 +16,7 @@
 #include "src/managers/fullscreen/FullscreenController.hpp"
 #include "src/managers/eventLoop/EventLoopManager.hpp"
 #include "src/config/shared/actions/ConfigActions.hpp"
+#include "src/layout/target/Target.hpp"
 #include "src/desktop/rule/windowRule/WindowRuleEffectContainer.hpp"
 #include "src/helpers/MiscFunctions.hpp"
 #include "src/output/Monitor.hpp"
