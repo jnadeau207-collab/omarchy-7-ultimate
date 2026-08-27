@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# omarchy:summary=Open the standalone Settings application
+# omarchy:args=[route|omarchy-settings://link] [options]
+# omarchy:examples=omarchy launch settings | omarchy launch settings settings.display.overview | omarchy launch settings omarchy-settings://network/overview?resourceId=network.radio.wifi
+
+set -euo pipefail
+
+source "$OMARCHY_PATH/shell/apps/shared/launch-product-app.bash"
+launch_product_app settings "$@"

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "omarchy.product-routes/v1",
+  "application": "agent-center",
+  "appId": "org.omarchy.AgentCenter",
+  "scheme": "omarchy-agent",
+  "defaultRoute": "agent.overview",
+  "routes": [
+    {
+      "id": "agent.overview",
+      "section": "Agent Center",
+      "title": "Overview",
+      "description": "Fabric connection, provider availability, and explicit backend readiness.",
+      "keywords": ["agent", "overview", "status"],
+      "providerId": "",
+      "deepLink": { "host": "overview", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.tasks",
+      "section": "Work",
+      "title": "Tasks & runs",
+      "description": "Managed tasks, runs, steps, cancellation, retry, budgets, and artifacts.",
+      "keywords": ["task", "run", "step", "budget", "cancel"],
+      "providerId": "",
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["task", "run"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    },
+    {
+      "id": "agent.approvals",
+      "section": "Work",
+      "title": "Pending approvals",
+      "description": "Consequential requests awaiting a human decision.",
+      "keywords": ["approval", "permission", "consent", "pending"],
+      "providerId": "",
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.automations",
+      "section": "Work",
+      "title": "Automations",
+      "description": "Schedules, events, retries, coalescing, and missed-run policy.",
+      "keywords": ["automation", "schedule", "event", "retry"],
+      "providerId": "",
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.activity",
+      "section": "History",
+      "title": "Activity & operations",
+      "description": "Durable operations, state, cancellation, reconciliation, and recovery.",
+      "keywords": ["activity", "operation", "progress", "recovery"],
+      "providerId": "",
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["operation"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    },
+    {
+      "id": "agent.history",
+      "section": "History",
+      "title": "History",
+      "description": "Completed work and durable evidence that can be queried safely.",
+      "keywords": ["history", "completed", "evidence", "ledger"],
+      "providerId": "",
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.context",
+      "section": "Trust",
+      "title": "Context",
+      "description": "What agents can see, where it came from, and when it expires.",
+      "keywords": ["context", "snapshot", "privacy", "scope"],
+      "providerId": "",
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.permissions",
+      "section": "Trust",
+      "title": "Permissions & trust",
+      "description": "Principals, grants, consent policy, revocation, and sandbox boundaries.",
+      "keywords": ["permission", "trust", "grant", "principal", "sandbox"],
+      "providerId": "",
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.usage",
+      "section": "Trust",
+      "title": "Usage",
+      "description": "Provider activity, limits, token use, cost, and task budgets.",
+      "keywords": ["usage", "token", "cost", "limit", "budget"],
+      "providerId": "",
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.providers",
+      "section": "System",
+      "title": "Providers & accounts",
+      "description": "Installed typed providers, lifecycle state, versions, and capabilities.",
+      "keywords": ["provider", "account", "capability", "version"],
+      "providerId": "",
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["provider"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    },
+    {
+      "id": "agent.artifacts",
+      "section": "System",
+      "title": "Artifacts",
+      "description": "Task-owned outputs with explicit scope and provenance.",
+      "keywords": ["artifact", "output", "file", "provenance"],
+      "providerId": "",
+      "argumentSchema": {}
+    },
+    {
+      "id": "agent.troubleshooting",
+      "section": "System",
+      "title": "Troubleshooting",
+      "description": "Connection health, compatibility, diagnostics, and recovery paths.",
+      "keywords": ["troubleshooting", "diagnostics", "health", "offline", "recovery"],
+      "providerId": "",
+      "argumentSchema": {}
+    }
+  ],
+  "entityDeepLinks": [
+    { "host": "task", "routeId": "agent.tasks", "entityType": "task" },
+    { "host": "run", "routeId": "agent.tasks", "entityType": "run" },
+    { "host": "operation", "routeId": "agent.activity", "entityType": "operation" },
+    { "host": "provider", "routeId": "agent.providers", "entityType": "provider" }
+  ]
+}

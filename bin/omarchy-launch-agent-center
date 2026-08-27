@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# omarchy:summary=Open the standalone Agent Center application
+# omarchy:args=[route|omarchy-agent://link] [options]
+# omarchy:examples=omarchy launch agent-center | omarchy launch agent-center agent.providers | omarchy launch agent-center omarchy-agent://operation/00000000-0000-0000-0000-000000000001
+
+set -euo pipefail
+
+source "$OMARCHY_PATH/shell/apps/shared/launch-product-app.bash"
+launch_product_app agent-center "$@"
