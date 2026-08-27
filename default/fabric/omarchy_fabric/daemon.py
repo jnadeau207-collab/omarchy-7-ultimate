@@ -46,6 +46,7 @@ from .protocol import (
     success_response,
     validate_request,
 )
+from .provider_registry import ProviderRegistry, TypedProvider
 from .reference_operation import ReferenceOperationManager
 from .security import EndpointAdmission, EndpointPrincipal, PrincipalKind, SessionBindingStore
 from .security.errors import SecurityValidationError
@@ -345,6 +346,7 @@ class DaemonConfig:
     socket_path: Path
     database_path: Path
     event_retention: int = DEFAULT_EVENT_RETENTION
+    typed_providers: tuple[TypedProvider, ...] = ()
 
 
 class ClientConnection:
@@ -504,6 +506,7 @@ class FabricDaemon:
         self.database = FabricDatabase(config.database_path)
         self.events = EventBroker(self.database, retention=config.event_retention)
         self.providers = FakeProviderRegistry(self.database)
+        self.typed_providers = ProviderRegistry(event_sink=self.events.publish)
         self.session_bindings = SessionBindingStore()
         self.reference_operations = ReferenceOperationManager(
             self.database,
@@ -524,6 +527,8 @@ class FabricDaemon:
         try:
             self.reference_operations.recover_startup()
             self.providers.load()
+            for provider in self.config.typed_providers:
+                self.typed_providers.register(provider)
             self._prepare_socket_path()
             old_umask = os.umask(0o077)
             try:
@@ -708,7 +713,10 @@ class FabricDaemon:
                 socket_path=self.config.socket_path,
                 started_monotonic=self.started_monotonic,
                 run_id=self.run_id,
-                provider_count=len(self.providers.providers),
+                provider_count=len(self.providers.providers) + self.typed_providers.provider_count,
+                fake_provider_count=len(self.providers.providers),
+                typed_provider_count=self.typed_providers.provider_count,
+                available_typed_provider_count=self.typed_providers.available_count,
                 subscription_count=self.events.subscription_count,
             )
         if request.method == "provider.register":
@@ -716,6 +724,11 @@ class FabricDaemon:
         if request.method == "provider.list":
             _require_exact_fields(request.params, required=())
             return {"providers": self.providers.list()}
+        if request.method == "provider.catalog":
+            _require_exact_fields(request.params, required=())
+            return {"providers": self.typed_providers.catalog()}
+        if request.method == "provider.read":
+            return await self._read_typed_provider(request.params)
         if request.method == "provider.invoke":
             return await self._invoke_provider(request, request.params)
         if request.method == "reference.operation.preflight":
@@ -858,6 +871,19 @@ class FabricDaemon:
             "actions": sorted(provider.actions),
             "disposition": disposition,
         }
+
+    async def _read_typed_provider(self, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        _require_exact_fields(params, required=("provider", "action", "arguments"))
+        provider_id = _stable_id(params["provider"], "provider")
+        action = _stable_id(params["action"], "action")
+        arguments = params["arguments"]
+        if not isinstance(arguments, dict):
+            raise FabricError(
+                "rpc.invalid-params",
+                "Fabric provider arguments are invalid",
+                "Typed provider read arguments must be a JSON object.",
+            )
+        return await self.typed_providers.read(provider_id, action, arguments)
 
     async def _invoke_provider(
         self,
