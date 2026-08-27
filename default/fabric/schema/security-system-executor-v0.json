@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:security-system-executor-v0",
+  "title": "Fixed user-Fabric to system-executor request",
+  "description": "consentNonce correlates consent and audit only; the executor independently validates state and dedicated Polkit authorization.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "operationId",
+    "action",
+    "arguments",
+    "providerVersion",
+    "stateRevision",
+    "approvalBinding",
+    "consentNonce"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "requestId": { "$ref": "common-v0.json#/$defs/uuid" },
+    "operationId": { "$ref": "common-v0.json#/$defs/uuid" },
+    "action": {
+      "enum": [
+        "packages.install",
+        "packages.remove",
+        "system.update",
+        "storage.format",
+        "account.delete",
+        "firewall.apply",
+        "firmware.update",
+        "recovery.restore",
+        "system.factory-reset"
+      ]
+    },
+    "arguments": { "type": "object" },
+    "providerVersion": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[^\\u0000]+$" },
+    "stateRevision": { "$ref": "common-v0.json#/$defs/stateRevision" },
+    "approvalBinding": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "consentNonce": { "$ref": "common-v0.json#/$defs/uuid" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "packages.install" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/packageInstall" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "packages.remove" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/packageRemove" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "system.update" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/systemUpdate" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "storage.format" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/storageFormat" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "account.delete" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/accountDelete" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "firewall.apply" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/firewallApply" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "firmware.update" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/firmwareUpdate" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "recovery.restore" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/recoveryRestore" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "system.factory-reset" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/factoryReset" } } }
+    }
+  ],
+  "$defs": {
+    "stableToken": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,159}$" },
+    "packageIds": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "$ref": "#/$defs/stableToken" } },
+    "confirmation": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[^\\u0000]+$" },
+    "packageInstall": {
+      "type": "object",
+      "required": ["package_ids"],
+      "properties": { "package_ids": { "$ref": "#/$defs/packageIds" } },
+      "additionalProperties": false
+    },
+    "packageRemove": {
+      "type": "object",
+      "required": ["package_ids", "preserve_data"],
+      "properties": { "package_ids": { "$ref": "#/$defs/packageIds" }, "preserve_data": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "systemUpdate": {
+      "type": "object",
+      "required": ["channel", "allow_without_restore_point"],
+      "properties": { "channel": { "enum": ["stable", "candidate"] }, "allow_without_restore_point": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "storageFormat": {
+      "type": "object",
+      "required": ["device_id", "filesystem", "label", "confirmation"],
+      "properties": {
+        "device_id": { "$ref": "#/$defs/stableToken" },
+        "filesystem": { "enum": ["btrfs", "ext4", "exfat", "fat32", "ntfs"] },
+        "label": { "type": "string", "maxLength": 64, "pattern": "^[^\\u0000\\r\\n]*$" },
+        "confirmation": { "$ref": "#/$defs/confirmation" }
+      },
+      "additionalProperties": false
+    },
+    "accountDelete": {
+      "type": "object",
+      "required": ["account_uid", "home_disposition", "confirmation"],
+      "properties": {
+        "account_uid": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "home_disposition": { "enum": ["preserve", "archive", "delete"] },
+        "archive_id": { "$ref": "#/$defs/stableToken" },
+        "confirmation": { "$ref": "#/$defs/confirmation" }
+      },
+      "additionalProperties": false
+    },
+    "firewallApply": {
+      "type": "object",
+      "required": ["profile_id", "rollback_seconds"],
+      "properties": {
+        "profile_id": { "$ref": "#/$defs/stableToken" },
+        "rollback_seconds": { "type": "integer", "minimum": 30, "maximum": 600 },
+        "keep_connection_id": { "$ref": "#/$defs/stableToken" }
+      },
+      "additionalProperties": false
+    },
+    "firmwareUpdate": {
+      "type": "object",
+      "required": ["device_id", "release_id"],
+      "properties": { "device_id": { "$ref": "#/$defs/stableToken" }, "release_id": { "$ref": "#/$defs/stableToken" } },
+      "additionalProperties": false
+    },
+    "recoveryRestore": {
+      "type": "object",
+      "required": ["restore_point_id", "confirmation"],
+      "properties": { "restore_point_id": { "$ref": "#/$defs/stableToken" }, "confirmation": { "$ref": "#/$defs/confirmation" } },
+      "additionalProperties": false
+    },
+    "factoryReset": {
+      "type": "object",
+      "required": ["baseline_id", "scope", "confirmation"],
+      "properties": {
+        "baseline_id": { "$ref": "#/$defs/stableToken" },
+        "scope": { "enum": ["system", "system-and-user-data"] },
+        "confirmation": { "$ref": "#/$defs/confirmation" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
