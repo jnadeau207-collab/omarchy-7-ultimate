@@ -189,10 +189,13 @@ grep -Fq 'leaf = "windows", enabled = false' "$ROOT/default/hypr/desktop-windows
   || fail "desktop mode must disable the windows animation parent, not only windowsIn"
 grep -Fq 'rounding = 0' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "desktop mode must zero theme rounding or only one window corner looks round"
-grep -Fq 'o.window({ tag = "chromium-based-browser" }, { rounding = 10 })' "$ROOT/default/hypr/desktop-windows.lua" \
-  || fail "Chromium CSD must restore the clipped right-hand corner at the compositor boundary"
+if grep -F 'tag = "chromium-based-browser"' "$ROOT/default/hypr/desktop-windows.lua" | grep -Fq 'rounding'; then
+  fail "Chromium must not use compositor rounding to mask a clipped native CSD corner"
+fi
 grep -Fq 'no_shadow = true' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "CSD clients must not get a second compositor shadow"
+grep -Fq 'no_blur = true' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "CSD clients must not get a compositor blur halo"
 grep -Fq 'resize_on_border = true' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "desktop windowing enables resize-on-border"
 grep -Fq 'extend_border_grab_area = 4' "$ROOT/default/hypr/desktop-windows.lua" \
@@ -215,6 +218,44 @@ grep -Fq 'load_omarchy_minimize' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "omarchy-minimize plugin source exists"
 grep -Fq 'setHidden' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "omarchy-minimize calls CWindow::setHidden"
+grep -Fq 'src/render/pass/SurfacePassElement.hpp' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize can inspect the exact Chromium surface-pass clamp"
+grep -Fq 'GET_TEX_BOX_SIGNATURE = "_ZN19CSurfacePassElement9getTexBoxEv"' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize pins the exact CSurfacePassElement::getTexBox ABI symbol"
+grep -Fq 'findFunctionsByName(PHANDLE, GET_TEX_BOX_SIGNATURE)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize resolves the exact getTexBox ABI symbol against the running compositor"
+grep -Fq '!matches.front().address' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize rejects a getTexBox lookup without an address"
+grep -Fq 'matches.front().signature != GET_TEX_BOX_SIGNATURE' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize validates the exact getTexBox mangled signature"
+grep -Fq 'matches.front().demangled != GET_TEX_BOX_DEMANGLED' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize validates the exact getTexBox demangled identity"
+grep -Fq 'g_chromiumWindows.contains(windowKey)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "surface-pass unclipping uses the preclassified Chromium window set"
+grep -Fq 'g_chromiumWindows.insert(key)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium windows are classified before the render hook reads them"
+grep -Fq 'g_chromiumWindows.erase(key)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "destroyed or reclassified windows leave the render-hook lookup set"
+grep -Fq 'if (element->m_data.squishOversized && !chromiumOverhang)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium native CSD overhang bypasses only Hyprland's oversized-surface clamp"
+grep -Fq 'windowBox.x -= CHROMIUM_FRAME_INSET' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium texture box expands left for the native CSD inset"
+grep -Fq 'windowBox.width += CHROMIUM_FRAME_INSET * 2.0' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium texture box keeps the complete native CSD width"
+grep -Fq 'cache.cachedTexBox = windowBox' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium texture-box hook preserves Hyprland's per-element cache"
+grep -Fq 'cache.texBoxCached = true' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium texture-box hook marks its cached result"
+grep -Fq 'g_getTexBoxHook->hook()' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize enables the Chromium texture-box trampoline"
+grep -Fq '!g_getTexBoxHook->m_original' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize refuses a texture-box hook without an original trampoline"
+grep -Fq 'removeFunctionHook(PHANDLE, g_getTexBoxHook)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "omarchy-minimize removes the Chromium texture-box trampoline on unload"
+grep -Fq 'if (element->m_data.surface && element->m_data.mainSurface)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "surface hook follows Hyprland's main-surface texture geometry"
+grep -Fq 'const auto surfaceSize = element->m_data.surface->m_current.size' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "surface hook covers child frame surfaces as well as the main surface"
 grep -Fq 'requestsMinimize' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "omarchy-minimize honors xdg/X11 CSD minimize requests"
 grep -Fq 'requestsMaximize' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
