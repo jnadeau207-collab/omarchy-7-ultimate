@@ -2,7 +2,7 @@
 
 One toggle, two profiles, one underlying platform:
 
-- **Desktop Mode** (default) — floating windows, Superbar, Start, visible affordances everywhere. Zero terminal ownership, zero hotkey prerequisites. Agent Center belongs here as native as Start (not implemented yet; `omarchy.agents` must stay visible until it is).
+- **Desktop Mode** (default) — floating windows, Superbar, Start, visible affordances everywhere. Zero terminal ownership, zero hotkey prerequisites. Agent Center belongs here as a native taskbar application alongside Start; its legacy `omarchy.agents` shell surface remains available as a launch shim.
 - **Power User Mode** — tiling-first layout, Omarchy's Super-key bindings, workspace-centric navigation, raw config editing, original Omarchy menu, optional top bar.
 
 Do not build two operating systems. A profile is a set of feature flags and defaults over the same shell, services, and theme system.
@@ -11,7 +11,7 @@ Do not build two operating systems. A profile is a set of feature flags and defa
 
 Flags mean **the capability exists in this profile today**, not "we intend to ship it." `default/ultimate/profiles/desktop.json` and `power-user.json` stay false for unimplemented surfaces. `ModeProfileService.qml` first-frame defaults must match `desktop.json`.
 
-Verified against the tree (2026-08-22):
+Verified against the tree (2026-08-27):
 
 - `desktopIcons` is false. There is no desktop icon surface (only a gallery label).
 - `quickSettings` is false. There is no Quick Settings composition. Superbar `TrayCluster.qml` hard-loads audio/bluetooth/network/monitor/power panels plus `Tray.qml` and clock — that is a notification-area cluster, not Quick Settings.
