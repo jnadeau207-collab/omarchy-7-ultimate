@@ -344,14 +344,6 @@ probe_surfaces_once() {
     return 1
   }
 
-  local required
-  for required in hyprctl jq coredumpctl sha256sum pgrep; do
-    command -v "$required" >/dev/null || {
-      echo "required probe tool is missing: $required" >&2
-      return 1
-    }
-  done
-
   local -r MAX_SURFACE_CYCLES=1
   local initial_pid initial_coredumps launched_files_pid=""
   initial_pid=$(compositor_pid) || {
