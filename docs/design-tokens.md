@@ -2,7 +2,7 @@
 
 Project Ultimate has one versioned semantic design-token contract. `bin/omarchy-theme-resolve-tokens` resolves an active or explicit `colors.toml`, zero or more `shell.toml` layers in precedence order, the compositor corner radius, and the checked-in v0 design defaults into `omarchy.design-tokens.v0`. The resolver is deterministic and Python-standard-library-only.
 
-The schema is `default/ultimate/design-system/tokens-v0.schema.json`, the non-palette defaults are `default/ultimate/design-system/defaults-v0.json`, and the resolver implementation is `default/ultimate/design-system/resolve_tokens.py`. Special product chrome colors live only in the defaults contract; QML and Lua do not carry private copies.
+The schema is `default/ultimate/design-system/tokens-v0.schema.json`, the non-palette defaults are `default/ultimate/design-system/defaults-v0.json`, and the resolver implementation is `default/ultimate/design-system/resolve_tokens.py`. Density and large-text defaults live in that defaults contract alongside special product chrome colors; QML and Lua do not carry private copies.
 
 The active outputs are:
 
@@ -34,7 +34,7 @@ The v0 payload covers all of the following groups:
 | `elevation` | none, low, medium, and high |
 | `effects` | blur and shadow enablement, dimensions, passes, color, and offsets |
 | `motion` | fast, normal, and slow milliseconds, easing, and reduced state |
-| `accessibility` | reduced motion, high contrast, declared thresholds, and measured role contrast |
+| `accessibility` | reduced motion, high contrast, large-text activation and scale, declared thresholds, and measured role contrast |
 | `components` | shared control, row, panel, popup, field, taskbar, and caption metrics |
 
 Color strings use lower-case Qt notation: opaque colors are `#rrggbb`, while translucent colors are `#aarrggbb`. Every dimensional field names its unit (`Px` or `Ms`) in the canonical JSON. Density scale is unitless.
@@ -71,6 +71,8 @@ scale = 1.25
 [tokens-accessibility]
 reduced-motion = true
 high-contrast = false
+large-text = true
+text-scale = 1.25
 
 [tokens-focus]
 ring = "accent"
@@ -88,6 +90,16 @@ Color overrides accept a canonical palette role or a Qt hex color. Pixel values 
 
 The resolver records source SHA-256 digests without embedding machine-specific paths or timestamps. Identical inputs produce byte-identical JSON. It fully resolves and validates both payloads before staging either file, writes temporary files in the destination directory, fsyncs them, and replaces outputs atomically. Invalid input cannot overwrite the last known good output. Legacy themes with low-contrast muted text remain representable and expose their measured secondary-text ratio; primary text and caption controls always meet their enforced thresholds, while high-contrast mode additionally enforces secondary and selection contrast.
 
+The optional `largeText` and `textScale` fields extend the existing v0 payload without invalidating a previously published v0 file. Newly resolved payloads always emit both fields; `Tokens.qml` supplies `false` and `1.0` defaults when reading an older payload. `text-scale` accepts `1` through `2` and only changes shared typography when `large-text` is active.
+
+## Semantic UI profiles
+
+`qs.Commons.SemanticProfile` is the opt-in presentation seam for shared QML controls. It combines density, display scale, high contrast, reduced motion, large text, text scale, locale stress, layout direction, and semantic palette roles without mutating the process-wide theme. Passing no `semanticProfile` retains each control's historical colors and geometry. Passing a profile activates density-aware spacing, the 28 px compact, 32 px comfortable, or 44 px touch target, profile typography, visible high-contrast focus, pseudo-localized copy, bidirectional layout where the container supports it, and zero-duration nonessential motion.
+
+`qs.Commons.Semantics` owns the canonical operation vocabulary and profile-aware helpers. The vocabulary is success, no-op, progress, denial, failure, cancel, restart, and recovery. Every definition includes a text label, explanation, tone, non-color symbol, and primary action. `qs.Ui.OperationStatus`, `OperationDialog`, and `DestructiveDialog` render that vocabulary. The destructive dialog always initializes on Cancel and includes visible consequence and recovery copy.
+
+The first shared controls exposing this seam are Button, IconButton, Card, Checkbox, RadioButton, Toggle, ToggleSwitch, TextField, ProgressBar, ProgressRing, Toast, EmptyState, ErrorState, OperationStatus, OperationDialog, and DestructiveDialog. Interactive controls declare an accessible name and role, and invoke the same signal from the attached press action as from pointer activation. The installed Qt runtime does not expose `Accessible.value`; determinate progress therefore publishes the percentage through `Accessible.description` and labels that fallback honestly until a native value interface is feasible.
+
 ## Compatibility chrome adapter
 
 `default/ultimate/chrome-tokens.json`, `default/ultimate/chrome-tokens-light.json`, `themes/ultimate-dark/chrome-tokens.json`, and `themes/ultimate-light/chrome-tokens.json` are generated `omarchy.chrome-adapter.v0` projections. They are retained for one compatibility window so an older installed revision can still read a theme staged by a newer checkout. They are not token inputs and must remain byte-identical to resolver output for the matching Ultimate palette.
@@ -102,6 +114,14 @@ Run the hermetic contract suite:
 ./test/shell.d/design-token-contract-test.sh
 ```
 
-It proves deterministic and idempotent output, exact dark/light compatibility projections, every contract group, all shipped themes, layered overrides, reduced motion, units/ranges, contrast measurement, malformed-input errors, atomic last-known-good retention, and shared QML/Lua consumption.
+It proves deterministic and idempotent output, exact dark/light compatibility projections, every contract group, all shipped themes, layered density and accessibility overrides including large text, reduced motion, units/ranges, contrast measurement, malformed-input errors, atomic last-known-good retention, and shared QML/Lua consumption.
+
+Run the semantic UI contract suite with:
+
+```bash
+./test/shell.d/semantic-ui-contract-test.sh
+```
+
+It checks the exhaustive operation vocabulary, color-independent state metadata, 4.5:1 fixture text and state contrast, pointer and touch targets, reduced-motion durations, large-text scale, RTL edge mirroring, pseudo-localization placeholder safety, finite layout estimates, shared-control accessibility declarations, cancel-first destructive behavior, executable gallery composition, and a live Quickshell geometry fixture when a compositor is available.
 
 Because the default dark and light projections are deliberately pixel-identical and this tranche changes no geometry, metal integration should use a fresh compositor process and the locked native-chrome campaign: activate Ultimate dark, capture Superbar plus Chrome fresh float, native maximize, three restore cycles, left/right snap, F11 enter/exit, and caption close/maximize/minimize hover; repeat the same states after activating Ultimate light. Inspect each full-resolution screenshot for the exact right and bottom pixels, caption controls, glass/text/edge colors, clipping, drift, focus, and stale dark/light state. Never hot-unload or hot-reload hyprbars. Preserve the Git SHA, resolver payload and adapter hashes, compositor log, screenshots, and inspection result in the candidate evidence bundle.

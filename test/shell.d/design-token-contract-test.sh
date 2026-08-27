@@ -16,6 +16,13 @@ export OMARCHY_PATH="$ROOT"
 grep -Fq '# omarchy:hidden=true' "$resolver" || fail "semantic token resolver is hidden internal plumbing"
 python3 -m json.tool "$schema" >/dev/null || fail "semantic token schema is valid JSON"
 python3 -m json.tool "$defaults" >/dev/null || fail "semantic token defaults are valid JSON"
+python3 - "$defaults" <<'PY'
+import json
+import sys
+
+defaults = json.load(open(sys.argv[1], encoding="utf-8"))
+assert defaults["accessibility"] == {"largeText": False, "textScale": 1.25}
+PY
 pass "semantic token contract sources are valid and routed as hidden plumbing"
 
 dark="$tmpdir/dark.json"
@@ -93,6 +100,8 @@ for payload in (dark, light):
     assert payload["motion"]["normalMs"] == 200
     assert payload["components"]["taskbarHeight"] == 48
     assert payload["components"]["captionHeight"] == 32
+    assert payload["accessibility"]["largeText"] is False
+    assert payload["accessibility"]["textScale"] == 1.0
     assert payload["accessibility"]["contrast"]["primaryText"] >= 4.5
 
 assert dark["chrome"] == {
@@ -131,6 +140,8 @@ scale = 1.25
 
 [tokens-accessibility]
 reduced-motion = true
+large-text = true
+text-scale = 1.4
 
 [tokens-chrome]
 glow = "#123456"
@@ -169,6 +180,8 @@ assert payload["components"]["taskbarHeight"] == 64
 assert payload["density"] == {"mode": "touch", "scale": 1.25}
 assert payload["motion"]["reduced"] is True
 assert payload["motion"]["fastMs"] == payload["motion"]["normalMs"] == payload["motion"]["slowMs"] == 0
+assert payload["accessibility"]["largeText"] is True
+assert payload["accessibility"]["textScale"] == 1.4
 assert payload["chrome"]["glow"] == "#654321"
 assert payload["radii"] == {"small": 5, "medium": 9, "large": 13}
 print("ok - layered shell overrides resolve typography, density, accessibility, radii, color, and component metrics")

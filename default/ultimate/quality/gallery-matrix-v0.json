@@ -30,6 +30,17 @@
     "value": "description-fallback-blocked",
     "action": "attached"
   },
+  "fixtureImplementation": "shared-controls-with-opt-in-semantic-profiles",
+  "automatedChecks": {
+    "minimumNormalTextContrast": 4.5,
+    "minimumLargeTextAndControlContrast": 3.0,
+    "minimumPointerTargetPx": 24,
+    "minimumTouchTargetPx": 44,
+    "finiteLayoutBounds": true,
+    "colorIndependentStateSymbols": true,
+    "reducedMotionDurationMs": 0,
+    "destructiveDefaultAction": "cancel"
+  },
   "renderCases": [
     {
       "id": "dark-comfortable-pointer",

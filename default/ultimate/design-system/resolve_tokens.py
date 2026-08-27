@@ -155,6 +155,11 @@ def load_defaults(path: Path) -> tuple[dict[str, Any], bytes]:
                 require_float(item, f"chromeProfiles.{mode}.{key}", 0, 1)
             else:
                 canonical_color(item, f"chromeProfiles.{mode}.{key}")
+    accessibility = value.get("accessibility")
+    if not isinstance(accessibility, dict):
+        raise TokenError("design defaults are missing accessibility")
+    parse_bool(accessibility.get("largeText"), "accessibility.largeText")
+    require_float(accessibility.get("textScale"), "accessibility.textScale", 1, 2)
     return value, raw
 
 
@@ -478,6 +483,7 @@ BOOL_OVERRIDES = {
     "effects.shadow-enabled": "effects.shadow.enabled",
     "accessibility.reduced-motion": "accessibility.reducedMotion",
     "accessibility.high-contrast": "accessibility.highContrast",
+    "accessibility.large-text": "accessibility.largeText",
 }
 
 
@@ -534,7 +540,7 @@ def apply_explicit_overrides(payload: dict[str, Any], shell: dict[str, Any], pal
             raise TokenError("tokens.motion.easing must be a non-empty string of at most 64 characters")
         payload["motion"]["easing"] = easing.strip()
 
-    known.update(("tokens.density.mode", "tokens.density.scale", "tokens.typography.family", "tokens.icons.family"))
+    known.update(("tokens.density.mode", "tokens.density.scale", "tokens.accessibility.text-scale", "tokens.typography.family", "tokens.icons.family"))
     if "tokens.density.mode" in shell:
         mode = shell["tokens.density.mode"]
         if mode not in ("compact", "comfortable", "touch"):
@@ -542,6 +548,10 @@ def apply_explicit_overrides(payload: dict[str, Any], shell: dict[str, Any], pal
         payload["density"]["mode"] = mode
     if "tokens.density.scale" in shell:
         payload["density"]["scale"] = require_float(shell["tokens.density.scale"], "tokens.density.scale", 0.5, 3)
+    if "tokens.accessibility.text-scale" in shell:
+        payload["accessibility"]["textScale"] = require_float(
+            shell["tokens.accessibility.text-scale"], "tokens.accessibility.text-scale", 1, 2
+        )
     for full, group in (("tokens.typography.family", "typography"), ("tokens.icons.family", "icons")):
         if full in shell:
             family = shell[full]
@@ -643,6 +653,13 @@ def build_payload(
     density_mode = shell.get("tokens.density.mode", defaults["density"]["default"])
     if density_mode not in defaults["density"]["scales"]:
         raise TokenError("tokens.density.mode must be compact, comfortable, or touch")
+    accessibility_defaults = defaults["accessibility"]
+    large_text = shell_bool(
+        shell,
+        "tokens.accessibility.large-text",
+        parse_bool(accessibility_defaults["largeText"], "accessibility.largeText"),
+    )
+    large_text_scale = require_float(accessibility_defaults["textScale"], "accessibility.textScale", 1, 2)
     density_scale = defaults["density"]["scales"][density_mode]
 
     motion = defaults["motion"]
@@ -761,6 +778,9 @@ def build_payload(
         "accessibility": {
             "reducedMotion": shell_bool(shell, "tokens.accessibility.reduced-motion", False),
             "highContrast": shell_bool(shell, "tokens.accessibility.high-contrast", False),
+            "largeText": large_text,
+            "textScale": shell_number(shell, "tokens.accessibility.text-scale", large_text_scale, 1, 2)
+            if large_text else 1.0,
             "minimumTextContrast": 4.5,
             "minimumLargeTextContrast": 3.0,
             "contrast": {},
@@ -824,6 +844,7 @@ def validate_payload(payload: dict[str, Any]) -> None:
     for key in ("fastMs", "normalMs", "slowMs"):
         require_int(payload["motion"][key], f"motion.{key}", 0, 60000)
     require_float(payload["density"]["scale"], "density.scale", 0.5, 3)
+    require_float(payload["accessibility"]["textScale"], "accessibility.textScale", 1, 2)
     if payload["density"]["mode"] not in ("compact", "comfortable", "touch"):
         raise TokenError("density.mode must be compact, comfortable, or touch")
 

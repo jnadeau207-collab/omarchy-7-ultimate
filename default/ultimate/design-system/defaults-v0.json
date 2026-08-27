@@ -8,6 +8,10 @@
       "touch": 1.25
     }
   },
+  "accessibility": {
+    "largeText": false,
+    "textScale": 1.25
+  },
   "chromeProfiles": {
     "dark": {
       "glass": "#1c1c1e",

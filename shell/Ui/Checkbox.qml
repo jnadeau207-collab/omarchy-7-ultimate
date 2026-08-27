@@ -9,11 +9,14 @@ Item {
 
   property bool checked: false
   property string label: ""
+  property real labelMaximumWidth: 0
+  property var semanticProfile: null
+  property string accessibleDescription: ""
   property bool hasCursor: false
   property bool focusable: false
 
-  property color foreground: Tokens.text.primary
-  property color accent: Tokens.accent.primary
+  property color foreground: semanticProfile ? semanticProfile.textPrimary : Tokens.text.primary
+  property color accent: semanticProfile ? semanticProfile.accent : Tokens.accent.primary
 
   signal toggled()
   signal hovered(bool isHovered)
@@ -23,15 +26,23 @@ Item {
   Keys.onSpacePressed: if (focusable) root.toggled()
 
   readonly property bool hot: mouse.containsMouse || hasCursor
-  readonly property int boxSize: Math.max(16, Math.round(Style.font.body * 1.25))
+  readonly property int boxSize: Math.max(16, Math.round(Semantics.font(semanticProfile, Style.font.body) * 1.25))
 
   implicitWidth: box.implicitWidth
-  implicitHeight: box.implicitHeight
+  implicitHeight: Math.max(box.implicitHeight, semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+
+  Accessible.role: Accessible.CheckBox
+  Accessible.name: Semantics.text(semanticProfile, label)
+  Accessible.description: accessibleDescription !== "" ? accessibleDescription
+    : Semantics.text(semanticProfile, checked ? "Checked" : "Not checked")
+  Accessible.onPressAction: {
+    if (root.enabled) root.toggled()
+  }
 
   Row {
     id: box
     anchors.verticalCenter: parent.verticalCenter
-    spacing: Style.space(8)
+    spacing: Semantics.metric(root.semanticProfile, Style.space(8))
 
     BorderSurface {
       id: square
@@ -42,15 +53,17 @@ Item {
         : mouse.pressed ? Util.alpha(root.accent, 0.18)
         : root.hot ? Util.alpha(root.foreground, 0.08)
         : "transparent"
-      borderSpec: Border.controlSpec(root.checked ? "selected" : (root.hot || (root.focusable && root.activeFocus) ? "hover-cursor" : "normal"), root.foreground, root.accent)
+      borderSpec: root.semanticProfile && root.semanticProfile.highContrast && root.focusable && root.activeFocus
+        ? Border.flat(root.semanticProfile.focusRing, root.semanticProfile.focusWidth)
+        : Border.controlSpec(root.checked ? "selected" : (root.hot || (root.focusable && root.activeFocus) ? "hover-cursor" : "normal"), root.foreground, root.accent)
 
-      Behavior on color { ColorAnimation { duration: Tokens.motion.fast } }
+      Behavior on color { ColorAnimation { duration: Semantics.duration(root.semanticProfile, Tokens.motion.fast) } }
 
       Text {
         anchors.centerIn: parent
         visible: root.checked
         text: "\u2713"
-        color: Tokens.surface.base
+        color: root.semanticProfile ? root.semanticProfile.surfaceBase : Tokens.surface.base
         font.family: Style.font.family
         font.pixelSize: root.boxSize * 0.8
         font.bold: true
@@ -60,10 +73,12 @@ Item {
     Text {
       id: labelText
       visible: root.label !== ""
-      text: root.label
+      text: Semantics.text(root.semanticProfile, root.label)
+      width: root.labelMaximumWidth > 0 ? root.labelMaximumWidth : implicitWidth
       color: root.foreground
       font.family: Style.font.family
-      font.pixelSize: Style.font.body
+      font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
+      wrapMode: Text.WordWrap
     }
   }
 

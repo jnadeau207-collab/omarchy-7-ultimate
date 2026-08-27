@@ -4,13 +4,15 @@ The provisional `quality-v0` contracts under `default/ultimate/quality/` establi
 
 ## Accessible state gallery
 
-The dev gallery includes a deterministic quality matrix. It renders all eight consequential-operation outcomes: success, no-op, progress, denial, failure, cancel, restart, and recovery. Separate presentation fixtures cover dark and light themes, compact, comfortable, and touch density, 1× through 2× scale, standard and high contrast, full and reduced motion, regular and large text, English, pseudo-localized, and long strings, left-to-right and right-to-left layout, and pointer and keyboard focus. This is pairwise presentation coverage rather than a misleading full Cartesian product.
+The dev gallery includes a deterministic executable quality matrix. It renders all eight consequential-operation outcomes through the shared `OperationStatus` primitive: success, no-op, progress, denial, failure, cancel, restart, and recovery. Separate `SemanticFixture` instances mount the real shared Button, TextField, Checkbox, ToggleSwitch, and ProgressBar controls under opt-in profiles covering dark and light themes, compact, comfortable, and touch density, 1× through 2× scale, standard and high contrast, full and reduced motion, regular and large text, English, pseudo-localized, and long strings, left-to-right and right-to-left layout, and pointer and keyboard focus. This is pairwise presentation coverage rather than a misleading full Cartesian product, and the matrix contains no rectangle-only mock delegates.
 
-The gallery fixtures attach semantic names, roles, and actions. The metal Qt `Accessible` attached type has no `value` property, so numeric state is carried in the accessible description as an explicit fallback while the required AT-SPI value interface remains blocked. The source contract records that distinction; it does not claim that the production shell is accessible.
+The gallery fixtures attach semantic names, roles, descriptions, and actions. State is carried by a visible label and standard Unicode symbol as well as color. Automated checks enforce 4.5:1 normal-text contrast in both fixture palettes, a 24 px global pointer floor, a 44 px touch floor, finite layout estimates under long and pseudo-localized copy, zero-duration nonessential motion, placeholder-preserving pseudo-localization, actual RTL layout direction, and cancel-first destructive dialogs. The metal Qt `Accessible` attached type has no `value` property, so numeric state is carried in the accessible description as an explicit fallback while the required AT-SPI value interface remains blocked. The source contract records that distinction; it does not claim that the production shell or assistive-client path has passed.
+
+Shared controls preserve their existing visual defaults until a caller passes `semanticProfile`. This keeps the tranche safe to land independently of product-surface rollout while allowing the gallery and runtime fixture to exercise the full system today. Central surface owners still need to pass profiles, define focus-modality ownership, and complete disposable-VM assistive-client proof before accessibility can be a release claim.
 
 ## AT-SPI feasibility
 
-AT-SPI tooling is installed and the Python GI bridge initializes on the metal reference. The result is still blocked: before the compositor incident, AT-SPI exposed a `quickshell` application with zero children; after Quickshell restoration, it exposed no Quickshell application. The shell also lacks a working numeric value interface. The shell, secure lock, and Polkit surfaces therefore have no assistive-client proof. Graphical OOBE is honestly recorded as missing because the current provisioning experience is terminal based.
+AT-SPI tooling is installed and the Python GI bridge initializes on the metal reference. A fresh `2026-08-27T00:13:56-04:00` traversal ran with the executable semantic gallery open. It exposed `xdg-desktop-portal-gtk`, `udiskie`, and `quickshell` applications, but all three reported zero children. The result is still blocked: the new QML name, role, description, and action attachments do not cross the Quickshell/Wayland export boundary into an assistive-client tree, and the shell still lacks a working numeric value interface. The shell, secure lock, and Polkit surfaces therefore have no assistive-client proof. Graphical OOBE is honestly recorded as missing because the current provisioning experience is terminal based.
 
 `test/acceptance.d/ultimate-accessibility-performance-test.sh` is a disposable-VM release gate. Missing tools, missing surface records, missing semantics, blocked feasibility, and absent surfaces are failures, never skips. Do not run it in an active development session.
 
@@ -45,3 +47,11 @@ OMARCHY_QUALITY_DISPOSABLE_VM=1 omarchy-dev-quality-baseline probe-surfaces-once
 ```
 
 The normal aggregate test runner does not execute graphical acceptance tests.
+
+Run the hermetic semantic matrix contract with:
+
+```bash
+./test/shell.d/semantic-ui-contract-test.sh
+```
+
+When a reachable compositor and Quickshell are present, that test also instantiates the shared controls and operation/dialog primitives and verifies live implicit geometry, target sizes, reduced motion, placeholder safety, RTL logical edges, state coverage, and the destructive default. Without a compositor it still runs every pure contract and source-structure check and reports the runtime skip explicitly.

@@ -13,12 +13,15 @@ Checkbox 1.0 Checkbox.qml
 ConfirmDialog 1.0 ConfirmDialog.qml
 CursorSurface 1.0 CursorSurface.qml
 Dropdown 1.0 Dropdown.qml
+DestructiveDialog 1.0 DestructiveDialog.qml
 EmptyState 1.0 EmptyState.qml
 ErrorState 1.0 ErrorState.qml
 IconButton 1.0 IconButton.qml
 KeyboardPanel 1.0 KeyboardPanel.qml
 MultiSelect 1.0 MultiSelect.qml
 NumberField 1.0 NumberField.qml
+OperationDialog 1.0 OperationDialog.qml
+OperationStatus 1.0 OperationStatus.qml
 OpticalGlyph 1.0 OpticalGlyph.qml
 Panel 1.0 Panel.qml
 PanelActionButton 1.0 PanelActionButton.qml

@@ -15,16 +15,21 @@ BorderSurface {
 
   property string iconText: ""
   property string tooltipText: ""
+  property var semanticProfile: null
+  property string accessibleName: tooltipText
+  property string accessibleDescription: ""
 
   property bool danger: false
   property bool hasCursor: false
   property bool focusable: false
+  property bool forceFocusVisible: false
   property bool bordered: false
   property bool selected: false
 
   // Square by default; consumers can stretch via explicit width/height.
-  property int size: Math.max(28, Math.round(Style.spacing.controlHeight * 0.9))
-  property real glyphSize: Style.font.icon
+  property int size: Math.max(28, Math.round(Style.spacing.controlHeight * 0.9),
+    semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+  property real glyphSize: Semantics.font(semanticProfile, Style.font.icon)
 
   signal clicked()
   signal rightClicked()
@@ -40,24 +45,36 @@ BorderSurface {
   radius: Style.cornerRadius
 
   readonly property bool hot: mouse.containsMouse || hasCursor
-  readonly property color _stateColor: danger ? Tokens.state.danger : Tokens.accent.primary
-  readonly property color _fg: Tokens.text.primary
+  readonly property bool _showFocusRing: focusable && (activeFocus || forceFocusVisible)
+  readonly property color _stateColor: danger
+    ? Semantics.toneColor("danger", semanticProfile)
+    : Semantics.toneColor("accent", semanticProfile)
+  readonly property color _fg: semanticProfile ? semanticProfile.textPrimary : Tokens.text.primary
 
   color: mouse.pressed ? Util.alpha(_stateColor, 0.28)
-    : (focusable && activeFocus) ? Util.alpha(_stateColor, 0.20)
+    : _showFocusRing ? Util.alpha(_stateColor, 0.20)
     : hot ? Util.alpha(_stateColor, 0.14)
     : selected ? Util.alpha(_stateColor, 0.18)
     : "transparent"
 
-  borderSpec: bordered || hot || (focusable && activeFocus)
-    ? Border.controlSpec(hot || (focusable && activeFocus) ? "hover-cursor" : "normal", _fg, _stateColor)
+  borderSpec: _showFocusRing && semanticProfile && semanticProfile.highContrast
+    ? Border.flat(semanticProfile.focusRing, semanticProfile.focusWidth)
+    : bordered || hot || _showFocusRing
+    ? Border.controlSpec(hot || _showFocusRing ? "hover-cursor" : "normal", _fg, _stateColor)
     : Border.none()
 
-  Behavior on color { ColorAnimation { duration: Tokens.motion.fast } }
+  Behavior on color { ColorAnimation { duration: Semantics.duration(root.semanticProfile, Tokens.motion.fast) } }
+
+  Accessible.role: Accessible.Button
+  Accessible.name: accessibleName !== "" ? Semantics.text(semanticProfile, accessibleName) : "Icon action"
+  Accessible.description: accessibleDescription
+  Accessible.onPressAction: {
+    if (root.enabled) root.clicked()
+  }
 
   ToolTip {
     visible: root.tooltipText !== "" && mouse.containsMouse
-    text: root.tooltipText
+    text: Semantics.text(root.semanticProfile, root.tooltipText)
     delay: 400
     padding: 0
     background: BorderSurface {
@@ -65,10 +82,10 @@ BorderSurface {
       radius: Style.cornerRadius
     }
     contentItem: Text {
-      text: root.tooltipText
+      text: Semantics.text(root.semanticProfile, root.tooltipText)
       color: Tokens.text.primary
       font.family: Style.font.family
-      font.pixelSize: Style.font.bodySmall
+      font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
     }
   }
 

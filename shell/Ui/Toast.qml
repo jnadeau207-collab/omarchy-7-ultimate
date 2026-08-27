@@ -25,39 +25,38 @@ Card {
   signal actionClicked(int index)
   signal dismissed()
 
-  readonly property color _tone: tone === "danger" ? Tokens.state.danger
-    : tone === "success" ? Tokens.state.success
-    : tone === "warning" ? Tokens.state.warning
-    : tone === "info" ? Tokens.state.info
-    : Tokens.accent.primary
+  readonly property color _tone: Semantics.toneColor(tone, semanticProfile)
 
   elevation: "raised"
   implicitWidth: 360
-  implicitHeight: column.implicitHeight + Style.spacing.controlPaddingY * 2
+  implicitHeight: column.implicitHeight + Semantics.metric(semanticProfile, Style.spacing.controlPaddingY) * 2
+  Accessible.role: Accessible.AlertMessage
+  Accessible.name: Semantics.text(semanticProfile, title !== "" ? title : "Notification")
+  Accessible.description: Semantics.text(semanticProfile, message)
 
   // State stripe: color plus the title carrying meaning, so the tone is
   // never signaled by color alone.
   Rectangle {
-    width: Style.space(3)
+    width: Semantics.metric(root.semanticProfile, Style.space(3), 3)
     height: parent.height
-    radius: parent.radius
+    radius: root.radius
     color: root._tone
   }
 
   Column {
     id: column
     anchors.left: parent.left
-    anchors.leftMargin: Style.space(12)
+    anchors.leftMargin: Semantics.metric(root.semanticProfile, Style.space(12))
     anchors.right: parent.right
-    anchors.rightMargin: Style.spacing.controlPaddingX
+    anchors.rightMargin: Semantics.metric(root.semanticProfile, Style.spacing.controlPaddingX)
     anchors.verticalCenter: parent.verticalCenter
-    spacing: Style.space(6)
+    spacing: Semantics.metric(root.semanticProfile, Style.space(6))
 
     Text {
-      text: root.title
-      color: Tokens.text.primary
+      text: Semantics.text(root.semanticProfile, root.title)
+      color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
       font.family: Style.font.family
-      font.pixelSize: Style.font.body
+      font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
       font.bold: true
       width: parent.width
       elide: Text.ElideRight
@@ -65,16 +64,16 @@ Card {
 
     Text {
       visible: root.message !== ""
-      text: root.message
-      color: Tokens.text.secondary
+      text: Semantics.text(root.semanticProfile, root.message)
+      color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary
       font.family: Style.font.family
-      font.pixelSize: Style.font.bodySmall
+      font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
       width: parent.width
       wrapMode: Text.WordWrap
     }
 
     Row {
-      spacing: Style.space(8)
+      spacing: Semantics.metric(root.semanticProfile, Style.space(8))
 
       Repeater {
         model: root.actions
@@ -83,6 +82,7 @@ Card {
           required property var modelData
           required property int index
           text: typeof modelData === "string" ? modelData : String(modelData.label || "")
+          semanticProfile: root.semanticProfile
           focusable: true
           onClicked: {
             root.actionClicked(index)

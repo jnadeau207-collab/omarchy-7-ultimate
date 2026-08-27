@@ -10,34 +10,38 @@ Column {
   property string iconText: "\u25cb"
   property string title: ""
   property string message: ""
+  property var semanticProfile: null
 
-  spacing: Style.space(8)
+  spacing: Semantics.metric(semanticProfile, Style.space(8))
+  Accessible.role: Accessible.Pane
+  Accessible.name: Semantics.text(semanticProfile, title !== "" ? title : "Empty state")
+  Accessible.description: Semantics.text(semanticProfile, message)
 
   Text {
     anchors.horizontalCenter: parent.horizontalCenter
     text: root.iconText
-    color: Tokens.text.disabled
+    color: root.semanticProfile ? root.semanticProfile.textDisabled : Tokens.text.disabled
     font.family: Style.font.family
-    font.pixelSize: Style.font.display
+    font.pixelSize: Semantics.font(root.semanticProfile, Style.font.display)
   }
 
   Text {
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.title !== ""
-    text: root.title
-    color: Tokens.text.secondary
+    text: Semantics.text(root.semanticProfile, root.title)
+    color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary
     font.family: Style.font.family
-    font.pixelSize: Style.font.body
+    font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
     font.bold: true
   }
 
   Text {
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.message !== ""
-    text: root.message
-    color: Tokens.text.disabled
+    text: Semantics.text(root.semanticProfile, root.message)
+    color: root.semanticProfile ? root.semanticProfile.textDisabled : Tokens.text.disabled
     font.family: Style.font.family
-    font.pixelSize: Style.font.bodySmall
+    font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
     horizontalAlignment: Text.AlignHCenter
     width: Math.min(root.width || 0, 420)
     wrapMode: Text.WordWrap

@@ -223,6 +223,8 @@
       "properties": {
         "reducedMotion": { "type": "boolean" },
         "highContrast": { "type": "boolean" },
+        "largeText": { "type": "boolean" },
+        "textScale": { "type": "number", "minimum": 1, "maximum": 2 },
         "minimumTextContrast": { "type": "number", "minimum": 1, "maximum": 21 },
         "minimumLargeTextContrast": { "type": "number", "minimum": 1, "maximum": 21 },
         "contrast": {
