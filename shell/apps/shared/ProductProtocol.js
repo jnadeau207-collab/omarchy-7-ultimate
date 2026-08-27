@@ -28,6 +28,9 @@ function isAppId(value) {
 function expectedScheme(application) {
   if (application === "settings") return "omarchy-settings"
   if (application === "agent-center") return "omarchy-agent"
+  if (application === "files") return "omarchy-files"
+  if (application === "software") return "omarchy-software"
+  if (application === "compatibility") return "omarchy-compatibility"
   return ""
 }
 
@@ -42,12 +45,16 @@ function validateArgument(value, contract) {
   if (contract.type === "boolean") return typeof value === "boolean"
   if (contract.type === "integer") return typeof value === "number" && isFinite(value) && Math.floor(value) === value
   if (contract.type === "enum") return Array.isArray(contract.values) && contract.values.indexOf(value) >= 0
+  if (contract.type === "text") {
+    return typeof value === "string" && Number.isInteger(contract.maxLength) &&
+      value.length <= contract.maxLength && !/[\u0000-\u001f\u007f]/.test(value)
+  }
   return false
 }
 
 function validateArgumentContract(contract) {
   if (!isObject(contract) || typeof contract.type !== "string") return "argument contract must be an object with a type"
-  var kinds = ["stable-id", "opaque-id", "boolean", "integer", "enum"]
+  var kinds = ["stable-id", "opaque-id", "boolean", "integer", "enum", "text"]
   if (kinds.indexOf(contract.type) < 0) return "argument type is unsupported"
   var keys = ["type"]
   if (Object.prototype.hasOwnProperty.call(contract, "optional")) {
@@ -55,7 +62,13 @@ function validateArgumentContract(contract) {
     keys.push("optional")
   }
   if (contract.type === "enum") keys.push("values")
+  if (contract.type === "text") keys.push("maxLength")
   if (!exactKeys(contract, keys)) return "argument contract has unexpected or missing fields"
+  if (contract.type === "text") {
+    if (!Number.isInteger(contract.maxLength) || contract.maxLength < 1 || contract.maxLength > 512)
+      return "argument text bound is invalid"
+    return ""
+  }
   if (contract.type !== "enum") return ""
   if (!Array.isArray(contract.values) || contract.values.length < 1 || contract.values.length > 32)
     return "argument enum values are invalid"

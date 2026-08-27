@@ -1,0 +1,28 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Files
+GenericName=File Manager
+Comment=Browse trusted file metadata through the Omarchy Files provider
+TryExec=omarchy-launch-files
+Exec=omarchy-launch-files --source desktop %u
+Icon=system-file-manager
+Terminal=false
+Categories=System;FileTools;FileManager;
+Keywords=files;folders;desktop;documents;downloads;trash;network;
+MimeType=x-scheme-handler/omarchy-files;
+StartupNotify=true
+StartupWMClass=org.omarchy.Files
+Actions=ThisPC;Recent;Trash;
+
+[Desktop Action ThisPC]
+Name=This PC
+Exec=omarchy-launch-files --source desktop files.this-pc
+
+[Desktop Action Recent]
+Name=Recent
+Exec=omarchy-launch-files --source desktop files.recent
+
+[Desktop Action Trash]
+Name=Trash
+Exec=omarchy-launch-files --source desktop files.trash

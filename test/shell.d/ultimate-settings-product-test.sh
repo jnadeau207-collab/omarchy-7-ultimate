@@ -1,0 +1,365 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
+
+run_node_test <<'JS'
+const fs = require('fs')
+const Model = requireFromRoot('shell/apps/ultimate-settings/SettingsModel.js')
+
+const routes = JSON.parse(fs.readFileSync(path.join(root, 'shell/apps/ultimate-settings/routes-v1.json'), 'utf8'))
+const domainRoutes = routes.routes.filter(route => route.id !== Model.OVERVIEW_ROUTE)
+
+assertEqual(routes.routes.length, 13, 'Settings exposes home plus all twelve product domains')
+assertEqual(Model.ROUTE_QUERIES.length, 12, 'Settings closed query map covers all twelve provider domains')
+assertEqual(new Set(Model.ROUTE_QUERIES.map(query => query.routeId)).size, 12, 'Settings query map has no duplicate route')
+assertDeepEqual(
+  domainRoutes.map(route => route.id),
+  Model.ROUTE_QUERIES.map(query => query.routeId),
+  'Settings route order exactly matches the closed query map'
+)
+for (const route of domainRoutes) {
+  const query = Model.queryForRoute(route.id)
+  assert(query !== null, `${route.id} has a closed provider query`)
+  assertEqual(query.providerId, route.providerId, `${route.id} reads only its catalog provider`)
+  assertEqual(query.action, 'inspect', `${route.id} uses its intended inventory action rather than sorting actions`)
+  assertDeepEqual(
+    Model.requestParameters(query),
+    { provider: route.providerId, action: 'inspect', arguments: {} },
+    `${route.id} sends exact empty inspect arguments`
+  )
+}
+
+const staticManifestDomains = ['display', 'audio', 'network', 'bluetooth', 'input', 'power', 'defaults']
+for (const domain of staticManifestDomains) {
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, `default/fabric/omarchy_fabric/providers/${domain}/manifest-v0.json`), 'utf8'))
+  const query = Model.ROUTE_QUERIES.find(candidate => candidate.providerId === manifest.provider)
+  assert(query !== undefined, `${manifest.provider} has a Settings route`)
+  assertEqual(manifest.actions[query.action].mode, 'read', `${manifest.provider}.${query.action} is read-only in provider truth`)
+  assertEqual(manifest.actions[query.action].capability, query.capability, `${manifest.provider} capability matches the Settings mapping`)
+}
+const leafBuilder = fs.readFileSync(path.join(root, 'default/fabric/omarchy_fabric/providers/process/_leaf.py'), 'utf8')
+assert(/inventory_action: str = "inspect"/.test(leafBuilder), 'administration leaf providers declare inspect as their inventory action')
+for (const domain of ['update', 'recovery']) {
+  const source = fs.readFileSync(path.join(root, `default/fabric/omarchy_fabric/providers/${domain}/provider.py`), 'utf8')
+  assert(source.includes(`PROVIDER_ID = "${domain}.provider"`), `${domain} route targets the code-owned provider identity`)
+  assert(source.includes('provider_bundle('), `${domain} provider consumes the closed administration leaf contract`)
+}
+const builtins = fs.readFileSync(path.join(root, 'default/fabric/omarchy_fabric/provider_builtins.py'), 'utf8')
+for (const missingProvider of ['personalization.provider', 'accessibility.provider', 'system-information.provider']) {
+  assert(!builtins.includes(`BuiltinProviderSpec("${missingProvider}"`), `${missingProvider} remains honestly not registered`)
+}
+
+function assertThrows(fn, description) {
+  let threw = false
+  try { fn() } catch (_) { threw = true }
+  assert(threw, description)
+}
+
+assertThrows(
+  () => Model.normalizedSelection(Model.queryForRoute('settings.personalization.overview'), { resourceId: 'theme.one' }),
+  'routes without a resource contract reject resource deep links'
+)
+assertThrows(
+  () => Model.normalizedSelection(Model.queryForRoute('settings.network.overview'), { resourceId: '../outside' }),
+  'resource deep links reject traversal-shaped identifiers'
+)
+assertThrows(
+  () => Model.normalizedSelection(Model.queryForRoute('settings.network.overview'), { resourceId: 'network.radio.wifi', extra: true }),
+  'resource deep links reject unknown argument fields'
+)
+assertEqual(Model.queryForRoute('settings.not-real'), null, 'unknown Settings routes fail closed before transport')
+
+function actionContract(capability, mode) {
+  return {
+    capability,
+    mode,
+    risk: mode === 'read' ? 'read-only' : 'low',
+    effects: mode === 'read' ? [] : ['mutating'],
+    arguments: { id: `urn:test:${capability}:arguments`, version: 'v0' },
+    result: { id: `urn:test:${capability}:result`, version: 'v0' },
+    preflight: mode === 'read' ? null : { id: `urn:test:${capability}:preflight`, version: 'v0' },
+    state: mode === 'read' ? null : { id: `urn:test:${capability}:state`, version: 'v0' },
+    supportsRollback: mode !== 'read',
+    supportsCancellation: false
+  }
+}
+
+function entryFor(query, order, state = 'available') {
+  const operationCapability = query.providerId.replace('.provider', '.configure')
+  return {
+    manifest: {
+      schemaVersion: 'v0', provider: query.providerId, providerVersion: 'v0',
+      minFabricProtocol: 0, maxFabricProtocol: 0,
+      capabilities: [query.capability, operationCapability],
+      actions: {
+        inspect: actionContract(query.capability, 'read'),
+        configure: actionContract(operationCapability, 'operation')
+      }
+    },
+    fingerprint: String(order % 10).repeat(64),
+    generation: 1,
+    registrationOrder: order,
+    state,
+    detail: state === 'available' ? '' : `${query.providerId} is ${state}`,
+    registeredAt: 1,
+    changedAt: 1
+  }
+}
+
+const fullCatalog = { providers: Model.ROUTE_QUERIES.map((query, index) => entryFor(query, index)) }
+assertEqual(Model.validateCatalogResponse(fullCatalog), '', 'Settings accepts the bounded exact provider catalog envelope')
+for (const query of Model.ROUTE_QUERIES) {
+  assertEqual(
+    Model.queryContractError(Model.providerEntry(fullCatalog.providers, query.providerId), query),
+    '',
+    `${query.routeId} validates its intended action against catalog truth`
+  )
+}
+const duplicateCatalog = { providers: fullCatalog.providers.concat([{ ...fullCatalog.providers[0], registrationOrder: 99 }]) }
+assert(Model.validateCatalogResponse(duplicateCatalog).includes('duplicate provider'), 'duplicate provider identities fail closed')
+const extraCatalogField = { providers: fullCatalog.providers, continuation: null }
+assert(Model.validateCatalogResponse(extraCatalogField).includes('unexpected field'), 'extra catalog envelope fields fail closed')
+const mismatchedEntry = JSON.parse(JSON.stringify(fullCatalog.providers[0]))
+mismatchedEntry.manifest.actions.inspect.capability = mismatchedEntry.manifest.actions.configure.capability
+assert(Model.queryContractError(mismatchedEntry, Model.ROUTE_QUERIES[0]).includes('closed read-only'), 'catalog action capability drift fails closed')
+
+const productionLike = {
+  providers: fullCatalog.providers.filter(entry => ![
+    'personalization.provider', 'accessibility.provider', 'system-information.provider'
+  ].includes(entry.manifest.provider))
+}
+const cards = Model.catalogCards(productionLike.providers)
+assertEqual(cards.length, 12, 'overview always represents all twelve Settings domains')
+assertEqual(cards.filter(card => card.status === 'not registered').length, 3, 'overview exposes every intentionally missing provider')
+assert(cards.every(card => card.detail.length <= Model.MAX_DISPLAY_TEXT), 'overview details obey the display text bound')
+
+function leafResult(query, entry, resources, availability = { read: true, operation: false, reason: null }) {
+  return {
+    provider: query.providerId,
+    providerVersion: 'v0',
+    generation: entry.generation,
+    action: query.action,
+    capability: query.capability,
+    value: {
+      schemaVersion: 'v0', provider: query.providerId, providerVersion: 'v0', action: query.action,
+      availability,
+      revision: `sha256.${'a'.repeat(64)}`,
+      resources
+    },
+    observedAt: 1
+  }
+}
+
+let sent = []
+let cancelled = []
+let serial = 0
+const controller = Model.createController({
+  send: (method, params) => {
+    const id = `request.${++serial}`
+    sent.push({ id, method, params })
+    return id
+  },
+  cancel: id => { cancelled.push(id); return true }
+})
+
+assert(!controller.activate('settings.network.overview', { resourceId: 'network.radio.wifi' }), 'offline route activation does not issue a request')
+assert(controller.setConnected(true), 'connecting starts the current catalog read')
+const firstCatalogRequest = sent.at(-1)
+assertEqual(firstCatalogRequest.method, 'provider.catalog', 'controller begins with only provider.catalog')
+assertDeepEqual(firstCatalogRequest.params, {}, 'provider catalog uses exact empty parameters')
+assert(controller.receiveResult(firstCatalogRequest.id, fullCatalog), 'current catalog response is accepted')
+const networkRequest = sent.at(-1)
+assertEqual(networkRequest.method, 'provider.read', 'catalog selection advances to only provider.read')
+assertDeepEqual(
+  networkRequest.params,
+  { provider: 'network.provider', action: 'inspect', arguments: {} },
+  'network route sends the exact intended inventory request'
+)
+
+assert(controller.activate('settings.display.overview', { resourceId: `display.output.${'a'.repeat(64)}` }), 'route activation starts a read from the validated current catalog')
+assert(cancelled.includes(networkRequest.id), 'route activation cancels the superseded local read correlation')
+assert(!controller.receiveResult(networkRequest.id, leafResult(
+  Model.queryForRoute('settings.network.overview'),
+  Model.providerEntry(fullCatalog.providers, 'network.provider'),
+  [{ id: 'network.radio.wifi', label: 'Wi-Fi radio', kind: 'wifi-radio', state: { enabled: true } }]
+)), 'late superseded provider results are ignored')
+assertEqual(controller.state.routeId, 'settings.display.overview', 'late results cannot replace the active Settings route')
+
+const displayQuery = Model.queryForRoute('settings.display.overview')
+const displayEntry = Model.providerEntry(fullCatalog.providers, displayQuery.providerId)
+const selectedDisplay = `display.output.${'a'.repeat(64)}`
+const otherDisplay = `display.output.${'b'.repeat(64)}`
+const displayRequest = sent.at(-1)
+assert(controller.receiveResult(displayRequest.id, leafResult(displayQuery, displayEntry, [
+  { id: selectedDisplay, label: 'Internal display', kind: 'display-output', state: { width: 1920, height: 1080, scale: 1, enabled: true } },
+  { id: otherDisplay, label: 'External display', kind: 'display-output', state: { width: 2560, height: 1440, scale: 1.25, enabled: true } }
+])), 'current typed display result is accepted')
+assertEqual(controller.state.phase, 'ready', 'non-empty typed inventory reaches current state')
+assertDeepEqual(controller.state.records.map(record => record.id), [selectedDisplay], 'resource deep links select one exact identity')
+assertEqual(controller.state.records[0].details.length, 4, 'real typed resource fields become a bounded presentation')
+
+controller.activate('settings.display.overview', { resourceId: `display.output.${'c'.repeat(64)}` })
+const absentRequest = sent.at(-1)
+controller.receiveResult(absentRequest.id, leafResult(displayQuery, displayEntry, [
+  { id: selectedDisplay, label: 'Internal display', kind: 'display-output', state: { enabled: true } }
+]))
+assertEqual(controller.state.phase, 'empty', 'an absent exact deep-link target is not broadened to other resources')
+assert(controller.state.selectedMissing, 'an absent exact target remains distinguishable from an empty provider')
+
+controller.activate('settings.network.overview', {})
+const networkCurrentRequest = sent.at(-1)
+controller.receiveFailure(networkCurrentRequest.id, { code: 'access.denied', explanation: 'Provider state is not visible.', recoveryActions: [] })
+assertEqual(controller.state.phase, 'denied', 'access failure has an explicit denied state')
+controller.refresh()
+const refreshCatalog = sent.at(-1)
+controller.receiveFailure(refreshCatalog.id, { code: 'rpc.cancelled', explanation: 'Read cancelled.', recoveryActions: ['fabric.reconnect'] })
+assertEqual(controller.state.phase, 'interrupted', 'catalog cancellation has an explicit interrupted state')
+assertDeepEqual(controller.state.recoveryActions, ['fabric.reconnect'], 'structured recovery paths remain visible')
+
+controller.refresh()
+const staleCatalog = sent.at(-1)
+assert(controller.markStale(staleCatalog.id), 'bounded deadline marks the active read stale')
+assertEqual(controller.state.phase, 'stale', 'deadline state is explicitly stale')
+assert(cancelled.includes(staleCatalog.id), 'stale deadline cancels the local pending correlation')
+assert(!controller.receiveResult(staleCatalog.id, fullCatalog), 'late result after deadline is ignored')
+
+controller.setConnected(false)
+assertEqual(controller.state.phase, 'offline', 'disconnect has an explicit offline state')
+assertEqual(controller.state.records.length, 0, 'disconnect clears live records instead of presenting stale cache')
+assertEqual(controller.state.catalog.length, 0, 'disconnect clears the provider catalog')
+
+const missingController = Model.createController({ send: (method, params) => {
+  sent.push({ id: `missing.${++serial}`, method, params })
+  return `missing.${serial}`
+}})
+missingController.activate('settings.personalization.overview', {})
+missingController.setConnected(true)
+const missingCatalogRequest = sent.at(-1)
+missingController.receiveResult(missingCatalogRequest.id, productionLike)
+assertEqual(missingController.state.phase, 'missing', 'unregistered route provider has an explicit missing state')
+assertEqual(sent.at(-1).method, 'provider.catalog', 'missing providers never trigger a guessed provider read')
+
+const degradedCatalog = JSON.parse(JSON.stringify(fullCatalog))
+const degradedNetwork = degradedCatalog.providers.find(entry => entry.manifest.provider === 'network.provider')
+degradedNetwork.state = 'degraded'
+degradedNetwork.detail = 'Network inventory is partial.'
+const degradedController = Model.createController({ send: (method, params) => {
+  const id = `degraded.${++serial}`
+  sent.push({ id, method, params })
+  return id
+}})
+degradedController.activate('settings.network.overview', {})
+degradedController.setConnected(true)
+degradedController.receiveResult(sent.at(-1).id, degradedCatalog)
+const degradedRead = sent.at(-1)
+degradedController.receiveResult(degradedRead.id, leafResult(
+  Model.queryForRoute('settings.network.overview'), degradedNetwork,
+  [{ id: 'network.radio.wifi', label: 'Wi-Fi radio', kind: 'wifi-radio', state: { enabled: true } }]
+))
+assertEqual(degradedController.state.phase, 'degraded', 'usable degraded provider state stays visibly degraded')
+assertEqual(degradedController.state.records.length, 1, 'degraded state shows only the real returned resources')
+
+const defaultsQuery = Model.queryForRoute('settings.apps.overview')
+const defaultsEntry = Model.providerEntry(fullCatalog.providers, defaultsQuery.providerId)
+const defaultsResult = {
+  provider: defaultsQuery.providerId, providerVersion: 'v0', generation: defaultsEntry.generation,
+  action: defaultsQuery.action, capability: defaultsQuery.capability, observedAt: 2,
+  value: {
+    schemaVersion: 'v0', provider: defaultsQuery.providerId, providerVersion: 'v0', action: 'inspect',
+    availability: { state: 'available', read: true, operation: false, reasons: [] },
+    revision: `sha256.${'d'.repeat(64)}`,
+    state: {
+      schemaVersion: 'v0', databaseId: 'defaults.database.primary',
+      associations: [{ id: 'defaults.association.http', kind: 'protocol', key: 'http', defaultAppId: 'app.browser', candidateAppIds: ['app.browser'], writable: true, source: 'user', status: 'configured', identity: `sha256.${'e'.repeat(64)}` }],
+      applications: [{ id: 'app.browser', desktopId: 'browser.desktop', name: 'Browser', state: 'available', icon: 'browser', mimeTypes: ['text/html'], protocols: ['http'], source: 'user', identity: `sha256.${'f'.repeat(64)}`, reason: null }]
+    }
+  }
+}
+const defaultsState = Model.baseState('settings.apps.overview', { resourceId: 'app.browser' }, 'loading')
+defaultsState.providerEntry = defaultsEntry
+const acceptedDefaults = Model.acceptedReadState(defaultsState, defaultsResult)
+assertEqual(acceptedDefaults.phase, 'ready', 'Apps renders the real defaults provider database')
+assertDeepEqual(acceptedDefaults.records.map(record => record.id), ['app.browser'], 'Apps deep links select exact applications as well as provider resources')
+assert(acceptedDefaults.records[0].label === 'Browser', 'Apps presents the typed application name')
+
+const manyResources = Array.from({ length: Model.MAX_VISIBLE_RECORDS + 4 }, (_, index) => ({
+  id: `network.interface.${String(index).padStart(3, '0')}`,
+  label: `Interface ${index}`,
+  kind: 'ethernet',
+  state: Object.fromEntries(Array.from({ length: Model.MAX_VISIBLE_FIELDS + 5 }, (__, field) => [`field${field}`, `${'x'.repeat(1000)}-${field}`]))
+}))
+const bounded = Model.normalizedRecords(Model.queryForRoute('settings.network.overview'), { resources: manyResources }, '')
+assertEqual(bounded.records.length, Model.MAX_VISIBLE_RECORDS, 'visible provider records have a hard local bound')
+assert(bounded.clipped, 'record clipping is explicit')
+assert(bounded.records.every(record => record.details.length <= Model.MAX_VISIBLE_FIELDS), 'record detail fields have a hard local bound')
+assert(bounded.records.every(record => record.details.every(detail => detail.value.length <= Model.MAX_DISPLAY_TEXT)), 'record values have a hard text bound')
+const controlText = Model.clippedText(`prefix\u0000${'z'.repeat(5000)}`)
+assert(controlText.length <= Model.MAX_DISPLAY_TEXT && controlText.endsWith('\u2026') && !controlText.includes('\u0000'), 'display text strips controls and clips long strings')
+
+assert(sent.every(request => ['provider.catalog', 'provider.read'].includes(request.method)), 'Settings controller can issue only catalog and read methods')
+assert(!sent.some(request => request.method.includes('preflight') || request.method.includes('invoke')), 'Settings never invokes mutation or preflight')
+
+let rejectedController
+rejectedController = Model.createController({
+  send: () => {
+    rejectedController.receiveFailure('', { code: 'client.method-denied', explanation: 'Method is not allowed.', recoveryActions: [] })
+    return ''
+  }
+})
+rejectedController.setConnected(true)
+assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
+JS
+
+entrypoint="$ROOT/shell/ultimate-settings.qml"
+application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
+model="$ROOT/shell/apps/ultimate-settings/SettingsModel.js"
+card="$ROOT/shell/apps/ultimate-settings/SettingsRecordCard.qml"
+
+grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read"]' "$entrypoint" \
+  || fail "Settings allowlist is exactly provider.catalog and provider.read"
+if grep -En 'provider\.invoke|reference\.operation|operation\.(preflight|approve|start|cancel)|managed-work\.query' \
+  "$entrypoint" "$application" "$model" "$card"; then
+  fail "Settings contains no mutation, legacy-operation, or managed-work method"
+fi
+pass "Settings method surface is exactly catalog plus typed read"
+
+if grep -En '(^|[^A-Za-z])(Process[[:space:]]*\{|Quickshell\.execDetached|execDetached\(|pkexec|sudo|hyprctl|systemctl|bash[[:space:]]+-c|sh[[:space:]]+-c)' \
+  "$application" "$model" "$card"; then
+  fail "Settings presentation contains no process, shell, compositor, or privilege fallback"
+fi
+pass "Settings has no direct command or privilege path"
+
+if grep -Fq 'firstReadAction' "$application" "$model"; then
+  fail "Settings no longer guesses the first alphabetic read action"
+fi
+grep -Fq 'var ROUTE_QUERIES = [' "$model" || fail "Settings owns a closed route query map"
+grep -Fq 'queryContractError(entry, query)' "$model" || fail "Settings validates route actions against catalog truth"
+grep -Fq 'requestParameters(query)' "$model" || fail "Settings constructs exact provider read arguments"
+pass "Settings selects deterministic contract-aware inventory actions"
+
+grep -Fq 'typeof root.host.cancelFabric !== "function"' "$application" \
+  || fail "Settings remains generation-safe on hosts without local correlation cancellation"
+grep -Fq 'root.host.cancelFabric(requestId)' "$application" \
+  || fail "Settings releases superseded correlations when the host exposes cancellation"
+grep -Fq 'markStale(root.queryState.requestId)' "$application" \
+  || fail "Settings enforces a bounded stale-read deadline"
+pass "Settings isolates superseded and stale request generations"
+
+grep -Fq 'focusable: true' "$application" || fail "Settings controls participate in keyboard focus"
+grep -Fq 'Keys.onPressed:' "$application" || fail "Settings exposes a keyboard refresh path"
+grep -Fq 'Accessible.role:' "$application" || fail "Settings state surfaces declare accessibility roles"
+grep -Fq 'Accessible.role:' "$card" || fail "Settings resource cards declare accessibility roles"
+grep -Fq 'Tokens.accessibility.highContrast' "$application" || fail "Settings honors high-contrast border semantics"
+grep -Fq 'Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff' "$application" \
+  || fail "Settings prevents horizontal content clipping"
+grep -Fq 'maximumLineCount:' "$application" || fail "Settings bounds long route and provider text"
+grep -Fq 'maximumLineCount:' "$card" || fail "Settings bounds long resource text"
+pass "Settings is responsive, keyboard reachable, accessible, and string bounded"
+
+grep -Fq 'text: "CHANGES UNAVAILABLE"' "$application" \
+  || fail "Settings represents mutation controls as unavailable"
+grep -Fq 'no direct commands, mutation, preflight, approval, or execution authority' "$application" \
+  || fail "Settings states its read-only authority boundary"
+pass "Settings exposes no false operation or preflight affordance"

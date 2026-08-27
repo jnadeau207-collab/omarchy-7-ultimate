@@ -257,7 +257,7 @@ pass "Settings entrypoint fixes process, app, and least-privilege Fabric identit
 grep -Fqx '//@ pragma AppId org.omarchy.AgentCenter' "$ROOT/shell/ultimate-agent-center.qml" || fail "Agent Center declares its stable app ID"
 grep -Fqx '//@ pragma ShellId omarchy-ultimate-agent-center' "$ROOT/shell/ultimate-agent-center.qml" || fail "Agent Center declares its stable shell ID"
 grep -Fqx '  fabricIdentity: "omarchy-agent-center"' "$ROOT/shell/ultimate-agent-center.qml" || fail "Agent Center declares its Fabric client identity"
-grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "reference.operation.get"]' "$ROOT/shell/ultimate-agent-center.qml" || fail "Agent Center has a bounded Fabric method allowlist"
+grep -Fqx '  fabricAllowedMethods: ["managed-work.query"]' "$ROOT/shell/ultimate-agent-center.qml" || fail "Agent Center has a bounded Fabric method allowlist"
 pass "Agent Center entrypoint fixes process, app, and least-privilege Fabric identity"
 
 if rg -n '(^|[^A-Za-z])(Process\s*\{|Quickshell\.execDetached|execDetached\(|pkexec|sudo|hyprctl|systemctl)' \
