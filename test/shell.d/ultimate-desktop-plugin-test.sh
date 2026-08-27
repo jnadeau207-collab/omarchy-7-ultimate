@@ -242,6 +242,12 @@ grep -Fq 'windowBox.x -= CHROMIUM_FRAME_INSET' "$ROOT/default/hypr/plugins/omarc
   || fail "Chromium texture box expands left for the native CSD inset"
 grep -Fq 'windowBox.width += CHROMIUM_FRAME_INSET * 2.0' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "Chromium texture box keeps the complete native CSD width"
+grep -Fq 'g_chromiumDamageBoxes' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium overhang damage tracks the previous and current perimeter"
+grep -Fq 'g_onTick' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium overhang damage follows animated window motion"
+grep -Fq 'damageBox(previous->second)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium motion damages the old overhang so no perimeter trail remains"
 grep -Fq 'cache.cachedTexBox = windowBox' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "Chromium texture-box hook preserves Hyprland's per-element cache"
 grep -Fq 'cache.texBoxCached = true' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
