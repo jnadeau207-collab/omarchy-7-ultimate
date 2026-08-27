@@ -297,8 +297,9 @@ ShellRoot {
     onActiveChanged: if (!active) shell.bar = null
     onStatusChanged: {
       if (status === Loader.Error) {
-        var detail = errorString ? errorString : ""
-        console.warn("bar option " + shell.activeBarId + " failed to load, falling back to " + shell.defaultBarId + ":", detail)
+        // Loader has no errorString property. Qt reports the underlying QML
+        // diagnostic; include the exact source in our fallback message.
+        console.warn("bar option " + shell.activeBarId + " failed to load from " + shell.activeBarSourceUrl + "; falling back to " + shell.defaultBarId)
         shell.failedBarId = shell.activeBarId
       }
     }
@@ -706,12 +707,10 @@ ShellRoot {
         }
         onStatusChanged: {
           if (status === Loader.Error) {
-            // Loader.errorString() reflects the source-load failure even when
-            // sourceComponent is null. Surface both so the user sees something
-            // actionable instead of a panel that silently refuses to open.
-            var detail = errorString ? errorString : ""
-            if (!detail && sourceComponent) detail = sourceComponent.errorString()
-            console.warn("panel plugin " + panelEntry.pluginId + " failed to load:", detail)
+            // Loader has no errorString property. The engine reports the
+            // underlying QML diagnostic; retain the exact plugin and source in
+            // our companion message without throwing a second ReferenceError.
+            console.warn("panel plugin " + panelEntry.pluginId + " failed to load from " + panelEntry.sourceUrl)
             shell.hide(panelEntry.pluginId)
           }
         }

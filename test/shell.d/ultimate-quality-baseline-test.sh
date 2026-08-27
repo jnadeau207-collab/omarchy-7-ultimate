@@ -9,6 +9,7 @@ quality_dir="$ROOT/default/ultimate/quality"
 gallery="$ROOT/shell/plugins/dev-gallery/QualityMatrix.qml"
 panel="$ROOT/shell/plugins/dev-gallery/GalleryPanel.qml"
 progress_ring="$ROOT/shell/Ui/ProgressRing.qml"
+shell_root="$ROOT/shell/shell.qml"
 acceptance="$ROOT/test/acceptance.d/ultimate-accessibility-performance-test.sh"
 tmp_dir=$(mktemp -d)
 trap 'rm -rf -- "$tmp_dir"' EXIT
@@ -60,6 +61,15 @@ if grep -Fq 'onValueChanged: canvas.requestPaint()' "$progress_ring"; then
   fail "quality gallery progress ring must not attach a nonexistent NumberAnimation value handler"
 fi
 pass "quality gallery progress ring uses a valid animation change handler"
+
+if grep -Fq 'var detail = errorString' "$shell_root"; then
+  fail "shell Loader error handlers must not reference a nonexistent errorString property"
+fi
+grep -Fq 'failed to load from " + panelEntry.sourceUrl' "$shell_root" ||
+  fail "panel Loader failures retain their source URL"
+grep -Fq 'failed to load from " + shell.activeBarSourceUrl' "$shell_root" ||
+  fail "bar Loader failures retain their source URL"
+pass "shell Loader failures report sources without throwing a second ReferenceError"
 
 if OMARCHY_PATH="$ROOT" bash "$checker" probe-surfaces-once >"$tmp_dir/gate.out" 2>"$tmp_dir/gate.err"; then
   fail "surface probe refuses the active development session"
