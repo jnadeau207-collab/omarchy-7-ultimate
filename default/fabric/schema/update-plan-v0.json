@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:update-plan-v0",
+  "x-omarchy-version": "v0",
+  "title": "System update plan",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "catalogRevision", "mode", "status", "checkpoint", "rebootRequired", "detail", "revision"],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "runId": { "type": "string", "pattern": "^update-run\\.[0-9a-f]{32}$" },
+    "catalogRevision": { "type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$" },
+    "mode": { "enum": ["check", "download", "apply", "reboot"] },
+    "status": { "enum": ["proposed", "checking", "downloading", "staged", "applying", "waiting-reboot", "succeeded", "failed", "cancelled", "interrupted", "reconciling", "needs-attention"] },
+    "checkpoint": { "enum": ["none", "required", "created", "failed"] },
+    "rebootRequired": { "type": "boolean" },
+    "detail": { "type": "string", "pattern": "^[^\\x00-\\x1f\\x7f]{0,1000}$" },
+    "revision": { "type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "apply" } }, "required": ["mode"] },
+      "then": { "properties": { "checkpoint": { "enum": ["required", "created", "failed"] } } },
+      "else": { "properties": { "checkpoint": { "const": "none" } } }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["applying", "waiting-reboot", "succeeded"] }, "mode": { "const": "apply" } }, "required": ["status", "mode"] },
+      "then": { "properties": { "checkpoint": { "const": "created" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "waiting-reboot" } }, "required": ["status"] },
+      "then": { "properties": { "mode": { "const": "apply" }, "checkpoint": { "const": "created" }, "rebootRequired": { "const": true } } }
+    }
+  ]
+}

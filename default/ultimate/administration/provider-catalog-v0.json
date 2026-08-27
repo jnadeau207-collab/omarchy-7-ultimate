@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "v0",
+  "executionBoundary": "plan-only",
+  "authorizationBoundary": "central-fabric",
+  "providers": [
+    { "id": "process.provider", "inventory": "process.inspect", "operation": "process.termination.plan", "realMutation": false },
+    { "id": "device.provider", "inventory": "device.inspect", "operation": "device.authorization.plan", "realMutation": false },
+    { "id": "storage.provider", "inventory": "storage.inspect", "operation": "storage.change.plan", "realMutation": false },
+    { "id": "printer.provider", "inventory": "printer.inspect", "operation": "printer.queue.plan", "realMutation": false },
+    { "id": "account.provider", "inventory": "account.inspect", "operation": "account.change.plan", "realMutation": false },
+    { "id": "firewall.provider", "inventory": "firewall.inspect", "operation": "firewall.rule.plan", "realMutation": false },
+    { "id": "service.provider", "inventory": "service.inspect", "operation": "service.lifecycle.plan", "realMutation": false },
+    { "id": "schedule.provider", "inventory": "schedule.inspect", "operation": "schedule.timer.plan", "realMutation": false }
+  ]
+}
