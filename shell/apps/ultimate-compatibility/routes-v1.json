@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "omarchy.product-routes/v1",
+  "application": "compatibility",
+  "appId": "org.omarchy.Compatibility",
+  "scheme": "omarchy-compatibility",
+  "defaultRoute": "compatibility.overview",
+  "routes": [
+    {
+      "id": "compatibility.overview",
+      "section": "Compatibility",
+      "title": "Overview",
+      "description": "Provider readiness, route assurance, and the exact boundaries of plan-only compatibility support.",
+      "keywords": ["compatibility", "overview", "support", "routes"],
+      "providerId": "compatibility.provider",
+      "deepLink": { "host": "overview", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "compatibility.decide",
+      "section": "Compatibility",
+      "title": "Route decision",
+      "description": "Evaluate a complete workload and host snapshot against all six code-owned compatibility routes.",
+      "keywords": ["decision", "native", "pwa", "proton", "vm", "recipe"],
+      "providerId": "compatibility.provider",
+      "deepLink": { "host": "decide", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "compatibility.deployments",
+      "section": "Library",
+      "title": "Deployments",
+      "description": "Installed compatibility deployments, exact decision revisions, routes, permissions, and data artifacts.",
+      "keywords": ["deployment", "installed", "runtime", "permissions"],
+      "providerId": "compatibility.provider",
+      "deepLink": { "host": "deployments", "path": "" },
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["deployment"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    }
+  ],
+  "entityDeepLinks": [
+    { "host": "deployment", "routeId": "compatibility.deployments", "entityType": "deployment" }
+  ]
+}

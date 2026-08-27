@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "omarchy.product-routes/v1",
+  "application": "software",
+  "appId": "org.omarchy.Software",
+  "scheme": "omarchy-software",
+  "defaultRoute": "software.catalog",
+  "routes": [
+    {
+      "id": "software.catalog",
+      "section": "Software",
+      "title": "Catalog",
+      "description": "Search all admitted software channels with explicit assurance, origin, signature, and review evidence.",
+      "keywords": ["software", "apps", "catalog", "search"],
+      "providerId": "packages.provider",
+      "deepLink": { "host": "catalog", "path": "" },
+      "argumentSchema": {
+        "query": { "type": "text", "maxLength": 120, "optional": true },
+        "entityType": { "type": "enum", "values": ["software"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    },
+    {
+      "id": "software.installed",
+      "section": "Library",
+      "title": "Installed",
+      "description": "Installed and unmanaged inventory with source, version, adoption, digest, and state evidence.",
+      "keywords": ["installed", "inventory", "packages", "library"],
+      "providerId": "packages.provider",
+      "deepLink": { "host": "installed", "path": "" },
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["installation"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    },
+    {
+      "id": "software.adoption",
+      "section": "Library",
+      "title": "Adoption",
+      "description": "Managed, adoptable, conflicting, and unmanaged classifications without changing the host.",
+      "keywords": ["adopt", "managed", "unmanaged", "conflict"],
+      "providerId": "packages.provider",
+      "deepLink": { "host": "adoption", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "software.history",
+      "section": "History",
+      "title": "Operation history",
+      "description": "Durable package operation projections, checkpoints, revisions, failures, and reconciliation state.",
+      "keywords": ["operation", "history", "checkpoint", "recovery"],
+      "providerId": "packages.provider",
+      "deepLink": { "host": "history", "path": "" },
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["operation"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    }
+  ],
+  "entityDeepLinks": [
+    { "host": "software", "routeId": "software.catalog", "entityType": "software" },
+    { "host": "installation", "routeId": "software.installed", "entityType": "installation" },
+    { "host": "operation", "routeId": "software.history", "entityType": "operation" }
+  ]
+}

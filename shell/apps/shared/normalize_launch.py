@@ -14,14 +14,23 @@ from urllib.parse import parse_qsl, unquote, urlsplit
 CATALOGS = {
     "settings": "ultimate-settings/routes-v1.json",
     "agent-center": "ultimate-agent-center/routes-v1.json",
+    "files": "ultimate-files/routes-v1.json",
+    "software": "ultimate-software/routes-v1.json",
+    "compatibility": "ultimate-compatibility/routes-v1.json",
 }
 APP_IDS = {
     "settings": "org.omarchy.Settings",
     "agent-center": "org.omarchy.AgentCenter",
+    "files": "org.omarchy.Files",
+    "software": "org.omarchy.Software",
+    "compatibility": "org.omarchy.Compatibility",
 }
 SCHEMES = {
     "settings": "omarchy-settings",
     "agent-center": "omarchy-agent",
+    "files": "omarchy-files",
+    "software": "omarchy-software",
+    "compatibility": "omarchy-compatibility",
 }
 SOURCES = frozenset({"cli", "desktop", "shell", "notification", "automation"})
 STABLE_ID = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
@@ -109,6 +118,13 @@ def validate_argument(value: Any, contract: dict[str, Any], label: str) -> Any:
         if not isinstance(values, list) or value not in values:
             raise LaunchError(f"{label} is not an allowed value")
         return value
+    if kind == "text":
+        maximum = contract.get("maxLength")
+        if not isinstance(value, str) or not isinstance(maximum, int) or isinstance(maximum, bool):
+            raise LaunchError(f"{label} must be bounded text")
+        if len(value) > maximum or any(ord(character) < 32 or ord(character) == 127 for character in value):
+            raise LaunchError(f"{label} is outside its bounded text contract")
+        return value
     raise LaunchError(f"{label} uses an unsupported argument type")
 
 
@@ -168,9 +184,14 @@ def validate_catalog(candidate: Any, application: str) -> dict[str, Any]:
                 raise LaunchError(f"{route_id} contains an invalid argument name")
             contract = require_object(raw_contract, f"{route_id}.{name} contract")
             kind = contract.get("type")
-            if kind not in {"stable-id", "opaque-id", "boolean", "integer", "enum"}:
+            if kind not in {"stable-id", "opaque-id", "boolean", "integer", "enum", "text"}:
                 raise LaunchError(f"{route_id}.{name} uses an unsupported argument type")
-            expected_contract_fields = {"type", "values"} if kind == "enum" else {"type"}
+            if kind == "enum":
+                expected_contract_fields = {"type", "values"}
+            elif kind == "text":
+                expected_contract_fields = {"type", "maxLength"}
+            else:
+                expected_contract_fields = {"type"}
             if "optional" in contract:
                 expected_contract_fields.add("optional")
             require_exact_keys(contract, expected_contract_fields, f"{route_id}.{name} contract")
@@ -184,6 +205,10 @@ def validate_catalog(candidate: Any, application: str) -> dict[str, Any]:
                     raise LaunchError(f"{route_id}.{name} enum values must be bounded strings")
                 if len(set(values)) != len(values):
                     raise LaunchError(f"{route_id}.{name} repeats an enum value")
+            elif kind == "text":
+                maximum = contract["maxLength"]
+                if isinstance(maximum, bool) or not isinstance(maximum, int) or not 1 <= maximum <= 512:
+                    raise LaunchError(f"{route_id}.{name} text bound is invalid")
         if "deepLink" in route:
             deep_link = route["deepLink"]
             deep_link = require_object(deep_link, f"{route_id} deep link")

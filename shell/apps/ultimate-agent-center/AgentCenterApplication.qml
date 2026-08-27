@@ -5,18 +5,15 @@ import qs.Commons
 import qs.Ui as Ui
 import qs.apps.shared as Shared
 
+import "AgentCenterModel.js" as AgentCenterModel
+import "." as AgentCenter
+
 Item {
   id: root
 
   property var host: null
-  property var providerCatalog: []
-  property string catalogState: "offline"
-  property var catalogError: null
-  property string catalogRequestId: ""
-  property string operationRequestId: ""
-  property string operationState: "idle"
-  property var operation: null
-  property var operationError: null
+  property var controller: null
+  property var queryState: AgentCenterModel.baseState("agent.overview", {}, "offline")
 
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
   readonly property var visibleRoutes: filteredRoutes(navigation.query)
@@ -24,6 +21,11 @@ Item {
     ? String(host.currentArguments.entityType) : ""
   readonly property string entityId: host && host.currentArguments && host.currentArguments.entityId
     ? String(host.currentArguments.entityId) : ""
+  readonly property var overviewMetrics: AgentCenterModel.overviewMetrics(queryState.summary)
+  readonly property bool queryBusy: queryState.phase === "loading"
+  readonly property bool canRefresh: host && host.fabricReady && !queryBusy
+  readonly property bool canLoadMore: host && host.fabricReady && !queryBusy &&
+    queryState.nextCursor !== null && !queryState.clipped
 
   function filteredRoutes(query) {
     if (!host || !host.routeCatalog || !Array.isArray(host.routeCatalog.routes)) return []
@@ -35,112 +37,80 @@ Item {
     })
   }
 
-  function refreshCatalog() {
-    if (!host || !host.fabricReady) {
-      providerCatalog = []
-      catalogState = "offline"
-      catalogRequestId = ""
-      return
+  function currentArguments() {
+    return {
+      entityType: root.entityType,
+      entityId: root.entityId
     }
-    catalogState = "loading"
-    catalogError = null
-    catalogRequestId = host.requestFabric("provider.catalog", {})
-    if (catalogRequestId === "") catalogState = "failed"
   }
 
-  function refreshEntity() {
-    operationRequestId = ""
-    operation = null
-    operationError = null
-    if (entityType !== "operation" || entityId === "") {
-      operationState = "idle"
-      return
-    }
-    if (!host || !host.fabricReady) {
-      operationState = "offline"
-      return
-    }
-    operationState = "loading"
-    operationRequestId = host.requestFabric("reference.operation.get", { operationId: entityId })
-    if (operationRequestId === "") operationState = "failed"
+  function ensureController() {
+    if (root.controller) return
+    root.controller = AgentCenterModel.createController({
+      send: function(method, params) {
+        return root.host ? root.host.requestFabric(method, params) : ""
+      },
+      cancel: function(requestId) {
+        return root.host ? root.host.cancelFabric(requestId) : false
+      },
+      onState: function(state) {
+        root.queryState = state
+      }
+    })
   }
 
-  function backendMessage() {
-    if (!currentRoute) return "The requested route is unavailable."
-    if (currentRoute.id === "agent.overview")
-      return "Agent Center only presents data exposed by its constrained Fabric client. Missing task and automation query contracts remain visibly unavailable."
-    if (currentRoute.id === "agent.providers")
-      return catalogState === "ready"
-        ? providerCatalog.length + " typed provider" + (providerCatalog.length === 1 ? " is" : "s are") + " registered in the current daemon."
-        : "Provider inventory is unavailable until the current Fabric catalog loads."
-    if (currentRoute.id === "agent.activity" && entityType === "operation") {
-      if (operationState === "ready") return "The operation was read through reference.operation.get using this app's endpoint session."
-      if (operationState === "loading") return "Reading the requested durable operation."
-      if (operationState === "offline") return "The requested operation is not shown while Fabric is offline."
-      if (operationState === "failed") return operationError && operationError.explanation
-        ? String(operationError.explanation) : "Fabric could not read the requested operation."
-    }
-    if (entityId !== "")
-      return "The link selected " + entityType + " " + entityId + ", but this Fabric revision has no read contract for that entity type."
-    return "This destination is present, but its backend query contract is not part of the current Fabric revision. No placeholder records are shown."
+  function synchronizeHost() {
+    root.ensureController()
+    if (!root.host) return
+    root.controller.activate(root.host.currentRoute || "agent.overview", root.currentArguments())
+    root.controller.setConnected(root.host.fabricReady)
   }
 
-  onHostChanged: {
-    if (!host) return
-    refreshCatalog()
-    refreshEntity()
+  function retryQuery() {
+    if (!root.controller) return
+    if (root.host && root.host.fabricReady) root.controller.refresh()
+    else if (root.host) root.host.retryFabric()
   }
+
+  function summaryLine() {
+    if (queryState.view === "agent.usage" && queryState.summary) {
+      return String(queryState.summary.recordCount || 0) + " total usage records \u00b7 " +
+        String(queryState.summary.costMicrounits || 0) + " cost microunits"
+    }
+    if (queryState.view === "agent.history" && queryState.summary)
+      return "History is durably pruned through sequence " + String(queryState.summary.prunedThrough || 0) + "."
+    return ""
+  }
+
+  onHostChanged: synchronizeHost()
+
+  Component.onCompleted: ensureController()
 
   Connections {
     target: root.host
     enabled: root.host !== null
 
     function onFabricConnectionReady(hello) {
-      root.refreshCatalog()
-      root.refreshEntity()
+      root.ensureController()
+      root.controller.setConnected(true)
     }
+
     function onFabricReadyChanged() {
-      if (root.host.fabricReady) {
-        root.refreshCatalog()
-        root.refreshEntity()
-      } else {
-        root.providerCatalog = []
-        root.catalogState = "offline"
-        root.operation = null
-        root.operationState = root.entityType === "operation" ? "offline" : "idle"
-      }
+      root.ensureController()
+      root.controller.setConnected(root.host.fabricReady)
     }
+
     function onRouteActivated(routeId, routeArguments, context) {
-      Qt.callLater(root.refreshEntity)
+      root.ensureController()
+      root.controller.activate(routeId, routeArguments || {})
     }
+
     function onFabricResult(requestId, result) {
-      if (requestId === root.catalogRequestId) {
-        root.catalogRequestId = ""
-        if (!result || !Array.isArray(result.providers)) {
-          root.catalogState = "failed"
-          root.catalogError = { explanation: "Fabric returned an invalid provider catalog." }
-        } else {
-          root.providerCatalog = result.providers
-          root.catalogState = "ready"
-          root.catalogError = null
-        }
-      } else if (requestId === root.operationRequestId) {
-        root.operationRequestId = ""
-        root.operation = result
-        root.operationError = null
-        root.operationState = "ready"
-      }
+      if (root.controller) root.controller.receiveResult(requestId, result)
     }
+
     function onFabricFailure(requestId, error) {
-      if (requestId === root.catalogRequestId || (requestId === "" && root.catalogState === "loading")) {
-        root.catalogRequestId = ""
-        root.catalogState = "failed"
-        root.catalogError = error
-      } else if (requestId === root.operationRequestId || (requestId === "" && root.operationState === "loading")) {
-        root.operationRequestId = ""
-        root.operationState = "failed"
-        root.operationError = error
-      }
+      if (root.controller) root.controller.receiveFailure(requestId, error)
     }
   }
 
@@ -173,221 +143,306 @@ Item {
           Layout.fillWidth: true
         }
 
-        ColumnLayout {
+        RowLayout {
           Layout.fillWidth: true
-          spacing: Style.space(3)
+          spacing: Style.space(10)
 
-          Text {
-            text: root.currentRoute ? root.currentRoute.title : "Agent Center"
-            color: Tokens.text.primary
-            font.family: Style.font.family
-            font.pixelSize: Style.font.heading
-            font.bold: true
+          ColumnLayout {
             Layout.fillWidth: true
+            spacing: Style.space(3)
+
+            Text {
+              text: root.currentRoute ? root.currentRoute.title : "Agent Center"
+              color: Tokens.text.primary
+              font.family: Style.font.family
+              font.pixelSize: Style.font.heading
+              font.bold: true
+              wrapMode: Text.WordWrap
+              Layout.fillWidth: true
+            }
+
+            Text {
+              text: root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."
+              color: Tokens.text.secondary
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+              wrapMode: Text.WordWrap
+              Layout.fillWidth: true
+            }
           }
 
-          Text {
-            text: root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."
-            color: Tokens.text.secondary
-            font.family: Style.font.family
-            font.pixelSize: Style.font.body
-            wrapMode: Text.WordWrap
-            Layout.fillWidth: true
+          Ui.Badge {
+            text: AgentCenterModel.phaseBadge(root.queryState)
+            tone: AgentCenterModel.phaseTone(root.queryState)
+            Layout.alignment: Qt.AlignTop
           }
         }
 
         Controls.ScrollView {
+          id: queryScroll
           Layout.fillWidth: true
           Layout.fillHeight: true
+          contentWidth: availableWidth
           clip: true
+          Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
 
           ColumnLayout {
-            width: parent.width
+            width: queryScroll.availableWidth
             spacing: Style.space(12)
 
             Rectangle {
               Layout.fillWidth: true
-              implicitHeight: backendColumn.implicitHeight + Style.space(28)
+              implicitHeight: statusColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.large
               color: Tokens.surface.base
-              border.color: Tokens.border.subtle
+              border.color: root.queryState.phase === "failed" || root.queryState.phase === "denied"
+                ? Tokens.state.danger
+                : root.queryState.phase === "ready" || root.queryState.phase === "empty"
+                  ? Tokens.border.subtle : Tokens.state.warning
               border.width: 1
-              Accessible.role: Accessible.Pane
-              Accessible.name: "Backend readiness"
-              Accessible.description: root.backendMessage()
+              Accessible.role: root.queryState.phase === "failed" || root.queryState.phase === "denied"
+                ? Accessible.AlertMessage : Accessible.Pane
+              Accessible.name: AgentCenterModel.stateTitle(root.queryState)
+              Accessible.description: AgentCenterModel.stateExplanation(root.queryState)
 
               ColumnLayout {
-                id: backendColumn
+                id: statusColumn
                 anchors.fill: parent
                 anchors.margins: Style.space(14)
                 spacing: Style.space(8)
 
                 RowLayout {
                   Layout.fillWidth: true
+                  spacing: Style.space(10)
 
                   Text {
-                    text: root.operationState === "ready" ? "Durable operation" : "Backend readiness"
+                    text: AgentCenterModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
                     font.family: Style.font.family
                     font.pixelSize: Style.font.title
                     font.bold: true
+                    wrapMode: Text.WordWrap
                     Layout.fillWidth: true
                   }
 
                   Ui.Button {
-                    visible: root.operationState === "failed" || root.catalogState === "failed"
-                    text: "Try again"
+                    visible: root.canRefresh
+                    text: "Refresh"
+                    tooltipText: "Read the current bounded page again"
                     focusable: true
-                    onClicked: {
-                      if (root.catalogState === "failed") root.refreshCatalog()
-                      if (root.operationState === "failed") root.refreshEntity()
-                    }
+                    bordered: true
+                    onClicked: root.retryQuery()
                   }
                 }
 
                 Text {
-                  text: root.backendMessage()
+                  text: AgentCenterModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
                   font.family: Style.font.family
                   font.pixelSize: Style.font.body
                   wrapMode: Text.WordWrap
+                  maximumLineCount: 6
+                  elide: Text.ElideRight
                   Layout.fillWidth: true
                 }
 
                 Ui.ProgressBar {
-                  visible: root.catalogState === "loading" || root.operationState === "loading"
+                  visible: root.queryBusy
                   indeterminate: true
-                  accessibleName: "Loading Agent Center state"
+                  accessibleName: root.queryState.appending ? "Loading more managed-work records" : "Loading Agent Center view"
                   Layout.fillWidth: true
                 }
 
                 Text {
                   visible: root.entityId !== ""
-                  text: "Selected " + root.entityType + ": " + root.entityId
+                  text: "Selected " + root.entityType + ": " + AgentCenterModel.clippedText(root.entityId, 180)
                   color: Tokens.text.disabled
                   font.family: Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.WrapAnywhere
                   Layout.fillWidth: true
+                }
+
+                Text {
+                  visible: root.queryState.error !== null && !!root.queryState.error.detail
+                  text: root.queryState.error
+                    ? "Detail: " + AgentCenterModel.clippedText(root.queryState.error.detail, 480)
+                    : ""
+                  color: Tokens.text.disabled
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WrapAnywhere
+                  maximumLineCount: 4
+                  elide: Text.ElideRight
+                  Layout.fillWidth: true
+                }
+
+                ColumnLayout {
+                  visible: root.queryState.recoveryActions.length > 0
+                  Layout.fillWidth: true
+                  spacing: Style.space(3)
+
+                  Text {
+                    text: "RECOVERY PATHS"
+                    color: Tokens.state.warning
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.caption
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Repeater {
+                    model: root.queryState.recoveryActions
+
+                    delegate: Text {
+                      required property var modelData
+
+                      text: "\u2022 " + AgentCenterModel.clippedText(modelData, 320)
+                      color: Tokens.text.secondary
+                      font.family: Style.font.family
+                      font.pixelSize: Style.font.bodySmall
+                      wrapMode: Text.WrapAnywhere
+                      Layout.fillWidth: true
+                    }
+                  }
+                }
+              }
+            }
+
+            GridLayout {
+              visible: root.queryState.view === "agent.overview" &&
+                (root.queryState.phase === "ready" || root.queryState.phase === "partial")
+              Layout.fillWidth: true
+              columns: root.width < 1050 ? 2 : 5
+              columnSpacing: Style.space(8)
+              rowSpacing: Style.space(8)
+
+              Repeater {
+                model: root.overviewMetrics
+
+                delegate: Rectangle {
+                  required property var modelData
+
+                  Layout.fillWidth: true
+                  implicitHeight: metricColumn.implicitHeight + Style.space(24)
+                  radius: Tokens.radius.medium
+                  color: Tokens.surface.raised
+                  border.color: Tokens.border.subtle
+                  border.width: 1
+                  Accessible.role: Accessible.StaticText
+                  Accessible.name: modelData.label + ": " + modelData.value
+
+                  ColumnLayout {
+                    id: metricColumn
+                    anchors.fill: parent
+                    anchors.margins: Style.space(12)
+                    spacing: Style.space(2)
+
+                    Text {
+                      text: String(modelData.value)
+                      color: Tokens.text.primary
+                      font.family: Style.font.family
+                      font.pixelSize: Style.font.display
+                      font.bold: true
+                      Layout.fillWidth: true
+                    }
+
+                    Text {
+                      text: modelData.label
+                      color: Tokens.text.secondary
+                      font.family: Style.font.family
+                      font.pixelSize: Style.font.bodySmall
+                      wrapMode: Text.WordWrap
+                      Layout.fillWidth: true
+                    }
+                  }
                 }
               }
             }
 
             Rectangle {
-              visible: root.operationState === "ready" && root.operation !== null
+              visible: root.summaryLine() !== ""
               Layout.fillWidth: true
-              implicitHeight: operationColumn.implicitHeight + Style.space(28)
+              implicitHeight: summaryText.implicitHeight + Style.space(20)
               radius: Tokens.radius.medium
               color: Tokens.surface.raised
               border.color: Tokens.border.subtle
               border.width: 1
-              Accessible.role: Accessible.Pane
-              Accessible.name: "Operation " + String(root.operation && root.operation.operationId || root.entityId)
+              Accessible.role: Accessible.StaticText
+              Accessible.name: summaryText.text
 
-              ColumnLayout {
-                id: operationColumn
+              Text {
+                id: summaryText
                 anchors.fill: parent
-                anchors.margins: Style.space(14)
-                spacing: Style.space(6)
-
-                Text {
-                  text: String(root.operation && (root.operation.label || root.operation.capability || root.operation.operationId) || "Operation")
-                  color: Tokens.text.primary
-                  font.family: Style.font.family
-                  font.pixelSize: Style.font.title
-                  font.bold: true
-                  Layout.fillWidth: true
-                }
-
-                Text {
-                  text: "Status: " + String(root.operation && root.operation.status || "unknown")
-                  color: Tokens.text.secondary
-                  font.family: Style.font.family
-                  font.pixelSize: Style.font.body
-                  Layout.fillWidth: true
-                }
-
-                Text {
-                  text: "Operation ID: " + String(root.operation && root.operation.operationId || root.entityId)
-                  color: Tokens.text.disabled
-                  font.family: Style.font.family
-                  font.pixelSize: Style.font.bodySmall
-                  wrapMode: Text.WrapAnywhere
-                  Layout.fillWidth: true
-                }
+                anchors.margins: Style.space(10)
+                text: root.summaryLine()
+                color: Tokens.text.secondary
+                font.family: Style.font.family
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.WordWrap
               }
             }
 
             Repeater {
-              model: root.currentRoute && root.currentRoute.id === "agent.providers" && root.catalogState === "ready"
-                ? root.providerCatalog : []
+              model: root.queryState.items
 
-              delegate: Rectangle {
+              delegate: AgentCenter.AgentRecordCard {
                 required property var modelData
 
-                readonly property string providerId: modelData && modelData.manifest ? String(modelData.manifest.provider || "") : ""
-                readonly property bool selected: root.entityType === "provider" && root.entityId === providerId
-
-                Layout.fillWidth: true
-                implicitHeight: providerColumn.implicitHeight + Style.space(24)
-                radius: Tokens.radius.medium
-                color: Tokens.surface.raised
-                border.color: selected ? Tokens.accent.primary : Tokens.border.subtle
-                border.width: 1
-                Accessible.role: Accessible.Pane
-                Accessible.name: providerId
-
-                ColumnLayout {
-                  id: providerColumn
-                  anchors.fill: parent
-                  anchors.margins: Style.space(12)
-                  spacing: Style.space(5)
-
-                  RowLayout {
-                    Layout.fillWidth: true
-
-                    Text {
-                      text: providerId
-                      color: Tokens.text.primary
-                      font.family: Style.font.family
-                      font.pixelSize: Style.font.body
-                      font.bold: true
-                      Layout.fillWidth: true
-                    }
-
-                    Ui.Badge {
-                      text: String(modelData.state || "unknown").toUpperCase()
-                      tone: modelData.state === "available" ? "success" : "warning"
-                    }
-                  }
-
-                  Text {
-                    text: "Version " + String(modelData.manifest && modelData.manifest.providerVersion || "unknown")
-                    color: Tokens.text.disabled
-                    font.family: Style.font.family
-                    font.pixelSize: Style.font.bodySmall
-                    Layout.fillWidth: true
-                  }
-
-                  Text {
-                    visible: modelData.detail !== null && modelData.detail !== undefined && String(modelData.detail) !== ""
-                    text: String(modelData.detail || "")
-                    color: Tokens.text.secondary
-                    font.family: Style.font.family
-                    font.pixelSize: Style.font.bodySmall
-                    wrapMode: Text.WordWrap
-                    Layout.fillWidth: true
-                  }
-                }
+                view: root.queryState.view
+                record: modelData
+                selectedEntityType: root.entityType
+                selectedEntityId: root.entityId
               }
             }
 
             Ui.EmptyState {
-              visible: root.currentRoute && root.currentRoute.id === "agent.providers" && root.catalogState === "ready" && root.providerCatalog.length === 0
+              visible: root.queryState.phase === "empty"
               Layout.fillWidth: true
               Layout.topMargin: Style.space(20)
-              title: "No typed providers registered"
-              message: "The daemon returned an empty current provider catalog."
+              title: root.entityId === "" ? "No records in this view" : "Requested record is absent"
+              message: root.entityId === ""
+                ? "Fabric returned an empty current owner-scoped page."
+                : "The stable deep link did not resolve to a visible owner-scoped record."
+            }
+
+            RowLayout {
+              visible: root.canLoadMore || root.queryState.clipped
+              Layout.fillWidth: true
+              spacing: Style.space(10)
+
+              Ui.Button {
+                visible: root.canLoadMore
+                text: "Load more"
+                tooltipText: "Read the next bounded managed-work page"
+                focusable: true
+                bordered: true
+                onClicked: root.controller.loadMore()
+              }
+
+              Text {
+                text: root.queryState.clipped
+                  ? "Display bound reached at " + AgentCenterModel.MAX_VISIBLE_ITEMS + " records."
+                  : root.queryState.items.length + " records loaded; another page is available."
+                color: Tokens.text.disabled
+                font.family: Style.font.family
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+              }
+            }
+
+            Text {
+              visible: root.queryState.phase === "ready" || root.queryState.phase === "empty" || root.queryState.phase === "partial"
+              text: "Read-only managed-work v0 \u00b7 no execution, approval, or recovery action is available from Agent Center"
+              color: Tokens.text.disabled
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              horizontalAlignment: Text.AlignHCenter
+              wrapMode: Text.WordWrap
+              Layout.fillWidth: true
+              Layout.topMargin: Style.space(6)
+              Layout.bottomMargin: Style.space(12)
             }
           }
         }

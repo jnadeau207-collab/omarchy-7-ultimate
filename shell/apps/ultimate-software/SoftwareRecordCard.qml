@@ -1,0 +1,125 @@
+import QtQuick
+import QtQuick.Layouts
+import qs.Commons
+import qs.Ui as Ui
+
+Rectangle {
+  id: root
+  required property var record
+  property bool selected: false
+
+  Layout.fillWidth: true
+  implicitHeight: content.implicitHeight + Style.space(28)
+  radius: Tokens.radius.medium
+  color: Tokens.surface.raised
+  border.color: selected ? Tokens.accent.primary : Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+  border.width: selected || Tokens.accessibility.highContrast ? 2 : 1
+  Accessible.role: Accessible.Pane
+  Accessible.name: String(record.title || record.id || "Software record")
+  Accessible.description: String(record.subtitle || "") + ". Status " + String(record.status || "unknown") + "."
+
+  ColumnLayout {
+    id: content
+    anchors.fill: parent
+    anchors.margins: Style.space(14)
+    spacing: Style.space(8)
+
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: Style.space(10)
+
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Style.space(2)
+
+        Text {
+          text: String(root.record.title || root.record.id || "Unnamed software record")
+          color: Tokens.text.primary
+          font.family: Style.font.family
+          font.pixelSize: Style.font.title
+          font.bold: true
+          wrapMode: Text.WrapAnywhere
+          maximumLineCount: 3
+          elide: Text.ElideRight
+          Layout.fillWidth: true
+        }
+
+        Text {
+          text: String(root.record.subtitle || root.record.kind || "Software evidence")
+          color: Tokens.text.secondary
+          font.family: Style.font.family
+          font.pixelSize: Style.font.bodySmall
+          wrapMode: Text.WrapAnywhere
+          maximumLineCount: 5
+          elide: Text.ElideRight
+          Layout.fillWidth: true
+        }
+      }
+
+      Ui.Badge {
+        text: String(root.record.status || "unknown").toUpperCase()
+        tone: String(root.record.tone || "neutral")
+        Layout.alignment: Qt.AlignTop
+      }
+    }
+
+    Text {
+      text: String(root.record.kind || "record") + " \u00b7 " + String(root.record.id || "")
+      color: Tokens.text.disabled
+      font.family: Style.font.family
+      font.pixelSize: Style.font.caption
+      wrapMode: Text.WrapAnywhere
+      maximumLineCount: 3
+      elide: Text.ElideRight
+      Layout.fillWidth: true
+    }
+
+    Rectangle {
+      visible: root.record.details && root.record.details.length > 0
+      Layout.fillWidth: true
+      implicitHeight: details.implicitHeight + Style.space(16)
+      radius: Tokens.radius.small
+      color: Tokens.surface.base
+      border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+      border.width: Tokens.accessibility.highContrast ? 2 : 1
+      Accessible.role: Accessible.StaticText
+      Accessible.name: "Provenance and state for " + String(root.record.title || root.record.id || "record")
+
+      ColumnLayout {
+        id: details
+        anchors.fill: parent
+        anchors.margins: Style.space(8)
+        spacing: Style.space(5)
+        Repeater {
+          model: root.record.details || []
+          delegate: RowLayout {
+            required property var modelData
+            Layout.fillWidth: true
+            spacing: Style.space(10)
+            Text {
+              text: modelData.label
+              color: Tokens.text.disabled
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              font.bold: true
+              wrapMode: Text.WordWrap
+              Layout.preferredWidth: root.width < 520 ? 104 : 144
+              Layout.maximumWidth: root.width < 520 ? 104 : 144
+              Layout.alignment: Qt.AlignTop
+            }
+            Text {
+              text: modelData.value
+              color: Tokens.text.secondary
+              font.family: Style.font.family
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WrapAnywhere
+              maximumLineCount: 6
+              elide: Text.ElideRight
+              Layout.fillWidth: true
+            }
+          }
+        }
+      }
+    }
+  }
+}

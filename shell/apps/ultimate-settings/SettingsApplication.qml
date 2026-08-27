@@ -4,26 +4,30 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Ui as Ui
 import qs.apps.shared as Shared
+import "." as SettingsComponents
+
+import "SettingsModel.js" as SettingsModel
 
 Item {
   id: root
 
   property var host: null
-  property var providerCatalog: []
-  property string catalogState: "offline"
-  property var catalogError: null
-  property string catalogRequestId: ""
-  property string providerReadRequestId: ""
-  property string providerViewState: "idle"
-  property var providerReadResult: null
-  property var providerReadError: null
+  property var controller: null
+  property var queryState: SettingsModel.baseState(SettingsModel.OVERVIEW_ROUTE, {}, "offline")
 
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
-  readonly property string selectedResourceId: host && host.currentArguments && host.currentArguments.resourceId
-    ? String(host.currentArguments.resourceId) : ""
   readonly property var visibleRoutes: filteredRoutes(navigation.query)
-  readonly property var selectedProvider: providerEntry(currentRoute ? currentRoute.providerId : "")
-  readonly property var visibleResources: filteredResources()
+  readonly property bool queryBusy: queryState.phase === "catalog-loading" || queryState.phase === "loading"
+  readonly property bool overviewVisible: queryState.phase === "overview"
+  readonly property bool canRetry: !queryBusy && [
+    "offline", "missing", "unavailable", "degraded", "contract-mismatch", "denied", "interrupted", "stale", "failed"
+  ].indexOf(queryState.phase) >= 0
+  readonly property bool domainVisible: queryState.query && queryState.query.providerId !== ""
+  readonly property int recordColumns: contentScroll.availableWidth >= 980 ? 2 : 1
+  readonly property int overviewColumns: contentScroll.availableWidth >= 1120 ? 3
+    : contentScroll.availableWidth >= 700 ? 2 : 1
+
+  focus: true
 
   function filteredRoutes(query) {
     if (!host || !host.routeCatalog || !Array.isArray(host.routeCatalog.routes)) return []
@@ -35,163 +39,95 @@ Item {
     })
   }
 
-  function providerEntry(providerId) {
-    if (!providerId || !Array.isArray(providerCatalog)) return null
-    for (var i = 0; i < providerCatalog.length; i++) {
-      var entry = providerCatalog[i]
-      if (entry && entry.manifest && entry.manifest.provider === providerId) return entry
-    }
-    return null
+  function currentArguments() {
+    if (!host || !host.currentArguments) return {}
+    return host.currentArguments
   }
 
-  function firstReadAction(entry) {
-    if (!entry || !entry.manifest || !entry.manifest.actions) return ""
-    var names = Object.keys(entry.manifest.actions).sort()
-    for (var i = 0; i < names.length; i++) {
-      if (entry.manifest.actions[names[i]].mode === "read") return names[i]
-    }
-    return ""
-  }
-
-  function filteredResources() {
-    var value = providerReadResult && providerReadResult.value ? providerReadResult.value : null
-    var resources = value && Array.isArray(value.resources) ? value.resources : []
-    if (selectedResourceId === "") return resources
-    return resources.filter(function(resource) { return resource && resource.id === selectedResourceId })
-  }
-
-  function refreshCatalog() {
-    if (!host || !host.fabricReady) {
-      providerCatalog = []
-      catalogState = "offline"
-      catalogRequestId = ""
-      return
-    }
-    catalogState = "loading"
-    catalogError = null
-    catalogRequestId = host.requestFabric("provider.catalog", {})
-    if (catalogRequestId === "") catalogState = "failed"
-  }
-
-  function refreshSelectedProvider() {
-    providerReadRequestId = ""
-    providerReadResult = null
-    providerReadError = null
-    if (!currentRoute || currentRoute.providerId === "") {
-      providerViewState = "overview"
-      return
-    }
-    if (!host || !host.fabricReady) {
-      providerViewState = "offline"
-      return
-    }
-    if (catalogState !== "ready") {
-      providerViewState = "waiting-catalog"
-      return
-    }
-    if (!selectedProvider) {
-      providerViewState = "missing"
-      return
-    }
-    if (selectedProvider.state !== "available") {
-      providerViewState = "unavailable"
-      return
-    }
-    var action = firstReadAction(selectedProvider)
-    if (action === "") {
-      providerViewState = "no-read-contract"
-      return
-    }
-    providerViewState = "loading"
-    providerReadRequestId = host.requestFabric("provider.read", {
-      provider: currentRoute.providerId,
-      action: action,
-      arguments: {}
+  function ensureController() {
+    if (controller) return
+    controller = SettingsModel.createController({
+      send: function(method, parameters) {
+        return root.host ? root.host.requestFabric(method, parameters) : ""
+      },
+      cancel: function(requestId) {
+        if (!root.host || typeof root.host.cancelFabric !== "function") return false
+        return root.host.cancelFabric(requestId)
+      },
+      onState: function(state) {
+        root.queryState = state
+        if (state.requestId !== "" && (state.phase === "catalog-loading" || state.phase === "loading")) staleTimer.restart()
+        else staleTimer.stop()
+      }
     })
-    if (providerReadRequestId === "") providerViewState = "failed"
   }
 
-  function providerStatusTitle() {
-    if (providerViewState === "overview") return "Provider-backed settings"
-    if (providerViewState === "offline") return "Fabric is offline"
-    if (providerViewState === "waiting-catalog") return "Loading provider catalog"
-    if (providerViewState === "missing") return "Provider is not registered"
-    if (providerViewState === "unavailable") return "Provider is unavailable"
-    if (providerViewState === "no-read-contract") return "Provider has no readable state"
-    if (providerViewState === "loading") return "Reading current state"
-    if (providerViewState === "failed") return "Provider read failed"
-    if (providerViewState === "ready") return "Current provider state"
-    return "Provider state"
-  }
-
-  function providerStatusExplanation() {
-    if (providerViewState === "overview") return "Choose a domain to read its registered typed provider. No direct system command runs from this application."
-    if (providerViewState === "offline") return "Settings does not display cached system state while its Fabric endpoint is disconnected."
-    if (providerViewState === "waiting-catalog") return "Settings is waiting for the daemon's current provider registry."
-    if (providerViewState === "missing") return "" + currentRoute.providerId + " is not present in the current Fabric catalog. This page does not advertise controls without it."
-    if (providerViewState === "unavailable") return selectedProvider && selectedProvider.detail
-      ? String(selectedProvider.detail) : "The provider is registered but has no usable backend."
-    if (providerViewState === "no-read-contract") return "The registered provider exposes no read action, so Settings cannot represent current state honestly."
-    if (providerViewState === "loading") return "The typed read is in progress."
-    if (providerViewState === "failed") return providerReadError && providerReadError.explanation
-      ? String(providerReadError.explanation) : "Fabric rejected or failed the typed provider read."
-    if (providerViewState === "ready") return providerReadResult && providerReadResult.observedAt
-      ? "Observed at " + providerReadResult.observedAt + "." : "The provider returned a validated state payload."
-    return ""
-  }
-
-  onHostChanged: {
+  function synchronizeHost() {
+    ensureController()
     if (!host) return
-    refreshCatalog()
-    refreshSelectedProvider()
+    controller.activate(host.currentRoute || SettingsModel.OVERVIEW_ROUTE, currentArguments())
+    controller.setConnected(host.fabricReady)
+  }
+
+  function retryState() {
+    if (!controller || !host) return
+    if (host.fabricReady) controller.refresh()
+    else host.retryFabric()
+  }
+
+  function statusBorderColor() {
+    if (queryState.phase === "failed" || queryState.phase === "denied" || queryState.phase === "contract-mismatch")
+      return Tokens.state.danger
+    if (queryState.phase === "ready" || queryState.phase === "empty" || queryState.phase === "overview")
+      return Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+    return Tokens.state.warning
+  }
+
+  onHostChanged: synchronizeHost()
+
+  Component.onCompleted: ensureController()
+
+  Keys.onPressed: function(event) {
+    if (event.key === Qt.Key_F5 || (event.modifiers & Qt.ControlModifier && event.key === Qt.Key_R)) {
+      root.retryState()
+      event.accepted = true
+    }
+  }
+
+  Timer {
+    id: staleTimer
+    interval: 9000
+    repeat: false
+    onTriggered: {
+      if (root.controller && root.queryState.requestId !== "") root.controller.markStale(root.queryState.requestId)
+    }
   }
 
   Connections {
     target: root.host
     enabled: root.host !== null
 
-    function onFabricConnectionReady(hello) { root.refreshCatalog() }
+    function onFabricConnectionReady(hello) {
+      root.ensureController()
+      root.controller.setConnected(true)
+    }
+
     function onFabricReadyChanged() {
-      if (root.host.fabricReady) root.refreshCatalog()
-      else {
-        root.providerCatalog = []
-        root.catalogState = "offline"
-        root.refreshSelectedProvider()
-      }
+      root.ensureController()
+      root.controller.setConnected(root.host.fabricReady)
     }
+
     function onRouteActivated(routeId, routeArguments, context) {
-      Qt.callLater(root.refreshSelectedProvider)
+      root.ensureController()
+      root.controller.activate(routeId, routeArguments || {})
     }
+
     function onFabricResult(requestId, result) {
-      if (requestId === root.catalogRequestId) {
-        root.catalogRequestId = ""
-        if (!result || !Array.isArray(result.providers)) {
-          root.catalogState = "failed"
-          root.catalogError = { explanation: "Fabric returned an invalid provider catalog." }
-        } else {
-          root.providerCatalog = result.providers
-          root.catalogState = "ready"
-          root.catalogError = null
-          root.refreshSelectedProvider()
-        }
-      } else if (requestId === root.providerReadRequestId) {
-        root.providerReadRequestId = ""
-        root.providerReadResult = result
-        root.providerReadError = null
-        root.providerViewState = "ready"
-      }
+      if (root.controller) root.controller.receiveResult(requestId, result)
     }
+
     function onFabricFailure(requestId, error) {
-      if (requestId === root.catalogRequestId || (requestId === "" && root.catalogState === "loading")) {
-        root.catalogRequestId = ""
-        root.catalogState = "failed"
-        root.catalogError = error
-        root.providerViewState = "waiting-catalog"
-      } else if (requestId === root.providerReadRequestId || (requestId === "" && root.providerViewState === "loading")) {
-        root.providerReadRequestId = ""
-        root.providerReadError = error
-        root.providerViewState = "failed"
-      }
+      if (root.controller) root.controller.receiveFailure(requestId, error)
     }
   }
 
@@ -204,8 +140,9 @@ Item {
       title: "Settings"
       routes: root.visibleRoutes
       currentRoute: root.host ? root.host.currentRoute : ""
-      Layout.preferredWidth: root.width < 920 ? 220 : 280
-      Layout.minimumWidth: 200
+      Layout.preferredWidth: root.width < 900 ? 210 : root.width > 1450 ? 300 : 260
+      Layout.minimumWidth: 196
+      Layout.maximumWidth: 320
       Layout.fillHeight: true
       onRouteActivated: function(routeId) { root.host.navigate(routeId, {}) }
     }
@@ -216,7 +153,7 @@ Item {
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Style.space(20)
+        anchors.margins: root.width < 900 ? Style.space(14) : Style.space(20)
         spacing: Style.space(14)
 
         Shared.FabricStatusBanner {
@@ -238,6 +175,9 @@ Item {
               font.family: Style.font.family
               font.pixelSize: Style.font.heading
               font.bold: true
+              wrapMode: Text.WordWrap
+              maximumLineCount: 3
+              elide: Text.ElideRight
               Layout.fillWidth: true
             }
 
@@ -247,25 +187,29 @@ Item {
               font.family: Style.font.family
               font.pixelSize: Style.font.body
               wrapMode: Text.WordWrap
+              maximumLineCount: 4
+              elide: Text.ElideRight
               Layout.fillWidth: true
             }
           }
 
           Ui.Badge {
-            visible: root.currentRoute && root.currentRoute.providerId !== ""
-            text: root.providerViewState === "ready" ? "LIVE" : "UNAVAILABLE"
-            tone: root.providerViewState === "ready" ? "success" : "warning"
+            text: SettingsModel.phaseBadge(root.queryState)
+            tone: SettingsModel.phaseTone(root.queryState)
             Layout.alignment: Qt.AlignTop
           }
         }
 
         Controls.ScrollView {
+          id: contentScroll
           Layout.fillWidth: true
           Layout.fillHeight: true
+          contentWidth: availableWidth
           clip: true
+          Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
 
           ColumnLayout {
-            width: parent.width
+            width: contentScroll.availableWidth
             spacing: Style.space(12)
 
             Rectangle {
@@ -273,11 +217,12 @@ Item {
               implicitHeight: statusColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.large
               color: Tokens.surface.base
-              border.color: Tokens.border.subtle
-              border.width: 1
-              Accessible.role: Accessible.Pane
-              Accessible.name: root.providerStatusTitle()
-              Accessible.description: root.providerStatusExplanation()
+              border.color: root.statusBorderColor()
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: root.queryState.phase === "failed" || root.queryState.phase === "denied" ||
+                root.queryState.phase === "contract-mismatch" ? Accessible.AlertMessage : Accessible.Pane
+              Accessible.name: SettingsModel.stateTitle(root.queryState)
+              Accessible.description: SettingsModel.stateExplanation(root.queryState)
 
               ColumnLayout {
                 id: statusColumn
@@ -287,9 +232,234 @@ Item {
 
                 RowLayout {
                   Layout.fillWidth: true
+                  spacing: Style.space(10)
 
                   Text {
-                    text: root.providerStatusTitle()
+                    text: SettingsModel.stateTitle(root.queryState)
+                    color: Tokens.text.primary
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Button {
+                    visible: root.canRetry
+                    text: root.queryState.phase === "offline" ? "Reconnect" : "Retry"
+                    tooltipText: root.queryState.phase === "offline"
+                      ? "Reconnect to Fabric and read current provider state"
+                      : "Refresh the provider catalog and current route"
+                    focusable: true
+                    bordered: true
+                    onClicked: root.retryState()
+                  }
+                }
+
+                Text {
+                  text: SettingsModel.stateExplanation(root.queryState)
+                  color: Tokens.text.secondary
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.body
+                  wrapMode: Text.WordWrap
+                  maximumLineCount: 7
+                  elide: Text.ElideRight
+                  Layout.fillWidth: true
+                }
+
+                Ui.ProgressBar {
+                  visible: root.queryBusy
+                  indeterminate: true
+                  accessibleName: root.queryState.phase === "catalog-loading"
+                    ? "Loading Settings provider catalog" : "Loading current Settings provider state"
+                  Layout.fillWidth: true
+                }
+
+                Text {
+                  visible: root.domainVisible
+                  text: SettingsModel.provenance(root.queryState)
+                  color: Tokens.text.disabled
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WrapAnywhere
+                  maximumLineCount: 4
+                  elide: Text.ElideRight
+                  Layout.fillWidth: true
+                }
+
+                Text {
+                  visible: root.queryState.selectedResourceId !== ""
+                  text: "Exact resource: " + SettingsModel.clippedText(root.queryState.selectedResourceId, 180)
+                  color: Tokens.text.disabled
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WrapAnywhere
+                  maximumLineCount: 3
+                  elide: Text.ElideRight
+                  Layout.fillWidth: true
+                }
+
+                Text {
+                  visible: root.queryState.error && root.queryState.error.detail
+                  text: "Detail: " + SettingsModel.clippedText(root.queryState.error ? root.queryState.error.detail : "", 480)
+                  color: Tokens.text.disabled
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WrapAnywhere
+                  maximumLineCount: 4
+                  elide: Text.ElideRight
+                  Layout.fillWidth: true
+                }
+
+                ColumnLayout {
+                  visible: root.queryState.recoveryActions.length > 0
+                  Layout.fillWidth: true
+                  spacing: Style.space(3)
+
+                  Text {
+                    text: "RECOVERY PATHS"
+                    color: Tokens.state.warning
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.caption
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Repeater {
+                    model: root.queryState.recoveryActions
+
+                    delegate: Text {
+                      required property var modelData
+
+                      text: "\u2022 " + SettingsModel.clippedText(modelData, 320)
+                      color: Tokens.text.secondary
+                      font.family: Style.font.family
+                      font.pixelSize: Style.font.bodySmall
+                      wrapMode: Text.WrapAnywhere
+                      maximumLineCount: 3
+                      elide: Text.ElideRight
+                      Layout.fillWidth: true
+                    }
+                  }
+                }
+              }
+            }
+
+            GridLayout {
+              visible: root.overviewVisible
+              Layout.fillWidth: true
+              columns: root.overviewColumns
+              columnSpacing: Style.space(10)
+              rowSpacing: Style.space(10)
+
+              Repeater {
+                model: root.queryState.overviewCards
+
+                delegate: Rectangle {
+                  required property var modelData
+
+                  Layout.fillWidth: true
+                  implicitHeight: overviewCardColumn.implicitHeight + Style.space(24)
+                  radius: Tokens.radius.medium
+                  color: Tokens.surface.raised
+                  border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+                  border.width: Tokens.accessibility.highContrast ? 2 : 1
+                  Accessible.role: Accessible.Pane
+                  Accessible.name: modelData.title + ". " + modelData.status
+                  Accessible.description: modelData.detail
+
+                  ColumnLayout {
+                    id: overviewCardColumn
+                    anchors.fill: parent
+                    anchors.margins: Style.space(12)
+                    spacing: Style.space(7)
+
+                    RowLayout {
+                      Layout.fillWidth: true
+                      spacing: Style.space(8)
+
+                      Text {
+                        text: modelData.title
+                        color: Tokens.text.primary
+                        font.family: Style.font.family
+                        font.pixelSize: Style.font.title
+                        font.bold: true
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 3
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                      }
+
+                      Ui.Badge {
+                        text: String(modelData.status).toUpperCase()
+                        tone: modelData.tone
+                        Layout.alignment: Qt.AlignTop
+                      }
+                    }
+
+                    Text {
+                      text: modelData.detail
+                      color: Tokens.text.secondary
+                      font.family: Style.font.family
+                      font.pixelSize: Style.font.bodySmall
+                      wrapMode: Text.WordWrap
+                      maximumLineCount: 5
+                      elide: Text.ElideRight
+                      Layout.fillWidth: true
+                    }
+
+                    Text {
+                      text: modelData.providerId
+                      color: Tokens.text.disabled
+                      font.family: Style.font.family
+                      font.pixelSize: Style.font.caption
+                      wrapMode: Text.WrapAnywhere
+                      maximumLineCount: 2
+                      elide: Text.ElideRight
+                      Layout.fillWidth: true
+                    }
+
+                    Ui.Button {
+                      text: "Open " + modelData.title
+                      tooltipText: "Open the read-only " + modelData.title + " Settings route"
+                      accessibleDescription: modelData.status + ". " + modelData.detail
+                      focusable: true
+                      bordered: true
+                      leftAlign: true
+                      Layout.fillWidth: true
+                      onClicked: root.host.navigate(modelData.routeId, {})
+                    }
+                  }
+                }
+              }
+            }
+
+            Rectangle {
+              visible: root.domainVisible && !root.queryBusy
+              Layout.fillWidth: true
+              implicitHeight: coverageColumn.implicitHeight + Style.space(24)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: "Settings coverage and unavailable changes"
+              Accessible.description: root.queryState.query ? root.queryState.query.coverage : ""
+
+              ColumnLayout {
+                id: coverageColumn
+                anchors.fill: parent
+                anchors.margins: Style.space(12)
+                spacing: Style.space(6)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    text: "Coverage"
                     color: Tokens.text.primary
                     font.family: Style.font.family
                     font.pixelSize: Style.font.title
@@ -297,104 +467,104 @@ Item {
                     Layout.fillWidth: true
                   }
 
-                  Ui.Button {
-                    visible: root.providerViewState === "failed" || root.catalogState === "failed"
-                    text: "Try again"
-                    focusable: true
-                    onClicked: {
-                      if (root.catalogState === "failed") root.refreshCatalog()
-                      else root.refreshSelectedProvider()
-                    }
+                  Ui.Badge {
+                    text: "CHANGES UNAVAILABLE"
+                    tone: "warning"
+                    Layout.alignment: Qt.AlignTop
                   }
                 }
 
                 Text {
-                  text: root.providerStatusExplanation()
+                  text: root.queryState.query ? root.queryState.query.coverage : ""
                   color: Tokens.text.secondary
                   font.family: Style.font.family
-                  font.pixelSize: Style.font.body
+                  font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.WordWrap
-                  Layout.fillWidth: true
-                }
-
-                Ui.ProgressBar {
-                  visible: root.providerViewState === "loading" || root.catalogState === "loading"
-                  indeterminate: true
-                  accessibleName: "Loading provider state"
+                  maximumLineCount: 6
+                  elide: Text.ElideRight
                   Layout.fillWidth: true
                 }
 
                 Text {
-                  visible: root.currentRoute && root.currentRoute.providerId !== ""
-                  text: root.currentRoute ? "Provider: " + root.currentRoute.providerId : ""
+                  visible: root.queryState.operationActions.length > 0
+                  text: "Declared provider operations: " + root.queryState.operationActions.join(", ") +
+                    ". Settings exposes no preflight, approval, or execution control until the durable coordinator is integrated."
                   color: Tokens.text.disabled
                   font.family: Style.font.family
-                  font.pixelSize: Style.font.bodySmall
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WrapAnywhere
+                  maximumLineCount: 5
+                  elide: Text.ElideRight
                   Layout.fillWidth: true
+                }
+              }
+            }
+
+            GridLayout {
+              visible: root.queryState.records.length > 0
+              Layout.fillWidth: true
+              columns: root.recordColumns
+              columnSpacing: Style.space(10)
+              rowSpacing: Style.space(10)
+
+              Repeater {
+                model: root.queryState.records
+
+                delegate: SettingsComponents.SettingsRecordCard {
+                  required property var modelData
+
+                  record: modelData
+                  selected: root.queryState.selectedResourceId !== "" &&
+                    root.queryState.selectedResourceId === modelData.id
                 }
               }
             }
 
             Ui.EmptyState {
-              visible: root.providerViewState === "ready" && root.visibleResources.length === 0
+              visible: root.queryState.phase === "empty"
               Layout.fillWidth: true
-              Layout.topMargin: Style.space(20)
-              title: root.selectedResourceId === "" ? "No resources reported" : "Requested resource is absent"
-              message: root.selectedResourceId === ""
-                ? "The provider returned a valid state with no resources."
-                : "The current provider result does not contain " + root.selectedResourceId + "."
+              Layout.topMargin: Style.space(16)
+              title: root.queryState.selectedMissing ? "Requested resource is absent" : "No resources reported"
+              message: root.queryState.selectedMissing
+                ? "The current typed inventory contains no exact match for this stable resource link."
+                : "The provider returned a valid current inventory with no resources."
             }
 
-            Repeater {
-              model: root.providerViewState === "ready" ? root.visibleResources : []
+            Rectangle {
+              visible: root.queryState.clipped
+              Layout.fillWidth: true
+              implicitHeight: clippedNotice.implicitHeight + Style.space(20)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.base
+              border.color: Tokens.state.warning
+              border.width: 1
+              Accessible.role: Accessible.AlertMessage
+              Accessible.name: clippedNotice.text
 
-              delegate: Rectangle {
-                required property var modelData
-
-                Layout.fillWidth: true
-                implicitHeight: resourceColumn.implicitHeight + Style.space(24)
-                radius: Tokens.radius.medium
-                color: Tokens.surface.raised
-                border.color: root.selectedResourceId === modelData.id ? Tokens.accent.primary : Tokens.border.subtle
-                border.width: 1
-                Accessible.role: Accessible.Pane
-                Accessible.name: String(modelData.label || modelData.id || "Provider resource")
-
-                ColumnLayout {
-                  id: resourceColumn
-                  anchors.fill: parent
-                  anchors.margins: Style.space(12)
-                  spacing: Style.space(5)
-
-                  Text {
-                    text: String(modelData.label || modelData.id || "Unnamed resource")
-                    color: Tokens.text.primary
-                    font.family: Style.font.family
-                    font.pixelSize: Style.font.body
-                    font.bold: true
-                    Layout.fillWidth: true
-                  }
-
-                  Text {
-                    text: String(modelData.kind || "resource") + " · " + String(modelData.id || "")
-                    color: Tokens.text.disabled
-                    font.family: Style.font.family
-                    font.pixelSize: Style.font.bodySmall
-                    wrapMode: Text.WrapAnywhere
-                    Layout.fillWidth: true
-                  }
-
-                  Text {
-                    visible: modelData.state !== undefined
-                    text: JSON.stringify(modelData.state)
-                    color: Tokens.text.secondary
-                    font.family: Style.font.family
-                    font.pixelSize: Style.font.bodySmall
-                    wrapMode: Text.WrapAnywhere
-                    Layout.fillWidth: true
-                  }
-                }
+              Text {
+                id: clippedNotice
+                anchors.fill: parent
+                anchors.margins: Style.space(10)
+                text: "Display bound reached at " + SettingsModel.MAX_VISIBLE_RECORDS + " records. " +
+                  root.queryState.totalRecords + " records were reported; use an exact resource deep link for a narrower view."
+                color: Tokens.text.secondary
+                font.family: Style.font.family
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.WordWrap
               }
+            }
+
+            Text {
+              visible: !root.queryBusy
+              text: "Read-only Fabric provider state \u00b7 no direct commands, mutation, preflight, approval, or execution authority"
+              color: Tokens.text.disabled
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              horizontalAlignment: Text.AlignHCenter
+              wrapMode: Text.WordWrap
+              Layout.fillWidth: true
+              Layout.topMargin: Style.space(6)
+              Layout.bottomMargin: Style.space(12)
             }
           }
         }
