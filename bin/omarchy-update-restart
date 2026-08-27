@@ -43,9 +43,28 @@ for file in "$HOME"/.local/state/omarchy/restart-*-required; do
   fi
 done
 
+fabric_refresh_status=0
+fabric_wants_path="$HOME/.config/systemd/user/graphical-session.target.wants/omarchy-fabric.service"
+if systemctl --user is-enabled --quiet omarchy-fabric.service ||
+  systemctl --user is-active --quiet omarchy-fabric.service ||
+  [[ -L $fabric_wants_path ]]; then
+  echo -e "\e[32m\nRefreshing Fabric\e[0m"
+  omarchy-fabric-service refresh
+  fabric_lifecycle_status=$?
+  if (( fabric_lifecycle_status == 78 )); then
+    echo "Fabric stopped because its updated runtime could not be verified. Complete the package update before restarting it." >&2
+    fabric_refresh_status=1
+  elif (( fabric_lifecycle_status != 0 )); then
+    echo "Fabric refresh failed and the previous daemon state is unknown. Do not use Fabric until its user service can be stopped and the package update completed." >&2
+    fabric_refresh_status=1
+  fi
+fi
+
 # Updates routinely replace the shell's QML, and a stale process can lazy-load
 # new files into old code. A restart failure (locked session, ssh, TTY) only
 # prints its reason: the next update or login gets a fresh shell anyway.
 echo -e "\e[32m\nRestarting shell\e[0m"
 echo "All plugins have been reloaded"
 omarchy-restart-shell || true
+
+exit "$fabric_refresh_status"

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import json
+import os
 import socket
 import stat
 import tempfile
@@ -13,6 +15,7 @@ from unittest import mock
 
 from helper import DaemonProcess, hello, raw_request
 
+from omarchy_fabric import daemon as daemon_module
 from omarchy_fabric.daemon import ClientConnection, DaemonConfig, FabricDaemon
 from omarchy_fabric.models import MAX_FRAME_BYTES, PROTOCOL_NAME, FabricError, RpcRequest
 from omarchy_fabric.security import EndpointAdmission, PrincipalKind, SessionBindingStore
@@ -529,6 +532,42 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(health["status"], "healthy")
         finally:
             await client.close()
+
+
+class DaemonExitClassificationTests(unittest.TestCase):
+    def test_typed_startup_refusal_uses_ex_config(self) -> None:
+        async def refuse(_config: DaemonConfig) -> None:
+            raise FabricError(
+                "database.corrupt",
+                "Fabric database is corrupt",
+                "The database must be restored before Fabric can start.",
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            argv = [
+                "--socket",
+                str(Path(temporary) / "fabric.sock"),
+                "--database",
+                str(Path(temporary) / "fabric.db"),
+            ]
+            with mock.patch.object(daemon_module, "run_daemon", side_effect=refuse):
+                with mock.patch("sys.stderr", new_callable=io.StringIO):
+                    self.assertEqual(os.EX_CONFIG, daemon_module.main(argv))
+
+    def test_unexpected_failure_is_left_restartable(self) -> None:
+        async def crash(_config: DaemonConfig) -> None:
+            raise RuntimeError("unexpected daemon failure")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            argv = [
+                "--socket",
+                str(Path(temporary) / "fabric.sock"),
+                "--database",
+                str(Path(temporary) / "fabric.db"),
+            ]
+            with mock.patch.object(daemon_module, "run_daemon", side_effect=crash):
+                with self.assertRaisesRegex(RuntimeError, "unexpected daemon failure"):
+                    daemon_module.main(argv)
 
 
 if __name__ == "__main__":

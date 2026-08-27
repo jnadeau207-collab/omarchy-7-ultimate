@@ -1222,7 +1222,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 130
     except FabricError as error:
         print(json.dumps({"error": error.to_dict()}, sort_keys=True), file=sys.stderr)
-        return 1
+        # A typed startup refusal is persistent configuration/state failure.
+        # systemd must not spin on it, while an unexpected Python exception is
+        # deliberately left uncaught so the service can restart exit status 1.
+        return os.EX_CONFIG
 
 
 if __name__ == "__main__":

@@ -123,6 +123,7 @@ default/**                     ──►  omarchy-settings    /usr/share/omarchy
   ├─ xdg-terminal-exec/*.list                           /usr/share/xdg-terminal-exec/
   ├─ applications/mimeapps.list                         /usr/share/applications/mimeapps.list
   ├─ systemd/user/*.service                             /usr/lib/systemd/user/
+  │   └─ omarchy-fabric.service                        per-user Fabric, enabled at first run and by migration
   ├─ systemd/user/app.slice.d/10-oomd.conf              /usr/lib/systemd/user/app.slice.d/
   ├─ systemd/system-sleep/{force-igpu,
   │    keyboard-backlight,unmount-fuse}                 /usr/lib/systemd/system-sleep/
