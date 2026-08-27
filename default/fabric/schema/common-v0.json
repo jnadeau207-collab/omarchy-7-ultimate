@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:common-v0",
+  "title": "Omarchy Fabric provisional common vocabulary",
+  "description": "Root-owned provisional vocabulary shared by the first Fabric foundation workstreams. Domain schemas may reference these definitions but may not redefine or edit them.",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "stableId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$",
+      "minLength": 3,
+      "maxLength": 160
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+(?:\\.[0-9]+){0,2}$"
+    },
+    "schemaReference": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uri-reference",
+          "minLength": 1
+        },
+        "version": {
+          "$ref": "#/$defs/schemaVersion"
+        }
+      },
+      "additionalProperties": false
+    },
+    "operationStatus": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "awaiting-consent",
+        "awaiting-authentication",
+        "queued",
+        "running",
+        "validating",
+        "awaiting-keep",
+        "waiting-restart",
+        "waiting-reboot",
+        "rolling-back",
+        "rolled-back",
+        "rollback-failed",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "interrupted",
+        "reconciling",
+        "needs-attention",
+        "undoing",
+        "undone",
+        "undo-failed",
+        "recovering",
+        "recovered",
+        "recovery-failed"
+      ]
+    },
+    "changeState": {
+      "type": "string",
+      "enum": [
+        "none",
+        "partial",
+        "complete",
+        "unknown"
+      ]
+    },
+    "effectTag": {
+      "type": "string",
+      "enum": [
+        "mutating",
+        "privileged",
+        "destructive",
+        "irreversible",
+        "download",
+        "compile",
+        "network",
+        "logout",
+        "restart",
+        "reboot"
+      ]
+    },
+    "eligibility": {
+      "type": "string",
+      "enum": [
+        "not-supported",
+        "ineligible",
+        "eligible",
+        "expired",
+        "consumed",
+        "stale"
+      ]
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "stateRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "errorEnvelope": {
+      "type": "object",
+      "required": [
+        "code",
+        "title",
+        "explanation",
+        "detail",
+        "retryable",
+        "changeState"
+      ],
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/stableId"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 16000
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "changeState": {
+          "$ref": "#/$defs/changeState"
+        },
+        "recoveryActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stableId"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
