@@ -24,6 +24,7 @@ BorderSurface {
 
   signal clicked()
   signal rightClicked()
+  signal hovered(bool on)
 
   readonly property bool _hot: clickable && (mouse.containsMouse || hasCursor)
 
@@ -51,6 +52,7 @@ BorderSurface {
     hoverEnabled: true
     cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
     acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onContainsMouseChanged: root.hovered(containsMouse)
     onClicked: function(mouse) {
       if (mouse.button === Qt.RightButton) root.rightClicked()
       else root.clicked()
