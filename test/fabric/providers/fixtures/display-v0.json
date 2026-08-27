@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "v0",
+  "monitors": [
+    {
+      "name": "eDP-1",
+      "disabled": false,
+      "width": 2880,
+      "height": 1800,
+      "refreshRate": 120.0,
+      "x": 0,
+      "y": 0,
+      "scale": 2.0,
+      "transform": 0,
+      "focused": true,
+      "mirrorOf": "",
+      "dpmsStatus": true
+    },
+    {
+      "name": "DP-1",
+      "disabled": false,
+      "width": 2560,
+      "height": 1440,
+      "refreshRate": 144.0,
+      "x": 1440,
+      "y": 0,
+      "scale": 1.0,
+      "transform": 0,
+      "focused": false,
+      "mirrorOf": "eDP-1",
+      "dpmsStatus": true
+    },
+    {
+      "name": "HDMI-A-1",
+      "disabled": true,
+      "width": 0,
+      "height": 0,
+      "refreshRate": 0.0,
+      "x": 0,
+      "y": 0,
+      "scale": 1.0,
+      "transform": 0,
+      "focused": false,
+      "mirrorOf": "",
+      "dpmsStatus": false
+    }
+  ]
+}

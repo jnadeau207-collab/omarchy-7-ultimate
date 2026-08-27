@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "v0",
+  "provider": "audio.provider",
+  "providerVersion": "v0",
+  "minFabricProtocol": 0,
+  "maxFabricProtocol": 0,
+  "capabilities": [
+    "audio.inspect",
+    "audio.volume.set"
+  ],
+  "actions": {
+    "inspect": {
+      "capability": "audio.inspect",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:audio:inventory-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:audio:inventory-result:v0",
+        "version": "v0"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
+    },
+    "output-volume.set": {
+      "capability": "audio.volume.set",
+      "mode": "operation",
+      "risk": "low",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:audio:operation-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:audio:operation-result:v0",
+        "version": "v0"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:audio:operation-preflight:v0",
+        "version": "v0"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:audio:operation-state:v0",
+        "version": "v0"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
+    }
+  }
+}

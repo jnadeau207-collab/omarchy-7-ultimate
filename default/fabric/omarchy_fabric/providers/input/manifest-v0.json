@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "v0",
+  "provider": "input.provider",
+  "providerVersion": "v0",
+  "minFabricProtocol": 0,
+  "maxFabricProtocol": 0,
+  "capabilities": [
+    "input.inspect",
+    "input.keyboard-layout.set"
+  ],
+  "actions": {
+    "inspect": {
+      "capability": "input.inspect",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:input:inventory-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:input:inventory-result:v0",
+        "version": "v0"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
+    },
+    "keyboard-layout.set": {
+      "capability": "input.keyboard-layout.set",
+      "mode": "operation",
+      "risk": "low",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:input:operation-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:input:operation-result:v0",
+        "version": "v0"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:input:operation-preflight:v0",
+        "version": "v0"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:input:operation-state:v0",
+        "version": "v0"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
+    }
+  }
+}
