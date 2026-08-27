@@ -70,16 +70,11 @@ function hyprbarsSnapInset(win) {
 }
 
 // Chromium paints its visible frame CHROMIUM_FRAME_INSET px right and down of
-// the box the compositor hands it, then runs past the far edge and is clipped
-// there. A box sized to the rect we want therefore shows desktop along the left
-// and top and cuts the right and bottom. It happens in normal floating and
-// snapped Chrome across CSD/SSD and flag combinations. Actual compositor
-// maximize and F11 paint edge-to-edge and must keep their raw geometry. GTK CSD
-// clients such as Nautilus do not need the inset either.
-//
-// Expanding the box by the inset puts the visible frame exactly on the rect we
-// asked for: box [288,188 912x612] paints frame 300..1199, the requested
-// 900px-wide rect at x=300, with no gap and nothing cut.
+// the box the compositor hands it, and its native frame continues to the far
+// edge. Keep the requested visible rectangle stable by expanding the
+// compositor box at both dimensions and shifting its origin back by the same
+// inset. Actual compositor maximize and F11 paint edge-to-edge and must keep
+// their raw geometry. GTK CSD clients such as Nautilus do not need the inset.
 var CHROMIUM_FRAME_INSET = 12
 var _chromiumFrameRegex = /(google-)?chrom(e|ium)|brave-browser|microsoft-edge|vivaldi-stable|helium/i
 
@@ -94,8 +89,8 @@ function chromiumFrameInset(win) {
   return usesChromiumFrame(win) ? CHROMIUM_FRAME_INSET : 0
 }
 
-// Grow a target rect into the compositor box that makes Chromium's visible
-// frame land on it. A no-op for every other client.
+// Expand a target rect into the compositor coordinates that make Chromium's
+// visible frame land on it. A no-op for every other client.
 function frameBox(rect, win) {
   var inset = chromiumFrameInset(win)
   if (!inset || !rect || !rect.width || !rect.height) return rect
