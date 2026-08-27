@@ -5,6 +5,7 @@ set -euo pipefail
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
 require_command script
+require_command python3
 
 fns="$ROOT/default/bash/fns/ssh-reconnect"
 
@@ -63,21 +64,50 @@ pass "missing destination is not interactive"
 fake_dir=$(mktemp -d)
 trap 'rm -rf "$fake_dir"' EXIT
 
-cat >"$fake_dir/ssh" <<EOF
-#!/bin/bash
-trap 'exit 130' INT
-trap 'exit 143' TERM
-[[ \$1 == "-G" ]] && { echo "remotecommand none"; exit 0; }
-n=\$(( \$(cat "$fake_dir/count" 2>/dev/null || echo 0) + 1 ))
-echo "\$n" >"$fake_dir/count"
-read -r duration code <<<"\$(sed -n "\${n}p" "$fake_dir/plan")"
-if [[ ! \$duration =~ ^[0-9]+([.][0-9]+)?$ ]] || [[ ! \$code =~ ^[0-9]+$ ]] || (( code > 255 )); then
-  echo "invalid fake ssh plan entry: \${duration:-<missing>} \${code:-<missing>}" >&2
-  exit 97
-fi
-sleep "\$duration"
-exit "\$code"
-EOF
+cat >"$fake_dir/ssh" <<'PY'
+#!/usr/bin/python3
+import math
+import pathlib
+import signal
+import sys
+import time
+
+
+def exit_on_signal(signum, _frame):
+    raise SystemExit(128 + signum)
+
+
+signal.signal(signal.SIGINT, exit_on_signal)
+signal.signal(signal.SIGTERM, exit_on_signal)
+
+if sys.argv[1:2] == ["-G"]:
+    print("remotecommand none")
+    raise SystemExit(0)
+
+root = pathlib.Path(__file__).resolve().parent
+count_path = root / "count"
+plan_path = root / "plan"
+try:
+    previous = int(count_path.read_text()) if count_path.exists() else 0
+except (OSError, ValueError):
+    previous = 0
+attempt = previous + 1
+count_path.write_text(f"{attempt}\n")
+
+try:
+    plan_line = plan_path.read_text().splitlines()[attempt - 1]
+    duration_text, code_text = plan_line.split()
+    duration = float(duration_text)
+    code = int(code_text)
+    if not math.isfinite(duration) or duration < 0 or not 0 <= code <= 255:
+        raise ValueError
+except (IndexError, OSError, ValueError):
+    print(f"invalid fake ssh plan entry at attempt {attempt}", file=sys.stderr)
+    raise SystemExit(97)
+
+time.sleep(duration)
+raise SystemExit(code)
+PY
 chmod +x "$fake_dir/ssh"
 
 cat >"$fake_dir/driver" <<EOF
