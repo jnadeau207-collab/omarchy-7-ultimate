@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:diagnostics-bundle-v0",
+  "x-omarchy-version": "v0",
+  "title": "Redacted support bundle preview",
+  "type": "object",
+  "required": ["schemaVersion", "sources", "maximumBytes", "estimatedBytes", "redacted", "entries", "revision"],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "sources": { "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true, "items": { "enum": ["service-failures", "journal-usage", "filesystem-usage"] } },
+    "maximumBytes": { "type": "integer", "minimum": 1024, "maximum": 1048576 },
+    "estimatedBytes": { "type": "integer", "minimum": 0, "maximum": 1048576 },
+    "redacted": { "const": true },
+    "entries": { "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true, "items": { "$ref": "#/$defs/entry" } },
+    "revision": { "type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["source", "bytes", "redactions", "excerpt"],
+      "properties": {
+        "source": { "enum": ["service-failures", "journal-usage", "filesystem-usage"] },
+        "bytes": { "type": "integer", "minimum": 0, "maximum": 1048576 },
+        "redactions": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "excerpt": { "type": "string", "pattern": "^[^\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]{0,512}$" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
