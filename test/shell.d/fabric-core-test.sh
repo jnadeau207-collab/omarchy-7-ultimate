@@ -16,7 +16,7 @@ import pathlib
 import sys
 
 module_directory = pathlib.Path(sys.argv[1])
-for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health", "provider_registry", "reference_operation"):
+for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health", "provider_builtins", "provider_registry", "reference_operation"):
     path = module_directory / f"{name}.py"
     compile(path.read_text(), str(path), "exec")
 PY
@@ -118,6 +118,7 @@ fabric_core_modules=(
   "$ROOT/default/fabric/omarchy_fabric/models.py"
   "$ROOT/default/fabric/omarchy_fabric/events.py"
   "$ROOT/default/fabric/omarchy_fabric/health.py"
+  "$ROOT/default/fabric/omarchy_fabric/provider_builtins.py"
   "$ROOT/default/fabric/omarchy_fabric/provider_registry.py"
   "$ROOT/default/fabric/omarchy_fabric/reference_operation.py"
 )
@@ -179,6 +180,8 @@ assert health["socket"]["ownerOnly"] is True
 assert health["socket"]["mode"] == "0600"
 assert health["database"]["journalMode"] == "wal"
 assert health["database"]["integrity"] == "ok"
+assert health["providers"]["typed"] == 6
+assert health["providers"]["availableTyped"] == 6
 assert doctor["status"] == "healthy"
 assert all(check["status"] == "pass" for check in doctor["checks"])
 PY
