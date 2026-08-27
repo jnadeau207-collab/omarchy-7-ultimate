@@ -63,10 +63,11 @@ local function load_csd_patterns()
   return patterns
 end
 
--- Desktop Mode chrome colors. Prefer the current theme's chrome-tokens.json
--- (theme-set copies it). Light themes without a local file use
--- chrome-tokens-light.json so Superbar glass, hyprbars bar, and caption
--- buttons all move. No private hex in add_hyprbars_buttons.
+-- Desktop Mode chrome colors. The semantic resolver publishes a flat
+-- chrome-tokens-v0.json compatibility projection next to its canonical
+-- design-tokens-v0.json payload. Older revisions still consume the checked-in
+-- chrome-tokens.json / chrome-tokens-light.json projections. No color literal
+-- or silent default lives in add_hyprbars_buttons.
 local function theme_is_light()
   local home = os.getenv("HOME") or ""
   if home == "" then
@@ -84,11 +85,15 @@ end
 local function chrome_tokens_path(root)
   local home = os.getenv("HOME") or ""
   if home ~= "" then
-    local current = home .. "/.local/state/omarchy/current/theme/chrome-tokens.json"
+    local current = home .. "/.local/state/omarchy/current/chrome-tokens-v0.json"
     local file = io.open(current, "r")
     if file then
+      local body = file:read("*a")
       file:close()
-      return current
+      local expected_mode = theme_is_light() and "light" or "dark"
+      if body:match('"_mode"%s*:%s*"' .. expected_mode .. '"') then
+        return current
+      end
     end
   end
   if theme_is_light() then
@@ -100,44 +105,76 @@ end
 local function load_chrome_tokens()
   local root = repo_root()
   if root == "" then
-    return {}
+    return nil, "OMARCHY_PATH is unavailable; cannot locate resolved chrome tokens"
   end
   local file = io.open(chrome_tokens_path(root), "r")
   if not file then
-    return {}
+    return nil, "cannot read resolved chrome token adapter at " .. chrome_tokens_path(root)
   end
   local body = file:read("*a")
   file:close()
   local tokens = {}
-  for key, value in body:gmatch('"([A-Za-z]+)"%s*:%s*"([^"]*)"') do
+  for key, value in body:gmatch('"([A-Za-z0-9_]+)"%s*:%s*"([^"]*)"') do
     tokens[key] = value
   end
-  return tokens
+  if tokens._schemaVersion ~= "omarchy.chrome-adapter.v0" or tokens._sourceSchemaVersion ~= "omarchy.design-tokens.v0" then
+    return nil, "resolved chrome token adapter has an incompatible schema"
+  end
+  local expected_mode = theme_is_light() and "light" or "dark"
+  if tokens._mode ~= expected_mode then
+    return nil, "resolved chrome token adapter mode does not match the active theme"
+  end
+  local required = {
+    "glassRed", "glassGreen", "glassBlue", "glassAlphaPct", "hyprbarsTextHex",
+    "captionCloseBgHex", "captionCloseFgHex", "captionMaxBgHex", "captionMaxFgHex",
+    "captionMinBgHex", "captionMinFgHex",
+  }
+  for _, key in ipairs(required) do
+    if not tokens[key] or tokens[key] == "" then
+      return nil, "resolved chrome token adapter is missing " .. key
+    end
+  end
+  for _, key in ipairs({ "glassRed", "glassGreen", "glassBlue" }) do
+    local value = tonumber(tokens[key])
+    if not value or value < 0 or value > 255 or value % 1 ~= 0 then
+      return nil, "resolved chrome token adapter has invalid " .. key
+    end
+  end
+  local alpha = tonumber(tokens.glassAlphaPct)
+  if not alpha or alpha < 0 or alpha > 100 then
+    return nil, "resolved chrome token adapter has invalid glassAlphaPct"
+  end
+  return tokens, nil
 end
 
 local function chrome_glass_rgba(tokens)
-  local r = tonumber(tokens.glassRed) or 28
-  local g = tonumber(tokens.glassGreen) or 28
-  local b = tonumber(tokens.glassBlue) or 30
-  local pct = tonumber(tokens.glassAlphaPct) or 62
+  local r = tonumber(tokens.glassRed)
+  local g = tonumber(tokens.glassGreen)
+  local b = tonumber(tokens.glassBlue)
+  local pct = tonumber(tokens.glassAlphaPct)
   local a = math.floor(pct * 255 / 100 + 0.5)
   return string.format("rgba(%02x%02x%02x%02x)", r, g, b, a)
 end
 
-local function chrome_hex_rgb(tokens, key, fallback)
-  local hex = tokens[key] or fallback or "#eeeeee"
+local function chrome_hex_rgb(tokens, key)
+  local hex = tokens[key]
   hex = hex:gsub("^#", "")
-  if #hex < 6 then
-    hex = (fallback or "#eeeeee"):gsub("^#", "")
-  end
-  if #hex < 6 then
-    hex = "eeeeee"
+  if not hex:match("^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]$") then
+    error("resolved chrome token adapter has invalid " .. key)
   end
   return string.format("rgb(%s)", hex:sub(1, 6))
 end
 
 local function chrome_text_rgb(tokens)
-  return chrome_hex_rgb(tokens, "hyprbarsTextHex", "#eeeeee")
+  return chrome_hex_rgb(tokens, "hyprbarsTextHex")
+end
+
+local function require_chrome_tokens()
+  local tokens, load_error = load_chrome_tokens()
+  if not tokens then
+    error(load_error)
+  end
+  return tokens
 end
 
 for _, class_pat in ipairs(load_csd_patterns()) do
@@ -159,7 +196,7 @@ o.window(".*", { opacity = "1 1" })
 -- required AFTER this file. It restores cyan borders, gaps, and blur-off.
 -- apply_desktop_look is called again from hyprland.lua after that file.
 local function apply_desktop_look()
-  local chrome = load_chrome_tokens()
+  local chrome = require_chrome_tokens()
   hl.config({
     general = {
       resize_on_border = true,
@@ -351,29 +388,29 @@ local function add_hyprbars_buttons()
   end
   -- hyprbars draws buttons right-to-left, so the user sees min / max / close.
   -- Snap layouts are maximize-hover (hover_action), drag-to-edge, and Win+Z.
-  local chrome = load_chrome_tokens()
+  local chrome = require_chrome_tokens()
   local sig = (chrome.captionCloseBgHex or "") .. (chrome.captionMaxBgHex or "") .. (chrome.glassRed or "")
   if _G.omarchy_hyprbars_buttons == sig then
     return
   end
   plugin.hyprbars.add_button({
-    bg_color = chrome_hex_rgb(chrome, "captionCloseBgHex", "#c42b1c"),
-    fg_color = chrome_hex_rgb(chrome, "captionCloseFgHex", "#ffffff"),
+    bg_color = chrome_hex_rgb(chrome, "captionCloseBgHex"),
+    fg_color = chrome_hex_rgb(chrome, "captionCloseFgHex"),
     size = 22,
     icon = "×",
     action = "omarchy-shell window close 0x{:x}",
   })
   plugin.hyprbars.add_button({
-    bg_color = chrome_hex_rgb(chrome, "captionMaxBgHex", "#c8c8c8"),
-    fg_color = chrome_hex_rgb(chrome, "captionMaxFgHex", "#1a1a1a"),
+    bg_color = chrome_hex_rgb(chrome, "captionMaxBgHex"),
+    fg_color = chrome_hex_rgb(chrome, "captionMaxFgHex"),
     size = 22,
     icon = "□",
     action = "omarchy-shell window toggleMaximize 0x{:x}",
     hover_action = "omarchy-shell window snapChooser 0x{:x}",
   })
   plugin.hyprbars.add_button({
-    bg_color = chrome_hex_rgb(chrome, "captionMinBgHex", "#c8c8c8"),
-    fg_color = chrome_hex_rgb(chrome, "captionMinFgHex", "#1a1a1a"),
+    bg_color = chrome_hex_rgb(chrome, "captionMinBgHex"),
+    fg_color = chrome_hex_rgb(chrome, "captionMinFgHex"),
     size = 22,
     icon = "–",
     action = "omarchy-shell window minimize 0x{:x}",

@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omarchy.org/schemas/design-tokens-v0.json",
+  "title": "Omarchy resolved semantic design tokens v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "source",
+    "surface",
+    "text",
+    "accent",
+    "selection",
+    "state",
+    "focus",
+    "border",
+    "chrome",
+    "caption",
+    "typography",
+    "icons",
+    "hitTargets",
+    "density",
+    "radii",
+    "elevation",
+    "effects",
+    "motion",
+    "accessibility",
+    "components"
+  ],
+  "$defs": {
+    "color": {
+      "type": "string",
+      "pattern": "^#(?:[0-9a-f]{6}|[0-9a-f]{8})$",
+      "description": "Lower-case Qt color: #rrggbb when opaque or #aarrggbb when translucent."
+    },
+    "px": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4096
+    },
+    "positivePx": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4096
+    },
+    "duration": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 60000
+    },
+    "colorMap": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/color" }
+    },
+    "pxMap": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/px" }
+    }
+  },
+  "properties": {
+    "schemaVersion": { "const": "omarchy.design-tokens.v0" },
+    "mode": { "enum": ["dark", "light"] },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["colorsSha256", "shellSha256", "defaultsSha256"],
+      "properties": {
+        "colorsSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "shellSha256": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "defaultsSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "surface": {
+      "allOf": [{ "$ref": "#/$defs/colorMap" }],
+      "required": ["canvas", "base", "raised", "glass", "overlay"]
+    },
+    "text": {
+      "allOf": [{ "$ref": "#/$defs/colorMap" }],
+      "required": ["primary", "secondary", "disabled"]
+    },
+    "accent": {
+      "allOf": [{ "$ref": "#/$defs/colorMap" }],
+      "required": ["primary", "hover", "pressed"]
+    },
+    "selection": {
+      "allOf": [{ "$ref": "#/$defs/colorMap" }],
+      "required": ["background", "foreground"]
+    },
+    "state": {
+      "allOf": [{ "$ref": "#/$defs/colorMap" }],
+      "required": ["success", "warning", "danger", "info"]
+    },
+    "focus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ring", "ringWidthPx", "ringOffsetPx"],
+      "properties": {
+        "ring": { "$ref": "#/$defs/color" },
+        "ringWidthPx": { "$ref": "#/$defs/px" },
+        "ringOffsetPx": { "$ref": "#/$defs/px" }
+      }
+    },
+    "border": {
+      "allOf": [{ "$ref": "#/$defs/colorMap" }],
+      "required": ["subtle", "strong"]
+    },
+    "chrome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["glass", "menu", "hover", "active", "pressed", "glow", "start", "edge"],
+      "properties": {
+        "glass": { "$ref": "#/$defs/color" },
+        "menu": { "$ref": "#/$defs/color" },
+        "hover": { "$ref": "#/$defs/color" },
+        "active": { "$ref": "#/$defs/color" },
+        "pressed": { "$ref": "#/$defs/color" },
+        "glow": { "$ref": "#/$defs/color" },
+        "start": { "$ref": "#/$defs/color" },
+        "edge": { "$ref": "#/$defs/color" }
+      }
+    },
+    "caption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bar", "text", "close", "maximize", "minimize"],
+      "properties": {
+        "bar": { "$ref": "#/$defs/color" },
+        "text": { "$ref": "#/$defs/color" },
+        "close": { "$ref": "#/$defs/colorMap" },
+        "maximize": { "$ref": "#/$defs/colorMap" },
+        "minimize": { "$ref": "#/$defs/colorMap" }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family", "sizesPx", "weights"],
+      "properties": {
+        "family": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "sizesPx": { "$ref": "#/$defs/pxMap" },
+        "weights": { "$ref": "#/$defs/pxMap" }
+      }
+    },
+    "icons": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family", "sizesPx"],
+      "properties": {
+        "family": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "sizesPx": { "$ref": "#/$defs/pxMap" }
+      }
+    },
+    "hitTargets": {
+      "allOf": [{ "$ref": "#/$defs/pxMap" }],
+      "required": ["minimum", "compact", "comfortable", "touch"]
+    },
+    "density": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "scale"],
+      "properties": {
+        "mode": { "enum": ["compact", "comfortable", "touch"] },
+        "scale": { "type": "number", "minimum": 0.5, "maximum": 3.0 }
+      }
+    },
+    "radii": {
+      "allOf": [{ "$ref": "#/$defs/pxMap" }],
+      "required": ["small", "medium", "large"]
+    },
+    "elevation": {
+      "allOf": [{ "$ref": "#/$defs/pxMap" }],
+      "required": ["none", "low", "medium", "high"]
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blur", "shadow"],
+      "properties": {
+        "blur": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "radiusPx", "passes"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "radiusPx": { "$ref": "#/$defs/px" },
+            "passes": { "type": "integer", "minimum": 0, "maximum": 16 }
+          }
+        },
+        "shadow": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "color", "radiusPx", "offsetXPx", "offsetYPx"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "color": { "$ref": "#/$defs/color" },
+            "radiusPx": { "$ref": "#/$defs/px" },
+            "offsetXPx": { "type": "integer", "minimum": -4096, "maximum": 4096 },
+            "offsetYPx": { "type": "integer", "minimum": -4096, "maximum": 4096 }
+          }
+        }
+      }
+    },
+    "motion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fastMs", "normalMs", "slowMs", "easing", "reduced"],
+      "properties": {
+        "fastMs": { "$ref": "#/$defs/duration" },
+        "normalMs": { "$ref": "#/$defs/duration" },
+        "slowMs": { "$ref": "#/$defs/duration" },
+        "easing": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "reduced": { "type": "boolean" }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reducedMotion", "highContrast", "minimumTextContrast", "minimumLargeTextContrast", "contrast"],
+      "properties": {
+        "reducedMotion": { "type": "boolean" },
+        "highContrast": { "type": "boolean" },
+        "minimumTextContrast": { "type": "number", "minimum": 1, "maximum": 21 },
+        "minimumLargeTextContrast": { "type": "number", "minimum": 1, "maximum": 21 },
+        "contrast": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 1, "maximum": 21 },
+          "required": ["primaryText", "secondaryText", "selectionText", "captionText", "captionClose", "captionMaximize", "captionMinimize"]
+        }
+      }
+    },
+    "components": {
+      "allOf": [{ "$ref": "#/$defs/pxMap" }],
+      "required": [
+        "controlGap",
+        "controlPaddingX",
+        "controlPaddingY",
+        "inputPaddingY",
+        "controlHeight",
+        "popupRowHeight",
+        "rowGap",
+        "rowPaddingX",
+        "labelGap",
+        "panelGap",
+        "panelPadding",
+        "popupPadding",
+        "dropdownWidth",
+        "searchableDropdownWidth",
+        "numberFieldWidth",
+        "searchablePopupMinHeight",
+        "taskbarHeight",
+        "captionHeight",
+        "captionButtonSize",
+        "captionButtonPadding",
+        "captionHorizontalPadding"
+      ]
+    }
+  }
+}

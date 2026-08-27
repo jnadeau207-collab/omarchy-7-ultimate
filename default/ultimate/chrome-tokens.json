@@ -1,5 +1,8 @@
 {
-  "_readme": "Dark Desktop Mode chrome. Superbar glass, hyprbars bar, and caption min/max/close. Light themes load chrome-tokens-light.json (or a theme-local chrome-tokens.json). No private hex in Lua.",
+  "_readme": "Generated compatibility adapter. Source of truth: omarchy.design-tokens.v0.",
+  "_schemaVersion": "omarchy.chrome-adapter.v0",
+  "_sourceSchemaVersion": "omarchy.design-tokens.v0",
+  "_mode": "dark",
   "glassRed": "28",
   "glassGreen": "28",
   "glassBlue": "30",

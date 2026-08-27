@@ -18,53 +18,36 @@ Item {
 
   property string home: Quickshell.env("HOME")
   property bool barHidden: false
-  property int barSize: Math.max(48, Style.bar.sizeHorizontal + 22)
+  property int barSize: Tokens.components.taskbarHeight
   property bool vertical: false
   property string position: "bottom"
   property string fontFamily: Style.font.family
   property color foreground: Tokens.text.primary
   property color barForeground: Tokens.text.primary
-  // Windows 7 Superbar glass: graphite, not Tokyo Night navy. Alpha + layer
-  // blur is the translucency. Do not fill with Tokens.surface.glass.
-  // Defaults match default/ultimate/chrome-tokens.json so the first frame is
-  // correct before FileView lands, and so a missing file cannot bleach chrome.
-  property color chromeBar: Qt.rgba(0.11, 0.11, 0.12, 0.62)
-  readonly property color chromeHover: Qt.rgba(1, 1, 1, 0.10)
-  readonly property color chromeActive: Qt.rgba(1, 1, 1, 0.16)
-  readonly property color chromePressed: Qt.rgba(1, 1, 1, 0.22)
-  property color chromeMenu: Qt.rgba(0.11, 0.11, 0.12, 0.88)
-  property color chromeGlow: "#e8943a"
-  property color chromeStart: "#9cbc0d"
-  property color chromeEdge: "#55ffffff"
-  property bool themeChromeReady: false
-  property bool themeIsLight: false
+  // Windows 7 Superbar glass remains graphite rather than palette canvas,
+  // but now comes from the same resolved payload as caption chrome. The old
+  // default/ultimate/chrome-tokens.json and chrome-tokens-light.json files are
+  // generated compatibility adapters. Locked pre-contract reference for the
+  // visual regression suite: Qt.rgba(0.11, 0.11, 0.12, 0.62).
+  readonly property color chromeBar: Tokens.chrome.glass
+  readonly property color chromeHover: Tokens.chrome.hover
+  readonly property color chromeActive: Tokens.chrome.active
+  readonly property color chromePressed: Tokens.chrome.pressed
+  readonly property color chromeMenu: Tokens.chrome.menu
+  readonly property color chromeGlow: Tokens.chrome.glow
+  readonly property color chromeStart: Tokens.chrome.start
+  readonly property color chromeEdge: Tokens.chrome.edge
   property color background: chromeBar
   property var moduleSlots: []
   readonly property var windowService: shell ? shell.windowService : null
   readonly property var appLibrary: shell ? shell.appLibrary : null
   readonly property var groups: windowService ? windowService.groups : []
 
-  function applyChromeTokens(body) {
-    var t
-    try {
-      t = JSON.parse(body || "{}")
-    } catch (e) {
-      return
-    }
-    if (!t || typeof t !== "object") return
-    var r = Number(t.glassRed)
-    var g = Number(t.glassGreen)
-    var b = Number(t.glassBlue)
-    var pct = Number(t.glassAlphaPct)
-    if (isNaN(r)) r = 28
-    if (isNaN(g)) g = 28
-    if (isNaN(b)) b = 30
-    if (isNaN(pct)) pct = 62
-    root.chromeBar = Qt.rgba(r / 255, g / 255, b / 255, pct / 100)
-    root.chromeMenu = Qt.rgba(r / 255, g / 255, b / 255, 0.88)
-    if (t.chromeGlowHex) root.chromeGlow = t.chromeGlowHex
-    if (t.chromeStartHex) root.chromeStart = t.chromeStartHex
-    if (t.chromeEdgeHex) root.chromeEdge = t.chromeEdgeHex
+  // Kept as the compatibility validation hook during the one-window adapter
+  // period. It validates the canonical payload; it never mutates bindings or
+  // accepts the legacy flat palette as a second source of truth.
+  function applyChromeTokens(payload) {
+    return Tokens.validPayload(payload)
   }
 
   function registerSlot(pluginId, item) {
@@ -155,43 +138,6 @@ Item {
     if (!next || !next.activeItem) return false
     next.activeItem.open()
     return true
-  }
-
-  FileView {
-    path: root.home + "/.local/state/omarchy/current/theme/chrome-tokens.json"
-    watchChanges: true
-    printErrors: false
-    onLoaded: {
-      root.themeChromeReady = true
-      root.applyChromeTokens(text())
-    }
-    onLoadFailed: {
-      root.themeChromeReady = false
-      fallbackChromeTokens.reload()
-    }
-    onFileChanged: reload()
-  }
-
-  FileView {
-    path: root.home + "/.local/state/omarchy/current/theme/colors.toml"
-    watchChanges: true
-    printErrors: false
-    onLoaded: {
-      root.themeIsLight = /mode\s*=\s*"light"/.test(text() || "")
-      if (!root.themeChromeReady) fallbackChromeTokens.reload()
-    }
-    onFileChanged: reload()
-  }
-
-  FileView {
-    id: fallbackChromeTokens
-    path: (root.omarchyPath || Quickshell.env("OMARCHY_PATH") || "") + (root.themeIsLight ? "/default/ultimate/chrome-tokens-light.json" : "/default/ultimate/chrome-tokens.json")
-    watchChanges: true
-    printErrors: false
-    onLoaded: {
-      if (!root.themeChromeReady) root.applyChromeTokens(text())
-    }
-    onFileChanged: reload()
   }
 
   FileView {
