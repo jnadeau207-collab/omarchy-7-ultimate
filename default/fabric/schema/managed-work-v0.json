@@ -1,0 +1,698 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:managed-work-v0",
+  "title": "Omarchy Fabric provisional managed-work results",
+  "description": "Closed result envelopes for durable context, tasks, runs, automations, projections, and Agent Center queries. This schema grants no execution authority.",
+  "x-omarchy-version": 0,
+  "oneOf": [
+    { "$ref": "#/$defs/context" },
+    { "$ref": "#/$defs/task" },
+    { "$ref": "#/$defs/run" },
+    { "$ref": "#/$defs/automation" },
+    { "$ref": "#/$defs/approval" },
+    { "$ref": "#/$defs/operation" },
+    { "$ref": "#/$defs/permission" },
+    { "$ref": "#/$defs/usage" },
+    { "$ref": "#/$defs/artifact" },
+    { "$ref": "#/$defs/scheduleReconciliation" },
+    { "$ref": "#/$defs/automationEventResult" },
+    { "$ref": "#/$defs/query" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "nullableId": {
+      "oneOf": [
+        { "$ref": "#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "opaqueId": {
+      "type": "string",
+      "pattern": "^(?:[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "timestamp": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 32503680000
+    },
+    "nullableTimestamp": {
+      "oneOf": [
+        { "$ref": "#/$defs/timestamp" },
+        { "type": "null" }
+      ]
+    },
+    "json": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/$defs/json" } },
+        { "type": "object", "additionalProperties": { "$ref": "#/$defs/json" } }
+      ]
+    },
+    "jsonObject": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/json" }
+    },
+    "owner": {
+      "type": "object",
+      "required": ["principalId", "sessionId"],
+      "properties": {
+        "principalId": { "$ref": "#/$defs/id" },
+        "sessionId": { "$ref": "#/$defs/id" }
+      },
+      "additionalProperties": false
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "kind",
+        "available",
+        "code",
+        "explanation",
+        "legacyInteractiveIncluded",
+        "networkDefault"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-execution-status" },
+        "available": { "const": false },
+        "code": { "const": "managed-execution.not-integrated" },
+        "explanation": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "legacyInteractiveIncluded": { "const": false },
+        "networkDefault": { "const": "denied" }
+      },
+      "additionalProperties": false
+    },
+    "budget": {
+      "type": "object",
+      "required": ["timeSeconds", "outputBytes", "costMicrounits", "network"],
+      "properties": {
+        "timeSeconds": { "type": "integer", "minimum": 1, "maximum": 604800 },
+        "outputBytes": { "type": "integer", "minimum": 0, "maximum": 10737418240 },
+        "costMicrounits": { "type": "integer", "minimum": 0, "maximum": 1000000000000000 },
+        "network": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "kind",
+        "contextId",
+        "owner",
+        "source",
+        "access",
+        "capturedAt",
+        "expiresAt",
+        "sensitivity",
+        "contentHash",
+        "revision",
+        "revokedAt",
+        "redaction",
+        "content"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "context-snapshot" },
+        "contextId": { "$ref": "#/$defs/id" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "source": { "$ref": "#/$defs/id" },
+        "access": {
+          "type": "object",
+          "required": ["scope", "taskId"],
+          "properties": {
+            "scope": { "enum": ["session", "task", "principal"] },
+            "taskId": { "$ref": "#/$defs/nullableId" }
+          },
+          "additionalProperties": false
+        },
+        "capturedAt": { "$ref": "#/$defs/timestamp" },
+        "expiresAt": { "$ref": "#/$defs/timestamp" },
+        "sensitivity": { "enum": ["public", "personal", "private", "restricted"] },
+        "contentHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "revokedAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "redaction": {
+          "type": "object",
+          "required": ["applied", "paths"],
+          "properties": {
+            "applied": { "type": "boolean" },
+            "paths": { "type": "array", "maxItems": 4096, "items": { "type": "string", "maxLength": 4096 } }
+          },
+          "additionalProperties": false
+        },
+        "content": { "$ref": "#/$defs/json" }
+      },
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "kind",
+        "taskId",
+        "owner",
+        "title",
+        "intent",
+        "contextIds",
+        "budget",
+        "state",
+        "revision",
+        "retryCount",
+        "createdAt",
+        "updatedAt",
+        "execution"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-task" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "intent": { "$ref": "#/$defs/jsonObject" },
+        "contextIds": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "budget": { "$ref": "#/$defs/budget" },
+        "state": { "enum": ["draft", "awaiting-approval", "queued", "running", "waiting", "retrying", "succeeded", "failed", "cancelled", "interrupted"] },
+        "revision": { "type": "integer", "minimum": 1 },
+        "retryCount": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" },
+        "execution": { "$ref": "#/$defs/execution" }
+      },
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "stepId", "runId", "sequence", "label", "capability", "state", "detail", "createdAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-step" },
+        "stepId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" },
+        "sequence": { "type": "integer", "minimum": 0 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "capability": { "$ref": "#/$defs/nullableId" },
+        "state": { "enum": ["planned", "blocked-unavailable", "cancelled"] },
+        "detail": { "$ref": "#/$defs/jsonObject" },
+        "createdAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "manifestStep": {
+      "type": "object",
+      "required": ["label", "capability"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "capability": { "$ref": "#/$defs/nullableId" }
+      },
+      "additionalProperties": false
+    },
+    "runManifest": {
+      "type": "object",
+      "required": ["provider", "model", "capabilities", "contextIds", "workspaceHandles", "artifactHandle", "budgets", "networkGranted", "sandboxRequired", "steps"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/id" },
+        "model": { "$ref": "#/$defs/id" },
+        "capabilities": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "contextIds": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "workspaceHandles": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "artifactHandle": { "$ref": "#/$defs/id" },
+        "budgets": { "$ref": "#/$defs/budget" },
+        "networkGranted": { "type": "boolean" },
+        "sandboxRequired": { "const": true },
+        "steps": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/manifestStep" } }
+      },
+      "additionalProperties": false
+    },
+    "run": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "runId", "taskId", "parentRunId", "owner", "manifest", "manifestHash", "state", "revision", "createdAt", "updatedAt", "interruptedAt", "steps", "execution"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-run" },
+        "runId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "parentRunId": { "$ref": "#/$defs/nullableId" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "manifest": { "$ref": "#/$defs/runManifest" },
+        "manifestHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "state": { "enum": ["queued", "running", "waiting", "retrying", "succeeded", "failed", "cancelled", "interrupted"] },
+        "revision": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" },
+        "interruptedAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "steps": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/step" } },
+        "execution": { "$ref": "#/$defs/execution" }
+      },
+      "additionalProperties": false
+    },
+    "retryPolicy": {
+      "type": "object",
+      "required": ["maxAttempts", "backoffSeconds"],
+      "properties": {
+        "maxAttempts": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "backoffSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+      },
+      "additionalProperties": false
+    },
+    "automationLimits": {
+      "type": "object",
+      "required": ["timeSeconds", "costMicrounits"],
+      "properties": {
+        "timeSeconds": { "type": "integer", "minimum": 1, "maximum": 604800 },
+        "costMicrounits": { "type": "integer", "minimum": 0, "maximum": 1000000000000000 }
+      },
+      "additionalProperties": false
+    },
+    "automationPolicy": {
+      "type": "object",
+      "required": ["missedRun", "coalescing", "maxCatchUp", "concurrency", "maxConcurrent", "retry", "limits", "signedOut"],
+      "properties": {
+        "missedRun": { "enum": ["skip", "run-once", "catch-up"] },
+        "coalescing": { "enum": ["earliest", "latest", "all"] },
+        "maxCatchUp": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "concurrency": { "enum": ["forbid", "replace", "allow"] },
+        "maxConcurrent": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "retry": { "$ref": "#/$defs/retryPolicy" },
+        "limits": { "$ref": "#/$defs/automationLimits" },
+        "signedOut": { "const": "pause" }
+      },
+      "additionalProperties": false
+    },
+    "trigger": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "seconds", "anchor"],
+          "properties": {
+            "kind": { "const": "interval" },
+            "seconds": { "type": "integer", "minimum": 60, "maximum": 31536000 },
+            "anchor": { "$ref": "#/$defs/timestamp" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "topic"],
+          "properties": {
+            "kind": { "const": "event" },
+            "topic": { "$ref": "#/$defs/id" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "timeZone", "hour", "minute", "weekdays", "dstPolicy"],
+          "properties": {
+            "kind": { "const": "calendar" },
+            "timeZone": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "hour": { "type": "integer", "minimum": 0, "maximum": 23 },
+            "minute": { "type": "integer", "minimum": 0, "maximum": 59 },
+            "weekdays": { "type": "array", "minItems": 1, "maxItems": 7, "uniqueItems": true, "items": { "type": "integer", "minimum": 0, "maximum": 6 } },
+            "dstPolicy": { "enum": ["wall-clock-first", "wall-clock-second", "skip-invalid"] }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "taskTemplate": {
+      "type": "object",
+      "required": ["title", "intent", "contextIds", "budget"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "intent": { "$ref": "#/$defs/jsonObject" },
+        "contextIds": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "budget": { "$ref": "#/$defs/budget" }
+      },
+      "additionalProperties": false
+    },
+    "firing": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "firingId", "automationId", "triggerKind", "triggerId", "dueAt", "state", "detail", "createdAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "automation-firing" },
+        "firingId": { "$ref": "#/$defs/id" },
+        "automationId": { "$ref": "#/$defs/id" },
+        "triggerKind": { "enum": ["schedule", "event"] },
+        "triggerId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "dueAt": { "$ref": "#/$defs/timestamp" },
+        "state": { "enum": ["pending-unavailable", "skipped", "cancelled"] },
+        "detail": { "$ref": "#/$defs/jsonObject" },
+        "createdAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "automation": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "automationId", "owner", "name", "taskTemplate", "trigger", "policy", "state", "revision", "nextDueAt", "lastReconciledAt", "createdAt", "updatedAt", "firings", "execution"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-automation" },
+        "automationId": { "$ref": "#/$defs/id" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "taskTemplate": { "$ref": "#/$defs/taskTemplate" },
+        "trigger": { "$ref": "#/$defs/trigger" },
+        "policy": { "$ref": "#/$defs/automationPolicy" },
+        "state": { "enum": ["enabled", "paused", "disabled"] },
+        "revision": { "type": "integer", "minimum": 1 },
+        "nextDueAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "lastReconciledAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" },
+        "firings": { "type": "array", "maxItems": 20, "items": { "$ref": "#/$defs/firing" } },
+        "execution": { "$ref": "#/$defs/execution" }
+      },
+      "additionalProperties": false
+    },
+    "approval": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "approvalId", "operationId", "owner", "sourceRevision", "capability", "state", "risk", "summary", "requestedAt", "expiresAt", "projectedAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "approval-projection" },
+        "approvalId": { "$ref": "#/$defs/opaqueId" },
+        "operationId": { "$ref": "#/$defs/opaqueId" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "sourceRevision": { "type": "integer", "minimum": 1 },
+        "capability": { "$ref": "#/$defs/id" },
+        "state": { "enum": ["pending", "approved", "denied", "expired", "cancelled"] },
+        "risk": { "enum": ["low", "consequential", "high"] },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "requestedAt": { "$ref": "#/$defs/timestamp" },
+        "expiresAt": { "$ref": "#/$defs/timestamp" },
+        "projectedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "operation": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "operationId", "owner", "sourceRevision", "taskId", "runId", "capability", "status", "changeState", "summary", "recoveryEligible", "artifactIds", "createdAt", "updatedAt", "projectedAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "operation-link" },
+        "operationId": { "$ref": "#/$defs/opaqueId" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "sourceRevision": { "type": "integer", "minimum": 1 },
+        "taskId": { "$ref": "#/$defs/nullableId" },
+        "runId": { "$ref": "#/$defs/nullableId" },
+        "capability": { "$ref": "#/$defs/id" },
+        "status": { "enum": ["proposed", "awaiting-consent", "awaiting-authentication", "queued", "running", "validating", "awaiting-keep", "waiting-restart", "waiting-reboot", "rolling-back", "rolled-back", "rollback-failed", "succeeded", "failed", "cancelled", "interrupted", "reconciling", "needs-attention", "undoing", "undone", "undo-failed", "recovering", "recovered", "recovery-failed"] },
+        "changeState": { "enum": ["none", "partial", "complete", "unknown"] },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "recoveryEligible": { "type": "boolean" },
+        "artifactIds": { "type": "array", "maxItems": 128, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" },
+        "projectedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "permission": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "grantId", "owner", "sourceRevision", "capability", "resource", "state", "riskCeiling", "issuedAt", "expiresAt", "projectedAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "permission-projection" },
+        "grantId": { "$ref": "#/$defs/opaqueId" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "sourceRevision": { "type": "integer", "minimum": 1 },
+        "capability": { "$ref": "#/$defs/id" },
+        "resource": { "$ref": "#/$defs/id" },
+        "state": { "enum": ["active", "revoked", "expired", "denied"] },
+        "riskCeiling": { "enum": ["low", "consequential"] },
+        "issuedAt": { "$ref": "#/$defs/timestamp" },
+        "expiresAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "projectedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "usage": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "usageId", "owner", "taskId", "runId", "provider", "metric", "quantity", "unit", "costMicrounits", "recordedAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "usage-record" },
+        "usageId": { "$ref": "#/$defs/opaqueId" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "taskId": { "$ref": "#/$defs/nullableId" },
+        "runId": { "$ref": "#/$defs/nullableId" },
+        "provider": { "$ref": "#/$defs/id" },
+        "metric": { "$ref": "#/$defs/id" },
+        "quantity": { "type": "number", "minimum": 0 },
+        "unit": { "$ref": "#/$defs/id" },
+        "costMicrounits": { "type": "integer", "minimum": 0 },
+        "recordedAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "artifactId", "owner", "taskId", "runId", "handle", "label", "mediaType", "byteLength", "contentHash", "scope", "createdAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-artifact" },
+        "artifactId": { "$ref": "#/$defs/id" },
+        "owner": { "$ref": "#/$defs/owner" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/nullableId" },
+        "handle": { "$ref": "#/$defs/id" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "mediaType": { "type": "string", "minLength": 3, "maxLength": 256 },
+        "byteLength": { "type": "integer", "minimum": 0 },
+        "contentHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "scope": { "enum": ["task", "principal"] },
+        "createdAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "scheduleReconciliation": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "reconciledAt", "signedIn", "missedCount", "createdCount", "skippedCount", "clockRollbackCount", "firings", "execution"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "schedule-reconciliation" },
+        "reconciledAt": { "$ref": "#/$defs/timestamp" },
+        "signedIn": { "type": "boolean" },
+        "missedCount": { "type": "integer", "minimum": 0 },
+        "createdCount": { "type": "integer", "minimum": 0 },
+        "skippedCount": { "type": "integer", "minimum": 0 },
+        "clockRollbackCount": { "type": "integer", "minimum": 0 },
+        "firings": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/firing" } },
+        "execution": { "$ref": "#/$defs/execution" }
+      },
+      "additionalProperties": false
+    },
+    "automationEventResult": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "eventId", "topic", "matchedCount", "firings", "execution"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "automation-event-result" },
+        "eventId": { "$ref": "#/$defs/opaqueId" },
+        "topic": { "$ref": "#/$defs/id" },
+        "matchedCount": { "type": "integer", "minimum": 0 },
+        "firings": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/firing" } },
+        "execution": { "$ref": "#/$defs/execution" }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "eventId", "topic", "entityId", "payload", "createdAt"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-work-event" },
+        "eventId": { "$ref": "#/$defs/id" },
+        "topic": { "$ref": "#/$defs/id" },
+        "entityId": { "$ref": "#/$defs/nullableId" },
+        "payload": { "$ref": "#/$defs/jsonObject" },
+        "createdAt": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "providerReadiness": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "providerId", "installed", "available", "code", "explanation"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-provider-readiness" },
+        "providerId": { "$ref": "#/$defs/nullableId" },
+        "installed": { "const": false },
+        "available": { "const": false },
+        "code": { "const": "managed-execution.not-integrated" },
+        "explanation": { "type": "string", "minLength": 1, "maxLength": 2000 }
+      },
+      "additionalProperties": false
+    },
+    "diagnostics": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "databaseSchema", "databaseIntegrity", "foreignKeyViolations", "restartRecoveries", "historyPrunedThrough", "ownerCounts", "capacities", "execution", "recoveryActions"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-work-diagnostics" },
+        "databaseSchema": { "const": 2 },
+        "databaseIntegrity": { "const": "ok" },
+        "foreignKeyViolations": { "type": "integer", "minimum": 0 },
+        "restartRecoveries": { "type": "integer", "minimum": 0 },
+        "historyPrunedThrough": { "type": "integer", "minimum": 0 },
+        "ownerCounts": {
+          "type": "object",
+          "required": ["contexts", "tasks", "runs", "automations", "automation_firings", "approval_projections", "operation_links", "permission_projections", "usage_records", "artifacts", "idempotency", "managed_events"],
+          "properties": {
+            "contexts": { "type": "integer", "minimum": 0 },
+            "tasks": { "type": "integer", "minimum": 0 },
+            "runs": { "type": "integer", "minimum": 0 },
+            "automations": { "type": "integer", "minimum": 0 },
+            "automation_firings": { "type": "integer", "minimum": 0 },
+            "approval_projections": { "type": "integer", "minimum": 0 },
+            "operation_links": { "type": "integer", "minimum": 0 },
+            "permission_projections": { "type": "integer", "minimum": 0 },
+            "usage_records": { "type": "integer", "minimum": 0 },
+            "artifacts": { "type": "integer", "minimum": 0 },
+            "idempotency": { "type": "integer", "minimum": 0 },
+            "managed_events": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "capacities": {
+          "type": "object",
+          "required": ["active_tasks", "total_tasks", "total_runs", "active_automations", "total_automations", "live_contexts", "total_contexts", "artifacts", "usage_records", "operation_links", "approval_projections", "permission_projections", "event_firings", "idempotency_records", "history_events", "page_size"],
+          "properties": {
+            "active_tasks": { "type": "integer", "minimum": 1 },
+            "total_tasks": { "type": "integer", "minimum": 1 },
+            "total_runs": { "type": "integer", "minimum": 1 },
+            "active_automations": { "type": "integer", "minimum": 1 },
+            "total_automations": { "type": "integer", "minimum": 1 },
+            "live_contexts": { "type": "integer", "minimum": 1 },
+            "total_contexts": { "type": "integer", "minimum": 1 },
+            "artifacts": { "type": "integer", "minimum": 1 },
+            "usage_records": { "type": "integer", "minimum": 1 },
+            "operation_links": { "type": "integer", "minimum": 1 },
+            "approval_projections": { "type": "integer", "minimum": 1 },
+            "permission_projections": { "type": "integer", "minimum": 1 },
+            "event_firings": { "type": "integer", "minimum": 1 },
+            "idempotency_records": { "type": "integer", "minimum": 1 },
+            "history_events": { "type": "integer", "minimum": 1 },
+            "page_size": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "execution": { "$ref": "#/$defs/execution" },
+        "recoveryActions": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+      },
+      "additionalProperties": false
+    },
+    "taskQueryItem": {
+      "type": "object",
+      "required": ["entityType", "task", "run"],
+      "properties": {
+        "entityType": { "enum": ["task", "run"] },
+        "task": { "oneOf": [{ "$ref": "#/$defs/task" }, { "type": "null" }] },
+        "run": { "oneOf": [{ "$ref": "#/$defs/run" }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "queryItem": {
+      "oneOf": [
+        { "$ref": "#/$defs/taskQueryItem" },
+        { "$ref": "#/$defs/approval" },
+        { "$ref": "#/$defs/automation" },
+        { "$ref": "#/$defs/operation" },
+        { "$ref": "#/$defs/event" },
+        { "$ref": "#/$defs/context" },
+        { "$ref": "#/$defs/permission" },
+        { "$ref": "#/$defs/usage" },
+        { "$ref": "#/$defs/artifact" },
+        { "$ref": "#/$defs/providerReadiness" },
+        { "$ref": "#/$defs/diagnostics" }
+      ]
+    },
+    "querySummary": {
+      "oneOf": [
+        { "type": "object", "maxProperties": 0, "additionalProperties": false },
+        {
+          "type": "object",
+          "required": ["activeTasks", "pendingApprovals", "enabledAutomations", "pendingUnavailableFirings", "liveContexts", "execution"],
+          "properties": {
+            "activeTasks": { "type": "integer", "minimum": 0 },
+            "pendingApprovals": { "type": "integer", "minimum": 0 },
+            "enabledAutomations": { "type": "integer", "minimum": 0 },
+            "pendingUnavailableFirings": { "type": "integer", "minimum": 0 },
+            "liveContexts": { "type": "integer", "minimum": 0 },
+            "execution": { "$ref": "#/$defs/execution" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["costMicrounits", "recordCount"],
+          "properties": {
+            "costMicrounits": { "type": "integer", "minimum": 0 },
+            "recordCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["prunedThrough"],
+          "properties": {
+            "prunedThrough": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "query": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "view", "items", "nextCursor", "partial", "availability", "summary"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "agent-center-query" },
+        "view": { "enum": ["agent.overview", "agent.tasks", "agent.approvals", "agent.automations", "agent.activity", "agent.history", "agent.context", "agent.permissions", "agent.usage", "agent.providers", "agent.artifacts", "agent.troubleshooting"] },
+        "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/queryItem" } },
+        "nextCursor": { "oneOf": [{ "type": "string", "minLength": 1, "maxLength": 1024 }, { "type": "null" }] },
+        "partial": { "const": false },
+        "availability": {
+          "type": "object",
+          "required": ["available", "code", "executionAvailable"],
+          "properties": {
+            "available": { "type": "boolean" },
+            "code": { "$ref": "#/$defs/id" },
+            "executionAvailable": { "const": false }
+          },
+          "additionalProperties": false
+        },
+        "summary": { "$ref": "#/$defs/querySummary" }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "code", "explanation", "retryable", "detail", "recoveryActions"],
+      "properties": {
+        "schemaVersion": { "const": "v0" },
+        "kind": { "const": "managed-work-error" },
+        "code": { "$ref": "#/$defs/id" },
+        "explanation": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "retryable": { "type": "boolean" },
+        "detail": { "type": "string", "maxLength": 16000 },
+        "recoveryActions": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}
