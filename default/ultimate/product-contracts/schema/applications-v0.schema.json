@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:ultimate:product-contracts:applications-v0",
+  "title": "Omarchy provisional application identity inventory v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "contractStatus", "normalization", "applications"],
+  "properties": {
+    "$schema": { "const": "urn:omarchy:ultimate:product-contracts:applications-v0" },
+    "schemaVersion": { "const": "v0" },
+    "contractStatus": { "const": "provisional-v0" },
+    "normalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["joinOrder", "desktopIdRule", "windowIdRule", "ambiguityRule"],
+      "properties": {
+        "joinOrder": { "type": "array", "minItems": 5, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "desktopIdRule": { "type": "string", "minLength": 1 },
+        "windowIdRule": { "type": "string", "minLength": 1 },
+        "ambiguityRule": { "type": "string", "minLength": 1 }
+      }
+    },
+    "applications": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "contractPrincipalId", "currentPrincipalId", "processId", "displayName", "firstParty", "availability", "desktopEntryPath", "desktopIds", "compositorMatchers", "taskbar", "singleInstance", "deepLinks", "humanRoutes", "evidencePaths", "debtIds"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "contractPrincipalId": { "$ref": "#/$defs/id" },
+          "currentPrincipalId": { "type": ["string", "null"], "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "processId": { "type": ["string", "null"], "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "firstParty": { "type": "boolean" },
+          "availability": { "enum": ["present-contract", "legacy-unjoined", "absent"] },
+          "desktopEntryPath": { "type": ["string", "null"], "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_. /-]+$" },
+          "desktopIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "compositorMatchers": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "taskbar": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["visibility", "shippedPin", "identityJoin"],
+            "properties": {
+              "visibility": { "enum": ["dynamic", "hidden", "planned"] },
+              "shippedPin": { "type": "boolean" },
+              "identityJoin": { "enum": ["stable", "heuristic", "none"] }
+            }
+          },
+          "singleInstance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["mode", "activation", "state"],
+            "properties": {
+              "mode": { "enum": ["reuse-existing", "allow-many", "application-defined", "unknown"] },
+              "activation": { "enum": ["desktop-entry", "dbus-activation", "deep-link", "none", "unknown"] },
+              "state": { "enum": ["contract", "legacy", "absent"] }
+            }
+          },
+          "deepLinks": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["scheme", "routePattern", "state"],
+              "properties": {
+                "scheme": { "type": "string", "pattern": "^[a-z][a-z0-9+.-]*$" },
+                "routePattern": { "type": "string", "minLength": 1 },
+                "state": { "enum": ["present", "planned"] }
+              }
+            }
+          },
+          "humanRoutes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "evidencePaths": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/path" } },
+          "debtIds": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "path": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_. /-]+$" }
+  }
+}

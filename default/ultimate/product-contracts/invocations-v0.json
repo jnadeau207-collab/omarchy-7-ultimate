@@ -1,0 +1,108 @@
+{
+  "$schema": "urn:omarchy:ultimate:product-contracts:invocations-v0",
+  "schemaVersion": "v0",
+  "contractStatus": "provisional-v0",
+  "contextContract": {
+    "requiredFields": ["invocationId", "screen.logicalId", "screen.connector", "screen.edidHash", "anchorRect", "seatId", "route", "focusRestoration"],
+    "monitorResolutionOrder": ["exact live logical screen plus connector and EDID hash", "same EDID hash on its current connector", "same connector when EDID is unavailable", "primary screen only after an explicit fallback decision"],
+    "reopenRule": "A surface reopens on its last live owner only when that owner still matches the invocation context; otherwise it resolves the invoking screen again and records the fallback.",
+    "focusRule": "Open captures a stable restoration target and close restores it unless the invocation launched or deliberately focused a different target; a vanished target resolves to an explicit no-restore result."
+  },
+  "monitorSemantics": [
+    {
+      "id": "monitor.contract.invoker-v0",
+      "state": "contract",
+      "deterministic": true,
+      "acceptsScreenIdentity": true,
+      "acceptsConnector": true,
+      "acceptsEdidHash": true,
+      "acceptsAnchorRect": true,
+      "acceptsSeat": true,
+      "reopenPlacement": "invoking-monitor",
+      "selection": "Resolve the exact live screen tuple, constrain the anchor to its work area, and persist the resolved owner with the route instance.",
+      "debtIds": []
+    },
+    {
+      "id": "monitor.legacy.global-default",
+      "state": "legacy-unbound",
+      "deterministic": false,
+      "acceptsScreenIdentity": false,
+      "acceptsConnector": false,
+      "acceptsEdidHash": false,
+      "acceptsAnchorRect": false,
+      "acceptsSeat": false,
+      "reopenPlacement": "component-specific",
+      "selection": "The loader or PanelWindow chooses its default screen and internal anchors; the shell route supplies no monitor context.",
+      "debtIds": ["debt.invocation.context-missing"]
+    },
+    {
+      "id": "monitor.legacy.first-bar-instance",
+      "state": "legacy-unbound",
+      "deterministic": false,
+      "acceptsScreenIdentity": false,
+      "acceptsConnector": false,
+      "acceptsEdidHash": false,
+      "acceptsAnchorRect": false,
+      "acceptsSeat": false,
+      "reopenPlacement": "component-specific",
+      "selection": "Bar.findPanelWidget returns the first loaded matching widget, independent of the invoking monitor, pointer, and seat.",
+      "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance"]
+    }
+  ],
+  "focusSemantics": [
+    {
+      "id": "focus.contract.restore-v0",
+      "state": "contract",
+      "deterministic": true,
+      "capturesTarget": true,
+      "restoresOnDismiss": true,
+      "policy": "Capture the requested stable target, distinguish launch and click-through transfer, and return a typed restored, transferred, vanished, or no-target result.",
+      "debtIds": []
+    },
+    {
+      "id": "focus.legacy.component-specific",
+      "state": "legacy-ad-hoc",
+      "deterministic": false,
+      "capturesTarget": false,
+      "restoresOnDismiss": false,
+      "policy": "Each component handles keyboard grabs and dismissal locally; the route has no restoration target or typed focus outcome.",
+      "debtIds": ["debt.focus.component-specific"]
+    },
+    {
+      "id": "focus.legacy.start-partial",
+      "state": "partial",
+      "deterministic": false,
+      "capturesTarget": true,
+      "restoresOnDismiss": false,
+      "policy": "Start remembers the active toplevel and implements proven pointer click-through, but it does not accept or report the shared restoration contract.",
+      "debtIds": ["debt.focus.component-specific"]
+    }
+  ],
+  "routes": [
+    { "id": "route.surface.omarchy.agents", "pluginId": "omarchy.agents", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Agents bar button", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.clipboard", "pluginId": "omarchy.clipboard", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Clipboard shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.dev-gallery", "pluginId": "omarchy.dev-gallery", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Developer gallery command", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.emojis", "pluginId": "omarchy.emojis", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Emoji shortcut and system menu", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.image-picker", "pluginId": "omarchy.image-picker", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Image picker commands", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.menu", "pluginId": "omarchy.menu", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "System menu button and shortcuts", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.osd", "pluginId": "omarchy.osd", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Session feedback", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.audio", "pluginId": "omarchy.audio", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Audio bar button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.bluetooth", "pluginId": "omarchy.bluetooth", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Bluetooth bar button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.clock", "pluginId": "omarchy.clock", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Clock bar button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.disk-speedtest", "pluginId": "omarchy.disk-speedtest", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "System menu disk speed test", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.dropbox", "pluginId": "omarchy.dropbox", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Dropbox bar button", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.monitor", "pluginId": "omarchy.monitor", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Display bar button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.network", "pluginId": "omarchy.network", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Network bar button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.power", "pluginId": "omarchy.power", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Power bar button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.speedtest", "pluginId": "omarchy.speedtest", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "System menu network speed test", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.tailscale", "pluginId": "omarchy.tailscale", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Tailscale bar button", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.weather", "pluginId": "omarchy.weather", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.first-bar-instance", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Weather bar button", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.invocation.first-bar-instance", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.wifiqr", "pluginId": "omarchy.wifiqr", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Network QR action", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.reminders", "pluginId": "omarchy.reminders", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Reminder shortcut and menu", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.ultimate-run", "pluginId": "omarchy.ultimate-run", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Run shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.ultimate-settings", "pluginId": "omarchy.ultimate-settings", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Settings shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific", "debt.identity.standalone-apps-absent"] },
+    { "id": "route.surface.omarchy.ultimate-snap-chooser", "pluginId": "omarchy.ultimate-snap-chooser", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Snap chooser caption button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.ultimate-start", "pluginId": "omarchy.ultimate-start", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.start-partial", "processId": "process.omarchy-shell", "humanRoute": "Start button and shortcut", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] },
+    { "id": "route.surface.omarchy.ultimate-task-switcher", "pluginId": "omarchy.ultimate-task-switcher", "target": "shell", "operations": ["summon", "toggle", "hide"], "payload": "legacy-opaque-json", "monitorSemanticsId": "monitor.legacy.global-default", "focusSemanticsId": "focus.legacy.component-specific", "processId": "process.omarchy-shell", "humanRoute": "Task View button and Alt-Tab shortcuts", "state": "present-legacy", "debtIds": ["debt.invocation.context-missing", "debt.focus.component-specific"] }
+  ]
+}

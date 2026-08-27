@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:ultimate:product-contracts:surfaces-v0",
+  "title": "Omarchy provisional first-party surface inventory v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "contractStatus", "plugins"],
+  "properties": {
+    "$schema": { "const": "urn:omarchy:ultimate:product-contracts:surfaces-v0" },
+    "schemaVersion": { "const": "v0" },
+    "contractStatus": { "const": "provisional-v0" },
+    "plugins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pluginId", "manifestPath", "processId", "processRole", "availability", "contractConformance", "invocationRouteId", "taskbarApplication", "debtIds"],
+        "properties": {
+          "pluginId": { "$ref": "#/$defs/id" },
+          "manifestPath": { "$ref": "#/$defs/path" },
+          "processId": { "$ref": "#/$defs/id" },
+          "processRole": { "enum": ["hosted-ui", "hosted-service", "bar-host"] },
+          "availability": { "const": "present" },
+          "contractConformance": { "enum": ["contract-v0", "legacy-debt"] },
+          "invocationRouteId": { "type": ["string", "null"], "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "taskbarApplication": { "type": "boolean" },
+          "debtIds": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "path": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_. /-]+$" }
+  }
+}
