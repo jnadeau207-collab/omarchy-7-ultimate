@@ -1,0 +1,16 @@
+[Unit]
+Description=Omarchy per-user Fabric control plane
+Documentation=file:///usr/share/doc/omarchy/agent-fabric.md
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/omarchy-fabricd
+Restart=on-failure
+RestartSec=1
+RuntimeDirectory=omarchy
+RuntimeDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target
