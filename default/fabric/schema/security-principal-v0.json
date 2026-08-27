@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:security-principal-v0",
+  "title": "Endpoint-bound Fabric principal session",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "principalId",
+    "sessionId",
+    "uid",
+    "endpointId",
+    "kind",
+    "issuedAt",
+    "expiresAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "principalId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "sessionId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "uid": { "type": "integer", "minimum": 0 },
+    "endpointId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "kind": { "enum": ["shell", "provider", "task"] },
+    "providerId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "taskId": { "$ref": "common-v0.json#/$defs/stableId" },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "provider" } }, "required": ["kind"] },
+      "then": { "required": ["providerId"], "not": { "required": ["taskId"] } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "task" } }, "required": ["kind"] },
+      "then": { "required": ["taskId"], "not": { "required": ["providerId"] } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "shell" } }, "required": ["kind"] },
+      "then": { "not": { "anyOf": [{ "required": ["providerId"] }, { "required": ["taskId"] }] } }
+    }
+  ],
+  "additionalProperties": false
+}
