@@ -6,11 +6,12 @@ This is the working plan for the fork. It is not a theme plan. It is not a “mo
 
 Not: Windows-like Omarchy with AI tools.
 
-Resume from `HANDOFF_NEW_BOX_2026-08-23.md` (immutable). That file wins on next-work order if this plan still says fabric-next.
+Current execution authority is [`ultimate-product-completion-program-2026-08-26.md`](ultimate-product-completion-program-2026-08-26.md). `HANDOFF_NEW_BOX_2026-08-23.md` remains immutable historical evidence, but its dated next-work ordering and status no longer control execution.
 
 Read this file together with:
 
-- `HANDOFF_NEW_BOX_2026-08-23.md` — current lock (P0s, Start click-through, screensaver, branding)
+- `plans/ultimate-product-completion-program-2026-08-26.md` — current execution program and dependency waves
+- `HANDOFF_NEW_BOX_2026-08-23.md` — immutable historical lock and evidence from the prior program
 - `PRODUCT_DOCTRINE.md` — eight rules (the original seven plus Agent-Native)
 - `WINDOWS_NATIVE_ACCEPTANCE.md` — forty-task smoke test (necessary, not sufficient; six numbered rows automated, plus unnumbered harness proofs)
 - `WINDOWS_7_ULTIMATE_PARITY.md` — job matrix
@@ -18,11 +19,11 @@ Read this file together with:
 - `docs/mode-profiles.md` — Desktop Mode vs Power User Mode as flags, one platform
 - `docs/settings-service-api.md` — UI and agents → typed service → Omarchy/system tooling
 - `docs/design-tokens.md` — one token pipeline for Superbar and hyprbars; no new private palettes
-- `plans/desktop-mode-handoff.md` — live Hyprland windowing evidence; current next-work lock is the HANDOFF file
+- `plans/desktop-mode-handoff.md` — historical live Hyprland windowing evidence
 
 If those documents and this plan disagree, the doctrine wins. If this plan and a PR description disagree, this plan wins. Do not take PR #1’s old “Windowing go/no-go — GO” as an OS go; that writeup was rejected.
 
-## Reviewer lock (2026-08-22, held)
+## Preserved W0 evidence and invariants (2026-08-22)
 
 Keep `4ea1dcf3` through `c1ae994f`. Those SHAs stay. Do not amend them. Do not squash them. Do not restore `--disable-features=WaylandWindowDecorations`.
 
@@ -40,14 +41,14 @@ Live this session (`windows-native-test.sh` exit 0 including numbered 20–25 an
 - `omarchy-update` rebuilds hyprbars + omarchy-minimize after `omarchy-update-system-pkgs` (`omarchy-apply-hyprland-plugins`). A failed rebuild fails the update. Still **not** AUR `hyprland-plugin-hyprbars` in `install/omarchy-other.packages`. Versioned distro packages remain the durable end state.
 - Superbar group menu: **Close group** when `windows.length > 1`, else **Close window**. Peek × still one window.
 
-What did not move (not this slice):
+Scope not delivered by W0 and now owned by the current program:
 
 - hyprbars is still not an ISO-mirror pacman package.
 - Tokyo Night seed, nvim-as-txt, TTY first-boot, no product ISO.
 - Chrome install-as-product, games, and “install any Windows app” are later phases.
 - Peek thumbnails, jump lists, Agent Center UI, Settings app.
 
-## Remaining W0 / product-windowing debt
+## Preserved W0 outcome and packaging debt
 
 The four product-windowing debts from 2026-08-22 are **closed** on metal. Left for later packaging, not as an excuse to reopen W0:
 
@@ -56,7 +57,7 @@ The four product-windowing debts from 2026-08-22 are **closed** on metal. Left f
 ## Taskbar / Start / Settings honesty (known defects, not features)
 
 - Superbar is a prototype, not the masterpiece. Notification-area cluster is driven from `barConfig.layout.right` + `BarWidgetRegistry` (`TrayCluster.qml`). Desktop Mode overlay includes `omarchy.agents` without rewriting `shell.json`. Chrome hexes include `#1b1b1b` `#333333` `#3a3a3a` `#4a4a4a` `#e8943a` `#9cbc0d` `#55ffffff`. hyprbars `bar_color` is `rgba(1a1a1acc)`. `Variants` already draws a bar per `Quickshell.screens` — missing is multi-monitor **policy**, not rendering.
-- Start is a 440×560 glass launcher (search + pins + app list + Power User footer toggle), not Windows 7 Start. Outside-click and Start-orb re-toggle landed in `e3bf9385` (full-screen swallow). Remaining: Windows click-through via a shared transient coordinator (`HANDOFF_NEW_BOX_2026-08-23.md`).
+- Start is a 440×560 glass launcher (search + pins + app list + Power User footer toggle), not Windows 7 Start. Outside-click, orb re-toggle, the shared transient coordinator, and compositor-delivered click-through are landed and proved. Remaining infrastructure work is monitor/seat/anchor-aware ownership and a focus-restoration stack without regressing click-through.
 - Settings (`omarchy.ultimate-settings`) is a stub: five buttons (Display, Sound, Network, Bluetooth, Power) that toggle existing panels.
 - Peek is a title list. Right-click is pin/unpin and **Close group** / **Close window** (label follows `windows.length`). Peek × closes one.
 - `feature()` is only consulted in `shell.qml` (`taskbar`/`topBar`) and `Start.qml` (`developerToolsInStart`).
@@ -102,7 +103,9 @@ work                       All Ultimate product work
 
 Do not create `cursor/*`, `ultimate/*`, or any other slice branches. Do not turn `main` into the experimental line. Phase work happens as commits on `work`. Do not merge `work` into `main` as the OS.
 
-## Branch reconciliation (locked 2026-08-22)
+## Historical branch reconciliation evidence (2026-08-22)
+
+This section is a dated forensic snapshot, not current branch or tag truth. The reconciled 2026-08-26 baseline in Current position supersedes its SHAs and counts while retaining the evidence ledger.
 
 Do not re-audit this from memory. The ledger is **outside the product repo** — do not commit the bundle or copy ~240 MB into git:
 
@@ -119,35 +122,17 @@ Do **not** claim mathematical zero unique Jesse *commits*. Claim zero unique Jes
 
 **Caveats (not branches):** 65 version tags remain; `refs/pull/1/head` and `refs/pull/2/head` remain. If someone reads “GitHub has no refs except main and work,” that reading fails. The two-branch **head** claim passes.
 
-## Current position (2026-08-23)
+## Current position (2026-08-26)
 
-Windowing Gate W0 is **architecture GO** and **agent-reported product-windowing GO** on the metal Hyprland 0.56.2 session (HDMI-A-1 1920×1080). Independent review has not certified `687d022b` from a clean checkout. The product is still **REJECTED**. Desktop shell acceptance is **FAIL** until Start click-through is proven. Progress against the locked identity is roughly **20%**. Do not let a future agent declare victory after a green harness.
+The reconciled baseline is `work`/GitHub/metal `1334ba30`, with `main`/origin/upstream `quattro` at `0ae16948` and exactly two branch heads. Chrome CSD float, restore, native maximize, snap, F11, and focus have independent source review plus direct metal geometry, pointer, pixel, health, and visual proof. The physical right edge and caption controls are no longer clipped.
 
-**Next work is not more fabric and not Agent Center UI.** Order is `HANDOFF_NEW_BOX_2026-08-23.md` §In flight: Download Video P0, FIDO2 P0, Start click-through, screensaver/branding. `e3bf9385` already closed ordinary Start dismiss.
+The product remains **REJECTED**. The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery, but Settings is still a five-button stub; Start, Superbar, and Task View are functional prototypes; Quick Settings, Notification Center, desktop icons, Agent Center, full typed system services, Files/This PC, Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
 
-**Phase 0 (foundation)** is mostly in the repo: doctrine, acceptance manifests, mode profiles, design-token singleton, settings-service convention, shell tests, VM acceptance skeleton.
+The current program is the large, dependency-managed [`ultimate-product-completion-program-2026-08-26.md`](ultimate-product-completion-program-2026-08-26.md). It spans the remaining Fabric control plane, design system, shell, Settings, Files/defaults, Software, Compatibility, Administration/Recovery, OOBE/migration, and release certification work. It replaces the dated next-work ordering.
 
-**Phase 1 (Windowing Gate W0)** product-windowing passed on metal. Stack `4ea1dcf3` through `c1ae994f` stays. Do not reopen LTRB / hyprbars / CSD / `setHidden` / three-button captions / Files chrome / reopen memory as if they were still dirty.
+The first execution fleet builds three independent foundations in parallel: Fabric Core, the machine-readable capability/parity graph, and the trust/sandbox plane. Subsequent fleets perform WindowService reference cutover, context/runtime/tasks, semantic UI and provider engines, then whole product surfaces and packaged certification.
 
-**Phase 2 (Agent Fabric) minimum pass bar is closed** against WindowService: `{ changed, error }`, capability broker, local-session permissions, operation ledger, window undo via `restoreNormal` / `restoreLayout`, Superbar cluster from the bar-widget registry with `omarchy.agents` visible. Display/Audio/Network are still panels. Agent Center UI, full capability graph, sandboxed runtime, and persistent tasks are **not** this pass.
-
-What exists:
-
-- Desktop Mode profile (default) overlays the bottom `omarchy.ultimate-taskbar` without rewriting `shell.json`. Overlay `bar.layout.right` includes `omarchy.agents`. Live disk `~/.config/omarchy/shell.json` stayed heritage (`bar.id` unset, `position: top`).
-- `default/hypr/desktop-windows.lua` floats by default (`size = { 880, 560 }` fallback only), zeros tiling gaps, enables `resize_on_border`, and loads **hyprbars** from `/usr/lib/hyprland-plugins/hyprbars.so`. Overlay plugin `omarchy.ultimate-window-chrome` is gone. `formatWindowCmd` in `barDeco.cpp` substitutes `0x{:x}`. Three caption buttons, visible min / max / close. Maximize `hover_action` summons `omarchy.ultimate-snap-chooser`.
-- CSD from `default/ultimate/csd-clients.json` (Chromium family, Firefox, anchored Zen, YouTube/Zoom PWA, Cursor, Nautilus). Live grim: Chromium one CSD row; Files no hyprbars row. zenity is not Zen.
-- `WindowService` talks Lua `hl.dsp.window.*` through `Hyprland.dispatch`, and minimize/restore through `hl.plugin.omarchy_minimize`. Writers return `{ changed, error }` and record through `CapabilityBroker`. IPC serializes that object (`ping` stays `"ok"`).
-- Snap work area uses Hyprland 0.56 `reserved` as **left, top, right, bottom**. Live 1920×1080 reserved `[0,0,0,40]`. SSD snap insets 32px; CSD snap insets 0.
-- Minimize is in-place `CWindow::setHidden`, not `special:minimized`.
-- Start is a Desktop Mode launcher: idle Start hides Terminal/Vim (`developerToolsInStart` is false on the desktop profile), search still finds them, shipped pins are Chrome and Files (`5942beaa`).
-
-What this still does not pretend to be: peek thumbnails, jump lists, Agent Center, Settings app, desktop icons, Software Center, Compatibility Center, OOBE, product ISO, versioned hyprbars packages.
-
-Profile flags for unimplemented surfaces are **false** (`desktopIcons`, `quickSettings`, `notificationCenter`). `snapLayouts` and `taskView` stay true because chooser and Task View overlay exist as prototypes.
-
-**Phases 3–11** are not product-complete. Tokens are consumed (Start, Settings, TaskButton, switcher, snap); `themes/ultimate-light/` exists. Superbar/hyprbars chrome bypass is the leak, not “seed only.” Superbar/Start/Settings are prototypes or stubs. There is no desktop icon surface, no Quick Settings composition, no Settings app, no Dolphin default, no Software Center, no Compatibility Center, no OOBE, no ISO.
-
-Default theme, nvim-for-txt, TTY first boot that teaches Super+K, and the missing product ISO remain later slices. Do not paper over them in a windowing PR.
+Locked invariants remain: keep the accepted W0 history, do not restore disabled Wayland decorations or overlay chrome, do not put the AUR hyprbars package in the install list, preserve Desktop Mode's non-mutating `shell.json` overlay, never hot-unload/reload hyprbars, stay on `work`, never force-push, and never merge `work` into `main` as the OS.
 
 ## Audit vs tree (do not rubber-stamp)
 
@@ -172,7 +157,7 @@ Claims from the 2026-08-22 course-correction that this turn **verified in the tr
 
 ## Phases (vertical product capability)
 
-Do not reorder to “make QML pretty.” Phase 2 window-fabric minimum is closed. Remaining fabric depth is later. **Now:** P0 security, then Start click-through, then screensaver/branding (`HANDOFF_NEW_BOX_2026-08-23.md`). New Desktop Mode surfaces may not sprawl ahead of that.
+The named phases below remain the product taxonomy. Execution order now follows the dependency waves in [`ultimate-product-completion-program-2026-08-26.md`](ultimate-product-completion-program-2026-08-26.md), which deliberately builds the Fabric, design, and provider contracts before parallel product-surface assembly.
 
 ### Phase 0 — Foundation
 
@@ -188,21 +173,21 @@ The forty-task harness rows 20–25 were necessary and not sufficient for the OS
 
 ### Phase 2 — Agent Fabric (gate)
 
-Minimum pass bar (2026-08-23): WindowService `{ changed, error }`, capability broker, local-session permit (ui/ipc/agent/undo), ledger `~/.local/state/omarchy/ultimate/capability-ledger.json`, window undo via recorded `restoreNormal` / `restoreLayout`, Superbar cluster from `BarWidgetRegistry` with `omarchy.agents` visible. Same WindowService verbs from QML and `omarchy-shell window`.
+Historical prototype minimum (2026-08-23): WindowService `{ changed, error }`, caller-labeled local-session allowlist (ui/ipc/agent/undo), ledger `~/.local/state/omarchy/ultimate/capability-ledger.json`, window undo via recorded `restoreNormal` / `restoreLayout`, Superbar cluster from `BarWidgetRegistry` with `omarchy.agents` visible. Same WindowService verbs from QML and `omarchy-shell window`. This was a useful first-provider milestone, not a defensible permission/security pass.
 
 Still missing on purpose: full parity-graph catalog (row 1), persistent Agent Center tasks (8), rich context broker (9), sandboxed Agent Runtime (11). Display/Audio/Network stay panels until Phase 5. Agent Center UI is Phase 4.
 
 ### Phase 3 — Design system
 
-Running UI kit in `shell/Ui`, light/dark, compact/comfortable/touch later, no Nerd Font salad in consumer chrome, screenshot every state. One token/theme pipeline must drive Superbar **and** hyprbars (light theme must propagate). Not mockups. Not an excuse to invent new product surfaces.
+Complete the running `shell/Ui` kit and light/dark pipeline with compact/comfortable/touch density, reduced motion, high contrast, accessibility semantics, RTL, pseudo-locales, and a verified state gallery. No Nerd Font salad in consumer chrome. One token/theme pipeline must drive Superbar **and** hyprbars. Not mockups.
 
 ### Phase 4 — Desktop shell
 
-Desktop surface, real Superbar (plugin-hosted widgets, previews, jump lists, badges), masterpiece Start, tray, Quick Settings, notification center, calendar, lock. **Agent Center as native as Start** (tasks, active agents, pending actions, automations, history, context; usage widget is one section). At the end of this phase it should already look like a different OS. Do not start this sprawl by assuming agents are later.
+Desktop surface, real Superbar (plugin-hosted widgets, previews, jump lists, badges), masterpiece Start, tray, Quick Settings, notification center, calendar, lock. **Agent Center is a normal taskbar-visible and snappable toplevel as first-class as Start** (tasks, active agents, pending actions, automations, history, context; usage widget is one section). At the end of this phase it should already look like a different OS.
 
 ### Phase 5 — Settings
 
-First-class app over typed services. Display, Sound, Network, Bluetooth, Input, Personalization, Apps, Update/Recovery first. Same verbs as Agent Fabric.
+First-class app over typed services. Display, Sound, Network, Bluetooth, Input, Personalization, Apps/defaults/startup, Power, Accessibility, Update/Recovery, Region and Language, and System Information. Same verbs as Agent Fabric.
 
 ### Phase 6 — Files and defaults
 
@@ -228,25 +213,26 @@ Only when the product works. No package lists. No Super+K tutorial as first boot
 
 Every hover, context menu, dialog, empty state, error, DPI, focus ring, reduced motion.
 
-## What the next Cursor turn is allowed to do
+## Program invariants
 
 Keep `4ea1dcf3` through `c1ae994f`. Do not amend them. Do not restore `--disable-features=WaylandWindowDecorations`.
 
-1. Windowing W0 is architecture GO and product-windowing GO. Do not merge PR #1 as the OS. Product is still REJECTED.
-2. Phase 2 minimum pass bar is closed. Do not start Agent Center UI, Superbar peek bitmaps, or a huge Phase 3/4 visual pass as if fabric depth were done. Next movable is later fabric depth (catalog, context, sandboxed runtime) **or** Phase 3 token unification for Superbar/hyprbars — not ISO, gum, Tokyo Night seed, nvim-as-txt, or Steam/.exe in the same slice.
-3. Keep LTRB snap, typed `Hyprland.dispatch`, `/usr/lib/hyprland-plugins` hyprbars, `omarchy-minimize` `setHidden`, JSON CSD `hyprbars:no_bar`, addressed caption `0x{:x}`, three-button SSD, maximize hover snap.
-4. Do not put `hyprland-plugin-hyprbars` in `install/omarchy-other.packages`.
-5. Do not teach Super+K in Desktop Mode first boot. Do not make foot/vim first class.
-6. Stay on `work`. Never create `cursor/*`. Never push `main`. Never force-push.
+1. Execute the named major program; do not fragment it into disconnected planning or one-off visual work.
+2. The first fleet owns Fabric Core, Capability Graph, and Trust Plane in the non-overlapping paths specified by the program. Root owns integration and freezes RPC/schema v1 after adversarial review.
+3. Product surfaces consume frozen typed services and operation state. Consumer QML does not gain new process invocation, shell strings, raw `hyprctl`, or privileged logic.
+4. Keep LTRB snap, typed compositor dispatch, `/usr/lib/hyprland-plugins` hyprbars, `omarchy-minimize` hidden state, JSON CSD exclusion, addressed captions, three-button SSD, maximize-hover snap, and the measured Chromium frame transforms.
+5. Never hot-unload/reload the native plugin. Every native/chrome change gets a fresh compositor restart and the complete right-edge regression campaign.
+6. Keep unimplemented profile flags false, preserve Power User Mode, do not teach terminal/hotkey ownership in Desktop Mode, stay on `work`, never create slice branches, never push `main`, and never force-push.
 
 ## Acceptance
 
-Release requires all three:
+The three matrices are the core product proofs, and all six release conditions in the current program are mandatory at one packaged candidate SHA:
 
-1. Forty-task smoke test (`WINDOWS_NATIVE_ACCEPTANCE.md`) — a Windows-native tester completes all forty with no terminal and no web search.
-2. Job parity (`WINDOWS_7_ULTIMATE_PARITY.md`).
-3. Agent-native matrix (`AGENT_NATIVE_ACCEPTANCE.md`).
-
-Second test: an Omarchy/Arch power user can still terminal, pacman-equivalent, enable original bindings, tile, edit configs, script, install plugins.
+1. A Windows-native tester completes all forty tasks with the mouse, without Terminal or web search.
+2. Every job in `WINDOWS_7_ULTIMATE_PARITY.md` has a certified human route, typed capability mapping, structured errors, and recovery.
+3. The `AGENT_NATIVE_ACCEPTANCE.md` path completes the same jobs through the same validators, operations, and recovery.
+4. An Omarchy/Arch power user can still use terminal, supported package tooling, original bindings, tiling, workspaces, config editing, scripting, and plugins.
+5. Fresh install, upgrade, migration, rollback, factory reset, accessibility, localization, mixed-DPI, hardware, security, recovery, and performance gates pass.
+6. No open data-loss, privilege, supply-chain, update/recovery, accessibility-critical, clipping, hidden-control, phantom-success, or stale-progress defect remains.
 
 A green `./test/all` on a machine without Hyprland does not pass W0. A green `windows-native-test.sh` that only talks to `omarchy-shell window` and checks `left.x <= right.x` does not pass W0 and does not pass the OS.
