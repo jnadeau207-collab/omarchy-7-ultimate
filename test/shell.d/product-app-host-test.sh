@@ -273,7 +273,7 @@ mkdir -p "$fake_bin"
 cat >"$fake_bin/qs" <<'SH'
 #!/bin/bash
 
-if [[ $* == *" window focus "* ]]; then
+if [[ $* == *" window activate "* ]]; then
   printf '%s\n' "$*" >>"$OMARCHY_TEST_LOG/omarchy-shell"
   if [[ ! -f $OMARCHY_TEST_STATE/ipc-no-focus ]]; then
     address="${!#}"
@@ -281,6 +281,7 @@ if [[ $* == *" window focus "* ]]; then
       address="0X${address#0x}"
     fi
     printf '%s\n' "$address" >"$OMARCHY_TEST_STATE/active.address"
+    rm -f "$OMARCHY_TEST_STATE/active.hidden"
   fi
   printf '{"changed":true,"error":null}\n'
   exit 0
@@ -324,7 +325,12 @@ if [[ ${1:-} == "clients" ]]; then
   fi
 elif [[ ${1:-} == "activewindow" ]]; then
   address=$(cat "$OMARCHY_TEST_STATE/active.address" 2>/dev/null || true)
-  printf '{"address":"%s"}\n' "$address"
+  if [[ -f $OMARCHY_TEST_STATE/active.hidden ]]; then
+    hidden=true
+  else
+    hidden=false
+  fi
+  printf '{"address":"%s","hidden":%s,"mapped":true}\n' "$address" "$hidden"
 else
   printf '%s\n' "$*" >>"$OMARCHY_TEST_LOG/hyprctl"
   if [[ -f $OMARCHY_TEST_STATE/fallback-focus ]]; then
@@ -381,10 +387,10 @@ fi
 [[ $(wc -l <"$test_tmp/log/systemd-run") == "$starts_before" ]] || fail "Invalid launch started a service"
 pass "Invalid launches are rejected before process start or IPC"
 
-grep -Fq 'window focus 0x1' "$test_tmp/log/omarchy-shell" || fail "Settings focuses its exact compositor app identity"
-grep -Fq 'window focus 0x2' "$test_tmp/log/omarchy-shell" || fail "Agent Center focuses its exact compositor app identity"
+grep -Fq 'window activate 0x1' "$test_tmp/log/omarchy-shell" || fail "Settings activates its exact compositor app identity"
+grep -Fq 'window activate 0x2' "$test_tmp/log/omarchy-shell" || fail "Agent Center activates its exact compositor app identity"
 [[ ! -s $test_tmp/log/hyprctl ]] || fail "Verified WindowService focus avoids the compositor fallback"
-pass "Launchers use verified WindowService focus for exact compositor identities"
+pass "Launchers use verified WindowService activation for exact compositor identities"
 
 printf '3\n' >"$test_tmp/state/client-delay"
 touch "$test_tmp/state/uppercase-focus"
@@ -392,6 +398,11 @@ bash "$ROOT/bin/omarchy-launch-settings" settings.audio.overview || fail "Settin
 [[ $(cat "$test_tmp/state/client-delay") == "0" ]] || fail "Focus did not wait for delayed client publication"
 grep -Fq '0X1' "$test_tmp/state/active.address" || fail "Focus comparison did not accept a case-equivalent address"
 pass "Focus waits for the compositor client and compares addresses case-insensitively"
+
+touch "$test_tmp/state/active.hidden"
+bash "$ROOT/bin/omarchy-launch-settings" settings.network.overview || fail "Settings activation restores a hidden window"
+[[ ! -f $test_tmp/state/active.hidden ]] || fail "Settings remained hidden after activation"
+pass "Activation restores a hidden standalone application before focus verification"
 
 rm "$test_tmp/state/uppercase-focus"
 touch "$test_tmp/state/ipc-no-focus" "$test_tmp/state/fallback-focus"

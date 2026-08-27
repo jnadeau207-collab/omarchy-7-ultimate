@@ -60,13 +60,15 @@ product_app_window_address() {
 
 product_app_active_address_is() {
   local wanted="$1"
-  local active_json active
+  local active_json
 
   if active_json=$(hyprctl activewindow -j 2>/dev/null); then
-    if active=$(jq -r '.address // empty' <<<"$active_json" 2>/dev/null); then
-      if [[ ${active,,} == ${wanted,,} ]]; then
-        return 0
-      fi
+    if jq -e --arg wanted "${wanted,,}" '
+      ((.address // "") | ascii_downcase) == $wanted
+      and .hidden != true
+      and .mapped != false
+    ' <<<"$active_json" >/dev/null 2>&1; then
+      return 0
     fi
   fi
 
@@ -101,7 +103,7 @@ product_app_focus() {
     return 1
   fi
 
-  if OMARCHY_SHELL_IPC_TIMEOUT=0.5s "$OMARCHY_PATH/bin/omarchy-shell" window focus "$address" >/dev/null 2>&1; then
+  if OMARCHY_SHELL_IPC_TIMEOUT=0.5s "$OMARCHY_PATH/bin/omarchy-shell" window activate "$address" >/dev/null 2>&1; then
     if product_app_wait_for_focus "$address"; then
       return 0
     fi
