@@ -22,6 +22,14 @@ ShellRoot {
   property CapabilityBroker capabilityBroker: CapabilityBroker { }
   property TransientSurfaceCoordinator transientCoordinator: TransientSurfaceCoordinator { }
   property ModeProfileService modeProfileService: ModeProfileService { }
+  // Establish one shell-owned Fabric transport without making daemon health a
+  // shell-start dependency. A consumer must separately own activation, method
+  // grants, and exposure; this integration is dormant and grants nothing.
+  FabricClient {
+    id: fabricClient
+    active: false
+    allowedMethods: []
+  }
 
   property string home: Quickshell.env("HOME")
 
