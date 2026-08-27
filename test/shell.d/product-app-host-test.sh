@@ -275,7 +275,13 @@ cat >"$fake_bin/qs" <<'SH'
 
 if [[ $* == *" window focus "* ]]; then
   printf '%s\n' "$*" >>"$OMARCHY_TEST_LOG/omarchy-shell"
-  printf '%s\n' "${!#}" >"$OMARCHY_TEST_STATE/active.address"
+  if [[ ! -f $OMARCHY_TEST_STATE/ipc-no-focus ]]; then
+    address="${!#}"
+    if [[ -f $OMARCHY_TEST_STATE/uppercase-focus ]]; then
+      address="0X${address#0x}"
+    fi
+    printf '%s\n' "$address" >"$OMARCHY_TEST_STATE/active.address"
+  fi
   printf '{"changed":true,"error":null}\n'
   exit 0
 fi
@@ -305,16 +311,35 @@ cat >"$fake_bin/hyprctl" <<'SH'
 #!/bin/bash
 
 if [[ ${1:-} == "clients" ]]; then
-  printf '[{"address":"0x1","class":"org.omarchy.Settings","initialClass":"org.omarchy.Settings","focusHistoryID":0},{"address":"0x2","class":"org.omarchy.AgentCenter","initialClass":"org.omarchy.AgentCenter","focusHistoryID":0}]\n'
+  if [[ -f $OMARCHY_TEST_STATE/clients-empty ]]; then
+    printf '[]\n'
+  else
+    delay=$(cat "$OMARCHY_TEST_STATE/client-delay" 2>/dev/null || printf '0\n')
+    if (( delay > 0 )); then
+      printf '%s\n' "$((delay - 1))" >"$OMARCHY_TEST_STATE/client-delay"
+      printf '[]\n'
+    else
+      printf '[{"address":"0x1","class":"org.omarchy.Settings","initialClass":"org.omarchy.Settings","focusHistoryID":0},{"address":"0x2","class":"org.omarchy.AgentCenter","initialClass":"org.omarchy.AgentCenter","focusHistoryID":0}]\n'
+    fi
+  fi
 elif [[ ${1:-} == "activewindow" ]]; then
   address=$(cat "$OMARCHY_TEST_STATE/active.address" 2>/dev/null || true)
   printf '{"address":"%s"}\n' "$address"
 else
   printf '%s\n' "$*" >>"$OMARCHY_TEST_LOG/hyprctl"
+  if [[ -f $OMARCHY_TEST_STATE/fallback-focus ]]; then
+    address=$(sed -n 's/.*address:\(0[xX][0-9a-fA-F]*\).*/\1/p' <<<"$*")
+    printf '%s\n' "$address" >"$OMARCHY_TEST_STATE/active.address"
+  fi
 fi
 SH
 
-chmod +x "$fake_bin/qs" "$fake_bin/systemd-run" "$fake_bin/hyprctl"
+cat >"$fake_bin/sleep" <<'SH'
+#!/bin/bash
+exit 0
+SH
+
+chmod +x "$fake_bin/qs" "$fake_bin/systemd-run" "$fake_bin/hyprctl" "$fake_bin/sleep"
 mkdir -p "$test_tmp/state" "$test_tmp/log"
 : >"$test_tmp/log/systemd-run"
 : >"$test_tmp/log/hyprctl"
@@ -360,3 +385,33 @@ grep -Fq 'window focus 0x1' "$test_tmp/log/omarchy-shell" || fail "Settings focu
 grep -Fq 'window focus 0x2' "$test_tmp/log/omarchy-shell" || fail "Agent Center focuses its exact compositor app identity"
 [[ ! -s $test_tmp/log/hyprctl ]] || fail "Verified WindowService focus avoids the compositor fallback"
 pass "Launchers use verified WindowService focus for exact compositor identities"
+
+printf '3\n' >"$test_tmp/state/client-delay"
+touch "$test_tmp/state/uppercase-focus"
+bash "$ROOT/bin/omarchy-launch-settings" settings.audio.overview || fail "Settings focus tolerates delayed client publication"
+[[ $(cat "$test_tmp/state/client-delay") == "0" ]] || fail "Focus did not wait for delayed client publication"
+grep -Fq '0X1' "$test_tmp/state/active.address" || fail "Focus comparison did not accept a case-equivalent address"
+pass "Focus waits for the compositor client and compares addresses case-insensitively"
+
+rm "$test_tmp/state/uppercase-focus"
+touch "$test_tmp/state/ipc-no-focus" "$test_tmp/state/fallback-focus"
+: >"$test_tmp/state/active.address"
+: >"$test_tmp/log/hyprctl"
+bash "$ROOT/bin/omarchy-launch-settings" settings.power.overview || fail "Compositor fallback recovers an unavailable shell focus"
+grep -Fq 'focus({ window = "address:0x1" })' "$test_tmp/log/hyprctl" || fail "Focus recovery did not target the exact address"
+[[ $(cat "$test_tmp/state/active.address") == "0x1" ]] || fail "Focus recovery did not verify the active address"
+pass "A verified compositor fallback recovers shell focus failure"
+
+rm "$test_tmp/state/fallback-focus"
+printf '0xdead\n' >"$test_tmp/state/active.address"
+if bash "$ROOT/bin/omarchy-launch-settings" settings.system.overview >/dev/null 2>&1; then
+  fail "Permanent focus failure was reported as success"
+fi
+pass "Launchers fail closed when neither focus path changes the active window"
+
+rm "$test_tmp/state/ipc-no-focus"
+touch "$test_tmp/state/clients-empty"
+if bash "$ROOT/bin/omarchy-launch-settings" settings.overview >/dev/null 2>&1; then
+  fail "Missing compositor client was reported as focused"
+fi
+pass "Launchers fail closed when the application client never appears"
