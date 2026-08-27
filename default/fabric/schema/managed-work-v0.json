@@ -14,6 +14,7 @@
     { "$ref": "#/$defs/permission" },
     { "$ref": "#/$defs/usage" },
     { "$ref": "#/$defs/artifact" },
+    { "$ref": "#/$defs/providerReadiness" },
     { "$ref": "#/$defs/scheduleReconciliation" },
     { "$ref": "#/$defs/automationEventResult" },
     { "$ref": "#/$defs/query" },
@@ -400,13 +401,14 @@
     },
     "operation": {
       "type": "object",
-      "required": ["schemaVersion", "kind", "operationId", "owner", "sourceRevision", "taskId", "runId", "capability", "status", "changeState", "summary", "recoveryEligible", "artifactIds", "createdAt", "updatedAt", "projectedAt"],
+      "required": ["schemaVersion", "kind", "operationId", "owner", "sourceRevision", "legacyOwner", "taskId", "runId", "capability", "status", "changeState", "summary", "recoveryEligible", "artifactIds", "createdAt", "updatedAt", "projectedAt"],
       "properties": {
         "schemaVersion": { "const": "v0" },
         "kind": { "const": "operation-link" },
         "operationId": { "$ref": "#/$defs/opaqueId" },
         "owner": { "$ref": "#/$defs/owner" },
         "sourceRevision": { "type": "integer", "minimum": 1 },
+        "legacyOwner": { "type": "boolean" },
         "taskId": { "$ref": "#/$defs/nullableId" },
         "runId": { "$ref": "#/$defs/nullableId" },
         "capability": { "$ref": "#/$defs/id" },
@@ -526,15 +528,23 @@
     },
     "providerReadiness": {
       "type": "object",
-      "required": ["schemaVersion", "kind", "providerId", "installed", "available", "code", "explanation"],
+      "required": ["schemaVersion", "kind", "providerId", "providerVersion", "sourceRevision", "registryGeneration", "registrationOrder", "installed", "available", "state", "code", "explanation", "registeredAt", "changedAt", "projectedAt"],
       "properties": {
         "schemaVersion": { "const": "v0" },
         "kind": { "const": "managed-provider-readiness" },
-        "providerId": { "$ref": "#/$defs/nullableId" },
-        "installed": { "const": false },
-        "available": { "const": false },
-        "code": { "const": "managed-execution.not-integrated" },
-        "explanation": { "type": "string", "minLength": 1, "maxLength": 2000 }
+        "providerId": { "$ref": "#/$defs/id" },
+        "providerVersion": { "type": "string", "pattern": "^v[0-9]+(?:\\.[0-9]+){0,2}$", "maxLength": 64 },
+        "sourceRevision": { "type": "integer", "minimum": 1 },
+        "registryGeneration": { "type": "integer", "minimum": 1 },
+        "registrationOrder": { "type": "integer", "minimum": 0 },
+        "installed": { "type": "boolean" },
+        "available": { "type": "boolean" },
+        "state": { "enum": ["available", "degraded", "unavailable", "incompatible", "not-registered"] },
+        "code": { "$ref": "#/$defs/id" },
+        "explanation": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "registeredAt": { "$ref": "#/$defs/timestamp" },
+        "changedAt": { "$ref": "#/$defs/timestamp" },
+        "projectedAt": { "$ref": "#/$defs/timestamp" }
       },
       "additionalProperties": false
     },
@@ -544,14 +554,14 @@
       "properties": {
         "schemaVersion": { "const": "v0" },
         "kind": { "const": "managed-work-diagnostics" },
-        "databaseSchema": { "const": 2 },
+        "databaseSchema": { "const": 4 },
         "databaseIntegrity": { "const": "ok" },
         "foreignKeyViolations": { "type": "integer", "minimum": 0 },
         "restartRecoveries": { "type": "integer", "minimum": 0 },
         "historyPrunedThrough": { "type": "integer", "minimum": 0 },
         "ownerCounts": {
           "type": "object",
-          "required": ["contexts", "tasks", "runs", "automations", "automation_firings", "approval_projections", "operation_links", "permission_projections", "usage_records", "artifacts", "idempotency", "managed_events"],
+          "required": ["contexts", "tasks", "runs", "automations", "automation_firings", "approval_projections", "operation_links", "permission_projections", "usage_records", "artifacts", "idempotency", "managed_events", "provider_projections"],
           "properties": {
             "contexts": { "type": "integer", "minimum": 0 },
             "tasks": { "type": "integer", "minimum": 0 },
@@ -564,13 +574,14 @@
             "usage_records": { "type": "integer", "minimum": 0 },
             "artifacts": { "type": "integer", "minimum": 0 },
             "idempotency": { "type": "integer", "minimum": 0 },
-            "managed_events": { "type": "integer", "minimum": 0 }
+            "managed_events": { "type": "integer", "minimum": 0 },
+            "provider_projections": { "type": "integer", "minimum": 0 }
           },
           "additionalProperties": false
         },
         "capacities": {
           "type": "object",
-          "required": ["active_tasks", "total_tasks", "total_runs", "active_automations", "total_automations", "live_contexts", "total_contexts", "artifacts", "usage_records", "operation_links", "approval_projections", "permission_projections", "event_firings", "idempotency_records", "history_events", "page_size"],
+          "required": ["active_tasks", "total_tasks", "total_runs", "active_automations", "total_automations", "live_contexts", "total_contexts", "artifacts", "usage_records", "operation_links", "approval_projections", "permission_projections", "provider_projections", "event_firings", "idempotency_records", "history_events", "page_size"],
           "properties": {
             "active_tasks": { "type": "integer", "minimum": 1 },
             "total_tasks": { "type": "integer", "minimum": 1 },
@@ -584,6 +595,7 @@
             "operation_links": { "type": "integer", "minimum": 1 },
             "approval_projections": { "type": "integer", "minimum": 1 },
             "permission_projections": { "type": "integer", "minimum": 1 },
+            "provider_projections": { "type": "integer", "minimum": 1 },
             "event_firings": { "type": "integer", "minimum": 1 },
             "idempotency_records": { "type": "integer", "minimum": 1 },
             "history_events": { "type": "integer", "minimum": 1 },
@@ -656,6 +668,39 @@
         }
       ]
     },
+    "emptyQuerySummary": {
+      "type": "object",
+      "maxProperties": 0,
+      "additionalProperties": false
+    },
+    "overviewQuerySummary": {
+      "type": "object",
+      "required": ["activeTasks", "pendingApprovals", "enabledAutomations", "pendingUnavailableFirings", "liveContexts", "execution"],
+      "properties": {
+        "activeTasks": { "type": "integer", "minimum": 0 },
+        "pendingApprovals": { "type": "integer", "minimum": 0 },
+        "enabledAutomations": { "type": "integer", "minimum": 0 },
+        "pendingUnavailableFirings": { "type": "integer", "minimum": 0 },
+        "liveContexts": { "type": "integer", "minimum": 0 },
+        "execution": { "$ref": "#/$defs/execution" }
+      },
+      "additionalProperties": false
+    },
+    "historyQuerySummary": {
+      "type": "object",
+      "required": ["prunedThrough"],
+      "properties": { "prunedThrough": { "type": "integer", "minimum": 0 } },
+      "additionalProperties": false
+    },
+    "usageQuerySummary": {
+      "type": "object",
+      "required": ["costMicrounits", "recordCount"],
+      "properties": {
+        "costMicrounits": { "type": "integer", "minimum": 0 },
+        "recordCount": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
     "query": {
       "type": "object",
       "required": ["schemaVersion", "kind", "view", "items", "nextCursor", "partial", "availability", "summary"],
@@ -678,6 +723,98 @@
         },
         "summary": { "$ref": "#/$defs/querySummary" }
       },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "view": { "const": "agent.overview" },
+                "items": { "type": "array", "maxItems": 0 },
+                "nextCursor": { "type": "null" },
+                "summary": { "$ref": "#/$defs/overviewQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.tasks" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/taskQueryItem" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.approvals" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/approval" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.automations" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/automation" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.activity" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/operation" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.history" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/event" } },
+                "summary": { "$ref": "#/$defs/historyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.context" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/context" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.permissions" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/permission" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.usage" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/usage" } },
+                "summary": { "$ref": "#/$defs/usageQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.providers" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/providerReadiness" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.artifacts" },
+                "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/artifact" } },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            },
+            {
+              "properties": {
+                "view": { "const": "agent.troubleshooting" },
+                "items": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/diagnostics" } },
+                "nextCursor": { "type": "null" },
+                "summary": { "$ref": "#/$defs/emptyQuerySummary" }
+              }
+            }
+          ]
+        }
+      ],
       "additionalProperties": false
     },
     "error": {

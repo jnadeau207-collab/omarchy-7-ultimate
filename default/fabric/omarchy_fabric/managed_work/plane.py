@@ -12,6 +12,7 @@ import re
 import time
 import uuid
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,9 @@ from .validation import (
     canonical_json,
     closed_object,
     decode_cursor,
+    decode_ordered_cursor,
     encode_cursor,
+    encode_ordered_cursor,
     enum_value,
     fingerprint,
     finite_number,
@@ -38,6 +41,15 @@ from .validation import (
     stable_id,
     timestamp,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class NormalizedQuery:
+    view: str
+    limit: int
+    cursor: str | None
+    entity_type: str | None
+    entity_id: str | None
 
 TASK_TRANSITIONS: dict[str, frozenset[str]] = {
     "draft": frozenset({"awaiting-approval", "queued", "cancelled"}),
@@ -91,9 +103,12 @@ OPERATION_STATES = frozenset(
         "recovery-failed",
     }
 )
+MAX_QUERY_RESPONSE_BYTES = 56 * 1024
+MAX_DURABLE_OWNERS = 16
 _MEDIA_TYPE_RE = re.compile(
     r"^[a-z0-9][a-z0-9!#$&^_.+-]{0,126}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}$"
 )
+_PROVIDER_VERSION_RE = re.compile(r"^v[0-9]+(?:\.[0-9]+){0,2}$")
 
 
 def _new_id(prefix: str) -> str:
@@ -120,13 +135,287 @@ class ManagedWorkPlane:
         }
     )
 
-    def __init__(self, database_path: Path, *, capacities: CapacityLimits | None = None) -> None:
-        self.store = ManagedWorkStore(database_path)
+    def __init__(
+        self,
+        database_path: Path,
+        *,
+        capacities: CapacityLimits | None = None,
+        maximum_database_bytes: int | None = None,
+    ) -> None:
+        self.store = (
+            ManagedWorkStore(database_path)
+            if maximum_database_bytes is None
+            else ManagedWorkStore(database_path, maximum_database_bytes=maximum_database_bytes)
+        )
         self.capacities = capacities or CapacityLimits()
 
-    def open(self) -> "ManagedWorkPlane":
-        self.store.open()
+    def open(self, *, database_lease_descriptor: int | None = None) -> "ManagedWorkPlane":
+        self.store.open(database_lease_descriptor=database_lease_descriptor)
+        previous_recoveries = self.store.restart_recoveries
+        try:
+            self._validate_startup_query_liveness()
+            with self.store.transaction():
+                recovery_count = self.store.recover_interrupted()
+                self._validate_startup_query_liveness()
+            self.store.restart_recoveries = recovery_count
+        except ManagedWorkError as error:
+            self.store.restart_recoveries = previous_recoveries
+            self.store.close()
+            if error.code.startswith("managed-work.database"):
+                raise
+            raise ManagedWorkError(
+                "managed-work.database-corrupt",
+                "Managed work refused durable state that cannot produce bounded closed query items.",
+                detail=error.code,
+                recovery_actions=("managed-work.restore-database",),
+            ) from error
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError, OverflowError) as error:
+            self.store.restart_recoveries = previous_recoveries
+            self.store.close()
+            raise ManagedWorkError(
+                "managed-work.database-corrupt",
+                "Managed work refused durable state that cannot produce bounded closed query items.",
+                detail=type(error).__name__,
+                recovery_actions=("managed-work.restore-database",),
+            ) from error
         return self
+
+    def _validate_startup_query_liveness(self) -> None:
+        connection = self.store.require_connection()
+        principal_ids: set[str] = set()
+        owner_sessions: dict[str, str] = {}
+
+        def rows(table: str, maximum: int) -> list[Any]:
+            total_limit = maximum * MAX_DURABLE_OWNERS
+            result = connection.execute(
+                f"SELECT * FROM {table} ORDER BY row_id LIMIT ?",
+                (total_limit + 1,),
+            ).fetchall()
+            if len(result) > total_limit:
+                raise ManagedWorkError(
+                    "managed-work.database-corrupt",
+                    "Managed work refused a table that exceeds its declared durable capacity.",
+                    detail=table,
+                    recovery_actions=("managed-work.restore-database",),
+                )
+            counts: dict[str, int] = {}
+            for row in result:
+                principal_id = str(row["principal_id"])
+                principal_ids.add(principal_id)
+                counts[principal_id] = counts.get(principal_id, 0) + 1
+                if counts[principal_id] > maximum:
+                    raise ManagedWorkError(
+                        "managed-work.database-corrupt",
+                        "Managed work refused an owner table that exceeds its declared durable capacity.",
+                        detail=table,
+                        recovery_actions=("managed-work.restore-database",),
+                    )
+                if "owner_session_id" in row.keys():
+                    owner_sessions.setdefault(principal_id, str(row["owner_session_id"]))
+            return result
+
+        contexts = rows("contexts", self.capacities.total_contexts)
+        tasks = rows("tasks", self.capacities.total_tasks)
+        runs = rows("runs", self.capacities.total_runs)
+        automations = rows("automations", self.capacities.total_automations)
+        rows("automation_firings", self.capacities.event_firings)
+        approvals = rows("approval_projections", self.capacities.approval_projections)
+        operations = rows("operation_links", self.capacities.operation_links)
+        permissions = rows("permission_projections", self.capacities.permission_projections)
+        usage = rows("usage_records", self.capacities.usage_records)
+        artifacts = rows("artifacts", self.capacities.artifacts)
+        events = rows("managed_events", self.capacities.history_events)
+        providers = rows("provider_projections", self.capacities.provider_projections)
+
+        def require_subset_capacity(
+            table: str,
+            values: Sequence[Any],
+            maximum: int,
+            predicate: Any,
+        ) -> None:
+            counts: dict[str, int] = {}
+            for row in values:
+                if not predicate(row):
+                    continue
+                principal_id = str(row["principal_id"])
+                counts[principal_id] = counts.get(principal_id, 0) + 1
+                if counts[principal_id] > maximum:
+                    raise ManagedWorkError(
+                        "managed-work.database-corrupt",
+                        "Managed work refused an owner table whose active rows exceed declared capacity.",
+                        detail=table,
+                        recovery_actions=("managed-work.restore-database",),
+                    )
+
+        validation_time = time.time()
+        require_subset_capacity(
+            "contexts.live",
+            contexts,
+            self.capacities.live_contexts,
+            lambda row: row["revoked_at"] is None and float(row["expires_at"]) > validation_time,
+        )
+        require_subset_capacity(
+            "tasks.active",
+            tasks,
+            self.capacities.active_tasks,
+            lambda row: row["state"] not in TERMINAL_TASK_STATES,
+        )
+        require_subset_capacity(
+            "automations.active",
+            automations,
+            self.capacities.active_automations,
+            lambda row: row["state"] != "disabled",
+        )
+        idempotency_limit = self.capacities.idempotency_records * MAX_DURABLE_OWNERS
+        idempotency_rows = connection.execute(
+            """
+            SELECT principal_id, result_json
+            FROM idempotency
+            ORDER BY principal_id, action, idempotency_key
+            LIMIT ?
+            """,
+            (idempotency_limit + 1,),
+        ).fetchall()
+        if len(idempotency_rows) > idempotency_limit:
+            raise ManagedWorkError(
+                "managed-work.database-corrupt",
+                "Managed work refused an idempotency table beyond its declared capacity.",
+                recovery_actions=("managed-work.restore-database",),
+            )
+        idempotency_counts: dict[str, int] = {}
+        for row in idempotency_rows:
+            principal_id = str(row["principal_id"])
+            principal_ids.add(principal_id)
+            idempotency_counts[principal_id] = idempotency_counts.get(principal_id, 0) + 1
+            if idempotency_counts[principal_id] > self.capacities.idempotency_records:
+                raise ManagedWorkError(
+                    "managed-work.database-corrupt",
+                    "Managed work refused an owner idempotency table beyond its declared capacity.",
+                    recovery_actions=("managed-work.restore-database",),
+                )
+
+        step_limit = self.capacities.total_runs * MAX_DURABLE_OWNERS * 64
+        step_counts: dict[str, int] = {}
+        step_total = 0
+        for row in connection.execute(
+            "SELECT run_id, principal_id FROM steps ORDER BY row_id LIMIT ?",
+            (step_limit + 1,),
+        ):
+            step_total += 1
+            if step_total > step_limit:
+                raise ManagedWorkError(
+                    "managed-work.database-corrupt",
+                    "Managed work refused a step table beyond its declared durable capacity.",
+                    recovery_actions=("managed-work.restore-database",),
+                )
+            run_id = str(row["run_id"])
+            principal_ids.add(str(row["principal_id"]))
+            step_counts[run_id] = step_counts.get(run_id, 0) + 1
+            if step_counts[run_id] > 64:
+                raise ManagedWorkError(
+                    "managed-work.database-corrupt",
+                    "Managed work refused a run with more than 64 durable steps.",
+                    recovery_actions=("managed-work.restore-database",),
+                )
+
+        if len(principal_ids) > MAX_DURABLE_OWNERS:
+            raise ManagedWorkError(
+                "managed-work.database-corrupt",
+                "Managed work refused an owner-only database with too many durable owners.",
+                recovery_actions=("managed-work.restore-database",),
+            )
+
+        for row in contexts:
+            self._require_query_item_capacity("agent.context", self._context_result(row))
+        for row in runs:
+            run = self._run_result(
+                row,
+                self._steps_for_run(connection, row["run_id"], row["principal_id"]),
+            )
+            self._require_query_item_capacity(
+                "agent.tasks",
+                {"entityType": "run", "task": None, "run": run},
+            )
+        for row in tasks:
+            latest = connection.execute(
+                "SELECT * FROM runs WHERE task_id = ? AND principal_id = ? ORDER BY row_id DESC LIMIT 1",
+                (row["task_id"], row["principal_id"]),
+            ).fetchone()
+            run = None
+            if latest is not None:
+                run = self._run_result(
+                    latest,
+                    self._steps_for_run(connection, latest["run_id"], row["principal_id"]),
+                )
+            self._require_query_item_capacity(
+                "agent.tasks",
+                {"entityType": "task", "task": self._task_result(row), "run": run},
+            )
+        for row in automations:
+            self._require_query_item_capacity(
+                "agent.automations",
+                self._automation_result(
+                    row,
+                    self._firings_for_automation(
+                        connection,
+                        row["automation_id"],
+                        row["principal_id"],
+                        limit=5,
+                    ),
+                ),
+            )
+        for row in approvals:
+            self._require_query_item_capacity("agent.approvals", self._approval_result(row))
+        for row in operations:
+            self._require_query_item_capacity("agent.activity", self._operation_result(row))
+        for row in permissions:
+            self._require_query_item_capacity("agent.permissions", self._permission_result(row))
+        usage_summaries: dict[str, dict[str, int]] = {}
+        for row in usage:
+            summary = usage_summaries.setdefault(
+                str(row["principal_id"]),
+                {"costMicrounits": 0, "recordCount": 0},
+            )
+            summary["costMicrounits"] += int(row["cost_microunits"])
+            summary["recordCount"] += 1
+        for row in usage:
+            self._require_query_item_capacity(
+                "agent.usage",
+                self._usage_result(row),
+                summary=usage_summaries[str(row["principal_id"])],
+            )
+        for row in artifacts:
+            self._require_query_item_capacity("agent.artifacts", self._artifact_result(row))
+        pruned_values = connection.execute(
+            "SELECT value FROM managed_metadata WHERE key LIKE 'history_pruned_through.%'"
+        ).fetchall()
+        pruned_through = max((int(row[0]) for row in pruned_values), default=0)
+        for row in events:
+            self._require_query_item_capacity(
+                "agent.history",
+                self._event_result(row),
+                summary={"prunedThrough": pruned_through},
+            )
+        for row in providers:
+            self._require_query_item_capacity("agent.providers", self._provider_result(row))
+
+        for row in idempotency_rows:
+            if row["result_json"] is None:
+                continue
+            result = json.loads(row["result_json"])
+            if len(canonical_json(result).encode("utf-8")) > MAX_QUERY_RESPONSE_BYTES:
+                raise ManagedWorkError(
+                    "managed-work.database-corrupt",
+                    "Managed work refused an oversized durable idempotency result.",
+                    recovery_actions=("managed-work.restore-database",),
+                )
+
+        if not principal_ids:
+            principal_ids.add("account.uid.0")
+        for principal_id in sorted(principal_ids):
+            actor = Actor(principal_id, owner_sessions.get(principal_id, "session.validation"))
+            diagnostics = self._query_troubleshooting(actor)["items"][0]
+            self._require_query_item_capacity("agent.troubleshooting", diagnostics)
 
     def close(self) -> None:
         self.store.close()
@@ -151,7 +440,9 @@ class ManagedWorkPlane:
 
     @staticmethod
     def _require_idempotency_key(value: Any) -> str:
-        return bounded_text(value, field="idempotency key", maximum=256)
+        key = bounded_text(value, field="idempotency key", maximum=256)
+        reject_secret_fields({"value": key}, field="idempotency key")
+        return key
 
     def _claim_idempotency(
         self,
@@ -243,9 +534,25 @@ class ManagedWorkPlane:
                 "INSERT OR REPLACE INTO managed_metadata(key, value) VALUES (?, ?)",
                 (f"history_pruned_through.{actor.principal_id}", str(cutoff_row)),
             )
+        event_id = _new_id("event")
+        payload_value = normalize_json(payload, field="managed event payload")
+        reject_secret_fields(payload_value, field="managed event payload")
+        self._require_query_item_capacity(
+            "agent.history",
+            {
+                "schemaVersion": "v0",
+                "kind": "managed-work-event",
+                "eventId": event_id,
+                "topic": topic,
+                "entityId": entity_id,
+                "payload": payload_value,
+                "createdAt": now,
+            },
+            summary={"prunedThrough": 9_223_372_036_854_775_807},
+        )
         connection.execute(
             "INSERT INTO managed_events(event_id, principal_id, owner_session_id, topic, entity_id, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (_new_id("event"), actor.principal_id, actor.session_id, topic, entity_id, canonical_json(payload), now),
+            (event_id, actor.principal_id, actor.session_id, topic, entity_id, canonical_json(payload_value), now),
         )
 
     @staticmethod
@@ -433,6 +740,7 @@ class ManagedWorkPlane:
             )
             row = connection.execute("SELECT * FROM contexts WHERE context_id = ?", (context_id,)).fetchone()
             result = self._context_result(row)
+            self._require_query_item_capacity("agent.context", result)
             self._append_event(connection, actor, topic="context.captured", entity_id=context_id, payload={"contextId": context_id}, now=captured_at)
             self._finish_idempotency(connection, actor, action="context.capture", key=key, result=result, now=captured_at)
             return result
@@ -517,6 +825,7 @@ class ManagedWorkPlane:
     ) -> dict[str, Any]:
         current = time.time() if now is None else timestamp(now, field="task creation time")
         title_value = bounded_text(title, field="task title", maximum=512)
+        reject_secret_fields({"value": title_value}, field="task title")
         intent_value = normalize_json(intent, field="task intent")
         if not isinstance(intent_value, dict):
             raise ManagedWorkError("task.intent", "Task intent must be an object.")
@@ -552,7 +861,12 @@ class ManagedWorkPlane:
                 where="state NOT IN ('succeeded', 'failed', 'cancelled')",
             )
             for context_id in context_values:
-                self._context_row(connection, actor, context_id, now=current)
+                context = self._context_row(connection, actor, context_id, now=current)
+                if context["access_scope"] in {"session", "task"}:
+                    raise ManagedWorkError(
+                        "task.context-scope",
+                        "A durable task accepts only principal-scoped context; session and task context cannot be rebound.",
+                    )
             task_id = _new_id("task")
             connection.execute(
                 """
@@ -575,9 +889,55 @@ class ManagedWorkPlane:
             )
             row = connection.execute("SELECT * FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
             result = self._task_result(row)
+            self._require_query_item_capacity(
+                "agent.tasks",
+                {"entityType": "task", "task": result, "run": None},
+            )
             self._append_event(connection, actor, topic="task.created", entity_id=task_id, payload={"taskId": task_id}, now=current)
             self._finish_idempotency(connection, actor, action="task.create", key=key, result=result, now=current)
             return result
+
+    def release_session_contexts(self, actor: Actor) -> int:
+        """Atomically remove context that cannot outlive its authenticated session."""
+
+        with self.store.transaction() as connection:
+            attached = connection.execute(
+                """
+                SELECT 1
+                FROM contexts context
+                JOIN tasks task ON task.principal_id = context.principal_id
+                JOIN json_each(task.context_ids_json) reference
+                  ON reference.value = context.context_id
+                WHERE context.principal_id = ?
+                  AND context.owner_session_id = ?
+                  AND context.access_scope = 'session'
+                LIMIT 1
+                """,
+                (actor.principal_id, actor.session_id),
+            ).fetchone()
+            if attached is not None:
+                raise ManagedWorkError(
+                    "managed-work.database-corrupt",
+                    "A durable task illegally references session-scoped context.",
+                    recovery_actions=("managed-work.restore-database",),
+                )
+            connection.execute(
+                """
+                DELETE FROM idempotency
+                WHERE principal_id = ?
+                  AND action = 'context.capture'
+                  AND json_extract(result_json, '$.contextId') IN (
+                    SELECT context_id FROM contexts
+                    WHERE principal_id = ? AND owner_session_id = ? AND access_scope = 'session'
+                  )
+                """,
+                (actor.principal_id, actor.principal_id, actor.session_id),
+            )
+            removed = connection.execute(
+                "DELETE FROM contexts WHERE principal_id = ? AND owner_session_id = ? AND access_scope = 'session'",
+                (actor.principal_id, actor.session_id),
+            ).rowcount
+            return int(removed)
 
     def get_task(self, actor: Actor, task_id: str) -> dict[str, Any]:
         with self.store.read() as connection:
@@ -597,6 +957,7 @@ class ManagedWorkPlane:
         revision = integer(expected_revision, field="expected revision", minimum=1)
         target_value = enum_value(target, field="task state", choices=set(TASK_TRANSITIONS))
         reason_value = bounded_text(reason, field="transition reason", maximum=2048, allow_empty=True)
+        reject_secret_fields({"value": reason_value}, field="transition reason")
         if target_value in {"running", "waiting", "retrying", "succeeded"}:
             raise ManagedWorkError(
                 "managed-execution.unavailable",
@@ -676,6 +1037,7 @@ class ManagedWorkPlane:
                     else stable_id(step_data["capability"], field="step capability"),
                 }
             )
+        reject_secret_fields(step_values, field="run manifest steps")
         return {
             "provider": stable_id(data["provider"], field="run provider"),
             "model": stable_id(data["model"], field="run model"),
@@ -710,8 +1072,11 @@ class ManagedWorkPlane:
         }
 
     @staticmethod
-    def _steps_for_run(connection: Any, run_id: str) -> list[dict[str, Any]]:
-        rows = connection.execute("SELECT * FROM steps WHERE run_id = ? ORDER BY sequence", (run_id,)).fetchall()
+    def _steps_for_run(connection: Any, run_id: str, principal_id: str) -> list[dict[str, Any]]:
+        rows = connection.execute(
+            "SELECT * FROM steps WHERE run_id = ? AND principal_id = ? ORDER BY sequence",
+            (run_id, principal_id),
+        ).fetchall()
         return [
             {
                 "schemaVersion": "v0",
@@ -761,9 +1126,9 @@ class ManagedWorkPlane:
             task_contexts = set(json.loads(task["context_ids_json"]))
             for context_id in manifest_value["contextIds"]:
                 context = self._context_row(connection, actor, context_id, now=current)
-                if context_id not in task_contexts and not (
-                    context["access_scope"] == "task" and context["task_id"] == task_id
-                ):
+                if context["access_scope"] == "task" and context["task_id"] != task_id:
+                    raise ManagedWorkError("run.context-scope", "The run manifest references context outside its task.")
+                if context_id not in task_contexts and context["access_scope"] != "task":
                     raise ManagedWorkError("run.context-scope", "The run manifest references context outside its task.")
             if manifest_value["networkGranted"]:
                 grant = connection.execute(
@@ -812,7 +1177,15 @@ class ManagedWorkPlane:
                     ),
                 )
             row = connection.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
-            result = self._run_result(row, self._steps_for_run(connection, run_id))
+            result = self._run_result(row, self._steps_for_run(connection, run_id, actor.principal_id))
+            self._require_query_item_capacity(
+                "agent.tasks",
+                {"entityType": "run", "task": None, "run": result},
+            )
+            self._require_query_item_capacity(
+                "agent.tasks",
+                {"entityType": "task", "task": self._task_result(task), "run": result},
+            )
             self._append_event(connection, actor, topic="run.planned", entity_id=run_id, payload={"runId": run_id, "taskId": task_id}, now=current)
             self._finish_idempotency(connection, actor, action="run.plan", key=key, result=result, now=current)
             return result
@@ -820,7 +1193,7 @@ class ManagedWorkPlane:
     def get_run(self, actor: Actor, run_id: str) -> dict[str, Any]:
         with self.store.read() as connection:
             row = self._run_row(connection, actor, run_id)
-            return self._run_result(row, self._steps_for_run(connection, run_id))
+            return self._run_result(row, self._steps_for_run(connection, run_id, actor.principal_id))
 
     def transition_run(
         self,
@@ -868,7 +1241,7 @@ class ManagedWorkPlane:
                 payload={"runId": run_id, "from": row["state"], "to": target_value, "detail": detail_value},
                 now=current,
             )
-            return self._run_result(updated, self._steps_for_run(connection, run_id))
+            return self._run_result(updated, self._steps_for_run(connection, run_id, actor.principal_id))
 
     def retry_run(
         self,
@@ -942,7 +1315,19 @@ class ManagedWorkPlane:
                 (current, parent["task_id"]),
             )
             new_run = connection.execute("SELECT * FROM runs WHERE run_id = ?", (new_run_id,)).fetchone()
-            result = self._run_result(new_run, self._steps_for_run(connection, new_run_id))
+            result = self._run_result(new_run, self._steps_for_run(connection, new_run_id, actor.principal_id))
+            updated_task = connection.execute(
+                "SELECT * FROM tasks WHERE task_id = ?",
+                (parent["task_id"],),
+            ).fetchone()
+            self._require_query_item_capacity(
+                "agent.tasks",
+                {"entityType": "run", "task": None, "run": result},
+            )
+            self._require_query_item_capacity(
+                "agent.tasks",
+                {"entityType": "task", "task": self._task_result(updated_task), "run": result},
+            )
             self._append_event(connection, actor, topic="run.retried", entity_id=new_run_id, payload={"runId": new_run_id, "parentRunId": run_id}, now=current)
             self._finish_idempotency(connection, actor, action="run.retry", key=key, result=result, now=current)
             return result
@@ -1010,10 +1395,17 @@ class ManagedWorkPlane:
         }
 
     @classmethod
-    def _firings_for_automation(cls, connection: Any, automation_id: str, *, limit: int = 20) -> list[dict[str, Any]]:
+    def _firings_for_automation(
+        cls,
+        connection: Any,
+        automation_id: str,
+        principal_id: str,
+        *,
+        limit: int = 20,
+    ) -> list[dict[str, Any]]:
         rows = connection.execute(
-            "SELECT * FROM automation_firings WHERE automation_id = ? ORDER BY row_id DESC LIMIT ?",
-            (automation_id, limit),
+            "SELECT * FROM automation_firings WHERE automation_id = ? AND principal_id = ? ORDER BY row_id DESC LIMIT ?",
+            (automation_id, principal_id, limit),
         ).fetchall()
         return [cls._firing_result(row) for row in rows]
 
@@ -1038,7 +1430,9 @@ class ManagedWorkPlane:
     ) -> dict[str, Any]:
         current = time.time() if now is None else timestamp(now, field="automation creation time")
         name_value = bounded_text(name, field="automation name", maximum=512)
+        reject_secret_fields({"value": name_value}, field="automation name")
         template_value = self._normalize_task_template(task_template)
+        reject_secret_fields(template_value, field="automation task template")
         trigger_value = normalize_trigger(trigger)
         policy_value = normalize_policy(policy)
         key = self._require_idempotency_key(idempotency_key)
@@ -1097,6 +1491,7 @@ class ManagedWorkPlane:
             )
             row = connection.execute("SELECT * FROM automations WHERE automation_id = ?", (automation_id,)).fetchone()
             result = self._automation_result(row)
+            self._require_query_item_capacity("agent.automations", result)
             self._append_event(connection, actor, topic="automation.created", entity_id=automation_id, payload={"automationId": automation_id}, now=current)
             self._finish_idempotency(connection, actor, action="automation.create", key=key, result=result, now=current)
             return result
@@ -1104,7 +1499,10 @@ class ManagedWorkPlane:
     def get_automation(self, actor: Actor, automation_id: str) -> dict[str, Any]:
         with self.store.read() as connection:
             row = self._automation_row(connection, actor, automation_id)
-            return self._automation_result(row, self._firings_for_automation(connection, automation_id))
+            return self._automation_result(
+                row,
+                self._firings_for_automation(connection, automation_id, actor.principal_id),
+            )
 
     def set_automation_state(
         self,
@@ -1149,7 +1547,12 @@ class ManagedWorkPlane:
                 payload={"automationId": automation_id, "from": row["state"], "to": state_value},
                 now=current,
             )
-            return self._automation_result(updated, self._firings_for_automation(connection, automation_id))
+            result = self._automation_result(
+                updated,
+                self._firings_for_automation(connection, automation_id, actor.principal_id),
+            )
+            self._require_query_item_capacity("agent.automations", result)
+            return result
 
     def reconcile_schedules(
         self,
@@ -1252,6 +1655,22 @@ class ManagedWorkPlane:
                 connection.execute(
                     "UPDATE automations SET next_due_at = ?, last_reconciled_at = ?, updated_at = ? WHERE automation_id = ?",
                     (future, current, current, row["automation_id"]),
+                )
+                projected = connection.execute(
+                    "SELECT * FROM automations WHERE automation_id = ?",
+                    (row["automation_id"],),
+                ).fetchone()
+                self._require_query_item_capacity(
+                    "agent.automations",
+                    self._automation_result(
+                        projected,
+                        self._firings_for_automation(
+                            connection,
+                            row["automation_id"],
+                            actor.principal_id,
+                            limit=5,
+                        ),
+                    ),
                 )
             if created or skipped or rollbacks:
                 self._append_event(
@@ -1381,6 +1800,23 @@ class ManagedWorkPlane:
                 if cursor.rowcount:
                     firing = connection.execute("SELECT * FROM automation_firings WHERE firing_id = ?", (firing_id,)).fetchone()
                     firings.append(self._firing_result(firing))
+            for automation_id in {str(row["automation_id"]) for row in novel}:
+                projected = connection.execute(
+                    "SELECT * FROM automations WHERE automation_id = ?",
+                    (automation_id,),
+                ).fetchone()
+                self._require_query_item_capacity(
+                    "agent.automations",
+                    self._automation_result(
+                        projected,
+                        self._firings_for_automation(
+                            connection,
+                            automation_id,
+                            actor.principal_id,
+                            limit=5,
+                        ),
+                    ),
+                )
             if firings:
                 self._append_event(
                     connection,
@@ -1468,6 +1904,7 @@ class ManagedWorkPlane:
         }
         if value["expiresAt"] <= value["requestedAt"]:
             raise ManagedWorkError("approval.expiry", "Approval expiry must follow its request time.")
+        reject_secret_fields({"value": value["summary"]}, field="approval summary")
         payload_json = canonical_json(value)
         with self.store.transaction() as connection:
             existing = connection.execute(
@@ -1539,6 +1976,7 @@ class ManagedWorkPlane:
                 (actor.principal_id, value["approvalId"]),
             ).fetchone()
             result = self._approval_result(row)
+            self._require_query_item_capacity("agent.approvals", result)
             if decision != "unchanged":
                 self._append_event(connection, actor, topic="approval.projected", entity_id=value["approvalId"], payload={"approvalId": value["approvalId"], "state": value["state"]}, now=current)
             return result
@@ -1552,6 +1990,7 @@ class ManagedWorkPlane:
             "operationId": row["operation_id"],
             "owner": {"principalId": row["principal_id"], "sessionId": row["owner_session_id"]},
             "sourceRevision": int(row["source_revision"]),
+            "legacyOwner": bool(payload.get("legacyOwner", False)),
             "taskId": row["task_id"],
             "runId": row["run_id"],
             "capability": row["capability"],
@@ -1584,6 +2023,7 @@ class ManagedWorkPlane:
                 "createdAt",
                 "updatedAt",
             },
+            optional={"legacyOwner"},
         )
         task_id = None if data["taskId"] is None else stable_id(data["taskId"], field="task ID")
         run_id = None if data["runId"] is None else stable_id(data["runId"], field="run ID")
@@ -1597,12 +2037,15 @@ class ManagedWorkPlane:
             raise ManagedWorkError("operation.artifacts", "Operation artifact IDs must be unique.")
         if not isinstance(data["recoveryEligible"], bool):
             raise ManagedWorkError("operation.recovery", "Operation recovery eligibility must be a boolean.")
+        if not isinstance(data.get("legacyOwner", False), bool):
+            raise ManagedWorkError("operation.legacy-owner", "Legacy owner provenance must be a boolean.")
         created = timestamp(data["createdAt"], field="operation creation time")
         updated = timestamp(data["updatedAt"], field="operation update time")
         if updated < created:
             raise ManagedWorkError("operation.time", "Operation update time precedes creation time.")
         value = {
             "sourceRevision": integer(data["sourceRevision"], field="source revision", minimum=1),
+            "legacyOwner": data.get("legacyOwner", False),
             "operationId": opaque_id(data["operationId"], field="operation ID"),
             "taskId": task_id,
             "runId": run_id,
@@ -1623,6 +2066,7 @@ class ManagedWorkPlane:
             "createdAt": created,
             "updatedAt": updated,
         }
+        reject_secret_fields({"value": value["summary"]}, field="operation summary")
         payload_json = canonical_json(value)
         with self.store.transaction() as connection:
             if task_id is not None:
@@ -1705,9 +2149,349 @@ class ManagedWorkPlane:
                 (actor.principal_id, value["operationId"]),
             ).fetchone()
             result = self._operation_result(row)
+            self._require_query_item_capacity("agent.activity", result)
             if decision != "unchanged":
                 self._append_event(connection, actor, topic="operation.projected", entity_id=value["operationId"], payload={"operationId": value["operationId"], "status": value["status"]}, now=current)
             return result
+
+    def project_operation_inventory(
+        self,
+        actor: Actor,
+        inventory: Sequence[tuple[Actor, Mapping[str, Any]]],
+        *,
+        source_capability: str,
+        now: float | None = None,
+    ) -> list[dict[str, Any]]:
+        """Atomically project one bounded authoritative operation snapshot."""
+
+        current = time.time() if now is None else timestamp(now, field="operation inventory time")
+        if not isinstance(actor, Actor):
+            raise ManagedWorkError("operation.inventory", "Operation inventory owner is invalid.")
+        capability = stable_id(source_capability, field="operation inventory capability")
+        if isinstance(inventory, (str, bytes, bytearray)) or not isinstance(inventory, Sequence):
+            raise ManagedWorkError("operation.inventory", "Operation inventory must be a bounded array.")
+        if len(inventory) > self.capacities.operation_links:
+            raise ManagedWorkError("capacity.operation-links", "Operation inventory exceeds durable capacity.")
+        identities: list[tuple[Actor, Mapping[str, Any], str]] = []
+        seen: set[tuple[str, str]] = set()
+        for index, item in enumerate(inventory):
+            if not isinstance(item, tuple) or len(item) != 2:
+                raise ManagedWorkError("operation.inventory", f"Operation inventory item {index} is malformed.")
+            source_actor, projection = item
+            if not isinstance(source_actor, Actor) or not isinstance(projection, Mapping):
+                raise ManagedWorkError("operation.inventory", f"Operation inventory item {index} is malformed.")
+            if source_actor.principal_id != actor.principal_id:
+                raise ManagedWorkError(
+                    "operation.inventory-owner",
+                    "Operation inventory cannot cross its explicit stable owner boundary.",
+                )
+            if projection.get("capability") != capability:
+                raise ManagedWorkError(
+                    "operation.inventory-source",
+                    "Operation inventory contains an item from another projection source family.",
+                )
+            operation_id = opaque_id(projection.get("operationId"), field="operation ID")
+            identity = (source_actor.principal_id, operation_id)
+            if identity in seen:
+                raise ManagedWorkError("operation.inventory", "Operation inventory contains a duplicate identity.")
+            seen.add(identity)
+            identities.append((source_actor, projection, operation_id))
+        results: list[dict[str, Any]] = []
+        with self.store.transaction() as connection:
+            existing_capabilities = {
+                str(row["operation_id"]): str(row["capability"])
+                for row in connection.execute(
+                    "SELECT operation_id, capability FROM operation_links WHERE principal_id = ? LIMIT ?",
+                    (actor.principal_id, self.capacities.operation_links + 1),
+                ).fetchall()
+            }
+            all_existing = set(existing_capabilities)
+            source_existing = {
+                str(row["operation_id"])
+                for row in connection.execute(
+                    "SELECT operation_id FROM operation_links WHERE principal_id = ? AND capability = ? LIMIT ?",
+                    (actor.principal_id, capability, self.capacities.operation_links + 1),
+                ).fetchall()
+            }
+            incoming = {operation_id for _source_actor, _projection, operation_id in identities}
+            if any(
+                operation_id in existing_capabilities
+                and existing_capabilities[operation_id] != capability
+                for operation_id in incoming
+            ):
+                raise ManagedWorkError(
+                    "operation.inventory-source-conflict",
+                    "Operation inventory cannot replace an identity owned by another projection source family.",
+                )
+            prospective = (all_existing - source_existing) | incoming
+            if (
+                len(all_existing) > self.capacities.operation_links
+                or len(source_existing) > self.capacities.operation_links
+                or len(prospective) > self.capacities.operation_links
+            ):
+                raise ManagedWorkError(
+                    "capacity.operation-links",
+                    "Operation inventory and existing durable links exceed capacity.",
+                )
+            for source_actor, projection, _operation_id in identities:
+                results.append(self.link_operation(source_actor, projection, now=current))
+            missing = source_existing - incoming
+            if missing:
+                placeholders = ",".join("?" for _ in missing)
+                connection.execute(
+                    f"DELETE FROM operation_links WHERE principal_id = ? AND capability = ? AND operation_id IN ({placeholders})",
+                    (actor.principal_id, capability, *sorted(missing)),
+                )
+        return results
+
+    @staticmethod
+    def _provider_result(row: Any) -> dict[str, Any]:
+        return {
+            "schemaVersion": "v0",
+            "kind": "managed-provider-readiness",
+            "providerId": row["provider_id"],
+            "providerVersion": row["provider_version"],
+            "sourceRevision": int(row["source_revision"]),
+            "registryGeneration": int(row["registry_generation"]),
+            "registrationOrder": int(row["registration_order"]),
+            "installed": bool(row["installed"]),
+            "available": bool(row["available"]),
+            "state": row["state"],
+            "code": row["code"],
+            "explanation": row["explanation"],
+            "registeredAt": float(row["registered_at"]),
+            "changedAt": float(row["changed_at"]),
+            "projectedAt": float(row["projected_at"]),
+        }
+
+    def project_provider_inventory(
+        self,
+        actor: Actor,
+        catalog: Sequence[Mapping[str, Any]],
+        *,
+        now: float | None = None,
+    ) -> list[dict[str, Any]]:
+        """Persist one closed, monotonic projection of daemon registry truth.
+
+        The caller is the daemon integration, not RPC.  The registry catalog is
+        reduced to non-secret readiness fields before it reaches durable state.
+        Revisions are owned by this projection and never trust registry counters
+        that may restart from one after a daemon restart.
+        """
+
+        current = time.time() if now is None else timestamp(now, field="provider projection time")
+        if isinstance(catalog, (str, bytes, bytearray)) or not isinstance(catalog, Sequence):
+            raise ManagedWorkError("provider.catalog", "Provider inventory must be an array.")
+        if len(catalog) > self.capacities.provider_projections:
+            raise ManagedWorkError("capacity.provider-projections", "Provider inventory exceeds its durable capacity.")
+        normalized: dict[str, dict[str, Any]] = {}
+        for index, raw in enumerate(catalog):
+            record = closed_object(
+                raw,
+                field=f"provider catalog item {index}",
+                required={
+                    "manifest",
+                    "fingerprint",
+                    "generation",
+                    "registrationOrder",
+                    "state",
+                    "detail",
+                    "registeredAt",
+                    "changedAt",
+                },
+            )
+            manifest = record["manifest"]
+            if not isinstance(manifest, Mapping):
+                raise ManagedWorkError("provider.manifest", "Provider manifest must be an object.")
+            provider_id = stable_id(manifest.get("provider"), field="provider ID")
+            provider_version = bounded_text(
+                manifest.get("providerVersion"),
+                field="provider version",
+                maximum=64,
+            )
+            if _PROVIDER_VERSION_RE.fullmatch(provider_version) is None:
+                raise ManagedWorkError("provider.version", "Provider version is malformed.")
+            if provider_id in normalized:
+                raise ManagedWorkError("provider.duplicate", "Provider inventory contains a duplicate provider ID.")
+            registry_fingerprint = sha256_id(record["fingerprint"], field="provider fingerprint")
+            generation = integer(record["generation"], field="registry generation", minimum=1)
+            registration_order = integer(
+                record["registrationOrder"],
+                field="provider registration order",
+                minimum=0,
+                maximum=self.capacities.provider_projections - 1,
+            )
+            state = enum_value(
+                record["state"],
+                field="provider state",
+                choices={"available", "degraded", "unavailable", "incompatible"},
+            )
+            detail = bounded_text(record["detail"], field="provider detail", maximum=4096, allow_empty=True)
+            registered_at = timestamp(record["registeredAt"], field="provider registration time")
+            changed_at = timestamp(record["changedAt"], field="provider change time")
+            if changed_at < registered_at:
+                raise ManagedWorkError("provider.time", "Provider change time precedes registration.")
+            available = state in {"available", "degraded"}
+            normalized[provider_id] = {
+                "providerId": provider_id,
+                "providerVersion": provider_version,
+                "registryFingerprint": registry_fingerprint,
+                "detailDigest": fingerprint(detail),
+                "registryGeneration": generation,
+                "registrationOrder": registration_order,
+                "installed": True,
+                "available": available,
+                "state": state,
+                "code": (
+                    "provider.available"
+                    if state == "available"
+                    else "provider.degraded"
+                    if state == "degraded"
+                    else "provider.incompatible-version"
+                    if state == "incompatible"
+                    else "provider.unavailable"
+                ),
+                "explanation": (
+                    "The provider is registered and its read capabilities are available."
+                    if state == "available"
+                    else "The provider is registered and usable, but reports degraded readiness."
+                    if state == "degraded"
+                    else "The provider is registered but currently unavailable."
+                ),
+                "registeredAt": registered_at,
+                "changedAt": changed_at,
+            }
+
+        with self.store.transaction() as connection:
+            existing_rows = {
+                row["provider_id"]: row
+                for row in connection.execute(
+                    "SELECT * FROM provider_projections WHERE principal_id = ? ORDER BY provider_id",
+                    (actor.principal_id,),
+                ).fetchall()
+            }
+            if len(set(existing_rows) | set(normalized)) > self.capacities.provider_projections:
+                raise ManagedWorkError("capacity.provider-projections", "Provider projections reached durable capacity.")
+            for provider_id, value in normalized.items():
+                payload_json = canonical_json(value)
+                existing = existing_rows.get(provider_id)
+                if existing is not None and existing["payload_json"] == payload_json:
+                    continue
+                source_revision = 1 if existing is None else int(existing["source_revision"]) + 1
+                if existing is None:
+                    connection.execute(
+                        """
+                        INSERT INTO provider_projections(
+                          provider_id, principal_id, owner_session_id, source_revision,
+                          provider_version, registry_generation, registration_order, installed, available, state,
+                          code, explanation, registered_at, changed_at, projected_at, payload_json
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            provider_id,
+                            actor.principal_id,
+                            actor.session_id,
+                            source_revision,
+                            value["providerVersion"],
+                            value["registryGeneration"],
+                            value["registrationOrder"],
+                            1,
+                            int(value["available"]),
+                            value["state"],
+                            value["code"],
+                            value["explanation"],
+                            value["registeredAt"],
+                            value["changedAt"],
+                            current,
+                            payload_json,
+                        ),
+                    )
+                else:
+                    connection.execute(
+                        """
+                        UPDATE provider_projections SET
+                          owner_session_id = ?, source_revision = ?, provider_version = ?,
+                          registry_generation = ?, registration_order = ?, installed = 1, available = ?, state = ?,
+                          code = ?, explanation = ?, registered_at = ?, changed_at = ?,
+                          projected_at = ?, payload_json = ?
+                        WHERE principal_id = ? AND provider_id = ?
+                        """,
+                        (
+                            actor.session_id,
+                            source_revision,
+                            value["providerVersion"],
+                            value["registryGeneration"],
+                            value["registrationOrder"],
+                            int(value["available"]),
+                            value["state"],
+                            value["code"],
+                            value["explanation"],
+                            value["registeredAt"],
+                            value["changedAt"],
+                            current,
+                            payload_json,
+                            actor.principal_id,
+                            provider_id,
+                        ),
+                    )
+
+            missing = sorted(set(existing_rows) - set(normalized))
+            for provider_id in missing:
+                existing = existing_rows[provider_id]
+                if existing["state"] == "not-registered":
+                    continue
+                try:
+                    previous = json.loads(existing["payload_json"])
+                except (json.JSONDecodeError, TypeError) as error:
+                    raise ManagedWorkError(
+                        "managed-work.database-corrupt",
+                        "A durable provider projection contains malformed JSON.",
+                        recovery_actions=("managed-work.restore-database",),
+                    ) from error
+                value = {
+                    "providerId": provider_id,
+                    "providerVersion": existing["provider_version"],
+                    "registryFingerprint": previous["registryFingerprint"],
+                    "detailDigest": previous["detailDigest"],
+                    "registryGeneration": int(existing["registry_generation"]),
+                    "registrationOrder": previous["registrationOrder"],
+                    "installed": False,
+                    "available": False,
+                    "state": "not-registered",
+                    "code": "provider.not-registered",
+                    "explanation": "The provider is no longer registered with this daemon.",
+                    "registeredAt": float(existing["registered_at"]),
+                    "changedAt": current,
+                }
+                connection.execute(
+                    """
+                    UPDATE provider_projections SET
+                      owner_session_id = ?, source_revision = source_revision + 1,
+                      installed = 0, available = 0, state = 'not-registered',
+                      code = ?, explanation = ?, changed_at = ?, projected_at = ?, payload_json = ?
+                    WHERE principal_id = ? AND provider_id = ?
+                    """,
+                    (
+                        actor.session_id,
+                        value["code"],
+                        value["explanation"],
+                        current,
+                        current,
+                        canonical_json(value),
+                        actor.principal_id,
+                        provider_id,
+                    ),
+                )
+            results = [
+                self._provider_result(row)
+                for row in connection.execute(
+                    "SELECT * FROM provider_projections WHERE principal_id = ? ORDER BY provider_id",
+                    (actor.principal_id,),
+                ).fetchall()
+            ]
+            for result in results:
+                self._require_query_item_capacity("agent.providers", result)
+            return results
 
     @staticmethod
     def _permission_result(row: Any) -> dict[str, Any]:
@@ -1822,6 +2606,7 @@ class ManagedWorkPlane:
                 (actor.principal_id, value["grantId"]),
             ).fetchone()
             result = self._permission_result(row)
+            self._require_query_item_capacity("agent.permissions", result)
             if decision != "unchanged":
                 self._append_event(connection, actor, topic="permission.projected", entity_id=value["grantId"], payload={"grantId": value["grantId"], "state": value["state"]}, now=current)
             return result
@@ -1922,7 +2707,9 @@ class ManagedWorkPlane:
                 "SELECT * FROM usage_records WHERE principal_id = ? AND usage_id = ?",
                 (actor.principal_id, value["usageId"]),
             ).fetchone()
-            return self._usage_result(row)
+            result = self._usage_result(row)
+            self._require_query_item_capacity("agent.usage", result)
+            return result
 
     @staticmethod
     def _artifact_result(row: Any) -> dict[str, Any]:
@@ -1963,6 +2750,7 @@ class ManagedWorkPlane:
             stable_id(run_id, field="run ID")
         handle_value = stable_id(handle, field="artifact handle")
         label_value = bounded_text(label, field="artifact label", maximum=512)
+        reject_secret_fields({"value": label_value}, field="artifact label")
         media_value = bounded_text(media_type, field="artifact media type", maximum=256)
         if not _MEDIA_TYPE_RE.fullmatch(media_value):
             raise ManagedWorkError("artifact.media-type", "Artifact media type must be a MIME type.")
@@ -2021,6 +2809,7 @@ class ManagedWorkPlane:
             )
             row = connection.execute("SELECT * FROM artifacts WHERE artifact_id = ?", (artifact_id,)).fetchone()
             result = self._artifact_result(row)
+            self._require_query_item_capacity("agent.artifacts", result)
             self._append_event(connection, actor, topic="artifact.registered", entity_id=artifact_id, payload={"artifactId": artifact_id, "taskId": task_id}, now=current)
             self._finish_idempotency(connection, actor, action="artifact.register", key=key, result=result, now=current)
             return result
@@ -2044,6 +2833,48 @@ class ManagedWorkPlane:
             "code": code,
             "executionAvailable": False,
         }
+
+    @staticmethod
+    def _capacity_cursor(view: str) -> str | None:
+        if view in {"agent.overview", "agent.troubleshooting"}:
+            return None
+        maximum_identity = "p" * 160
+        maximum_integer = 2**53 - 1
+        if view == "agent.providers":
+            return encode_ordered_cursor(
+                view=view,
+                principal_id=maximum_identity,
+                row_id=maximum_integer,
+                order=maximum_integer,
+                entity_id=maximum_identity,
+            )
+        return encode_cursor(
+            view=view,
+            principal_id=maximum_identity,
+            row_id=maximum_integer,
+        )
+
+    @staticmethod
+    def _require_query_item_capacity(
+        view: str,
+        item: Mapping[str, Any],
+        *,
+        summary: Mapping[str, Any] | None = None,
+    ) -> None:
+        try:
+            ManagedWorkPlane._finish_query(
+                view=view,
+                items=[dict(item)],
+                next_cursor=ManagedWorkPlane._capacity_cursor(view),
+                summary=summary,
+            )
+        except ManagedWorkError as error:
+            if error.code != "query.result-capacity":
+                raise
+            raise ManagedWorkError(
+                "validation.query-item-capacity",
+                "The record cannot be persisted because one closed query item would exceed the Fabric frame budget.",
+            ) from error
 
     @staticmethod
     def _finish_query(
@@ -2075,10 +2906,10 @@ class ManagedWorkPlane:
             ).encode("utf-8")
         except (TypeError, ValueError) as error:
             raise ManagedWorkError("query.result", "The query produced invalid JSON.") from error
-        if len(encoded) > 512 * 1024:
+        if len(encoded) > MAX_QUERY_RESPONSE_BYTES:
             raise ManagedWorkError(
                 "query.result-capacity",
-                "The bounded query response is too large; request a smaller page.",
+                "The bounded query response does not fit one Fabric RPC frame; request a smaller page.",
                 retryable=True,
             )
         return result
@@ -2105,6 +2936,7 @@ class ManagedWorkPlane:
             "permission_projections",
             "usage_records",
             "artifacts",
+            "provider_projections",
         }
         if table not in allowed:
             raise RuntimeError("unapproved query table")
@@ -2124,6 +2956,60 @@ class ManagedWorkPlane:
         next_cursor = None
         if has_more and selected:
             next_cursor = encode_cursor(view=view, principal_id=principal_id, row_id=int(selected[-1]["row_id"]))
+        return selected, next_cursor
+
+    @staticmethod
+    def _provider_page(
+        connection: Any,
+        *,
+        principal_id: str,
+        view: str,
+        limit: int,
+        cursor: str | None,
+    ) -> tuple[list[Any], str | None]:
+        parameters: list[Any] = [principal_id]
+        continuation = ""
+        if cursor is not None:
+            try:
+                _row_id, order, provider_id = decode_ordered_cursor(
+                    cursor,
+                    view=view,
+                    principal_id=principal_id,
+                )
+            except ManagedWorkError:
+                legacy_row_id = decode_cursor(cursor, view=view, principal_id=principal_id)
+                legacy = connection.execute(
+                    "SELECT registration_order, provider_id FROM provider_projections WHERE principal_id = ? AND row_id = ?",
+                    (principal_id, legacy_row_id),
+                ).fetchone()
+                if legacy is None:
+                    raise ManagedWorkError("query.cursor", "The provider cursor no longer identifies an owned row.")
+                order = int(legacy["registration_order"])
+                provider_id = str(legacy["provider_id"])
+            continuation = "AND (registration_order > ? OR (registration_order = ? AND provider_id > ?))"
+            parameters.extend((order, order, provider_id))
+        parameters.append(limit + 1)
+        rows = connection.execute(
+            f"""
+            SELECT * FROM provider_projections
+            WHERE principal_id = ? {continuation}
+            ORDER BY registration_order, provider_id
+            LIMIT ?
+            """,
+            parameters,
+        ).fetchall()
+        has_more = len(rows) > limit
+        selected = list(rows[:limit])
+        next_cursor = None
+        if has_more and selected:
+            final = selected[-1]
+            next_cursor = encode_ordered_cursor(
+                view=view,
+                principal_id=principal_id,
+                row_id=int(final["row_id"]),
+                order=int(final["registration_order"]),
+                entity_id=str(final["provider_id"]),
+            )
         return selected, next_cursor
 
     def _query_overview(self, actor: Actor, *, now: float) -> dict[str, Any]:
@@ -2183,6 +3069,7 @@ class ManagedWorkPlane:
             "artifacts",
             "idempotency",
             "managed_events",
+            "provider_projections",
         )
         counts = {
             table: int(connection.execute(f"SELECT COUNT(*) FROM {table} WHERE principal_id = ?", (actor.principal_id,)).fetchone()[0])
@@ -2218,38 +3105,138 @@ class ManagedWorkPlane:
         entity_id: str | None = None,
         now: float | None = None,
     ) -> dict[str, Any]:
-        with self.store.read():
-            return self._query_locked(
-                actor,
-                view,
-                limit=limit,
-                cursor=cursor,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                now=now,
-            )
+        normalized = self.normalize_query_arguments(
+            actor,
+            view,
+            limit=limit,
+            cursor=cursor,
+            entity_type=entity_type,
+            entity_id=entity_id,
+        )
+        return self.query_normalized(actor, normalized, now=now)
 
-    def _query_locked(
+    def query_normalized(
         self,
         actor: Actor,
-        view: str,
+        normalized: NormalizedQuery,
         *,
-        limit: int = 50,
-        cursor: str | None = None,
-        entity_type: str | None = None,
-        entity_id: str | None = None,
         now: float | None = None,
     ) -> dict[str, Any]:
-        current = time.time() if now is None else timestamp(now, field="query time")
+        if not isinstance(actor, Actor) or not isinstance(normalized, NormalizedQuery):
+            raise ManagedWorkError("query.arguments", "The normalized query contract is invalid.")
+        with self.store.read():
+            try:
+                return self._query_normalized_locked(
+                    actor,
+                    normalized,
+                    now=now,
+                )
+            except ManagedWorkError:
+                raise
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+                raise ManagedWorkError(
+                    "managed-work.database-corrupt",
+                    "Managed work refused malformed durable query state.",
+                    detail=type(error).__name__,
+                    recovery_actions=("managed-work.restore-database",),
+                ) from error
+
+    def normalize_query_arguments(
+        self,
+        actor: Actor,
+        view: Any,
+        *,
+        limit: Any = 50,
+        cursor: Any = None,
+        entity_type: Any = None,
+        entity_id: Any = None,
+        present_fields: frozenset[str] | None = None,
+    ) -> NormalizedQuery:
+        """Purely validate and normalize one closed Agent Center read request."""
+
+        if not isinstance(actor, Actor):
+            raise ManagedWorkError("query.actor", "The query actor is invalid.")
+        if present_fields is not None:
+            if not isinstance(present_fields, frozenset) or not all(
+                isinstance(field, str) for field in present_fields
+            ):
+                raise ManagedWorkError("query.arguments", "The query field set is invalid.")
+            for field, value in (
+                ("cursor", cursor),
+                ("entityType", entity_type),
+                ("entityId", entity_id),
+            ):
+                if field in present_fields and value is None:
+                    raise ManagedWorkError(
+                        "query.arguments",
+                        f"{field} cannot be explicitly null.",
+                    )
         view_value = enum_value(view, field="Agent Center view", choices=set(self.QUERY_VIEWS))
         limit_value = integer(limit, field="page size", minimum=1, maximum=self.capacities.page_size)
         if (entity_type is None) != (entity_id is None):
             raise ManagedWorkError("query.entity", "Entity type and ID must be supplied together.")
-        if entity_type is not None:
-            entity_type = enum_value(entity_type, field="entity type", choices={"task", "run", "operation", "provider"})
-            entity_id = opaque_id(entity_id, field="entity ID")
+        entity_type_value = entity_type
+        entity_id_value = entity_id
+        if entity_type_value is not None:
+            entity_type_value = enum_value(
+                entity_type_value,
+                field="entity type",
+                choices={"task", "run", "operation", "provider"},
+            )
+            entity_id_value = opaque_id(entity_id_value, field="entity ID")
             if cursor is not None:
                 raise ManagedWorkError("query.cursor", "Entity queries do not accept pagination cursors.")
+        if view_value in {"agent.overview", "agent.troubleshooting"}:
+            if cursor is not None or entity_type_value is not None:
+                raise ManagedWorkError("query.arguments", f"{view_value} does not accept a cursor or entity selector.")
+        elif view_value == "agent.providers":
+            if entity_type_value is not None and entity_type_value != "provider":
+                raise ManagedWorkError("query.entity", "The provider route accepts only provider entities.")
+            if entity_id_value is not None:
+                stable_id(entity_id_value, field="provider ID")
+        elif view_value == "agent.tasks":
+            if entity_type_value is not None and entity_type_value not in {"task", "run"}:
+                raise ManagedWorkError("query.entity", "The tasks route accepts only task or run entities.")
+        elif view_value == "agent.activity":
+            if entity_type_value is not None and entity_type_value != "operation":
+                raise ManagedWorkError("query.entity", "The activity route accepts only operation entities.")
+        elif entity_type_value is not None:
+            raise ManagedWorkError("query.entity", "This Agent Center route has no entity selector.")
+        if cursor is not None:
+            if view_value == "agent.providers":
+                try:
+                    decode_ordered_cursor(cursor, view=view_value, principal_id=actor.principal_id)
+                except ManagedWorkError as ordered_error:
+                    try:
+                        decode_cursor(cursor, view=view_value, principal_id=actor.principal_id)
+                    except ManagedWorkError as legacy_error:
+                        raise ManagedWorkError(
+                            "query.cursor",
+                            "The pagination cursor is malformed or belongs to another view.",
+                        ) from legacy_error
+            else:
+                decode_cursor(cursor, view=view_value, principal_id=actor.principal_id)
+        return NormalizedQuery(
+            view=view_value,
+            limit=limit_value,
+            cursor=cursor,
+            entity_type=entity_type_value,
+            entity_id=entity_id_value,
+        )
+
+    def _query_normalized_locked(
+        self,
+        actor: Actor,
+        normalized: NormalizedQuery,
+        *,
+        now: float | None = None,
+    ) -> dict[str, Any]:
+        current = time.time() if now is None else timestamp(now, field="query time")
+        view_value = normalized.view
+        limit_value = normalized.limit
+        cursor = normalized.cursor
+        entity_type = normalized.entity_type
+        entity_id = normalized.entity_id
         if view_value == "agent.overview":
             if cursor is not None or entity_type is not None:
                 raise ManagedWorkError("query.arguments", "Overview does not accept a cursor or entity selector.")
@@ -2258,45 +3245,54 @@ class ManagedWorkPlane:
             if cursor is not None or entity_type is not None:
                 raise ManagedWorkError("query.arguments", "Troubleshooting does not accept a cursor or entity selector.")
             return self._query_troubleshooting(actor)
+        connection = self.store.require_connection()
         if view_value == "agent.providers":
-            if cursor is not None:
-                raise ManagedWorkError("query.cursor", "Provider readiness does not accept a pagination cursor.")
             if entity_type is not None and entity_type != "provider":
                 raise ManagedWorkError("query.entity", "The provider route accepts only provider entities.")
             if entity_id is not None:
                 stable_id(entity_id, field="provider ID")
-            item = {
-                "schemaVersion": "v0",
-                "kind": "managed-provider-readiness",
-                "providerId": entity_id,
-                "installed": False,
-                "available": False,
-                "code": "managed-execution.not-integrated",
-                "explanation": "Provider inventory remains owned by the central Fabric registry; managed execution is unavailable.",
-            }
+                if cursor is not None:
+                    raise ManagedWorkError("query.cursor", "Provider entity queries do not accept a cursor.")
+                row = connection.execute(
+                    "SELECT * FROM provider_projections WHERE principal_id = ? AND provider_id = ?",
+                    (actor.principal_id, entity_id),
+                ).fetchone()
+                return self._finish_query(
+                    view=view_value,
+                    items=[] if row is None else [self._provider_result(row)],
+                    next_cursor=None,
+                    available=row is not None,
+                    code="provider.unavailable" if row is None else "managed-work.query-ready",
+                )
+            rows, next_cursor = self._provider_page(
+                connection,
+                principal_id=actor.principal_id,
+                view=view_value,
+                limit=limit_value,
+                cursor=cursor,
+            )
             return self._finish_query(
                 view=view_value,
-                items=[item],
-                next_cursor=None,
-                available=False,
-                code="managed-work.provider-registry-not-integrated",
+                items=[self._provider_result(row) for row in rows],
+                next_cursor=next_cursor,
             )
-
-        connection = self.store.require_connection()
         if view_value == "agent.tasks" and entity_type is not None:
             if entity_type == "task":
                 stable_id(entity_id, field="task ID")
                 task = self._task_row(connection, actor, entity_id)
                 latest = connection.execute(
-                    "SELECT * FROM runs WHERE task_id = ? ORDER BY row_id DESC LIMIT 1",
-                    (entity_id,),
+                    "SELECT * FROM runs WHERE task_id = ? AND principal_id = ? ORDER BY row_id DESC LIMIT 1",
+                    (entity_id, actor.principal_id),
                 ).fetchone()
                 item = {
                     "entityType": "task",
                     "task": self._task_result(task),
                     "run": None
                     if latest is None
-                    else self._run_result(latest, self._steps_for_run(connection, latest["run_id"])),
+                    else self._run_result(
+                        latest,
+                        self._steps_for_run(connection, latest["run_id"], actor.principal_id),
+                    ),
                 }
             elif entity_type == "run":
                 stable_id(entity_id, field="run ID")
@@ -2307,8 +3303,11 @@ class ManagedWorkPlane:
         if view_value == "agent.activity" and entity_type is not None:
             if entity_type != "operation":
                 raise ManagedWorkError("query.entity", "The activity route accepts only operation entities.")
-            row = connection.execute("SELECT * FROM operation_links WHERE operation_id = ?", (entity_id,)).fetchone()
-            if row is None or row["principal_id"] != actor.principal_id:
+            row = connection.execute(
+                "SELECT * FROM operation_links WHERE principal_id = ? AND operation_id = ?",
+                (actor.principal_id, entity_id),
+            ).fetchone()
+            if row is None:
                 raise ManagedWorkError("access.denied", "The operation is unavailable to this principal.")
             return self._finish_query(view=view_value, items=[self._operation_result(row)], next_cursor=None)
         if entity_type is not None:
@@ -2326,8 +3325,8 @@ class ManagedWorkPlane:
             items: list[dict[str, Any]] = []
             for row in rows:
                 latest = connection.execute(
-                    "SELECT * FROM runs WHERE task_id = ? ORDER BY row_id DESC LIMIT 1",
-                    (row["task_id"],),
+                    "SELECT * FROM runs WHERE task_id = ? AND principal_id = ? ORDER BY row_id DESC LIMIT 1",
+                    (row["task_id"], actor.principal_id),
                 ).fetchone()
                 items.append(
                     {
@@ -2335,7 +3334,10 @@ class ManagedWorkPlane:
                         "task": self._task_result(row),
                         "run": None
                         if latest is None
-                        else self._run_result(latest, self._steps_for_run(connection, latest["run_id"])),
+                        else self._run_result(
+                            latest,
+                            self._steps_for_run(connection, latest["run_id"], actor.principal_id),
+                        ),
                     }
                 )
             return self._finish_query(view=view_value, items=items, next_cursor=next_cursor)
@@ -2366,7 +3368,18 @@ class ManagedWorkPlane:
             )
             return self._finish_query(
                 view=view_value,
-                items=[self._automation_result(row, self._firings_for_automation(connection, row["automation_id"], limit=5)) for row in rows],
+                items=[
+                    self._automation_result(
+                        row,
+                        self._firings_for_automation(
+                            connection,
+                            row["automation_id"],
+                            actor.principal_id,
+                            limit=5,
+                        ),
+                    )
+                    for row in rows
+                ],
                 next_cursor=next_cursor,
             )
         if view_value == "agent.activity":

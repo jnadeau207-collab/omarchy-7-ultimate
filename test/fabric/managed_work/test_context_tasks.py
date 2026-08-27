@@ -49,8 +49,8 @@ class ContextTaskTests(unittest.TestCase):
             redact_keys=("custom-secret",),
             now=1_000,
         )
-        self.assertEqual("[redacted]", result["content"]["account"]["token"])
-        self.assertEqual("[redacted]", result["content"]["session"]["accessToken"])
+        self.assertEqual("[REDACTED]", result["content"]["account"]["token"])
+        self.assertEqual("[REDACTED]", result["content"]["session"]["accessToken"])
         self.assertEqual("[private notification excluded]", result["content"]["notification"]["body"])
         self.assertIn("/account/token", result["redaction"]["paths"])
         self.assertEqual(64, len(result["contentHash"]))
@@ -84,6 +84,134 @@ class ContextTaskTests(unittest.TestCase):
                 idempotency_key="context.redaction",
                 now=1_100,
             ),
+        )
+
+    def test_common_free_text_tokens_are_redacted_without_value_leakage(self) -> None:
+        tokens = {
+            "openai": "sk-proj-" + "A" * 48,
+            "slack": "xoxb-" + "1" * 12 + "-" + "B" * 24,
+            "slack-app": "xapp-1-" + "H" * 30,
+            "gitlab": "glpat-" + "C" * 32,
+            "npm": "npm_" + "D" * 36,
+            "jwt": "eyJ" + "E" * 12 + "." + "F" * 20 + "." + "G" * 32,
+        }
+        result = self.plane.capture_context(
+            ACTOR,
+            source="focused-application",
+            access_scope="principal",
+            content={"nested": [{"value": value} for value in tokens.values()]},
+            sensitivity="private",
+            ttl_seconds=600,
+            idempotency_key="context.token-families",
+            now=1_000,
+        )
+        self.assertEqual(
+            ["[REDACTED]"] * len(tokens),
+            [item["value"] for item in result["content"]["nested"]],
+        )
+        durable = self.plane.store.require_connection().execute(
+            "SELECT content_json FROM contexts WHERE context_id = ?",
+            (result["contextId"],),
+        ).fetchone()[0]
+        for token in tokens.values():
+            self.assertNotIn(token, durable)
+
+        error = self.assert_code(
+            "validation.secret-field",
+            lambda: self.plane.create_task(
+                ACTOR,
+                title="Token test",
+                intent={"note": tokens["openai"]},
+                context_ids=[],
+                budget=budget(),
+                idempotency_key="task.token-family",
+                now=1_001,
+            ),
+        )
+        self.assertIn("openai-token", error.detail)
+        self.assertNotIn(tokens["openai"], error.detail)
+
+        safe = self.plane.capture_context(
+            ACTOR,
+            source="focused-application",
+            access_scope="principal",
+            content={
+                "tokenizer": "cl100k_base",
+                "words": ["sketch-project-roadmap", "npm package", "jwt documentation"],
+            },
+            sensitivity="public",
+            ttl_seconds=600,
+            idempotency_key="context.token-false-positive",
+            now=1_002,
+        )
+        self.assertEqual(
+            ["sketch-project-roadmap", "npm package", "jwt documentation"],
+            safe["content"]["words"],
+        )
+        self.assertEqual("cl100k_base", safe["content"]["tokenizer"])
+        safe_task = self.plane.create_task(
+            ACTOR,
+            title="Tokenizer configuration",
+            intent={"tokenizer": "cl100k_base"},
+            context_ids=[],
+            budget=budget(),
+            idempotency_key="task.tokenizer-safe",
+            now=1_002,
+        )
+        self.assertEqual("cl100k_base", safe_task["intent"]["tokenizer"])
+        key_error = self.assert_code(
+            "validation.secret-field",
+            lambda: self.plane.capture_context(
+                ACTOR,
+                source="focused-application",
+                access_scope="principal",
+                content={tokens["openai"]: "value"},
+                sensitivity="private",
+                ttl_seconds=600,
+                idempotency_key="context.token-key",
+                now=1_003,
+            ),
+        )
+        self.assertIn("key-openai-token", key_error.detail)
+        self.assertNotIn(tokens["openai"], key_error.detail)
+        malformed_key_error = self.assert_code(
+            "validation.json-number",
+            lambda: self.plane.capture_context(
+                ACTOR,
+                source="focused-application",
+                access_scope="principal",
+                content={"nested": {tokens["openai"]: 2**60}},
+                sensitivity="private",
+                ttl_seconds=600,
+                idempotency_key="context.token-key-invalid-child",
+                now=1_003,
+            ),
+        )
+        self.assertNotIn(tokens["openai"], malformed_key_error.explanation)
+        self.assertNotIn(tokens["openai"], malformed_key_error.detail)
+        before = self.plane.store.require_connection().execute(
+            "SELECT COUNT(*) FROM contexts"
+        ).fetchone()[0]
+        self.assert_code(
+            "validation.json-string",
+            lambda: self.plane.capture_context(
+                ACTOR,
+                source="focused-application",
+                access_scope="principal",
+                content={"value": "sk-proj-" + "Z" * 16_385},
+                sensitivity="private",
+                ttl_seconds=600,
+                idempotency_key="context.token-oversized",
+                now=1_003,
+            ),
+        )
+        connection = self.plane.store.require_connection()
+        self.assertEqual(before, connection.execute("SELECT COUNT(*) FROM contexts").fetchone()[0])
+        self.assertEqual(
+            0,
+            connection.execute(
+                "SELECT COUNT(*) FROM idempotency WHERE idempotency_key = 'context.token-oversized'"
+            ).fetchone()[0],
         )
 
     def test_excluded_sources_session_scope_expiry_and_revocation_fail_closed(self) -> None:
@@ -120,6 +248,29 @@ class ContextTaskTests(unittest.TestCase):
             "revision.stale",
             lambda: self.plane.revoke_context(ACTOR, context["contextId"], expected_revision=1, now=1_021),
         )
+
+    def test_session_context_cannot_attach_to_durable_task_and_cleanup_releases_identity(self) -> None:
+        session_context = create_context(self.plane, key="context.session-cleanup", scope="session")
+        self.assert_code(
+            "task.context-scope",
+            lambda: create_task(
+                self.plane,
+                context_ids=[session_context["contextId"]],
+                key="task.session-context",
+            ),
+        )
+        connection = self.plane.store.require_connection()
+        self.assertEqual(1, connection.execute("SELECT COUNT(*) FROM contexts").fetchone()[0])
+        self.assertEqual(1, self.plane.release_session_contexts(ACTOR))
+        self.assertEqual(0, connection.execute("SELECT COUNT(*) FROM contexts").fetchone()[0])
+        self.assertEqual(
+            0,
+            connection.execute(
+                "SELECT COUNT(*) FROM idempotency WHERE action = 'context.capture'"
+            ).fetchone()[0],
+        )
+        replacement = create_context(self.plane, key="context.session-cleanup", scope="session", now=1_010)
+        self.assertNotEqual(session_context["contextId"], replacement["contextId"])
 
     def test_task_state_machine_stale_revision_and_execution_refusal(self) -> None:
         context = create_context(self.plane)

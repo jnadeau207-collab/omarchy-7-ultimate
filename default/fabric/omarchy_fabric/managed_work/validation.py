@@ -10,6 +10,7 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from ..security.redaction import REDACTED, redact_text, scan_for_secrets
 from .errors import ManagedWorkError
 
 MAX_JSON_BYTES = 64 * 1024
@@ -42,6 +43,21 @@ _SECRET_COMPACT_KEYS = frozenset(
         "token",
     }
 )
+_MANAGED_TOKEN_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("openai-token", re.compile(r"(?<![A-Za-z0-9_-])sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{24,}(?![A-Za-z0-9_-])")),
+    (
+        "slack-token",
+        re.compile(r"(?<![A-Za-z0-9-])(?:xox[baprs]-|xapp-)[A-Za-z0-9-]{20,}(?![A-Za-z0-9-])"),
+    ),
+    ("gitlab-token", re.compile(r"(?<![A-Za-z0-9_-])glpat-[A-Za-z0-9_-]{20,}(?![A-Za-z0-9_-])")),
+    ("npm-token", re.compile(r"(?<![A-Za-z0-9_])npm_[A-Za-z0-9]{20,}(?![A-Za-z0-9])")),
+    (
+        "jwt",
+        re.compile(
+            r"(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{7,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}(?![A-Za-z0-9_-])"
+        ),
+    ),
+)
 _EXCLUDED_CONTEXT_SOURCES = frozenset(
     {
         "lock-screen",
@@ -59,6 +75,14 @@ def stable_id(value: Any, *, field: str) -> str:
         raise ManagedWorkError("validation.id", f"{field} must be a bounded stable identifier.")
     if not _ID_RE.fullmatch(value):
         raise ManagedWorkError("validation.id", f"{field} must be a lowercase stable identifier.")
+    findings = scan_secret_fields(value)
+    if findings:
+        path, kind = findings[0]
+        raise ManagedWorkError(
+            "validation.secret-field",
+            f"{field} contains secret-shaped data that must not be persisted.",
+            detail=f"{kind} at {path}",
+        )
     return value
 
 
@@ -67,6 +91,14 @@ def opaque_id(value: Any, *, field: str) -> str:
         raise ManagedWorkError("validation.id", f"{field} must be a bounded opaque identifier.")
     if not _ID_RE.fullmatch(value) and not _UUID_RE.fullmatch(value):
         raise ManagedWorkError("validation.id", f"{field} must be a stable identifier or lowercase UUID.")
+    findings = scan_secret_fields(value)
+    if findings:
+        path, kind = findings[0]
+        raise ManagedWorkError(
+            "validation.secret-field",
+            f"{field} contains secret-shaped data that must not be persisted.",
+            detail=f"{kind} at {path}",
+        )
     return value
 
 
@@ -162,7 +194,8 @@ def normalize_json(value: Any, *, field: str = "value") -> Any:
             for key in sorted(current):
                 if not isinstance(key, str) or not key or "\x00" in key or len(key.encode("utf-8")) > 256:
                     raise ManagedWorkError("validation.json-key", f"{location} has an invalid object key.")
-                result[key] = visit(current[key], depth + 1, f"{location}/{key}")
+                safe_key = "[secret-key]" if scan_secret_fields(key) else key
+                result[key] = visit(current[key], depth + 1, f"{location}/{safe_key}")
             return result
         if isinstance(current, Sequence) and not isinstance(current, (str, bytes, bytearray)):
             return [visit(item, depth + 1, f"{location}/{index}") for index, item in enumerate(current)]
@@ -197,21 +230,75 @@ def secret_shaped_key(key: str) -> bool:
 
 
 def reject_secret_fields(value: Any, *, field: str) -> None:
+    findings = scan_secret_fields(value)
+    if findings:
+        path, kind = findings[0]
+        raise ManagedWorkError(
+            "validation.secret-field",
+            f"{field} contains secret-shaped data that must not be persisted.",
+            detail=f"{kind} at {path}",
+        )
+
+
+def _pointer(parent: str, key: str | int) -> str:
+    escaped = str(key).replace("~", "~0").replace("/", "~1")
+    return f"{parent}/{escaped}"
+
+
+def scan_secret_fields(
+    value: Any,
+    *,
+    allow_redacted_keys: bool = False,
+) -> tuple[tuple[str, str], ...]:
+    """Return bounded path/kind evidence without retaining secret fragments."""
+
+    findings: list[tuple[str, str]] = []
+
+    def text_kinds(text: str) -> list[str]:
+        kinds: list[str] = []
+        central = scan_for_secrets(text)
+        if central:
+            kinds.append(central[0].kind)
+        for kind, pattern in _MANAGED_TOKEN_PATTERNS:
+            if pattern.search(text):
+                kinds.append(kind)
+                break
+        return kinds
+
     def visit(current: Any, path: str) -> None:
         if isinstance(current, Mapping):
-            for key, child in current.items():
-                if secret_shaped_key(key):
-                    raise ManagedWorkError(
-                        "validation.secret-field",
-                        f"{field} contains a secret-shaped field that must not be persisted.",
-                        detail=f"{path}/{key}",
-                    )
-                visit(child, f"{path}/{key}")
+            for key, item in current.items():
+                child = _pointer(path, str(key))
+                if secret_shaped_key(str(key)):
+                    if not (allow_redacted_keys and item == REDACTED):
+                        findings.append((child, "sensitive-key"))
+                else:
+                    for kind in text_kinds(str(key)):
+                        findings.append((_pointer(path, "[secret-key]"), f"key-{kind}"))
+                    visit(item, child)
         elif isinstance(current, Sequence) and not isinstance(current, (str, bytes, bytearray)):
-            for index, child in enumerate(current):
-                visit(child, f"{path}/{index}")
+            for index, item in enumerate(current):
+                visit(item, _pointer(path, index))
+        elif isinstance(current, str):
+            findings.extend((path or "/", kind) for kind in text_kinds(current))
 
     visit(value, "")
+    return tuple(findings)
+
+
+def _redact_text_secrets(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _redact_text_secrets(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_text_secrets(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_redact_text_secrets(item) for item in value)
+    if isinstance(value, str):
+        redacted = redact_text(value)
+        for _kind, pattern in _MANAGED_TOKEN_PATTERNS:
+            redacted = pattern.sub(REDACTED, redacted)
+        return redacted
+    return value
 
 
 def require_context_source(source: Any) -> str:
@@ -227,6 +314,16 @@ def require_context_source(source: Any) -> str:
 
 def redact_context(content: Any, *, extra_keys: Sequence[str] = ()) -> tuple[Any, list[str]]:
     normalized = normalize_json(content, field="context content")
+    token_keys = [
+        finding for finding in scan_secret_fields(normalized) if finding[1].startswith("key-")
+    ]
+    if token_keys:
+        path, kind = token_keys[0]
+        raise ManagedWorkError(
+            "validation.secret-field",
+            "Context content contains a secret-shaped object key that cannot be stored safely.",
+            detail=f"{kind} at {path}",
+        )
     configured: set[str] = set()
     for key in extra_keys:
         configured.add(bounded_text(key, field="redaction key", maximum=256).casefold())
@@ -237,9 +334,10 @@ def redact_context(content: Any, *, extra_keys: Sequence[str] = ()) -> tuple[Any
             result: dict[str, Any] = {}
             private_notification = current.get("private") is True
             for key, value in current.items():
-                child = f"{path}/{key}"
+                escaped = str(key).replace("~", "~0").replace("/", "~1")
+                child = f"{path}/{escaped}"
                 if secret_shaped_key(key) or key.casefold() in configured:
-                    result[key] = "[redacted]"
+                    result[key] = REDACTED
                     paths.append(child)
                 elif private_notification and key.casefold() in {"body", "content", "message", "preview", "title"}:
                     result[key] = "[private notification excluded]"
@@ -251,7 +349,10 @@ def redact_context(content: Any, *, extra_keys: Sequence[str] = ()) -> tuple[Any
             return [visit(value, f"{path}/{index}") for index, value in enumerate(current)]
         return current
 
-    return visit(normalized, ""), sorted(paths)
+    key_redacted = visit(normalized, "")
+    findings = scan_secret_fields(key_redacted, allow_redacted_keys=True)
+    paths.extend(path for path, _kind in findings)
+    return _redact_text_secrets(key_redacted), sorted(set(paths))
 
 
 def encode_cursor(*, view: str, principal_id: str, row_id: int) -> str:
@@ -274,7 +375,61 @@ def decode_cursor(cursor: Any, *, view: str, principal_id: str) -> int:
         if data["version"] != 0 or data["view"] != view or data["principalId"] != principal_id:
             raise ValueError("cursor binding mismatch")
         return integer(data["rowId"], field="cursor row", minimum=1)
-    except ManagedWorkError:
-        raise
+    except ManagedWorkError as error:
+        if error.code == "query.cursor":
+            raise
+        raise ManagedWorkError("query.cursor", "The pagination cursor is malformed or belongs to another view.") from error
+    except Exception as error:
+        raise ManagedWorkError("query.cursor", "The pagination cursor is malformed or belongs to another view.") from error
+
+
+def encode_ordered_cursor(
+    *,
+    view: str,
+    principal_id: str,
+    row_id: int,
+    order: int,
+    entity_id: str,
+) -> str:
+    payload = canonical_json(
+        {
+            "entityId": entity_id,
+            "order": order,
+            "principalId": principal_id,
+            "rowId": row_id,
+            "version": 0,
+            "view": view,
+        }
+    )
+    return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii").rstrip("=")
+
+
+def decode_ordered_cursor(
+    cursor: Any,
+    *,
+    view: str,
+    principal_id: str,
+) -> tuple[int, int, str]:
+    if not isinstance(cursor, str) or not cursor or len(cursor) > 1024:
+        raise ManagedWorkError("query.cursor", "The pagination cursor is invalid.")
+    try:
+        padding = "=" * (-len(cursor) % 4)
+        payload = json.loads(base64.urlsafe_b64decode((cursor + padding).encode("ascii")))
+        data = closed_object(
+            payload,
+            field="ordered cursor",
+            required={"version", "view", "principalId", "rowId", "order", "entityId"},
+        )
+        if data["version"] != 0 or data["view"] != view or data["principalId"] != principal_id:
+            raise ValueError("cursor binding mismatch")
+        return (
+            integer(data["rowId"], field="cursor row", minimum=1),
+            integer(data["order"], field="cursor order", minimum=0),
+            stable_id(data["entityId"], field="cursor entity ID"),
+        )
+    except ManagedWorkError as error:
+        if error.code == "query.cursor":
+            raise
+        raise ManagedWorkError("query.cursor", "The pagination cursor is malformed or belongs to another view.") from error
     except Exception as error:
         raise ManagedWorkError("query.cursor", "The pagination cursor is malformed or belongs to another view.") from error
