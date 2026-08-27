@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "v0",
+  "wifi": "running:enabled:enabled\n",
+  "devices": "wlan0:wifi:connected:Cafe\\:East\\\\Guest\neth0:ethernet:disconnected:\n"
+}
