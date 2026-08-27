@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "quality-v0",
+  "matrixId": "ultimate-accessible-state-gallery-v0",
+  "strategy": "exhaustive-operation-states-plus-pairwise-presentation-profiles",
+  "operationStates": [
+    "success",
+    "no-op",
+    "progress",
+    "denial",
+    "failure",
+    "cancel",
+    "restart",
+    "recovery"
+  ],
+  "axes": {
+    "theme": ["dark", "light"],
+    "density": ["compact", "comfortable", "touch"],
+    "scale": [1, 1.25, 1.5, 2],
+    "contrast": ["standard", "high"],
+    "motion": ["full", "reduced"],
+    "textSize": ["regular", "large"],
+    "locale": ["en-US", "pseudo", "long"],
+    "direction": ["ltr", "rtl"],
+    "focus": ["pointer", "keyboard"]
+  },
+  "semanticRequirements": ["name", "role", "value", "action"],
+  "renderCases": [
+    {
+      "id": "dark-comfortable-pointer",
+      "theme": "dark",
+      "density": "comfortable",
+      "scale": 1,
+      "contrast": "standard",
+      "motion": "full",
+      "textSize": "regular",
+      "locale": "en-US",
+      "direction": "ltr",
+      "focus": "pointer"
+    },
+    {
+      "id": "light-compact-keyboard-pseudo",
+      "theme": "light",
+      "density": "compact",
+      "scale": 1.25,
+      "contrast": "high",
+      "motion": "reduced",
+      "textSize": "large",
+      "locale": "pseudo",
+      "direction": "ltr",
+      "focus": "keyboard"
+    },
+    {
+      "id": "dark-touch-rtl-long",
+      "theme": "dark",
+      "density": "touch",
+      "scale": 1.5,
+      "contrast": "high",
+      "motion": "reduced",
+      "textSize": "large",
+      "locale": "long",
+      "direction": "rtl",
+      "focus": "keyboard"
+    },
+    {
+      "id": "light-comfortable-rtl-two-x",
+      "theme": "light",
+      "density": "comfortable",
+      "scale": 2,
+      "contrast": "standard",
+      "motion": "full",
+      "textSize": "regular",
+      "locale": "en-US",
+      "direction": "rtl",
+      "focus": "pointer"
+    }
+  ]
+}

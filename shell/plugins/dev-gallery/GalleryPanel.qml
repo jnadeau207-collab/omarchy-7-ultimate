@@ -114,7 +114,7 @@ Item {
   readonly property var visibleSections: [
     "cursor-surface", "button", "button-group", "panel-action-button",
     "panel-tool-tip", "slider", "text-field", "number-field",
-    "toggle", "toggle-switch", "dropdown", "searchable-dropdown", "ultimate", "composed"
+    "toggle", "toggle-switch", "dropdown", "searchable-dropdown", "quality-matrix", "ultimate", "composed"
   ]
 
   function sectionCount(section) {
@@ -131,6 +131,7 @@ Item {
       case "toggle-switch":       return 2
       case "dropdown":            return 1
       case "searchable-dropdown": return 1
+      case "quality-matrix":      return 1
       case "ultimate":            return 5
       case "composed":            return 2
     }
@@ -208,6 +209,10 @@ Item {
   }
 
   function activateCursor() {
+    if (focusSection === "quality-matrix") {
+      qualityMatrix.activatePrimary()
+      return
+    }
     if (focusSection === "button-group") {
       var opts = ["top", "right", "bottom", "left"]
       if (selectedIndex >= 0 && selectedIndex < opts.length)
@@ -1844,6 +1849,18 @@ Item {
                 }
               }
             }
+          }
+
+          // ---- Accessible quality matrix ------------------------------------
+          QualityMatrix {
+            id: qualityMatrix
+            width: parent.width
+            hasCursor: root.focusSection === "quality-matrix"
+            onHoveredChanged: if (hovered) {
+              root.focusSection = "quality-matrix"
+              root.selectedIndex = 0
+            }
+            onHasCursorChanged: if (hasCursor) root.ensureCursorVisible(this)
           }
 
           // ---- Ultimate kit --------------------------------------------------

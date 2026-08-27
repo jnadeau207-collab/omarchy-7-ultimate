@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "quality-v0",
+  "assessmentId": "qt-quickshell-atspi-feasibility-v0",
+  "capturedAt": "2026-08-26T21:12:14-04:00",
+  "referenceId": "metal-omarchy-2026-08-26",
+  "tooling": {
+    "status": "available",
+    "packages": [
+      {"name": "at-spi2-core", "version": "2.60.6-1"},
+      {"name": "python-gobject", "version": "3.56.3-1"}
+    ],
+    "probe": "Python GI Atspi 2.0 desktop traversal over /run/user/1000/at-spi/bus_0"
+  },
+  "surfaceClasses": [
+    {
+      "id": "shell",
+      "implementation": "present",
+      "status": "blocked",
+      "source": "shell/shell.qml and shell/plugins/dev-gallery/QualityMatrix.qml",
+      "requiredSemantics": ["name", "role", "value", "action"],
+      "evidence": "Before the compositor incident, AT-SPI exposed an application named quickshell with zero children. After Quickshell restoration, the desktop traversal did not expose quickshell at all.",
+      "blocker": "Qt/Quickshell Wayland accessibility objects are not exported into the AT-SPI tree. QML Accessible attachments in the gallery therefore cannot yet be observed by an assistive client."
+    },
+    {
+      "id": "secure-lock",
+      "implementation": "present",
+      "status": "blocked",
+      "source": "shell/plugins/lock/LockView.qml",
+      "requiredSemantics": ["password-field-name", "password-field-role", "unlock-action", "error-status"],
+      "evidence": "The implementation exists, but the shared lock QML has no Accessible attachments and no secure disposable-VM AT-SPI proof has passed.",
+      "blocker": "Secure lock semantics must be implemented and proved without exposing password values."
+    },
+    {
+      "id": "oobe",
+      "implementation": "missing",
+      "status": "missing",
+      "source": "install and provisioning scripts",
+      "requiredSemantics": ["step-name", "field-role", "progress-value", "continue-action"],
+      "evidence": "Provisioning currently uses terminal and gum flows; there is no graphical OOBE surface to inspect.",
+      "blocker": "A graphical OOBE implementation and its accessibility contract do not exist."
+    },
+    {
+      "id": "polkit",
+      "implementation": "present",
+      "status": "blocked",
+      "source": "shell/plugins/polkit/PolkitAgent.qml",
+      "requiredSemantics": ["prompt-name", "password-field-role", "authenticate-action", "cancel-action"],
+      "evidence": "The Polkit surface exists, but its QML has no Accessible attachments and no disposable-VM AT-SPI proof has passed.",
+      "blocker": "Authentication prompt semantics must be implemented and proved without exposing password values."
+    }
+  ],
+  "releaseGate": {
+    "status": "blocked",
+    "rule": "All four surface classes must be implemented and proved in a disposable VM; absent tooling, absent semantics, blocked records, and missing records are failures rather than skips."
+  }
+}

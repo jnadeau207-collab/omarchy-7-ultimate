@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "quality-v0",
+  "referenceId": "metal-omarchy-2026-08-26",
+  "capturedAt": "2026-08-26T21:12:14-04:00",
+  "host": "omarchy",
+  "provenance": {
+    "transport": "read-only SSH using BatchMode, StrictHostKeyChecking, and C:/dev/omarchy-vm/omarchy_known_hosts",
+    "repositoryPath": "/home/jesse/omarchy7ultimate",
+    "repositoryHead": "6a4be84c86ce2d6ad9b6555c61c3cdad65c617f3",
+    "repositoryStatusCount": 0,
+    "bootId": "ad8e0ea4-9d76-41a8-814d-3e56885a5b1d",
+    "commands": [
+      "date --iso-8601=seconds",
+      "uname -srmo",
+      "lscpu",
+      "cat /proc/meminfo",
+      "cat /sys/class/dmi/id/board_vendor",
+      "cat /sys/class/dmi/id/board_name",
+      "lspci -nnk",
+      "lsblk -b -d -n -o NAME,MODEL,SIZE,TRAN",
+      "hyprctl -j monitors",
+      "upower -e",
+      "upower -i /org/freedesktop/UPower/devices/DisplayDevice",
+      "systemd-analyze",
+      "journalctl --user -b -o short-monotonic",
+      "pacman -Q at-spi2-core python-gobject"
+    ]
+  },
+  "hardware": {
+    "cpu": {"model": "AMD Ryzen 7 5800X3D 8-Core Processor", "cores": 8, "threads": 16},
+    "memoryBytes": 67335475200,
+    "gpu": {"model": "NVIDIA GA104 GeForce RTX 3070", "driver": "nvidia"},
+    "board": {"vendor": "ASUSTeK COMPUTER INC.", "model": "ROG STRIX B450-F GAMING"},
+    "systemDisk": {"model": "Samsung SSD 970 EVO Plus 1TB", "sizeBytes": 1000204886016, "transport": "nvme"}
+  },
+  "preIncidentDisplay": {
+    "connector": "HDMI-A-1",
+    "width": 1920,
+    "height": 1080,
+    "refreshHz": 60,
+    "scale": 1,
+    "status": "context-for-failed-first-paint-probe",
+    "provenance": "Hyprland crash-report log tail captured immediately after the failed first-paint measurement sequence"
+  },
+  "postIncidentDisplay": {
+    "connector": "HDMI-A-1",
+    "width": 3840,
+    "height": 2160,
+    "refreshHz": 30,
+    "scale": 1,
+    "status": "context-for-post-incident-idle-and-IPC-observations-only",
+    "reason": "Hyprland restarted in safe mode after the blocking reliability incident. CPU, RSS, search-model, and IPC observations were collected read-only in this state; no first-paint or animation result uses it. No compositor configuration was changed by the quality probe."
+  },
+  "power": {
+    "batteryPresent": false,
+    "upowerDisplayDevicePowerSupply": false,
+    "status": "unsupported-on-this-reference"
+  }
+}
