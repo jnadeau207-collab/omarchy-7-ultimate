@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "quality-v0",
+  "registerId": "ultimate-quality-reliability-incidents-v0",
+  "incidents": [
+    {
+      "id": "hyprland-surface-churn-2026-08-26",
+      "status": "resolved",
+      "occurredAt": "2026-08-26T21:08:27.715503-04:00",
+      "coredumps": [
+        {"executable": "/usr/bin/Hyprland", "pid": 58291, "signal": "SIGABRT", "timestamp": "2026-08-26T21:08:28-04:00"},
+        {"executable": "/usr/lib/xdg-desktop-portal-hyprland", "pid": 58816, "signal": "SIGSEGV", "timestamp": "2026-08-26T21:08:28-04:00"}
+      ],
+      "crashReport": {
+        "path": "/home/jesse/.cache/hyprland/hyprlandCrashReport58291.txt",
+        "mtime": "2026-08-26 21:08:27.753513858 -0400",
+        "sizeBytes": 7732,
+        "sha256": "447edeb63352ef69ab550406043b5849d038653f849cffc495df7ff570080e2a",
+        "reportedSignal": "11 (SEGV)",
+        "signature": "omarchy-minimize.so -> Config::Actions::resize -> CLayoutManager::resizeTarget -> Layout::CSpace::resizeTarget"
+      },
+      "minimalKnownSequence": [
+        "For Start: hide the plugin, wait for its namespace to disappear, summon it, poll hyprctl -j layers at 5 ms, hide it, wait 100 ms; repeat ten times.",
+        "Repeat the same ten-cycle sequence for Settings.",
+        "Launch Files; the compositor crashed before the Files timing completed."
+      ],
+      "causality": "The sequence and stack are preserved, but the exact triggering iteration is not claimed.",
+      "recovery": "Hyprland restarted through uwsm; Quickshell was restored with omarchy-restart-shell. No compositor configuration was changed.",
+      "resolution": {
+        "resolvedAt": "2026-08-26T21:34:36-04:00",
+        "rootCause": "An omarchy-minimize idle restore could retain a mapped CWindow after Hyprland detached its layout target from CSpace. dispatchCompositorBox then called Config::Actions::resize, whose Hyprland 0.56.2 path dereferences target->space() without a null guard.",
+        "guard": "dispatchCompositorBox now fails closed unless the window is mapped and both layoutTarget() and layoutTarget()->space() are live immediately before the synchronous compositor resize; restoreFloatOnScreen also refuses unmapped windows.",
+        "fixedByCommits": [
+          "c2822ff996900cd2fbb8344412666da2f05369b3",
+          "2863e6fc9602aa38c19566d2ebf5c88010c135c6"
+        ],
+        "deployedRepositoryHead": "6a49f797e71685708e6a32533aa686f3d0aefcc4",
+        "pluginSha256": "807757eadef905f9c0e1e04dff882fad02ae4d4741a8db96f5bc570c2224c856",
+        "verification": {
+          "hyprlandPid": 213829,
+          "startCycles": 10,
+          "settingsCycles": 10,
+          "filesLaunches": 1,
+          "maximizeRestoreCloseRaceCycles": 30,
+          "chromiumRestoreCycles": 3,
+          "chromiumStates": ["fresh-float", "maximize", "restore", "snap-left", "fullscreen", "fullscreen-exit"],
+          "hyprlandPidUnchanged": true,
+          "newCrashReport": false,
+          "newCoredump": false,
+          "latestCrashReportPath": "/home/jesse/.cache/hyprland/hyprlandCrashReport58291.txt",
+          "latestCrashReportSha256": "447edeb63352ef69ab550406043b5849d038653f849cffc495df7ff570080e2a",
+          "chromiumScreenshotSha256": {
+            "fresh-float": "56eaebeb6e6567f6ff947944fde189a4dbc441ea3f4d0958fcd9bd9269fefda5",
+            "maximize": "1867e56bb0019391207b7ab00e56a9f9f26333d8d58cb1db3b49c1714ede93d0",
+            "restore": "56eaebeb6e6567f6ff947944fde189a4dbc441ea3f4d0958fcd9bd9269fefda5",
+            "snap-left": "7cc7721c0c213aa3049854bedbc4fc256906918af6a86d413fad9a76c9473fbd",
+            "fullscreen": "d29288afa5df5d3fda15b58d61b274bf23557925259eff1ecfe8bd99b941a7a6",
+            "fullscreen-exit": "cda6176450544d2d3fbe6158a416ad2c3293336af9bcf8ac9a028194d23c9fbe"
+          }
+        }
+      },
+      "probePolicy": {
+        "disposableVmOnly": true,
+        "maxCyclesPerSurface": 1,
+        "stopOnCompositorPidChange": true,
+        "stopOnNewCoredump": true,
+        "cooldownMilliseconds": 1000
+      }
+    }
+  ]
+}

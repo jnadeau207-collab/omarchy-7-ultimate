@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "quality-v0",
+  "baselineId": "ultimate-performance-baseline-v0",
+  "referenceId": "metal-omarchy-2026-08-26",
+  "capturedAt": "2026-08-26T21:13:36-04:00",
+  "budgetPolicy": "Budgets are provisional product thresholds. Observations are separately typed as measured, blocked, or unsupported; a policy threshold is never presented as a measurement.",
+  "metrics": [
+    {
+      "id": "boot-to-interactive",
+      "unit": "ms",
+      "direction": "max",
+      "threshold": 150000,
+      "thresholdBasis": "provisional margin above the current journal marker",
+      "observation": {"status": "measured", "value": 137868.811, "statistic": "first post-launch Quickshell service marker", "sampleCount": 1, "method": "journalctl --user -b -o short-monotonic", "limitation": "This is a reproducible proxy, not an input-ready event."}
+    },
+    {
+      "id": "shell-idle-cpu",
+      "unit": "percent-one-core",
+      "direction": "max",
+      "threshold": 2,
+      "thresholdBasis": "provisional headroom above the current p95",
+      "observation": {"status": "measured", "value": 0.9998507822686443, "statistic": "p95", "sampleCount": 15, "method": "one-second /proc process tick deltas", "capturedAtStart": "2026-08-26T21:13:21.644252-04:00", "capturedAtEnd": "2026-08-26T21:13:36.646752-04:00", "context": "Post-incident Hyprland safe-mode session at 3840x2160@30; suitable only as an idle-process starting observation."}
+    },
+    {
+      "id": "shell-idle-rss",
+      "unit": "bytes",
+      "direction": "max",
+      "threshold": 838860800,
+      "thresholdBasis": "provisional 800 MiB ceiling",
+      "observation": {"status": "measured", "value": 557084672, "statistic": "max", "sampleCount": 15, "method": "one-second /proc/PID/status VmRSS samples", "capturedAtStart": "2026-08-26T21:13:21.644252-04:00", "capturedAtEnd": "2026-08-26T21:13:36.646752-04:00", "context": "Post-incident Hyprland safe-mode session at 3840x2160@30; suitable only as an idle-process starting observation."}
+    },
+    {
+      "id": "start-first-paint",
+      "unit": "ms",
+      "direction": "max",
+      "threshold": 500,
+      "thresholdBasis": "provisional interaction target pending a safe measurement",
+      "observation": {"status": "blocked", "value": null, "blocker": "The pre-fix repeated panel-mapping sequence crashed Hyprland. The crash is resolved and stress-verified, but no post-fix disposable-VM first-paint sample has been retained yet."}
+    },
+    {
+      "id": "settings-first-paint",
+      "unit": "ms",
+      "direction": "max",
+      "threshold": 750,
+      "thresholdBasis": "provisional interaction target pending a safe measurement",
+      "observation": {"status": "blocked", "value": null, "blocker": "The pre-fix repeated panel-mapping sequence crashed Hyprland. The crash is resolved and stress-verified, but no post-fix disposable-VM first-paint sample has been retained yet."}
+    },
+    {
+      "id": "files-first-paint",
+      "unit": "ms",
+      "direction": "max",
+      "threshold": 1500,
+      "thresholdBasis": "provisional external-application target pending a safe measurement",
+      "observation": {"status": "blocked", "value": null, "blocker": "The pre-fix compositor crashed before Files timing completed. The crash is resolved and stress-verified, but no post-fix disposable-VM first-paint sample has been retained yet."}
+    },
+    {
+      "id": "search-catalog",
+      "unit": "ms-per-query",
+      "direction": "max",
+      "threshold": 5,
+      "thresholdBasis": "provisional model-only search ceiling",
+      "observation": {"status": "measured", "value": 0.019864000000000357, "statistic": "p95", "sampleCount": 200, "method": "AppSearch.js over 17 live desktop entries and seven fixed queries; excludes QML rendering and icon lookup", "capturedAt": "2026-08-26T21:12:56.898-04:00", "context": "Post-incident read-only model benchmark; display state does not affect this observation."}
+    },
+    {
+      "id": "operation-event-latency",
+      "unit": "ms-round-trip",
+      "direction": "max",
+      "threshold": 50,
+      "thresholdBasis": "provisional shell IPC event proxy ceiling",
+      "observation": {"status": "measured", "value": 24.234674, "statistic": "p95", "sampleCount": 30, "method": "fresh omarchy-shell process invoking shell ping over qs IPC", "capturedAt": "2026-08-26T21:13:08.327698-04:00", "context": "Post-incident read-only IPC probe in the restored Quickshell process.", "limitation": "This is a transport proxy until Fabric provider events are deployed on the reference host."}
+    },
+    {
+      "id": "animation-frame-pacing",
+      "unit": "ms-frame-p95",
+      "direction": "max",
+      "threshold": 20,
+      "thresholdBasis": "provisional 60 Hz presentation target",
+      "observation": {"status": "blocked", "value": null, "blocker": "No presentation-feedback capture has been completed in a disposable graphical VM. Monitor refresh alone is not frame-pacing evidence."}
+    },
+    {
+      "id": "battery-idle-power",
+      "unit": "watts-average",
+      "direction": "max",
+      "threshold": 1.5,
+      "thresholdBasis": "provisional mobile-reference target",
+      "observation": {"status": "unsupported", "value": null, "blocker": "The current metal reference is a desktop and UPower reports no power-supply battery."}
+    }
+  ]
+}
