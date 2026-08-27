@@ -248,6 +248,8 @@ grep -Fq 'g_onTick' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "Chromium overhang damage follows animated window motion"
 grep -Fq 'sameChromiumDamageBox' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "Chromium overhang damage detects direct non-animated moves"
+grep -Fq 'g_onRenderPre' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium overhang damage runs before every scheduled render"
 grep -Fq 'g_onMouseMove' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "Chromium overhang damage follows interactive drag motion"
 grep -Fq 'damageBox(previous->second)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
