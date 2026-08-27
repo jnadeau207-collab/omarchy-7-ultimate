@@ -289,7 +289,16 @@ static CBox compositorFrameBox(PHLWINDOW w, const CBox& rect) {
 // These are the same actions behind hl.dsp.window.resize/move, proven stable on
 // metal for both the transformed position and surface size.
 static bool dispatchCompositorBox(PHLWINDOW w, const CBox& box) {
-  if (!w)
+  if (!w || !w->m_isMapped)
+    return false;
+  // Fullscreen exit and rapid surface teardown can leave the shared CWindow
+  // alive for an idle callback after Hyprland has detached its layout target
+  // from CSpace. Config::Actions::resize assumes target->space() is non-null;
+  // calling it in that interval aborts the whole compositor. The event loop is
+  // single-threaded, so proving the target is still assigned immediately before
+  // the synchronous resize closes that lifetime race without guessing geometry.
+  const auto layoutTarget = w->layoutTarget();
+  if (!layoutTarget || !layoutTarget->space())
     return false;
   const bool wasApplying = g_inPluginApply;
   g_inPluginApply        = true;
@@ -339,7 +348,7 @@ static void saveNormalFloat(PHLWINDOW w) {
 }
 
 static void restoreFloatOnScreen(PHLWINDOW w) {
-  if (!w || w->isHidden())
+  if (!w || !w->m_isMapped || w->isHidden())
     return;
   if (isMaximizedNow(w) || isCoveringFullscreen(w))
     return;
