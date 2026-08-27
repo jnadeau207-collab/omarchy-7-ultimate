@@ -1,0 +1,28 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Settings
+GenericName=System Settings
+Comment=Configure Omarchy through typed system providers
+TryExec=omarchy-launch-settings
+Exec=omarchy-launch-settings --source desktop %u
+Icon=preferences-system
+Terminal=false
+Categories=Settings;
+Keywords=settings;display;sound;network;bluetooth;input;power;accessibility;update;recovery;
+MimeType=x-scheme-handler/omarchy-settings;
+StartupNotify=true
+StartupWMClass=org.omarchy.Settings
+Actions=Display;Network;Accessibility;
+
+[Desktop Action Display]
+Name=Display
+Exec=omarchy-launch-settings --source desktop settings.display.overview
+
+[Desktop Action Network]
+Name=Network & Internet
+Exec=omarchy-launch-settings --source desktop settings.network.overview
+
+[Desktop Action Accessibility]
+Name=Accessibility
+Exec=omarchy-launch-settings --source desktop settings.accessibility.overview
