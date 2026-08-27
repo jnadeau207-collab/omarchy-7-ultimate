@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "v0",
+  "revision": "sha256.519fbcba0682160c636acbede9e6814d33f74584f340bcc9705f155dc7ac198d",
+  "assurance": "contract-seed",
+  "recipes": [
+    {
+      "id": "recipe.adobe-reader.v1",
+      "workloadId": "workload.adobe-reader",
+      "displayName": "Adobe Acrobat Reader",
+      "version": "2026.1",
+      "architecture": "x86_64",
+      "artifact": {"origin": "https://get.adobe.com/reader/", "digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"},
+      "permissions": ["network", "filesystem-home"],
+      "hostRequirements": {"runtime": "wine", "minimumMemoryMiB": 2048, "minimumDiskMiB": 4096},
+      "lifecycle": {
+        "install": [{"id":"step.verify","action":"verify-artifact","reversible":true},{"id":"step.prefix","action":"create-prefix","reversible":true},{"id":"step.runtime","action":"install-runtime","reversible":true},{"id":"step.permissions","action":"apply-permissions","reversible":true},{"id":"step.launcher","action":"create-launcher","reversible":true}],
+        "validate": [{"id":"step.validate","action":"validate-launch","reversible":true}],
+        "remove": [{"id":"step.remove-launcher","action":"remove-launcher","reversible":true},{"id":"step.remove-runtime","action":"remove-runtime","reversible":false}],
+        "export": [{"id":"step.export","action":"export-data","reversible":true}]
+      },
+      "exportPolicy": "data-only",
+      "removalPlan": {"preserve":["data.user-documents"],"delete":["runtime.wine-prefix","launcher.desktop-entry"]},
+      "signature": {"status":"declared","keyId":"omarchy-compat-review-v1","reviewRevision":"sha256:8888888888888888888888888888888888888888888888888888888888888888"}
+    },
+    {
+      "id": "recipe.autocad-viewer.v1",
+      "workloadId": "workload.autocad-viewer",
+      "displayName": "Autodesk Viewer compatibility profile",
+      "version": "2026.1",
+      "architecture": "x86_64",
+      "artifact": {"origin": "https://viewer.autodesk.com/", "digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"},
+      "permissions": ["network", "filesystem-home"],
+      "hostRequirements": {"runtime": "browser", "minimumMemoryMiB": 1024, "minimumDiskMiB": 64},
+      "lifecycle": {
+        "install": [{"id":"step.verify","action":"verify-artifact","reversible":true},{"id":"step.permissions","action":"apply-permissions","reversible":true},{"id":"step.launcher","action":"create-launcher","reversible":true}],
+        "validate": [{"id":"step.validate","action":"validate-launch","reversible":true}],
+        "remove": [{"id":"step.remove-launcher","action":"remove-launcher","reversible":true}],
+        "export": [{"id":"step.export","action":"export-data","reversible":true}]
+      },
+      "exportPolicy": "supported",
+      "removalPlan": {"preserve":["data.user-drawings"],"delete":["launcher.desktop-entry"]},
+      "signature": {"status":"declared","keyId":"omarchy-compat-review-v1","reviewRevision":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+    }
+  ]
+}

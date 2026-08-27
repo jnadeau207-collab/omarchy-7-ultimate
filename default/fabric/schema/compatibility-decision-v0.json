@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:compatibility-decision-v0",
+  "x-omarchy-version": "v0",
+  "title": "Omarchy Compatibility Center route decision",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "decisionId", "recipeRevision", "recipeAssurance", "eligibility", "selectedRoute", "recipeId", "reasonCode", "explanation", "requiredPermissions", "considered", "revision"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "provider": {"const": "compatibility.provider"},
+    "decisionId": {"$ref": "#/$defs/stableId"},
+    "recipeRevision": {"$ref": "#/$defs/revision"},
+    "recipeAssurance": {"type": "string", "enum": ["contract-seed", "release-verified"]},
+    "eligibility": {"type": "string", "enum": ["supported", "unsupported"]},
+    "selectedRoute": {"oneOf": [{"$ref": "#/$defs/route"}, {"type": "null"}]},
+    "recipeId": {"oneOf": [{"$ref": "#/$defs/stableId"}, {"type": "null"}]},
+    "reasonCode": {"$ref": "#/$defs/stableId"},
+    "explanation": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "requiredPermissions": {"type": "array", "maxItems": 16, "uniqueItems": true, "items": {"type": "string", "enum": ["network", "audio", "camera", "microphone", "notifications", "filesystem-home", "filesystem-removable", "devices", "session"]}},
+    "considered": {"type": "array", "minItems": 6, "maxItems": 6, "prefixItems": [
+      {"$ref":"#/$defs/nativeConsidered"}, {"$ref":"#/$defs/pwaConsidered"}, {"$ref":"#/$defs/recipeConsidered"}, {"$ref":"#/$defs/protonConsidered"}, {"$ref":"#/$defs/isolatedConsidered"}, {"$ref":"#/$defs/vmConsidered"}
+    ], "items": false},
+    "revision": {"$ref": "#/$defs/revision"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "stableId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160},
+    "revision": {"type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$"},
+    "route": {"type": "string", "enum": ["native", "pwa", "known-good-recipe", "game-proton", "isolated-app", "vm"]},
+    "consideredBase": {"type": "object", "required": ["route", "status", "reason"], "properties": {"route": {"$ref": "#/$defs/route"}, "status": {"type": "string", "enum": ["eligible", "ineligible"]}, "reason": {"type": "string", "minLength": 1, "maxLength": 500}}, "additionalProperties": false},
+    "nativeConsidered": {"type":"object","required":["route","status","reason"],"properties":{"route":{"const":"native"},"status":{"type":"string","enum":["eligible","ineligible"]},"reason":{"type":"string","minLength":1,"maxLength":500}},"additionalProperties":false},
+    "pwaConsidered": {"type":"object","required":["route","status","reason"],"properties":{"route":{"const":"pwa"},"status":{"type":"string","enum":["eligible","ineligible"]},"reason":{"type":"string","minLength":1,"maxLength":500}},"additionalProperties":false},
+    "recipeConsidered": {"type":"object","required":["route","status","reason"],"properties":{"route":{"const":"known-good-recipe"},"status":{"type":"string","enum":["eligible","ineligible"]},"reason":{"type":"string","minLength":1,"maxLength":500}},"additionalProperties":false},
+    "protonConsidered": {"type":"object","required":["route","status","reason"],"properties":{"route":{"const":"game-proton"},"status":{"type":"string","enum":["eligible","ineligible"]},"reason":{"type":"string","minLength":1,"maxLength":500}},"additionalProperties":false},
+    "isolatedConsidered": {"type":"object","required":["route","status","reason"],"properties":{"route":{"const":"isolated-app"},"status":{"type":"string","enum":["eligible","ineligible"]},"reason":{"type":"string","minLength":1,"maxLength":500}},"additionalProperties":false},
+    "vmConsidered": {"type":"object","required":["route","status","reason"],"properties":{"route":{"const":"vm"},"status":{"type":"string","enum":["eligible","ineligible"]},"reason":{"type":"string","minLength":1,"maxLength":500}},"additionalProperties":false}
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "v0",
+  "provider": "packages.provider",
+  "providerVersion": "v0",
+  "minFabricProtocol": 0,
+  "maxFabricProtocol": 0,
+  "capabilities": [
+    "packages.catalog.inspect",
+    "packages.inventory.inspect",
+    "packages.adoption.inspect",
+    "packages.operations.inspect",
+    "packages.install",
+    "packages.remove",
+    "packages.adopt",
+    "packages.recover"
+  ],
+  "actions": {
+    "catalog.search": {"capability":"packages.catalog.inspect","mode":"read","risk":"read-only","effects":[],"arguments":{"id":"urn:omarchy:fabric:provider:packages:catalog-search-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:catalog-search-result:v0","version":"v0"},"preflight":null,"state":null,"supportsRollback":false,"supportsCancellation":false},
+    "inventory.inspect": {"capability":"packages.inventory.inspect","mode":"read","risk":"read-only","effects":[],"arguments":{"id":"urn:omarchy:fabric:provider:packages:inventory-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:inventory-result:v0","version":"v0"},"preflight":null,"state":null,"supportsRollback":false,"supportsCancellation":false},
+    "adoption.inspect": {"capability":"packages.adoption.inspect","mode":"read","risk":"read-only","effects":[],"arguments":{"id":"urn:omarchy:fabric:provider:packages:empty-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:adoption-result:v0","version":"v0"},"preflight":null,"state":null,"supportsRollback":false,"supportsCancellation":false},
+    "operations.inspect": {"capability":"packages.operations.inspect","mode":"read","risk":"read-only","effects":[],"arguments":{"id":"urn:omarchy:fabric:provider:packages:empty-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:operations-result:v0","version":"v0"},"preflight":null,"state":null,"supportsRollback":false,"supportsCancellation":false},
+    "install": {"capability":"packages.install","mode":"operation","risk":"consequential","effects":["mutating","download"],"arguments":{"id":"urn:omarchy:fabric:provider:packages:operation-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:operation-result:v0","version":"v0"},"preflight":{"id":"urn:omarchy:fabric:provider:packages:operation-preflight:v0","version":"v0"},"state":{"id":"urn:omarchy:fabric:provider:packages:operation-state:v0","version":"v0"},"supportsRollback":true,"supportsCancellation":true},
+    "remove": {"capability":"packages.remove","mode":"operation","risk":"destructive","effects":["mutating","destructive"],"arguments":{"id":"urn:omarchy:fabric:provider:packages:operation-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:operation-result:v0","version":"v0"},"preflight":{"id":"urn:omarchy:fabric:provider:packages:operation-preflight:v0","version":"v0"},"state":{"id":"urn:omarchy:fabric:provider:packages:operation-state:v0","version":"v0"},"supportsRollback":true,"supportsCancellation":true},
+    "adopt": {"capability":"packages.adopt","mode":"operation","risk":"consequential","effects":["mutating"],"arguments":{"id":"urn:omarchy:fabric:provider:packages:operation-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:operation-result:v0","version":"v0"},"preflight":{"id":"urn:omarchy:fabric:provider:packages:operation-preflight:v0","version":"v0"},"state":{"id":"urn:omarchy:fabric:provider:packages:operation-state:v0","version":"v0"},"supportsRollback":true,"supportsCancellation":true},
+    "recover": {"capability":"packages.recover","mode":"operation","risk":"consequential","effects":["mutating","download"],"arguments":{"id":"urn:omarchy:fabric:provider:packages:operation-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:packages:operation-result:v0","version":"v0"},"preflight":{"id":"urn:omarchy:fabric:provider:packages:operation-preflight:v0","version":"v0"},"state":{"id":"urn:omarchy:fabric:provider:packages:operation-state:v0","version":"v0"},"supportsRollback":true,"supportsCancellation":true}
+  }
+}
