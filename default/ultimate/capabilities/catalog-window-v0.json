@@ -1,0 +1,3597 @@
+{
+  "$schema": "urn:omarchy:ultimate:capability-schema:catalog-v0",
+  "schemaVersion": "v0",
+  "domain": "window",
+  "capabilities": [
+    {
+      "id": "window.pin",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Taskbar app context menu",
+        "path": "Superbar > right-click app"
+      },
+      "agentCenterLabel": "Taskbar app context menu",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.pin",
+        "brokerVerb": "pin"
+      }
+    },
+    {
+      "id": "window.unpin",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Taskbar app context menu",
+        "path": "Superbar > right-click app"
+      },
+      "agentCenterLabel": "Taskbar app context menu",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.unpin",
+        "brokerVerb": "unpin"
+      }
+    },
+    {
+      "id": "window.toggle-pin",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Taskbar app context menu",
+        "path": "Superbar > right-click app"
+      },
+      "agentCenterLabel": "Taskbar app context menu",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.togglePin",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.focus",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Taskbar app button",
+        "path": "Superbar > running app"
+      },
+      "agentCenterLabel": "Taskbar app button",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.focus",
+        "brokerVerb": "focus"
+      }
+    },
+    {
+      "id": "window.close",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "destructive"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Confirm the exact live window and unsaved-work consequence before close."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "manual",
+        "expectation": "The application owns unsaved-work recovery; the capability must preflight that closing may discard it.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Close button or taskbar context menu",
+        "path": "Window > Close"
+      },
+      "agentCenterLabel": "Close button or taskbar context menu",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.close",
+        "brokerVerb": "close"
+      }
+    },
+    {
+      "id": "window.close-active",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "destructive"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Confirm the exact live window and unsaved-work consequence before close."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "manual",
+        "expectation": "The application owns unsaved-work recovery; the capability must preflight that closing may discard it.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Close button or taskbar context menu",
+        "path": "Window > Close"
+      },
+      "agentCenterLabel": "Close button or taskbar context menu",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.closeActive",
+        "brokerVerb": "closeActive"
+      }
+    },
+    {
+      "id": "window.minimize",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Caption buttons",
+        "path": "Window caption"
+      },
+      "agentCenterLabel": "Caption buttons",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.minimize",
+        "brokerVerb": "minimize"
+      }
+    },
+    {
+      "id": "window.restore",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Caption buttons",
+        "path": "Window caption"
+      },
+      "agentCenterLabel": "Caption buttons",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.restore",
+        "brokerVerb": "restore"
+      }
+    },
+    {
+      "id": "window.toggle-from-taskbar",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Taskbar app button",
+        "path": "Superbar > running app"
+      },
+      "agentCenterLabel": "Taskbar app button",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.toggleFromTaskbar",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.activate-at-cursor-soon",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start",
+        "label": "Outside-click activation",
+        "path": "Start > click another window"
+      },
+      "agentCenterLabel": "Outside-click activation",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.activateAtCursorSoon",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.activate-at-cursor",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start",
+        "label": "Outside-click activation",
+        "path": "Start > click another window"
+      },
+      "agentCenterLabel": "Outside-click activation",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.activateAtCursor",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.activate",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Taskbar app button",
+        "path": "Superbar > running app"
+      },
+      "agentCenterLabel": "Taskbar app button",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.activate",
+        "brokerVerb": "activate"
+      }
+    },
+    {
+      "id": "window.maximize",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Caption buttons",
+        "path": "Window caption"
+      },
+      "agentCenterLabel": "Caption buttons",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.maximize",
+        "brokerVerb": "maximize"
+      }
+    },
+    {
+      "id": "window.unmaximize",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Caption buttons",
+        "path": "Window caption"
+      },
+      "agentCenterLabel": "Caption buttons",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.unmaximize",
+        "brokerVerb": "unmaximize"
+      }
+    },
+    {
+      "id": "window.toggle-maximize",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Caption buttons",
+        "path": "Window caption"
+      },
+      "agentCenterLabel": "Caption buttons",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.toggleMaximize",
+        "brokerVerb": "toggleMaximize"
+      }
+    },
+    {
+      "id": "window.restore-or-minimize",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Caption buttons",
+        "path": "Window caption"
+      },
+      "agentCenterLabel": "Caption buttons",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.restoreOrMinimize",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.restore-normal",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Caption buttons",
+        "path": "Window caption"
+      },
+      "agentCenterLabel": "Caption buttons",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.restoreNormal",
+        "brokerVerb": "restoreNormal"
+      }
+    },
+    {
+      "id": "window.move-to",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowGeometryInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Drag, resize, or Snap chooser",
+        "path": "Window caption > Snap"
+      },
+      "agentCenterLabel": "Drag, resize, or Snap chooser",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.moveTo",
+        "brokerVerb": "moveTo"
+      }
+    },
+    {
+      "id": "window.resize-to",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowGeometryInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Drag, resize, or Snap chooser",
+        "path": "Window caption > Snap"
+      },
+      "agentCenterLabel": "Drag, resize, or Snap chooser",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.resizeTo",
+        "brokerVerb": "resizeTo"
+      }
+    },
+    {
+      "id": "window.snap-left",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Drag, resize, or Snap chooser",
+        "path": "Window caption > Snap"
+      },
+      "agentCenterLabel": "Drag, resize, or Snap chooser",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.snapLeft",
+        "brokerVerb": "snapLeft"
+      }
+    },
+    {
+      "id": "window.snap-right",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Drag, resize, or Snap chooser",
+        "path": "Window caption > Snap"
+      },
+      "agentCenterLabel": "Drag, resize, or Snap chooser",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.snapRight",
+        "brokerVerb": "snapRight"
+      }
+    },
+    {
+      "id": "window.snap-to",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowGeometryInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Drag, resize, or Snap chooser",
+        "path": "Window caption > Snap"
+      },
+      "agentCenterLabel": "Drag, resize, or Snap chooser",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.snapTo",
+        "brokerVerb": "snapTo"
+      }
+    },
+    {
+      "id": "window.snap-arrow",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowGeometryInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Drag, resize, or Snap chooser",
+        "path": "Window caption > Snap"
+      },
+      "agentCenterLabel": "Drag, resize, or Snap chooser",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.snapArrow",
+        "brokerVerb": "snapArrow"
+      }
+    },
+    {
+      "id": "window.aero-drag-end",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowGeometryInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Drag, resize, or Snap chooser",
+        "path": "Window caption > Snap"
+      },
+      "agentCenterLabel": "Drag, resize, or Snap chooser",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.aeroDragEnd",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.save-layout",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Snap chooser",
+        "label": "Save or restore layout",
+        "path": "Window caption > Snap chooser"
+      },
+      "agentCenterLabel": "Save or restore layout",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.saveLayout",
+        "brokerVerb": "saveLayout"
+      }
+    },
+    {
+      "id": "window.restore-layout",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Snap chooser",
+        "label": "Save or restore layout",
+        "path": "Window caption > Snap chooser"
+      },
+      "agentCenterLabel": "Save or restore layout",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.restoreLayout",
+        "brokerVerb": "restoreLayout"
+      }
+    },
+    {
+      "id": "window.toggle-show-desktop",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Show Desktop button",
+        "path": "Superbar > Show Desktop"
+      },
+      "agentCenterLabel": "Show Desktop button",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.toggleShowDesktop",
+        "brokerVerb": "toggleShowDesktop"
+      }
+    },
+    {
+      "id": "window.cycle-next",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Task switcher cards",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Task switcher cards",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.cycleNext",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.cycle-prev",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Task switcher cards",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Task switcher cards",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.cyclePrev",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.commit-cycle",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Task switcher cards",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Task switcher cards",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.commitCycle",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.cancel-cycle",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Task switcher cards",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Task switcher cards",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.cancelCycle",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.activate-from-switcher",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Task switcher cards",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Task switcher cards",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.activateFromSwitcher",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.toggle-fullscreen",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Capture the prior window state and expose a one-shot state-fingerprint-guarded undo.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window content",
+        "label": "Application Full Screen command",
+        "path": "Window > Full Screen"
+      },
+      "agentCenterLabel": "Application Full Screen command",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.toggleFullscreen",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.create-desktop",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Capture the prior desktop or monitor assignment and offer a guarded compensating move.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Desktop controls",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Desktop controls",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.createDesktop",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.switch-desktop",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/desktopInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Desktop controls",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Desktop controls",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.switchDesktop",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.switch-to-desktop",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/desktopInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable state change is expected; retry only after confirming the live target still exists.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Desktop controls",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Desktop controls",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.switchToDesktop",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.move-to-desktop",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/desktopInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Capture the prior desktop or monitor assignment and offer a guarded compensating move.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Desktop controls",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Desktop controls",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.moveToDesktop",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.close-desktop",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/emptyInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Capture the prior desktop or monitor assignment and offer a guarded compensating move.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task View",
+        "label": "Desktop controls",
+        "path": "Superbar > Task View"
+      },
+      "agentCenterLabel": "Desktop controls",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.closeDesktop",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "window.move-to-monitor",
+      "version": "v0",
+      "provider": {
+        "id": "ultimate.window-service",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/windowTargetInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "session.window"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible desktop gesture or scoped agent grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "session.window"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the compositor mutation is dispatched."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Capture the prior desktop or monitor assignment and offer a guarded compensating move.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "address",
+          "title"
+        ],
+        "policy": "Persist stable window identity only when required and redact user-visible titles from ordinary audit summaries."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "label": "Move window between displays",
+        "path": "Window > move across display edge"
+      },
+      "agentCenterLabel": "Move window between displays",
+      "proofIds": {
+        "acceptance": [
+          "proof.window-service.source-audit"
+        ],
+        "parity": [
+          "proof.parity.windowing-baseline"
+        ]
+      },
+      "source": {
+        "file": "shell/services/WindowService.qml",
+        "symbol": "WindowService.moveToMonitor",
+        "brokerVerb": null
+      }
+    }
+  ]
+}
