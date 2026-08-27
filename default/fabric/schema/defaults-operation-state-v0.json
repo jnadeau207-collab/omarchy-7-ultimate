@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:operation-state:v0",
+  "x-omarchy-version": "v0",
+  "title": "Default application database operation state",
+  "type": "object",
+  "required": ["resourceId", "revision", "value"],
+  "properties": {
+    "resourceId": {"const": "defaults.database.primary"},
+    "revision": {"$ref": "#/$defs/revision"},
+    "value": {"$ref": "#/$defs/database"},
+    "recoveryFromRevision": {"$ref": "#/$defs/revision"},
+    "recoveryAction": {"type": "string", "enum": ["mime.set", "protocol.set", "association.clear"]}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "revision": {"type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$"},
+    "stableId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160},
+    "mimeType": {"type": "string", "pattern": "^[a-z0-9.+-]+/[a-z0-9.+-]+$", "maxLength": 160},
+    "scheme": {"type": "string", "pattern": "^[a-z][a-z0-9+.-]*$", "maxLength": 64},
+    "reason": {
+      "type": "object",
+      "required": ["code", "title", "explanation", "detail", "retryable", "changeState"],
+      "properties": {
+        "code": {"$ref": "#/$defs/stableId"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 160},
+        "explanation": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "detail": {"type": "string", "maxLength": 2000},
+        "retryable": {"type": "boolean"},
+        "changeState": {"type": "string", "enum": ["none", "partial", "complete", "unknown"]},
+        "recoveryActions": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"$ref": "#/$defs/stableId"}}
+      },
+      "additionalProperties": false
+    },
+    "application": {
+      "type": "object",
+      "required": ["id", "desktopId", "name", "state", "icon", "mimeTypes", "protocols", "source", "identity", "reason"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "desktopId": {"type": "string", "pattern": "^[A-Za-z0-9_.+-]+\\.desktop$", "maxLength": 255},
+        "name": {"type": "string", "minLength": 1, "maxLength": 160},
+        "state": {"type": "string", "enum": ["available", "unavailable"]},
+        "icon": {"oneOf": [{"type": "null"}, {"type": "string", "minLength": 1, "maxLength": 255}]},
+        "mimeTypes": {"type": "array", "maxItems": 128, "uniqueItems": true, "items": {"$ref": "#/$defs/mimeType"}},
+        "protocols": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/scheme"}},
+        "source": {"type": "string", "enum": ["user", "local", "system"]},
+        "identity": {"$ref": "#/$defs/revision"},
+        "reason": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/reason"}]}
+      },
+      "additionalProperties": false
+    },
+    "association": {
+      "type": "object",
+      "required": ["id", "kind", "key", "defaultAppId", "candidateAppIds", "writable", "source", "status", "identity"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "kind": {"type": "string", "enum": ["mime", "protocol"]},
+        "key": {"oneOf": [{"$ref": "#/$defs/mimeType"}, {"$ref": "#/$defs/scheme"}]},
+        "defaultAppId": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/stableId"}]},
+        "candidateAppIds": {"type": "array", "maxItems": 128, "uniqueItems": true, "items": {"$ref": "#/$defs/stableId"}},
+        "writable": {"type": "boolean"},
+        "source": {"type": "string", "enum": ["none", "system", "user"]},
+        "status": {"type": "string", "enum": ["configured", "unconfigured", "dangling"]},
+        "identity": {"$ref": "#/$defs/revision"}
+      },
+      "additionalProperties": false
+    },
+    "database": {
+      "type": "object",
+      "required": ["schemaVersion", "databaseId", "applications", "associations"],
+      "properties": {
+        "schemaVersion": {"const": "v0"},
+        "databaseId": {"const": "defaults.database.primary"},
+        "applications": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/application"}},
+        "associations": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/association"}}
+      },
+      "additionalProperties": false
+    }
+  }
+}

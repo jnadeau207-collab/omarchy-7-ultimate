@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:operation-state:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files workspace operation state",
+  "type": "object",
+  "required": ["resourceId", "revision", "value"],
+  "properties": {
+    "resourceId": {"const": "files.workspace.primary"},
+    "revision": {"$ref": "#/$defs/revision"},
+    "value": {"$ref": "#/$defs/workspace"},
+    "recoveryFromRevision": {"$ref": "#/$defs/revision"},
+    "recoveryAction": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.trash", "trash.restore", "mount.connect", "mount.disconnect"]}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "revision": {"type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$"},
+    "stableId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160},
+    "reason": {
+      "type": "object",
+      "required": ["code", "title", "explanation", "detail", "retryable", "changeState"],
+      "properties": {
+        "code": {"$ref": "#/$defs/stableId"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 160},
+        "explanation": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "detail": {"type": "string", "maxLength": 2000},
+        "retryable": {"type": "boolean"},
+        "changeState": {"type": "string", "enum": ["none", "partial", "complete", "unknown"]},
+        "recoveryActions": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"$ref": "#/$defs/stableId"}}
+      },
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "required": ["id", "kind", "label", "state", "writable", "rootToken", "reason"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "kind": {"type": "string", "enum": ["this-pc", "home", "desktop", "documents", "downloads", "trash", "mount", "network"]},
+        "label": {"type": "string", "minLength": 1, "maxLength": 160},
+        "state": {"type": "string", "enum": ["available", "degraded", "unavailable"]},
+        "writable": {"type": "boolean"},
+        "rootToken": {"$ref": "#/$defs/revision"},
+        "reason": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/reason"}]}
+      },
+      "additionalProperties": false
+    },
+    "trashMetadata": {
+      "type": "object",
+      "required": ["originalLocationId", "originalParentId", "originalRelativePath"],
+      "properties": {
+        "originalLocationId": {"$ref": "#/$defs/stableId"},
+        "originalParentId": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/stableId"}]},
+        "originalRelativePath": {"type": "string", "minLength": 1, "maxLength": 1024}
+      },
+      "additionalProperties": false
+    },
+    "entry": {
+      "type": "object",
+      "required": ["id", "locationId", "parentId", "name", "relativePath", "kind", "sizeBytes", "modifiedNs", "mimeType", "hidden", "writable", "identity", "symlinkTargetState", "trash"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "locationId": {"$ref": "#/$defs/stableId"},
+        "parentId": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/stableId"}]},
+        "name": {"type": "string", "minLength": 1, "maxLength": 255},
+        "relativePath": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "kind": {"type": "string", "enum": ["file", "directory", "symlink"]},
+        "sizeBytes": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0, "maximum": 9007199254740991}]},
+        "modifiedNs": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0, "maximum": 9007199254740991}]},
+        "mimeType": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-z0-9.+-]+/[a-z0-9.+-]+$", "maxLength": 160}]},
+        "hidden": {"type": "boolean"},
+        "writable": {"type": "boolean"},
+        "identity": {"$ref": "#/$defs/revision"},
+        "symlinkTargetState": {"oneOf": [{"type": "null"}, {"type": "string", "enum": ["inside-root", "outside-root", "missing", "unknown"]}]},
+        "trash": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/trashMetadata"}]}
+      },
+      "additionalProperties": false
+    },
+    "mountSource": {
+      "type": "object",
+      "required": ["scheme", "display", "host", "share"],
+      "properties": {
+        "scheme": {"type": "string", "enum": ["system", "device", "smb"]},
+        "display": {"type": "string", "minLength": 1, "maxLength": 320},
+        "host": {"oneOf": [{"type": "null"}, {"type": "string", "minLength": 1, "maxLength": 253}]},
+        "share": {"oneOf": [{"type": "null"}, {"type": "string", "minLength": 1, "maxLength": 255}]}
+      },
+      "additionalProperties": false
+    },
+    "mount": {
+      "type": "object",
+      "required": ["id", "kind", "label", "state", "writable", "locationId", "source", "reason"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "kind": {"type": "string", "enum": ["system", "removable", "smb"]},
+        "label": {"type": "string", "minLength": 1, "maxLength": 160},
+        "state": {"type": "string", "enum": ["mounted", "unmounted", "degraded", "unavailable"]},
+        "writable": {"type": "boolean"},
+        "locationId": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/stableId"}]},
+        "source": {"$ref": "#/$defs/mountSource"},
+        "reason": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/reason"}]}
+      },
+      "additionalProperties": false
+    },
+    "recent": {
+      "type": "object",
+      "required": ["entryId", "rank"],
+      "properties": {
+        "entryId": {"$ref": "#/$defs/stableId"},
+        "rank": {"type": "integer", "minimum": 0, "maximum": 127}
+      },
+      "additionalProperties": false
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["schemaVersion", "workspaceId", "locations", "entries", "mounts", "recent"],
+      "properties": {
+        "schemaVersion": {"const": "v0"},
+        "workspaceId": {"const": "files.workspace.primary"},
+        "locations": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/location"}},
+        "entries": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/entry"}},
+        "mounts": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/mount"}},
+        "recent": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/recent"}}
+      },
+      "additionalProperties": false
+    }
+  }
+}

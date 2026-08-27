@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:operation-result:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files operation result",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "providerVersion", "action", "capability", "resource", "changed", "changeState", "stateRevision", "state", "error"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "provider": {"const": "files.provider"},
+    "providerVersion": {"const": "v0"},
+    "action": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.trash", "trash.restore", "mount.connect", "mount.disconnect"]},
+    "capability": {"type": "string", "enum": ["files.directory.create", "files.entry.rename", "files.entry.trash", "files.trash.restore", "files.mount.connect", "files.mount.disconnect"]},
+    "resource": {"$ref": "urn:omarchy:fabric:provider:files:operation-preflight:v0#/$defs/resource"},
+    "changed": {"type": "boolean"},
+    "changeState": {"type": "string", "enum": ["none", "complete"]},
+    "stateRevision": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/revision"},
+    "state": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0"},
+    "error": {"type": "null"}
+  },
+  "additionalProperties": false
+}

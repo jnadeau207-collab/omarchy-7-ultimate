@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:query-result:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files browse, search, or recent result",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "providerVersion", "action", "availability", "revision", "entries", "truncated"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "provider": {"const": "files.provider"},
+    "providerVersion": {"const": "v0"},
+    "action": {"type": "string", "enum": ["browse", "search", "recent"]},
+    "availability": {"$ref": "urn:omarchy:fabric:provider:files:inventory-result:v0#/$defs/availability"},
+    "revision": {"oneOf": [{"type": "null"}, {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/revision"}]},
+    "entries": {"type": "array", "maxItems": 128, "items": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/entry"}},
+    "truncated": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

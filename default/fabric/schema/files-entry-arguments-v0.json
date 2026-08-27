@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:entry-arguments:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files entry arguments",
+  "type": "object",
+  "required": ["entryId"],
+  "properties": {"entryId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160}},
+  "additionalProperties": false
+}
