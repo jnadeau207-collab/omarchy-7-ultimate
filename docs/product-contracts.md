@@ -16,10 +16,10 @@ The v0 inventory covers:
 
 - all 43 first-party plugin manifests under `shell/plugins/`, including adjacent bar-widget manifests;
 - all 25 plugin identities that the current `shell summon`, `shell toggle`, and `shell hide` lifecycle can open;
-- all 22 live Quickshell IPC targets and every method declared by their handlers, including the inherited `omarchy.audio` panel target;
-- all 18 shipped first-party application launchers under `applications/`, `default/alacritty/`, and `default/applications/`;
+- all 27 live Quickshell IPC targets and every method declared by their handlers, including the inherited `omarchy.audio` panel target;
+- all 23 shipped first-party application launchers under `applications/`, `default/alacritty/`, `default/applications/`, and the standalone product entrypoints;
 - both external application identities shipped as default taskbar pins: Chrome and Files/Nautilus;
-- the standalone Settings and Agent Center identities, endpoint principals, application processes, desktop launchers, deep links, and owner IPC targets;
+- the standalone Settings, Agent Center, Files, Software Center, and Compatibility Center identities, endpoint principals, application processes, desktop launchers, deep links, and owner IPC targets;
 - the three current search implementations (Start applications, Run applications/command fallback, and menu-tree search) plus the five required but absent Settings, Desktop, Files, Software, and Agent Center sources;
 - every QML or JavaScript path under `shell/plugins/` and `shell/services/` that currently declares `Process`, calls `execDetached`, or dispatches directly to Hyprland.
 
@@ -52,7 +52,7 @@ The join order is explicit packaged alias, exact desktop entry id, exact declare
 
 Each application record reserves a stable per-application principal, declares current process/principal binding, lists exact desktop and compositor identifiers, records taskbar visibility and shipped-pin state, and describes single-instance activation and deep links. Current launcher records are `legacy-unjoined` because `WindowModel.js` lowercases and substring-matches compositor ids, with a special Chromium branch. The stable contract principals are therefore reserved identifiers, not claims that current windows are already authenticated as those principals.
 
-Settings and Agent Center are present as separately launched, ordinary taskbar applications. Settings owns `process.omarchy-ultimate-settings`, reserves `principal.app.ultimate-settings`, declares `org.omarchy.Settings`, and implements the `omarchy-settings://<domain>/<page>?<typed-query>` route shape. Agent Center owns `process.omarchy-agent-center`, reserves `principal.app.agent-center`, declares `org.omarchy.AgentCenter`, and implements the `omarchy-agent://<task|run|operation|provider>/<stable-id>` route shape. Each process has a separate read-only Fabric endpoint session and a typed single-instance activation target. The current daemon nevertheless admits all same-user clients through the shared `principal.fabric.owner-rpc` role; the caller-supplied client label is not product authority. Both this missing product-principal binding and the owner-socket-only, caller-unbound Quickshell activation IPC remain explicit debts with no mutation authority.
+Settings, Agent Center, Files, Software Center, and Compatibility Center are present as separately launched, ordinary taskbar applications. Each owns a stable process, reserves a product principal, declares an exact application id, and implements a typed deep-link route catalog. Each process has a separate read-only Fabric endpoint session and a typed single-instance activation target. The current daemon nevertheless admits all same-user clients through the shared `principal.fabric.owner-rpc` role; the caller-supplied client label is not product authority. This missing product-principal binding and the owner-socket-only, caller-unbound Quickshell activation IPC remain explicit debts with no mutation authority.
 
 Their legacy shell plugin surfaces remain useful human launch shims. The application records remain `legacy-unjoined`, rather than falsely claiming `present-contract`, until taskbar identity stops using the shared heuristic application join.
 
