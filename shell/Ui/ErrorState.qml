@@ -15,40 +15,43 @@ Column {
   property string detail: ""
 
   property bool hasCursor: false
+  property var semanticProfile: null
 
   signal retryClicked()
   signal detailsToggled(bool visible)
 
-  readonly property bool _hot: mouse.containsMouse || hasCursor
   property bool _detailsOpen: false
 
-  spacing: Style.space(8)
+  spacing: Semantics.metric(semanticProfile, Style.space(8))
+  Accessible.role: Accessible.AlertMessage
+  Accessible.name: Semantics.text(semanticProfile, title !== "" ? title : "Operation failed")
+  Accessible.description: Semantics.text(semanticProfile, explanation)
 
   Text {
     anchors.horizontalCenter: parent.horizontalCenter
     text: "\u26a0"
-    color: Tokens.state.danger
+    color: Semantics.toneColor("danger", root.semanticProfile)
     font.family: Style.font.family
-    font.pixelSize: Style.font.display
+    font.pixelSize: Semantics.font(root.semanticProfile, Style.font.display)
   }
 
   Text {
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.title !== ""
-    text: root.title
-    color: Tokens.text.primary
+    text: Semantics.text(root.semanticProfile, root.title)
+    color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
     font.family: Style.font.family
-    font.pixelSize: Style.font.body
+    font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
     font.bold: true
   }
 
   Text {
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.explanation !== ""
-    text: root.explanation
-    color: Tokens.text.secondary
+    text: Semantics.text(root.semanticProfile, root.explanation)
+    color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary
     font.family: Style.font.family
-    font.pixelSize: Style.font.bodySmall
+    font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
     horizontalAlignment: Text.AlignHCenter
     width: Math.min(root.width || 0, 420)
     wrapMode: Text.WordWrap
@@ -56,10 +59,11 @@ Column {
 
   Row {
     anchors.horizontalCenter: parent.horizontalCenter
-    spacing: Style.space(8)
+    spacing: Semantics.metric(root.semanticProfile, Style.space(8))
 
     Button {
       text: "Try again"
+      semanticProfile: root.semanticProfile
       focusable: true
       onClicked: root.retryClicked()
     }
@@ -67,6 +71,7 @@ Column {
     Button {
       visible: root.detail !== ""
       text: root._detailsOpen ? "Hide details" : "Details"
+      semanticProfile: root.semanticProfile
       focusable: true
       onClicked: {
         root._detailsOpen = !root._detailsOpen
@@ -81,24 +86,17 @@ Column {
     width: Math.min(root.width || 480, 480)
     height: detailText.implicitHeight + Style.space(12)
     radius: Math.max(4, Math.round(Style.cornerRadius * 0.5))
-    color: Tokens.surface.raised
+    color: root.semanticProfile ? root.semanticProfile.surfaceRaised : Tokens.surface.raised
 
     Text {
       id: detailText
       anchors.fill: parent
       anchors.margins: Style.space(6)
-      text: root.detail
-      color: Tokens.text.secondary
+      text: Semantics.text(root.semanticProfile, root.detail)
+      color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary
       font.family: Style.font.family
-      font.pixelSize: Style.font.bodySmall
+      font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
       wrapMode: Text.WrapAnywhere
     }
-  }
-
-  MouseArea {
-    id: mouse
-    anchors.fill: parent
-    hoverEnabled: true
-    cursorShape: Qt.ArrowCursor
   }
 }

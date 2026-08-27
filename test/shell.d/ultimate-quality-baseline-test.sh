@@ -7,7 +7,9 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 checker="$ROOT/bin/omarchy-dev-quality-baseline"
 quality_dir="$ROOT/default/ultimate/quality"
 gallery="$ROOT/shell/plugins/dev-gallery/QualityMatrix.qml"
+semantic_fixture="$ROOT/shell/plugins/dev-gallery/SemanticFixture.qml"
 panel="$ROOT/shell/plugins/dev-gallery/GalleryPanel.qml"
+operation_status="$ROOT/shell/Ui/OperationStatus.qml"
 progress_ring="$ROOT/shell/Ui/ProgressRing.qml"
 card="$ROOT/shell/Ui/Card.qml"
 checkbox="$ROOT/shell/Ui/Checkbox.qml"
@@ -44,8 +46,42 @@ assert matrix["semanticImplementation"] == {
     "action": "attached",
 }
 assert matrix["strategy"] == "exhaustive-operation-states-plus-pairwise-presentation-profiles"
+assert matrix["fixtureImplementation"] == "shared-controls-with-opt-in-semantic-profiles"
+assert matrix["automatedChecks"] == {
+    "minimumNormalTextContrast": 4.5,
+    "minimumLargeTextAndControlContrast": 3.0,
+    "minimumPointerTargetPx": 24,
+    "minimumTouchTargetPx": 44,
+    "finiteLayoutBounds": True,
+    "colorIndependentStateSymbols": True,
+    "reducedMotionDurationMs": 0,
+    "destructiveDefaultAction": "cancel",
+}
 PY
 pass "gallery contract fixes exhaustive states and pairwise presentation coverage"
+
+python3 - "$quality_dir/atspi-feasibility-v0.json" <<'PY'
+import json
+import sys
+
+contract = json.load(open(sys.argv[1], encoding="utf-8"))
+shell = next(entry for entry in contract["surfaceClasses"] if entry["id"] == "shell")
+assert shell["status"] == "blocked"
+assert shell["latestProbe"]["result"] == "blocked-zero-exported-children"
+assert {row["name"]: row["children"] for row in shell["latestProbe"]["applications"]}["quickshell"] == 0
+assert "not observable by an assistive client" in shell["evidence"]
+PY
+pass "AT-SPI contract records the fresh zero-child export blocker without claiming proof"
+
+grep -Fq 'OperationStatus {' "$gallery" || fail "quality gallery executes the shared operation primitive"
+grep -Fq 'SemanticFixture {' "$gallery" || fail "quality gallery executes the shared presentation fixture"
+grep -Fq 'OperationDialog {' "$gallery" || fail "quality gallery executes the common operation dialog"
+grep -Fq 'DestructiveDialog {' "$gallery" || fail "quality gallery executes the destructive dialog"
+for control in 'Button {' 'TextField {' 'Checkbox {' 'ToggleSwitch {' 'ProgressBar {'; do
+  grep -Fq "$control" "$semantic_fixture" || fail "semantic fixture executes shared control: $control"
+done
+grep -Fq 'definition.symbol' "$operation_status" || fail "operation status communicates state without color alone"
+pass "quality gallery uses executable shared controls and color-independent operation states"
 
 for marker in 'Accessible.name' 'Accessible.role' 'Accessible.description' 'Accessible.onPressAction'; do
   grep -Fq "$marker" "$gallery" || fail "quality gallery declares semantic $marker"

@@ -118,6 +118,9 @@ QtObject {
     if (typeof candidate.motion.easing !== "string" || !candidate.motion.easing) return false
     if (typeof candidate.motion.reduced !== "boolean") return false
     if (typeof candidate.accessibility.reducedMotion !== "boolean" || typeof candidate.accessibility.highContrast !== "boolean") return false
+    if (candidate.accessibility.largeText !== undefined && typeof candidate.accessibility.largeText !== "boolean") return false
+    if (candidate.accessibility.textScale !== undefined
+        && (typeof candidate.accessibility.textScale !== "number" || !isFinite(candidate.accessibility.textScale))) return false
     if (typeof candidate.effects.blur.enabled !== "boolean" || typeof candidate.effects.shadow.enabled !== "boolean") return false
     return true
   }
@@ -305,6 +308,8 @@ QtObject {
   readonly property QtObject accessibility: QtObject {
     property bool reducedMotion: root.boolValue("accessibility.reducedMotion", false)
     property bool highContrast: root.boolValue("accessibility.highContrast", false)
+    property bool largeText: root.boolValue("accessibility.largeText", false)
+    property real textScale: root.numberValue("accessibility.textScale", largeText ? 1.25 : 1.0)
     property real minimumTextContrast: root.numberValue("accessibility.minimumTextContrast", 4.5)
     property real minimumLargeTextContrast: root.numberValue("accessibility.minimumLargeTextContrast", 3.0)
   }

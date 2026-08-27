@@ -29,25 +29,40 @@ Item {
 
   property bool checked: false
   property bool busy: false
+  property var semanticProfile: null
+  property string accessibleName: "Toggle"
+  property string accessibleDescription: ""
 
   // Off when the surrounding row owns the click, as in `Toggle`.
   property bool interactive: true
+  property bool focusable: interactive
+  // A switch embedded in a labeled Toggle row is only its visual indicator.
+  // Keep standalone switches accessible by default, while letting containers
+  // suppress the duplicate node without weakening their own semantics.
+  property bool accessibleIgnored: !interactive
+  property bool forceFocusVisible: false
 
   // Panel-cursor flag. Same role as Button.hasCursor: panels with their own
   // keyboard cursor bind this to drive the highlight separately from hover.
   property bool hasCursor: false
 
   property bool cursorRing: interactive
-  property int cursorPad: Style.space(6)
+  property int cursorPad: Semantics.metric(semanticProfile, Style.space(6))
   property bool rounded: Style.cornerRadius > 0
-  property color foreground: Color.foreground
-  property color accent: Color.accent
+  property color foreground: semanticProfile ? semanticProfile.textPrimary : Color.foreground
+  property color accent: semanticProfile ? semanticProfile.accent : Color.accent
 
   signal toggled()
   signal hovered(bool isHovered)
 
   readonly property alias containsMouse: mouse.containsMouse
   readonly property bool hot: hasCursor || mouse.containsMouse
+  readonly property bool focusVisible: focusable && (activeFocus || forceFocusVisible)
+
+  activeFocusOnTab: focusable
+  Keys.onReturnPressed: if (focusable && !busy) root.toggled()
+  Keys.onEnterPressed: if (focusable && !busy) root.toggled()
+  Keys.onSpacePressed: if (focusable && !busy) root.toggled()
 
   // `trackHeight` is settable so a compact placement — a switch riding a panel
   // section header, say — can ask for a genuinely smaller control instead of
@@ -55,22 +70,36 @@ Item {
   // and blurs their edges. The derived sizes only carry floors low enough to
   // stay out of an override's way; at the default track height each one is
   // already above its floor, so nothing about the normal switch changes.
-  property int trackHeight: Math.max(22, Math.round(Style.spacing.controlHeight * 0.55))
+  property int trackHeight: Math.max(22, Math.round(Semantics.metric(semanticProfile, Style.spacing.controlHeight) * 0.55))
   property int trackWidth: Math.round(trackHeight * 1.9)
   property int knobSize: Math.max(6, Math.round(trackHeight * 0.72))
   property int knobInset: Math.max(1, Math.round((trackHeight - knobSize) / 2))
 
   readonly property int _pad: cursorRing ? cursorPad : 0
 
-  implicitWidth: trackWidth + _pad * 2
-  implicitHeight: trackHeight + _pad * 2
+  implicitWidth: Math.max(trackWidth + _pad * 2, semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+  implicitHeight: Math.max(trackHeight + _pad * 2, semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+
+  Accessible.role: Accessible.CheckBox
+  Accessible.ignored: root.accessibleIgnored
+  Accessible.checkable: true
+  Accessible.checked: root.checked
+  Accessible.focusable: root.focusable
+  Accessible.name: Semantics.text(semanticProfile, accessibleName)
+  Accessible.description: accessibleDescription !== "" ? accessibleDescription
+    : Semantics.text(semanticProfile, busy ? "Busy" : checked ? "On" : "Off")
+  Accessible.onPressAction: {
+    if (root.interactive && !root.busy && root.enabled) root.toggled()
+  }
 
   BorderSurface {
     anchors.fill: parent
-    visible: root.cursorRing && root.hot
+    visible: root.cursorRing && (root.hot || root.focusVisible)
     color: "transparent"
     radius: Style.cornerRadius
-    borderSpec: Border.controlSpec("hover-cursor", root.foreground, root.accent)
+    borderSpec: root.semanticProfile && root.semanticProfile.highContrast && root.focusVisible
+      ? Border.flat(root.semanticProfile.focusRing, root.semanticProfile.focusWidth)
+      : Border.controlSpec("hover-cursor", root.foreground, root.accent)
   }
 
   BorderSurface {
@@ -84,7 +113,7 @@ Item {
       : Style.normalFillFor(root.foreground, root.accent)
     borderSpec: Border.controlSpec(root.checked ? "selected" : "normal", root.foreground, root.accent)
 
-    Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on color { ColorAnimation { duration: Semantics.duration(root.semanticProfile, 120) } }
 
     Rectangle {
       width: root.knobSize
@@ -94,8 +123,8 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       color: root.checked ? Style.selectedStateColor(root.foreground, root.accent) : Qt.darker(root.foreground, 1.25)
 
-      Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-      Behavior on color { ColorAnimation { duration: 120 } }
+      Behavior on x { NumberAnimation { duration: Semantics.duration(root.semanticProfile, 120); easing.type: Easing.OutCubic } }
+      Behavior on color { ColorAnimation { duration: Semantics.duration(root.semanticProfile, 120) } }
     }
   }
 
@@ -106,6 +135,9 @@ Item {
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     onContainsMouseChanged: root.hovered(containsMouse)
-    onClicked: if (!root.busy) root.toggled()
+    onClicked: {
+      if (root.focusable) root.forceActiveFocus()
+      if (!root.busy) root.toggled()
+    }
   }
 }
