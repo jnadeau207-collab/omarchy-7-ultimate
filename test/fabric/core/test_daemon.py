@@ -37,10 +37,24 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
         try:
             version = await client.request("version")
             health = await client.request("health")
+            catalog = await client.request("provider.catalog")
             self.assertEqual(version["protocol"], PROTOCOL_NAME)
             self.assertEqual(version["version"], 0)
             self.assertEqual(health["status"], "healthy")
             self.assertEqual(health["database"]["journalMode"], "wal")
+            self.assertEqual(health["providers"]["typed"], 6)
+            self.assertEqual(health["providers"]["availableTyped"], 6)
+            self.assertEqual(
+                [entry["manifest"]["provider"] for entry in catalog["providers"]],
+                [
+                    "audio.provider",
+                    "bluetooth.provider",
+                    "display.provider",
+                    "input.provider",
+                    "network.provider",
+                    "power.provider",
+                ],
+            )
             self.assertTrue(health["socket"]["ownerOnly"])
             self.assertEqual(stat.S_IMODE(self.daemon.socket_path.stat().st_mode), 0o600)
         finally:

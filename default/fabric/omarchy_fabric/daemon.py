@@ -16,7 +16,7 @@ import struct
 import sys
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -46,6 +46,7 @@ from .protocol import (
     success_response,
     validate_request,
 )
+from .provider_builtins import build_builtin_providers
 from .provider_registry import ProviderRegistry, TypedProvider
 from .reference_operation import ReferenceOperationManager
 from .security import EndpointAdmission, EndpointPrincipal, PrincipalKind, SessionBindingStore
@@ -346,7 +347,7 @@ class DaemonConfig:
     socket_path: Path
     database_path: Path
     event_retention: int = DEFAULT_EVENT_RETENTION
-    typed_providers: tuple[TypedProvider, ...] = ()
+    typed_providers: tuple[TypedProvider, ...] = field(default_factory=build_builtin_providers)
 
 
 class ClientConnection:
