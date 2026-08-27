@@ -32,6 +32,8 @@ MAX_PROVIDER_DOCUMENT_BYTES = 256 * 1024
 MAX_PROVIDER_VALUE_BYTES = MAX_FRAME_BYTES - 8192
 MAX_PROVIDER_READ_SECONDS = 8.0
 MAX_PROVIDER_PREFLIGHT_SECONDS = 8.0
+MAX_PROVIDER_AVAILABILITY_DETAIL_BYTES = 500
+USABLE_PROVIDER_STATES = frozenset({"available", "degraded"})
 
 
 @runtime_checkable
@@ -54,6 +56,14 @@ class ProviderRegistration:
     state: str
 
 
+@dataclass(frozen=True)
+class ProviderAvailability:
+    """Code-owned initial availability declared by a typed provider builder."""
+
+    state: str
+    detail: str = ""
+
+
 @dataclass
 class _ProviderRecord:
     provider: TypedProvider
@@ -61,6 +71,7 @@ class _ProviderRecord:
     fingerprint: str
     validators: dict[tuple[str, str], Draft202012Validator]
     generation: int
+    registration_order: int
     state: str
     detail: str
     registered_at: float
@@ -109,6 +120,20 @@ def _validation_detail(error: ValidationError) -> str:
     if path:
         return f"{path}: {error.message}"
     return error.message
+
+
+def _valid_availability_detail(value: object, *, required: bool) -> bool:
+    if (
+        not isinstance(value, str)
+        or (required and not value)
+        or (value and not value.isprintable())
+    ):
+        return False
+    try:
+        encoded = value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return len(encoded) <= MAX_PROVIDER_AVAILABILITY_DETAIL_BYTES
 
 
 def _walk_json(value: Any):
@@ -175,6 +200,14 @@ class ProviderRegistry:
     def available_count(self) -> int:
         return sum(record.state == "available" for record in self._records.values())
 
+    @property
+    def degraded_count(self) -> int:
+        return sum(record.state == "degraded" for record in self._records.values())
+
+    @property
+    def usable_count(self) -> int:
+        return sum(record.state in USABLE_PROVIDER_STATES for record in self._records.values())
+
     def register(self, provider: TypedProvider) -> ProviderRegistration:
         """Register a code-selected provider or prove an identical registration."""
 
@@ -199,13 +232,14 @@ class ProviderRegistry:
             )
 
         now = self._clock()
-        state, detail = self._compatibility(manifest)
+        state, detail = self._initial_availability(provider, manifest)
         record = _ProviderRecord(
             provider=provider,
             manifest=manifest,
             fingerprint=fingerprint,
             validators=validators,
             generation=1,
+            registration_order=len(self._records),
             state=state,
             detail=detail,
             registered_at=now,
@@ -243,7 +277,12 @@ class ProviderRegistry:
                 retryable=True,
                 recovery_actions=("provider.refresh",),
             )
-        if existing.fingerprint == fingerprint and existing.state == "available":
+        state, detail = self._initial_availability(provider, manifest)
+        if (
+            existing.fingerprint == fingerprint
+            and existing.state == state
+            and existing.detail == detail
+        ):
             return ProviderRegistration(
                 provider_id,
                 manifest["providerVersion"],
@@ -252,7 +291,6 @@ class ProviderRegistry:
                 existing.state,
             )
 
-        state, detail = self._compatibility(manifest)
         now = self._clock()
         replacement = _ProviderRecord(
             provider=provider,
@@ -260,6 +298,7 @@ class ProviderRegistry:
             fingerprint=fingerprint,
             validators=validators,
             generation=existing.generation + 1,
+            registration_order=existing.registration_order,
             state=state,
             detail=detail,
             registered_at=existing.registered_at,
@@ -294,7 +333,7 @@ class ProviderRegistry:
                 retryable=True,
                 recovery_actions=("provider.refresh",),
             )
-        if not isinstance(detail, str) or not 1 <= len(detail) <= 2000:
+        if not _valid_availability_detail(detail, required=True):
             raise FabricError(
                 "provider.invalid-lifecycle",
                 "Fabric provider lifecycle update is invalid",
@@ -331,6 +370,7 @@ class ProviderRegistry:
                 ),
                 "fingerprint": record.fingerprint,
                 "generation": record.generation,
+                "registrationOrder": record.registration_order,
                 "state": record.state,
                 "detail": record.detail,
                 "registeredAt": record.registered_at,
@@ -359,7 +399,7 @@ class ProviderRegistry:
                 detail=provider_id,
                 recovery_actions=("system.update",),
             )
-        if record.state != "available":
+        if record.state not in USABLE_PROVIDER_STATES:
             raise self._unavailable(provider_id, detail=record.detail)
         action_contract = record.manifest["actions"].get(action)
         if action_contract is None:
@@ -422,7 +462,7 @@ class ProviderRegistry:
                 recovery_actions=("provider.retry",),
             ) from error
         current = self._records.get(provider_id)
-        if current is not record or record.generation != generation or record.state != "available":
+        if current is not record or record.generation != generation or record.state not in USABLE_PROVIDER_STATES:
             raise FabricError(
                 "provider.changed-during-read",
                 "Fabric provider changed during the read",
@@ -478,7 +518,7 @@ class ProviderRegistry:
                 detail=provider_id,
                 recovery_actions=("system.update",),
             )
-        if record.state != "available":
+        if record.state not in USABLE_PROVIDER_STATES:
             raise self._unavailable(provider_id, detail=record.detail)
         action_contract = record.manifest["actions"].get(action)
         if action_contract is None:
@@ -540,7 +580,7 @@ class ProviderRegistry:
                 recovery_actions=("provider.retry",),
             ) from error
         current = self._records.get(provider_id)
-        if current is not record or record.generation != generation or record.state != "available":
+        if current is not record or record.generation != generation or record.state not in USABLE_PROVIDER_STATES:
             raise FabricError(
                 "provider.changed-during-preflight",
                 "Fabric provider changed during preflight",
@@ -836,6 +876,50 @@ class ProviderRegistry:
             f"the daemon runs {self.protocol_version}.",
         )
 
+    def _initial_availability(
+        self,
+        provider: TypedProvider,
+        manifest: Mapping[str, Any],
+    ) -> tuple[str, str]:
+        state, detail = self._compatibility(manifest)
+        if state != "available":
+            return state, detail
+        try:
+            declaration = getattr(provider, "availability", None)
+        except Exception as error:
+            raise FabricError(
+                "provider.invalid-availability",
+                "Fabric provider availability is invalid",
+                "The provider availability declaration could not be read safely.",
+            ) from error
+        if declaration is None:
+            return state, detail
+        if not isinstance(declaration, ProviderAvailability):
+            raise FabricError(
+                "provider.invalid-availability",
+                "Fabric provider availability is invalid",
+                "Initial availability must use the code-owned provider availability contract.",
+                detail=manifest["provider"],
+            )
+        if declaration.state not in {"available", "degraded", "unavailable"}:
+            raise FabricError(
+                "provider.invalid-availability",
+                "Fabric provider availability is invalid",
+                "Initial availability uses an unsupported state.",
+                detail=manifest["provider"],
+            )
+        if not _valid_availability_detail(
+            declaration.detail,
+            required=declaration.state != "available",
+        ):
+            raise FabricError(
+                "provider.invalid-availability",
+                "Fabric provider availability is invalid",
+                "Initial availability requires a bounded printable explanation.",
+                detail=manifest["provider"],
+            )
+        return declaration.state, declaration.detail
+
     @staticmethod
     def _validate_value(
         validator: Draft202012Validator,
@@ -885,6 +969,7 @@ class ProviderRegistry:
             "provider": record.manifest["provider"],
             "providerVersion": record.manifest["providerVersion"],
             "generation": record.generation,
+            "registrationOrder": record.registration_order,
             "state": record.state,
             "transition": transition,
             "detail": record.detail,

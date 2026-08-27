@@ -180,8 +180,10 @@ assert health["socket"]["ownerOnly"] is True
 assert health["socket"]["mode"] == "0600"
 assert health["database"]["journalMode"] == "wal"
 assert health["database"]["integrity"] == "ok"
-assert health["providers"]["typed"] == 6
-assert health["providers"]["availableTyped"] == 6
+assert health["providers"]["typed"] == 22
+assert health["providers"]["availableTyped"] == 20
+assert health["providers"]["degradedTyped"] == 2
+assert health["providers"]["usableTyped"] == 22
 assert doctor["status"] == "healthy"
 assert all(check["status"] == "pass" for check in doctor["checks"])
 PY

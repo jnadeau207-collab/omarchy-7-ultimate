@@ -18,6 +18,7 @@ from helper import DaemonProcess, hello, raw_request
 from omarchy_fabric import daemon as daemon_module
 from omarchy_fabric.daemon import ClientConnection, DaemonConfig, FabricDaemon
 from omarchy_fabric.models import MAX_FRAME_BYTES, PROTOCOL_NAME, FabricError, RpcRequest
+from omarchy_fabric.provider_builtins import BUILTIN_PROVIDER_IDS
 from omarchy_fabric.security import EndpointAdmission, PrincipalKind, SessionBindingStore
 from omarchy_fabric.security.errors import SecurityValidationError
 
@@ -42,18 +43,20 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(version["version"], 0)
             self.assertEqual(health["status"], "healthy")
             self.assertEqual(health["database"]["journalMode"], "wal")
-            self.assertEqual(health["providers"]["typed"], 6)
-            self.assertEqual(health["providers"]["availableTyped"], 6)
+            self.assertEqual(health["providers"]["typed"], 22)
+            self.assertEqual(health["providers"]["availableTyped"], 20)
+            self.assertEqual(health["providers"]["degradedTyped"], 2)
+            self.assertEqual(health["providers"]["usableTyped"], 22)
             self.assertEqual(
                 [entry["manifest"]["provider"] for entry in catalog["providers"]],
+                sorted(BUILTIN_PROVIDER_IDS),
+            )
+            self.assertEqual(
                 [
-                    "audio.provider",
-                    "bluetooth.provider",
-                    "display.provider",
-                    "input.provider",
-                    "network.provider",
-                    "power.provider",
+                    entry["manifest"]["provider"]
+                    for entry in sorted(catalog["providers"], key=lambda entry: entry["registrationOrder"])
                 ],
+                list(BUILTIN_PROVIDER_IDS),
             )
             self.assertTrue(health["socket"]["ownerOnly"])
             self.assertEqual(stat.S_IMODE(self.daemon.socket_path.stat().st_mode), 0o600)

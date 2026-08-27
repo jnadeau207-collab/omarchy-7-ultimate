@@ -13,6 +13,8 @@ Each package exposes a code-owned factory. Registry wiring must import these exa
 - `omarchy_fabric.providers.input.build_provider`
 - `omarchy_fabric.providers.power.build_provider`
 
+The production builtin contract now contains 22 explicit provider specifications: these six leaves, Files and default applications, Software and Compatibility Center, and twelve administration/recovery leaves. Construction order is preserved in each catalog entry's `registrationOrder`, while the catalog array remains sorted by provider ID for backward-compatible consumers. A failed builder or admission becomes an unavailable minimal placeholder under the expected provider ID; it does not claim the failed provider's actions or capabilities, and registry availability is checked before action dispatch.
+
 Every factory returns an object with deeply immutable `manifest` and `schemas` mappings plus asynchronous `read`, `preflight`, `apply`, `validate`, and `rollback` methods. The standalone schemas use JSON Schema Draft 2020-12, carry exact `$id` and `x-omarchy-version` values, close every object, bound every collection and string, and use no external references.
 
 ## Leaf contracts
