@@ -252,6 +252,7 @@ static CHyprSignalListener                     g_onDestroy;
 static CHyprSignalListener                     g_onFullscreen;
 static CHyprSignalListener                     g_onUpdateRules;
 static CHyprSignalListener                     g_onTick;
+static CHyprSignalListener                     g_onMouseMove;
 static Desktop::Rule::CWindowRuleEffectContainer::storageType g_nobarEffectIdx = 0;
 static bool                                    g_inPluginApply = false;
 
@@ -263,6 +264,23 @@ static void later(std::function<void()> fn) {
   if (!g_pEventLoopManager)
     return;
   g_pEventLoopManager->doLater(std::move(fn));
+}
+
+// Interactive drag warps the window position and disconnects its animation,
+// so the animation tick is not guaranteed to run. The mouse signal fires before
+// DragController applies the new box; damage both sides and repeat on idle for
+// the post-drag box so the overhang cannot leave a perimeter trail.
+static void damageChromiumDrag(const Vector2D&, Event::SCallbackInfo&) {
+  if (!g_layoutManager)
+    return;
+  const auto target = g_layoutManager->dragController()->target();
+  const auto window = target ? target->window() : nullptr;
+  if (!window || !usesChromiumFrame(window))
+    return;
+
+  damageChromiumTransition(window);
+  PHLWINDOWREF ref = window;
+  later([ref]() { damageChromiumTransition(ref.lock()); });
 }
 
 static std::optional<bool> requestedMinimized(PHLWINDOW w) {
@@ -1108,6 +1126,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     }
   });
   g_onTick = Event::bus()->m_events.tick.listen([]() { damageChromiumAnimations(); });
+  g_onMouseMove = Event::bus()->m_events.input.mouse.move.listen(damageChromiumDrag);
   g_onFullscreen = Event::bus()->m_events.window.fullscreen.listen([](PHLWINDOW w) {
     syncCsdMaximizedState(w);
     PHLWINDOWREF ref = w;
@@ -1151,4 +1170,5 @@ APICALL EXPORT void PLUGIN_EXIT() {
   g_onFullscreen  = {};
   g_onUpdateRules = {};
   g_onTick        = {};
+  g_onMouseMove   = {};
 }
