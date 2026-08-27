@@ -246,6 +246,8 @@ grep -Fq 'g_chromiumDamageBoxes' "$ROOT/default/hypr/plugins/omarchy-minimize/ma
   || fail "Chromium overhang damage tracks the previous and current perimeter"
 grep -Fq 'g_onTick' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "Chromium overhang damage follows animated window motion"
+grep -Fq 'g_onMouseMove' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
+  || fail "Chromium overhang damage follows interactive drag motion"
 grep -Fq 'damageBox(previous->second)' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
   || fail "Chromium motion damages the old overhang so no perimeter trail remains"
 grep -Fq 'cache.cachedTexBox = windowBox' "$ROOT/default/hypr/plugins/omarchy-minimize/main.cpp" \
