@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:rpc-v0",
+  "title": "Omarchy Fabric provisional RPC v0",
+  "description": "Bounded newline-framed request, response, and push-event envelopes for the owner-scoped Fabric socket.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/successResponse"
+    },
+    {
+      "$ref": "#/$defs/errorResponse"
+    },
+    {
+      "$ref": "#/$defs/eventMessage"
+    }
+  ],
+  "$defs": {
+    "protocol": {
+      "const": "omarchy.fabric.rpc/v0"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/protocol"
+        },
+        "id": {
+          "$ref": "#/$defs/requestId"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "hello",
+            "version",
+            "health",
+            "provider.register",
+            "provider.list",
+            "provider.invoke",
+            "events.subscribe",
+            "events.unsubscribe"
+          ]
+        },
+        "params": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "hello"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/helloParams"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "enum": [
+                  "version",
+                  "health",
+                  "provider.list"
+                ]
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/emptyParams"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "provider.register"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/fakeProviderRegistration"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "provider.invoke"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/providerInvocation"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "events.subscribe"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/eventSubscription"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "events.unsubscribe"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/eventUnsubscribe"
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "successResponse": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "id",
+        "result"
+      ],
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/protocol"
+        },
+        "id": {
+          "$ref": "#/$defs/requestId"
+        },
+        "result": true
+      },
+      "additionalProperties": false
+    },
+    "errorResponse": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "id",
+        "error"
+      ],
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/protocol"
+        },
+        "id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/requestId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "$ref": "common-v0.json#/$defs/errorEnvelope"
+        }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "sequence",
+        "id",
+        "topic",
+        "payload",
+        "createdAt"
+      ],
+      "properties": {
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "id": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "topic": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "eventMessage": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "event"
+      ],
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/protocol"
+        },
+        "event": {
+          "$ref": "#/$defs/event"
+        }
+      },
+      "additionalProperties": false
+    },
+    "helloParams": {
+      "type": "object",
+      "required": [
+        "client",
+        "minVersion",
+        "maxVersion"
+      ],
+      "properties": {
+        "client": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "minVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxVersion": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "emptyParams": {
+      "type": "object",
+      "maxProperties": 0
+    },
+    "fakeProviderRegistration": {
+      "type": "object",
+      "required": [
+        "provider",
+        "version",
+        "actions"
+      ],
+      "properties": {
+        "provider": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "version": {
+          "$ref": "common-v0.json#/$defs/schemaVersion"
+        },
+        "actions": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 64
+        }
+      },
+      "additionalProperties": false
+    },
+    "providerInvocation": {
+      "type": "object",
+      "required": [
+        "provider",
+        "action",
+        "arguments",
+        "idempotencyKey"
+      ],
+      "properties": {
+        "provider": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "action": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "arguments": {
+          "type": "object"
+        },
+        "idempotencyKey": {
+          "$ref": "common-v0.json#/$defs/idempotencyKey"
+        }
+      },
+      "additionalProperties": false
+    },
+    "eventSubscription": {
+      "type": "object",
+      "required": [
+        "topics"
+      ],
+      "properties": {
+        "topics": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "common-v0.json#/$defs/stableId"
+              },
+              {
+                "const": "*"
+              }
+            ]
+          }
+        },
+        "after": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128
+        }
+      },
+      "additionalProperties": false
+    },
+    "eventUnsubscribe": {
+      "type": "object",
+      "required": [
+        "subscriptionId"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

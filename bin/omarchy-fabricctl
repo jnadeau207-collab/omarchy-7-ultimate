@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# omarchy:summary=Inspect the provisional per-user Fabric daemon
+# omarchy:args=[--socket PATH] [--json] <health|doctor|version>
+# omarchy:hidden=true
+
+set -euo pipefail
+
+fabric_python_path="$OMARCHY_PATH/default/fabric"
+if [[ -n ${PYTHONPATH:-} ]]; then
+  fabric_python_path+=":$PYTHONPATH"
+fi
+
+exec env PYTHONPATH="$fabric_python_path" python3 -m omarchy_fabric.health "$@"
