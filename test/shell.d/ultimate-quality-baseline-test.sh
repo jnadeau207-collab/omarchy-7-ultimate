@@ -9,6 +9,7 @@ quality_dir="$ROOT/default/ultimate/quality"
 gallery="$ROOT/shell/plugins/dev-gallery/QualityMatrix.qml"
 panel="$ROOT/shell/plugins/dev-gallery/GalleryPanel.qml"
 progress_ring="$ROOT/shell/Ui/ProgressRing.qml"
+card="$ROOT/shell/Ui/Card.qml"
 shell_root="$ROOT/shell/shell.qml"
 acceptance="$ROOT/test/acceptance.d/ultimate-accessibility-performance-test.sh"
 tmp_dir=$(mktemp -d)
@@ -61,6 +62,12 @@ if grep -Fq 'onValueChanged: canvas.requestPaint()' "$progress_ring"; then
   fail "quality gallery progress ring must not attach a nonexistent NumberAnimation value handler"
 fi
 pass "quality gallery progress ring uses a valid animation change handler"
+
+grep -Fq 'signal hovered(bool on)' "$card" ||
+  fail "interactive cards publish their hover contract"
+grep -Fq 'onContainsMouseChanged: root.hovered(containsMouse)' "$card" ||
+  fail "interactive cards drive the hover contract from the pointer area"
+pass "quality gallery cards expose the hover signal consumed by the live fixture"
 
 if grep -Fq 'var detail = errorString' "$shell_root"; then
   fail "shell Loader error handlers must not reference a nonexistent errorString property"
