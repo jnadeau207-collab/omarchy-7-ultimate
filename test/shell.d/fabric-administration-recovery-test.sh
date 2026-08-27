@@ -30,7 +30,20 @@ catalog = json.loads((root / "default/ultimate/administration/provider-catalog-v
 policy = json.loads((root / "default/ultimate/recovery/policy-v0.json").read_text())
 assert catalog["executionBoundary"] == "plan-only"
 assert catalog["authorizationBoundary"] == "central-fabric"
-assert len(catalog["providers"]) == 8
+assert [provider["id"] for provider in catalog["providers"]] == [
+    "account.provider",
+    "backup.provider",
+    "device.provider",
+    "diagnostics.provider",
+    "firewall.provider",
+    "printer.provider",
+    "process.provider",
+    "recovery.provider",
+    "schedule.provider",
+    "service.provider",
+    "storage.provider",
+    "update.provider",
+]
 assert all(provider["realMutation"] is False for provider in catalog["providers"])
 assert policy["restore"]["scope"] == "system"
 assert policy["restore"]["preserveHome"] is True

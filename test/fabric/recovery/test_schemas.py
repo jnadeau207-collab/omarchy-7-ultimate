@@ -52,7 +52,23 @@ class PublicSchemaTests(unittest.TestCase):
         policy = json.loads((ROOT / "default" / "ultimate" / "recovery" / "policy-v0.json").read_text(encoding="utf-8"))
         self.assertEqual(catalog["executionBoundary"], "plan-only")
         self.assertEqual(catalog["authorizationBoundary"], "central-fabric")
-        self.assertEqual(len(catalog["providers"]), 8)
+        self.assertEqual(
+            [provider["id"] for provider in catalog["providers"]],
+            [
+                "account.provider",
+                "backup.provider",
+                "device.provider",
+                "diagnostics.provider",
+                "firewall.provider",
+                "printer.provider",
+                "process.provider",
+                "recovery.provider",
+                "schedule.provider",
+                "service.provider",
+                "storage.provider",
+                "update.provider",
+            ],
+        )
         self.assertTrue(all(provider["realMutation"] is False for provider in catalog["providers"]))
         self.assertEqual(policy["restore"]["scope"], "system")
         self.assertTrue(policy["restore"]["preserveHome"])

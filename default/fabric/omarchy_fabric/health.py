@@ -58,11 +58,15 @@ def daemon_health(
     fake_provider_count: int = 0,
     typed_provider_count: int = 0,
     available_typed_provider_count: int = 0,
+    degraded_typed_provider_count: int = 0,
+    usable_typed_provider_count: int | None = None,
 ) -> dict[str, Any]:
     integrity = database.quick_check()
     journal_mode = database.journal_mode()
     socket = socket_health(socket_path)
     healthy = integrity == "ok" and journal_mode == "wal" and socket.get("ownerOnly") is True
+    if usable_typed_provider_count is None:
+        usable_typed_provider_count = available_typed_provider_count + degraded_typed_provider_count
     return {
         "status": "healthy" if healthy else "unhealthy",
         "protocol": {
@@ -90,6 +94,8 @@ def daemon_health(
             "fake": fake_provider_count,
             "typed": typed_provider_count,
             "availableTyped": available_typed_provider_count,
+            "degradedTyped": degraded_typed_provider_count,
+            "usableTyped": usable_typed_provider_count,
         },
         "events": {"subscriptions": subscription_count},
     }

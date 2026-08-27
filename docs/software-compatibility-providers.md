@@ -1,6 +1,6 @@
 # Software Center and Compatibility Center providers
 
-This foundation defines two code-owned Fabric providers that turn software acquisition and non-native application routing into typed, reviewable plans. It deliberately does not register either provider in the production daemon yet. Central provider registration, durable authorization, progress event publication, privileged execution, and UI integration remain root-owned seams.
+This foundation defines two code-owned Fabric providers that turn software acquisition and non-native application routing into typed, reviewable plans. Both are registered through the explicit production builtin list in `degraded` state because their checked-in inputs are contract seeds. Their read and preflight contracts are usable, but every production apply, validation, and rollback hook refuses execution until central durable authorization and externally attested release data exist.
 
 ## Software Center domain
 
@@ -50,9 +50,8 @@ The initial inputs live under `default/ultimate/software/` and `default/ultimate
 
 ## Integration seams
 
-The next integration step must remain centralized:
+The remaining integration must stay centralized:
 
-- add the two provider factories to the code-owned builtin registry only after root review;
 - bind apply, validation, rollback, cancellation, and reconciliation to the central durable operation coordinator rather than exposing a direct RPC mutation route;
 - translate adapter plans into existing Omarchy helpers or add reviewed privileged helpers where the declared executable does not exist;
 - publish checkpoint progress and operation projections through Fabric events;
@@ -60,4 +59,6 @@ The next integration step must remain centralized:
 - populate Compatibility Center host inputs from measured runtime, memory, disk, architecture, isolation, browser, Proton, and virtualization state rather than caller guesses;
 - connect Settings, Software Center, and Compatibility Center surfaces to the read and preflight contracts.
 
-Until those seams are complete, the implementation is intentionally a broad typed backend foundation with hermetic execution. It does not claim that host package mutation, recipe execution, VM provisioning, or UI flows are live.
+Production construction loads the catalog, source policy, recipes, and routing policy only from paths derived from the installed code root. It does not accept environment-selected roots or caller-selected files. Builder or admission failure is isolated as an unavailable placeholder under the expected provider ID, without copying the failed provider's capabilities or leaking exception text.
+
+Until the remaining seams are complete, the implementation is intentionally a broad typed backend foundation with hermetic execution. It does not claim that host package mutation, recipe execution, VM provisioning, or UI flows are live.
