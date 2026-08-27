@@ -10,6 +10,8 @@ gallery="$ROOT/shell/plugins/dev-gallery/QualityMatrix.qml"
 panel="$ROOT/shell/plugins/dev-gallery/GalleryPanel.qml"
 progress_ring="$ROOT/shell/Ui/ProgressRing.qml"
 card="$ROOT/shell/Ui/Card.qml"
+checkbox="$ROOT/shell/Ui/Checkbox.qml"
+radio_button="$ROOT/shell/Ui/RadioButton.qml"
 shell_root="$ROOT/shell/shell.qml"
 acceptance="$ROOT/test/acceptance.d/ultimate-accessibility-performance-test.sh"
 tmp_dir=$(mktemp -d)
@@ -68,6 +70,15 @@ grep -Fq 'signal hovered(bool on)' "$card" ||
 grep -Fq 'onContainsMouseChanged: root.hovered(containsMouse)' "$card" ||
   fail "interactive cards drive the hover contract from the pointer area"
 pass "quality gallery cards expose the hover signal consumed by the live fixture"
+
+for choice_control in "$checkbox" "$radio_button"; do
+  if grep -Eq 'label\.implicit(Width|Height)' "$choice_control"; then
+    fail "choice control sizing must not dereference the string-valued label property" "$choice_control"
+  fi
+done
+grep -Fq 'implicitWidth: box.implicitWidth' "$checkbox" || fail "checkbox sizing comes from its content row"
+grep -Fq 'implicitWidth: circle.implicitWidth' "$radio_button" || fail "radio sizing comes from its content row"
+pass "quality gallery choice controls have finite, non-circular implicit geometry"
 
 if grep -Fq 'var detail = errorString' "$shell_root"; then
   fail "shell Loader error handlers must not reference a nonexistent errorString property"
