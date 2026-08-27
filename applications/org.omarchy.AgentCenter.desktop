@@ -1,0 +1,28 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Agent Center
+GenericName=Agent Tasks and Automations
+Comment=Inspect managed agent work, approvals, automations, and trust
+TryExec=omarchy-launch-agent-center
+Exec=omarchy-launch-agent-center --source desktop %u
+Icon=system-run
+Terminal=false
+Categories=System;
+Keywords=agent;task;automation;approval;activity;usage;provider;
+MimeType=x-scheme-handler/omarchy-agent;
+StartupNotify=true
+StartupWMClass=org.omarchy.AgentCenter
+Actions=Tasks;Approvals;Automations;
+
+[Desktop Action Tasks]
+Name=Tasks & Runs
+Exec=omarchy-launch-agent-center --source desktop agent.tasks
+
+[Desktop Action Approvals]
+Name=Pending Approvals
+Exec=omarchy-launch-agent-center --source desktop agent.approvals
+
+[Desktop Action Automations]
+Name=Automations
+Exec=omarchy-launch-agent-center --source desktop agent.automations
