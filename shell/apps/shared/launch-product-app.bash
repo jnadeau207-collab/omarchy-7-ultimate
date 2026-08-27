@@ -35,46 +35,86 @@ Options:
 USAGE
 }
 
-product_app_focus() {
+product_app_window_address() {
   local app_id="$1"
-  local clients address active attempt
+  local clients address attempt
 
-  if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+  for (( attempt = 0; attempt < 50; attempt++ )); do
     if clients=$(hyprctl clients -j 2>/dev/null); then
-      address=$(jq -r --arg app "$app_id" '
+      if address=$(jq -r --arg app "$app_id" '
         [.[] | select(.class == $app or .initialClass == $app)]
         | sort_by(.focusHistoryID // 999999)
         | (.[0].address // empty)
-      ' <<<"$clients")
-      if [[ -n $address ]]; then
-        if OMARCHY_SHELL_IPC_TIMEOUT=0.5s "$OMARCHY_PATH/bin/omarchy-shell" window focus "$address" >/dev/null 2>&1; then
-          for (( attempt = 0; attempt < 10; attempt++ )); do
-            active=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty' 2>/dev/null)
-            if [[ ${active,,} == ${address,,} ]]; then
-              return 0
-            fi
-            sleep 0.02
-          done
+      ' <<<"$clients" 2>/dev/null); then
+        if [[ -n $address ]]; then
+          printf '%s\n' "$address"
+          return 0
         fi
+      fi
+    fi
+    sleep 0.02
+  done
 
-        # Recovery path for callers racing a shell restart. Hyprland can return
-        # success for a stale Lua address handle, so verify the active address
-        # instead of trusting the dispatcher exit status.
-        hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1
-        for (( attempt = 0; attempt < 10; attempt++ )); do
-          active=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty' 2>/dev/null)
-          if [[ ${active,,} == ${address,,} ]]; then
-            return 0
-          fi
-          sleep 0.02
-        done
+  return 1
+}
 
-        return 1
+product_app_active_address_is() {
+  local wanted="$1"
+  local active_json active
+
+  if active_json=$(hyprctl activewindow -j 2>/dev/null); then
+    if active=$(jq -r '.address // empty' <<<"$active_json" 2>/dev/null); then
+      if [[ ${active,,} == ${wanted,,} ]]; then
+        return 0
       fi
     fi
   fi
 
-  return 0
+  return 1
+}
+
+product_app_wait_for_focus() {
+  local address="$1"
+  local attempt
+
+  for (( attempt = 0; attempt < 50; attempt++ )); do
+    if product_app_active_address_is "$address"; then
+      return 0
+    fi
+    sleep 0.02
+  done
+
+  return 1
+}
+
+product_app_focus() {
+  local app_id="$1"
+  local address
+
+  if [[ -z ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+    return 0
+  fi
+
+  if address=$(product_app_window_address "$app_id"); then
+    :
+  else
+    return 1
+  fi
+
+  if OMARCHY_SHELL_IPC_TIMEOUT=0.5s "$OMARCHY_PATH/bin/omarchy-shell" window focus "$address" >/dev/null 2>&1; then
+    if product_app_wait_for_focus "$address"; then
+      return 0
+    fi
+  fi
+
+  # Recovery path for callers racing a shell restart. Hyprland can return
+  # success for a stale Lua address handle, so verify the active address
+  # instead of trusting the dispatcher exit status.
+  if ! hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  product_app_wait_for_focus "$address"
 }
 
 product_app_activate() {
@@ -149,8 +189,12 @@ launch_product_app() {
   fi
 
   if product_app_activate "$entrypoint" "$ipc_target" "$envelope"; then
-    product_app_focus "$app_id"
-    return 0
+    if product_app_focus "$app_id"; then
+      return 0
+    else
+      printf '%s could not be focused by the compositor.\n' "$app_id" >&2
+      return 1
+    fi
   else
     activation_status=$?
     if (( activation_status == 1 )); then
@@ -170,8 +214,12 @@ launch_product_app() {
   local attempt
   for (( attempt = 0; attempt < 100; attempt++ )); do
     if product_app_activate "$entrypoint" "$ipc_target" "$envelope"; then
-      product_app_focus "$app_id"
-      return 0
+      if product_app_focus "$app_id"; then
+        return 0
+      else
+        printf '%s started but could not be focused by the compositor.\n' "$app_id" >&2
+        return 1
+      fi
     else
       activation_status=$?
       if (( activation_status == 1 )); then
