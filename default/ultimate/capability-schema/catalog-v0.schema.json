@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:ultimate:capability-schema:catalog-v0",
+  "title": "Omarchy Ultimate provisional capability catalog",
+  "type": "object",
+  "required": ["$schema", "schemaVersion", "domain", "capabilities"],
+  "properties": {
+    "$schema": { "const": "urn:omarchy:ultimate:capability-schema:catalog-v0" },
+    "schemaVersion": { "const": "v0" },
+    "domain": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" },
+    "capabilities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/capability" },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "schemaNode": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "capability": {
+      "type": "object",
+      "required": ["id", "version", "provider", "kind", "effects", "schemas", "availability", "resourceScopes", "consent", "idempotency", "concurrency", "cancellation", "recovery", "redaction", "humanRoute", "agentCenterLabel", "proofIds", "source"],
+      "properties": {
+        "id": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/capabilityId" },
+        "version": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/schemaVersion" },
+        "provider": {
+          "type": "object",
+          "required": ["id", "version", "state"],
+          "properties": {
+            "id": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" },
+            "version": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/schemaVersion" },
+            "state": { "type": "string", "enum": ["present", "legacy-direct", "provider-missing"] }
+          },
+          "additionalProperties": false
+        },
+        "kind": { "type": "string", "enum": ["reader", "writer", "long-running"] },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/effectTag" },
+          "uniqueItems": true
+        },
+        "schemas": {
+          "type": "object",
+          "required": ["input", "state", "result", "error", "preflight", "progress", "undo"],
+          "properties": {
+            "input": { "$ref": "#/$defs/schemaNode" },
+            "state": { "$ref": "#/$defs/schemaNode" },
+            "result": { "$ref": "#/$defs/schemaNode" },
+            "error": { "$ref": "#/$defs/schemaNode" },
+            "preflight": { "$ref": "#/$defs/schemaNode" },
+            "progress": { "$ref": "#/$defs/schemaNode" },
+            "undo": { "$ref": "#/$defs/schemaNode" }
+          },
+          "additionalProperties": false
+        },
+        "availability": {
+          "type": "object",
+          "required": ["human", "agent", "claim"],
+          "properties": {
+            "human": { "type": "string", "enum": ["present", "partial", "missing"] },
+            "agent": { "type": "string", "enum": ["present", "unavailable"] },
+            "claim": { "type": "string", "enum": ["present", "partial", "missing"] }
+          },
+          "additionalProperties": false
+        },
+        "resourceScopes": {
+          "type": "array",
+          "items": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "consent": {
+          "type": "object",
+          "required": ["mode", "policy"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["none", "implicit", "per-operation", "high-risk"] },
+            "policy": { "type": "string", "minLength": 1, "maxLength": 1000 }
+          },
+          "additionalProperties": false
+        },
+        "idempotency": {
+          "type": "object",
+          "required": ["mode", "keyRequired"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["read", "idempotent", "keyed", "non-idempotent"] },
+            "keyRequired": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "concurrency": {
+          "type": "object",
+          "required": ["mode", "scope"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["parallel", "resource-serialized", "global-serialized"] },
+            "scope": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" }
+          },
+          "additionalProperties": false
+        },
+        "cancellation": {
+          "type": "object",
+          "required": ["mode", "limit"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["not-applicable", "before-apply", "cooperative", "uncancellable"] },
+            "limit": { "type": "string", "minLength": 1, "maxLength": 1000 }
+          },
+          "additionalProperties": false
+        },
+        "recovery": {
+          "type": "object",
+          "required": ["mode", "expectation", "stateFingerprintRequired"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["none", "undo", "compensating", "restore-point", "manual", "provider-missing"] },
+            "expectation": { "type": "string", "minLength": 1, "maxLength": 2000 },
+            "stateFingerprintRequired": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "redaction": {
+          "type": "object",
+          "required": ["fields", "policy"],
+          "properties": {
+            "fields": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+            "policy": { "type": "string", "minLength": 1, "maxLength": 1000 }
+          },
+          "additionalProperties": false
+        },
+        "humanRoute": {
+          "type": "object",
+          "required": ["status", "surface", "label", "path"],
+          "properties": {
+            "status": { "type": "string", "enum": ["visible", "planned", "missing"] },
+            "surface": { "type": "string", "minLength": 1, "maxLength": 160 },
+            "label": { "type": "string", "minLength": 1, "maxLength": 240 },
+            "path": { "type": "string", "maxLength": 500 }
+          },
+          "additionalProperties": false
+        },
+        "agentCenterLabel": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "proofIds": {
+          "type": "object",
+          "required": ["acceptance", "parity"],
+          "properties": {
+            "acceptance": { "type": "array", "items": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" }, "uniqueItems": true },
+            "parity": { "type": "array", "items": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" }, "uniqueItems": true }
+          },
+          "additionalProperties": false
+        },
+        "source": {
+          "type": "object",
+          "required": ["file", "symbol"],
+          "properties": {
+            "file": { "type": "string", "minLength": 1, "maxLength": 500 },
+            "symbol": { "type": "string", "minLength": 1, "maxLength": 240 },
+            "brokerVerb": { "type": ["string", "null"], "maxLength": 160 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,6074 @@
+{
+  "$schema": "urn:omarchy:ultimate:capability-schema:catalog-v0",
+  "schemaVersion": "v0",
+  "domain": "system-jobs",
+  "capabilities": [
+    {
+      "id": "desktop.icons.manage",
+      "version": "v0",
+      "provider": {
+        "id": "desktop.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "desktop.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "desktop.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Desktop",
+        "label": "Manage desktop icons",
+        "path": ""
+      },
+      "agentCenterLabel": "Manage desktop icons",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.desktop-icons-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:desktop.icons.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "desktop.wallpaper.set",
+      "version": "v0",
+      "provider": {
+        "id": "desktop.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "desktop.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "desktop.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Personalization",
+        "label": "Choose desktop background",
+        "path": "Start > Personalization > Background"
+      },
+      "agentCenterLabel": "Choose desktop background",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.desktop-wallpaper-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/image-picker/ImagePicker.qml",
+        "symbol": "ImagePicker.apply",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "desktop.context-menu.open",
+      "version": "v0",
+      "provider": {
+        "id": "desktop.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "desktop.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "desktop.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Desktop",
+        "label": "Open desktop context menu",
+        "path": ""
+      },
+      "agentCenterLabel": "Open desktop context menu",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.desktop-context-menu-open.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:desktop.context-menu.open",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.trash.manage",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "destructive"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Desktop",
+        "label": "Recycle or restore items",
+        "path": ""
+      },
+      "agentCenterLabel": "Recycle or restore items",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-trash-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:files.trash.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "shell.superbar.use",
+      "version": "v0",
+      "provider": {
+        "id": "shell.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "shell.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "shell.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "label": "Use taskbar controls",
+        "path": "Superbar"
+      },
+      "agentCenterLabel": "Use taskbar controls",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.shell-superbar-use.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/ultimate-taskbar/Taskbar.qml",
+        "symbol": "Taskbar",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "apps.launch",
+      "version": "v0",
+      "provider": {
+        "id": "apps.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "apps.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "apps.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start",
+        "label": "Launch an application",
+        "path": "Start > application"
+      },
+      "agentCenterLabel": "Launch an application",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.apps-launch.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/ultimate-start/Start.qml",
+        "symbol": "Start.launch",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "search.system.query",
+      "version": "v0",
+      "provider": {
+        "id": "search.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "search.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "search.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start",
+        "label": "Search apps, files, and settings",
+        "path": "Start > Search"
+      },
+      "agentCenterLabel": "Search apps, files, and settings",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.search-system-query.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/ultimate-start/Start.qml",
+        "symbol": "Start.search",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.this-pc.open",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Open This PC",
+        "path": "Superbar > Files"
+      },
+      "agentCenterLabel": "Open This PC",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-this-pc-open.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "omarchy-launch-nautilus",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "network.wifi.connect",
+      "version": "v0",
+      "provider": {
+        "id": "network.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "network.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "network.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "label": "Connect to Wi-Fi",
+        "path": "Superbar > Network"
+      },
+      "agentCenterLabel": "Connect to Wi-Fi",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.network-wifi-connect.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/panels/network/Panel.qml",
+        "symbol": "NetworkPanel.connect",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "network.manage",
+      "version": "v0",
+      "provider": {
+        "id": "network.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "network.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "network.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "label": "Manage network connections",
+        "path": "Superbar > Network"
+      },
+      "agentCenterLabel": "Manage network connections",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.network-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/panels/network/Panel.qml",
+        "symbol": "NetworkPanel",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "personalization.theme.set",
+      "version": "v0",
+      "provider": {
+        "id": "personalization.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "personalization.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "personalization.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Personalization",
+        "label": "Choose a theme",
+        "path": "Start > Personalization"
+      },
+      "agentCenterLabel": "Choose a theme",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.personalization-theme-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-theme-set",
+        "symbol": "omarchy-theme-set",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "printers.manage",
+      "version": "v0",
+      "provider": {
+        "id": "printers.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "printers.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "printers.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Devices and Printers",
+        "path": ""
+      },
+      "agentCenterLabel": "Devices and Printers",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.printers-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:printers.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "devices.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "devices.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "devices.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "devices.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Device Manager",
+        "path": ""
+      },
+      "agentCenterLabel": "Device Manager",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.devices-inspect.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:devices.inspect",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "software.installed.manage",
+      "version": "v0",
+      "provider": {
+        "id": "software.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "privileged"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "software.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "software.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Programs and Features",
+        "path": ""
+      },
+      "agentCenterLabel": "Programs and Features",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.software-installed-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:software.installed.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "apps.defaults.set",
+      "version": "v0",
+      "provider": {
+        "id": "apps.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "apps.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "apps.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Default apps",
+        "path": ""
+      },
+      "agentCenterLabel": "Default apps",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.apps-defaults-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:apps.defaults.set",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "accounts.manage",
+      "version": "v0",
+      "provider": {
+        "id": "accounts.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "privileged"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "accounts.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "accounts.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "User Accounts",
+        "path": ""
+      },
+      "agentCenterLabel": "User Accounts",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.accounts-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:accounts.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "credentials.manage",
+      "version": "v0",
+      "provider": {
+        "id": "credentials.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "privileged"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "credentials.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "credentials.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "manual",
+        "expectation": "Provide a state-fingerprint-guarded manual path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Credential Manager",
+        "path": ""
+      },
+      "agentCenterLabel": "Credential Manager",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.credentials-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:credentials.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "power.profile.set",
+      "version": "v0",
+      "provider": {
+        "id": "power.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "power.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "power.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "label": "Choose power mode",
+        "path": "Superbar > Power"
+      },
+      "agentCenterLabel": "Choose power mode",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.power-profile-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/panels/power/Panel.qml",
+        "symbol": "PowerPanel",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "audio.output.manage",
+      "version": "v0",
+      "provider": {
+        "id": "audio.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "audio.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "audio.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "label": "Choose audio output",
+        "path": "Superbar > Sound"
+      },
+      "agentCenterLabel": "Choose audio output",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.audio-output-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/panels/audio/Panel.qml",
+        "symbol": "AudioPanel",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "display.configure",
+      "version": "v0",
+      "provider": {
+        "id": "display.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "display.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "display.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "label": "Configure displays",
+        "path": "Superbar > Display"
+      },
+      "agentCenterLabel": "Configure displays",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.display-configure.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/panels/monitor/Panel.qml",
+        "symbol": "MonitorPanel",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "firewall.manage",
+      "version": "v0",
+      "provider": {
+        "id": "firewall.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "privileged",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "firewall.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "firewall.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "label": "Windows Firewall",
+        "path": "Start > Settings > Network > Firewall"
+      },
+      "agentCenterLabel": "Windows Firewall",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.firewall-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "install/config/firewall.sh",
+        "symbol": "firewall",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "update.install",
+      "version": "v0",
+      "provider": {
+        "id": "update.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged",
+        "download",
+        "network",
+        "restart",
+        "reboot"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "update.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "update.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "label": "Install system updates",
+        "path": "Start > Settings > Update"
+      },
+      "agentCenterLabel": "Install system updates",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.update-install.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:update.history.read",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "update.history.read",
+      "version": "v0",
+      "provider": {
+        "id": "update.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "update.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "update.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "label": "View update history",
+        "path": "Start > Settings > Update > History"
+      },
+      "agentCenterLabel": "View update history",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.update-history-read.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:update.history.read",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "backup.manage",
+      "version": "v0",
+      "provider": {
+        "id": "backup.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "backup.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "backup.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Backup and Restore",
+        "label": "Create and manage backups",
+        "path": "Start > Backup and Restore"
+      },
+      "agentCenterLabel": "Create and manage backups",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.backup-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-snapshot",
+        "symbol": "omarchy-snapshot",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "recovery.restore-point.create",
+      "version": "v0",
+      "provider": {
+        "id": "recovery.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "recovery.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "recovery.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "System Restore",
+        "label": "Create a restore point",
+        "path": "Start > System Restore"
+      },
+      "agentCenterLabel": "Create a restore point",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.recovery-restore-point-create.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-snapshot",
+        "symbol": "omarchy-snapshot",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "recovery.restore-point.rollback",
+      "version": "v0",
+      "provider": {
+        "id": "recovery.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged",
+        "destructive",
+        "restart",
+        "reboot"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "recovery.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "recovery.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "System Restore",
+        "label": "Restore the system",
+        "path": "Start > System Restore"
+      },
+      "agentCenterLabel": "Restore the system",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.recovery-restore-point-rollback.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-snapshot",
+        "symbol": "omarchy-snapshot",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "storage.disk.manage",
+      "version": "v0",
+      "provider": {
+        "id": "storage.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged",
+        "destructive"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "storage.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "storage.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "manual",
+        "expectation": "Provide a state-fingerprint-guarded manual path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Disk Management",
+        "path": ""
+      },
+      "agentCenterLabel": "Disk Management",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.storage-disk-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:storage.disk.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "processes.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "processes.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "processes.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "processes.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Task Manager",
+        "label": "View running applications and processes",
+        "path": "Superbar > Task Manager"
+      },
+      "agentCenterLabel": "View running applications and processes",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.processes-inspect.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "config/btop/btop.conf",
+        "symbol": "btop",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "resources.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "resources.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "resources.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "resources.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Resource Monitor",
+        "label": "Inspect system resources",
+        "path": ""
+      },
+      "agentCenterLabel": "Inspect system resources",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.resources-inspect.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:resources.inspect",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "services.manage",
+      "version": "v0",
+      "provider": {
+        "id": "services.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "privileged"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "services.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "services.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Services",
+        "label": "Manage system services",
+        "path": ""
+      },
+      "agentCenterLabel": "Manage system services",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.services-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:services.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "tasks.schedule",
+      "version": "v0",
+      "provider": {
+        "id": "tasks.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "tasks.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "tasks.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Task Scheduler",
+        "label": "Schedule a task",
+        "path": ""
+      },
+      "agentCenterLabel": "Schedule a task",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.tasks-schedule.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:tasks.schedule",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "events.history.read",
+      "version": "v0",
+      "provider": {
+        "id": "events.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "events.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "events.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Notification Center",
+        "label": "View notification and operation history",
+        "path": "Superbar > Notifications"
+      },
+      "agentCenterLabel": "View notification and operation history",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.events-history-read.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/notifications/Service.qml",
+        "symbol": "NotificationService.showHistory",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "remote-desktop.manage",
+      "version": "v0",
+      "provider": {
+        "id": "remote-desktop.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "privileged",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "remote-desktop.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "remote-desktop.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Remote Desktop",
+        "path": ""
+      },
+      "agentCenterLabel": "Remote Desktop",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.remote-desktop-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:remote-desktop.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "storage.encryption.manage",
+      "version": "v0",
+      "provider": {
+        "id": "storage.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged",
+        "destructive"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "storage.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "storage.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "manual",
+        "expectation": "Provide a state-fingerprint-guarded manual path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Drive Encryption",
+        "path": ""
+      },
+      "agentCenterLabel": "Drive Encryption",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.storage-encryption-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:storage.encryption.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "sharing.smb.connect",
+      "version": "v0",
+      "provider": {
+        "id": "sharing.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "sharing.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "sharing.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Files",
+        "label": "Connect to network share",
+        "path": ""
+      },
+      "agentCenterLabel": "Connect to network share",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.sharing-smb-connect.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:sharing.smb.connect",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "locale.configure",
+      "version": "v0",
+      "provider": {
+        "id": "locale.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "locale.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "locale.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "label": "Region and language",
+        "path": "Start > Settings > Time and language"
+      },
+      "agentCenterLabel": "Region and language",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.locale-configure.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/bar/widgets/KeyboardLayout.qml",
+        "symbol": "keyboard-layout",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "accessibility.configure",
+      "version": "v0",
+      "provider": {
+        "id": "accessibility.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "accessibility.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "accessibility.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Ease of Access",
+        "path": ""
+      },
+      "agentCenterLabel": "Ease of Access",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.accessibility-configure.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:accessibility.configure",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.associations.set",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Choose file associations",
+        "path": ""
+      },
+      "agentCenterLabel": "Choose file associations",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-associations-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:files.associations.set",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.properties.read",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "View Properties",
+        "path": "Files > right-click > Properties"
+      },
+      "agentCenterLabel": "View Properties",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-properties-read.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-properties",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "software.install",
+      "version": "v0",
+      "provider": {
+        "id": "software.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged",
+        "download",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "software.resource"
+      ],
+      "consent": {
+        "mode": "per-operation",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "software.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Software Center",
+        "label": "Install software",
+        "path": "Start > Software Center"
+      },
+      "agentCenterLabel": "Install software",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.software-install.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-pkg-add",
+        "symbol": "omarchy-pkg-add",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "software.uninstall",
+      "version": "v0",
+      "provider": {
+        "id": "software.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged",
+        "destructive"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "software.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "software.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Software Center",
+        "label": "Uninstall software",
+        "path": "Start > Software Center > Installed"
+      },
+      "agentCenterLabel": "Uninstall software",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.software-uninstall.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-pkg-drop",
+        "symbol": "omarchy-pkg-drop",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "compatibility.install",
+      "version": "v0",
+      "provider": {
+        "id": "compatibility.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "download",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "compatibility.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "compatibility.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Compatibility Center",
+        "label": "Install Windows software",
+        "path": ""
+      },
+      "agentCenterLabel": "Install Windows software",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.compatibility-install.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:compatibility.install",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "compatibility.uninstall",
+      "version": "v0",
+      "provider": {
+        "id": "compatibility.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "destructive"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "compatibility.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "compatibility.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Compatibility Center",
+        "label": "Uninstall Windows software",
+        "path": ""
+      },
+      "agentCenterLabel": "Uninstall Windows software",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.compatibility-uninstall.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:compatibility.uninstall",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "display.night-light.set",
+      "version": "v0",
+      "provider": {
+        "id": "display.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "display.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "display.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Quick Settings",
+        "label": "Turn night light on or off",
+        "path": "Superbar > Quick Settings"
+      },
+      "agentCenterLabel": "Turn night light on or off",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.display-night-light-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/services/nightlight/Service.qml",
+        "symbol": "NightlightService",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "gaming.proton.manage",
+      "version": "v0",
+      "provider": {
+        "id": "gaming.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "download",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "gaming.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "gaming.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "restore-point",
+        "expectation": "Provide a state-fingerprint-guarded restore-point path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Gaming and Proton",
+        "path": ""
+      },
+      "agentCenterLabel": "Gaming and Proton",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.gaming-proton-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:gaming.proton.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "privacy.manage",
+      "version": "v0",
+      "provider": {
+        "id": "privacy.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "privacy.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "privacy.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "Privacy controls",
+        "path": ""
+      },
+      "agentCenterLabel": "Privacy controls",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.privacy-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:privacy.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "fabric.capabilities.invoke",
+      "version": "v0",
+      "provider": {
+        "id": "fabric.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "present",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "fabric.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "fabric.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "manual",
+        "expectation": "Provide a state-fingerprint-guarded manual path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome and Superbar",
+        "label": "Invoke a catalogued window capability",
+        "path": "Window caption or Superbar taskbar action"
+      },
+      "agentCenterLabel": "Invoke a catalogued window capability",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.fabric-capabilities-invoke.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/services/CapabilityBroker.qml",
+        "symbol": "CapabilityBroker.invoke",
+        "brokerVerb": "invoke"
+      }
+    },
+    {
+      "id": "agents.center.manage",
+      "version": "v0",
+      "provider": {
+        "id": "agents.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "agents.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "agents.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Agent Center",
+        "label": "Manage agents and tasks",
+        "path": ""
+      },
+      "agentCenterLabel": "Manage agents and tasks",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.agents-center-manage.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:agents.center.manage",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "os.install",
+      "version": "v0",
+      "provider": {
+        "id": "os.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating",
+        "privileged",
+        "destructive",
+        "irreversible",
+        "reboot"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "os.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "os.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "manual",
+        "expectation": "Provide a state-fingerprint-guarded manual path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Installer",
+        "label": "Install Omarchy Ultimate",
+        "path": ""
+      },
+      "agentCenterLabel": "Install Omarchy Ultimate",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.os-install.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:os.install",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "bluetooth.audio.pair",
+      "version": "v0",
+      "provider": {
+        "id": "bluetooth.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "network"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "bluetooth.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "bluetooth.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "label": "Pair Bluetooth headphones",
+        "path": "Superbar > Bluetooth"
+      },
+      "agentCenterLabel": "Pair Bluetooth headphones",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.bluetooth-audio-pair.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/panels/bluetooth/Panel.qml",
+        "symbol": "BluetoothPanel.connectDevice",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "audio.volume.set",
+      "version": "v0",
+      "provider": {
+        "id": "audio.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "audio.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "audio.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "label": "Adjust output volume",
+        "path": "Superbar > Sound"
+      },
+      "agentCenterLabel": "Adjust output volume",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.audio-volume-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-audio-output-volume",
+        "symbol": "omarchy-audio-output-volume",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.downloads.open",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Open Downloads",
+        "path": "Superbar > Files > Downloads"
+      },
+      "agentCenterLabel": "Open Downloads",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-downloads-open.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-downloads",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.folder.create",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Create a folder",
+        "path": "Files > New Folder"
+      },
+      "agentCenterLabel": "Create a folder",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-folder-create.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-folder-create",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.entry.rename",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Rename an item",
+        "path": "Files > Rename"
+      },
+      "agentCenterLabel": "Rename an item",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-entry-rename.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-rename",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.copy",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Copy files",
+        "path": "Files > Copy and Paste"
+      },
+      "agentCenterLabel": "Copy files",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-copy.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-copy",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.archive.create",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Create a zip archive",
+        "path": "Files > Compress"
+      },
+      "agentCenterLabel": "Create a zip archive",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-archive-create.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-compress",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "storage.removable.mount",
+      "version": "v0",
+      "provider": {
+        "id": "storage.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "storage.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "storage.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Open removable storage",
+        "path": "Files > Devices"
+      },
+      "agentCenterLabel": "Open removable storage",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.storage-removable-mount.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-mount",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "storage.removable.eject",
+      "version": "v0",
+      "provider": {
+        "id": "storage.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "storage.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "storage.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Safely eject storage",
+        "path": "Files > Devices > Eject"
+      },
+      "agentCenterLabel": "Safely eject storage",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.storage-removable-eject.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-eject",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.document.open",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Open a document",
+        "path": "Files > document"
+      },
+      "agentCenterLabel": "Open a document",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-document-open.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-open",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "files.text.edit",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Text Editor",
+        "label": "Edit a text file",
+        "path": "Files > text file"
+      },
+      "agentCenterLabel": "Edit a text file",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-text-edit.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "bin/omarchy-launch-nautilus",
+        "symbol": "nautilus-text-edit",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "apps.startup.disable",
+      "version": "v0",
+      "provider": {
+        "id": "apps.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "apps.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "apps.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Task Manager",
+        "label": "Disable startup application",
+        "path": ""
+      },
+      "agentCenterLabel": "Disable startup application",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.apps-startup-disable.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:apps.startup.disable",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "input.keyboard-layout.set",
+      "version": "v0",
+      "provider": {
+        "id": "input.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "input.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "input.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "label": "Change keyboard layout",
+        "path": "Start > Settings > Keyboard"
+      },
+      "agentCenterLabel": "Change keyboard layout",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.input-keyboard-layout-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/bar/widgets/KeyboardLayout.qml",
+        "symbol": "keyboard-layout",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "system.info.read",
+      "version": "v0",
+      "provider": {
+        "id": "system.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "system.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading current state does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "system.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Settings",
+        "label": "System information",
+        "path": ""
+      },
+      "agentCenterLabel": "System information",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.system-info-read.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:system.info.read",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "troubleshooting.audio.run",
+      "version": "v0",
+      "provider": {
+        "id": "troubleshooting.provider",
+        "version": "v0",
+        "state": "provider-missing"
+      },
+      "kind": "long-running",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationProgress"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "troubleshooting.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "keyed",
+        "keyRequired": true
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "troubleshooting.resource"
+      },
+      "cancellation": {
+        "mode": "cooperative",
+        "limit": "The provider declares the last safe cancellation checkpoint before apply."
+      },
+      "recovery": {
+        "mode": "compensating",
+        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "missing",
+        "surface": "Troubleshooting",
+        "label": "Troubleshoot audio",
+        "path": ""
+      },
+      "agentCenterLabel": "Troubleshoot audio",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.troubleshooting-audio-run.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "symbol": "planned:troubleshooting.audio.run",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "power.shutdown",
+      "version": "v0",
+      "provider": {
+        "id": "power.provider",
+        "version": "v0",
+        "state": "legacy-direct"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating",
+        "logout"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "present",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "power.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "power.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "No durable mutation is expected.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start",
+        "label": "Shut down",
+        "path": "Start > Shut down"
+      },
+      "agentCenterLabel": "Shut down",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.power-shutdown.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/plugins/ultimate-start/Start.qml",
+        "symbol": "Start.shutdown",
+        "brokerVerb": null
+      }
+    }
+  ]
+}

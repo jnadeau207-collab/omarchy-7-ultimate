@@ -1,0 +1,611 @@
+#!/bin/bash
+
+# omarchy:summary=Validate the Ultimate capability and parity graph
+# omarchy:args=[--root PATH] [--data-root PATH]
+# omarchy:examples=omarchy dev capability check | omarchy dev capability check --root /path/to/omarchy | omarchy dev capability check --data-root /tmp/capability-fixture
+# omarchy:hidden=true
+
+set -euo pipefail
+
+export PYTHONDONTWRITEBYTECODE=1
+
+graph_root=${OMARCHY_PATH:-}
+graph_data_root=""
+
+while (( $# > 0 )); do
+  if [[ $1 == "--root" || $1 == "--data-root" ]]; then
+    option=$1
+    if [[ -n ${2:-} ]]; then
+      if [[ $option == "--root" ]]; then
+        graph_root=$2
+      else
+        graph_data_root=$2
+      fi
+      shift 2
+    else
+      echo "error: $option requires a path" >&2
+      exit 2
+    fi
+  else
+    echo "error: unexpected argument: $1" >&2
+    exit 2
+  fi
+done
+
+if [[ -z $graph_root ]]; then
+  echo "error: OMARCHY_PATH is required (or pass --root PATH)" >&2
+  exit 2
+fi
+
+if [[ -z $graph_data_root ]]; then
+  graph_data_root=$graph_root
+fi
+
+if ! python -c 'import jsonschema' >/dev/null 2>&1; then
+  echo "error: python-jsonschema is required for capability validation; install the python-jsonschema package" >&2
+  exit 2
+fi
+
+python - "$graph_root" "$graph_data_root" <<'PY'
+import json
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+from jsonschema import Draft202012Validator, FormatChecker
+from referencing import Registry, Resource
+
+
+root = Path(sys.argv[1]).resolve()
+data_root = Path(sys.argv[2]).resolve()
+errors = []
+
+
+def report(message):
+    errors.append(message)
+
+
+def display_path(path):
+    for base in (data_root, root):
+        try:
+            return str(path.relative_to(base))
+        except ValueError:
+            continue
+    return str(path)
+
+
+def load_json(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        report(f"missing required file: {display_path(path)}")
+    except json.JSONDecodeError as exc:
+        report(f"invalid JSON in {display_path(path)}: line {exc.lineno}, column {exc.colno}: {exc.msg}")
+    return None
+
+
+def dotted_path(parts):
+    if not parts:
+        return "$"
+    return "$" + "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts)
+
+
+schema_dir = data_root / "default/ultimate/capability-schema"
+capability_dir = data_root / "default/ultimate/capabilities"
+schema_paths = [
+    root / "default/fabric/schema/common-v0.json",
+    schema_dir / "contract-types-v0.json",
+    schema_dir / "catalog-v0.schema.json",
+    schema_dir / "window-surface-v0.schema.json",
+    schema_dir / "legacy-debt-v0.schema.json",
+    schema_dir / "parity-jobs-v0.schema.json",
+]
+
+schema_docs = {}
+for path in schema_paths:
+    document = load_json(path)
+    if document is None:
+        continue
+    schema_id = document.get("$id")
+    if not schema_id:
+        report(f"schema has no $id: {display_path(path)}")
+        continue
+    if schema_id in schema_docs:
+        report(f"duplicate schema $id {schema_id}: {display_path(path)}")
+        continue
+    schema_docs[schema_id] = document
+    try:
+        Draft202012Validator.check_schema(document)
+    except Exception as exc:
+        report(f"invalid JSON Schema {display_path(path)}: {exc}")
+
+
+registry = Registry().with_resources(
+    (schema_id, Resource.from_contents(document))
+    for schema_id, document in schema_docs.items()
+)
+
+
+def validate_document(document, schema_id, label):
+    schema = schema_docs.get(schema_id)
+    if schema is None or document is None:
+        return
+    validator = Draft202012Validator(schema, registry=registry, format_checker=FormatChecker())
+    for issue in sorted(validator.iter_errors(document), key=lambda item: list(item.absolute_path)):
+        report(f"{label} {dotted_path(issue.absolute_path)}: {issue.message}")
+
+
+catalog_paths = sorted(capability_dir.glob("catalog-*-v0.json"))
+if not catalog_paths:
+    report("no capability catalog manifests found")
+catalog_docs = [(path, load_json(path)) for path in catalog_paths]
+surface_path = capability_dir / "window-surface-v0.json"
+debt_path = capability_dir / "legacy-debt-v0.json"
+jobs_path = data_root / "default/ultimate/parity/jobs.json"
+surface = load_json(surface_path)
+debt = load_json(debt_path)
+jobs = load_json(jobs_path)
+
+for path, document in catalog_docs:
+    validate_document(document, "urn:omarchy:ultimate:capability-schema:catalog-v0", display_path(path))
+validate_document(surface, "urn:omarchy:ultimate:capability-schema:window-surface-v0", display_path(surface_path))
+validate_document(debt, "urn:omarchy:ultimate:capability-schema:legacy-debt-v0", display_path(debt_path))
+validate_document(jobs, "urn:omarchy:ultimate:capability-schema:parity-jobs-v0", display_path(jobs_path))
+
+
+def walk_refs(node):
+    if isinstance(node, dict):
+        if isinstance(node.get("$ref"), str):
+            yield node["$ref"]
+        for value in node.values():
+            yield from walk_refs(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from walk_refs(value)
+
+
+def resolve_pointer(document, fragment):
+    if fragment in ("", "#"):
+        return document
+    if not fragment.startswith("#/"):
+        raise KeyError(fragment)
+    current = document
+    for raw in fragment[2:].split("/"):
+        key = raw.replace("~1", "/").replace("~0", "~")
+        current = current[key]
+    return current
+
+
+def check_schema_refs(node, label, local_document=None):
+    try:
+        Draft202012Validator.check_schema(node)
+    except Exception as exc:
+        report(f"invalid embedded schema {label}: {exc}")
+        return
+    for reference in walk_refs(node):
+        base, marker, fragment = reference.partition("#")
+        if base:
+            target = schema_docs.get(base)
+            if target is None:
+                report(f"broken schema reference in {label}: {reference}")
+                continue
+        else:
+            target = local_document
+            if target is None:
+                report(f"relative schema reference has no document in {label}: {reference}")
+                continue
+        try:
+            resolve_pointer(target, f"#{fragment}" if marker else "")
+        except (KeyError, IndexError, TypeError):
+            report(f"broken schema reference in {label}: {reference}")
+
+
+for schema_id, schema in schema_docs.items():
+    check_schema_refs(schema, schema_id, schema)
+
+capabilities = []
+for path, document in catalog_docs:
+    if isinstance(document, dict) and isinstance(document.get("capabilities"), list):
+        for capability in document["capabilities"]:
+            if isinstance(capability, dict):
+                capabilities.append(capability)
+
+capability_counts = Counter(capability.get("id") for capability in capabilities if capability.get("id"))
+for capability_id, count in sorted(capability_counts.items()):
+    if count > 1:
+        report(f"duplicate capability id: {capability_id}")
+capability_by_id = {capability.get("id"): capability for capability in capabilities if capability.get("id")}
+
+for capability in capabilities:
+    capability_id = capability.get("id", "<missing>")
+    schemas = capability.get("schemas", {})
+    if isinstance(schemas, dict):
+        for slot, schema in schemas.items():
+            if isinstance(schema, dict):
+                check_schema_refs(schema, f"capability {capability_id} schema {slot}")
+    source = capability.get("source", {})
+    source_file = source.get("file") if isinstance(source, dict) else None
+    if source_file and not (root / source_file).exists():
+        report(f"capability {capability_id} names a missing source file: {source_file}")
+    effects = set(capability.get("effects", []))
+    recovery = capability.get("recovery", {})
+    consent = capability.get("consent", {})
+    preflight = schemas.get("preflight", {}) if isinstance(schemas, dict) else {}
+    preflight_ref = preflight.get("$ref", "") if isinstance(preflight, dict) else ""
+    if effects.intersection({"destructive", "irreversible"}):
+        if preflight_ref.endswith("/notApplicable"):
+            report(f"destructive capability {capability_id} has no preflight schema")
+        if consent.get("mode") not in {"per-operation", "high-risk"}:
+            report(f"destructive capability {capability_id} lacks consequential consent")
+        if recovery.get("mode") in {"none", "provider-missing", None}:
+            report(f"destructive capability {capability_id} has no recovery safeguard")
+        if not recovery.get("stateFingerprintRequired"):
+            report(f"destructive capability {capability_id} does not require a state fingerprint")
+    if capability.get("kind") == "long-running":
+        progress = schemas.get("progress", {}) if isinstance(schemas, dict) else {}
+        if isinstance(progress, dict) and progress.get("$ref", "").endswith("/notApplicable"):
+            report(f"long-running capability {capability_id} has no progress schema")
+    availability = capability.get("availability", {})
+    route = capability.get("humanRoute", {})
+    if capability.get("kind") != "reader" and availability.get("agent") == "present":
+        if availability.get("human") == "missing" or route.get("status") != "visible" or not route.get("path"):
+            report(f"agent mutation {capability_id} has no visible human route")
+    if availability.get("claim") == "present":
+        proofs = capability.get("proofIds", {})
+        if capability.get("provider", {}).get("state") != "present":
+            report(f"capability {capability_id} falsely claims present without a present provider")
+        if availability.get("human") != "present" or route.get("status") != "visible" or not route.get("path"):
+            report(f"capability {capability_id} falsely claims present without a complete human route")
+        if not proofs.get("acceptance") or not proofs.get("parity"):
+            report(f"capability {capability_id} falsely claims present without acceptance and parity proof ids")
+
+debt_entries = debt.get("entries", []) if isinstance(debt, dict) else []
+debt_counts = Counter(entry.get("id") for entry in debt_entries if isinstance(entry, dict) and entry.get("id"))
+for debt_id, count in sorted(debt_counts.items()):
+    if count > 1:
+        report(f"duplicate legacy debt id: {debt_id}")
+debt_by_id = {entry.get("id"): entry for entry in debt_entries if isinstance(entry, dict) and entry.get("id")}
+
+job_entries = jobs.get("jobs", []) if isinstance(jobs, dict) else []
+job_counts = Counter(entry.get("id") for entry in job_entries if isinstance(entry, dict) and entry.get("id"))
+for job_id, count in sorted(job_counts.items()):
+    if count > 1:
+        report(f"duplicate parity job id: {job_id}")
+
+for entry in debt_entries:
+    if not isinstance(entry, dict):
+        continue
+    for capability_id in entry.get("capabilityIds", []):
+        if capability_id not in capability_by_id:
+            report(f"legacy debt {entry.get('id')} has broken capability reference: {capability_id}")
+
+for job in job_entries:
+    if not isinstance(job, dict):
+        continue
+    job_id = job.get("id", "<missing>")
+    resolved = []
+    for capability_id in job.get("capabilityIds", []):
+        capability = capability_by_id.get(capability_id)
+        if capability is None:
+            report(f"job {job_id} has broken capability reference: {capability_id}")
+        else:
+            resolved.append(capability)
+    if job.get("agentAvailability") == "present":
+        unavailable = [cap.get("id") for cap in resolved if cap.get("availability", {}).get("agent") != "present"]
+        if unavailable:
+            report(f"job {job_id} claims agent availability through unavailable capabilities: {', '.join(unavailable)}")
+    if job.get("claim") == "present":
+        route = job.get("humanRoute", {})
+        if route.get("status") != "visible" or not route.get("path"):
+            report(f"job {job_id} falsely claims present without a visible human route")
+        if job.get("agentAvailability") != "present":
+            report(f"job {job_id} falsely claims present while agents are unavailable")
+        if not job.get("proofIds"):
+            report(f"job {job_id} falsely claims present without proof ids")
+        unavailable = [cap.get("id") for cap in resolved if cap.get("provider", {}).get("state") != "present" or cap.get("availability", {}).get("agent") != "present"]
+        if unavailable:
+            report(f"job {job_id} falsely claims present through incomplete capabilities: {', '.join(unavailable)}")
+    if job.get("proofStatus") == "automated" and not any(proof.startswith("windows-native.automated.") for proof in job.get("proofIds", [])):
+        report(f"automated job {job_id} has no automated proof id")
+
+
+def markdown_rows(path, sections):
+    rows = []
+    section = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## "):
+            candidate = line[3:].strip()
+            section = candidate if candidate in sections else None
+            continue
+        if section is None or not line.startswith("|"):
+            continue
+        columns = [column.strip() for column in line.strip().strip("|").split("|")]
+        if len(columns) < 2 or columns[0] in {"Job", "---", "-----"} or set(columns[0]) == {"-"}:
+            continue
+        rows.append((section, columns[0], columns[1]))
+    return rows
+
+
+parity_source = markdown_rows(root / "WINDOWS_7_ULTIMATE_PARITY.md", {"Desktop jobs", "2026 layers"})
+parity_inventory = [
+    (entry.get("source", {}).get("section"), entry.get("sourceLabel"), entry.get("sourceStatus"))
+    for entry in job_entries
+    if entry.get("kind") == "parity-job"
+]
+if parity_inventory != parity_source:
+    missing = sorted(set(parity_source) - set(parity_inventory))
+    extra = sorted(set(parity_inventory) - set(parity_source))
+    if missing:
+        report("unregistered parity matrix rows: " + "; ".join(row[1] for row in missing))
+    if extra:
+        report("stale parity job rows: " + "; ".join(row[1] for row in extra))
+    if not missing and not extra:
+        report("parity job order or source metadata does not match WINDOWS_7_ULTIMATE_PARITY.md")
+
+task_source = []
+for line in (root / "WINDOWS_NATIVE_ACCEPTANCE.md").read_text(encoding="utf-8").splitlines():
+    match = re.match(r"^\|\s*(\d+)\s*\|\s*(.*?)\s*\|\s*(pending|manual|automated)\s*\|$", line)
+    if match:
+        task_source.append((int(match.group(1)), match.group(2), match.group(3)))
+task_inventory = [
+    (entry.get("source", {}).get("row"), entry.get("sourceLabel"), entry.get("sourceStatus"))
+    for entry in job_entries
+    if entry.get("kind") == "windows-native-task"
+]
+if task_inventory != task_source:
+    missing = sorted(set(task_source) - set(task_inventory))
+    extra = sorted(set(task_inventory) - set(task_source))
+    if missing:
+        report("unregistered Windows-native tasks: " + "; ".join(str(row[0]) for row in missing))
+    if extra:
+        report("stale Windows-native task rows: " + "; ".join(str(row[0]) for row in extra))
+    if not missing and not extra:
+        report("Windows-native task order or source metadata does not match WINDOWS_NATIVE_ACCEPTANCE.md")
+if len(task_source) != 40:
+    report(f"WINDOWS_NATIVE_ACCEPTANCE.md must contain forty numbered tasks, found {len(task_source)}")
+
+service_methods = surface.get("serviceMethods", []) if isinstance(surface, dict) else []
+ipc_paths = surface.get("ipcPaths", []) if isinstance(surface, dict) else []
+service_name_counts = Counter(item.get("name") for item in service_methods if isinstance(item, dict) and item.get("name"))
+ipc_name_counts = Counter(item.get("name") for item in ipc_paths if isinstance(item, dict) and item.get("name"))
+for name, count in sorted(service_name_counts.items()):
+    if count > 1:
+        report(f"duplicate WindowService inventory method: {name}")
+for name, count in sorted(ipc_name_counts.items()):
+    if count > 1:
+        report(f"duplicate window IPC inventory path: {name}")
+
+service_file = root / surface.get("serviceFile", "") if isinstance(surface, dict) else root
+broker_file = root / surface.get("brokerFile", "") if isinstance(surface, dict) else root
+ipc_file = root / surface.get("ipcFile", "") if isinstance(surface, dict) else root
+
+if service_file.is_file():
+    service_text = service_file.read_text(encoding="utf-8")
+    actual_public = re.findall(r"^  function ([A-Za-z][A-Za-z0-9_]*)\(", service_text, re.MULTILINE)
+    inventory_public = [item.get("name") for item in service_methods]
+    if actual_public != inventory_public:
+        missing = sorted(set(actual_public) - set(inventory_public))
+        extra = sorted(set(inventory_public) - set(actual_public))
+        if missing:
+            report("unregistered WindowService public methods: " + ", ".join(missing))
+        if extra:
+            report("stale WindowService method inventory: " + ", ".join(extra))
+        if not missing and not extra:
+            report("WindowService public method order does not match its inventory")
+else:
+    report(f"WindowService source is missing: {service_file}")
+
+broker_verbs = []
+if broker_file.is_file():
+    broker_text = broker_file.read_text(encoding="utf-8")
+    block_match = re.search(r"property var windowVerbs:\s*\(\{(.*?)^  \}\)", broker_text, re.MULTILINE | re.DOTALL)
+    if block_match:
+        broker_verbs = re.findall(r"^    ([A-Za-z][A-Za-z0-9_]*):", block_match.group(1), re.MULTILINE)
+    else:
+        report("could not locate CapabilityBroker.windowVerbs")
+else:
+    report(f"CapabilityBroker source is missing: {broker_file}")
+
+catalogued_inventory = [item.get("name") for item in service_methods if item.get("catalogState") == "broker-catalogued"]
+if set(catalogued_inventory) != set(broker_verbs):
+    missing = sorted(set(broker_verbs) - set(catalogued_inventory))
+    extra = sorted(set(catalogued_inventory) - set(broker_verbs))
+    if missing:
+        report("unregistered broker window verbs: " + ", ".join(missing))
+    if extra:
+        report("inventory falsely marks absent broker verbs as catalogued: " + ", ".join(extra))
+
+
+def debt_covers(debt_id, state, capability_id, surface_ref):
+    entry = debt_by_id.get(debt_id)
+    if entry is None:
+        report(f"missing legacy debt entry {debt_id} for {surface_ref}")
+        return
+    if entry.get("state") != state:
+        report(f"legacy debt {debt_id} has state {entry.get('state')}, expected {state}")
+    if capability_id not in entry.get("capabilityIds", []):
+        report(f"legacy debt {debt_id} does not cover capability {capability_id}")
+    if surface_ref not in entry.get("surfaceRefs", []):
+        report(f"legacy debt {debt_id} does not cover surface {surface_ref}")
+
+
+for item in service_methods:
+    if not isinstance(item, dict):
+        continue
+    name = item.get("name")
+    capability_id = item.get("capabilityId")
+    if item.get("kind") == "reader":
+        if item.get("catalogState") != "reader" or capability_id is not None or item.get("debtId") is not None:
+            report(f"WindowService reader {name} is not recorded as a debt-free reader")
+        continue
+    capability = capability_by_id.get(capability_id)
+    if capability is None:
+        report(f"WindowService writer {name} has broken capability reference: {capability_id}")
+        continue
+    if capability.get("source", {}).get("symbol") != f"WindowService.{name}":
+        report(f"WindowService writer {name} points at a mismatched capability source symbol")
+    if item.get("catalogState") == "broker-catalogued":
+        if capability.get("source", {}).get("brokerVerb") != name:
+            report(f"broker-catalogued WindowService writer {name} lacks a matching brokerVerb")
+        if item.get("debtId") is not None:
+            report(f"broker-catalogued WindowService writer {name} carries service-level legacy debt")
+    elif item.get("catalogState") == "legacy-direct":
+        debt_covers(item.get("debtId"), "legacy-direct", capability_id, f"window-service:{name}")
+        if capability.get("availability", {}).get("agent") != "unavailable":
+            report(f"legacy-direct WindowService writer {name} falsely claims agent availability")
+    else:
+        report(f"WindowService writer {name} has invalid catalog state {item.get('catalogState')}")
+
+ipc_chunks = {}
+actual_ipc = []
+if ipc_file.is_file():
+    ipc_text = ipc_file.read_text(encoding="utf-8")
+    target_index = ipc_text.find('target: "window"')
+    handler_start = ipc_text.rfind("  IpcHandler {", 0, target_index)
+    if target_index < 0 or handler_start < 0:
+        report("could not locate target=window IpcHandler")
+    else:
+        handler = ipc_text[handler_start:]
+        matches = list(re.finditer(r"^    function ([A-Za-z][A-Za-z0-9_]*)\(", handler, re.MULTILINE))
+        actual_ipc = [match.group(1) for match in matches]
+        for index, match in enumerate(matches):
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(handler)
+            ipc_chunks[match.group(1)] = handler[match.start():end]
+else:
+    report(f"window IPC source is missing: {ipc_file}")
+
+inventory_ipc = [item.get("name") for item in ipc_paths]
+if actual_ipc != inventory_ipc:
+    missing = sorted(set(actual_ipc) - set(inventory_ipc))
+    extra = sorted(set(inventory_ipc) - set(actual_ipc))
+    if missing:
+        report("unregistered window IPC paths: " + ", ".join(missing))
+    if extra:
+        report("stale window IPC inventory paths: " + ", ".join(extra))
+    if not missing and not extra:
+        report("window IPC path order does not match its inventory")
+
+for item in ipc_paths:
+    if not isinstance(item, dict):
+        continue
+    name = item.get("name")
+    capability_id = item.get("capabilityId")
+    routing = item.get("routing")
+    kind = item.get("kind")
+    if capability_id is not None and capability_id not in capability_by_id:
+        report(f"window IPC path {name} has broken capability reference: {capability_id}")
+    if routing in {"direct-window-service", "direct-ui"}:
+        debt_covers(item.get("debtId"), "legacy-direct", capability_id, f"window-ipc:{name}")
+    elif item.get("debtId") is not None:
+        report(f"non-direct window IPC path {name} carries legacy-direct debt")
+    if kind in {"health", "reader"} and routing != "read-only":
+        report(f"read-only window IPC path {name} has mutating routing {routing}")
+    if kind in {"dedicated-writer", "ui-writer"} and routing not in {"direct-window-service", "direct-ui"}:
+        report(f"writer window IPC path {name} is not recorded as a direct bypass")
+    chunk = ipc_chunks.get(name, "")
+    if routing == "broker-generic" and "shell.capabilityBroker.invoke(" not in chunk:
+        report(f"window IPC path {name} no longer calls the generic capability broker")
+    if routing == "broker-undo" and "shell.capabilityBroker.undoLast(" not in chunk:
+        report(f"window IPC path {name} no longer calls broker undo")
+    if routing == "direct-ui" and "shell.summon(" not in chunk:
+        report(f"window IPC path {name} no longer owns the recorded direct UI mutation")
+    actual_targets = []
+    for target in re.findall(r"(?:shell\.windowService|\bsvc)\.([A-Za-z][A-Za-z0-9_]*)\(", chunk):
+        if target not in actual_targets:
+            actual_targets.append(target)
+    if actual_targets != item.get("targetMethods", []):
+        report(f"window IPC path {name} target methods changed: source={actual_targets}, inventory={item.get('targetMethods', [])}")
+
+known_surface_refs = {
+    *(f"window-service:{item.get('name')}" for item in service_methods),
+    *(f"window-ipc:{item.get('name')}" for item in ipc_paths),
+    *(f"capability:{capability_id}" for capability_id in capability_by_id),
+}
+valid_legacy_refs = {
+    *(f"window-service:{item.get('name')}" for item in service_methods if item.get("catalogState") == "legacy-direct"),
+    *(f"window-ipc:{item.get('name')}" for item in ipc_paths if item.get("routing") in {"direct-window-service", "direct-ui"}),
+    *(f"capability:{capability_id}" for capability_id, capability in capability_by_id.items() if capability.get("provider", {}).get("state") == "legacy-direct"),
+}
+valid_provider_missing_refs = {
+    f"capability:{capability_id}" for capability_id, capability in capability_by_id.items()
+    if capability.get("provider", {}).get("state") == "provider-missing"
+}
+valid_agent_unavailable_refs = {
+    f"capability:{capability_id}" for capability_id, capability in capability_by_id.items()
+    if capability.get("availability", {}).get("agent") == "unavailable"
+}
+
+state_valid_refs = {
+    "legacy-direct": valid_legacy_refs,
+    "provider-missing": valid_provider_missing_refs,
+    "agent-unavailable": valid_agent_unavailable_refs,
+}
+for entry in debt_entries:
+    if not isinstance(entry, dict):
+        continue
+    state = entry.get("state")
+    valid_refs = state_valid_refs.get(state, set())
+    for surface_ref in entry.get("surfaceRefs", []):
+        if surface_ref not in known_surface_refs:
+            report(f"legacy debt {entry.get('id')} has unknown surface reference: {surface_ref}")
+        elif surface_ref not in valid_refs:
+            report(f"legacy debt {entry.get('id')} registers irrelevant {state} surface: {surface_ref}")
+
+
+def covered_capabilities(state):
+    return {
+        capability_id
+        for entry in debt_entries
+        if isinstance(entry, dict) and entry.get("state") == state
+        for capability_id in entry.get("capabilityIds", [])
+    }
+
+
+provider_missing = {
+    capability_id for capability_id, capability in capability_by_id.items()
+    if capability.get("provider", {}).get("state") == "provider-missing"
+}
+provider_legacy = {
+    capability_id for capability_id, capability in capability_by_id.items()
+    if capability.get("provider", {}).get("state") == "legacy-direct"
+}
+agent_unavailable = {
+    capability_id for capability_id, capability in capability_by_id.items()
+    if capability.get("availability", {}).get("agent") == "unavailable"
+}
+for state, expected in [
+    ("provider-missing", provider_missing),
+    ("agent-unavailable", agent_unavailable),
+]:
+    covered = covered_capabilities(state)
+    if expected - covered:
+        report(f"unregistered {state} capability debt: {', '.join(sorted(expected - covered))}")
+    if covered - expected:
+        report(f"stale {state} capability debt: {', '.join(sorted(covered - expected))}")
+legacy_covered = covered_capabilities("legacy-direct")
+if provider_legacy - legacy_covered:
+    report("unregistered legacy-direct provider debt: " + ", ".join(sorted(provider_legacy - legacy_covered)))
+
+if errors:
+    for message in sorted(set(errors)):
+        print(f"error: {message}", file=sys.stderr)
+    print(f"capability graph invalid: {len(set(errors))} error(s)", file=sys.stderr)
+    raise SystemExit(1)
+
+writer_count = sum(1 for item in service_methods if item.get("kind") == "writer")
+reader_count = sum(1 for item in service_methods if item.get("kind") == "reader")
+catalogued_count = sum(1 for item in service_methods if item.get("catalogState") == "broker-catalogued")
+legacy_writer_count = sum(1 for item in service_methods if item.get("catalogState") == "legacy-direct")
+direct_ipc_count = sum(1 for item in ipc_paths if item.get("routing") in {"direct-window-service", "direct-ui"})
+parity_count = sum(1 for item in job_entries if item.get("kind") == "parity-job")
+task_count = sum(1 for item in job_entries if item.get("kind") == "windows-native-task")
+print(
+    "capability graph valid: "
+    f"{len(capabilities)} capabilities; "
+    f"WindowService {len(service_methods)} public methods ({writer_count} writers: {catalogued_count} broker, {legacy_writer_count} legacy; {reader_count} readers); "
+    f"window IPC {len(ipc_paths)} paths ({direct_ipc_count} direct legacy); "
+    f"{parity_count} parity jobs; {task_count} Windows-native tasks; "
+    f"{len(debt_entries)} checked debt groups"
+)
+PY
