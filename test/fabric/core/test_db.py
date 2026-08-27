@@ -5,6 +5,7 @@ import stat
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from helper import FABRIC_ROOT
 
@@ -65,7 +66,8 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(database.opened_schema, CURRENT_DATABASE_SCHEMA)
             self.assertEqual(database.quick_check(), "ok")
             self.assertEqual(database.journal_mode(), "wal")
-            self.assertEqual(stat.S_IMODE(self.path.stat().st_mode), 0o600)
+            if __import__("os").name != "nt":
+                self.assertEqual(stat.S_IMODE(self.path.stat().st_mode), 0o600)
             version = database.connection.execute("PRAGMA user_version").fetchone()[0]
             metadata = database.connection.execute(
                 "SELECT value FROM schema_metadata WHERE key = 'schema_version'"
@@ -139,7 +141,8 @@ class DatabaseTests(unittest.TestCase):
             self.assertIsNotNone(database.backup_path)
             assert database.backup_path is not None
             self.assertTrue(database.backup_path.exists())
-            self.assertEqual(stat.S_IMODE(database.backup_path.stat().st_mode), 0o600)
+            if __import__("os").name != "nt":
+                self.assertEqual(stat.S_IMODE(database.backup_path.stat().st_mode), 0o600)
             self.assertEqual(database.provider_count(), 1)
             backup = sqlite3.connect(database.backup_path)
             try:
@@ -199,6 +202,39 @@ class DatabaseTests(unittest.TestCase):
         with self.assertRaises(FabricError) as caught:
             FabricDatabase(self.path).open()
         self.assertEqual(caught.exception.code, "database.corrupt")
+
+    @unittest.skipIf(__import__("os").name == "nt", "requires Linux inode replacement semantics")
+    def test_connected_inode_swap_refuses_before_decoy_mutation(self) -> None:
+        original = FabricDatabase(self.path)
+        original.open()
+        original.close()
+        decoy = self.root / "decoy.db"
+        decoy_database = FabricDatabase(decoy)
+        decoy_database.open()
+        decoy_database.close()
+        original_bytes = self.path.read_bytes()
+        decoy_bytes = decoy.read_bytes()
+        parked = self.root / "parked.db"
+        real_connect = sqlite3.connect
+        swapped = False
+
+        def swap_then_connect(database, *args, **kwargs):
+            nonlocal swapped
+            if Path(database) == self.path and not swapped:
+                swapped = True
+                self.path.replace(parked)
+                decoy.replace(self.path)
+            return real_connect(database, *args, **kwargs)
+
+        with mock.patch("omarchy_fabric.db.sqlite3.connect", side_effect=swap_then_connect):
+            with self.assertRaises(FabricError) as caught:
+                FabricDatabase(self.path).open()
+        self.assertEqual("database.unsafe-path", caught.exception.code)
+        self.assertTrue(swapped)
+        self.assertEqual(original_bytes, parked.read_bytes())
+        self.assertEqual(decoy_bytes, self.path.read_bytes())
+        for suffix in ("-journal", "-wal", "-shm"):
+            self.assertFalse(Path(f"{self.path}{suffix}").exists())
 
     def test_event_retention_records_expired_cursor(self) -> None:
         database = FabricDatabase(self.path)

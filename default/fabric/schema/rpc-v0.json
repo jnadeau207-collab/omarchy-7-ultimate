@@ -50,6 +50,7 @@
             "provider.register",
             "provider.list",
             "provider.catalog",
+            "managed-work.query",
             "provider.read",
             "provider.invoke",
             "reference.operation.preflight",
@@ -68,6 +69,25 @@
         }
       },
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "managed-work.query"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/managedWorkQueryParams"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -426,6 +446,68 @@
     "emptyParams": {
       "type": "object",
       "maxProperties": 0
+    },
+    "managedWorkQueryParams": {
+      "type": "object",
+      "required": ["version", "view"],
+      "properties": {
+        "version": { "const": "v0" },
+        "view": {
+          "enum": ["agent.overview", "agent.tasks", "agent.approvals", "agent.automations", "agent.activity", "agent.history", "agent.context", "agent.permissions", "agent.usage", "agent.providers", "agent.artifacts", "agent.troubleshooting"]
+        },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "cursor": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "entityType": { "enum": ["task", "run", "operation", "provider"] },
+        "entityId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "^(?:[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"
+        }
+      },
+      "dependentRequired": {
+        "entityType": ["entityId"],
+        "entityId": ["entityType"]
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "view": { "enum": ["agent.overview", "agent.troubleshooting"] } }, "required": ["view"] },
+          "then": { "not": { "anyOf": [{ "required": ["cursor"] }, { "required": ["entityType"] }, { "required": ["entityId"] }] } }
+        },
+        {
+          "if": { "properties": { "view": { "const": "agent.providers" } }, "required": ["view", "entityType"] },
+          "then": { "properties": { "entityType": { "const": "provider" } } }
+        },
+        {
+          "if": { "properties": { "view": { "const": "agent.tasks" } }, "required": ["view", "entityType"] },
+          "then": { "properties": { "entityType": { "enum": ["task", "run"] } } }
+        },
+        {
+          "if": { "properties": { "view": { "const": "agent.activity" } }, "required": ["view", "entityType"] },
+          "then": { "properties": { "entityType": { "const": "operation" } } }
+        },
+        {
+          "if": { "required": ["entityType"] },
+          "then": { "not": { "required": ["cursor"] } }
+        },
+        {
+          "if": {
+            "properties": { "view": { "not": { "enum": ["agent.providers", "agent.tasks", "agent.activity"] } } },
+            "required": ["view"]
+          },
+          "then": { "not": { "anyOf": [{ "required": ["entityType"] }, { "required": ["entityId"] }] } }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "managedWorkMethodResultContract": {
+      "type": "object",
+      "required": ["method", "result"],
+      "properties": {
+        "method": { "const": "managed-work.query" },
+        "result": { "$ref": "managed-work-v0.json#/$defs/query" }
+      },
+      "additionalProperties": false
     },
     "fakeProviderRegistration": {
       "type": "object",

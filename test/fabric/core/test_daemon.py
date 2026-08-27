@@ -111,6 +111,7 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
             connection_id="atomic-hello",
             hello_complete=False,
             principal=None,
+            peer_uid=daemon.daemon_uid,
         )
         params = {"client": "atomic-hello", "minVersion": 0, "maxVersion": 0}
         with mock.patch.object(
@@ -150,6 +151,7 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
             "health",
             "provider.list",
             "provider.catalog",
+            "managed-work.query",
             "provider.read",
             "events.subscribe",
             "reference.operation.preflight",

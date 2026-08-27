@@ -20,6 +20,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - exercised by import-only non-Linux tooling
+    fcntl = None  # type: ignore[assignment]
+
 from .db import FabricDatabase, request_fingerprint
 from .events import EventBroker, EventSubscription
 from .health import daemon_health
@@ -46,10 +51,17 @@ from .protocol import (
     success_response,
     validate_request,
 )
+from .managed_work import (
+    Actor,
+    DaemonProjectionBridge,
+    ManagedWorkError,
+    ManagedWorkPlane,
+    StableOwnerSessionStore,
+)
 from .provider_builtins import build_builtin_providers
 from .provider_registry import ProviderRegistry, TypedProvider
 from .reference_operation import ReferenceOperationManager
-from .security import EndpointAdmission, EndpointPrincipal, PrincipalKind, SessionBindingStore
+from .security import EndpointAdmission, EndpointPrincipal, PrincipalKind
 from .security.errors import SecurityValidationError
 
 LOGGER = logging.getLogger("omarchy-fabricd")
@@ -348,6 +360,11 @@ class DaemonConfig:
     database_path: Path
     event_retention: int = DEFAULT_EVENT_RETENTION
     typed_providers: tuple[TypedProvider, ...] = field(default_factory=build_builtin_providers)
+    managed_work_database_path: Path | None = None
+
+    @property
+    def managed_work_path(self) -> Path:
+        return self.managed_work_database_path or self.database_path.with_name("managed-work.db")
 
 
 class ClientConnection:
@@ -369,6 +386,7 @@ class ClientConnection:
         self.finished = asyncio.Event()
         self.run_task: asyncio.Task[None] | None = None
         self.principal: EndpointPrincipal | None = None
+        self.peer_uid: int | None = None
 
     async def run(self) -> None:
         self.run_task = asyncio.current_task()
@@ -439,13 +457,22 @@ class ClientConnection:
             self.finished.set()
 
     def _peer_is_owner(self) -> bool:
+        self.peer_uid = None
         peer_socket = self.writer.get_extra_info("socket")
         if peer_socket is None or not hasattr(socket, "SO_PEERCRED"):
             return False
         try:
-            credentials = peer_socket.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
-            _pid, uid, _gid = struct.unpack("3i", credentials)
-            return uid == os.getuid()
+            credential_size = struct.calcsize("iII")
+            credentials = peer_socket.getsockopt(
+                socket.SOL_SOCKET,
+                socket.SO_PEERCRED,
+                credential_size,
+            )
+            _pid, uid, _gid = struct.unpack("iII", credentials)
+            if uid != self.daemon.daemon_uid:
+                return False
+            self.peer_uid = uid
+            return True
         except (AttributeError, OSError, struct.error):
             return False
 
@@ -487,6 +514,12 @@ class ClientConnection:
             return
         self.closed = True
         if self.principal is not None:
+            try:
+                self.daemon.managed_work.release_session_contexts(
+                    Actor(self.principal.principal_id, self.principal.session_id)
+                )
+            except ManagedWorkError as error:
+                LOGGER.error("managed-work session cleanup refused: %s", error.code)
             self.daemon.session_bindings.release(self.principal.session_id)
             self.principal = None
         for subscription_id, (_subscription, task) in list(self.subscriptions.items()):
@@ -504,64 +537,170 @@ class ClientConnection:
 class FabricDaemon:
     def __init__(self, config: DaemonConfig) -> None:
         self.config = config
+        self.daemon_uid = os.getuid() if hasattr(os, "getuid") else 0
         self.database = FabricDatabase(config.database_path)
         self.events = EventBroker(self.database, retention=config.event_retention)
         self.providers = FakeProviderRegistry(self.database)
         self.typed_providers = ProviderRegistry(event_sink=self.events.publish)
-        self.session_bindings = SessionBindingStore()
+        self.session_bindings = StableOwnerSessionStore(self.daemon_uid)
         self.reference_operations = ReferenceOperationManager(
             self.database,
             self.events,
             session_is_active=self.session_bindings.is_active,
+        )
+        self.managed_work = ManagedWorkPlane(config.managed_work_path)
+        self.managed_projections = DaemonProjectionBridge(
+            self.managed_work,
+            self.reference_operations,
         )
         self.server: asyncio.AbstractServer | None = None
         self.connections: set[ClientConnection] = set()
         self.run_id = ""
         self.started_monotonic = 0.0
         self._socket_identity: tuple[int, int] | None = None
+        self._instance_lock_fds: list[int] = []
+        self._database_lease_fds: list[tuple[Path, int, tuple[int, int]]] = []
         self._stopped = False
 
     async def start(self) -> None:
         self._secure_directory(self.config.database_path.parent)
+        self._secure_directory(self.config.managed_work_path.parent)
         self._secure_directory(self.config.socket_path.parent)
-        self.database.open()
+        bound_socket: socket.socket | None = None
         try:
+            self._prepare_socket_path()
+            old_umask = os.umask(0o077)
+            try:
+                bound_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                bound_socket.setblocking(False)
+                bound_socket.bind(str(self.config.socket_path))
+                socket_stat = self.config.socket_path.lstat()
+                if (
+                    not stat.S_ISSOCK(socket_stat.st_mode)
+                    or socket_stat.st_uid != self.daemon_uid
+                ):
+                    raise FabricError(
+                        "socket.unsafe-path",
+                        "Fabric socket ownership could not be verified",
+                        "Fabric refuses to retain an unverified bound endpoint.",
+                    )
+                self._socket_identity = (socket_stat.st_dev, socket_stat.st_ino)
+                bound_socket.listen(socket.SOMAXCONN)
+                os.chmod(self.config.socket_path, 0o600)
+                socket_stat = self.config.socket_path.lstat()
+                descriptor_stat = os.fstat(bound_socket.fileno())
+                if (
+                    not stat.S_ISSOCK(socket_stat.st_mode)
+                    or socket_stat.st_uid != self.daemon_uid
+                    or not stat.S_ISSOCK(descriptor_stat.st_mode)
+                    or descriptor_stat.st_uid != self.daemon_uid
+                ):
+                    raise FabricError(
+                        "socket.unsafe-path",
+                        "Fabric socket ownership could not be verified",
+                        "Fabric refuses to publish an unverified local endpoint.",
+                    )
+                if (socket_stat.st_dev, socket_stat.st_ino) != self._socket_identity:
+                    raise FabricError(
+                        "socket.unsafe-path",
+                        "Fabric socket changed during endpoint setup",
+                        "Fabric refuses to publish an endpoint whose identity changed.",
+                    )
+            finally:
+                os.umask(old_umask)
+
+            self._acquire_instance_locks()
+            self.database.open(
+                database_lease_descriptor=self._database_lease_descriptor(
+                    self.config.database_path
+                )
+            )
+            self._verify_sqlite_database_inode(
+                database_path=self.config.database_path,
+                connection=self.database.connection,
+                lease_descriptor=self._database_lease_descriptor(self.config.database_path),
+            )
+            try:
+                self.managed_work.open(
+                    database_lease_descriptor=self._database_lease_descriptor(
+                        self.config.managed_work_path
+                    )
+                )
+            except ManagedWorkError as error:
+                raise FabricError(
+                    error.code,
+                    "Managed-work database was refused",
+                    error.explanation,
+                    detail=error.detail,
+                    retryable=error.retryable,
+                    change_state="none",
+                    recovery_actions=error.recovery_actions,
+                ) from error
+            self._verify_database_leases()
             self.reference_operations.recover_startup()
             self.providers.load()
             for provider in self.config.typed_providers:
                 self.typed_providers.register(provider)
-            self._prepare_socket_path()
-            old_umask = os.umask(0o077)
-            try:
-                self.server = await asyncio.start_unix_server(
-                    self._accept,
-                    path=str(self.config.socket_path),
-                    limit=MAX_FRAME_BYTES + 1,
-                )
-            finally:
-                os.umask(old_umask)
-            os.chmod(self.config.socket_path, 0o600)
-            socket_stat = self.config.socket_path.stat()
-            self._socket_identity = (socket_stat.st_dev, socket_stat.st_ino)
             self.started_monotonic = time.monotonic()
             self.run_id = self.database.start_daemon_run(os.getpid())
+            self.server = await asyncio.start_unix_server(
+                self._accept,
+                sock=bound_socket,
+                limit=MAX_FRAME_BYTES + 1,
+                start_serving=False,
+            )
+            bound_socket = None
+            self._verify_owned_socket_identity()
+            await self.server.start_serving()
         except Exception:
+            if bound_socket is not None:
+                try:
+                    bound_socket.close()
+                except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                    LOGGER.error("startup socket cleanup failed: %s", type(error).__name__)
             if self.server is not None:
-                self.server.close()
-                await self.server.wait_closed()
+                try:
+                    self.server.close()
+                    await self.server.wait_closed()
+                except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                    LOGGER.error("startup server cleanup failed: %s", type(error).__name__)
                 self.server = None
-            self._remove_owned_socket()
-            self.database.close()
+            try:
+                self._remove_owned_socket()
+            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                LOGGER.error("startup socket-path cleanup failed: %s", type(error).__name__)
+            try:
+                self.managed_work.close()
+            except Exception as error:  # pragma: no cover - exceptional SQLite cleanup
+                LOGGER.error("startup managed-work cleanup failed: %s", type(error).__name__)
+            try:
+                self.database.close()
+            except Exception as error:  # pragma: no cover - exceptional SQLite cleanup
+                LOGGER.error("startup Fabric database cleanup failed: %s", type(error).__name__)
+            try:
+                self._release_instance_locks()
+            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                LOGGER.error("startup database lease cleanup failed: %s", type(error).__name__)
             raise
 
     async def stop(self, reason: str = "requested") -> None:
         if self._stopped:
             return
         self._stopped = True
+        first_error: BaseException | None = None
+
+        def remember(error: BaseException) -> None:
+            nonlocal first_error
+            if first_error is None:
+                first_error = error
+
         server = self.server
         self.server = None
         if server is not None:
-            server.close()
+            try:
+                server.close()
+            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                remember(error)
         active_connections = list(self.connections)
         if active_connections:
             await asyncio.gather(
@@ -586,17 +725,35 @@ class FabricDaemon:
                 if tasks:
                     await asyncio.gather(*tasks, return_exceptions=True)
         if server is not None:
-            await server.wait_closed()
-        await self.reference_operations.shutdown()
-        self.events.close()
-        try:
-            if self.run_id:
-                self.database.finish_daemon_run(self.run_id, reason)
-        finally:
             try:
-                self.database.close()
-            finally:
-                self._remove_owned_socket()
+                await server.wait_closed()
+            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                remember(error)
+        try:
+            await self.reference_operations.shutdown()
+        except Exception as error:
+            remember(error)
+        try:
+            self.events.close()
+        except Exception as error:
+            remember(error)
+        if self.run_id:
+            try:
+                self.database.finish_daemon_run(self.run_id, reason)
+            except Exception as error:
+                remember(error)
+        for cleanup in (
+            self.managed_work.close,
+            self.database.close,
+            self._remove_owned_socket,
+            self._release_instance_locks,
+        ):
+            try:
+                cleanup()
+            except Exception as error:  # pragma: no cover - exceptional cleanup path
+                remember(error)
+        if first_error is not None:
+            raise first_error
 
     async def _accept(
         self,
@@ -656,6 +813,21 @@ class FabricDaemon:
             probe.settimeout(0.2)
             probe.connect(str(path))
         except (ConnectionRefusedError, FileNotFoundError):
+            try:
+                current = path.lstat()
+            except FileNotFoundError:
+                return
+            if (
+                not stat.S_ISSOCK(current.st_mode)
+                or current.st_uid != self.daemon_uid
+                or (current.st_dev, current.st_ino) != (metadata.st_dev, metadata.st_ino)
+            ):
+                raise FabricError(
+                    "socket.unsafe-path",
+                    "Fabric socket changed during stale-endpoint recovery",
+                    "Fabric will not unlink an endpoint whose identity changed while it was probed.",
+                    detail=str(path),
+                )
             path.unlink()
             return
         except OSError as error:
@@ -672,6 +844,363 @@ class FabricDaemon:
             "Fabric is already running",
             "Another Fabric daemon is accepting connections on this socket.",
         )
+
+    @staticmethod
+    def _instance_lock_path(database_path: Path) -> Path:
+        return database_path.with_name(f"{database_path.name}.daemon.lock")
+
+    @staticmethod
+    def _absolute_database_path(database_path: Path) -> Path:
+        return Path(os.path.abspath(os.fspath(database_path)))
+
+    def _acquire_one_instance_lock(self, path: Path) -> int:
+        if fcntl is None:
+            raise FabricError(
+                "daemon.lock-unavailable",
+                "Fabric daemon ownership locking is unavailable",
+                "The production daemon requires Linux flock support before opening durable state.",
+                change_state="none",
+            )
+        flags = os.O_RDWR | os.O_CREAT
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        try:
+            descriptor = os.open(path, flags, 0o600)
+        except OSError as error:
+            raise FabricError(
+                "daemon.lock-unsafe",
+                "Fabric daemon ownership lock is unsafe",
+                "Fabric could not safely open its owner-only instance lock.",
+                detail=type(error).__name__,
+            ) from error
+        try:
+            metadata = os.fstat(descriptor)
+            path_metadata = path.lstat()
+            if (
+                not stat.S_ISREG(metadata.st_mode)
+                or metadata.st_uid != self.daemon_uid
+                or metadata.st_nlink != 1
+                or (metadata.st_dev, metadata.st_ino)
+                != (path_metadata.st_dev, path_metadata.st_ino)
+            ):
+                raise FabricError(
+                    "daemon.lock-unsafe",
+                    "Fabric daemon ownership lock is unsafe",
+                    "The instance lock must be a stable regular file owned by the daemon account.",
+                )
+            os.fchmod(descriptor, 0o600)
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise FabricError(
+                    "daemon.already-running",
+                    "Fabric is already running",
+                    "Another Fabric daemon owns this account's durable state lease.",
+                ) from error
+            path_metadata = path.lstat()
+            if (metadata.st_dev, metadata.st_ino) != (
+                path_metadata.st_dev,
+                path_metadata.st_ino,
+            ):
+                raise FabricError(
+                    "daemon.lock-unsafe",
+                    "Fabric daemon ownership lock changed",
+                    "Fabric refused an instance lock path that changed during acquisition.",
+                )
+            return descriptor
+        except Exception:
+            os.close(descriptor)
+            raise
+
+    def _acquire_database_lease(self, path: Path) -> tuple[int, tuple[int, int]]:
+        if fcntl is None:
+            raise FabricError(
+                "daemon.lock-unavailable",
+                "Fabric daemon ownership locking is unavailable",
+                "The production daemon requires Linux flock support before opening durable state.",
+                change_state="none",
+            )
+        flags = os.O_RDWR | os.O_CREAT
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        try:
+            descriptor = os.open(path, flags, 0o600)
+        except OSError as error:
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric durable state could not be leased",
+                "Fabric could not safely open an owner-only durable database inode.",
+                detail=type(error).__name__,
+            ) from error
+        try:
+            metadata = os.fstat(descriptor)
+            path_metadata = path.lstat()
+            identity = (metadata.st_dev, metadata.st_ino)
+            if (
+                not stat.S_ISREG(metadata.st_mode)
+                or metadata.st_uid != self.daemon_uid
+                or metadata.st_nlink != 1
+                or not stat.S_ISREG(path_metadata.st_mode)
+                or identity != (path_metadata.st_dev, path_metadata.st_ino)
+            ):
+                raise FabricError(
+                    "daemon.database-unsafe",
+                    "Fabric durable state is unsafe",
+                    "Each durable database must be one stable regular inode owned only by the daemon account.",
+                )
+            os.fchmod(descriptor, 0o600)
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise FabricError(
+                    "daemon.already-running",
+                    "Fabric is already running",
+                    "Another Fabric daemon owns one of this account's durable database inodes.",
+                ) from error
+            path_metadata = path.lstat()
+            if (
+                not stat.S_ISREG(path_metadata.st_mode)
+                or (path_metadata.st_dev, path_metadata.st_ino) != identity
+            ):
+                raise FabricError(
+                    "daemon.database-unsafe",
+                    "Fabric durable state changed during lease acquisition",
+                    "Fabric refused a durable database path that changed before startup.",
+                )
+            return descriptor, identity
+        except Exception:
+            os.close(descriptor)
+            raise
+
+    def _acquire_instance_locks(self) -> None:
+        paths = sorted(
+            (
+                self._absolute_database_path(self.config.database_path),
+                self._absolute_database_path(self.config.managed_work_path),
+            ),
+            key=lambda value: os.fspath(value),
+        )
+        if paths[0] == paths[1]:
+            raise FabricError(
+                "daemon.database-alias",
+                "Fabric databases must be distinct",
+                "The Fabric and managed-work schemas cannot share one database path.",
+            )
+        acquired_locks: list[int] = []
+        acquired_leases: list[tuple[Path, int, tuple[int, int]]] = []
+        seen_inodes: set[tuple[int, int]] = set()
+        try:
+            for path in paths:
+                acquired_locks.append(self._acquire_one_instance_lock(self._instance_lock_path(path)))
+            for path in paths:
+                descriptor, identity = self._acquire_database_lease(path)
+                if identity in seen_inodes:
+                    os.close(descriptor)
+                    raise FabricError(
+                        "daemon.database-alias",
+                        "Fabric databases resolve to the same inode",
+                        "The Fabric and managed-work schemas require distinct durable database inodes.",
+                    )
+                seen_inodes.add(identity)
+                acquired_leases.append((path, descriptor, identity))
+        except Exception:
+            for _path, descriptor, _identity in reversed(acquired_leases):
+                try:
+                    if fcntl is not None:
+                        fcntl.flock(descriptor, fcntl.LOCK_UN)
+                except OSError:
+                    pass
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+            for descriptor in reversed(acquired_locks):
+                try:
+                    if fcntl is not None:
+                        fcntl.flock(descriptor, fcntl.LOCK_UN)
+                except OSError:
+                    pass
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+            raise
+        self._instance_lock_fds = acquired_locks
+        self._database_lease_fds = acquired_leases
+
+    def _verify_database_leases(self) -> None:
+        for path, descriptor, identity in self._database_lease_fds:
+            try:
+                metadata = os.fstat(descriptor)
+                path_metadata = path.lstat()
+            except OSError as error:
+                raise FabricError(
+                    "daemon.database-unsafe",
+                    "Fabric durable state identity could not be verified",
+                    "Fabric refuses to publish after a durable database path changes.",
+                    detail=type(error).__name__,
+                ) from error
+            if (
+                not stat.S_ISREG(metadata.st_mode)
+                or metadata.st_uid != self.daemon_uid
+                or metadata.st_nlink != 1
+                or not stat.S_ISREG(path_metadata.st_mode)
+                or (metadata.st_dev, metadata.st_ino) != identity
+                or (path_metadata.st_dev, path_metadata.st_ino) != identity
+            ):
+                raise FabricError(
+                    "daemon.database-unsafe",
+                    "Fabric durable state identity changed",
+                    "Fabric refuses to publish after a durable database inode changes.",
+                )
+
+    def _database_lease_descriptor(self, database_path: Path) -> int:
+        expected = self._absolute_database_path(database_path)
+        for path, descriptor, _identity in self._database_lease_fds:
+            if path == expected:
+                return descriptor
+        raise FabricError(
+            "daemon.database-unsafe",
+            "Fabric durable state lease is missing",
+            "Fabric refuses to open durable state without its lifetime inode lease.",
+        )
+
+    def _verify_sqlite_database_inode(
+        self,
+        *,
+        database_path: Path,
+        connection: Any,
+        lease_descriptor: int,
+    ) -> None:
+        if connection is None:
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric durable state connection is missing",
+                "Fabric refuses to publish without an opened durable database.",
+            )
+        lease_metadata = os.fstat(lease_descriptor)
+        identity = (lease_metadata.st_dev, lease_metadata.st_ino)
+        expected_path = self._absolute_database_path(database_path).resolve(strict=True)
+        rows = connection.execute("PRAGMA database_list").fetchall()
+        main_rows = [row for row in rows if str(row[1]) == "main"]
+        if len(main_rows) != 1:
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric durable state connection is ambiguous",
+                "Fabric could not verify the opened main SQLite database.",
+            )
+        try:
+            opened_path = Path(str(main_rows[0][2])).resolve(strict=True)
+        except (OSError, RuntimeError) as error:
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric durable state path could not be resolved",
+                "Fabric could not verify the opened main SQLite database path.",
+                detail=type(error).__name__,
+            ) from error
+        if opened_path != expected_path:
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric opened an unexpected durable state path",
+                "Fabric refuses a SQLite connection whose path differs from its lifetime lease.",
+            )
+        descriptor_directory = Path("/proc/self/fd")
+        if not descriptor_directory.is_dir():
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric cannot prove its opened durable state inode",
+                "The production daemon requires Linux descriptor identity evidence.",
+            )
+        try:
+            descriptors = [
+                int(entry.name)
+                for entry in descriptor_directory.iterdir()
+                if entry.name.isdigit()
+            ]
+        except OSError as error:
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric could not enumerate its opened durable state descriptors",
+                "The production daemon requires Linux descriptor identity evidence.",
+                detail=type(error).__name__,
+            ) from error
+        matches = []
+        for descriptor in descriptors:
+            if descriptor == lease_descriptor:
+                continue
+            try:
+                metadata = os.fstat(descriptor)
+            except OSError:
+                continue
+            if stat.S_ISREG(metadata.st_mode) and (metadata.st_dev, metadata.st_ino) == identity:
+                matches.append(descriptor)
+        if len(matches) != 1:
+            raise FabricError(
+                "daemon.database-unsafe",
+                "Fabric could not prove its opened durable state inode",
+                "The SQLite connection must hold exactly one descriptor for the leased database inode.",
+                detail=f"matching descriptors: {len(matches)}",
+            )
+
+    def _verify_owned_socket_identity(self) -> None:
+        if self._socket_identity is None:
+            raise FabricError(
+                "socket.unsafe-path",
+                "Fabric socket ownership evidence is missing",
+                "Fabric refuses to publish an endpoint without its bound inode identity.",
+            )
+        try:
+            metadata = self.config.socket_path.lstat()
+        except OSError as error:
+            raise FabricError(
+                "socket.unsafe-path",
+                "Fabric socket disappeared before publication",
+                "Fabric refuses to publish an endpoint whose path cannot be verified.",
+                detail=type(error).__name__,
+            ) from error
+        if (
+            not stat.S_ISSOCK(metadata.st_mode)
+            or metadata.st_uid != self.daemon_uid
+            or (metadata.st_dev, metadata.st_ino) != self._socket_identity
+        ):
+            raise FabricError(
+                "socket.unsafe-path",
+                "Fabric socket changed before publication",
+                "Fabric refuses to publish an endpoint whose bound inode identity changed.",
+            )
+
+    def _release_instance_locks(self) -> None:
+        leases = self._database_lease_fds
+        self._database_lease_fds = []
+        descriptors = self._instance_lock_fds
+        self._instance_lock_fds = []
+        first_error: OSError | None = None
+        for _path, descriptor, _identity in reversed(leases):
+            try:
+                if fcntl is not None:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+            except OSError as error:
+                first_error = first_error or error
+            try:
+                os.close(descriptor)
+            except OSError as error:
+                first_error = first_error or error
+        for descriptor in reversed(descriptors):
+            try:
+                if fcntl is not None:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+            except OSError as error:
+                first_error = first_error or error
+            try:
+                os.close(descriptor)
+            except OSError as error:
+                first_error = first_error or error
+        if first_error is not None:
+            raise first_error
 
     def _remove_owned_socket(self) -> None:
         if self._socket_identity is None:
@@ -730,6 +1259,8 @@ class FabricDaemon:
         if request.method == "provider.catalog":
             _require_exact_fields(request.params, required=())
             return {"providers": self.typed_providers.catalog()}
+        if request.method == "managed-work.query":
+            return self._managed_work_query(principal, request.params)
         if request.method == "provider.read":
             return await self._read_typed_provider(request.params)
         if request.method == "provider.invoke":
@@ -778,6 +1309,56 @@ class FabricDaemon:
                 recovery_actions=("fabric.reconnect",),
             ) from error
 
+    def _managed_work_query(
+        self,
+        principal: EndpointPrincipal,
+        params: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        _require_exact_fields(
+            params,
+            required=("version", "view"),
+            optional=("limit", "cursor", "entityType", "entityId"),
+            context="managed-work query",
+        )
+        if params["version"] != "v0":
+            raise FabricError(
+                "managed-work.version-unsupported",
+                "Managed-work query version is unsupported",
+                "This daemon exposes only the closed v0 Agent Center query contract.",
+                change_state="none",
+                recovery_actions=("system.update",),
+            )
+        actor = Actor(principal.principal_id, principal.session_id)
+        try:
+            normalized = self.managed_work.normalize_query_arguments(
+                actor,
+                params["view"],
+                limit=params.get("limit", 50),
+                cursor=params.get("cursor"),
+                entity_type=params.get("entityType"),
+                entity_id=params.get("entityId"),
+                present_fields=frozenset(params),
+            )
+            view = normalized.view
+            if view in {"agent.providers", "agent.troubleshooting"}:
+                self.managed_projections.refresh_providers(actor, self.typed_providers.catalog())
+            if view in {"agent.activity", "agent.troubleshooting"}:
+                self.managed_projections.refresh_reference_operations(actor)
+            return self.managed_work.query_normalized(
+                actor,
+                normalized,
+            )
+        except ManagedWorkError as error:
+            raise FabricError(
+                error.code,
+                "Managed-work query was refused",
+                error.explanation,
+                detail=error.detail,
+                retryable=error.retryable,
+                change_state="none",
+                recovery_actions=error.recovery_actions,
+            ) from error
+
     def _hello(
         self,
         connection: ClientConnection,
@@ -797,7 +1378,11 @@ class FabricDaemon:
         client = params["client"]
         minimum = params["minVersion"]
         maximum = params["maxVersion"]
-        if not isinstance(client, str) or not 1 <= len(client) <= 160:
+        if (
+            not isinstance(client, str)
+            or not 1 <= len(client.encode("utf-8")) <= 160
+            or "\x00" in client
+        ):
             raise FabricError(
                 "rpc.invalid-params",
                 "Fabric client identity is invalid",
@@ -823,8 +1408,13 @@ class FabricDaemon:
                 recovery_actions=("system.update",),
             )
         try:
+            if connection.peer_uid is None:
+                raise SecurityValidationError(
+                    "principal.peer-credentials",
+                    "The connection has no authenticated Unix peer UID.",
+                )
             principal, _credential = self.session_bindings.issue(
-                os.getuid(),
+                connection.peer_uid,
                 EndpointAdmission(endpoint_id="fabric.owner-rpc", kind=PrincipalKind.SHELL),
             )
         except SecurityValidationError as error:
@@ -845,6 +1435,7 @@ class FabricDaemon:
             "databaseSchema": CURRENT_DATABASE_SCHEMA,
             "principal": {
                 "id": principal.principal_id,
+                "ownerId": principal.principal_id,
                 "sessionId": principal.session_id,
                 "endpoint": principal.endpoint_id,
                 "kind": principal.kind.value,
