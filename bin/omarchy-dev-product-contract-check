@@ -396,6 +396,7 @@ def matching_brace(text, start):
 
 def discover_ipc():
     found = {}
+    product_host_handlers = []
     qml_paths = sorted((root / "shell").rglob("*.qml"))
     for path in qml_paths:
         text = path.read_text(encoding="utf-8")
@@ -417,6 +418,12 @@ def discover_ipc():
             elif dynamic:
                 source_target = re.search(r"(?m)^\s*ipcTarget:\s*\"([^\"]+)\"", text)
                 if not source_target or not source_target.group(1):
+                    if rel == "shell/apps/shared/ProductAppHost.qml":
+                        product_host_handlers.append({
+                            "sourcePath": rel,
+                            "methods": re.findall(r"\bfunction\s+([A-Za-z][A-Za-z0-9]*)\s*\(", block),
+                            "handlerKind": "dynamic-target",
+                        })
                     continue
                 target = source_target.group(1)
                 kind = "dynamic-target"
@@ -441,6 +448,22 @@ def discover_ipc():
                 "methods": ["open", "close", "show", "hide", "toggle"],
                 "handlerKind": "inherited-panel",
             }
+    if len(product_host_handlers) > 1:
+        report("multiple unresolved ProductAppHost IPC handler templates")
+    elif product_host_handlers:
+        template = product_host_handlers[0]
+        for path in qml_paths:
+            text = path.read_text(encoding="utf-8")
+            if not re.search(r"\b(?:Shared\.)?ProductAppHost\s*\{", text):
+                continue
+            source_target = re.search(r"(?m)^\s*ipcTarget:\s*\"([^\"]+)\"", text)
+            if not source_target or not source_target.group(1):
+                continue
+            target = source_target.group(1)
+            if target in found:
+                rel = path.relative_to(root).as_posix()
+                report(f"duplicate live IPC target {target}: {rel} and {found[target]['sourcePath']}")
+            found[target] = dict(template)
     return found
 
 
