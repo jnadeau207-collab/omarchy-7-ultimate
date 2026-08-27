@@ -123,8 +123,7 @@ Column {
             tone: modelData.tone
             Accessible.role: Accessible.ProgressBar
             Accessible.name: modelData.label + " progress"
-            Accessible.value: Math.round(modelData.progress * 100)
-            Accessible.description: "Progress value from zero to one hundred percent"
+            Accessible.description: modelData.label + " progress: " + Math.round(modelData.progress * 100) + " percent. Numeric AT-SPI value export is not yet available."
           }
         }
       }
@@ -222,7 +221,7 @@ Column {
       font.pixelSize: Style.font.caption
       Accessible.role: Accessible.StaticText
       Accessible.name: "Last action"
-      Accessible.value: root.lastAction
+      Accessible.description: "Last action: " + root.lastAction
     }
   }
 }

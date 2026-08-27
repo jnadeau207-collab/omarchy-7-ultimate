@@ -24,6 +24,12 @@
     "focus": ["pointer", "keyboard"]
   },
   "semanticRequirements": ["name", "role", "value", "action"],
+  "semanticImplementation": {
+    "name": "attached",
+    "role": "attached",
+    "value": "description-fallback-blocked",
+    "action": "attached"
+  },
   "renderCases": [
     {
       "id": "dark-comfortable-pointer",

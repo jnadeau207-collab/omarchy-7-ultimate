@@ -18,8 +18,8 @@
       "status": "blocked",
       "source": "shell/shell.qml and shell/plugins/dev-gallery/QualityMatrix.qml",
       "requiredSemantics": ["name", "role", "value", "action"],
-      "evidence": "Before the compositor incident, AT-SPI exposed an application named quickshell with zero children. After Quickshell restoration, the desktop traversal did not expose quickshell at all.",
-      "blocker": "Qt/Quickshell Wayland accessibility objects are not exported into the AT-SPI tree. QML Accessible attachments in the gallery therefore cannot yet be observed by an assistive client."
+      "evidence": "Before the compositor incident, AT-SPI exposed an application named quickshell with zero children. After Quickshell restoration, the desktop traversal did not expose quickshell at all. The metal Qt Accessible attached type also rejects a value property; the gallery therefore carries numeric state in its accessible description as an explicit fallback, not as value-interface proof.",
+      "blocker": "Qt/Quickshell Wayland accessibility objects are not exported into the AT-SPI tree, and a numeric AT-SPI value interface has not been implemented. QML Accessible attachments in the gallery therefore cannot yet be observed or validated by an assistive client."
     },
     {
       "id": "secure-lock",
