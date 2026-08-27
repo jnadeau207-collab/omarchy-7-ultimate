@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:admin-inventory-v0",
+  "x-omarchy-version": "v0",
+  "title": "Administration inventory projection",
+  "type": "object",
+  "required": ["schemaVersion", "revision", "domains"],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "revision": { "type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$" },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/domain" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "domain": {
+      "type": "object",
+      "required": ["id", "provider", "readAvailable", "operationAvailable", "resourceCount", "revision"],
+      "properties": {
+        "id": { "enum": ["process", "device", "storage", "printer", "account", "firewall", "service", "schedule"] },
+        "provider": { "type": "string", "pattern": "^[a-z]+\\.provider$" },
+        "readAvailable": { "type": "boolean" },
+        "operationAvailable": { "type": "boolean" },
+        "resourceCount": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "revision": { "type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

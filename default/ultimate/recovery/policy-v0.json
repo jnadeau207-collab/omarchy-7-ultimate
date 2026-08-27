@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "v0",
+  "update": {
+    "checkpointRequiredForApply": true,
+    "cancelBeforeApplyOnly": true,
+    "reconcileInterruptedRuns": true,
+    "privateJournalRequired": true,
+    "crossProcessLockRequired": true
+  },
+  "restore": {
+    "scope": "system",
+    "preserveHome": true,
+    "exactConfirmation": true,
+    "verifiedHealthyRequired": true,
+    "verifiedReadOnlyRequired": true,
+    "realMutation": false
+  },
+  "backup": {
+    "scope": "home",
+    "engine": "restic",
+    "retention": { "daily": 7, "weekly": 4, "monthly": 6 },
+    "threats": ["accidental-deletion", "disk-failure", "malware", "repository-loss"],
+    "verifiedSnapshotPathsRequired": true,
+    "maximumSelectableSnapshots": 64,
+    "realMutation": false
+  },
+  "diagnostics": {
+    "redactionRequired": true,
+    "maximumPreviewBytes": 1048576,
+    "maximumSourceBytes": 262144,
+    "structuredEvidenceOnly": true,
+    "upload": false
+  }
+}

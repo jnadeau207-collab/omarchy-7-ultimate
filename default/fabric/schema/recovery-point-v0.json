@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:recovery-point-v0",
+  "x-omarchy-version": "v0",
+  "title": "System-only restore point",
+  "type": "object",
+  "required": ["schemaVersion", "id", "scope", "source", "createdAt", "eligible", "health", "readOnly", "revision"],
+  "properties": {
+    "schemaVersion": { "const": "v0" },
+    "id": { "type": "string", "pattern": "^restore-point\\.[0-9a-f]{24}$" },
+    "scope": { "const": "system" },
+    "source": { "enum": ["snapshot", "transaction"] },
+    "createdAt": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "eligible": { "type": "boolean" },
+    "health": { "enum": ["healthy", "degraded", "unavailable", "unknown"] },
+    "readOnly": { "oneOf": [{ "type": "null" }, { "type": "boolean" }] },
+    "revision": { "type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "eligible": { "const": true } }, "required": ["eligible"] },
+      "then": { "properties": { "health": { "const": "healthy" }, "readOnly": { "const": true } } }
+    }
+  ]
+}
