@@ -1,0 +1,34 @@
+[Unit]
+Description=Run the Omarchy per-user Fabric control plane
+Documentation=file:///usr/share/doc/omarchy/agent-fabric-packaging.md
+After=graphical-session.target
+PartOf=graphical-session.target
+ConditionEnvironment=OMARCHY_PATH
+StartLimitIntervalSec=30
+StartLimitBurst=5
+
+[Service]
+Type=simple
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=-%t/uwsm/env_session.conf
+ExecStartPre=/usr/bin/omarchy-fabric-service prepare-start
+ExecStart=/usr/bin/omarchy-fabricd
+Restart=on-failure
+RestartPreventExitStatus=78
+RestartSec=2
+TimeoutStopSec=15
+RuntimeDirectory=omarchy
+RuntimeDirectoryMode=0700
+StateDirectory=omarchy/fabric
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=graphical-session.target
