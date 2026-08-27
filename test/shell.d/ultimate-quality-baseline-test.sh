@@ -8,6 +8,7 @@ checker="$ROOT/bin/omarchy-dev-quality-baseline"
 quality_dir="$ROOT/default/ultimate/quality"
 gallery="$ROOT/shell/plugins/dev-gallery/QualityMatrix.qml"
 panel="$ROOT/shell/plugins/dev-gallery/GalleryPanel.qml"
+progress_ring="$ROOT/shell/Ui/ProgressRing.qml"
 acceptance="$ROOT/test/acceptance.d/ultimate-accessibility-performance-test.sh"
 tmp_dir=$(mktemp -d)
 trap 'rm -rf -- "$tmp_dir"' EXIT
@@ -52,6 +53,13 @@ grep -Fq 'Numeric AT-SPI value export is not yet available.' "$gallery" ||
   fail "quality gallery carries numeric state through its declared fallback"
 grep -Fq 'QualityMatrix {' "$panel" || fail "dev gallery mounts the quality matrix"
 pass "quality gallery declares name, role, action, and an honest blocked value fallback"
+
+grep -Fq 'onPhaseChanged: canvas.requestPaint()' "$progress_ring" ||
+  fail "quality gallery progress ring repaints from its animated phase"
+if grep -Fq 'onValueChanged: canvas.requestPaint()' "$progress_ring"; then
+  fail "quality gallery progress ring must not attach a nonexistent NumberAnimation value handler"
+fi
+pass "quality gallery progress ring uses a valid animation change handler"
 
 if OMARCHY_PATH="$ROOT" bash "$checker" probe-surfaces-once >"$tmp_dir/gate.out" 2>"$tmp_dir/gate.err"; then
   fail "surface probe refuses the active development session"
