@@ -2093,8 +2093,11 @@ Item {
                 }
 
                 Item { width: 1; height: Style.spacing.rowPaddingX }
+                }
+            }
+          }
         }
-      }
+        }
       }
     }
   }
