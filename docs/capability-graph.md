@@ -15,14 +15,14 @@ This is schema version `v0`, not a frozen public `v1` contract. The root-owned s
 | `default/ultimate/capability-schema/parity-jobs-v0.schema.json` | Shape of the parity and Windows-native task graph. |
 | `default/ultimate/capabilities/catalog-window-v0.json` | All 39 current public WindowService writers, including their broker status and semantic contracts. |
 | `default/ultimate/capabilities/catalog-system-jobs-v0.json` | Product and system capabilities required by the parity matrix and forty-task manifest. Missing providers remain catalogued as missing so jobs never resolve to prose-only aspirations. |
-| `default/ultimate/capabilities/catalog-provider-readers-v0.json` | Typed read-only inventory capabilities for Display, Audio, Network, Bluetooth, Input, and Power. Their providers are present while shared human routes remain partial and managed-agent routes remain unavailable. |
+| `default/ultimate/capabilities/catalog-provider-readers-v0.json` | Typed read-only inventory capabilities for every production builtin provider. Present providers keep honest human routes (visible or planned) and managed-agent routes remain unavailable. |
 | `default/ultimate/capabilities/window-surface-v0.json` | Exact source-ordered inventory of 44 public WindowService methods and all 40 functions on the `window` IPC target. |
 | `default/ultimate/capabilities/legacy-debt-v0.json` | Checked coverage for `legacy-direct`, `provider-missing`, and `agent-unavailable` states. |
 | `default/ultimate/parity/jobs.json` | All 42 rows from `WINDOWS_7_ULTIMATE_PARITY.md` and all 40 numbered tasks from `WINDOWS_NATIVE_ACCEPTANCE.md`. |
 
 ## Current inventory
 
-The checked inventory contains 110 capability descriptors. WindowService contributes 39 writers: 21 names are in the prototype `CapabilityBroker.windowVerbs` catalog and 18 remain public legacy-direct writers. Five additional public WindowService methods are readers, producing an exact 44-method service inventory. Six typed leaf providers add honest read-only inventory capabilities for Display, Audio, Network, Bluetooth, Input, and Power; these providers do not make the corresponding managed-agent routes available.
+The checked inventory contains 129 capability descriptors. WindowService contributes 39 writers: 21 names are in the prototype `CapabilityBroker.windowVerbs` catalog and 18 remain public legacy-direct writers. Five additional public WindowService methods are readers, producing an exact 44-method service inventory. Twenty-two typed leaf providers add honest read-only inventory capabilities in builtin factory order; these providers do not make the corresponding managed-agent routes available.
 
 The `window` IPC target has 40 functions. `ping` and `cycleSnapshot` are read-only, `invoke` and `undoLast` are broker gateways, and 36 dedicated or UI routes still bypass the generic broker path. The inventory records the target WindowService methods for each direct route, so a transport change cannot quietly alter the mutation surface.
 
