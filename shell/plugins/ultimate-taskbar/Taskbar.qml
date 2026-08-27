@@ -24,6 +24,8 @@ Item {
   property string fontFamily: Style.font.family
   property color foreground: Tokens.text.primary
   property color barForeground: Tokens.text.primary
+  property color urgent: Tokens.state.danger
+  property bool foregroundAnimationEnabled: true
   // Windows 7 Superbar glass remains graphite rather than palette canvas,
   // but now comes from the same resolved payload as caption chrome. The old
   // default/ultimate/chrome-tokens.json and chrome-tokens-light.json files are

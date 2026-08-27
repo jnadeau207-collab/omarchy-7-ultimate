@@ -29,6 +29,10 @@ jq -e '.id == "omarchy.ultimate-start" and (.kinds | index("menu"))' \
 pass "Start plugin declares kind menu"
 
 [[ -f $ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml ]] || fail "Taskbar.qml exists"
+grep -Fq 'property color urgent:' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "taskbar exposes the urgent color expected by hosted bar widgets"
+grep -Fq 'property bool foregroundAnimationEnabled:' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "taskbar exposes the foreground animation flag expected by hosted bar widgets"
 [[ -f $ROOT/shell/plugins/ultimate-start/Start.qml ]] || fail "Start.qml exists"
 grep -Fq 'omarchy-taskbar' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "taskbar uses a distinct layer namespace"
@@ -566,4 +570,3 @@ if grep -Eq 'prove_toolkit .*kdialog' "$ROOT/test/acceptance.d/windows-native-te
   fail "Qt snap probe must not use kdialog; that window cannot take a half-tile"
 fi
 pass "mouse proof helper fails honestly without an absolute pointer"
-
