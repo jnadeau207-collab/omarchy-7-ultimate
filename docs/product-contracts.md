@@ -19,7 +19,7 @@ The v0 inventory covers:
 - all 22 live Quickshell IPC targets and every method declared by their handlers, including the inherited `omarchy.audio` panel target;
 - all 18 shipped first-party application launchers under `applications/`, `default/alacritty/`, and `default/applications/`;
 - both external application identities shipped as default taskbar pins: Chrome and Files/Nautilus;
-- the absent standalone Settings and Agent Center identities, explicitly marked absent rather than inferred from their current in-process plugin shims;
+- the standalone Settings and Agent Center identities, endpoint principals, application processes, desktop launchers, deep links, and owner IPC targets;
 - the three current search implementations (Start applications, Run applications/command fallback, and menu-tree search) plus the five required but absent Settings, Desktop, Files, Software, and Agent Center sources;
 - every QML or JavaScript path under `shell/plugins/` and `shell/services/` that currently declares `Process`, calls `execDetached`, or dispatches directly to Hyprland.
 
@@ -52,12 +52,9 @@ The join order is explicit packaged alias, exact desktop entry id, exact declare
 
 Each application record reserves a stable per-application principal, declares current process/principal binding, lists exact desktop and compositor identifiers, records taskbar visibility and shipped-pin state, and describes single-instance activation and deep links. Current launcher records are `legacy-unjoined` because `WindowModel.js` lowercases and substring-matches compositor ids, with a special Chromium branch. The stable contract principals are therefore reserved identifiers, not claims that current windows are already authenticated as those principals.
 
-The two future product application records are intentionally `absent`:
+Settings and Agent Center are present as separately launched, ordinary taskbar applications. Settings owns `process.omarchy-ultimate-settings`, `principal.app.ultimate-settings`, `org.omarchy.Settings`, and the `omarchy-settings://<domain>/<page>?<typed-query>` route shape. Agent Center owns `process.omarchy-agent-center`, `principal.app.agent-center`, `org.omarchy.AgentCenter`, and the `omarchy-agent://<task|run|operation|provider>/<stable-id>` route shape. Each process has a separate endpoint-bound, read-only Fabric session and a typed single-instance activation target.
 
-- Settings reserves `org.omarchy.Settings`, the `principal.app.ultimate-settings` principal, single-instance deep-link activation, and the `omarchy-settings://<domain>/<page>?<typed-query>` route shape.
-- Agent Center reserves `org.omarchy.AgentCenter`, the `principal.app.agent-center` principal, single-instance deep-link activation, and the `omarchy-agent://<task|run|operation|provider>/<stable-id>` route shape.
-
-Their current plugin surfaces remain useful human shims, but they are not taskbar applications, independent process principals, or proof of deep-link support.
+Their legacy shell plugin surfaces remain useful human launch shims. The application records remain `legacy-unjoined`, rather than falsely claiming `present-contract`, until taskbar identity stops using the shared heuristic application join.
 
 ## Normalized search
 
@@ -90,7 +87,7 @@ The checker parses balanced `IpcHandler` blocks, resolves `root.ipcTarget` from 
 
 ## Checked legacy debt
 
-`legacy-debt-v0.json` keeps unsupported behavior visible. The current ten groups cover missing invocation context, first-bar-instance monitor selection, component-specific focus, heuristic application joins, absent standalone product applications, private search result shapes, untyped search mutations, direct QML process execution, the shared shell principal, and caller-unbound IPC.
+`legacy-debt-v0.json` keeps unsupported behavior visible. The current nine groups cover missing invocation context, first-bar-instance monitor selection, component-specific focus, heuristic application joins, private search result shapes, untyped search mutations, direct QML process execution, the shared shell principal, and caller-unbound IPC.
 
 Debt is not a waiver for new work. Present-contract claims require real source and evidence; legacy and partial records require an open debt id; absent providers cannot name live implementation paths. Removing debt requires satisfying its exit condition and landing the corresponding runtime and acceptance proof in the owning workstream.
 
@@ -99,7 +96,7 @@ Debt is not a waiver for new work. Present-contract claims require real source a
 - `surfaces-v0.json` inventories every first-party plugin and its host/process relationship.
 - `invocations-v0.json` defines the complete context contract and records every current summon/toggle/hide route against monitor and focus semantics.
 - `ipc-v0.json` inventories live IPC targets and methods.
-- `applications-v0.json` defines identity normalization and inventories launcher, taskbar-pin, and planned standalone-app identities.
+- `applications-v0.json` defines identity normalization and inventories launcher, taskbar-pin, and standalone product-app identities.
 - `search-v0.json` defines the normalized result/action contract and inventories current and absent providers.
 - `processes-v0.json` defines principals/processes and inventories every current QML process invocation site.
 - `legacy-debt-v0.json` records the unsupported baseline and objective exit conditions.
