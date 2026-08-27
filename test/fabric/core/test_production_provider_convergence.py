@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import json
 import tempfile
 import unittest
@@ -19,6 +20,26 @@ from omarchy_fabric.providers.compatibility.engine import deployment_revision
 from omarchy_fabric.providers.packages import provider as package_provider_module
 from omarchy_fabric.providers.packages.engine import inventory_revision
 from omarchy_fabric.security import EndpointPrincipal, PrincipalKind
+
+
+ROOT = Path(__file__).resolve().parents[3]
+MISSING_PRODUCT_ENGINES = (
+    "personalization.provider",
+    "accessibility.provider",
+    "system-information.provider",
+)
+PRODUCT_ROUTE_CATALOGS = (
+    "shell/apps/ultimate-settings/routes-v1.json",
+    "shell/apps/ultimate-files/routes-v1.json",
+    "shell/apps/ultimate-software/routes-v1.json",
+    "shell/apps/ultimate-compatibility/routes-v1.json",
+    "shell/apps/ultimate-agent-center/routes-v1.json",
+)
+REQUIRED_SETTINGS_PROVIDERS = {
+    "settings.apps.overview": "defaults.provider",
+    "settings.update.overview": "update.provider",
+    "settings.recovery.overview": "recovery.provider",
+}
 
 
 def principal() -> EndpointPrincipal:
@@ -328,6 +349,61 @@ class ProductionPolicyBoundsTests(unittest.TestCase):
                     with self.assertRaises(FabricError) as invalid:
                         loader(policy, schema)
                     self.assertEqual(invalid.exception.code, expected_code)
+
+
+def provider_manifest_capabilities(provider_id: str) -> tuple[str, ...]:
+    domain = provider_id.removesuffix(".provider")
+    manifest_path = ROOT / "default/fabric/omarchy_fabric/providers" / domain / "manifest-v0.json"
+    if manifest_path.is_file():
+        return tuple(json.loads(manifest_path.read_text(encoding="utf-8"))["capabilities"])
+    module = importlib.import_module(f"omarchy_fabric.providers.{domain}.provider")
+    return tuple(module.MANIFEST["capabilities"])
+
+
+class CatalogConvergenceLockTests(unittest.TestCase):
+    def test_catalog_reader_ids_are_on_provider_manifests(self) -> None:
+        catalog = json.loads(
+            (ROOT / "default/ultimate/capabilities/catalog-provider-readers-v0.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        capability_ids = tuple(entry["id"] for entry in catalog["capabilities"])
+        present_ids = []
+        for entry in catalog["capabilities"]:
+            provider_id = entry["provider"]["id"]
+            manifest_capabilities = provider_manifest_capabilities(provider_id)
+            if provider_id not in present_ids:
+                present_ids.append(provider_id)
+            self.assertIn(entry["id"], manifest_capabilities)
+            self.assertEqual(entry["kind"], "reader")
+            self.assertEqual(entry["provider"]["state"], "present")
+            self.assertEqual(entry["availability"]["agent"], "unavailable")
+            self.assertNotEqual(entry["availability"]["claim"], "present")
+            self.assertTrue(entry["redaction"]["fields"])
+        self.assertEqual(tuple(present_ids), BUILTIN_PROVIDER_IDS)
+        self.assertNotIn("packages.inspect", provider_manifest_capabilities("packages.provider"))
+        self.assertNotIn("compatibility.inspect", provider_manifest_capabilities("compatibility.provider"))
+        self.assertNotIn("packages.inspect", capability_ids)
+        self.assertNotIn("compatibility.inspect", capability_ids)
+
+    def test_product_routes_name_registered_or_explicitly_missing_providers(self) -> None:
+        allowed = set(BUILTIN_PROVIDER_IDS) | set(MISSING_PRODUCT_ENGINES) | {""}
+        settings_routes = {}
+        for relative in PRODUCT_ROUTE_CATALOGS:
+            catalog = json.loads((ROOT / relative).read_text(encoding="utf-8"))
+            for route in catalog["routes"]:
+                provider_id = route["providerId"]
+                self.assertIn(
+                    provider_id,
+                    allowed,
+                    f"{relative} route {route['id']} names unregistered provider {provider_id}",
+                )
+                if catalog["application"] == "settings":
+                    settings_routes[route["id"]] = provider_id
+        for route_id, provider_id in REQUIRED_SETTINGS_PROVIDERS.items():
+            self.assertEqual(settings_routes[route_id], provider_id)
+        for missing in MISSING_PRODUCT_ENGINES:
+            self.assertNotIn(missing, BUILTIN_PROVIDER_IDS)
 
 
 if __name__ == "__main__":
