@@ -56,6 +56,11 @@ grep -Fq 'static bool dispatchCompositorBox' "$cpp" \
   || fail "native Chromium geometry must use dispatcher-equivalent actions"
 grep -Fq 'Config::Actions::resize(Vector2D{box.w, box.h}, false, w)' "$cpp" \
   || fail "native Chromium geometry must configure surface size through the resize action"
+grep -Fq 'if (!layoutTarget || !layoutTarget->space())' "$cpp" \
+  || fail "native geometry must refuse Hyprland targets detached during surface teardown"
+if ! grep -A18 '^static bool dispatchCompositorBox(PHLWINDOW w, const CBox& box) {' "$cpp" | grep -Fq '!w->m_isMapped'; then
+  fail "native geometry must refuse an unmapped window before entering the layout action"
+fi
 grep -Fq 'Config::Actions::move(Vector2D{box.x, box.y}, false, w)' "$cpp" \
   || fail "native Chromium geometry must configure position through the move action"
 if grep -Fq 'applyChromiumMaximizedBox' "$cpp"; then
