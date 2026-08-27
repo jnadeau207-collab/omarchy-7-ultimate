@@ -74,6 +74,68 @@ MIGRATIONS: dict[int, tuple[str, ...]] = {
         "CREATE INDEX events_topic_sequence_idx ON events(topic, sequence)",
         "CREATE INDEX idempotency_status_idx ON idempotency(status, updated_at)",
     ),
+    3: (
+        """
+        CREATE TABLE reference_resources (
+          resource_id TEXT PRIMARY KEY,
+          state TEXT NOT NULL CHECK (state IN ('enabled', 'disabled')),
+          revision INTEGER NOT NULL CHECK (revision >= 0),
+          updated_at REAL NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE reference_operations (
+          operation_id TEXT PRIMARY KEY,
+          idempotency_key TEXT NOT NULL UNIQUE,
+          request_hash TEXT NOT NULL,
+          recovery_token_digest TEXT NOT NULL,
+          principal_id TEXT NOT NULL,
+          session_id TEXT NOT NULL,
+          resource_id TEXT NOT NULL,
+          provider_version TEXT NOT NULL,
+          state_revision TEXT NOT NULL,
+          before_state TEXT NOT NULL CHECK (before_state IN ('enabled', 'disabled')),
+          desired_state TEXT NOT NULL CHECK (desired_state IN ('enabled', 'disabled')),
+          outcome TEXT NOT NULL CHECK (outcome IN ('succeed', 'fail-after-apply')),
+          pace TEXT NOT NULL CHECK (pace IN ('immediate', 'observable')),
+          status TEXT NOT NULL CHECK (status IN (
+            'awaiting-consent', 'queued', 'running', 'interrupted', 'reconciling',
+            'succeeded', 'recovered', 'failed', 'cancelled'
+          )),
+          checkpoint TEXT NOT NULL CHECK (checkpoint IN (
+            'preflight', 'authorized', 'validated', 'applied', 'finished', 'reconciled'
+          )),
+          progress INTEGER NOT NULL CHECK (progress BETWEEN 0 AND 100),
+          cancellation_requested INTEGER NOT NULL DEFAULT 0 CHECK (cancellation_requested IN (0, 1)),
+          ledger_entry_count INTEGER NOT NULL DEFAULT 0 CHECK (ledger_entry_count BETWEEN 0 AND 128),
+          ledger_head_hash TEXT NOT NULL DEFAULT '0000000000000000000000000000000000000000000000000000000000000000'
+            CHECK (length(ledger_head_hash) = 64 AND ledger_head_hash NOT GLOB '*[^0-9a-f]*'),
+          approval_id TEXT,
+          approval_binding_digest TEXT,
+          correlation_nonce TEXT,
+          authorization_code TEXT,
+          error_json TEXT,
+          result_json TEXT,
+          created_at REAL NOT NULL,
+          updated_at REAL NOT NULL
+        )
+        """,
+        "CREATE INDEX reference_operations_status_idx ON reference_operations(status, updated_at)",
+        "CREATE INDEX reference_operations_resource_idx ON reference_operations(resource_id, created_at)",
+        """
+        CREATE TABLE reference_operation_ledger (
+          sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+          entry_id TEXT NOT NULL UNIQUE,
+          operation_id TEXT NOT NULL REFERENCES reference_operations(operation_id),
+          event_type TEXT NOT NULL,
+          payload_json TEXT NOT NULL,
+          previous_hash TEXT NOT NULL,
+          entry_hash TEXT NOT NULL UNIQUE,
+          created_at REAL NOT NULL
+        )
+        """,
+        "CREATE INDEX reference_operation_ledger_operation_idx ON reference_operation_ledger(operation_id, sequence)",
+    ),
 }
 
 

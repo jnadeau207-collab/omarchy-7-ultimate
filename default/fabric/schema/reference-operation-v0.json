@@ -1,0 +1,772 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:reference-operation-v0",
+  "title": "Omarchy Fabric hermetic consequential reference operation v0",
+  "description": "Closed contracts for the fake reference-setting operation used to prove Fabric lifecycle, trust, recovery, and evidence invariants without host mutation.",
+  "$defs": {
+    "referenceArguments": {
+      "type": "object",
+      "required": [
+        "desiredState",
+        "outcome",
+        "pace"
+      ],
+      "properties": {
+        "desiredState": {
+          "type": "string",
+          "enum": [
+            "enabled",
+            "disabled"
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "succeed",
+            "fail-after-apply"
+          ]
+        },
+        "pace": {
+          "type": "string",
+          "enum": [
+            "immediate",
+            "observable"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "preflightParams": {
+      "type": "object",
+      "required": [
+        "operationId",
+        "idempotencyKey",
+        "recoveryToken",
+        "resourceId",
+        "arguments"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "idempotencyKey": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$"
+        },
+        "recoveryToken": {
+          "$ref": "#/$defs/recoveryToken"
+        },
+        "resourceId": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "arguments": {
+          "$ref": "#/$defs/referenceArguments"
+        }
+      },
+      "additionalProperties": false
+    },
+    "approveParams": {
+      "type": "object",
+      "required": [
+        "operationId",
+        "confirmation"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "confirmation": {
+          "const": "approve-exact-operation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "startParams": {
+      "type": "object",
+      "required": [
+        "operationId",
+        "approvalId"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "approvalId": {
+          "type": "string",
+          "pattern": "^approval\\.[a-f0-9]{32}$",
+          "maxLength": 160
+        }
+      },
+      "additionalProperties": false
+    },
+    "operationParams": {
+      "type": "object",
+      "required": [
+        "operationId"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "recoveryToken": {
+          "$ref": "#/$defs/recoveryToken"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ledgerParams": {
+      "type": "object",
+      "required": [
+        "operationId"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "recoveryToken": {
+          "$ref": "#/$defs/recoveryToken"
+        },
+        "afterSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        }
+      },
+      "additionalProperties": false
+    },
+    "recoveryToken": {
+      "type": "string",
+      "description": "A fresh caller-generated 32-byte value from a cryptographically secure random number generator, encoded as unpadded base64url. Shape validation does not establish randomness.",
+      "pattern": "^[A-Za-z0-9_-]{43}$"
+    },
+    "operationStatus": {
+      "type": "string",
+      "enum": [
+        "awaiting-consent",
+        "queued",
+        "running",
+        "interrupted",
+        "reconciling",
+        "succeeded",
+        "recovered",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "checkpoint": {
+      "type": "string",
+      "enum": [
+        "preflight",
+        "authorized",
+        "validated",
+        "applied",
+        "finished",
+        "reconciled"
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "approvalId",
+        "correlationNonce",
+        "bindingDigest",
+        "expiresAt",
+        "oneUse"
+      ],
+      "properties": {
+        "approvalId": {
+          "type": "string",
+          "pattern": "^approval\\.[a-f0-9]{32}$"
+        },
+        "correlationNonce": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "bindingDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "expiresAt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "oneUse": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "approveResult": {
+      "type": "object",
+      "required": [
+        "operation",
+        "approval"
+      ],
+      "properties": {
+        "operation": {
+          "$ref": "#/$defs/operation"
+        },
+        "approval": {
+          "$ref": "#/$defs/approval"
+        }
+      },
+      "additionalProperties": false
+    },
+    "preflightResult": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/operation"
+        },
+        {
+          "required": [
+            "preflight"
+          ]
+        }
+      ]
+    },
+    "getResult": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/operation"
+        },
+        {
+          "required": [
+            "resourceState"
+          ]
+        }
+      ]
+    },
+    "operation": {
+      "type": "object",
+      "required": [
+        "operationId",
+        "provider",
+        "providerVersion",
+        "capability",
+        "risk",
+        "resource",
+        "stateRevision",
+        "arguments",
+        "beforeState",
+        "status",
+        "checkpoint",
+        "progress",
+        "cancellationRequested",
+        "approvalId",
+        "authorizationCode",
+        "error",
+        "result",
+        "idempotency",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "provider": {
+          "const": "fake.reference-settings"
+        },
+        "providerVersion": {
+          "const": "v0"
+        },
+        "capability": {
+          "const": "reference.setting.apply"
+        },
+        "risk": {
+          "const": "consequential"
+        },
+        "resource": {
+          "$ref": "#/$defs/resource"
+        },
+        "stateRevision": {
+          "type": "string",
+          "pattern": "^revision\\.[0-9]+$"
+        },
+        "arguments": {
+          "$ref": "#/$defs/referenceArguments"
+        },
+        "beforeState": {
+          "enum": [
+            "enabled",
+            "disabled"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/operationStatus"
+        },
+        "checkpoint": {
+          "$ref": "#/$defs/checkpoint"
+        },
+        "progress": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "cancellationRequested": {
+          "type": "boolean"
+        },
+        "approvalId": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^approval\\.[a-f0-9]{32}$"
+            }
+          ]
+        },
+        "authorizationCode": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "const": "policy.approved"
+            }
+          ]
+        },
+        "error": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "common-v0.json#/$defs/errorEnvelope"
+            }
+          ]
+        },
+        "result": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/result"
+            }
+          ]
+        },
+        "idempotency": {
+          "type": "object",
+          "required": [
+            "key",
+            "replayed"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "common-v0.json#/$defs/idempotencyKey"
+            },
+            "replayed": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "createdAt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "updatedAt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "preflight": {
+          "$ref": "#/$defs/preflight"
+        },
+        "resourceState": {
+          "$ref": "#/$defs/resourceState"
+        }
+      },
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "reference-setting"
+        },
+        "id": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        }
+      },
+      "additionalProperties": false
+    },
+    "resourceState": {
+      "type": "object",
+      "required": [
+        "id",
+        "state",
+        "revision"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "state": {
+          "enum": [
+            "enabled",
+            "disabled"
+          ]
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^revision\\.[0-9]+$"
+        },
+        "updatedAt": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "preflight": {
+      "type": "object",
+      "required": [
+        "eligible",
+        "consequence",
+        "requiresConsent",
+        "hostMutation"
+      ],
+      "properties": {
+        "eligible": {
+          "const": true
+        },
+        "consequence": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "requiresConsent": {
+          "const": true
+        },
+        "hostMutation": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "required": [
+        "provider",
+        "resource",
+        "state",
+        "revision",
+        "validated",
+        "reconciled"
+      ],
+      "properties": {
+        "provider": {
+          "const": "fake.reference-settings"
+        },
+        "resource": {
+          "$ref": "#/$defs/resource"
+        },
+        "state": {
+          "enum": [
+            "enabled",
+            "disabled"
+          ]
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^revision\\.[0-9]+$"
+        },
+        "validated": {
+          "type": "boolean"
+        },
+        "reconciled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidencePayload": {
+      "type": "object",
+      "required": [
+        "operationId",
+        "phase",
+        "status",
+        "checkpoint",
+        "progress"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "phase": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "status": {
+          "$ref": "#/$defs/operationStatus"
+        },
+        "checkpoint": {
+          "$ref": "#/$defs/checkpoint"
+        },
+        "progress": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "provider": {
+          "const": "fake.reference-settings"
+        },
+        "providerVersion": {
+          "const": "v0"
+        },
+        "capability": {
+          "const": "reference.setting.apply"
+        },
+        "risk": {
+          "const": "consequential"
+        },
+        "resource": {
+          "$ref": "#/$defs/resource"
+        },
+        "stateRevision": {
+          "type": "string",
+          "pattern": "^revision\\.[0-9]+$"
+        },
+        "arguments": {
+          "$ref": "#/$defs/referenceArguments"
+        },
+        "principalId": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "sessionId": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "approvalId": {
+          "type": "string",
+          "pattern": "^approval\\.[a-f0-9]{32}$"
+        },
+        "correlationNonce": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "bindingDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "authorizationCode": {
+          "const": "policy.approved"
+        },
+        "resourceRevision": {
+          "type": "string",
+          "pattern": "^revision\\.[0-9]+$"
+        },
+        "errorCode": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "changeState": {
+          "$ref": "common-v0.json#/$defs/changeState"
+        },
+        "result": {
+          "$ref": "#/$defs/result"
+        },
+        "previousStatus": {
+          "$ref": "#/$defs/operationStatus"
+        },
+        "recoveryAction": {
+          "const": "reference.operation.reconcile"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ledgerEntry": {
+      "type": "object",
+      "required": [
+        "sequence",
+        "entryId",
+        "operationId",
+        "eventType",
+        "payload",
+        "previousHash",
+        "entryHash",
+        "createdAt"
+      ],
+      "properties": {
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "entryId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "eventType": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "payload": {
+          "$ref": "#/$defs/evidencePayload"
+        },
+        "previousHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "entryHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "createdAt": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "ledger": {
+      "type": "object",
+      "required": [
+        "operationId",
+        "verified",
+        "entryCount",
+        "totalEntryCount",
+        "headHash",
+        "entries",
+        "nextAfterSequence"
+      ],
+      "properties": {
+        "operationId": {
+          "$ref": "common-v0.json#/$defs/uuid"
+        },
+        "verified": {
+          "const": true
+        },
+        "entryCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "totalEntryCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128
+        },
+        "headHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/ledgerEntry"
+          }
+        },
+        "nextAfterSequence": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9223372036854775807
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "methodResultContract": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "method",
+            "result"
+          ],
+          "properties": {
+            "method": {
+              "const": "reference.operation.preflight"
+            },
+            "result": {
+              "$ref": "#/$defs/preflightResult"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "method",
+            "result"
+          ],
+          "properties": {
+            "method": {
+              "const": "reference.operation.approve"
+            },
+            "result": {
+              "$ref": "#/$defs/approveResult"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "method",
+            "result"
+          ],
+          "properties": {
+            "method": {
+              "const": "reference.operation.get"
+            },
+            "result": {
+              "$ref": "#/$defs/getResult"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "method",
+            "result"
+          ],
+          "properties": {
+            "method": {
+              "enum": [
+                "reference.operation.start",
+                "reference.operation.cancel",
+                "reference.operation.reconcile"
+              ]
+            },
+            "result": {
+              "$ref": "#/$defs/operation"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "method",
+            "result"
+          ],
+          "properties": {
+            "method": {
+              "const": "reference.operation.ledger"
+            },
+            "result": {
+              "$ref": "#/$defs/ledger"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

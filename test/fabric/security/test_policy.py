@@ -128,12 +128,26 @@ class TrustPolicyTests(unittest.TestCase):
 
     def test_sessions_expire_and_revoke_fail_closed(self) -> None:
         principal, credential = self.issue(PrincipalKind.SHELL)
+        self.assertTrue(self.sessions.is_active(principal.session_id))
         self.clock.now += timedelta(hours=2)
         with self.assertRaisesRegex(SecurityValidationError, "expired"):
             self.sessions.resolve(1000, credential)
+        with self.assertRaisesRegex(SecurityValidationError, "expired"):
+            self.sessions.require_active(principal)
+        self.assertFalse(self.sessions.is_active(principal.session_id))
         principal, credential = self.issue(PrincipalKind.SHELL)
         self.sessions.revoke(principal.session_id)
         with self.assertRaisesRegex(SecurityValidationError, "revoked"):
+            self.sessions.resolve(1000, credential)
+        with self.assertRaisesRegex(SecurityValidationError, "revoked"):
+            self.sessions.require_active(principal)
+        self.assertFalse(self.sessions.is_active(principal.session_id))
+
+    def test_released_connection_session_is_forgotten(self) -> None:
+        principal, credential = self.issue(PrincipalKind.SHELL)
+        self.assertTrue(self.sessions.release(principal.session_id))
+        self.assertFalse(self.sessions.release(principal.session_id))
+        with self.assertRaisesRegex(SecurityValidationError, "invalid"):
             self.sessions.resolve(1000, credential)
 
     def test_default_deny_and_exact_resource_constraint_grant(self) -> None:
@@ -297,6 +311,28 @@ class TrustPolicyTests(unittest.TestCase):
             now=self.clock.now,
         )
         self.assertEqual(decision.code, "approval.expired")
+
+    def test_approval_authority_is_capacity_bounded_and_prunes_terminal_records(self) -> None:
+        shell, _ = self.issue(PrincipalKind.SHELL)
+        request = self.request(shell, risk=RiskLevel.CONSEQUENTIAL)
+        approvals = ApprovalAuthority(clock=self.clock, max_records=2)
+        first = approvals.issue(shell, request, expires_at=self.clock.now + timedelta(minutes=5))
+        second = approvals.issue(shell, request, expires_at=self.clock.now + timedelta(minutes=5))
+        self.assertEqual(approvals.record_count, 2)
+        with self.assertRaisesRegex(SecurityValidationError, "capacity"):
+            approvals.issue(shell, request, expires_at=self.clock.now + timedelta(minutes=5))
+        self.assertEqual(approvals.record_count, 2)
+        self.assertTrue(approvals.discard(second.approval_id))
+        self.assertFalse(approvals.discard(second.approval_id))
+        replacement = approvals.issue(shell, request, expires_at=self.clock.now + timedelta(minutes=5))
+        self.assertEqual(approvals.record_count, 2)
+        self.assertTrue(approvals.check(first.approval_id, shell, request, consume=True).valid)
+        approvals.issue(shell, request, expires_at=self.clock.now + timedelta(minutes=5))
+        self.assertEqual(approvals.record_count, 2)
+        self.clock.now += timedelta(minutes=6)
+        self.assertEqual(approvals.prune(), 2)
+        self.assertEqual(approvals.record_count, 0)
+        self.assertIsNotNone(replacement)
 
     def test_high_risk_task_needs_both_task_grant_and_exact_approval(self) -> None:
         task, _ = self.issue(PrincipalKind.TASK, task_id="task.one")

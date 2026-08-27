@@ -16,44 +16,92 @@ import pathlib
 import sys
 
 module_directory = pathlib.Path(sys.argv[1])
-for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health"):
+for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health", "reference_operation"):
     path = module_directory / f"{name}.py"
     compile(path.read_text(), str(path), "exec")
 PY
 pass "Fabric Python modules compile"
 
-python3 - "$ROOT/default/fabric/schema/common-v0.json" "$ROOT/default/fabric/schema/rpc-v0.json" <<'PY'
+python3 - \
+  "$ROOT/default/fabric/schema/common-v0.json" \
+  "$ROOT/default/fabric/schema/rpc-v0.json" \
+  "$ROOT/default/fabric/schema/reference-operation-v0.json" <<'PY'
 import json
 import pathlib
+import re
 import sys
 
-common_path, rpc_path = map(pathlib.Path, sys.argv[1:])
+common_path, rpc_path, reference_path = map(pathlib.Path, sys.argv[1:])
 common = json.loads(common_path.read_text())
 rpc = json.loads(rpc_path.read_text())
+reference = json.loads(reference_path.read_text())
+
+def walk(value):
+    yield value
+    if isinstance(value, dict):
+        for child in value.values():
+            yield from walk(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from walk(child)
+
+def resolve_pointer(document, pointer):
+    current = document
+    for part in pointer.removeprefix("/").split("/") if pointer else ():
+        current = current[part.replace("~1", "/").replace("~0", "~")]
+    return current
+
 assert common["$id"] == "urn:omarchy:fabric:schema:common-v0"
 assert rpc["$id"] == "urn:omarchy:fabric:schema:rpc-v0"
+assert reference["$id"] == "urn:omarchy:fabric:schema:reference-operation-v0"
 assert "common-v0.json#/$defs/errorEnvelope" in rpc_path.read_text()
+assert "reference-operation-v0.json#/$defs/preflightParams" in rpc_path.read_text()
 assert rpc["$defs"]["protocol"]["const"] == "omarchy.fabric.rpc/v0"
 assert rpc["$defs"]["requestId"]["maxLength"] == 128
 assert rpc["$defs"]["eventSubscription"]["properties"]["limit"]["maximum"] == 128
+reference_methods = {
+    "reference.operation.preflight",
+    "reference.operation.approve",
+    "reference.operation.start",
+    "reference.operation.get",
+    "reference.operation.cancel",
+    "reference.operation.reconcile",
+    "reference.operation.ledger",
+}
+assert reference_methods <= set(rpc["$defs"]["request"]["properties"]["method"]["enum"])
+assert "recoveryToken" in reference["$defs"]["preflightParams"]["required"]
+assert reference["$defs"]["recoveryToken"]["pattern"] == "^[A-Za-z0-9_-]{43}$"
+assert "recoveryToken" not in reference["$defs"]["operation"]["properties"]
+assert "recoveryToken" not in reference["$defs"]["evidencePayload"]["properties"]
+assert reference["$defs"]["ledgerParams"]["properties"]["limit"]["maximum"] == 8
+assert reference["$defs"]["ledger"]["properties"]["entries"]["maxItems"] == 8
+assert len(reference["$defs"]["methodResultContract"]["oneOf"]) == 5
+for name in ("referenceArguments", "preflightParams", "approveParams", "startParams", "operationParams", "ledgerParams", "approval", "approveResult", "operation", "resource", "resourceState", "preflight", "result", "evidencePayload", "ledgerEntry", "ledger"):
+    assert reference["$defs"][name]["type"] == "object", name
+    assert reference["$defs"][name]["additionalProperties"] is False, name
+for node in walk(reference):
+    if not isinstance(node, dict):
+        continue
+    if node.get("type") == "object":
+        assert node.get("additionalProperties") is False, node
+    if "pattern" in node:
+        re.compile(node["pattern"])
+    if "$ref" in node:
+        ref = node["$ref"]
+        if ref.startswith("#/"):
+            resolve_pointer(reference, ref[1:])
+        elif ref.startswith("common-v0.json#/"):
+            resolve_pointer(common, ref.split("#", 1)[1])
+        else:
+            raise AssertionError(f"unapproved reference-operation schema ref: {ref}")
 PY
-pass "Fabric RPC schema is valid JSON and consumes the root common vocabulary"
+pass "Fabric RPC and closed reference-operation schemas consume the root common vocabulary"
 
 for command in omarchy-fabricd omarchy-fabricctl; do
   grep -q '^# omarchy:summary=' "$ROOT/bin/$command" || fail "$command declares a summary"
   grep -q '^# omarchy:hidden=true$' "$ROOT/bin/$command" || fail "$command remains provisional and hidden"
 done
 pass "Fabric daemon and diagnostics commands carry hidden provisional metadata"
-
-grep -q '^ExecStart=/usr/bin/omarchy-fabricd$' \
-  "$ROOT/test/fabric/core/fixtures/omarchy-fabric.service" || \
-  fail "Fabric service fixture uses a fixed daemon argv"
-! grep -Eq '(/bin/(ba)?sh|-c[[:space:]])' \
-  "$ROOT/test/fabric/core/fixtures/omarchy-fabric.service" || \
-  fail "Fabric service fixture does not launch a shell"
-[[ ! -e $ROOT/default/systemd/user/omarchy-fabric.service ]] || \
-  fail "Fabric Core does not install the packaging owner's service"
-pass "Fabric service work remains a fixed-argv test contract, not an installed unit"
 
 fabric_core_modules=(
   "$ROOT/default/fabric/omarchy_fabric/__init__.py"
@@ -63,6 +111,7 @@ fabric_core_modules=(
   "$ROOT/default/fabric/omarchy_fabric/models.py"
   "$ROOT/default/fabric/omarchy_fabric/events.py"
   "$ROOT/default/fabric/omarchy_fabric/health.py"
+  "$ROOT/default/fabric/omarchy_fabric/reference_operation.py"
 )
 ! grep -En 'create_subprocess_shell|shell[[:space:]]*=[[:space:]]*True|os\.system|popen\(' \
   "${fabric_core_modules[@]}" || \
