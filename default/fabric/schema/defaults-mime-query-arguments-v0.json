@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:mime-query-arguments:v0",
+  "x-omarchy-version": "v0",
+  "title": "Default MIME query arguments",
+  "type": "object",
+  "required": ["mimeType"],
+  "properties": {"mimeType": {"$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/mimeType"}},
+  "additionalProperties": false
+}

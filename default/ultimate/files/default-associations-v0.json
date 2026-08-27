@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "v0",
+  "mimeTypes": [
+    "application/json",
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "text/html",
+    "text/plain",
+    "video/mp4"
+  ],
+  "protocols": ["http", "https", "mailto"]
+}

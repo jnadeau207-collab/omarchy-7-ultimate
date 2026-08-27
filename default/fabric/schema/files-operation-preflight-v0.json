@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:operation-preflight:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files operation preflight",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "providerVersion", "action", "capability", "resource", "normalizedArguments", "stateRevision", "currentState", "proposedState", "changed", "summary", "risk", "effects", "guards", "recovery"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "provider": {"const": "files.provider"},
+    "providerVersion": {"const": "v0"},
+    "action": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.trash", "trash.restore", "mount.connect", "mount.disconnect"]},
+    "capability": {"type": "string", "enum": ["files.directory.create", "files.entry.rename", "files.entry.trash", "files.trash.restore", "files.mount.connect", "files.mount.disconnect"]},
+    "resource": {"$ref": "#/$defs/resource"},
+    "normalizedArguments": {"oneOf": [
+      {"$ref": "urn:omarchy:fabric:provider:files:create-directory-arguments:v0"},
+      {"$ref": "urn:omarchy:fabric:provider:files:rename-arguments:v0"},
+      {"$ref": "urn:omarchy:fabric:provider:files:entry-arguments:v0"},
+      {"$ref": "urn:omarchy:fabric:provider:files:mount-arguments:v0"}
+    ]},
+    "stateRevision": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/revision"},
+    "currentState": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0"},
+    "proposedState": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0"},
+    "changed": {"type": "boolean"},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "risk": {"type": "string", "enum": ["low", "consequential"]},
+    "effects": {"type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "enum": ["mutating", "network"]}},
+    "guards": {"$ref": "#/$defs/guards"},
+    "recovery": {"$ref": "#/$defs/recovery"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "resource": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {"kind": {"const": "files.workspace"}, "id": {"const": "files.workspace.primary"}},
+      "additionalProperties": false
+    },
+    "anchor": {
+      "type": "object",
+      "required": ["resourceId", "identity"],
+      "properties": {
+        "resourceId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160},
+        "identity": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/revision"}
+      },
+      "additionalProperties": false
+    },
+    "guards": {
+      "type": "object",
+      "required": ["snapshotRevision", "pathPolicy", "noFollow", "anchors"],
+      "properties": {
+        "snapshotRevision": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/revision"},
+        "pathPolicy": {"const": "location-relative-v0"},
+        "noFollow": {"const": true},
+        "anchors": {"type": "array", "maxItems": 8, "items": {"$ref": "#/$defs/anchor"}}
+      },
+      "additionalProperties": false
+    },
+    "recovery": {
+      "type": "object",
+      "required": ["mode", "priorState"],
+      "properties": {"mode": {"const": "undo"}, "priorState": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0"}},
+      "additionalProperties": false
+    }
+  }
+}

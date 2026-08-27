@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:search-arguments:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files search arguments",
+  "type": "object",
+  "required": ["query", "locationIds", "includeHidden", "limit"],
+  "properties": {
+    "query": {"type": "string", "minLength": 1, "maxLength": 160},
+    "locationIds": {"type": "array", "maxItems": 16, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160}},
+    "includeHidden": {"type": "boolean"},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 128}
+  },
+  "additionalProperties": false
+}

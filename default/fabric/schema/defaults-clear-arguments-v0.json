@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:clear-arguments:v0",
+  "x-omarchy-version": "v0",
+  "title": "Clear default association arguments",
+  "type": "object",
+  "required": ["associationId"],
+  "properties": {"associationId": {"$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/stableId"}},
+  "additionalProperties": false
+}

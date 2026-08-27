@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:query-result:v0",
+  "x-omarchy-version": "v0",
+  "title": "Default MIME or protocol query result",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "providerVersion", "action", "availability", "revision", "association", "application"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "provider": {"const": "defaults.provider"},
+    "providerVersion": {"const": "v0"},
+    "action": {"type": "string", "enum": ["mime.query", "protocol.query"]},
+    "availability": {"$ref": "urn:omarchy:fabric:provider:defaults:inventory-result:v0#/$defs/availability"},
+    "revision": {"oneOf": [{"type": "null"}, {"$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/revision"}]},
+    "association": {"oneOf": [{"type": "null"}, {"$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/association"}]},
+    "application": {"oneOf": [{"type": "null"}, {"$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/application"}]}
+  },
+  "additionalProperties": false
+}
