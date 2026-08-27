@@ -264,6 +264,7 @@ static CHyprSignalListener                     g_onDestroy;
 static CHyprSignalListener                     g_onFullscreen;
 static CHyprSignalListener                     g_onUpdateRules;
 static CHyprSignalListener                     g_onTick;
+static CHyprSignalListener                     g_onRenderPre;
 static CHyprSignalListener                     g_onMouseMove;
 static Desktop::Rule::CWindowRuleEffectContainer::storageType g_nobarEffectIdx = 0;
 static bool                                    g_inPluginApply = false;
@@ -1138,6 +1139,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     }
   });
   g_onTick = Event::bus()->m_events.tick.listen([]() { damageChromiumAnimations(); });
+  // render.pre runs for every scheduled output frame, including direct
+  // non-animated moves for which the animation manager emits no tick. It is
+  // still before beginRender snapshots the damage region, so the old and new
+  // Chromium overhangs are included in that exact frame.
+  g_onRenderPre = Event::bus()->m_events.render.pre.listen([](PHLMONITOR) { damageChromiumAnimations(); });
   g_onMouseMove = Event::bus()->m_events.input.mouse.move.listen(damageChromiumDrag);
   g_onFullscreen = Event::bus()->m_events.window.fullscreen.listen([](PHLWINDOW w) {
     syncCsdMaximizedState(w);
@@ -1182,5 +1188,6 @@ APICALL EXPORT void PLUGIN_EXIT() {
   g_onFullscreen  = {};
   g_onUpdateRules = {};
   g_onTick        = {};
+  g_onRenderPre   = {};
   g_onMouseMove   = {};
 }
