@@ -12,6 +12,9 @@
 #undef private
 #include "xdg-decoration-unstable-v1.hpp"
 #include "src/render/Renderer.hpp"
+#include "src/render/pass/SurfacePassElement.hpp"
+#include "src/managers/input/InputManager.hpp"
+#include "src/layout/LayoutManager.hpp"
 #include "src/xwayland/XSurface.hpp"
 #include "src/managers/fullscreen/FullscreenController.hpp"
 #include "src/managers/eventLoop/EventLoopManager.hpp"
@@ -44,6 +47,7 @@
 #include <string_view>
 #include <unistd.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 extern "C" {
@@ -52,6 +56,24 @@ extern "C" {
 }
 
 static HANDLE PHANDLE = nullptr;
+static std::unordered_set<uintptr_t> g_chromiumWindows;
+
+static CFunctionHook* g_getTexBoxHook = nullptr;
+static constexpr const char* GET_TEX_BOX_SIGNATURE = "_ZN19CSurfacePassElement9getTexBoxEv";
+static constexpr const char* GET_TEX_BOX_DEMANGLED = "CSurfacePassElement::getTexBox()";
+
+// These are the two private cache fields immediately following m_data in the
+// pinned Hyprland 0.56.2 CSurfacePassElement ABI. The plugin already refuses a
+// header/runtime hash mismatch before this accessor can run.
+struct SurfacePassCache {
+  bool texBoxCached = false;
+  CBox cachedTexBox = {};
+};
+
+static SurfacePassCache& surfacePassCache(CSurfacePassElement* element) {
+  auto* dataEnd = reinterpret_cast<char*>(&element->m_data) + sizeof(element->m_data);
+  return *reinterpret_cast<SurfacePassCache*>(dataEnd);
+}
 
 static std::string canonAddr(std::string spec) {
   if (spec.rfind("address:", 0) == 0)
@@ -253,9 +275,9 @@ static CBox monitorWork(PHLWINDOW w) {
 }
 
 // Chromium's Wayland CSD paints its visible frame 12px right/down from the
-// compositor box while keeping the right/bottom edge at the box boundary. Keep
-// every saved and clamped rectangle in visible-frame coordinates and transform
-// exactly once at compositor egress. GTK CSD clients do not have this inset.
+// compositor box and extends through the far edge. Keep every saved and
+// clamped rectangle in visible-frame coordinates and expand the compositor box
+// by the same inset at egress. GTK CSD clients do not have this inset.
 static constexpr double CHROMIUM_FRAME_INSET = 12.0;
 
 static bool usesChromiumFrame(PHLWINDOW w) {
@@ -269,6 +291,105 @@ static bool usesChromiumFrame(PHLWINDOW w) {
   return cls.find("chrome") != std::string::npos || cls.find("chromium") != std::string::npos ||
       cls.find("brave-browser") != std::string::npos || cls.find("microsoft-edge") != std::string::npos ||
       cls.find("vivaldi-stable") != std::string::npos || cls.find("helium") != std::string::npos;
+}
+
+// CSurfacePassElement normally shrinks a window surface at the compositor-box
+// boundary. Chromium's native CSD deliberately overhangs that boundary by the
+// frame inset, so the shrink removes its right/bottom edge and top-right radius.
+// Reproduce Hyprland's texture-box calculation locally with only that clamp
+// disabled for normal Chromium window surfaces; popups and every other client
+// are untouched.
+static CBox getTexBoxWithChromiumOverhang(CSurfacePassElement* element) {
+  if (!element)
+    return {};
+  auto& cache = surfacePassCache(element);
+  if (cache.texBoxCached)
+    return cache.cachedTexBox;
+
+  // This is the upstream CSurfacePassElement::getTexBox implementation. Keep
+  // it local instead of calling CFunctionHook::m_original: Hyprland's trampoline
+  // cannot safely carry this 40-byte member-return ABI on the metal build.
+  const double outputX = -element->m_data.pMonitor->m_position.x;
+  const double outputY = -element->m_data.pMonitor->m_position.y;
+  const auto interactiveResize = element->m_data.pWindow && g_layoutManager->dragController()->target() &&
+      g_layoutManager->dragController()->mode() == MBIND_RESIZE;
+  auto surface = Desktop::View::CWLSurface::fromResource(element->m_data.surface);
+
+  CBox windowBox;
+  if (element->m_data.surface && element->m_data.mainSurface) {
+    windowBox = {sc<int>(outputX) + element->m_data.pos.x + element->m_data.localPos.x,
+                  sc<int>(outputY) + element->m_data.pos.y + element->m_data.localPos.y,
+                  element->m_data.w, element->m_data.h};
+    const auto window = surface ? Desktop::View::CWindow::fromView(surface->view()) : nullptr;
+    if (surface && !surface->m_fillIgnoreSmall && surface->small()) {
+      const auto correct = surface->correctSmallVec();
+      const auto size = surface->getViewporterCorrectedSize();
+      const auto reported = window->getReportedSize();
+      if (!interactiveResize) {
+        windowBox.translate(correct);
+        const auto realSize = window->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+        windowBox.width = size.x * (realSize.x / reported.x);
+        windowBox.height = size.y * (realSize.y / reported.y);
+      } else {
+        windowBox.width = size.x;
+        windowBox.height = size.y;
+      }
+    }
+  } else {
+    const auto surfaceSize = element->m_data.surface->m_current.size;
+    windowBox = {sc<int>(outputX) + element->m_data.pos.x + element->m_data.localPos.x,
+                 sc<int>(outputY) + element->m_data.pos.y + element->m_data.localPos.y,
+                 std::max(sc<float>(surfaceSize.x), 2.F), std::max(sc<float>(surfaceSize.y), 2.F)};
+    if (element->m_data.pWindow && element->m_data.pWindow->sizeAnimation()->isBeingAnimated() &&
+        element->m_data.surface && !element->m_data.mainSurface && element->m_data.squishOversized) {
+      const auto reported = element->m_data.pWindow->getReportedSize();
+      if (reported.x != 0 && reported.y != 0) {
+        const auto realSize = element->m_data.pWindow->size(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+        windowBox.width = (windowBox.width / reported.x) * realSize.x;
+        windowBox.height = (windowBox.height / reported.y) * realSize.y;
+      }
+    }
+  }
+
+  const auto windowKey = element->m_data.pWindow ? reinterpret_cast<uintptr_t>(element->m_data.pWindow.get()) : 0;
+  const bool chromiumOverhang = windowKey && !element->m_data.popup && g_chromiumWindows.contains(windowKey);
+  if (element->m_data.squishOversized && !chromiumOverhang) {
+    if (element->m_data.localPos.x + windowBox.width > element->m_data.w)
+      windowBox.width = element->m_data.w - element->m_data.localPos.x;
+    if (element->m_data.localPos.y + windowBox.height > element->m_data.h)
+      windowBox.height = element->m_data.h - element->m_data.localPos.y;
+  }
+
+  // Chromium's client-side frame owns a transparent inset on every edge. Keep
+  // that complete texture quad in the render pass; otherwise Hyprland's box
+  // ends through the native close glyph and leaves the right corner square.
+  if (chromiumOverhang) {
+    windowBox.x -= CHROMIUM_FRAME_INSET;
+    windowBox.y -= CHROMIUM_FRAME_INSET;
+    windowBox.width += CHROMIUM_FRAME_INSET * 2.0;
+    windowBox.height += CHROMIUM_FRAME_INSET * 2.0;
+  }
+
+  cache.cachedTexBox = windowBox;
+  cache.texBoxCached = true;
+  return windowBox;
+}
+
+static void hookChromiumSurfaceTexBox() {
+  const auto matches = HyprlandAPI::findFunctionsByName(PHANDLE, GET_TEX_BOX_SIGNATURE);
+  if (matches.size() != 1 || !matches.front().address || matches.front().signature != GET_TEX_BOX_SIGNATURE ||
+      matches.front().demangled != GET_TEX_BOX_DEMANGLED)
+    throw std::runtime_error("[omarchy-minimize] CSurfacePassElement::getTexBox identity check failed");
+
+  g_getTexBoxHook = HyprlandAPI::createFunctionHook(
+      PHANDLE, matches.front().address, reinterpret_cast<void*>(&getTexBoxWithChromiumOverhang));
+  if (!g_getTexBoxHook)
+    throw std::runtime_error("[omarchy-minimize] could not create CSurfacePassElement::getTexBox hook");
+  if (!g_getTexBoxHook->hook() || !g_getTexBoxHook->m_original) {
+    HyprlandAPI::removeFunctionHook(PHANDLE, g_getTexBoxHook);
+    g_getTexBoxHook = nullptr;
+    throw std::runtime_error("[omarchy-minimize] could not enable a valid CSurfacePassElement::getTexBox hook");
+  }
 }
 
 static CBox visibleFrameRect(PHLWINDOW w, const CBox& box) {
@@ -849,6 +970,10 @@ static void watchWindow(PHLWINDOW w) {
     return;
 
   const auto key = reinterpret_cast<uintptr_t>(w.get());
+  if (usesChromiumFrame(w))
+    g_chromiumWindows.insert(key);
+  else
+    g_chromiumWindows.erase(key);
   MinWatch   watch;
   bool       attached = false;
   PHLWINDOWREF ref    = w;
@@ -898,6 +1023,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     throw std::runtime_error("[omarchy-minimize] Version mismatch");
   }
 
+  hookChromiumSurfaceTexBox();
+
   HyprlandAPI::addLuaFunction(PHANDLE, "omarchy_minimize", "minimize", luaMinimize);
   HyprlandAPI::addLuaFunction(PHANDLE, "omarchy_minimize", "restore", luaRestore);
 
@@ -911,6 +1038,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
       const auto key = reinterpret_cast<uintptr_t>(live.get());
       g_watches.erase(key);
       g_savedFloat.erase(key);
+      g_chromiumWindows.erase(key);
     }
   });
   g_onFullscreen = Event::bus()->m_events.window.fullscreen.listen([](PHLWINDOW w) {
@@ -941,8 +1069,13 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
+  if (g_getTexBoxHook) {
+    HyprlandAPI::removeFunctionHook(PHANDLE, g_getTexBoxHook);
+    g_getTexBoxHook = nullptr;
+  }
   g_watches.clear();
   g_savedFloat.clear();
+  g_chromiumWindows.clear();
   g_onCreate      = {};
   g_onOpen        = {};
   g_onOpenLate    = {};
