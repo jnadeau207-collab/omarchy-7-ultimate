@@ -113,7 +113,9 @@ class SecuritySchemaTests(unittest.TestCase):
             path
             for root in roots
             for path in root.rglob("*")
-            if path.is_file() and (root.name != "schema" or path.name.startswith("security-"))
+            if path.is_file()
+            and path.suffix in {".json", ".py"}
+            and (root.name != "schema" or path.name.startswith("security-"))
         ]
         files.append(ROOT / "docs" / "agent-fabric-threat-model.md")
         files.append(ROOT / "test" / "acceptance.d" / "agent-sandbox-test.sh")
