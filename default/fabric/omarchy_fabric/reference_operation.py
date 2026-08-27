@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 import re
+import sqlite3
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -43,6 +44,7 @@ _TERMINAL_STATUSES = frozenset({"succeeded", "recovered", "failed", "cancelled"}
 _ACTIVE_STATUSES = frozenset({"queued", "running", "reconciling"})
 _MAX_LEDGER_ENTRIES = 128
 _MAX_LEDGER_PAGE_ENTRIES = 8
+_MAX_PROJECTION_SOURCES = 256
 _MAX_APPROVAL_ISSUES = 4
 _ZERO_HASH = "0" * 64
 _EVIDENCE_FAILURE_CODES = frozenset({"ledger.capacity-exhausted", "ledger.integrity-failed"})
@@ -182,6 +184,14 @@ class ReferenceOperationStore:
         self.event_retention = event_retention
 
     @staticmethod
+    def _rollback_preserving(connection: Any) -> None:
+        try:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+        except sqlite3.DatabaseError:
+            pass
+
+    @staticmethod
     def _operation_from_row(row: Any) -> dict[str, Any]:
         return {
             "operationId": row["operation_id"],
@@ -226,6 +236,251 @@ class ReferenceOperationStore:
     def get(self, operation_id: str) -> dict[str, Any]:
         row = self._row(operation_id)
         return self._operation_from_row(row)
+
+    def projection_sources(
+        self,
+        principal_id: str,
+        *,
+        limit: int,
+    ) -> tuple[dict[str, Any], ...]:
+        """Return one bounded, verified, secret-free owner snapshot.
+
+        This is the public read seam into durable Agent Center projection. It
+        returns plain copies rather than SQLite rows, recovery credentials,
+        arguments, authorization material, provider errors, or store handles.
+        """
+
+        if (
+            not isinstance(principal_id, str)
+            or len(principal_id.encode("utf-8")) > 160
+            or _STABLE_RE.fullmatch(principal_id) is None
+        ):
+            raise FabricError(
+                "projection.invalid-owner",
+                "Reference projection owner is invalid",
+                "The projection owner must be a bounded stable principal ID.",
+                change_state="none",
+            )
+        if (
+            isinstance(limit, bool)
+            or not isinstance(limit, int)
+            or not 1 <= limit <= _MAX_PROJECTION_SOURCES
+        ):
+            raise FabricError(
+                "projection.invalid-limit",
+                "Reference projection limit is invalid",
+                f"The projection limit must be between 1 and {_MAX_PROJECTION_SOURCES}.",
+                change_state="none",
+            )
+        connection = self.database._require_connection()
+        if connection.in_transaction:
+            raise FabricError(
+                "projection.busy",
+                "Reference projection snapshot is temporarily unavailable",
+                "The authoritative store is completing another serialized operation.",
+                retryable=True,
+                change_state="none",
+            )
+        try:
+            connection.execute("BEGIN")
+            stable_account = principal_id.startswith("account.uid.") and principal_id[12:].isdigit()
+            owner_clause = (
+                "(principal_id = ? OR principal_id GLOB 'principal.*')"
+                if stable_account
+                else "principal_id = ?"
+            )
+            rows = connection.execute(
+                f"""
+                SELECT * FROM reference_operations
+                WHERE {owner_clause}
+                ORDER BY created_at, operation_id
+                LIMIT ?
+                """,
+                (principal_id, limit + 1),
+            ).fetchall()
+            if len(rows) > limit:
+                raise FabricError(
+                    "projection.capacity-exceeded",
+                    "Reference projection capacity is exhausted",
+                    "The owner has more durable operations than this bounded projection can represent.",
+                    change_state="none",
+                    recovery_actions=("managed-work.review-retention",),
+                )
+            snapshot: list[dict[str, Any]] = []
+            for row in rows:
+                session_id = row["session_id"]
+                if (
+                    not isinstance(session_id, str)
+                    or len(session_id.encode("utf-8")) > 160
+                    or _STABLE_RE.fullmatch(session_id) is None
+                ):
+                    raise FabricError(
+                        "operation.invalid-record",
+                        "Reference operation record is invalid",
+                        "The durable operation session identity is malformed.",
+                        change_state="unknown",
+                        recovery_actions=("fabric.restore-database",),
+                    )
+                verified = self._verified_ledger_rows(
+                    connection,
+                    str(row["operation_id"]),
+                    row,
+                )
+                source_revision = len(verified)
+                if source_revision < 1:
+                    raise FabricError(
+                        "ledger.integrity-failed",
+                        "Reference operation ledger integrity failed",
+                        "A projection requires verified non-empty operation evidence.",
+                        change_state="unknown",
+                        recovery_actions=("fabric.restore-database",),
+                    )
+                origin_row, origin_payload = verified[0]
+                if (
+                    str(origin_row["event_type"]) != "preflight.completed"
+                    or origin_payload.get("operationId") != str(row["operation_id"])
+                    or origin_payload.get("principalId") != str(row["principal_id"])
+                    or origin_payload.get("sessionId") != session_id
+                ):
+                    raise FabricError(
+                        "ledger.state-mismatch",
+                        "Reference operation origin disagrees with its ledger",
+                        "The first verified evidence does not attest the durable principal and session provenance.",
+                        detail="origin",
+                        change_state="unknown",
+                        recovery_actions=("fabric.restore-database",),
+                    )
+                latest_row, latest_payload = verified[-1]
+                comparisons = {
+                    "operationId": str(row["operation_id"]),
+                    "status": str(row["status"]),
+                    "checkpoint": str(row["checkpoint"]),
+                    "progress": int(row["progress"]),
+                }
+                for key, expected in comparisons.items():
+                    if latest_payload.get(key) != expected:
+                        raise FabricError(
+                            "ledger.state-mismatch",
+                            "Reference operation state disagrees with its ledger",
+                            "The latest verified evidence does not attest the projected operation state.",
+                            detail=key,
+                            change_state="unknown",
+                            recovery_actions=("fabric.restore-database",),
+                        )
+                if not 0 <= float(latest_row["created_at"]) - float(row["updated_at"]) <= 5:
+                    raise FabricError(
+                        "ledger.state-mismatch",
+                        "Reference operation time disagrees with its ledger",
+                        "The latest verified evidence does not bound the projected update time.",
+                        detail="updatedAt",
+                        change_state="unknown",
+                        recovery_actions=("fabric.restore-database",),
+                    )
+                try:
+                    error = json.loads(row["error_json"]) if row["error_json"] else None
+                    result = json.loads(row["result_json"]) if row["result_json"] else None
+                except (json.JSONDecodeError, TypeError) as decode_error:
+                    raise FabricError(
+                        "operation.invalid-record",
+                        "Reference operation record is invalid",
+                        "The durable operation result metadata is malformed.",
+                        change_state="unknown",
+                        recovery_actions=("fabric.restore-database",),
+                    ) from decode_error
+                error_change_state = None
+                if isinstance(error, Mapping) and error.get("changeState") in {
+                    "none",
+                    "partial",
+                    "complete",
+                    "unknown",
+                }:
+                    error_change_state = str(error["changeState"])
+                result_validated = (
+                    bool(result["validated"])
+                    if isinstance(result, Mapping) and isinstance(result.get("validated"), bool)
+                    else None
+                )
+                error_evidence = "errorCode" in latest_payload or "changeState" in latest_payload
+                if (
+                    ("errorCode" in latest_payload) != ("changeState" in latest_payload)
+                    or (
+                        error_evidence
+                        and (
+                            not isinstance(error, Mapping)
+                            or latest_payload.get("errorCode") != error.get("code")
+                            or latest_payload.get("changeState") != error.get("changeState")
+                        )
+                    )
+                    or (not error_evidence and error is not None)
+                ):
+                    raise FabricError(
+                        "ledger.state-mismatch",
+                        "Reference operation error disagrees with its ledger",
+                        "The latest verified evidence does not attest the projected error metadata.",
+                        detail="error",
+                        change_state="unknown",
+                        recovery_actions=("fabric.restore-database",),
+                    )
+                if "result" in latest_payload:
+                    if latest_payload["result"] != result:
+                        raise FabricError(
+                            "ledger.state-mismatch",
+                            "Reference operation result disagrees with its ledger",
+                            "The latest verified evidence does not attest the projected result metadata.",
+                            detail="result",
+                            change_state="unknown",
+                            recovery_actions=("fabric.restore-database",),
+                        )
+                elif result is not None:
+                    raise FabricError(
+                        "ledger.state-mismatch",
+                        "Reference operation result disagrees with its ledger",
+                        "The latest verified evidence does not attest the projected result metadata.",
+                        detail="result",
+                        change_state="unknown",
+                        recovery_actions=("fabric.restore-database",),
+                    )
+                snapshot.append(
+                    {
+                        "operationId": str(row["operation_id"]),
+                        "sessionId": session_id,
+                        "legacyOwner": str(row["principal_id"]) != principal_id,
+                        "sourceRevision": source_revision,
+                        "capability": REFERENCE_CAPABILITY,
+                        "status": str(row["status"]),
+                        "checkpoint": str(row["checkpoint"]),
+                        "errorChangeState": error_change_state,
+                        "resultValidated": result_validated,
+                        "createdAt": float(row["created_at"]),
+                        "updatedAt": float(row["updated_at"]),
+                    }
+                )
+            connection.execute("COMMIT")
+            return tuple(snapshot)
+        except FabricError:
+            self._rollback_preserving(connection)
+            raise
+        except (KeyError, TypeError, ValueError, OverflowError) as error:
+            self._rollback_preserving(connection)
+            raise FabricError(
+                "operation.invalid-record",
+                "Reference operation record is invalid",
+                "The bounded projection source contains malformed durable values.",
+                detail=type(error).__name__,
+                change_state="unknown",
+                recovery_actions=("fabric.restore-database",),
+            ) from error
+        except sqlite3.DatabaseError as error:
+            self._rollback_preserving(connection)
+            raise FabricError(
+                "projection.read-failed",
+                "Reference projection snapshot could not be read",
+                "The authoritative operation store refused the bounded snapshot.",
+                detail=type(error).__name__,
+                retryable=True,
+                change_state="none",
+                recovery_actions=("fabric.reconnect",),
+            ) from error
 
     @staticmethod
     def _origin_matches(row: Any, principal: EndpointPrincipal) -> bool:
@@ -1363,6 +1618,14 @@ class ReferenceOperationManager:
         for event in events:
             self.events.deliver(event)
         return len(events)
+
+    def projection_sources(
+        self,
+        principal_id: str,
+        *,
+        limit: int,
+    ) -> tuple[dict[str, Any], ...]:
+        return self.store.projection_sources(principal_id, limit=limit)
 
     def _deliver(self, event: dict[str, Any] | None) -> None:
         if event is not None:

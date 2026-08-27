@@ -159,8 +159,301 @@ class FabricDatabase:
         self.connection: sqlite3.Connection | None = None
         self.opened_schema: int | None = None
         self.backup_path: Path | None = None
+        self._sidecar_holds: dict[str, tuple[int, tuple[int, int]]] = {}
 
-    def open(self) -> None:
+    def _hold_existing_sidecars(self) -> None:
+        held: dict[str, tuple[int, tuple[int, int]]] = {}
+        try:
+            for suffix in ("-journal", "-wal", "-shm"):
+                path = Path(f"{self.path}{suffix}")
+                try:
+                    expected = path.lstat()
+                except FileNotFoundError:
+                    continue
+                flags = os.O_RDWR
+                if hasattr(os, "O_CLOEXEC"):
+                    flags |= os.O_CLOEXEC
+                if hasattr(os, "O_NOFOLLOW"):
+                    flags |= os.O_NOFOLLOW
+                descriptor = os.open(path, flags)
+                metadata = os.fstat(descriptor)
+                identity = (metadata.st_dev, metadata.st_ino)
+                if (
+                    not stat.S_ISREG(metadata.st_mode)
+                    or metadata.st_nlink != 1
+                    or (hasattr(os, "getuid") and metadata.st_uid != os.getuid())
+                    or identity != (expected.st_dev, expected.st_ino)
+                ):
+                    os.close(descriptor)
+                    raise FabricError(
+                        "database.unsafe-path",
+                        "Fabric SQLite sidecar path is unsafe",
+                        "Existing rollback, WAL, and shared-memory files must be stable owner-only regular inodes.",
+                        detail=suffix,
+                    )
+                if os.name != "nt":
+                    os.fchmod(descriptor, 0o600)
+                if suffix == "-journal":
+                    os.close(descriptor)
+                else:
+                    held[suffix] = (descriptor, identity)
+        except Exception:
+            for descriptor, _identity in held.values():
+                os.close(descriptor)
+            raise
+        self._sidecar_holds = held
+
+    def _release_sidecar_holds(self) -> None:
+        held = self._sidecar_holds
+        self._sidecar_holds = {}
+        for descriptor, _identity in held.values():
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+    def _verify_open_sidecars(
+        self,
+        connection: sqlite3.Connection,
+        suffixes: Sequence[str],
+        *,
+        require_open: bool,
+    ) -> None:
+        descriptor_directory = Path("/proc/self/fd")
+        if os.name != "nt" and not descriptor_directory.is_dir():
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric cannot prove SQLite sidecar identities",
+                "The production daemon requires Linux descriptor identity evidence.",
+            )
+        if os.name == "nt":
+            descriptors: list[int] = []
+        else:
+            try:
+                descriptors = [
+                    int(entry.name)
+                    for entry in descriptor_directory.iterdir()
+                    if entry.name.isdigit()
+                ]
+            except OSError as error:
+                raise FabricError(
+                    "database.unsafe-path",
+                    "Fabric could not enumerate SQLite sidecars",
+                    "Fabric cannot verify SQLite sidecar identities.",
+                    detail=type(error).__name__,
+                ) from error
+        for suffix in suffixes:
+            path = Path(f"{self.path}{suffix}")
+            try:
+                metadata = path.lstat()
+            except FileNotFoundError:
+                if require_open:
+                    raise FabricError(
+                        "database.unsafe-path",
+                        "Fabric SQLite sidecar is missing at its use boundary",
+                        "Fabric could not verify the SQLite sidecar required by the active transaction.",
+                        detail=suffix,
+                    )
+                continue
+            identity = (metadata.st_dev, metadata.st_ino)
+            if (
+                not stat.S_ISREG(metadata.st_mode)
+                or metadata.st_nlink != 1
+                or (hasattr(os, "getuid") and metadata.st_uid != os.getuid())
+            ):
+                raise FabricError(
+                    "database.unsafe-path",
+                    "Fabric SQLite sidecar is unsafe",
+                    "SQLite sidecars must remain owner-only regular inodes.",
+                    detail=suffix,
+                )
+            held = self._sidecar_holds.get(suffix)
+            if held is not None and held[1] != identity:
+                raise FabricError(
+                    "database.unsafe-path",
+                    "Fabric SQLite sidecar identity changed",
+                    "SQLite opened a sidecar path that differs from its held inode.",
+                    detail=suffix,
+                )
+            if os.name != "nt":
+                excluded = None if held is None else held[0]
+                matched = False
+                for descriptor in descriptors:
+                    if descriptor == excluded:
+                        continue
+                    try:
+                        opened = os.fstat(descriptor)
+                    except OSError:
+                        continue
+                    if stat.S_ISREG(opened.st_mode) and (opened.st_dev, opened.st_ino) == identity:
+                        matched = True
+                        break
+                if require_open and not matched:
+                    raise FabricError(
+                        "database.unsafe-path",
+                        "Fabric could not prove SQLite's opened sidecar inode",
+                        "The active SQLite transaction must hold the verified sidecar inode.",
+                        detail=suffix,
+                    )
+            if os.name != "nt":
+                os.chmod(path, 0o600)
+
+    def _open_held_database(self, expected: os.stat_result | None) -> tuple[int, tuple[int, int]]:
+        flags = os.O_RDWR | os.O_CREAT
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        descriptor = os.open(self.path, flags, 0o600)
+        try:
+            metadata = os.fstat(descriptor)
+            identity = (metadata.st_dev, metadata.st_ino)
+            if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+                raise FabricError(
+                    "database.unsafe-path",
+                    "Fabric database path is unsafe",
+                    "The held Fabric database must be one regular inode.",
+                )
+            if hasattr(os, "getuid") and metadata.st_uid != os.getuid():
+                raise FabricError(
+                    "database.wrong-owner",
+                    "Fabric database has the wrong owner",
+                    "The held Fabric database must be owned by the daemon account.",
+                )
+            if expected is not None and identity != (expected.st_dev, expected.st_ino):
+                raise FabricError(
+                    "database.unsafe-path",
+                    "Fabric database identity changed",
+                    "Fabric refused a database path that changed before it could be held.",
+                )
+            if os.name != "nt":
+                os.fchmod(descriptor, 0o600)
+            return descriptor, identity
+        except Exception:
+            os.close(descriptor)
+            raise
+
+    def _verify_connected_identity(
+        self,
+        *,
+        connection: sqlite3.Connection,
+        held_descriptor: int,
+        identity: tuple[int, int],
+        existing_matches: frozenset[int],
+    ) -> None:
+        path_metadata = self.path.lstat()
+        if (
+            not stat.S_ISREG(path_metadata.st_mode)
+            or path_metadata.st_nlink != 1
+            or (path_metadata.st_dev, path_metadata.st_ino) != identity
+        ):
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric database changed while SQLite opened it",
+                "Fabric refuses a SQLite connection whose path no longer matches its held inode.",
+            )
+        database_rows = connection.execute("PRAGMA database_list").fetchall()
+        main_rows = [row for row in database_rows if str(row[1]) == "main"]
+        if len(main_rows) != 1:
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric database connection is ambiguous",
+                "Fabric could not verify SQLite's opened main database.",
+            )
+        try:
+            connected_path = Path(str(main_rows[0][2])).resolve(strict=True)
+            expected_path = self.path.resolve(strict=True)
+        except (OSError, RuntimeError) as error:
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric database path could not be verified",
+                "Fabric could not resolve SQLite's opened main database path.",
+                detail=type(error).__name__,
+            ) from error
+        if connected_path != expected_path:
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric opened an unexpected database path",
+                "SQLite's main database path differs from the held Fabric database.",
+            )
+        if os.name == "nt":
+            return
+        descriptor_directory = Path("/proc/self/fd")
+        if not descriptor_directory.is_dir():
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric cannot prove SQLite's opened database inode",
+                "The production daemon requires Linux descriptor identity evidence.",
+            )
+        try:
+            descriptors = [
+                int(entry.name)
+                for entry in descriptor_directory.iterdir()
+                if entry.name.isdigit()
+            ]
+        except OSError as error:
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric could not enumerate SQLite descriptors",
+                "The production daemon requires Linux descriptor identity evidence.",
+                detail=type(error).__name__,
+            ) from error
+        matches: set[int] = set()
+        for descriptor in descriptors:
+            if descriptor == held_descriptor:
+                continue
+            try:
+                metadata = os.fstat(descriptor)
+            except OSError:
+                continue
+            if stat.S_ISREG(metadata.st_mode) and (metadata.st_dev, metadata.st_ino) == identity:
+                matches.add(descriptor)
+        new_matches = matches - existing_matches
+        if not existing_matches.issubset(matches) or len(new_matches) != 1:
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric could not prove SQLite's opened database inode",
+                "SQLite must hold exactly one descriptor for the held Fabric database inode.",
+                detail=f"matching descriptors: {len(matches)}; new: {len(new_matches)}",
+            )
+
+    @staticmethod
+    def _matching_descriptors(identity: tuple[int, int], *, exclude: int) -> frozenset[int]:
+        if os.name == "nt":
+            return frozenset()
+        descriptor_directory = Path("/proc/self/fd")
+        if not descriptor_directory.is_dir():
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric cannot enumerate SQLite descriptors before connect",
+                "The production daemon requires Linux descriptor identity evidence.",
+            )
+        try:
+            descriptors = [
+                int(entry.name)
+                for entry in descriptor_directory.iterdir()
+                if entry.name.isdigit()
+            ]
+        except OSError as error:
+            raise FabricError(
+                "database.unsafe-path",
+                "Fabric could not enumerate SQLite descriptors before connect",
+                "The production daemon requires Linux descriptor identity evidence.",
+                detail=type(error).__name__,
+            ) from error
+        matches: set[int] = set()
+        for descriptor in descriptors:
+            if descriptor == exclude:
+                continue
+            try:
+                metadata = os.fstat(descriptor)
+            except OSError:
+                continue
+            if stat.S_ISREG(metadata.st_mode) and (metadata.st_dev, metadata.st_ino) == identity:
+                matches.add(descriptor)
+        return frozenset(matches)
+
+    def open(self, *, database_lease_descriptor: int | None = None) -> None:
         if self.connection is not None:
             return
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -181,21 +474,62 @@ class FabricDatabase:
                     "Fabric database path is unsafe",
                     "Fabric refuses to open a symbolic link or non-regular database path.",
                 )
-            if metadata.st_uid != os.getuid():
+            if hasattr(os, "getuid") and metadata.st_uid != os.getuid():
                 raise FabricError(
                     "database.wrong-owner",
                     "Fabric database has the wrong owner",
                     "The Fabric database must be owned by the current user.",
                 )
         try:
-            connection = sqlite3.connect(
-                self.path,
-                timeout=5.0,
-                isolation_level=None,
-            )
+            self._hold_existing_sidecars()
+            close_held_descriptor = database_lease_descriptor is None
+            if database_lease_descriptor is None:
+                held_descriptor, held_identity = self._open_held_database(metadata)
+            else:
+                held_descriptor = database_lease_descriptor
+                held_metadata = os.fstat(held_descriptor)
+                held_identity = (held_metadata.st_dev, held_metadata.st_ino)
+                path_metadata = self.path.lstat()
+                if (
+                    not stat.S_ISREG(held_metadata.st_mode)
+                    or held_metadata.st_nlink != 1
+                    or (hasattr(os, "getuid") and held_metadata.st_uid != os.getuid())
+                    or held_identity != (path_metadata.st_dev, path_metadata.st_ino)
+                ):
+                    raise FabricError(
+                        "database.unsafe-path",
+                        "Fabric database lease is unsafe",
+                        "The daemon's held Fabric database inode does not match its path.",
+                    )
+            try:
+                existing_matches = self._matching_descriptors(
+                    held_identity,
+                    exclude=held_descriptor,
+                )
+                connection = sqlite3.connect(
+                    self.path,
+                    timeout=5.0,
+                    isolation_level=None,
+                )
+                self._verify_connected_identity(
+                    connection=connection,
+                    held_descriptor=held_descriptor,
+                    identity=held_identity,
+                    existing_matches=existing_matches,
+                )
+            finally:
+                if close_held_descriptor:
+                    os.close(held_descriptor)
             connection.row_factory = sqlite3.Row
             connection.execute("PRAGMA busy_timeout = 5000")
             connection.execute("PRAGMA foreign_keys = ON")
+            if self._sidecar_holds:
+                connection.execute("PRAGMA schema_version").fetchone()
+                self._verify_open_sidecars(
+                    connection,
+                    tuple(self._sidecar_holds),
+                    require_open=True,
+                )
             integrity = connection.execute("PRAGMA quick_check").fetchone()
             if integrity is None or integrity[0] != "ok":
                 detail = "no integrity result" if integrity is None else str(integrity[0])
@@ -239,13 +573,15 @@ class FabricDatabase:
             if current and current < CURRENT_DATABASE_SCHEMA:
                 self.backup_path = self._backup_before_migration(connection, current)
             try:
-                self._migrate(connection, current)
+                migration_mode = str(connection.execute("PRAGMA journal_mode").fetchone()[0]).lower()
+                migration_sidecars = ("-wal", "-shm") if migration_mode == "wal" else ("-journal",)
+                self._migrate(connection, current, sidecars=migration_sidecars)
             except (sqlite3.DatabaseError, OSError) as error:
                 raise FabricError(
                     "database.migration-failed",
                     "Fabric database migration failed",
                     "The schema transaction was rolled back and the pre-migration database was retained.",
-                    detail=str(error),
+                    detail=type(error).__name__,
                     recovery_actions=("fabric.restore-database",),
                 ) from error
 
@@ -259,6 +595,18 @@ class FabricDatabase:
                 )
             connection.execute("PRAGMA synchronous = FULL")
             connection.execute("PRAGMA wal_autocheckpoint = 100")
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                connection.execute(
+                    "UPDATE schema_metadata SET value = value WHERE key = 'schema_version'"
+                )
+                self._verify_open_sidecars(
+                    connection,
+                    ("-wal", "-shm"),
+                    require_open=True,
+                )
+            finally:
+                connection.execute("ROLLBACK")
             self.connection = connection
             self.opened_schema = CURRENT_DATABASE_SCHEMA
             try:
@@ -268,31 +616,34 @@ class FabricDatabase:
                     "database.permissions",
                     "Fabric database permissions are unsafe",
                     "Fabric could not restrict its database to the current user.",
-                    detail=str(error),
+                    detail=type(error).__name__,
                 ) from error
             self.reconcile_interrupted_requests()
         except FabricError:
             if "connection" in locals():
                 connection.close()
+            self._release_sidecar_holds()
             raise
         except sqlite3.DatabaseError as error:
             if "connection" in locals():
                 connection.close()
+            self._release_sidecar_holds()
             raise FabricError(
                 "database.corrupt",
                 "Fabric database cannot be read",
                 "Fabric refused to use a database SQLite could not read safely.",
-                detail=str(error),
+                detail=type(error).__name__,
                 recovery_actions=("fabric.restore-database",),
             ) from error
         except OSError as error:
             if "connection" in locals():
                 connection.close()
+            self._release_sidecar_holds()
             raise FabricError(
                 "database.unavailable",
                 "Fabric database is unavailable",
                 "Fabric could not create or secure its state database.",
-                detail=str(error),
+                detail=type(error).__name__,
                 retryable=True,
             ) from error
 
@@ -303,7 +654,10 @@ class FabricDatabase:
             try:
                 connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             finally:
-                connection.close()
+                try:
+                    connection.close()
+                finally:
+                    self._release_sidecar_holds()
 
     def _require_connection(self) -> sqlite3.Connection:
         if self.connection is None:
@@ -329,8 +683,13 @@ class FabricDatabase:
         os.replace(temporary, backup)
         return backup
 
-    @staticmethod
-    def _migrate(connection: sqlite3.Connection, current: int) -> None:
+    def _migrate(
+        self,
+        connection: sqlite3.Connection,
+        current: int,
+        *,
+        sidecars: Sequence[str],
+    ) -> None:
         for target in range(current + 1, CURRENT_DATABASE_SCHEMA + 1):
             statements = MIGRATIONS.get(target)
             if statements is None:
@@ -343,6 +702,11 @@ class FabricDatabase:
             try:
                 for statement in statements:
                     connection.execute(statement)
+                    self._verify_open_sidecars(
+                        connection,
+                        sidecars,
+                        require_open=True,
+                    )
                 connection.execute(
                     "INSERT OR REPLACE INTO schema_metadata(key, value) VALUES ('schema_version', ?)",
                     (str(target),),

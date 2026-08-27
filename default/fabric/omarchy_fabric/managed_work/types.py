@@ -31,9 +31,10 @@ class CapacityLimits:
     total_contexts: int = 10_000
     artifacts: int = 2048
     usage_records: int = 10_000
-    operation_links: int = 4096
+    operation_links: int = 256
     approval_projections: int = 1024
     permission_projections: int = 1024
+    provider_projections: int = 2048
     event_firings: int = 4096
     idempotency_records: int = 50_000
     history_events: int = 20_000
