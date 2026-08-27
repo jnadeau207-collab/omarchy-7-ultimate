@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:inventory-result:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files inventory result",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "providerVersion", "action", "availability", "revision", "state"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "provider": {"const": "files.provider"},
+    "providerVersion": {"const": "v0"},
+    "action": {"const": "inspect"},
+    "availability": {"$ref": "#/$defs/availability"},
+    "revision": {"oneOf": [{"type": "null"}, {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/revision"}]},
+    "state": {"oneOf": [{"type": "null"}, {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/workspace"}]}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "availability": {
+      "type": "object",
+      "required": ["state", "read", "operation", "reasons"],
+      "properties": {
+        "state": {"type": "string", "enum": ["available", "degraded", "unavailable"]},
+        "read": {"type": "boolean"},
+        "operation": {"type": "boolean"},
+        "reasons": {"type": "array", "maxItems": 16, "items": {"$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/reason"}}
+      },
+      "additionalProperties": false
+    }
+  }
+}

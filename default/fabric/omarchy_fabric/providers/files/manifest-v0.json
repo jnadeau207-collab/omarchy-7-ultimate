@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "v0",
+  "provider": "files.provider",
+  "providerVersion": "v0",
+  "minFabricProtocol": 0,
+  "maxFabricProtocol": 0,
+  "capabilities": [
+    "files.inspect",
+    "files.browse",
+    "files.search",
+    "files.recent.read",
+    "files.directory.create",
+    "files.entry.rename",
+    "files.entry.trash",
+    "files.trash.restore",
+    "files.mount.connect",
+    "files.mount.disconnect"
+  ],
+  "actions": {
+    "inspect": {
+      "capability": "files.inspect", "mode": "read", "risk": "read-only", "effects": [],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:empty-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:inventory-result:v0", "version": "v0"},
+      "preflight": null, "state": null, "supportsRollback": false, "supportsCancellation": false
+    },
+    "browse": {
+      "capability": "files.browse", "mode": "read", "risk": "read-only", "effects": [],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:browse-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:query-result:v0", "version": "v0"},
+      "preflight": null, "state": null, "supportsRollback": false, "supportsCancellation": false
+    },
+    "search": {
+      "capability": "files.search", "mode": "read", "risk": "read-only", "effects": [],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:search-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:query-result:v0", "version": "v0"},
+      "preflight": null, "state": null, "supportsRollback": false, "supportsCancellation": false
+    },
+    "recent": {
+      "capability": "files.recent.read", "mode": "read", "risk": "read-only", "effects": [],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:recent-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:query-result:v0", "version": "v0"},
+      "preflight": null, "state": null, "supportsRollback": false, "supportsCancellation": false
+    },
+    "directory.create": {
+      "capability": "files.directory.create", "mode": "operation", "risk": "low", "effects": ["mutating"],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:create-directory-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:operation-result:v0", "version": "v0"},
+      "preflight": {"id": "urn:omarchy:fabric:provider:files:operation-preflight:v0", "version": "v0"},
+      "state": {"id": "urn:omarchy:fabric:provider:files:operation-state:v0", "version": "v0"},
+      "supportsRollback": true, "supportsCancellation": false
+    },
+    "entry.rename": {
+      "capability": "files.entry.rename", "mode": "operation", "risk": "low", "effects": ["mutating"],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:rename-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:operation-result:v0", "version": "v0"},
+      "preflight": {"id": "urn:omarchy:fabric:provider:files:operation-preflight:v0", "version": "v0"},
+      "state": {"id": "urn:omarchy:fabric:provider:files:operation-state:v0", "version": "v0"},
+      "supportsRollback": true, "supportsCancellation": false
+    },
+    "entry.trash": {
+      "capability": "files.entry.trash", "mode": "operation", "risk": "consequential", "effects": ["mutating"],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:entry-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:operation-result:v0", "version": "v0"},
+      "preflight": {"id": "urn:omarchy:fabric:provider:files:operation-preflight:v0", "version": "v0"},
+      "state": {"id": "urn:omarchy:fabric:provider:files:operation-state:v0", "version": "v0"},
+      "supportsRollback": true, "supportsCancellation": false
+    },
+    "trash.restore": {
+      "capability": "files.trash.restore", "mode": "operation", "risk": "low", "effects": ["mutating"],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:entry-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:operation-result:v0", "version": "v0"},
+      "preflight": {"id": "urn:omarchy:fabric:provider:files:operation-preflight:v0", "version": "v0"},
+      "state": {"id": "urn:omarchy:fabric:provider:files:operation-state:v0", "version": "v0"},
+      "supportsRollback": true, "supportsCancellation": false
+    },
+    "mount.connect": {
+      "capability": "files.mount.connect", "mode": "operation", "risk": "consequential", "effects": ["mutating", "network"],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:mount-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:operation-result:v0", "version": "v0"},
+      "preflight": {"id": "urn:omarchy:fabric:provider:files:operation-preflight:v0", "version": "v0"},
+      "state": {"id": "urn:omarchy:fabric:provider:files:operation-state:v0", "version": "v0"},
+      "supportsRollback": true, "supportsCancellation": false
+    },
+    "mount.disconnect": {
+      "capability": "files.mount.disconnect", "mode": "operation", "risk": "consequential", "effects": ["mutating", "network"],
+      "arguments": {"id": "urn:omarchy:fabric:provider:files:mount-arguments:v0", "version": "v0"},
+      "result": {"id": "urn:omarchy:fabric:provider:files:operation-result:v0", "version": "v0"},
+      "preflight": {"id": "urn:omarchy:fabric:provider:files:operation-preflight:v0", "version": "v0"},
+      "state": {"id": "urn:omarchy:fabric:provider:files:operation-state:v0", "version": "v0"},
+      "supportsRollback": true, "supportsCancellation": false
+    }
+  }
+}

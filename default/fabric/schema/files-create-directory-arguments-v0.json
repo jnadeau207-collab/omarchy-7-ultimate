@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:create-directory-arguments:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files create directory arguments",
+  "type": "object",
+  "required": ["locationId", "parentRelativePath", "name"],
+  "properties": {
+    "locationId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160},
+    "parentRelativePath": {"type": "string", "maxLength": 1024},
+    "name": {"type": "string", "minLength": 1, "maxLength": 255}
+  },
+  "additionalProperties": false
+}
