@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:packages-operation-v0",
+  "x-omarchy-version": "v0",
+  "title": "Omarchy Software Center durable operation projection",
+  "type": "object",
+  "required": ["operationId", "requestId", "action", "status", "checkpoints", "inventoryRevision", "revision", "error"],
+  "properties": {
+    "operationId": {"$ref": "#/$defs/stableId"},
+    "requestId": {"$ref": "#/$defs/stableId"},
+    "action": {"type": "string", "enum": ["install", "remove", "adopt", "recover"]},
+    "status": {"type": "string", "enum": ["running", "succeeded", "failed", "cancelled", "needs-reconcile", "rolled-back"]},
+    "checkpoints": {"type": "array", "maxItems": 5, "prefixItems": [{"const":"verify-provenance"},{"const":"stage-payload"},{"const":"apply"},{"const":"validate"},{"const":"commit"}], "items": false},
+    "inventoryRevision": {"$ref": "#/$defs/revision"},
+    "revision": {"$ref": "#/$defs/revision"},
+    "error": {"type": ["string", "null"], "maxLength": 1000}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "stableId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160},
+    "revision": {"type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$"}
+  }
+}

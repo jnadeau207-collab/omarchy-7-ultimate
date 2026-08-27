@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:packages-source-policy-v0",
+  "x-omarchy-version": "v0",
+  "title": "Omarchy Software Center source trust policy",
+  "type": "object",
+  "required": ["schemaVersion", "policyId", "acceptedSourceTypes", "requirements", "unknownSources", "contractSeedBehavior", "releaseVerifiedAdmission"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "policyId": {"const": "software.source-policy.default"},
+    "acceptedSourceTypes": {"const": ["curated", "signed-repo", "flatpak", "reviewed-aur", "appimage", "web-app"]},
+    "requirements": {
+      "type": "object",
+      "required": ["curated", "signed-repo", "flatpak", "reviewed-aur", "appimage", "web-app"],
+      "properties": {
+        "curated": {"const": "verified-release-key"},
+        "signed-repo": {"const": "verified-repository-key"},
+        "flatpak": {"const": "verified-summary-key"},
+        "reviewed-aur": {"const": "pinned-reviewed-snapshot"},
+        "appimage": {"const": "pinned-digest-and-isolation"},
+        "web-app": {"const": "reviewed-origin-and-browser-isolation"}
+      },
+      "additionalProperties": false
+    },
+    "unknownSources": {"const": "reject"},
+    "contractSeedBehavior": {"const": "plan-only"},
+    "releaseVerifiedAdmission": {"const": "external-revision-attestation"}
+  },
+  "additionalProperties": false
+}

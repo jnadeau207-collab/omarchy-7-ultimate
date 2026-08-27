@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "v0",
+  "provider": "compatibility.provider",
+  "providerVersion": "v0",
+  "minFabricProtocol": 0,
+  "maxFabricProtocol": 0,
+  "capabilities": ["compatibility.route.decide", "compatibility.deployments.inspect", "compatibility.deploy", "compatibility.remove", "compatibility.export"],
+  "actions": {
+    "route.decide": {"capability":"compatibility.route.decide","mode":"read","risk":"read-only","effects":[],"arguments":{"id":"urn:omarchy:fabric:provider:compatibility:route-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:compatibility:route-result:v0","version":"v0"},"preflight":null,"state":null,"supportsRollback":false,"supportsCancellation":false},
+    "deployments.inspect": {"capability":"compatibility.deployments.inspect","mode":"read","risk":"read-only","effects":[],"arguments":{"id":"urn:omarchy:fabric:provider:compatibility:empty-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:compatibility:deployments-result:v0","version":"v0"},"preflight":null,"state":null,"supportsRollback":false,"supportsCancellation":false},
+    "deploy": {"capability":"compatibility.deploy","mode":"operation","risk":"consequential","effects":["mutating","download"],"arguments":{"id":"urn:omarchy:fabric:provider:compatibility:operation-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:compatibility:operation-result:v0","version":"v0"},"preflight":{"id":"urn:omarchy:fabric:provider:compatibility:operation-preflight:v0","version":"v0"},"state":{"id":"urn:omarchy:fabric:provider:compatibility:operation-state:v0","version":"v0"},"supportsRollback":true,"supportsCancellation":true},
+    "remove": {"capability":"compatibility.remove","mode":"operation","risk":"destructive","effects":["mutating","destructive"],"arguments":{"id":"urn:omarchy:fabric:provider:compatibility:operation-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:compatibility:operation-result:v0","version":"v0"},"preflight":{"id":"urn:omarchy:fabric:provider:compatibility:operation-preflight:v0","version":"v0"},"state":{"id":"urn:omarchy:fabric:provider:compatibility:operation-state:v0","version":"v0"},"supportsRollback":true,"supportsCancellation":true},
+    "export": {"capability":"compatibility.export","mode":"operation","risk":"low","effects":["mutating"],"arguments":{"id":"urn:omarchy:fabric:provider:compatibility:operation-arguments:v0","version":"v0"},"result":{"id":"urn:omarchy:fabric:provider:compatibility:operation-result:v0","version":"v0"},"preflight":{"id":"urn:omarchy:fabric:provider:compatibility:operation-preflight:v0","version":"v0"},"state":{"id":"urn:omarchy:fabric:provider:compatibility:operation-state:v0","version":"v0"},"supportsRollback":false,"supportsCancellation":true}
+  }
+}

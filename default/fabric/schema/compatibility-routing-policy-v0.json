@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:compatibility-routing-policy-v0",
+  "x-omarchy-version": "v0",
+  "title": "Omarchy Compatibility Center routing policy",
+  "type": "object",
+  "required": ["schemaVersion", "policyId", "routeOrder", "unsupportedBehavior", "permissionExpansion", "unknownAntiCheat", "recipeTrustKeyIds", "contractSeedBehavior", "releaseVerifiedAdmission"],
+  "properties": {
+    "schemaVersion": {"const": "v0"},
+    "policyId": {"const": "compatibility.routing.default"},
+    "routeOrder": {"const": ["native", "pwa", "known-good-recipe", "game-proton", "isolated-app", "vm"]},
+    "unsupportedBehavior": {"const": "explain-and-refuse"},
+    "permissionExpansion": {"const": "reject"},
+    "unknownAntiCheat": {"const": "unsupported-outside-vm"},
+    "recipeTrustKeyIds": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 160}},
+    "contractSeedBehavior": {"const": "plan-only"},
+    "releaseVerifiedAdmission": {"const": "external-revision-attestation"}
+  },
+  "additionalProperties": false
+}
