@@ -11,8 +11,13 @@ trap 'rm -rf "$tmpdir"' EXIT
 
 home="$tmpdir/home"
 stub_bin="$tmpdir/bin"
-mkdir -p "$home/.config" "$stub_bin"
+mkdir -p "$home/.config" "$home/.local/state/omarchy/ultimate" "$stub_bin"
 cp -r "$ROOT/config/hypr" "$home/.config/hypr"
+
+# This fixture reports the stock Power User bindings from its fake compositor.
+# Keep the source-derived Lua dispatcher cache on the same mode, exactly as a
+# real running session does, so it scans the bindings the fixture reports.
+printf '%s\n' "power-user" >"$home/.local/state/omarchy/ultimate/mode"
 
 # The menu reads binds from Hyprland, which is not running here, so stand in for
 # it. A Lua bind reports dispatcher __lua and no arg, and the menu recovers both
