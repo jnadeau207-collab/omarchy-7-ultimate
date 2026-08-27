@@ -4,6 +4,11 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
+# The fixture below uses Unicode block art and exercises character-to-cell
+# accounting. Establish the locale it requires so non-login invocations (for
+# example, an SSH test run with LANG unset) do not make Bash count UTF-8 bytes.
+export LC_ALL=C.UTF-8
+
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
