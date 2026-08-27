@@ -10,7 +10,7 @@ from pathlib import Path
 from omarchy_fabric.daemon import DaemonConfig, FabricDaemon
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.protocol import FabricClient
-from omarchy_fabric.provider_registry import ProviderRegistry
+from omarchy_fabric.provider_registry import ProviderAvailability, ProviderRegistry
 from omarchy_fabric.security import EndpointAdmission, PrincipalKind, SessionBindingStore
 
 
@@ -309,6 +309,61 @@ class ProviderRegistryTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(value["generation"], 3)
 
+    def test_unavailable_detail_is_printable_and_bounded_by_utf8_bytes(self) -> None:
+        invalid_details = (
+            "contains\x00nul",
+            "contains\nnewline",
+            "contains\ttab",
+            "a" * 501,
+            "é" * 251,
+            "\ud800",
+        )
+        for detail in invalid_details:
+            with self.subTest(representation=ascii(detail)):
+                registry = ProviderRegistry(clock=lambda: 1.0)
+                registry.register(ReadProvider())
+                with self.assertRaises(FabricError) as invalid:
+                    registry.mark_unavailable(
+                        "test.display",
+                        expected_generation=1,
+                        detail=detail,
+                    )
+                self.assertEqual(invalid.exception.code, "provider.invalid-lifecycle")
+                self.assertNotIn("contains", invalid.exception.to_dict().get("detail", ""))
+                entry = registry.catalog()[0]
+                self.assertEqual(entry["generation"], 1)
+                self.assertEqual(entry["state"], "available")
+                self.assertEqual(entry["detail"], "")
+
+        registry = ProviderRegistry(clock=iter((1.0, 2.0)).__next__)
+        registry.register(ReadProvider())
+        accepted = registry.mark_unavailable(
+            "test.display",
+            expected_generation=1,
+            detail="é" * 250,
+        )
+        self.assertEqual(accepted.state, "unavailable")
+        self.assertEqual(registry.catalog()[0]["detail"], "é" * 250)
+
+    def test_initial_availability_uses_the_same_closed_detail_contract(self) -> None:
+        available = ReadProvider()
+        available.availability = ProviderAvailability("available", "")
+        self.assertEqual(ProviderRegistry().register(available).state, "available")
+
+        invalid_declarations = (
+            ProviderAvailability("degraded", ""),
+            ProviderAvailability("unknown", "bounded but unsupported"),
+            ProviderAvailability("unavailable", "contains\nnewline"),
+            ProviderAvailability("unavailable", "é" * 251),
+        )
+        for declaration in invalid_declarations:
+            with self.subTest(declaration=declaration):
+                provider = ReadProvider()
+                provider.availability = declaration
+                with self.assertRaises(FabricError) as invalid:
+                    ProviderRegistry().register(provider)
+                self.assertEqual(invalid.exception.code, "provider.invalid-availability")
+
     async def test_timeouts_and_unstructured_failures_are_normalized(self) -> None:
         provider = BlockingProvider()
         registry = ProviderRegistry()
@@ -459,6 +514,8 @@ class TypedProviderRpcTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(health["providers"]["typed"], 2)
         self.assertEqual(health["providers"]["availableTyped"], 2)
+        self.assertEqual(health["providers"]["degradedTyped"], 0)
+        self.assertEqual(health["providers"]["usableTyped"], 2)
         self.assertEqual(
             [entry["manifest"]["provider"] for entry in catalog["providers"]],
             ["test.display", "test.operation-display"],

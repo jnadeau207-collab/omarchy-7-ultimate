@@ -718,6 +718,8 @@ class FabricDaemon:
                 fake_provider_count=len(self.providers.providers),
                 typed_provider_count=self.typed_providers.provider_count,
                 available_typed_provider_count=self.typed_providers.available_count,
+                degraded_typed_provider_count=self.typed_providers.degraded_count,
+                usable_typed_provider_count=self.typed_providers.usable_count,
                 subscription_count=self.events.subscription_count,
             )
         if request.method == "provider.register":

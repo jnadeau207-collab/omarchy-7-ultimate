@@ -81,6 +81,8 @@ const agent = JSON.parse(fs.readFileSync(path.join(root, 'shell/apps/ultimate-ag
 const settingsValidation = protocol.validateCatalog(settings, 'settings', 'org.omarchy.Settings')
 assert(settingsValidation.ok, 'QML-side protocol accepts the canonical Settings catalog')
 assertEqual(settings.routes.length, 13, 'Settings catalog spans home and all twelve provider domains')
+const appsRoute = settings.routes.find(route => route.id === 'settings.apps.overview')
+assertEqual(appsRoute.providerId, 'defaults.provider', 'Settings Apps binds to the registered defaults provider')
 
 const agentValidation = protocol.validateCatalog(agent, 'agent-center', 'org.omarchy.AgentCenter')
 assert(agentValidation.ok, 'QML-side protocol accepts the canonical Agent Center catalog')
@@ -162,6 +164,8 @@ with open(sys.argv[3], encoding="utf-8") as stream:
 module.validate_catalog(settings, "settings")
 module.validate_catalog(settings, "settings")
 module.validate_catalog(agent, "agent-center")
+apps_route = next(route for route in settings["routes"] if route["id"] == "settings.apps.overview")
+assert apps_route["providerId"] == "defaults.provider"
 
 mutations = []
 
@@ -210,6 +214,18 @@ else:
     raise AssertionError("closed Python catalog validator accepted duplicate enum values")
 PY
 pass "Python catalog validator rejects closed-schema corruption"
+
+python - "$settings_catalog" <<'PY' || fail "Settings Apps route binds to defaults.provider"
+import json
+import sys
+
+catalog = json.load(open(sys.argv[1], encoding="utf-8"))
+apps = [route for route in catalog["routes"] if route["id"] == "settings.apps.overview"]
+assert len(apps) == 1
+assert apps[0]["providerId"] == "defaults.provider"
+assert all(route["providerId"] != "apps.provider" for route in catalog["routes"])
+PY
+pass "Settings Apps route binds to the registered defaults provider"
 
 for domain in display audio network bluetooth input personalization apps power accessibility update recovery system; do
   python - "$settings_catalog" "$domain" <<'PY' || fail "Settings catalog registers $domain"
