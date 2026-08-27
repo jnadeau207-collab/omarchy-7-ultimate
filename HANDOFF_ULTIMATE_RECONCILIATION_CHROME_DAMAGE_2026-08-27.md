@@ -6,12 +6,12 @@ Reconcile the recent Omarchy Ultimate work across the main checkout, GitHub, the
 
 ## State of world
 
-- Main checkout: `C:\dev\omarchy7ultimate`, branch `work`, clean, `HEAD 9932c62b40bd32ab31989547bbe818da4b0235d8`, and `origin/work` is the same commit.
+- Main checkout: `C:\dev\omarchy7ultimate`, branch `work`, clean, `HEAD fb0d4b35cf12c2844c889ae6b5553c4494c5f4ad` (documentation handoff commit; code parent `9932c62b40bd32ab31989547bbe818da4b0235d8`), and `origin/work` is the same commit.
 - Main repository has one worktree only. There are no stashes or tracked/untracked product diffs. Ignored entries are generated Python `__pycache__` directories plus `.aider.chat.history.md` and `.aider.input.history`; these are not Git work and were not deleted because the history files are user data.
-- GitHub `origin/work` is exactly `9932c62b40bd32ab31989547bbe818da4b0235d8`.
+- GitHub `origin/work` is exactly `fb0d4b35cf12c2844c889ae6b5553c4494c5f4ad`.
 - Package checkout `C:\dev\omarchy-pkgs` and `/home/jesse/omarchy-pkgs` are clean at `e902923c2b2f48948bbd95571186c045fac4b8b6`, with local `work` tracking `ultimate/work`.
 - ISO checkout `C:\dev\omarchy-iso` and `/home/jesse/omarchy-iso` are clean at `268bac16d351a21d867e37565738f458b11cb06c`, with `quattro` tracking `origin/quattro`.
-- Metal is `jesse@192.168.1.171`; `/home/jesse/omarchy7ultimate` is clean at `9932c62b40bd32ab31989547bbe818da4b0235d8`.
+- Metal is `jesse@192.168.1.171`; `/home/jesse/omarchy7ultimate` is clean at `fb0d4b35cf12c2844c889ae6b5553c4494c5f4ad`.
 - Metal compositor service `wayland-wm@hyprland.desktop.service` is active. Current Hyprland PID is `1414672`; current plugin mapping is inode `67821` from the checkout, with no `(deleted)` mapping. `omarchy-minimize` and `hyprbars` are loaded. Animations are enabled.
 - A coredump from PID `1401272` exists at `08:10:41`, during the old-to-new compositor restart boundary. There are no coredumps after `08:11:00`; the current compositor PID is `1414672`.
 - The fresh real Google Chrome proof window remains centered on metal: address `0x558ec87c6df0`, position `[388,142]`, size `[1004,764]`, floating, non-fullscreen, class `google-chrome`, title `about:blank - Google Chrome`.
