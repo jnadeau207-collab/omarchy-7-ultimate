@@ -101,6 +101,10 @@ ShellRoot {
     return fabric.request(method, parameters || {})
   }
 
+  function cancelFabric(requestId) {
+    return fabric.cancel(String(requestId || ""))
+  }
+
   function retryFabric() {
     return fabric.retryConnection()
   }

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# omarchy:summary=Open the standalone Compatibility Center application
+# omarchy:args=[route|omarchy-compatibility://link] [options]
+# omarchy:examples=omarchy launch compatibility | omarchy launch compatibility compatibility.deployments
+
+set -euo pipefail
+
+source "$OMARCHY_PATH/shell/apps/shared/launch-product-app.bash"
+launch_product_app compatibility "$@"

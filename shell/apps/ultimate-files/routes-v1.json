@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "omarchy.product-routes/v1",
+  "application": "files",
+  "appId": "org.omarchy.Files",
+  "scheme": "omarchy-files",
+  "defaultRoute": "files.overview",
+  "routes": [
+    {
+      "id": "files.overview",
+      "section": "Files",
+      "title": "Home",
+      "description": "Trusted locations, mounted storage, network shares, and current inventory assurance.",
+      "keywords": ["files", "home", "locations", "mounts"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "overview", "path": "" },
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["location"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    },
+    {
+      "id": "files.this-pc",
+      "section": "Files",
+      "title": "This PC",
+      "description": "Local locations and system or removable mounts from the current trusted snapshot.",
+      "keywords": ["computer", "storage", "disk", "mount"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "this-pc", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "files.desktop",
+      "section": "Locations",
+      "title": "Desktop",
+      "description": "Bounded metadata for the canonical Desktop location without reading file contents.",
+      "keywords": ["desktop", "folder", "files"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "desktop", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "files.documents",
+      "section": "Locations",
+      "title": "Documents",
+      "description": "Bounded metadata for the canonical Documents location without reading file contents.",
+      "keywords": ["documents", "folder", "files"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "documents", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "files.downloads",
+      "section": "Locations",
+      "title": "Downloads",
+      "description": "Bounded metadata for the canonical Downloads location without reading file contents.",
+      "keywords": ["downloads", "folder", "files"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "downloads", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "files.recent",
+      "section": "Activity",
+      "title": "Recent",
+      "description": "Recent entries resolved against the same trusted inventory used by browse and search.",
+      "keywords": ["recent", "history", "files"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "recent", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "files.search",
+      "section": "Activity",
+      "title": "Search",
+      "description": "Deterministic bounded metadata search across trusted indexed locations.",
+      "keywords": ["search", "find", "query"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "search", "path": "results" },
+      "argumentSchema": {
+        "query": { "type": "text", "maxLength": 120, "optional": true },
+        "entityType": { "type": "enum", "values": ["entry"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    },
+    {
+      "id": "files.trash",
+      "section": "Activity",
+      "title": "Trash",
+      "description": "Recoverable Trash inventory and original-location evidence; permanent deletion is unavailable.",
+      "keywords": ["trash", "restore", "deleted"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "trash", "path": "" },
+      "argumentSchema": {}
+    },
+    {
+      "id": "files.network",
+      "section": "Storage",
+      "title": "Network & mounts",
+      "description": "Removable and SMB mount state with credential-free source identity and explicit degradation.",
+      "keywords": ["network", "smb", "share", "mount", "usb"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "network", "path": "" },
+      "argumentSchema": {
+        "entityType": { "type": "enum", "values": ["mount"], "optional": true },
+        "entityId": { "type": "opaque-id", "optional": true }
+      }
+    }
+  ],
+  "entityDeepLinks": [
+    { "host": "location", "routeId": "files.overview", "entityType": "location" },
+    { "host": "entry", "routeId": "files.search", "entityType": "entry" },
+    { "host": "mount", "routeId": "files.network", "entityType": "mount" }
+  ]
+}

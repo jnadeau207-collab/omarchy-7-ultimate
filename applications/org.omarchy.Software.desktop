@@ -1,0 +1,28 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Software Center
+GenericName=Software Manager
+Comment=Inspect trusted software catalogs and installed application state
+TryExec=omarchy-launch-software
+Exec=omarchy-launch-software --source desktop %u
+Icon=system-software-install
+Terminal=false
+Categories=System;Settings;PackageManager;
+Keywords=software;apps;packages;installed;catalog;provenance;
+MimeType=x-scheme-handler/omarchy-software;
+StartupNotify=true
+StartupWMClass=org.omarchy.Software
+Actions=Installed;Adoption;History;
+
+[Desktop Action Installed]
+Name=Installed software
+Exec=omarchy-launch-software --source desktop software.installed
+
+[Desktop Action Adoption]
+Name=Adoption status
+Exec=omarchy-launch-software --source desktop software.adoption
+
+[Desktop Action History]
+Name=Operation history
+Exec=omarchy-launch-software --source desktop software.history

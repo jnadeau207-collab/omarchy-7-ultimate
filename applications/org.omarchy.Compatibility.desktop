@@ -1,0 +1,24 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Compatibility Center
+GenericName=Application Compatibility
+Comment=Inspect compatibility decisions and deployment evidence
+TryExec=omarchy-launch-compatibility
+Exec=omarchy-launch-compatibility --source desktop %u
+Icon=applications-system
+Terminal=false
+Categories=System;Settings;
+Keywords=compatibility;windows;proton;wine;virtual machine;recipe;
+MimeType=x-scheme-handler/omarchy-compatibility;
+StartupNotify=true
+StartupWMClass=org.omarchy.Compatibility
+Actions=Decide;Deployments;
+
+[Desktop Action Decide]
+Name=Route decision
+Exec=omarchy-launch-compatibility --source desktop compatibility.decide
+
+[Desktop Action Deployments]
+Name=Deployments
+Exec=omarchy-launch-compatibility --source desktop compatibility.deployments

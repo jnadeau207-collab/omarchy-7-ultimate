@@ -1,6 +1,6 @@
-# Shared single-instance launcher for the two standalone product applications.
-# This file is sourced by bin/omarchy-launch-settings and
-# bin/omarchy-launch-agent-center; it is not a user-facing command.
+# Shared single-instance launcher for standalone product applications.
+# This file is sourced by the product-specific launch commands; it is not a
+# user-facing command.
 
 product_app_usage() {
   local application="$1"
@@ -10,10 +10,25 @@ product_app_usage() {
     command_name="omarchy-launch-settings"
     scheme="omarchy-settings"
     default_route="settings.overview"
-  else
+  elif [[ $application == "agent-center" ]]; then
     command_name="omarchy-launch-agent-center"
     scheme="omarchy-agent"
     default_route="agent.overview"
+  elif [[ $application == "files" ]]; then
+    command_name="omarchy-launch-files"
+    scheme="omarchy-files"
+    default_route="files.overview"
+  elif [[ $application == "software" ]]; then
+    command_name="omarchy-launch-software"
+    scheme="omarchy-software"
+    default_route="software.catalog"
+  elif [[ $application == "compatibility" ]]; then
+    command_name="omarchy-launch-compatibility"
+    scheme="omarchy-compatibility"
+    default_route="compatibility.overview"
+  else
+    printf 'Unknown standalone application: %s\n' "$application" >&2
+    return 2
   fi
 
   cat <<USAGE
@@ -174,6 +189,21 @@ launch_product_app() {
     ipc_target="omarchy.agent-center"
     app_id="org.omarchy.AgentCenter"
     unit_name="omarchy-ultimate-agent-center"
+  elif [[ $application == "files" ]]; then
+    entrypoint="$OMARCHY_PATH/shell/ultimate-files.qml"
+    ipc_target="omarchy.files"
+    app_id="org.omarchy.Files"
+    unit_name="omarchy-ultimate-files"
+  elif [[ $application == "software" ]]; then
+    entrypoint="$OMARCHY_PATH/shell/ultimate-software.qml"
+    ipc_target="omarchy.software"
+    app_id="org.omarchy.Software"
+    unit_name="omarchy-ultimate-software"
+  elif [[ $application == "compatibility" ]]; then
+    entrypoint="$OMARCHY_PATH/shell/ultimate-compatibility.qml"
+    ipc_target="omarchy.compatibility"
+    app_id="org.omarchy.Compatibility"
+    unit_name="omarchy-ultimate-compatibility"
   else
     printf 'Unknown standalone application: %s\n' "$application" >&2
     return 2

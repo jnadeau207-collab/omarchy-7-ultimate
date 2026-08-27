@@ -9,7 +9,7 @@
       "id": "agent.overview",
       "section": "Agent Center",
       "title": "Overview",
-      "description": "Fabric connection, provider availability, and explicit backend readiness.",
+      "description": "Owner-scoped work counts and explicit managed-execution readiness.",
       "keywords": ["agent", "overview", "status"],
       "providerId": "",
       "deepLink": { "host": "overview", "path": "" },
@@ -19,7 +19,7 @@
       "id": "agent.tasks",
       "section": "Work",
       "title": "Tasks & runs",
-      "description": "Managed tasks, runs, steps, cancellation, retry, budgets, and artifacts.",
+      "description": "Managed tasks, latest runs, immutable steps, budgets, and execution readiness.",
       "keywords": ["task", "run", "step", "budget", "cancel"],
       "providerId": "",
       "argumentSchema": {
@@ -31,7 +31,7 @@
       "id": "agent.approvals",
       "section": "Work",
       "title": "Pending approvals",
-      "description": "Consequential requests awaiting a human decision.",
+      "description": "Read-only projections of unexpired consequential requests awaiting a decision elsewhere.",
       "keywords": ["approval", "permission", "consent", "pending"],
       "providerId": "",
       "argumentSchema": {}
@@ -40,7 +40,7 @@
       "id": "agent.automations",
       "section": "Work",
       "title": "Automations",
-      "description": "Schedules, events, retries, coalescing, and missed-run policy.",
+      "description": "Automation definitions, schedules, retry policy, and recent durable firings.",
       "keywords": ["automation", "schedule", "event", "retry"],
       "providerId": "",
       "argumentSchema": {}
@@ -49,7 +49,7 @@
       "id": "agent.activity",
       "section": "History",
       "title": "Activity & operations",
-      "description": "Durable operations, state, cancellation, reconciliation, and recovery.",
+      "description": "Durable operation state, change evidence, reconciliation status, and recovery eligibility.",
       "keywords": ["activity", "operation", "progress", "recovery"],
       "providerId": "",
       "argumentSchema": {
@@ -61,7 +61,7 @@
       "id": "agent.history",
       "section": "History",
       "title": "History",
-      "description": "Completed work and durable evidence that can be queried safely.",
+      "description": "Bounded lifecycle events with explicit history-pruning evidence.",
       "keywords": ["history", "completed", "evidence", "ledger"],
       "providerId": "",
       "argumentSchema": {}
@@ -70,7 +70,7 @@
       "id": "agent.context",
       "section": "Trust",
       "title": "Context",
-      "description": "What agents can see, where it came from, and when it expires.",
+      "description": "Visible redacted context, provenance, scope, expiry, and revocation state.",
       "keywords": ["context", "snapshot", "privacy", "scope"],
       "providerId": "",
       "argumentSchema": {}
@@ -79,7 +79,7 @@
       "id": "agent.permissions",
       "section": "Trust",
       "title": "Permissions & trust",
-      "description": "Principals, grants, consent policy, revocation, and sandbox boundaries.",
+      "description": "Owner-scoped grant projections, resource scope, risk ceilings, and revocation state.",
       "keywords": ["permission", "trust", "grant", "principal", "sandbox"],
       "providerId": "",
       "argumentSchema": {}
@@ -88,7 +88,7 @@
       "id": "agent.usage",
       "section": "Trust",
       "title": "Usage",
-      "description": "Provider activity, limits, token use, cost, and task budgets.",
+      "description": "Provider metrics, quantities, cost microunits, and task or run provenance.",
       "keywords": ["usage", "token", "cost", "limit", "budget"],
       "providerId": "",
       "argumentSchema": {}
@@ -97,7 +97,7 @@
       "id": "agent.providers",
       "section": "System",
       "title": "Providers & accounts",
-      "description": "Installed typed providers, lifecycle state, versions, and capabilities.",
+      "description": "Typed provider registration order, lifecycle state, versions, and honest read usability.",
       "keywords": ["provider", "account", "capability", "version"],
       "providerId": "",
       "argumentSchema": {
@@ -109,7 +109,7 @@
       "id": "agent.artifacts",
       "section": "System",
       "title": "Artifacts",
-      "description": "Task-owned outputs with explicit scope and provenance.",
+      "description": "Opaque task-owned output handles with scope, size, hash, and run provenance.",
       "keywords": ["artifact", "output", "file", "provenance"],
       "providerId": "",
       "argumentSchema": {}
@@ -118,7 +118,7 @@
       "id": "agent.troubleshooting",
       "section": "System",
       "title": "Troubleshooting",
-      "description": "Connection health, compatibility, diagnostics, and recovery paths.",
+      "description": "Managed database integrity, owner counts, capacities, restart evidence, and recovery paths.",
       "keywords": ["troubleshooting", "diagnostics", "health", "offline", "recovery"],
       "providerId": "",
       "argumentSchema": {}
