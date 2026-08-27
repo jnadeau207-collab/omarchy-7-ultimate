@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "omarchy.design-defaults.v0",
+  "density": {
+    "default": "comfortable",
+    "scales": {
+      "compact": 0.86,
+      "comfortable": 1.0,
+      "touch": 1.25
+    }
+  },
+  "chromeProfiles": {
+    "dark": {
+      "glass": "#1c1c1e",
+      "glassAlpha": 0.62,
+      "menuAlpha": 0.88,
+      "text": "#eeeeee",
+      "glow": "#e8943a",
+      "start": "#9cbc0d",
+      "edge": "#55ffffff",
+      "closeBackground": "#c42b1c",
+      "closeForeground": "#ffffff",
+      "maximizeBackground": "#c8c8c8",
+      "maximizeForeground": "#1a1a1a",
+      "minimizeBackground": "#c8c8c8",
+      "minimizeForeground": "#1a1a1a"
+    },
+    "light": {
+      "glass": "#e8ecf0",
+      "glassAlpha": 0.78,
+      "menuAlpha": 0.88,
+      "text": "#20262c",
+      "glow": "#3a76a8",
+      "start": "#55875c",
+      "edge": "#3320262c",
+      "closeBackground": "#b85750",
+      "closeForeground": "#ffffff",
+      "maximizeBackground": "#5c6873",
+      "maximizeForeground": "#ffffff",
+      "minimizeBackground": "#5c6873",
+      "minimizeForeground": "#ffffff"
+    }
+  },
+  "chromeInteraction": {
+    "color": "#ffffff",
+    "hoverAlpha": 0.10,
+    "activeAlpha": 0.16,
+    "pressedAlpha": 0.22
+  },
+  "motion": {
+    "fastMs": 100,
+    "normalMs": 200,
+    "slowMs": 300,
+    "easing": "OutCubic"
+  },
+  "effects": {
+    "blurEnabled": true,
+    "blurRadiusPx": 8,
+    "blurPasses": 2,
+    "shadowEnabled": true,
+    "shadowColor": "#59000000",
+    "shadowRadiusPx": 8,
+    "shadowOffsetXPx": 0,
+    "shadowOffsetYPx": 2
+  },
+  "elevationPx": {
+    "none": 0,
+    "low": 1,
+    "medium": 4,
+    "high": 8
+  },
+  "focus": {
+    "ringWidthPx": 1,
+    "ringOffsetPx": 1
+  },
+  "hitTargetsPx": {
+    "minimum": 24,
+    "compact": 28,
+    "comfortable": 32,
+    "touch": 44
+  },
+  "captionMetricsPx": {
+    "height": 32,
+    "buttonSize": 22,
+    "buttonPadding": 8,
+    "horizontalPadding": 12
+  }
+}
