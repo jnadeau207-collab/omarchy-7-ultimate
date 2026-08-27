@@ -58,6 +58,8 @@ grep -Fq 'Config::Actions::resize(Vector2D{box.w, box.h}, false, w)' "$cpp" \
   || fail "native Chromium geometry must configure surface size through the resize action"
 grep -Fq 'if (!layoutTarget || !layoutTarget->space())' "$cpp" \
   || fail "native geometry must refuse Hyprland targets detached during surface teardown"
+grep -Fq '#include "src/layout/target/Target.hpp"' "$cpp" \
+  || fail "detached-target guard must use Hyprland's complete layout-target type"
 if ! grep -A18 '^static bool dispatchCompositorBox(PHLWINDOW w, const CBox& box) {' "$cpp" | grep -Fq '!w->m_isMapped'; then
   fail "native geometry must refuse an unmapped window before entering the layout action"
 fi
