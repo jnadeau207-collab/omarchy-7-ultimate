@@ -55,6 +55,9 @@ def daemon_health(
     run_id: str,
     provider_count: int,
     subscription_count: int,
+    fake_provider_count: int = 0,
+    typed_provider_count: int = 0,
+    available_typed_provider_count: int = 0,
 ) -> dict[str, Any]:
     integrity = database.quick_check()
     journal_mode = database.journal_mode()
@@ -82,7 +85,12 @@ def daemon_health(
             "runId": run_id,
             "uptimeSeconds": max(0.0, time.monotonic() - started_monotonic),
         },
-        "providers": {"registered": provider_count},
+        "providers": {
+            "registered": provider_count,
+            "fake": fake_provider_count,
+            "typed": typed_provider_count,
+            "availableTyped": available_typed_provider_count,
+        },
         "events": {"subscriptions": subscription_count},
     }
 

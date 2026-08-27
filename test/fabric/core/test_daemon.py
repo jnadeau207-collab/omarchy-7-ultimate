@@ -132,6 +132,8 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
             "version",
             "health",
             "provider.list",
+            "provider.catalog",
+            "provider.read",
             "events.subscribe",
             "reference.operation.preflight",
             "reference.operation.approve",

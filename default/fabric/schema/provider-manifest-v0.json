@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:provider-manifest-v0",
+  "title": "Omarchy Fabric provisional typed-provider manifest",
+  "description": "A closed, version-negotiated declaration for code-owned Fabric providers. The daemon validates every action argument and result against the referenced provider-owned schemas before crossing the provider boundary.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "provider",
+    "providerVersion",
+    "minFabricProtocol",
+    "maxFabricProtocol",
+    "capabilities",
+    "actions"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "v0"
+    },
+    "provider": {
+      "$ref": "common-v0.json#/$defs/stableId"
+    },
+    "providerVersion": {
+      "$ref": "common-v0.json#/$defs/schemaVersion"
+    },
+    "minFabricProtocol": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1024
+    },
+    "maxFabricProtocol": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1024
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "common-v0.json#/$defs/capabilityId"
+      }
+    },
+    "actions": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 128,
+      "propertyNames": {
+        "$ref": "common-v0.json#/$defs/stableId"
+      },
+      "patternProperties": {
+        "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$": {
+          "$ref": "#/$defs/action"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "contractOrNull": {
+      "oneOf": [
+        {
+          "$ref": "common-v0.json#/$defs/schemaReference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "action": {
+      "type": "object",
+      "required": [
+        "capability",
+        "mode",
+        "risk",
+        "effects",
+        "arguments",
+        "result",
+        "preflight",
+        "state",
+        "supportsRollback",
+        "supportsCancellation"
+      ],
+      "properties": {
+        "capability": {
+          "$ref": "common-v0.json#/$defs/capabilityId"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "read",
+            "operation"
+          ]
+        },
+        "risk": {
+          "type": "string",
+          "enum": [
+            "read-only",
+            "low",
+            "consequential",
+            "destructive"
+          ]
+        },
+        "effects": {
+          "type": "array",
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "common-v0.json#/$defs/effectTag"
+          }
+        },
+        "arguments": {
+          "$ref": "common-v0.json#/$defs/schemaReference"
+        },
+        "result": {
+          "$ref": "common-v0.json#/$defs/schemaReference"
+        },
+        "preflight": {
+          "$ref": "#/$defs/contractOrNull"
+        },
+        "state": {
+          "$ref": "#/$defs/contractOrNull"
+        },
+        "supportsRollback": {
+          "type": "boolean"
+        },
+        "supportsCancellation": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
