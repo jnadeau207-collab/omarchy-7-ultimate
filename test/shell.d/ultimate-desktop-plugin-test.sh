@@ -189,6 +189,8 @@ grep -Fq 'leaf = "windows", enabled = false' "$ROOT/default/hypr/desktop-windows
   || fail "desktop mode must disable the windows animation parent, not only windowsIn"
 grep -Fq 'rounding = 0' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "desktop mode must zero theme rounding or only one window corner looks round"
+grep -Fq 'o.window({ tag = "chromium-based-browser" }, { rounding = 10 })' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "Chromium CSD must restore the clipped right-hand corner at the compositor boundary"
 grep -Fq 'no_shadow = true' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "CSD clients must not get a second compositor shadow"
 grep -Fq 'resize_on_border = true' "$ROOT/default/hypr/desktop-windows.lua" \
@@ -300,7 +302,7 @@ fi
 if grep -Fq 'toggleMaximize active' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "hyprbars caption buttons must not target the focused window"
 fi
-if grep -Fq '{ tag = "chromium-based-browser" }' "$ROOT/default/hypr/desktop-windows.lua"; then
+if grep -F 'tag = "chromium-based-browser"' "$ROOT/default/hypr/desktop-windows.lua" | grep -Fq 'hyprbars:no_bar'; then
   fail "hyprbars:no_bar must not depend on the chromium-based-browser tag YouTube/Zoom drop"
 fi
 grep -Fq 'youtube' "$ROOT/default/ultimate/csd-clients.json" \

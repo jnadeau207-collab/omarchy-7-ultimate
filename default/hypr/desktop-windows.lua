@@ -184,6 +184,11 @@ for _, class_pat in ipairs(load_csd_patterns()) do
   o.window(class_pat, { float = true, ["hyprbars:no_bar"] = true, no_shadow = true, border_size = 0, rounding = 0, size = { 1200, 740 } })
 end
 
+-- Chromium's Wayland CSD paints 12px right of its compositor box and loses its
+-- native right-hand radius at that box boundary. Clip the raw Chromium surface
+-- to the same 10px radius it paints on the left so both top corners match.
+o.window({ tag = "chromium-based-browser" }, { rounding = 10 })
+
 -- Lock surfaces are not 880×560 app windows. Fullscreen per output, no hyprbars.
 o.window("org.omarchy.screensaver", { float = true, fullscreen = true, ["hyprbars:no_bar"] = true })
 
