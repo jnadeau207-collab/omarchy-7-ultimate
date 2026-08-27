@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:ultimate:capability-schema:contract-types-v0",
+  "title": "Omarchy Ultimate provisional capability contract types",
+  "description": "Versioned schema fragments used by provisional capability descriptors. These describe the required semantic contract; provider availability separately records what is implemented today.",
+  "$defs": {
+    "emptyInput": {
+      "type": "object",
+      "maxProperties": 0,
+      "additionalProperties": false
+    },
+    "genericInput": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "windowTargetInput": {
+      "type": "object",
+      "required": ["address"],
+      "properties": {
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "additionalProperties": false
+    },
+    "windowGeometryInput": {
+      "type": "object",
+      "required": ["address"],
+      "properties": {
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "side": { "type": "string", "enum": ["l", "r", "tl", "tr", "bl", "br", "max", "normal"] },
+        "direction": { "type": "string", "enum": ["l", "r", "u", "d"] }
+      },
+      "additionalProperties": false
+    },
+    "desktopInput": {
+      "type": "object",
+      "properties": {
+        "address": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "desktopId": { "type": "integer", "minimum": 1 },
+        "direction": { "type": "string", "enum": ["l", "r"] }
+      },
+      "additionalProperties": false
+    },
+    "capabilityState": {
+      "type": "object",
+      "required": ["revision", "available"],
+      "properties": {
+        "revision": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stateRevision" },
+        "available": { "type": "boolean" },
+        "value": true
+      },
+      "additionalProperties": false
+    },
+    "operationResult": {
+      "type": "object",
+      "required": ["changed", "changeState", "error"],
+      "properties": {
+        "changed": { "type": "boolean" },
+        "changeState": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/changeState" },
+        "value": true,
+        "error": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/errorEnvelope" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "operationError": {
+      "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/errorEnvelope"
+    },
+    "operationPreflight": {
+      "type": "object",
+      "required": ["summary", "effects", "recovery", "stateRevision"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/effectTag" },
+          "uniqueItems": true
+        },
+        "recovery": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "stateRevision": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stateRevision" },
+        "estimatedSeconds": { "type": "integer", "minimum": 0 },
+        "downloadBytes": { "type": "integer", "minimum": 0 },
+        "diskBytes": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "operationProgress": {
+      "type": "object",
+      "required": ["phase", "fraction"],
+      "properties": {
+        "phase": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" },
+        "fraction": { "type": "number", "minimum": 0, "maximum": 1 },
+        "message": { "type": "string", "maxLength": 2000 }
+      },
+      "additionalProperties": false
+    },
+    "operationUndo": {
+      "type": "object",
+      "required": ["eligible", "mode", "stateRevision"],
+      "properties": {
+        "eligible": { "type": "boolean" },
+        "mode": { "type": "string", "enum": ["undo", "compensating", "restore-point", "manual", "none"] },
+        "stateRevision": { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stateRevision" },
+        "expiresAt": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "notApplicable": {
+      "type": "null"
+    }
+  }
+}

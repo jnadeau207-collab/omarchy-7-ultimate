@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:ultimate:capability-schema:window-surface-v0",
+  "title": "Omarchy Ultimate current WindowService and window IPC surface inventory",
+  "type": "object",
+  "required": ["$schema", "schemaVersion", "serviceFile", "brokerFile", "ipcFile", "serviceMethods", "ipcPaths"],
+  "properties": {
+    "$schema": { "const": "urn:omarchy:ultimate:capability-schema:window-surface-v0" },
+    "schemaVersion": { "const": "v0" },
+    "serviceFile": { "type": "string", "minLength": 1 },
+    "brokerFile": { "type": "string", "minLength": 1 },
+    "ipcFile": { "type": "string", "minLength": 1 },
+    "serviceMethods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind", "catalogState", "capabilityId", "debtId"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$" },
+          "kind": { "type": "string", "enum": ["reader", "writer"] },
+          "catalogState": { "type": "string", "enum": ["reader", "broker-catalogued", "legacy-direct"] },
+          "capabilityId": { "oneOf": [{ "type": "null" }, { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/capabilityId" }] },
+          "debtId": { "oneOf": [{ "type": "null" }, { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" }] }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "ipcPaths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind", "routing", "capabilityId", "targetMethods", "debtId"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$" },
+          "kind": { "type": "string", "enum": ["health", "reader", "generic-writer", "dedicated-writer", "ui-writer"] },
+          "routing": { "type": "string", "enum": ["read-only", "broker-generic", "broker-undo", "direct-window-service", "direct-ui"] },
+          "capabilityId": { "oneOf": [{ "type": "null" }, { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/capabilityId" }] },
+          "targetMethods": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$" }, "uniqueItems": true },
+          "debtId": { "oneOf": [{ "type": "null" }, { "$ref": "urn:omarchy:fabric:schema:common-v0#/$defs/stableId" }] }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}

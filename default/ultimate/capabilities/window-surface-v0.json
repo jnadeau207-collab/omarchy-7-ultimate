@@ -1,0 +1,708 @@
+{
+  "$schema": "urn:omarchy:ultimate:capability-schema:window-surface-v0",
+  "schemaVersion": "v0",
+  "serviceFile": "shell/services/WindowService.qml",
+  "brokerFile": "shell/services/CapabilityBroker.qml",
+  "ipcFile": "shell/shell.qml",
+  "serviceMethods": [
+    {
+      "name": "windowTitle",
+      "kind": "reader",
+      "catalogState": "reader",
+      "capabilityId": null,
+      "debtId": null
+    },
+    {
+      "name": "pin",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.pin",
+      "debtId": null
+    },
+    {
+      "name": "unpin",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.unpin",
+      "debtId": null
+    },
+    {
+      "name": "togglePin",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.toggle-pin",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "focus",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.focus",
+      "debtId": null
+    },
+    {
+      "name": "close",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.close",
+      "debtId": null
+    },
+    {
+      "name": "closeActive",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.close-active",
+      "debtId": null
+    },
+    {
+      "name": "minimize",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.minimize",
+      "debtId": null
+    },
+    {
+      "name": "restore",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.restore",
+      "debtId": null
+    },
+    {
+      "name": "isActive",
+      "kind": "reader",
+      "catalogState": "reader",
+      "capabilityId": null,
+      "debtId": null
+    },
+    {
+      "name": "isMaximized",
+      "kind": "reader",
+      "catalogState": "reader",
+      "capabilityId": null,
+      "debtId": null
+    },
+    {
+      "name": "isMinimized",
+      "kind": "reader",
+      "catalogState": "reader",
+      "capabilityId": null,
+      "debtId": null
+    },
+    {
+      "name": "toggleFromTaskbar",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.toggle-from-taskbar",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "activateAtCursorSoon",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.activate-at-cursor-soon",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "activateAtCursor",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.activate-at-cursor",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "activate",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.activate",
+      "debtId": null
+    },
+    {
+      "name": "maximize",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.maximize",
+      "debtId": null
+    },
+    {
+      "name": "unmaximize",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.unmaximize",
+      "debtId": null
+    },
+    {
+      "name": "toggleMaximize",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.toggle-maximize",
+      "debtId": null
+    },
+    {
+      "name": "restoreOrMinimize",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.restore-or-minimize",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "restoreNormal",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.restore-normal",
+      "debtId": null
+    },
+    {
+      "name": "moveTo",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.move-to",
+      "debtId": null
+    },
+    {
+      "name": "resizeTo",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.resize-to",
+      "debtId": null
+    },
+    {
+      "name": "snapLeft",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.snap-left",
+      "debtId": null
+    },
+    {
+      "name": "snapRight",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.snap-right",
+      "debtId": null
+    },
+    {
+      "name": "snapTo",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.snap-to",
+      "debtId": null
+    },
+    {
+      "name": "snapArrow",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.snap-arrow",
+      "debtId": null
+    },
+    {
+      "name": "aeroDragEnd",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.aero-drag-end",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "saveLayout",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.save-layout",
+      "debtId": null
+    },
+    {
+      "name": "restoreLayout",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.restore-layout",
+      "debtId": null
+    },
+    {
+      "name": "toggleShowDesktop",
+      "kind": "writer",
+      "catalogState": "broker-catalogued",
+      "capabilityId": "window.toggle-show-desktop",
+      "debtId": null
+    },
+    {
+      "name": "cycleNext",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.cycle-next",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "cyclePrev",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.cycle-prev",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "commitCycle",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.commit-cycle",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "cancelCycle",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.cancel-cycle",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "activateFromSwitcher",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.activate-from-switcher",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "isFullscreen",
+      "kind": "reader",
+      "catalogState": "reader",
+      "capabilityId": null,
+      "debtId": null
+    },
+    {
+      "name": "toggleFullscreen",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.toggle-fullscreen",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "createDesktop",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.create-desktop",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "switchDesktop",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.switch-desktop",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "switchToDesktop",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.switch-to-desktop",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "moveToDesktop",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.move-to-desktop",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "closeDesktop",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.close-desktop",
+      "debtId": "legacy.window-service.public-writers"
+    },
+    {
+      "name": "moveToMonitor",
+      "kind": "writer",
+      "catalogState": "legacy-direct",
+      "capabilityId": "window.move-to-monitor",
+      "debtId": "legacy.window-service.public-writers"
+    }
+  ],
+  "ipcPaths": [
+    {
+      "name": "ping",
+      "kind": "health",
+      "routing": "read-only",
+      "capabilityId": null,
+      "targetMethods": [],
+      "debtId": null
+    },
+    {
+      "name": "invoke",
+      "kind": "generic-writer",
+      "routing": "broker-generic",
+      "capabilityId": null,
+      "targetMethods": [],
+      "debtId": null
+    },
+    {
+      "name": "undoLast",
+      "kind": "generic-writer",
+      "routing": "broker-undo",
+      "capabilityId": null,
+      "targetMethods": [],
+      "debtId": null
+    },
+    {
+      "name": "toggleShowDesktop",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.toggle-show-desktop",
+      "targetMethods": [
+        "toggleShowDesktop"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "snapLeft",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.snap-left",
+      "targetMethods": [
+        "snapLeft"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "snapRight",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.snap-right",
+      "targetMethods": [
+        "snapRight"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "snapTo",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.snap-to",
+      "targetMethods": [
+        "snapTo"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "snapArrow",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.snap-arrow",
+      "targetMethods": [
+        "snapArrow"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "aeroDragEnd",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.aero-drag-end",
+      "targetMethods": [
+        "aeroDragEnd"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "saveLayout",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.save-layout",
+      "targetMethods": [
+        "saveLayout"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "restoreLayout",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.restore-layout",
+      "targetMethods": [
+        "restoreLayout"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "snapChooser",
+      "kind": "ui-writer",
+      "routing": "direct-ui",
+      "capabilityId": "window.snap-to",
+      "targetMethods": [],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "taskView",
+      "kind": "ui-writer",
+      "routing": "direct-ui",
+      "capabilityId": "window.cycle-next",
+      "targetMethods": [],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "createDesktop",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.create-desktop",
+      "targetMethods": [
+        "createDesktop"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "closeDesktop",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.close-desktop",
+      "targetMethods": [
+        "closeDesktop"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "switchDesktop",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.switch-desktop",
+      "targetMethods": [
+        "switchDesktop"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "switchToDesktop",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.switch-to-desktop",
+      "targetMethods": [
+        "switchToDesktop"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "moveToDesktop",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.move-to-desktop",
+      "targetMethods": [
+        "moveToDesktop"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "moveToMonitor",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.move-to-monitor",
+      "targetMethods": [
+        "moveToMonitor"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "toggleFullscreen",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.toggle-fullscreen",
+      "targetMethods": [
+        "toggleFullscreen"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "close",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.close",
+      "targetMethods": [
+        "close"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "closeActive",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.close-active",
+      "targetMethods": [
+        "closeActive"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "cycleNext",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.cycle-next",
+      "targetMethods": [
+        "cycleNext"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "cycleSnapshot",
+      "kind": "reader",
+      "routing": "read-only",
+      "capabilityId": null,
+      "targetMethods": [],
+      "debtId": null
+    },
+    {
+      "name": "cyclePrev",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.cycle-prev",
+      "targetMethods": [
+        "cyclePrev"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "commitCycle",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.commit-cycle",
+      "targetMethods": [
+        "cancelCycle",
+        "activate"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "activate",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.activate",
+      "targetMethods": [
+        "activate"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "focus",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.focus",
+      "targetMethods": [
+        "focus"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "minimize",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.minimize",
+      "targetMethods": [
+        "minimize"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "restore",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.restore",
+      "targetMethods": [
+        "restore"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "maximize",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.maximize",
+      "targetMethods": [
+        "maximize"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "unmaximize",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.unmaximize",
+      "targetMethods": [
+        "unmaximize"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "restoreOrMinimize",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.restore-or-minimize",
+      "targetMethods": [
+        "restoreOrMinimize"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "restoreNormal",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.restore-normal",
+      "targetMethods": [
+        "restoreNormal"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "toggleMaximize",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.toggle-maximize",
+      "targetMethods": [
+        "toggleMaximize"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "moveTo",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.move-to",
+      "targetMethods": [
+        "moveTo"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "resizeTo",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.resize-to",
+      "targetMethods": [
+        "resizeTo"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "pin",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.pin",
+      "targetMethods": [
+        "pin"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "unpin",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.unpin",
+      "targetMethods": [
+        "unpin"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    },
+    {
+      "name": "toggleFromTaskbar",
+      "kind": "dedicated-writer",
+      "routing": "direct-window-service",
+      "capabilityId": "window.toggle-from-taskbar",
+      "targetMethods": [
+        "toggleFromTaskbar"
+      ],
+      "debtId": "legacy.window-ipc.direct-routes"
+    }
+  ]
+}

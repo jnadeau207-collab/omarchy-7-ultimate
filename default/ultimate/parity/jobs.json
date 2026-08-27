@@ -1,0 +1,2182 @@
+{
+  "$schema": "urn:omarchy:ultimate:capability-schema:parity-jobs-v0",
+  "schemaVersion": "v0",
+  "jobs": [
+    {
+      "id": "parity.desktop-icons-wallpaper-context-menu-recycle",
+      "kind": "parity-job",
+      "sourceLabel": "Desktop (icons, wallpaper, context menu, Recycle)",
+      "sourceStatus": "prototype / missing",
+      "claim": "prototype",
+      "capabilityIds": [
+        "desktop.icons.manage",
+        "desktop.wallpaper.set",
+        "desktop.context-menu.open",
+        "files.trash.manage"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Desktop and Personalization",
+        "path": "Desktop; Start > Personalization"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Wallpaper can be restored; destructive trash operations require guarded undo.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.desktop-icons-wallpaper-context-menu-recycle"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 1
+      }
+    },
+    {
+      "id": "parity.superbar-taskbar",
+      "kind": "parity-job",
+      "sourceLabel": "Superbar (taskbar)",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "shell.superbar.use",
+        "window.pin",
+        "window.unpin",
+        "window.minimize",
+        "window.restore",
+        "window.toggle-show-desktop"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "path": "Bottom taskbar"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Window and pin changes require state-aware undo; presentation-only actions are retryable.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.superbar-taskbar"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 2
+      }
+    },
+    {
+      "id": "parity.start",
+      "kind": "parity-job",
+      "sourceLabel": "Start",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "apps.launch",
+        "search.system.query",
+        "power.shutdown"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start",
+        "path": "Superbar > Start"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Launching is non-destructive; shutdown requires an explicit visible confirmation path.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.start"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 3
+      }
+    },
+    {
+      "id": "parity.search",
+      "kind": "parity-job",
+      "sourceLabel": "Search",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "search.system.query"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start Search",
+        "path": "Start > Search"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only queries have no recovery requirement.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.search"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 4
+      }
+    },
+    {
+      "id": "parity.explorer-this-pc",
+      "kind": "parity-job",
+      "sourceLabel": "Explorer / This PC",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "files.this-pc.open",
+        "files.folder.create",
+        "files.entry.rename",
+        "files.copy",
+        "files.properties.read"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files (legacy Nautilus)",
+        "path": "Superbar > Files"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "File mutations require conflict-safe undo and truthful partial-change reporting.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.explorer-this-pc"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 5
+      }
+    },
+    {
+      "id": "parity.network",
+      "kind": "parity-job",
+      "sourceLabel": "Network",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "network.manage",
+        "network.wifi.connect"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Network panel",
+        "path": "Superbar > Network"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Capture the previous connection and expose reconnect or disconnect compensation.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.network"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 6
+      }
+    },
+    {
+      "id": "parity.personalization",
+      "kind": "parity-job",
+      "sourceLabel": "Personalization",
+      "sourceStatus": "plumbing / prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "desktop.wallpaper.set",
+        "personalization.theme.set"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Image picker and theme menu",
+        "path": "Start > Personalization"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Capture the previous wallpaper and theme and offer guarded undo.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.personalization"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 7
+      }
+    },
+    {
+      "id": "parity.devices-printers",
+      "kind": "parity-job",
+      "sourceLabel": "Devices & Printers",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "printers.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Devices and Printers"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Printer changes require cancellable setup and compensating removal.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.devices-printers"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 8
+      }
+    },
+    {
+      "id": "parity.device-manager",
+      "kind": "parity-job",
+      "sourceLabel": "Device Manager",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "devices.inspect"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Device Manager"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Inspection is read-only; future device mutations require preflight and recovery.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.device-manager"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 9
+      }
+    },
+    {
+      "id": "parity.programs-and-features",
+      "kind": "parity-job",
+      "sourceLabel": "Programs and Features",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "software.installed.manage",
+        "software.uninstall"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Apps"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Removal requires impact preflight, progress, and restore-point-backed recovery.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.programs-and-features"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 10
+      }
+    },
+    {
+      "id": "parity.default-programs",
+      "kind": "parity-job",
+      "sourceLabel": "Default Programs",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "apps.defaults.set",
+        "files.associations.set"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Default apps"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Record prior associations and offer guarded undo.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.default-programs"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 11
+      }
+    },
+    {
+      "id": "parity.user-accounts",
+      "kind": "parity-job",
+      "sourceLabel": "User Accounts",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "accounts.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Accounts"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Account changes require authentication, invariant checks, and compensating recovery.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.user-accounts"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 12
+      }
+    },
+    {
+      "id": "parity.credential-manager",
+      "kind": "parity-job",
+      "sourceLabel": "Credential Manager",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "credentials.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Credential Manager"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Secrets must stay in Secret Service; destructive changes require explicit manual recovery guidance.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.credential-manager"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 13
+      }
+    },
+    {
+      "id": "parity.power-options",
+      "kind": "parity-job",
+      "sourceLabel": "Power Options",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "power.profile.set"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Power panel",
+        "path": "Superbar > Power"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Capture and restore the prior profile.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.power-options"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 14
+      }
+    },
+    {
+      "id": "parity.sound",
+      "kind": "parity-job",
+      "sourceLabel": "Sound",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "audio.output.manage",
+        "audio.volume.set",
+        "troubleshooting.audio.run"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Sound panel",
+        "path": "Superbar > Sound"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Capture prior routes and levels; troubleshooting must report each applied repair.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.sound"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 15
+      }
+    },
+    {
+      "id": "parity.display",
+      "kind": "parity-job",
+      "sourceLabel": "Display",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "display.configure",
+        "display.night-light.set"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Monitor panel",
+        "path": "Superbar > Display"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Timed display changes must automatically roll back unless kept.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.display"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 16
+      }
+    },
+    {
+      "id": "parity.firewall",
+      "kind": "parity-job",
+      "sourceLabel": "Firewall",
+      "sourceStatus": "plumbing",
+      "claim": "plumbing",
+      "capabilityIds": [
+        "firewall.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Network > Firewall"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Rules require exact preflight and compensating restore of the prior ruleset.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.firewall"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 17
+      }
+    },
+    {
+      "id": "parity.update",
+      "kind": "parity-job",
+      "sourceLabel": "Update",
+      "sourceStatus": "plumbing / prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "update.install",
+        "update.history.read"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Update"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Create a restore point, journal progress across restart, and reconcile after reboot.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.update"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 18
+      }
+    },
+    {
+      "id": "parity.backup-restore",
+      "kind": "parity-job",
+      "sourceLabel": "Backup & Restore",
+      "sourceStatus": "plumbing",
+      "claim": "plumbing",
+      "capabilityIds": [
+        "backup.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Backup and Restore",
+        "path": "Start > Backup and Restore"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Backups validate artifacts before success and preserve the prior schedule on failure.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.backup-restore"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 19
+      }
+    },
+    {
+      "id": "parity.system-restore",
+      "kind": "parity-job",
+      "sourceLabel": "System Restore",
+      "sourceStatus": "plumbing",
+      "claim": "plumbing",
+      "capabilityIds": [
+        "recovery.restore-point.create",
+        "recovery.restore-point.rollback"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "System Restore",
+        "path": "Start > System Restore"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore operations are durable, restart-safe, and reconcile the actual booted snapshot.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.system-restore"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 20
+      }
+    },
+    {
+      "id": "parity.disk-management",
+      "kind": "parity-job",
+      "sourceLabel": "Disk Management",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "storage.disk.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Storage > Disks"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Destructive partition changes require immutable preflight, authentication, and manual recovery media guidance.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.disk-management"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 21
+      }
+    },
+    {
+      "id": "parity.task-manager",
+      "kind": "parity-job",
+      "sourceLabel": "Task Manager",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "processes.inspect",
+        "apps.startup.disable"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Task Manager",
+        "path": "Superbar > Task Manager"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Inspection is read-only; startup changes retain guarded undo.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.task-manager"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 22
+      }
+    },
+    {
+      "id": "parity.resource-monitor",
+      "kind": "parity-job",
+      "sourceLabel": "Resource Monitor",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "resources.inspect"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Resource Monitor",
+        "path": "Task Manager > Performance > Resource Monitor"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only inspection has no recovery requirement.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.resource-monitor"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 23
+      }
+    },
+    {
+      "id": "parity.services",
+      "kind": "parity-job",
+      "sourceLabel": "Services",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "services.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Services",
+        "path": "Start > Services"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Capture prior enablement and running state and offer compensating restore.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.services"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 24
+      }
+    },
+    {
+      "id": "parity.task-scheduler",
+      "kind": "parity-job",
+      "sourceLabel": "Task Scheduler",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "tasks.schedule"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Task Scheduler",
+        "path": "Start > Task Scheduler"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Scheduled-task creation and deletion require durable identity and compensating recovery.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.task-scheduler"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 25
+      }
+    },
+    {
+      "id": "parity.event-history",
+      "kind": "parity-job",
+      "sourceLabel": "Event / history",
+      "sourceStatus": "prototype (toasts + window ledger)",
+      "claim": "prototype",
+      "capabilityIds": [
+        "events.history.read"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Notification history",
+        "path": "Superbar > Notifications"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only history has no recovery requirement; retention and redaction remain explicit.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.event-history"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 26
+      }
+    },
+    {
+      "id": "parity.remote-desktop",
+      "kind": "parity-job",
+      "sourceLabel": "Remote desktop",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "remote-desktop.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Remote Desktop"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Network exposure changes require exact preflight and automatic rule rollback.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.remote-desktop"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 27
+      }
+    },
+    {
+      "id": "parity.drive-encryption",
+      "kind": "parity-job",
+      "sourceLabel": "Drive encryption",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "storage.encryption.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Drive Encryption"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Key escrow and recovery media are mandatory before encryption mutation.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.drive-encryption"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 28
+      }
+    },
+    {
+      "id": "parity.sharing",
+      "kind": "parity-job",
+      "sourceLabel": "Sharing",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "sharing.smb.connect",
+        "firewall.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Files and Settings",
+        "path": "Files > Connect to Server; Settings > Sharing"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Connection changes compensate by disconnecting; shared exposure restores prior firewall state.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.sharing"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 29
+      }
+    },
+    {
+      "id": "parity.language-locale",
+      "kind": "parity-job",
+      "sourceLabel": "Language / locale",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "locale.configure",
+        "input.keyboard-layout.set"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Time and Language"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Record prior locale and layout and offer undo.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.language-locale"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 30
+      }
+    },
+    {
+      "id": "parity.accessibility",
+      "kind": "parity-job",
+      "sourceLabel": "Accessibility",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "accessibility.configure"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Ease of Access"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Every change must remain keyboard-reachable and offer direct undo.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.accessibility"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 31
+      }
+    },
+    {
+      "id": "parity.file-associations",
+      "kind": "parity-job",
+      "sourceLabel": "File associations",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "files.associations.set",
+        "apps.defaults.set"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Default apps"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Record prior MIME handlers and offer guarded undo.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.file-associations"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 32
+      }
+    },
+    {
+      "id": "parity.properties",
+      "kind": "parity-job",
+      "sourceLabel": "Properties",
+      "sourceStatus": "missing as product",
+      "claim": "missing",
+      "capabilityIds": [
+        "files.properties.read",
+        "system.info.read"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files (legacy Nautilus)",
+        "path": "Files > right-click > Properties"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only properties require no recovery.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.properties"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 33
+      }
+    },
+    {
+      "id": "parity.context-menus",
+      "kind": "parity-job",
+      "sourceLabel": "Context menus",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
+      "capabilityIds": [
+        "desktop.context-menu.open",
+        "shell.superbar.use"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar and Start context menus",
+        "path": "Right-click taskbar item or Start item"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Presentation changes are retryable; mutations reached from a menu inherit their capability recovery.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.context-menus"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "Desktop jobs",
+        "row": 34
+      }
+    },
+    {
+      "id": "parity.software-center",
+      "kind": "parity-job",
+      "sourceLabel": "Software Center",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "software.install",
+        "software.uninstall",
+        "software.installed.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Software Center",
+        "path": "Start > Software Center"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Transactions require trust preflight, progress, rollback checkpoints, and adoption-safe removal.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.software-center"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 35
+      }
+    },
+    {
+      "id": "parity.compatibility-center",
+      "kind": "parity-job",
+      "sourceLabel": "Compatibility Center",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "compatibility.install",
+        "compatibility.uninstall"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Compatibility Center",
+        "path": "Start > Compatibility Center"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Recipes require isolation, export, and restore-point-backed removal.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.compatibility-center"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 36
+      }
+    },
+    {
+      "id": "parity.snapshot-recovery",
+      "kind": "parity-job",
+      "sourceLabel": "Snapshot recovery",
+      "sourceStatus": "plumbing",
+      "claim": "plumbing",
+      "capabilityIds": [
+        "recovery.restore-point.create",
+        "recovery.restore-point.rollback"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "System Restore",
+        "path": "Start > System Restore"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Snapshot identity and boot reconciliation are authoritative; never report success before validation.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.snapshot-recovery"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 37
+      }
+    },
+    {
+      "id": "parity.modern-display-scaling-hdr-night-light",
+      "kind": "parity-job",
+      "sourceLabel": "Modern display (scaling, HDR, night light)",
+      "sourceStatus": "prototype / plumbing",
+      "claim": "prototype",
+      "capabilityIds": [
+        "display.configure",
+        "display.night-light.set"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Monitor panel",
+        "path": "Superbar > Display"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Timed settings automatically roll back unless explicitly kept.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.modern-display-scaling-hdr-night-light"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 38
+      }
+    },
+    {
+      "id": "parity.proton-gaming",
+      "kind": "parity-job",
+      "sourceLabel": "Proton / gaming",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "gaming.proton.manage",
+        "software.install"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Gaming"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Install and prefix changes require checkpoints and restore-point recovery.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.proton-gaming"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 39
+      }
+    },
+    {
+      "id": "parity.privacy",
+      "kind": "parity-job",
+      "sourceLabel": "Privacy",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "privacy.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Privacy"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Record prior permissions and offer guarded undo without logging private content.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.privacy"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 40
+      }
+    },
+    {
+      "id": "parity.agent-fabric",
+      "kind": "parity-job",
+      "sourceLabel": "Agent Fabric",
+      "sourceStatus": "prototype (window)",
+      "claim": "prototype",
+      "capabilityIds": [
+        "fabric.capabilities.invoke",
+        "window.minimize",
+        "window.restore",
+        "window.snap-to"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Existing window affordances and agent invocation",
+        "path": "Superbar window controls; agent capability invocation"
+      },
+      "agentAvailability": "present",
+      "recoveryExpectation": "Window mutations use the existing one-shot undo prototype; durable operation recovery remains required.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.agent-fabric"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 41
+      }
+    },
+    {
+      "id": "parity.agent-center",
+      "kind": "parity-job",
+      "sourceLabel": "Agent Center",
+      "sourceStatus": "missing",
+      "claim": "missing",
+      "capabilityIds": [
+        "agents.center.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Agent Center",
+        "path": "Superbar > Agent Center"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Task cancellation, retry, approval, and artifact recovery must be durable.",
+      "proofStatus": "tree-audit",
+      "proofIds": [
+        "parity.tree-audit.agent-center"
+      ],
+      "source": {
+        "file": "WINDOWS_7_ULTIMATE_PARITY.md",
+        "section": "2026 layers",
+        "row": 42
+      }
+    },
+    {
+      "id": "windows-native.1",
+      "kind": "windows-native-task",
+      "sourceLabel": "Install the OS",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "os.install"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Installer",
+        "path": "Boot installer"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Installation must checkpoint durable state and give explicit recovery-media guidance.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.1"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 1
+      }
+    },
+    {
+      "id": "windows-native.2",
+      "kind": "windows-native-task",
+      "sourceLabel": "Connect Wi-Fi",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "network.wifi.connect"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Network panel",
+        "path": "Superbar > Network"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore or disconnect the attempted connection on failure.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.2"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 2
+      }
+    },
+    {
+      "id": "windows-native.3",
+      "kind": "windows-native-task",
+      "sourceLabel": "Set display scaling to 125%",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "display.configure"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Monitor panel",
+        "path": "Superbar > Display"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Automatically roll back a timed display change unless kept.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.3"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 3
+      }
+    },
+    {
+      "id": "windows-native.4",
+      "kind": "windows-native-task",
+      "sourceLabel": "Change the wallpaper",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "desktop.wallpaper.set"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Image picker",
+        "path": "Personalization > Background"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the previous wallpaper.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.4"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 4
+      }
+    },
+    {
+      "id": "windows-native.5",
+      "kind": "windows-native-task",
+      "sourceLabel": "Pair Bluetooth headphones",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "bluetooth.audio.pair"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Quick Settings",
+        "path": "Superbar > Bluetooth"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Remove the incomplete pairing and restore the previous output route.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.5"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 5
+      }
+    },
+    {
+      "id": "windows-native.6",
+      "kind": "windows-native-task",
+      "sourceLabel": "Adjust output volume",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "audio.volume.set"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Sound panel",
+        "path": "Superbar > Sound"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the previous volume.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.6"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 6
+      }
+    },
+    {
+      "id": "windows-native.7",
+      "kind": "windows-native-task",
+      "sourceLabel": "Install Firefox or Chrome",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "software.install"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Software Center",
+        "path": "Start > Software Center"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Rollback the package transaction or restore point.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.7"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 7
+      }
+    },
+    {
+      "id": "windows-native.8",
+      "kind": "windows-native-task",
+      "sourceLabel": "Install Steam",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "software.install",
+        "gaming.proton.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Software Center",
+        "path": "Start > Software Center"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Rollback the package transaction and adopted runtime state.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.8"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 8
+      }
+    },
+    {
+      "id": "windows-native.9",
+      "kind": "windows-native-task",
+      "sourceLabel": "Open Downloads",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "files.downloads.open"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Superbar > Files > Downloads"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only navigation requires no recovery.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.9"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 9
+      }
+    },
+    {
+      "id": "windows-native.10",
+      "kind": "windows-native-task",
+      "sourceLabel": "Create a folder",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "files.folder.create"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Files > New Folder"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Offer guarded undo if the folder remains empty and unchanged.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.10"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 10
+      }
+    },
+    {
+      "id": "windows-native.11",
+      "kind": "windows-native-task",
+      "sourceLabel": "Rename it",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "files.entry.rename"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Files > Rename"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the prior name if the target fingerprint still matches.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.11"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 11
+      }
+    },
+    {
+      "id": "windows-native.12",
+      "kind": "windows-native-task",
+      "sourceLabel": "Copy files",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "files.copy"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Files > Copy and Paste"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Report partial copies and offer cleanup of created targets.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.12"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 12
+      }
+    },
+    {
+      "id": "windows-native.13",
+      "kind": "windows-native-task",
+      "sourceLabel": "Zip them",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "files.archive.create"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Files > Compress"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Cancel before finalization or remove the newly created archive.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.13"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 13
+      }
+    },
+    {
+      "id": "windows-native.14",
+      "kind": "windows-native-task",
+      "sourceLabel": "Connect a USB drive",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "storage.removable.mount"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Files > Devices"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Unmount an incomplete or no-longer-needed mount.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.14"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 14
+      }
+    },
+    {
+      "id": "windows-native.15",
+      "kind": "windows-native-task",
+      "sourceLabel": "Eject it",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "storage.removable.eject"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Files > Devices > Eject"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Report busy state without pretending the device was ejected.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.15"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 15
+      }
+    },
+    {
+      "id": "windows-native.16",
+      "kind": "windows-native-task",
+      "sourceLabel": "Connect to an SMB share",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "sharing.smb.connect"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Files",
+        "path": "Files > Connect to Server"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Disconnect a failed or no-longer-needed connection.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.16"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 16
+      }
+    },
+    {
+      "id": "windows-native.17",
+      "kind": "windows-native-task",
+      "sourceLabel": "Open a PDF",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "files.document.open"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "path": "Files > PDF"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only open requires no recovery.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.17"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 17
+      }
+    },
+    {
+      "id": "windows-native.18",
+      "kind": "windows-native-task",
+      "sourceLabel": "Edit a text file",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "files.text.edit"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Text Editor",
+        "path": "Files > text file"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Preserve file history or a guarded undo artifact.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.18"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 18
+      }
+    },
+    {
+      "id": "windows-native.19",
+      "kind": "windows-native-task",
+      "sourceLabel": "Change the default browser",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "apps.defaults.set"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Default apps"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the previous default handler.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.19"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 19
+      }
+    },
+    {
+      "id": "windows-native.20",
+      "kind": "windows-native-task",
+      "sourceLabel": "Pin an app",
+      "sourceStatus": "automated",
+      "claim": "present",
+      "capabilityIds": [
+        "window.pin"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "path": "Right-click app > Pin"
+      },
+      "agentAvailability": "present",
+      "recoveryExpectation": "Undo by removing the exact pin if it has not changed.",
+      "proofStatus": "automated",
+      "proofIds": [
+        "windows-native.automated.20"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 20
+      }
+    },
+    {
+      "id": "windows-native.21",
+      "kind": "windows-native-task",
+      "sourceLabel": "Unpin an app",
+      "sourceStatus": "automated",
+      "claim": "present",
+      "capabilityIds": [
+        "window.unpin"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "path": "Right-click app > Unpin"
+      },
+      "agentAvailability": "present",
+      "recoveryExpectation": "Undo by restoring the exact pin if the app identity still matches.",
+      "proofStatus": "automated",
+      "proofIds": [
+        "windows-native.automated.21"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 21
+      }
+    },
+    {
+      "id": "windows-native.22",
+      "kind": "windows-native-task",
+      "sourceLabel": "Minimize three windows",
+      "sourceStatus": "automated",
+      "claim": "present",
+      "capabilityIds": [
+        "window.minimize"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "path": "Caption > Minimize"
+      },
+      "agentAvailability": "present",
+      "recoveryExpectation": "Restore each exact minimized window.",
+      "proofStatus": "automated",
+      "proofIds": [
+        "windows-native.automated.22"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 22
+      }
+    },
+    {
+      "id": "windows-native.23",
+      "kind": "windows-native-task",
+      "sourceLabel": "Restore the one they want",
+      "sourceStatus": "automated",
+      "claim": "present",
+      "capabilityIds": [
+        "window.restore",
+        "window.activate"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Superbar",
+        "path": "Click the desired taskbar button"
+      },
+      "agentAvailability": "present",
+      "recoveryExpectation": "Re-minimize only while the target fingerprint still matches.",
+      "proofStatus": "automated",
+      "proofIds": [
+        "windows-native.automated.23"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 23
+      }
+    },
+    {
+      "id": "windows-native.24",
+      "kind": "windows-native-task",
+      "sourceLabel": "Snap two windows",
+      "sourceStatus": "automated",
+      "claim": "present",
+      "capabilityIds": [
+        "window.snap-left",
+        "window.snap-right",
+        "window.snap-to"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Window chrome",
+        "path": "Drag to edge or open Snap chooser"
+      },
+      "agentAvailability": "present",
+      "recoveryExpectation": "Restore each captured normal rectangle.",
+      "proofStatus": "automated",
+      "proofIds": [
+        "windows-native.automated.24"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 24
+      }
+    },
+    {
+      "id": "windows-native.25",
+      "kind": "windows-native-task",
+      "sourceLabel": "Use Alt+Tab",
+      "sourceStatus": "automated",
+      "claim": "partial",
+      "capabilityIds": [
+        "window.cycle-next",
+        "window.commit-cycle"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Task switcher",
+        "path": "Alt+Tab or Superbar > Task View"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Focus change is non-durable; cancel returns to the current selection.",
+      "proofStatus": "automated",
+      "proofIds": [
+        "windows-native.automated.25"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 25
+      }
+    },
+    {
+      "id": "windows-native.26",
+      "kind": "windows-native-task",
+      "sourceLabel": "Find an application that is consuming CPU",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "processes.inspect"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Task Manager",
+        "path": "Superbar > Task Manager"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only inspection requires no recovery.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.26"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 26
+      }
+    },
+    {
+      "id": "windows-native.27",
+      "kind": "windows-native-task",
+      "sourceLabel": "Disable a startup application",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "apps.startup.disable"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Task Manager",
+        "path": "Task Manager > Startup"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the previous startup state.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.27"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 27
+      }
+    },
+    {
+      "id": "windows-native.28",
+      "kind": "windows-native-task",
+      "sourceLabel": "Install system updates",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "update.install"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Update"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Create a restore point and reconcile after restart or reboot.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.28"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 28
+      }
+    },
+    {
+      "id": "windows-native.29",
+      "kind": "windows-native-task",
+      "sourceLabel": "Inspect update history",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "update.history.read"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Update > History"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only history requires no recovery.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.29"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 29
+      }
+    },
+    {
+      "id": "windows-native.30",
+      "kind": "windows-native-task",
+      "sourceLabel": "Create a restore point",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "recovery.restore-point.create"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "System Restore",
+        "path": "Start > System Restore > Create"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Validate the created snapshot and retain its durable identity.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.30"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 30
+      }
+    },
+    {
+      "id": "windows-native.31",
+      "kind": "windows-native-task",
+      "sourceLabel": "Roll back a deliberately broken update",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "recovery.restore-point.rollback"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "System Restore",
+        "path": "Start > System Restore > Restore"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Reconcile the actual booted state and expose manual recovery if rollback fails.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.31"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 31
+      }
+    },
+    {
+      "id": "windows-native.32",
+      "kind": "windows-native-task",
+      "sourceLabel": "Add a printer",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "printers.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Devices and Printers"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Cancel setup safely or remove the newly added printer.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.32"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 32
+      }
+    },
+    {
+      "id": "windows-native.33",
+      "kind": "windows-native-task",
+      "sourceLabel": "Change keyboard layout",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "input.keyboard-layout.set"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > Keyboard"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the prior layout.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.33"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 33
+      }
+    },
+    {
+      "id": "windows-native.34",
+      "kind": "windows-native-task",
+      "sourceLabel": "Enable night light",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "display.night-light.set"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Quick Settings",
+        "path": "Superbar > Quick Settings > Night light"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the prior color-temperature schedule.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.34"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 34
+      }
+    },
+    {
+      "id": "windows-native.35",
+      "kind": "windows-native-task",
+      "sourceLabel": "Change power mode",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "power.profile.set"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Power panel",
+        "path": "Superbar > Power"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Restore the prior profile.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.35"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 35
+      }
+    },
+    {
+      "id": "windows-native.36",
+      "kind": "windows-native-task",
+      "sourceLabel": "Install one known-compatible `.exe`",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "compatibility.install"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Compatibility Center",
+        "path": "Start > Compatibility Center"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Checkpoint the isolated prefix and provide export or restore-point recovery.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.36"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 36
+      }
+    },
+    {
+      "id": "windows-native.37",
+      "kind": "windows-native-task",
+      "sourceLabel": "Uninstall it",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "compatibility.uninstall"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Compatibility Center",
+        "path": "Compatibility Center > Installed"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Preserve exports and restore the prior prefix from a checkpoint when eligible.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.37"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 37
+      }
+    },
+    {
+      "id": "windows-native.38",
+      "kind": "windows-native-task",
+      "sourceLabel": "Find system/storage information",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "system.info.read",
+        "storage.disk.manage"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "path": "Start > Settings > System"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Read-only inspection requires no recovery.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.38"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 38
+      }
+    },
+    {
+      "id": "windows-native.39",
+      "kind": "windows-native-task",
+      "sourceLabel": "Troubleshoot intentionally broken audio",
+      "sourceStatus": "pending",
+      "claim": "missing",
+      "capabilityIds": [
+        "troubleshooting.audio.run"
+      ],
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Troubleshooting",
+        "path": "Start > Troubleshooting > Audio"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Record each repair and restore the previous route or configuration.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.39"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 39
+      }
+    },
+    {
+      "id": "windows-native.40",
+      "kind": "windows-native-task",
+      "sourceLabel": "Shut down",
+      "sourceStatus": "pending",
+      "claim": "prototype",
+      "capabilityIds": [
+        "power.shutdown"
+      ],
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Start",
+        "path": "Start > Shut down"
+      },
+      "agentAvailability": "unavailable",
+      "recoveryExpectation": "Require an explicit visible choice and report cancellation before logout.",
+      "proofStatus": "pending",
+      "proofIds": [
+        "windows-native.pending.40"
+      ],
+      "source": {
+        "file": "WINDOWS_NATIVE_ACCEPTANCE.md",
+        "section": "Numbered tasks",
+        "row": 40
+      }
+    }
+  ]
+}
