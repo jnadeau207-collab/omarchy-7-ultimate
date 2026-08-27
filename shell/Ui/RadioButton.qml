@@ -27,8 +27,8 @@ Item {
   readonly property int circleSize: Math.max(16, Math.round(Style.font.body * 1.25))
   readonly property int dotSize: Math.max(6, Math.round(circleSize * 0.45))
 
-  implicitWidth: circle.implicitWidth + (label !== "" ? Style.space(8) + label.implicitWidth : 0)
-  implicitHeight: Math.max(circleSize, label !== "" ? label.implicitHeight : 0)
+  implicitWidth: circle.implicitWidth
+  implicitHeight: circle.implicitHeight
 
   Row {
     id: circle
@@ -39,7 +39,6 @@ Item {
       width: root.circleSize
       height: root.circleSize
       radius: width / 2
-      anchors.verticalCenter: parent.verticalCenter
       color: mouse.pressed && !root.checked ? Util.alpha(root.accent, 0.18)
         : root.hot && !root.checked ? Util.alpha(root.foreground, 0.08)
         : "transparent"
@@ -58,12 +57,12 @@ Item {
     }
 
     Text {
+      id: labelText
       visible: root.label !== ""
       text: root.label
       color: root.foreground
       font.family: Style.font.family
       font.pixelSize: Style.font.body
-      anchors.verticalCenter: parent.verticalCenter
     }
   }
 
