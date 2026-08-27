@@ -49,6 +49,8 @@
             "health",
             "provider.register",
             "provider.list",
+            "provider.catalog",
+            "provider.read",
             "provider.invoke",
             "reference.operation.preflight",
             "reference.operation.approve",
@@ -191,7 +193,8 @@
                 "enum": [
                   "version",
                   "health",
-                  "provider.list"
+                  "provider.list",
+                  "provider.catalog"
                 ]
               }
             },
@@ -203,6 +206,25 @@
             "properties": {
               "params": {
                 "$ref": "#/$defs/emptyParams"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "provider.read"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "#/$defs/typedProviderRead"
               }
             }
           }
@@ -447,6 +469,26 @@
         },
         "idempotencyKey": {
           "$ref": "common-v0.json#/$defs/idempotencyKey"
+        }
+      },
+      "additionalProperties": false
+    },
+    "typedProviderRead": {
+      "type": "object",
+      "required": [
+        "provider",
+        "action",
+        "arguments"
+      ],
+      "properties": {
+        "provider": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "action": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        },
+        "arguments": {
+          "type": "object"
         }
       },
       "additionalProperties": false

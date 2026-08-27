@@ -16,7 +16,7 @@ import pathlib
 import sys
 
 module_directory = pathlib.Path(sys.argv[1])
-for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health", "reference_operation"):
+for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health", "provider_registry", "reference_operation"):
     path = module_directory / f"{name}.py"
     compile(path.read_text(), str(path), "exec")
 PY
@@ -25,15 +25,17 @@ pass "Fabric Python modules compile"
 python3 - \
   "$ROOT/default/fabric/schema/common-v0.json" \
   "$ROOT/default/fabric/schema/rpc-v0.json" \
+  "$ROOT/default/fabric/schema/provider-manifest-v0.json" \
   "$ROOT/default/fabric/schema/reference-operation-v0.json" <<'PY'
 import json
 import pathlib
 import re
 import sys
 
-common_path, rpc_path, reference_path = map(pathlib.Path, sys.argv[1:])
+common_path, rpc_path, provider_path, reference_path = map(pathlib.Path, sys.argv[1:])
 common = json.loads(common_path.read_text())
 rpc = json.loads(rpc_path.read_text())
+provider = json.loads(provider_path.read_text())
 reference = json.loads(reference_path.read_text())
 
 def walk(value):
@@ -53,9 +55,14 @@ def resolve_pointer(document, pointer):
 
 assert common["$id"] == "urn:omarchy:fabric:schema:common-v0"
 assert rpc["$id"] == "urn:omarchy:fabric:schema:rpc-v0"
+assert provider["$id"] == "urn:omarchy:fabric:schema:provider-manifest-v0"
 assert reference["$id"] == "urn:omarchy:fabric:schema:reference-operation-v0"
 assert "common-v0.json#/$defs/errorEnvelope" in rpc_path.read_text()
 assert "reference-operation-v0.json#/$defs/preflightParams" in rpc_path.read_text()
+assert {"provider.catalog", "provider.read"} <= set(rpc["$defs"]["request"]["properties"]["method"]["enum"])
+assert rpc["$defs"]["typedProviderRead"]["additionalProperties"] is False
+assert provider["additionalProperties"] is False
+assert provider["$defs"]["action"]["additionalProperties"] is False
 assert rpc["$defs"]["protocol"]["const"] == "omarchy.fabric.rpc/v0"
 assert rpc["$defs"]["requestId"]["maxLength"] == 128
 assert rpc["$defs"]["eventSubscription"]["properties"]["limit"]["maximum"] == 128
@@ -111,6 +118,7 @@ fabric_core_modules=(
   "$ROOT/default/fabric/omarchy_fabric/models.py"
   "$ROOT/default/fabric/omarchy_fabric/events.py"
   "$ROOT/default/fabric/omarchy_fabric/health.py"
+  "$ROOT/default/fabric/omarchy_fabric/provider_registry.py"
   "$ROOT/default/fabric/omarchy_fabric/reference_operation.py"
 )
 ! grep -En 'create_subprocess_shell|shell[[:space:]]*=[[:space:]]*True|os\.system|popen\(' \
