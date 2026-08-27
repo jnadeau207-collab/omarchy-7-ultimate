@@ -14,12 +14,13 @@ The product remains **REJECTED** until all six Release verdict conditions pass a
 
 This program starts from a clean, independently audited baseline:
 
-- `work`, local `HEAD`, GitHub `origin/work`, and the metal checkout are exactly `1334ba3098d351be9ef4687c0d9db5a99f88f617`.
+- `work`, local `HEAD`, GitHub `origin/work`, and the metal checkout are exactly `5504a044d34b0c44e3b3ab57f3f6fc5e6d427719` at the certified pre-execution baseline.
 - `main`, `origin/main`, and live `upstream/quattro` are exactly `0ae1694830b6bd9511042fe1b89a0062d8c083cb`.
 - Local and GitHub branch heads are exactly `main` and `work`. The rebased backup branches, redundant local tag, and zero-unique metal stashes were audited and removed.
 - All 66 official tags match origin and upstream. Aider histories and historical evidence were deliberately retained.
+- The coordinated `omarchy-pkgs` `work` branch, GitHub `ultimate/work`, and metal checkout are exactly `e902923c2b2f48948bbd95571186c045fac4b8b6`. Its two Ultimate packages pin the certified source revision and archive hash, declare the exact paired release, build reproducibly, and pass GitHub run `33037648028`.
 - Chrome CSD geometry is closed on the 1920×1080 metal box: fresh float and restore paint exactly 1,200 visible pixels, native maximize and F11 paint all 1,920 pixels, repeated transitions do not drift, the physical right edge and caption controls are visible, and focus IPC is honest. Future native-chrome changes must preserve that measured baseline.
-- Focused WindowService, Chromium CSD, and native plugin suites pass. The aggregate metal run has five unrelated existing/environment failures; the local WSL aggregate is dependency-contaminated, while all changed-area focused suites are green. Baseline-suite repair belongs in this program and must not be confused with a Chrome regression.
+- Focused WindowService, Chromium CSD, native plugin, Fabric, Trust, packaging, capability, and QML transport suites pass. The full metal `./test/all` aggregate passes all 220 test files with 3,057 `ok` lines and zero `not ok` lines. The former five aggregate defects and the intermittent SSH reconnect harness race were root-fixed and independently stress-tested before this baseline was frozen.
 - The Desktop Mode overlay still must not rewrite `~/.config/omarchy/shell.json`. `main` remains an exact upstream mirror; all Ultimate implementation stays on `work`; no slice branches are allowed.
 
 ## Program exit state
