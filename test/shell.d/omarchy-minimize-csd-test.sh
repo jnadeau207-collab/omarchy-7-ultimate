@@ -68,9 +68,8 @@ grep -Fq 'Config::Actions::move(Vector2D{box.x, box.y}, false, w)' "$cpp" \
 if grep -Fq 'applyChromiumMaximizedBox' "$cpp"; then
   fail "actual Chrome maximize paints edge-to-edge and must keep Hyprland's raw work-area geometry"
 fi
-if grep -Fq 'src/layout/LayoutManager.hpp' "$cpp"; then
-  fail "normal Chromium frame correction must not bypass fullscreen layout ownership"
-fi
+grep -Fq 'src/layout/LayoutManager.hpp' "$cpp" \
+  || fail "surface texture-box correction must use Hyprland's layout manager state"
 if grep -Fq 'w->setBox(' "$cpp"; then
   fail "omarchy-minimize must not use direct setBox for XDG geometry"
 fi
