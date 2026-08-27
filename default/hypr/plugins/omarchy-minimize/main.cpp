@@ -142,6 +142,12 @@ static CBox chromiumDamageBox(PHLWINDOW w) {
   return box;
 }
 
+static bool sameChromiumDamageBox(const CBox& a, const CBox& b) {
+  constexpr double EPSILON = 0.01;
+  return std::abs(a.x - b.x) < EPSILON && std::abs(a.y - b.y) < EPSILON && std::abs(a.width - b.width) < EPSILON &&
+      std::abs(a.height - b.height) < EPSILON;
+}
+
 static void damageChromiumTransition(PHLWINDOW w) {
   if (!w || !g_pHyprRenderer || !usesChromiumFrame(w) || !w->m_isMapped)
     return;
@@ -166,10 +172,16 @@ static void damageChromiumAnimations() {
 
     const auto key = reinterpret_cast<uintptr_t>(w.get());
     seen.insert(key);
-    if (w->positionAnimation()->isBeingAnimated() || w->sizeAnimation()->isBeingAnimated())
+    const auto current = chromiumDamageBox(w);
+    const auto previous = g_chromiumDamageBoxes.find(key);
+    // A direct compositor move/resize can update the current box without
+    // starting an animation (for example, hl.dsp.window.move or a settled
+    // drag). The normal damage path still only knows the compositor box, not
+    // Chromium's deliberate 12px texture overhang. Compare every tick so a
+    // jump between boxes damages both perimeters even when no animation flag
+    // is set.
+    if (previous == g_chromiumDamageBoxes.end() || !sameChromiumDamageBox(previous->second, current))
       damageChromiumTransition(w);
-    else if (!g_chromiumDamageBoxes.contains(key))
-      g_chromiumDamageBoxes[key] = chromiumDamageBox(w);
   }
 
   for (auto it = g_chromiumDamageBoxes.begin(); it != g_chromiumDamageBoxes.end();) {
