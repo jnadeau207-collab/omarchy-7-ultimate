@@ -51,10 +51,10 @@
       ],
       "debtIds": ["debt.search.legacy-result-shapes", "debt.search.untyped-mutations", "debt.process.consumer-direct-execution"]
     },
-    { "id": "search.settings", "source": "settings", "consumers": ["app.omarchy.ultimate-settings"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.identity.standalone-apps-absent", "debt.search.legacy-result-shapes"] },
+    { "id": "search.settings", "source": "settings", "consumers": ["app.omarchy.ultimate-settings"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] },
     { "id": "search.desktop", "source": "desktop", "consumers": ["Desktop"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] },
     { "id": "search.files", "source": "files", "consumers": ["Files"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] },
     { "id": "search.software", "source": "software", "consumers": ["Software Center"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] },
-    { "id": "search.agent-center", "source": "agent-center", "consumers": ["app.omarchy.agent-center"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.identity.standalone-apps-absent", "debt.search.legacy-result-shapes"] }
+    { "id": "search.agent-center", "source": "agent-center", "consumers": ["app.omarchy.agent-center"], "implementationPaths": [], "availability": "absent", "normalizedResult": false, "provenance": "none", "actions": [], "debtIds": ["debt.search.legacy-result-shapes"] }
   ]
 }

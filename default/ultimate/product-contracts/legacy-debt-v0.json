@@ -36,14 +36,6 @@
       "evidencePaths": ["shell/services/WindowModel.js", "shell/services/AppLibrary.qml", "default/ultimate/taskbar-pins.json"]
     },
     {
-      "id": "debt.identity.standalone-apps-absent",
-      "state": "open",
-      "summary": "Settings is an in-process destination shim and Agent Center is still a bar widget; neither has a standalone application identity, principal, deep-link handler, or single-instance host.",
-      "impact": "Taskbar grouping, reopen placement, authorization, deep links, and agent routing cannot target either product as a normal application.",
-      "exitCondition": "Packaged standalone Settings and Agent Center applications register stable desktop ids, endpoint-bound principals, deep-link routes, single-instance activation, and monitor-aware reopen behavior.",
-      "evidencePaths": ["shell/plugins/ultimate-settings/Settings.qml", "shell/plugins/agents/manifest.json"]
-    },
-    {
       "id": "debt.search.legacy-result-shapes",
       "state": "open",
       "summary": "Start, Run, and the system menu each build private result objects without the normalized identity, provenance, trust, typed action, route, and rank contract.",
