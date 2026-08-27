@@ -541,6 +541,1707 @@
         "symbol": "build_provider",
         "brokerVerb": null
       }
+    },
+    {
+      "id": "files.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading bounded Files inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the trusted Files snapshot after locations, mounts, or recent items change.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "nativePath",
+          "mountAuthority"
+        ],
+        "policy": "Persist only opaque location and entry identities; never record native paths or mount authority in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "View files",
+        "path": "Files > Home"
+      },
+      "agentCenterLabel": "Inspect files inventory",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/files/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "defaults.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "defaults.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "defaults.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading default application associations does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "defaults.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the Defaults snapshot after MIME or protocol associations change.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "desktopPath",
+          "command"
+        ],
+        "policy": "Persist only opaque application identities; never record desktop-file paths or command vectors in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Settings",
+        "label": "View default apps",
+        "path": "Settings > Apps"
+      },
+      "agentCenterLabel": "Inspect default applications",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.defaults-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/defaults/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "packages.catalog.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "packages.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "packages.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading the software catalog does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "packages.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the software catalog after its revision changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "origin",
+          "digest"
+        ],
+        "policy": "Persist only opaque software identities and declared assurance; do not copy artifact origins or digests into ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Software Center",
+        "label": "View software catalog",
+        "path": "Software Center > Catalog"
+      },
+      "agentCenterLabel": "Inspect software catalog",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.packages-catalog-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/packages/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "packages.inventory.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "packages.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "packages.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading installed software inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "packages.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh installed inventory after its revision changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "origin",
+          "digest"
+        ],
+        "policy": "Persist only opaque installation identities and declared assurance; do not copy artifact origins or digests into ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Software Center",
+        "label": "View installed software",
+        "path": "Software Center > Installed"
+      },
+      "agentCenterLabel": "Inspect installed software",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.packages-inventory-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/packages/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "packages.adoption.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "packages.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "packages.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading software adoption classification does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "packages.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh adoption state after inventory or catalog revisions change.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "origin",
+          "digest"
+        ],
+        "policy": "Persist only opaque installation identities and adoption state; do not copy artifact origins or digests into ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Software Center",
+        "label": "View software adoption",
+        "path": "Software Center > Adoption"
+      },
+      "agentCenterLabel": "Inspect software adoption",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.packages-adoption-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/packages/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "packages.operations.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "packages.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "packages.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading package operation history does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "packages.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh operation history after a journal revision changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "origin",
+          "digest"
+        ],
+        "policy": "Persist only opaque operation identities; do not copy artifact origins or digests into ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Software Center",
+        "label": "View software operation history",
+        "path": "Software Center > Operation history"
+      },
+      "agentCenterLabel": "Inspect software operations",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.packages-operations-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/packages/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "compatibility.deployments.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "compatibility.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "compatibility.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading compatibility deployments does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "compatibility.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh deployments after recipe or deployment revisions change.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "origin",
+          "digest"
+        ],
+        "policy": "Persist only opaque deployment identities; never record artifact origins or digests in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Compatibility Center",
+        "label": "View compatibility deployments",
+        "path": "Compatibility Center > Deployments"
+      },
+      "agentCenterLabel": "Inspect compatibility deployments",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.compatibility-deployments-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/compatibility/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "account.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "account.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "account.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading local account inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "account.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the account snapshot after passwd inventory changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "home"
+        ],
+        "policy": "Persist only opaque account identities; do not record home directories in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View accounts",
+        "path": "Administration > Accounts"
+      },
+      "agentCenterLabel": "Inspect accounts",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.account-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/account/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "backup.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "backup.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "backup.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading home-backup inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "backup.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the backup snapshot after repository inventory changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "repositoryPath",
+          "homeRoot"
+        ],
+        "policy": "Persist only opaque snapshot identities; never record repository or home paths in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Recovery",
+        "label": "View home backups",
+        "path": "Recovery > Backup"
+      },
+      "agentCenterLabel": "Inspect home backups",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.backup-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/backup/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "device.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "device.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "device.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading device inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "device.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the device snapshot after hardware or authorization state changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "devicePath",
+          "serial"
+        ],
+        "policy": "Persist only opaque device identities; never record device paths or serial numbers in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View devices",
+        "path": "Administration > Devices"
+      },
+      "agentCenterLabel": "Inspect devices",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.device-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/device/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "diagnostics.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "diagnostics.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "diagnostics.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading structured diagnostic checks does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "diagnostics.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh diagnostic checks after service, journal, or filesystem state changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "excerpt",
+          "rawOutput"
+        ],
+        "policy": "Persist only structured check identities and statuses; never retain raw probe output or excerpts in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Troubleshooting",
+        "label": "View diagnostics",
+        "path": "Troubleshooting > Diagnostics"
+      },
+      "agentCenterLabel": "Inspect diagnostics",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.diagnostics-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/diagnostics/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "firewall.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "firewall.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "firewall.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading firewall zone inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "firewall.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the firewall snapshot after zone or rule inventory changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "source"
+        ],
+        "policy": "Persist only opaque zone identities; never record source networks in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View firewall",
+        "path": "Administration > Firewall and Sharing"
+      },
+      "agentCenterLabel": "Inspect firewall zones",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.firewall-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/firewall/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "printer.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "printer.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "printer.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading printer inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "printer.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the printer snapshot after queue or endpoint inventory changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "endpoint"
+        ],
+        "policy": "Persist only opaque printer identities and classified connection types; never record endpoints in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View printers",
+        "path": "Administration > Devices and Printers"
+      },
+      "agentCenterLabel": "Inspect printers",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.printer-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/printer/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "process.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "process.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "process.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading process inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "process.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the process snapshot after process identity or boot revisions change.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "command"
+        ],
+        "policy": "Persist only opaque process identities; never record command lines in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View processes",
+        "path": "Administration > Task Manager"
+      },
+      "agentCenterLabel": "Inspect processes",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.process-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/process/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "recovery.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "recovery.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "recovery.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading system restore-point inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "recovery.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the recovery snapshot after snapshot inventory or eligibility truth changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "snapshotNumber"
+        ],
+        "policy": "Persist only opaque restore-point identities; do not record native snapshot numbers in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Settings",
+        "label": "View recovery state",
+        "path": "Settings > Recovery"
+      },
+      "agentCenterLabel": "Inspect recovery points",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.recovery-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/recovery/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "schedule.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "schedule.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "schedule.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading timer inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "schedule.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the schedule snapshot after timer definition revisions change.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "unit"
+        ],
+        "policy": "Persist only opaque timer identities; do not record native unit names in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View schedules",
+        "path": "Administration > Services and Schedules"
+      },
+      "agentCenterLabel": "Inspect schedules",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.schedule-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/schedule/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "service.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "service.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "service.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading service inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "service.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the service snapshot after unit state changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "unit"
+        ],
+        "policy": "Persist only opaque service identities; do not record native unit names in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View services",
+        "path": "Administration > Services and Schedules"
+      },
+      "agentCenterLabel": "Inspect services",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.service-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/service/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "storage.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "storage.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "missing",
+        "agent": "unavailable",
+        "claim": "missing"
+      },
+      "resourceScopes": [
+        "storage.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading storage inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "storage.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the storage snapshot after block-device inventory changes.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "devicePath"
+        ],
+        "policy": "Persist only opaque storage identities; never record device paths in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Administration",
+        "label": "View storage",
+        "path": "Administration > Storage"
+      },
+      "agentCenterLabel": "Inspect storage",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.storage-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/storage/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "update.inspect",
+      "version": "v0",
+      "provider": {
+        "id": "update.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "reader",
+      "effects": [],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "update.resource"
+      ],
+      "consent": {
+        "mode": "none",
+        "policy": "Reading update inventory does not require mutation consent."
+      },
+      "idempotency": {
+        "mode": "read",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "parallel",
+        "scope": "update.resource"
+      },
+      "cancellation": {
+        "mode": "not-applicable",
+        "limit": "No mutation is started."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Refresh the update snapshot after catalog or journal revisions change.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "packageName"
+        ],
+        "policy": "Persist only opaque update identities; do not record native package names in ordinary read evidence."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Settings",
+        "label": "View update state",
+        "path": "Settings > Update"
+      },
+      "agentCenterLabel": "Inspect updates",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.update-inspect.provider-contract"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/providers/update/provider.py",
+        "symbol": "build_provider",
+        "brokerVerb": null
+      }
     }
   ]
 }

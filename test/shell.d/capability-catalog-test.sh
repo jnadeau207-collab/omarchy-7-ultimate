@@ -32,7 +32,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"110 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"129 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -73,6 +73,7 @@ def save(path, value):
 
 
 system_path, system = load("default/ultimate/capabilities/catalog-system-jobs-v0.json")
+readers_path, readers = load("default/ultimate/capabilities/catalog-provider-readers-v0.json")
 surface_path, surface = load("default/ultimate/capabilities/window-surface-v0.json")
 debt_path, debt = load("default/ultimate/capabilities/legacy-debt-v0.json")
 jobs_path, jobs = load("default/ultimate/parity/jobs.json")
@@ -128,6 +129,21 @@ elif mutation == "missing-debt-coverage":
 elif mutation == "schema-violation":
     system["capabilities"][0]["provider"]["state"] = "optimistic"
     save(system_path, system)
+elif mutation == "unregistered-builtin-reader":
+    readers["capabilities"] = [
+        item for item in readers["capabilities"] if item["id"] != "files.inspect"
+    ]
+    save(readers_path, readers)
+elif mutation == "phantom-inspect-reader":
+    capability = next(item for item in readers["capabilities"] if item["id"] == "packages.catalog.inspect")
+    capability["id"] = "packages.inspect"
+    save(readers_path, readers)
+elif mutation == "reader-agent-available":
+    readers["capabilities"][0]["availability"]["agent"] = "present"
+    save(readers_path, readers)
+elif mutation == "reader-empty-redaction":
+    readers["capabilities"][0]["redaction"]["fields"] = []
+    save(readers_path, readers)
 else:
     raise SystemExit(f"unknown mutation: {mutation}")
 PY
@@ -164,6 +180,10 @@ assert_rejected "unregistered-service-mutation" "unregistered WindowService publ
 assert_rejected "unregistered-ipc-mutation" "unregistered window IPC paths: taskView"
 assert_rejected "missing-debt-coverage" "legacy debt legacy.window-service.public-writers does not cover surface window-service:togglePin"
 assert_rejected "schema-violation" "provider.state: 'optimistic' is not one of"
+assert_rejected "unregistered-builtin-reader" "unregistered builtin provider readers: files.provider"
+assert_rejected "phantom-inspect-reader" "capability packages.inspect is not on the packages.provider manifest"
+assert_rejected "reader-agent-available" "must keep availability.agent unavailable"
+assert_rejected "reader-empty-redaction" "has empty redaction.fields"
 
 if find "$ROOT/default/ultimate/capabilities" "$ROOT/default/ultimate/capability-schema" "$ROOT/default/ultimate/parity" "$ROOT/test/shell.d" -type d -name __pycache__ -print -quit | grep -q .; then
   fail "capability graph checks leave no Python bytecode caches"

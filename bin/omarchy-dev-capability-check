@@ -47,6 +47,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 python - "$graph_root" "$graph_data_root" <<'PY'
+import importlib
 import json
 import re
 import sys
@@ -216,6 +217,91 @@ for capability_id, count in sorted(capability_counts.items()):
     if count > 1:
         report(f"duplicate capability id: {capability_id}")
 capability_by_id = {capability.get("id"): capability for capability in capabilities if capability.get("id")}
+
+fabric_root = root / "default/fabric"
+if str(fabric_root) not in sys.path:
+    sys.path.insert(0, str(fabric_root))
+
+try:
+    from omarchy_fabric.provider_builtins import BUILTIN_PROVIDER_IDS
+except Exception as exc:
+    report(f"could not import BUILTIN_PROVIDER_IDS: {exc}")
+    BUILTIN_PROVIDER_IDS = ()
+
+
+def provider_manifest_capabilities(provider_id):
+    if not isinstance(provider_id, str) or not provider_id.endswith(".provider"):
+        report(f"catalog-provider-readers names an invalid provider id: {provider_id}")
+        return ()
+    domain = provider_id.removesuffix(".provider")
+    manifest_path = root / "default/fabric/omarchy_fabric/providers" / domain / "manifest-v0.json"
+    if manifest_path.is_file():
+        document = load_json(manifest_path)
+        capabilities = document.get("capabilities") if isinstance(document, dict) else None
+        if not isinstance(capabilities, list) or not capabilities:
+            report(f"provider manifest {display_path(manifest_path)} has no capabilities")
+            return ()
+        return tuple(capabilities)
+    try:
+        module = importlib.import_module(f"omarchy_fabric.providers.{domain}.provider")
+    except Exception as exc:
+        report(f"{provider_id} has no loadable manifest: {exc}")
+        return ()
+    manifest = getattr(module, "MANIFEST", None)
+    capabilities = manifest.get("capabilities") if isinstance(manifest, dict) else None
+    if not isinstance(capabilities, list) or not capabilities:
+        report(f"{provider_id} module MANIFEST has no capabilities")
+        return ()
+    return tuple(capabilities)
+
+
+reader_doc = next(
+    (document for path, document in catalog_docs if path.name == "catalog-provider-readers-v0.json"),
+    None,
+)
+if reader_doc is None:
+    report("missing catalog-provider-readers-v0.json")
+elif BUILTIN_PROVIDER_IDS:
+    present_ids = []
+    for capability in reader_doc.get("capabilities", []):
+        if not isinstance(capability, dict):
+            continue
+        provider = capability.get("provider", {})
+        capability_id = capability.get("id", "<missing>")
+        if capability.get("kind") != "reader":
+            report(f"capability {capability_id} in catalog-provider-readers-v0.json is not a reader")
+            continue
+        if not isinstance(provider, dict) or provider.get("state") != "present":
+            report(f"capability {capability_id} in catalog-provider-readers-v0.json is not a present provider")
+            continue
+        provider_id = provider.get("id")
+        manifest_capabilities = provider_manifest_capabilities(provider_id)
+        if capability_id not in manifest_capabilities:
+            report(f"capability {capability_id} is not on the {provider_id} manifest")
+        availability = capability.get("availability", {})
+        if not isinstance(availability, dict) or availability.get("agent") != "unavailable":
+            report(
+                f"capability {capability_id} in catalog-provider-readers-v0.json "
+                "must keep availability.agent unavailable"
+            )
+        redaction = capability.get("redaction", {})
+        fields = redaction.get("fields") if isinstance(redaction, dict) else None
+        if not isinstance(fields, list) or not fields:
+            report(
+                f"capability {capability_id} in catalog-provider-readers-v0.json "
+                "has empty redaction.fields"
+            )
+        if provider_id not in present_ids:
+            present_ids.append(provider_id)
+    if tuple(present_ids) != tuple(BUILTIN_PROVIDER_IDS):
+        missing = [item for item in BUILTIN_PROVIDER_IDS if item not in present_ids]
+        extra = [item for item in present_ids if item not in BUILTIN_PROVIDER_IDS]
+        if missing:
+            report("unregistered builtin provider readers: " + ", ".join(missing))
+        if extra:
+            report("catalog-provider-readers lists providers absent from builtins: " + ", ".join(extra))
+        if not missing and not extra:
+            report("catalog-provider-readers present-provider order does not match BUILTIN_PROVIDER_IDS")
 
 for capability in capabilities:
     capability_id = capability.get("id", "<missing>")
