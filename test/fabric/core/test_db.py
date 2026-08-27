@@ -30,6 +30,25 @@ def create_version_one(path: Path) -> None:
         connection.close()
 
 
+def create_version_two(path: Path) -> None:
+    create_version_one(path)
+    connection = sqlite3.connect(path, isolation_level=None)
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        for statement in MIGRATIONS[2]:
+            connection.execute(statement)
+        connection.execute(
+            "INSERT OR REPLACE INTO schema_metadata(key, value) VALUES ('schema_version', '2')"
+        )
+        connection.execute("PRAGMA user_version = 2")
+        connection.execute("COMMIT")
+    except Exception:
+        connection.execute("ROLLBACK")
+        raise
+    finally:
+        connection.close()
+
+
 class DatabaseTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -53,6 +72,54 @@ class DatabaseTests(unittest.TestCase):
             ).fetchone()[0]
             self.assertEqual(version, CURRENT_DATABASE_SCHEMA)
             self.assertEqual(metadata, str(CURRENT_DATABASE_SCHEMA))
+            tables = {
+                row[0]
+                for row in database.connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table'"
+                )
+            }
+            self.assertTrue(
+                {
+                    "reference_resources",
+                    "reference_operations",
+                    "reference_operation_ledger",
+                } <= tables
+            )
+            operation_columns = {
+                row[1]
+                for row in database.connection.execute(
+                    "PRAGMA table_info(reference_operations)"
+                )
+            }
+            self.assertTrue(
+                {"recovery_token_digest", "ledger_entry_count", "ledger_head_hash"}
+                <= operation_columns
+            )
+        finally:
+            database.close()
+
+    def test_version_two_migration_adds_reference_ledger_with_backup(self) -> None:
+        create_version_two(self.path)
+        database = FabricDatabase(self.path)
+        database.open()
+        try:
+            self.assertIsNotNone(database.backup_path)
+            assert database.backup_path is not None
+            backup = sqlite3.connect(database.backup_path)
+            try:
+                self.assertEqual(backup.execute("PRAGMA user_version").fetchone()[0], 2)
+                self.assertIsNone(
+                    backup.execute(
+                        "SELECT name FROM sqlite_master WHERE name = 'reference_operations'"
+                    ).fetchone()
+                )
+            finally:
+                backup.close()
+            self.assertIsNotNone(
+                database.connection.execute(
+                    "SELECT name FROM sqlite_master WHERE name = 'reference_operations'"
+                ).fetchone()
+            )
         finally:
             database.close()
 

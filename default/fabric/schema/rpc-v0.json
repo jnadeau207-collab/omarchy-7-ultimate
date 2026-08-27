@@ -50,6 +50,13 @@
             "provider.register",
             "provider.list",
             "provider.invoke",
+            "reference.operation.preflight",
+            "reference.operation.approve",
+            "reference.operation.start",
+            "reference.operation.get",
+            "reference.operation.cancel",
+            "reference.operation.reconcile",
+            "reference.operation.ledger",
             "events.subscribe",
             "events.unsubscribe"
           ]
@@ -59,6 +66,105 @@
         }
       },
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "reference.operation.preflight"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "reference-operation-v0.json#/$defs/preflightParams"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "reference.operation.approve"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "reference-operation-v0.json#/$defs/approveParams"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "reference.operation.start"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "reference-operation-v0.json#/$defs/startParams"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "enum": [
+                  "reference.operation.get",
+                  "reference.operation.cancel",
+                  "reference.operation.reconcile"
+                ]
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "reference-operation-v0.json#/$defs/operationParams"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "reference.operation.ledger"
+              }
+            },
+            "required": [
+              "method"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "$ref": "reference-operation-v0.json#/$defs/ledgerParams"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {

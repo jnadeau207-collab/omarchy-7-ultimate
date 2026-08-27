@@ -46,6 +46,9 @@ from .protocol import (
     success_response,
     validate_request,
 )
+from .reference_operation import ReferenceOperationManager
+from .security import EndpointAdmission, EndpointPrincipal, PrincipalKind, SessionBindingStore
+from .security.errors import SecurityValidationError
 
 LOGGER = logging.getLogger("omarchy-fabricd")
 STABLE_ID = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
@@ -362,6 +365,7 @@ class ClientConnection:
         self.closed = False
         self.finished = asyncio.Event()
         self.run_task: asyncio.Task[None] | None = None
+        self.principal: EndpointPrincipal | None = None
 
     async def run(self) -> None:
         self.run_task = asyncio.current_task()
@@ -479,6 +483,9 @@ class ClientConnection:
         if self.closed:
             return
         self.closed = True
+        if self.principal is not None:
+            self.daemon.session_bindings.release(self.principal.session_id)
+            self.principal = None
         for subscription_id, (_subscription, task) in list(self.subscriptions.items()):
             self.daemon.events.unsubscribe(subscription_id)
             task.cancel()
@@ -497,6 +504,12 @@ class FabricDaemon:
         self.database = FabricDatabase(config.database_path)
         self.events = EventBroker(self.database, retention=config.event_retention)
         self.providers = FakeProviderRegistry(self.database)
+        self.session_bindings = SessionBindingStore()
+        self.reference_operations = ReferenceOperationManager(
+            self.database,
+            self.events,
+            session_is_active=self.session_bindings.is_active,
+        )
         self.server: asyncio.AbstractServer | None = None
         self.connections: set[ClientConnection] = set()
         self.run_id = ""
@@ -509,6 +522,7 @@ class FabricDaemon:
         self._secure_directory(self.config.socket_path.parent)
         self.database.open()
         try:
+            self.reference_operations.recover_startup()
             self.providers.load()
             self._prepare_socket_path()
             old_umask = os.umask(0o077)
@@ -567,6 +581,7 @@ class FabricDaemon:
                     await asyncio.gather(*tasks, return_exceptions=True)
         if server is not None:
             await server.wait_closed()
+        await self.reference_operations.shutdown()
         self.events.close()
         try:
             if self.run_id:
@@ -682,6 +697,7 @@ class FabricDaemon:
             )
         if request.method == "hello":
             return self._hello(connection, request.params)
+        principal = self._principal(connection)
         if request.method == "version":
             _require_exact_fields(request.params, required=())
             return self._version()
@@ -702,6 +718,20 @@ class FabricDaemon:
             return {"providers": self.providers.list()}
         if request.method == "provider.invoke":
             return await self._invoke_provider(request, request.params)
+        if request.method == "reference.operation.preflight":
+            return self.reference_operations.preflight(principal, request.params)
+        if request.method == "reference.operation.approve":
+            return self.reference_operations.approve(principal, request.params)
+        if request.method == "reference.operation.start":
+            return self.reference_operations.start(principal, request.params)
+        if request.method == "reference.operation.get":
+            return self.reference_operations.get(principal, request.params)
+        if request.method == "reference.operation.cancel":
+            return self.reference_operations.cancel(principal, request.params)
+        if request.method == "reference.operation.reconcile":
+            return self.reference_operations.reconcile(principal, request.params)
+        if request.method == "reference.operation.ledger":
+            return self.reference_operations.ledger(principal, request.params)
         if request.method == "events.subscribe":
             return self._subscribe(connection, request.request_id, request.params)
         if request.method == "events.unsubscribe":
@@ -712,6 +742,25 @@ class FabricDaemon:
             "The requested method is not part of the provisional RPC contract.",
             detail=request.method,
         )
+
+    def _principal(self, connection: ClientConnection) -> EndpointPrincipal:
+        if connection.principal is None:
+            raise FabricError(
+                "principal.unavailable",
+                "Fabric endpoint principal is unavailable",
+                "The connection did not receive its daemon-bound endpoint identity.",
+                change_state="none",
+            )
+        try:
+            return self.session_bindings.require_active(connection.principal)
+        except SecurityValidationError as error:
+            raise FabricError(
+                error.code,
+                "Fabric endpoint session is inactive",
+                error.explanation,
+                change_state="none",
+                recovery_actions=("fabric.reconnect",),
+            ) from error
 
     def _hello(
         self,
@@ -757,6 +806,20 @@ class FabricDaemon:
                 f"The daemon supports versions {MIN_PROTOCOL_VERSION} through {MAX_PROTOCOL_VERSION}.",
                 recovery_actions=("system.update",),
             )
+        try:
+            principal, _credential = self.session_bindings.issue(
+                os.getuid(),
+                EndpointAdmission(endpoint_id="fabric.owner-rpc", kind=PrincipalKind.SHELL),
+            )
+        except SecurityValidationError as error:
+            raise FabricError(
+                error.code,
+                "Fabric endpoint session could not be issued",
+                error.explanation,
+                change_state="none",
+                recovery_actions=("fabric.reconnect",),
+            ) from error
+        connection.principal = principal
         connection.hello_complete = True
         return {
             "connectionId": connection.connection_id,
@@ -764,6 +827,12 @@ class FabricDaemon:
             "protocol": PROTOCOL_NAME,
             "version": PROTOCOL_VERSION,
             "databaseSchema": CURRENT_DATABASE_SCHEMA,
+            "principal": {
+                "id": principal.principal_id,
+                "sessionId": principal.session_id,
+                "endpoint": principal.endpoint_id,
+                "kind": principal.kind.value,
+            },
         }
 
     @staticmethod

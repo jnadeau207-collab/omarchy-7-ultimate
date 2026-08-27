@@ -150,14 +150,39 @@ class SessionBindingStore:
             raise SecurityValidationError("principal.revoked", "Session has been revoked.")
         if peer_uid != binding.principal.uid:
             raise SecurityValidationError("principal.peer-uid", "Session is bound to a different peer UID.")
+        return self.require_active(binding.principal)
+
+    def require_active(self, principal: EndpointPrincipal) -> EndpointPrincipal:
+        """Resolve a cached connection principal through daemon-owned session state."""
+
+        if not isinstance(principal, EndpointPrincipal):
+            raise SecurityValidationError("principal.unknown", "Session principal is invalid.")
+        binding = self._bindings.get(principal.session_id)
+        if binding is None or binding.principal != principal:
+            raise SecurityValidationError("principal.unknown", "Session does not exist.")
+        if binding.revoked:
+            raise SecurityValidationError("principal.revoked", "Session has been revoked.")
         now = self._clock()
         _validate_time(now, "Current time")
-        if now >= binding.principal.expires_at:
+        if now >= principal.expires_at:
             raise SecurityValidationError("principal.expired", "Session has expired.")
-        return binding.principal
+        return principal
+
+    def is_active(self, session_id: str) -> bool:
+        binding = self._bindings.get(session_id)
+        if binding is None or binding.revoked:
+            return False
+        now = self._clock()
+        _validate_time(now, "Current time")
+        return now < binding.principal.expires_at
 
     def revoke(self, session_id: str) -> None:
         binding = self._bindings.get(session_id)
         if binding is None:
             raise SecurityValidationError("principal.unknown", "Session does not exist.")
         binding.revoked = True
+
+    def release(self, session_id: str) -> bool:
+        """Forget a connection-bound session after its endpoint is closed."""
+
+        return self._bindings.pop(session_id, None) is not None
