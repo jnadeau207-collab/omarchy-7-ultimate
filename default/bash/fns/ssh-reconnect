@@ -28,6 +28,9 @@ ssh() {
   # so it cancels both the in-flight attempt and the loop itself. Keep
   # retrying fast failures, since a rebooting server refuses connections too.
   (
+    trap '_ssh_disarm; exit 130' INT
+    trap '_ssh_disarm; exit 143' TERM
+
     while true; do
       echo "Connection lost. Reconnecting (Ctrl-C to stop)..."
       sleep 2
