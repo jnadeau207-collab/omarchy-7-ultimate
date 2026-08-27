@@ -37,7 +37,7 @@ USAGE
 
 product_app_focus() {
   local app_id="$1"
-  local clients address
+  local clients address active attempt
 
   if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
     if clients=$(hyprctl clients -j 2>/dev/null); then
@@ -47,12 +47,29 @@ product_app_focus() {
         | (.[0].address // empty)
       ' <<<"$clients")
       if [[ -n $address ]]; then
-        if hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1; then
-          return 0
-        else
-          hyprctl dispatch focuswindow "address:$address" >/dev/null 2>&1
-          return $?
+        if OMARCHY_SHELL_IPC_TIMEOUT=0.5s "$OMARCHY_PATH/bin/omarchy-shell" window focus "$address" >/dev/null 2>&1; then
+          for (( attempt = 0; attempt < 10; attempt++ )); do
+            active=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty' 2>/dev/null)
+            if [[ ${active,,} == ${address,,} ]]; then
+              return 0
+            fi
+            sleep 0.02
+          done
         fi
+
+        # Recovery path for callers racing a shell restart. Hyprland can return
+        # success for a stale Lua address handle, so verify the active address
+        # instead of trusting the dispatcher exit status.
+        hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1
+        for (( attempt = 0; attempt < 10; attempt++ )); do
+          active=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty' 2>/dev/null)
+          if [[ ${active,,} == ${address,,} ]]; then
+            return 0
+          fi
+          sleep 0.02
+        done
+
+        return 1
       fi
     fi
   fi
