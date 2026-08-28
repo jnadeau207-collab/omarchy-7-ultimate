@@ -50,14 +50,14 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse((desktop / "NeverWritten").exists())
 
     async def test_standard_xdg_home_root_and_escaped_spaces_parse_without_shell_evaluation(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as downloads_directory:
             home = Path(directory)
             (home / ".config").mkdir()
             (home / "My Documents").mkdir()
             (home / ".config" / "user-dirs.dirs").write_text(
                 'XDG_DESKTOP_DIR="$HOME/"\n'
                 'XDG_DOCUMENTS_DIR="$HOME/My\\ Documents"\n'
-                'XDG_DOWNLOAD_DIR="/tmp"\n'
+                f'XDG_DOWNLOAD_DIR="{downloads_directory}"\n'
             )
             config = ROOT / "default" / "ultimate" / "files" / "locations-v0.json"
             inventory = await files.build_provider(home=home, config_path=config).read("inspect", {})
