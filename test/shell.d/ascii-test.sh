@@ -7,7 +7,7 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 export PATH="$ROOT/bin:$PATH"
 
 columns() {
-  awk 'NR == 1 { print length($0) }'
+  LC_ALL=C.UTF-8 awk 'NR == 1 { print length($0) }'
 }
 
 # The wordmark FIGlet itself draws for this font, so a change to the embedded
