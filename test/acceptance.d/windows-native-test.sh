@@ -155,13 +155,14 @@ window_is_maximized() {
   local addr="$1"
   local area
   area=$(work_area_json)
-  # hyprctl size is the client box. hyprbars sits in the top of the work area
-  # (~32px), so height can be work-area minus the title bar. The occupied
-  # span must still meet the work-area edges within 8px.
+  # Maximize is an explicit work-area float, not Hyprland fullscreen=1.
+  # Floating clients ignore maximized-fullscreen, so WindowService resizes to
+  # the work-area rect. hyprctl size is the client box; hyprbars (~32px) sits
+  # in the top of the work area. The occupied span must meet the work-area
+  # edges within 8px.
   hyprctl -j clients | jq -e --arg addr "$addr" --argjson area "$area" '
     .[] | select(.address == $addr)
-    | (.fullscreen == 1)
-    and ((.at[0] - $area.x) | fabs) <= 8
+    | ((.at[0] - $area.x) | fabs) <= 8
     and (.at[1] - $area.y) >= -8
     and (.at[1] - $area.y) <= 40
     and (((.at[0] + .size[0]) - ($area.x + $area.w)) | fabs) <= 8
