@@ -110,10 +110,8 @@ class DaemonManagedWorkContractTests(unittest.IsolatedAsyncioTestCase):
                     await self.request("managed-work.query", params)
 
         for method in (
-            "managed-work.task.create",
             "managed-work.run.start",
             "managed-work.automation.create",
-            "managed-work.context.capture",
             "managed-work.project",
             "managed-work.execute",
         ):
@@ -121,6 +119,41 @@ class DaemonManagedWorkContractTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(FabricError) as unavailable:
                     await self.request(method, {})
                 self.assertEqual("rpc.method-not-found", unavailable.exception.code)
+
+    async def test_task_mutation_and_context_capture_rpcs(self) -> None:
+        created = await self.request(
+            "managed-work.task.create",
+            {
+                "version": "v0",
+                "title": "RPC inventory",
+                "intent": {"goal": "inventory"},
+                "budget": budget(),
+                "idempotencyKey": "task.rpc-create",
+            },
+        )
+        self.assertEqual("draft", created["state"])
+        listed = await self.request("managed-work.task.list", {"version": "v0", "limit": 10})
+        self.assertTrue(any(item.get("task", {}).get("taskId") == created["taskId"] for item in listed["items"]))
+        cancelled = await self.request(
+            "managed-work.task.cancel",
+            {"version": "v0", "taskId": created["taskId"], "expectedRevision": created["revision"]},
+        )
+        self.assertEqual("cancelled", cancelled["state"])
+        captured = await self.request(
+            "managed-work.context.capture",
+            {
+                "version": "v0",
+                "source": "open-windows",
+                "idempotencyKey": "context.rpc-windows",
+                "snapshot": {
+                    "windows": [{"class": "foot", "title": "term", "address": "0x1", "focused": True}],
+                    "focus": {"class": "foot", "title": "term", "address": "0x1"},
+                    "selection": {"text": ""},
+                },
+            },
+        )
+        self.assertEqual("open-windows", captured["source"])
+        self.assertEqual(["foot"], [item["class"] for item in captured["content"]["windows"]])
 
     async def test_session_expiry_precedes_query_or_projection(self) -> None:
         current = [datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc)]
