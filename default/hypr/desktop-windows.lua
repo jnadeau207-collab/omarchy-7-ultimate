@@ -7,7 +7,9 @@ o.window(".*", { tag = "+default-opacity" })
 -- WindowService has no per-app placement for that class.
 o.window(".*", { size = { 880, 560 } })
 -- xdg modal dialogs keep the size they asked for instead of the 880×560 app default.
-o.window({ modal = true }, { float = true, center = true, size = { "window_w", "window_h" } })
+-- Keep the toolkit's requested size. Do not center on the monitor — a parented
+-- xdg dialog must stay on its parent, the way Windows places a message box.
+o.window({ modal = true }, { float = true, size = { "window_w", "window_h" } })
 
 -- Fix some dragging issues with XWayland.
 o.window(
