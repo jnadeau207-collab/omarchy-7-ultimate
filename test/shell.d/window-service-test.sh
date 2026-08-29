@@ -108,6 +108,8 @@ fi
 grep -Fq 'function moveTo' "$ws" || fail "caption drag uses WindowService.moveTo"
 grep -Fq 'function _markKnown' "$ws" || fail "explicit move/resize must mark the window known so reopen memory cannot cascade over it"
 grep -Fq 'function _keepFocusAfterClose' "$ws" || fail "close of an unfocused window must keep the focused window in front"
+grep -Fq 'Number(rect.x) < area.x - 4' "$ws" \
+  || fail "reopen memory must not store a CSD compositor box parked past the work-area origin"
 if awk '
   $0 ~ /function _applyRect\(/ { infn = 1 }
   infn && /_markKnown/ { mark = 1 }

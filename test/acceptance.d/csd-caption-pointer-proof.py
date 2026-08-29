@@ -156,8 +156,18 @@ def main() -> int:
     chrome_addr = chrome["address"]
     if str(chrome.get("class") or "").lower() == "cursor":
       raise ProofError("refusing to AbsPointer Cursor")
+    as_user(["omarchy-shell", "window", "restoreNormal", chrome_addr], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "moveTo", chrome_addr, "360", "146"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", chrome_addr, "1200", "740"], wait=True, timeout=5)
+    wait_until(
+      "CSD proof chrome at 360,146 1200x740 visible",
+      6,
+      lambda: (w := client_by_addr(chrome_addr)) is not None
+      and abs((w["at"][0] + 12) - 360) <= 16
+      and abs((w["at"][1] + 12) - 146) <= 16
+      and abs((w["size"][0] - 12) - 1200) <= 16
+      and abs((w["size"][1] - 12) - 740) <= 16,
+    )
     for other in chrome_windows():
       if other.get("address") == chrome_addr:
         continue
