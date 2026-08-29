@@ -332,15 +332,24 @@ def geometry_is_maximized(win: dict | None) -> bool:
   area = work_area()
   x, y = win["at"]
   w, h = win["size"]
+
+  def covers(xx: int, yy: int, ww: int, hh: int) -> bool:
+    return (
+      abs(xx - area["x"]) <= 8
+      and -8 <= (yy - area["y"]) <= 40
+      and abs((xx + ww) - (area["x"] + area["w"])) <= 8
+      and abs((yy + hh) - (area["y"] + area["h"])) <= 8
+    )
+
+  if covers(x, y, w, h):
+    return True
+  # Chromium CSD maximize is either a 12px compositor inset around the work
+  # area or an edge-to-edge work-area box. Only apply the inset when the raw
+  # box does not already cover.
   klass = str(win.get("class") or "").lower()
   if "chrom" in klass:
-    x, y, w, h = x + 12, y + 12, w - 12, h - 12
-  return (
-    abs(x - area["x"]) <= 8
-    and -8 <= (y - area["y"]) <= 40
-    and abs((x + w) - (area["x"] + area["w"])) <= 8
-    and abs((y + h) - (area["y"] + area["h"])) <= 8
-  )
+    return covers(x + 12, y + 12, w - 12, h - 12)
+  return False
 
 
 def launch_feet(n: int) -> None:
