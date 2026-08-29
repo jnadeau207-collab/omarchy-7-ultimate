@@ -11,6 +11,7 @@ from typing import Mapping
 
 from .builder import (
     FIXED_AGENT_RUNNER,
+    HOST_AGENT_RUNNER,
     SandboxSpec,
     SandboxUnavailable,
     SandboxViolation,
@@ -36,7 +37,7 @@ def packaged_runner_source() -> Path:
     if omarchy:
         candidates.append(Path(omarchy) / "default" / "fabric" / "agent-runner")
     candidates.append(Path(__file__).resolve().parents[1] / "agent-runner")
-    candidates.append(Path(FIXED_AGENT_RUNNER))
+    candidates.append(Path(HOST_AGENT_RUNNER))
     for path in candidates:
         try:
             if path.is_file() and not path.is_symlink() and os.access(path, os.R_OK):

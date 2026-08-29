@@ -9,7 +9,8 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Mapping, Sequence
 
-FIXED_AGENT_RUNNER = "/usr/lib/omarchy/fabric/agent-runner"
+FIXED_AGENT_RUNNER = "/run/omarchy/agent-runner"
+HOST_AGENT_RUNNER = "/usr/lib/omarchy/fabric/agent-runner"
 TRUSTED_BWRAP_PATHS = frozenset({"/usr/bin/bwrap", "/bin/bwrap"})
 _TASK_RE = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 _HOST_RE = re.compile(r"^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
@@ -293,17 +294,7 @@ def build_bwrap_command(
             raise SandboxViolation("Agent runner source must be a regular file.")
         if runner_source.name != "agent-runner":
             raise SandboxViolation("Agent runner source must be the packaged agent-runner.")
-        command.extend(
-            (
-                "--tmpfs",
-                "/usr/lib/omarchy",
-                "--dir",
-                "/usr/lib/omarchy/fabric",
-                "--ro-bind",
-                str(runner_source),
-                FIXED_AGENT_RUNNER,
-            )
-        )
+        command.extend(("--ro-bind", str(runner_source), FIXED_AGENT_RUNNER))
     command.extend(
         [
             "--setenv",
