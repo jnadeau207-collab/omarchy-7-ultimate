@@ -251,17 +251,21 @@ void CHyprBar::handleDownEvent(Event::SCallbackInfo& info, std::optional<ITouch:
         return;
     }
 
+    info.cancelled   = true;
+    m_bCancelledDown = true;
+
+    // Caption buttons must not steal focus. Focusing an unfocused window
+    // before close makes Hyprland pick the next focus-history client — often
+    // a maximized Chrome behind the remaining floats — and the aimed × no
+    // longer hits the window the user clicked.
+    if (doButtonPress(BARPADDING, BARBUTTONPADDING, HEIGHT, COORDS, BUTTONSRIGHT))
+        return;
+
     if (Desktop::focusState()->window() != PWINDOW)
         Desktop::focusState()->fullWindowFocus(PWINDOW, Desktop::FOCUS_REASON_CLICK);
 
     if (PWINDOW->m_isFloating)
         Desktop::windowState()->raise(PWINDOW);
-
-    info.cancelled   = true;
-    m_bCancelledDown = true;
-
-    if (doButtonPress(BARPADDING, BARBUTTONPADDING, HEIGHT, COORDS, BUTTONSRIGHT))
-        return;
 
     if (!ON_DOUBLE_CLICK.empty() &&
         std::chrono::duration_cast<std::chrono::milliseconds>(Time::steadyNow() - m_lastMouseDown).count() < 400 /* Arbitrary delay I found suitable */) {

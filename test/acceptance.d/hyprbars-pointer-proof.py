@@ -280,6 +280,23 @@ def cursor_near(x: int, y: int, slop: int = 16) -> bool:
   return abs(cx - x) <= slop and abs(cy - y) <= slop
 
 
+def window_near(addr: str, x: int, y: int, w: int, h: int, slop: int = 32) -> bool:
+  win = client_by_addr(addr)
+  if not win or not win.get("at") or not win.get("size"):
+    return False
+  return (
+    abs(win["at"][0] - x) <= slop
+    and abs(win["at"][1] - y) <= slop
+    and abs(win["size"][0] - w) <= slop
+    and abs(win["size"][1] - h) <= slop
+  )
+
+
+def active_is(addr: str) -> bool:
+  active = json.loads(hypr("-j", "activewindow") or "{}")
+  return active.get("address") == addr
+
+
 def monitor_size() -> tuple[int, int]:
   mons = json.loads(hypr("-j", "monitors") or "[]")
   focused = next((m for m in mons if m.get("focused")), mons[0])
@@ -636,7 +653,8 @@ def main() -> int:
     as_user(["omarchy-shell", "window", "moveTo", other["address"], "280", "160"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", other["address"], "720", "480"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "focus", addr], wait=True, timeout=5)
-    time.sleep(0.35)
+    wait_until("front foot at 80,80 720x480", 6, lambda: window_near(addr, 80, 80, 720, 480))
+    wait_until("rear foot at 280,160 720x480", 6, lambda: window_near(other["address"], 280, 160, 720, 480))
     behind = next((c for c in feet() if c["address"] == other["address"]), None)
     if not behind:
       raise ProofError("rear foot vanished before click-to-raise")
@@ -658,7 +676,8 @@ def main() -> int:
     as_user(["omarchy-shell", "window", "moveTo", other["address"], "1120", "80"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", other["address"], "720", "400"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "focus", addr], wait=True, timeout=5)
-    time.sleep(0.5)
+    wait_until("focused foot at 40,40 640x400", 6, lambda: window_near(addr, 40, 40, 640, 400))
+    wait_until("unfocused foot at 1120,80 720x400", 6, lambda: window_near(other["address"], 1120, 80, 720, 400))
     if client_by_addr(addr) is None:
       raise ProofError("focused foot vanished after click-to-raise")
     parked = next((c for c in feet() if c["address"] == other["address"]), None)
@@ -675,11 +694,9 @@ def main() -> int:
     still = client_by_addr(addr)
     if not still:
       raise ProofError("unfocused × closed the focused window")
+    wait_until("closing an unfocused window keeps the focused foot active", 4, lambda: active_is(addr))
     report["unfocused_close"] = "unmapped other, focused kept"
 
-    pointer.close()
-    time.sleep(0.3)
-    pointer = AbsPointer()
     still = client_by_addr(addr)
     if not still:
       raise ProofError("focused foot vanished before its close click")
