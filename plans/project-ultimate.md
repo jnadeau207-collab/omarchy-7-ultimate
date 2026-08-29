@@ -6,12 +6,14 @@ This is the working plan for the fork. It is not a theme plan. It is not a “mo
 
 Not: Windows-like Omarchy with AI tools.
 
-Current execution authority is [`ultimate-product-completion-program-2026-08-26.md`](ultimate-product-completion-program-2026-08-26.md). `HANDOFF_NEW_BOX_2026-08-23.md` remains immutable historical evidence, but its dated next-work ordering and status no longer control execution.
+This file and `PRODUCT_DOCTRINE.md` are the founding execution authority. The eleven phases below are the product taxonomy. Phase 1 is Windowing Gate W0; its evidence checklist is `W0_GATE.md`. Later overlay programs that replaced this taxonomy are not authority.
+
+`HANDOFF_NEW_BOX_2026-08-23.md` is the first post-W0 lock and remains immutable historical evidence. Dated next-work items in that file that are already in the tree stay done; they do not reopen W0.
 
 Read this file together with:
 
-- `plans/ultimate-product-completion-program-2026-08-26.md` — current execution program and dependency waves
-- `HANDOFF_NEW_BOX_2026-08-23.md` — immutable historical lock and evidence from the prior program
+- `W0_GATE.md` — Phase 1 windowing gate definition and evidence checklist
+- `HANDOFF_NEW_BOX_2026-08-23.md` — first post-W0 lock (historical)
 - `PRODUCT_DOCTRINE.md` — eight rules (the original seven plus Agent-Native)
 - `WINDOWS_NATIVE_ACCEPTANCE.md` — forty-task smoke test (necessary, not sufficient; six numbered rows automated, plus unnumbered harness proofs)
 - `WINDOWS_7_ULTIMATE_PARITY.md` — job matrix
@@ -122,15 +124,13 @@ Do **not** claim mathematical zero unique Jesse *commits*. Claim zero unique Jes
 
 **Caveats (not branches):** 65 version tags remain; `refs/pull/1/head` and `refs/pull/2/head` remain. If someone reads “GitHub has no refs except main and work,” that reading fails. The two-branch **head** claim passes.
 
-## Current position (2026-08-26)
+## Current position
 
-**Historical freeze at `1334ba30`.** Do not read this section as the live Git or product position. After the 2026-08-29 Quattro rebase, `main` tracks live `upstream/quattro` and `work` is Ultimate rebased onto it. Execution is [`ultimate-continue-2026-08-29.md`](ultimate-continue-2026-08-29.md). Recovery refs retain the pre-rebase tips.
+After the Quattro rebase, `main` tracks live `upstream/quattro` and `work` is Ultimate rebased onto it. Recovery refs retain the pre-rebase tips. Do not merge `work` into `main` as the OS.
 
-The reconciled baseline **at the time this paragraph was written** was `work`/GitHub/metal `1334ba30`, with `main`/origin/upstream `quattro` at `0ae16948` and exactly two branch heads. Chrome CSD float, restore, native maximize, snap, F11, and focus have independent source review plus direct metal geometry, pointer, pixel, health, and visual proof. The physical right edge and caption controls are no longer clipped.
+The product remains **REJECTED**. Windowing Gate W0 is Phase 1 only (`W0_GATE.md`). The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery, but Settings is still a five-button stub; Start, Superbar, and Task View are functional prototypes; Quick Settings, Notification Center, desktop icons, Agent Center, full typed system services, Files/This PC, Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
 
-The product remains **REJECTED**. The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery, but Settings is still a five-button stub; Start, Superbar, and Task View are functional prototypes; Quick Settings, Notification Center, desktop icons, Agent Center, full typed system services, Files/This PC, Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
-
-The current program is the large, dependency-managed [`ultimate-product-completion-program-2026-08-26.md`](ultimate-product-completion-program-2026-08-26.md). It spans the remaining Fabric control plane, design system, shell, Settings, Files/defaults, Software, Compatibility, Administration/Recovery, OOBE/migration, and release certification work. It replaces the dated next-work ordering.
+The named phases below are the live program. After W0: Phase 2 leftover fabric (persistent tasks, context broker, sandboxed runtime), then Phases 3–11 in order. Overlay programs written after this taxonomy do not replace it.
 
 The first execution fleet builds three independent foundations in parallel: Fabric Core, the machine-readable capability/parity graph, and the trust/sandbox plane. Subsequent fleets perform WindowService reference cutover, context/runtime/tasks, semantic UI and provider engines, then whole product surfaces and packaged certification.
 
@@ -159,7 +159,7 @@ Claims from the 2026-08-22 course-correction that this turn **verified in the tr
 
 ## Phases (vertical product capability)
 
-The named phases below remain the product taxonomy. Execution order now follows the dependency waves in [`ultimate-product-completion-program-2026-08-26.md`](ultimate-product-completion-program-2026-08-26.md), which deliberately builds the Fabric, design, and provider contracts before parallel product-surface assembly.
+The named phases below are the product taxonomy and the execution order. Do not skip Phase 1. Do not treat a later overlay document as a replacement for this list.
 
 ### Phase 0 — Foundation
 
