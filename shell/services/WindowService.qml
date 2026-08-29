@@ -402,7 +402,10 @@ QtObject {
       geom = root._monitorGeom(addr)
       var csd = WindowModel.usesWaylandCsd({ class: c.class, appId: c.initialClass || c.class, initialClass: c.initialClass })
       var remembered = key && root.placements[key] && root.placements[key].width ? root.placements[key] : null
+      var area = WindowModel.workArea(geom)
       if (remembered && geom && geom.width && (WindowModel.isSnapped(remembered, geom, 8, 32) || WindowModel.isSnapped(remembered, geom, 8, 0) || WindowModel.coversWorkArea(remembered, geom)))
+        remembered = null
+      if (remembered && area && area.width && Number(remembered.x) < area.x - 4 && Number(remembered.y) < area.y - 4)
         remembered = null
       // The native CSD plugin owns fresh-map sizing and applies Chromium's
       // compositor-frame transform. Do not apply it again during hydration.
