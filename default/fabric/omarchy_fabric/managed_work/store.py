@@ -16,9 +16,9 @@ from typing import Any, Iterator, Sequence
 from .errors import ManagedWorkError
 from .validation import scan_secret_fields
 
-CURRENT_SCHEMA = 4
+CURRENT_SCHEMA = 5
 MIN_READABLE_SCHEMA = 1
-MAX_READABLE_SCHEMA = 4
+MAX_READABLE_SCHEMA = 5
 MAX_DATABASE_BYTES = 512 * 1024 * 1024
 MIN_DATABASE_BYTES = 256 * 1024
 
@@ -359,6 +359,36 @@ MIGRATIONS: dict[int, tuple[str, ...]] = {
         "DROP TABLE provider_projections",
         "ALTER TABLE provider_projections_v4 RENAME TO provider_projections",
         "CREATE INDEX provider_projections_owner_rows ON provider_projections(principal_id, registration_order, provider_id)",
+    ),
+    5: (
+        """
+        CREATE TABLE automation_firings_v5 (
+          row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          firing_id TEXT NOT NULL UNIQUE,
+          automation_id TEXT NOT NULL REFERENCES automations(automation_id),
+          principal_id TEXT NOT NULL,
+          trigger_kind TEXT NOT NULL CHECK(trigger_kind IN ('schedule', 'event')),
+          trigger_id TEXT NOT NULL,
+          due_at REAL NOT NULL,
+          state TEXT NOT NULL CHECK(state IN ('pending-unavailable', 'skipped', 'cancelled', 'accepted')),
+          detail_json TEXT NOT NULL,
+          created_at REAL NOT NULL,
+          UNIQUE(automation_id, trigger_kind, trigger_id)
+        ) STRICT
+        """,
+        """
+        INSERT INTO automation_firings_v5(
+          row_id, firing_id, automation_id, principal_id, trigger_kind, trigger_id,
+          due_at, state, detail_json, created_at
+        )
+        SELECT row_id, firing_id, automation_id, principal_id, trigger_kind, trigger_id,
+               due_at, state, detail_json, created_at
+        FROM automation_firings
+        """,
+        "DROP TABLE automation_firings",
+        "ALTER TABLE automation_firings_v5 RENAME TO automation_firings",
+        "CREATE INDEX automation_firings_owner_rows ON automation_firings(principal_id, row_id DESC)",
+        "CREATE INDEX automation_firings_automation_rows ON automation_firings(automation_id, row_id DESC)",
     ),
 }
 

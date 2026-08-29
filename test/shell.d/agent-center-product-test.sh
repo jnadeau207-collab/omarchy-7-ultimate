@@ -138,7 +138,7 @@ const itemFixtures = {
   'agent.usage': { kind: 'usage-record', usageId: 'usage.one', provider: 'test.provider', metric: 'tokens.input', quantity: 10, unit: 'tokens', costMicrounits: 3, taskId: 'task.one', runId: null, recordedAt: 1 },
   'agent.providers': { kind: 'managed-provider-readiness', providerId: 'test.provider', providerVersion: 'v0', state: 'degraded', installed: true, available: true, explanation: 'Reads remain usable.', registrationOrder: 1, registryGeneration: 2, sourceRevision: 3, changedAt: 1 },
   'agent.artifacts': { kind: 'managed-artifact', artifactId: 'artifact.one', label: 'Report', mediaType: 'text/plain', scope: 'task', handle: 'artifact.handle', byteLength: 42, taskId: 'task.one', runId: null, contentHash: 'a'.repeat(64), createdAt: 1 },
-  'agent.troubleshooting': { kind: 'managed-work-diagnostics', databaseSchema: 4, databaseIntegrity: 'ok', foreignKeyViolations: 0, restartRecoveries: 1, historyPrunedThrough: 0, ownerCounts: { tasks: 1 }, capacities: { page_size: 100 }, execution, recoveryActions: ['managed-work.reconcile'] }
+  'agent.troubleshooting': { kind: 'managed-work-diagnostics', databaseSchema: 5, databaseIntegrity: 'ok', foreignKeyViolations: 0, restartRecoveries: 1, historyPrunedThrough: 0, ownerCounts: { tasks: 1 }, capacities: { page_size: 100 }, execution, recoveryActions: ['managed-work.reconcile'] }
 }
 
 assertEqual(Model.validateResponse('agent.overview', result('agent.overview')), '', 'overview accepts its closed summary-only result')
