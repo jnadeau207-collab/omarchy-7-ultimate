@@ -2,7 +2,7 @@
 
 Locked SHA: `119439b2971524b9502a85534f5db2a734954743` on `work`.
 
-This is a design-system GO, not an OS ship. W0 remains REJECTED. AT-SPI value export remains blocked (`docs/accessibility-performance.md`); the gallery states that on metal.
+This is a design-system GO, not an OS ship. Windowing Gate W0 is already closed (`HANDOFF_PHASE12_W0_CLOSE_2026-08-29.md`, accepted tree `a7eb6dd1`). The product / OS is still REJECTED. AT-SPI value export remains blocked (`docs/accessibility-performance.md`); the gallery states that on metal.
 
 ## What closed
 
