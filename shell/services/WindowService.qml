@@ -426,6 +426,20 @@ QtObject {
     if (refresh) Hyprland.refreshToplevels()
   }
 
+  function _markKnown(address) {
+    var target = root._canonAddr(address)
+    if (!target || root._knownAddresses[target]) return
+    var next = root._copyMap(root._knownAddresses)
+    next[target] = true
+    root._knownAddresses = next
+  }
+
+  function _keepFocusAfterClose(target) {
+    var hinted = root._canonAddr(root._focusedAddress)
+    if (hinted && hinted !== target) return hinted
+    return ""
+  }
+
   function _addr(address) {
     var target = String(address || "")
     if (target === "" || target === "active") return root._activeAddress()
@@ -820,8 +834,13 @@ QtObject {
   function close(address) {
     var target = root._addr(address)
     if (!target) return root._finish("close", address, root._err("No window", "There is no window to close.", ""))
+    var keep = root._keepFocusAfterClose(target)
     root._rememberPlacement(target)
     root._dispatchLua("hl.dsp.window.close({ " + root._luaWindow(target) + " })", true)
+    if (keep) {
+      root._focusDispatch(keep)
+      root._noteFocus(keep)
+    }
     return root._finish("close", target, root._ok(), { verb: "activate", address: target })
   }
 
@@ -1091,6 +1110,7 @@ QtObject {
     root._dispatchLua("hl.dsp.window.resize({ x = " + Math.round(Number(bounds.width)) + ", y = " + Math.round(Number(bounds.height)) + ", relative = false, " + win + " })")
     root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(bounds.x)) + ", y = " + Math.round(Number(bounds.y)) + ", relative = false, " + win + " })", true)
     root._placingRect = false
+    root._markKnown(target)
   }
 
   function moveTo(address, x, y) {
@@ -1106,6 +1126,7 @@ QtObject {
     }, root._monitorGeom(target), root._hyprbarsInset(target))
     var box = root._frameBox(target, bounds)
     root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(box.x)) + ", y = " + Math.round(Number(box.y)) + ", relative = false, " + root._luaWindow(target) + " })")
+    root._markKnown(target)
     return root._finish("moveTo", target, root._ok())
   }
 
@@ -1124,6 +1145,7 @@ QtObject {
     root._dispatchLua("hl.dsp.window.resize({ x = " + Math.round(Number(box.width)) + ", y = " + Math.round(Number(box.height)) + ", relative = false, " + root._luaWindow(target) + " })")
     if (Math.round(Number(bounds.x)) !== Math.round(Number(rec.x) || 0) || Math.round(Number(bounds.y)) !== Math.round(Number(rec.y) || 0))
       root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(box.x)) + ", y = " + Math.round(Number(box.y)) + ", relative = false, " + root._luaWindow(target) + " })")
+    root._markKnown(target)
     return root._finish("resizeTo", target, root._ok())
   }
 

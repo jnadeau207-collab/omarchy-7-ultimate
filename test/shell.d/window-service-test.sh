@@ -106,6 +106,39 @@ if grep -Fq 'WindowModel.snapRect(geom, direction, 32)' "$ws"; then
   fail "CSD clients must not always reserve 32px for hyprbars"
 fi
 grep -Fq 'function moveTo' "$ws" || fail "caption drag uses WindowService.moveTo"
+grep -Fq 'function _markKnown' "$ws" || fail "explicit move/resize must mark the window known so reopen memory cannot cascade over it"
+grep -Fq 'function _keepFocusAfterClose' "$ws" || fail "close of an unfocused window must keep the focused window in front"
+if awk '
+  $0 ~ /function moveTo\(/ { infn = 1 }
+  infn && /_markKnown/ { mark = 1 }
+  infn && /^  function / && $0 !~ /function moveTo\(/ { infn = 0 }
+  END { exit mark ? 0 : 1 }
+' "$ws"; then
+  :
+else
+  fail "moveTo must mark the window known"
+fi
+if awk '
+  $0 ~ /function resizeTo\(/ { infn = 1 }
+  infn && /_markKnown/ { mark = 1 }
+  infn && /^  function / && $0 !~ /function resizeTo\(/ { infn = 0 }
+  END { exit mark ? 0 : 1 }
+' "$ws"; then
+  :
+else
+  fail "resizeTo must mark the window known"
+fi
+if awk '
+  $0 ~ /function close\(/ { infn = 1 }
+  infn && /_keepFocusAfterClose/ { keep = 1 }
+  infn && /_focusDispatch\(keep\)/ { raise = 1 }
+  infn && /^  function / && $0 !~ /function close\(/ { infn = 0 }
+  END { exit (keep && raise) ? 0 : 1 }
+' "$ws"; then
+  :
+else
+  fail "close must re-raise the window that should keep focus"
+fi
 grep -Fq 'function _isLockAddress' "$ws" || fail "lock surfaces are identified before move/resize/restoreLayout"
 grep -Fq 'function _isLiveClient' "$ws" || fail "commitCycle can tell a live hyprctl client from a ghost highlight"
 if awk '

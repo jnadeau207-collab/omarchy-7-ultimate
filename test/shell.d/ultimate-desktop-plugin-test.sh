@@ -400,6 +400,19 @@ if grep -Fq 'm_pWindow != window' "$ROOT/default/hypr/plugins/hyprbars/barDeco.c
 fi
 grep -Fq 'WINDOWATCURSOR != m_pWindow' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp" \
   || fail "hyprbars only handles the window under the cursor"
+grep -Fq 'Caption buttons must not steal focus' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp" \
+  || fail "hyprbars caption buttons must not focus the window before close"
+if awk '
+  $0 ~ /void CHyprBar::handleDownEvent/ { infn = 1 }
+  infn && /doButtonPress/ && !press { press = NR }
+  infn && /fullWindowFocus/ { focus = NR }
+  infn && /^void CHyprBar::handleUpEvent/ { infn = 0 }
+  END { exit (press && focus && press < focus) ? 0 : 1 }
+' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp"; then
+  :
+else
+  fail "hyprbars must run caption button actions before focusing the window"
+fi
 grep -Fq 'm_bDraggingThis || !inputIsValid()' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp" \
   || fail "hyprbars maximize hover must not fire for another window's title-bar screen rect"
 grep -Fq 'windows[(activeIndex + 1)' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
