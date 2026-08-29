@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# IPC Start lifecycle on the live compositor. This does not prove click-through;
-# that still needs an absolute pointer. It does prove the card maps at 440x560
-# and that hide / toggle / dismissOutside unmap it without a fullscreen sink.
-
 set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
+
+start_chrome_vals=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["cardWidth"], d["cardHeight"], d["barHeight"], d["cardLeftMargin"])' "$ROOT/default/ultimate/start-chrome.json")
+read -r START_CARD_W START_CARD_H START_BAR_H START_CARD_LEFT <<<"$start_chrome_vals"
 
 require_compositor "Start IPC click-through lifecycle"
 require_command jq
@@ -60,7 +59,7 @@ wait_start() {
     local json
     json=$(start_layer_json)
     if [[ $want == mapped ]]; then
-      jq -e 'length == 1 and .[0].w == 440 and .[0].h == 560' <<<"$json" >/dev/null && return 0
+      jq -e --argjson w "$START_CARD_W" --argjson h "$START_CARD_H" 'length == 1 and .[0].w == $w and .[0].h == $h' <<<"$json" >/dev/null && return 0
     else
       jq -e 'length == 0' <<<"$json" >/dev/null && return 0
     fi
@@ -75,14 +74,15 @@ wait_start unmapped || fail "Start is unmapped before IPC proof"
 shell_ipc shell summon omarchy.ultimate-start '{}' >/dev/null
 wait_start mapped || {
   printf 'layers: %s\n' "$(start_layer_json)" >&2
-  fail "Start summons a 440x560 omarchy-start card"
+  fail "Start summons the start-chrome.json card"
 }
-pass "Start summons a 440x560 omarchy-start card"
+pass "Start summons the start-chrome.json card"
 
 mapped=$(start_layer_json)
-jq -e '.[0].x == 8 and .[0].y == 472' <<<"$mapped" >/dev/null \
-  || fail "Start card sits at 8,472 above the Superbar" "got $mapped"
-pass "Start card sits at 8,472 above the Superbar"
+expect_y=$((1080 - START_BAR_H - START_CARD_H))
+jq -e --argjson x "$START_CARD_LEFT" --argjson y "$expect_y" '.[0].x == $x and .[0].y == $y' <<<"$mapped" >/dev/null \
+  || fail "Start card sits above the Superbar using start-chrome.json" "got $mapped"
+pass "Start card sits above the Superbar using start-chrome.json"
 
 shell_ipc shell hide omarchy.ultimate-start >/dev/null
 wait_start unmapped || fail "Start hide unmaps omarchy-start"

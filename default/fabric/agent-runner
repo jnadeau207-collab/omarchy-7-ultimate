@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-"""Packaged managed-task runner. Executes only inside the Fabric sandbox."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import pathlib
@@ -19,6 +19,80 @@ FORBIDDEN_ENV = (
     "GNUPGHOME",
     "OMARCHY_FABRIC_SOCKET",
 )
+HANDLED_CAPABILITIES = frozenset({"system.info.read"})
+
+
+def _isolation_failure() -> int | None:
+    leaked = [name for name in FORBIDDEN_ENV if name in os.environ]
+    if leaked:
+        print("forbidden-env:" + ",".join(leaked), file=sys.stderr)
+        return 2
+    if pathlib.Path("/run/omarchy/fabric.sock").exists():
+        print("main-fabric-socket-visible", file=sys.stderr)
+        return 3
+    if pathlib.Path("/run/user").exists():
+        print("session-runtime-visible", file=sys.stderr)
+        return 4
+    home = pathlib.Path("/home")
+    if home.exists():
+        try:
+            entries = list(home.iterdir())
+        except OSError:
+            entries = [home]
+        if entries:
+            print(f"home-entry-visible:{entries[0].name}", file=sys.stderr)
+            return 5
+    return None
+
+
+def _read_manifest(task_id: str, manifest_fd: str) -> str:
+    manifest = ""
+    try:
+        with os.fdopen(int(manifest_fd), "r", closefd=False) as handle:
+            manifest = handle.read()
+    except OSError:
+        manifest = ""
+    if not manifest.strip():
+        workspace_manifest = pathlib.Path(f"/workspace/{task_id}/manifest.json")
+        if workspace_manifest.is_file():
+            manifest = workspace_manifest.read_text(encoding="utf-8")
+    return manifest
+
+
+def _workspace_listing(task_id: str) -> list[str]:
+    root = pathlib.Path(f"/workspace/{task_id}")
+    names: list[str] = []
+    if root.is_dir():
+        for path in sorted(root.rglob("*")):
+            if path.is_file():
+                names.append(path.relative_to(root).as_posix())
+    return names
+
+
+def _isolation_facts() -> dict[str, object]:
+    home = pathlib.Path("/home")
+    home_visible = False
+    if home.exists():
+        try:
+            home_visible = any(True for _ in home.iterdir())
+        except OSError:
+            home_visible = True
+    return {
+        "forbiddenEnv": [name for name in FORBIDDEN_ENV if name in os.environ],
+        "homeVisible": home_visible,
+        "runUserVisible": pathlib.Path("/run/user").exists(),
+        "fabricSocketVisible": pathlib.Path("/run/omarchy/fabric.sock").exists(),
+    }
+
+
+def _capability(manifest: dict[str, object]) -> str | None:
+    value = manifest.get("capability")
+    if isinstance(value, str) and value:
+        return value
+    capabilities = manifest.get("capabilities")
+    if isinstance(capabilities, list) and capabilities and isinstance(capabilities[0], str):
+        return capabilities[0]
+    return None
 
 
 def main() -> int:
@@ -31,41 +105,36 @@ def main() -> int:
     parser.add_argument("--reasoning-effort", required=False)
     args = parser.parse_args()
 
-    leaked = [name for name in FORBIDDEN_ENV if name in os.environ]
-    if leaked:
-        print("forbidden-env:" + ",".join(leaked), file=sys.stderr)
-        return 2
+    isolation = _isolation_failure()
+    if isolation is not None:
+        return isolation
 
-    if pathlib.Path("/run/omarchy/fabric.sock").exists():
-        print("main-fabric-socket-visible", file=sys.stderr)
-        return 3
-    if pathlib.Path("/run/user").exists():
-        print("session-runtime-visible", file=sys.stderr)
-        return 4
-    if pathlib.Path("/home").exists():
-        for child in pathlib.Path("/home").iterdir():
-            print(f"home-entry-visible:{child.name}", file=sys.stderr)
-            return 5
-
-    manifest = ""
-    try:
-        with os.fdopen(int(args.manifest_fd), "r", closefd=False) as handle:
-            manifest = handle.read()
-    except OSError:
-        manifest = ""
-    if not manifest.strip():
-        workspace_manifest = pathlib.Path(f"/workspace/{args.task_id}/manifest.json")
-        if workspace_manifest.is_file():
-            manifest = workspace_manifest.read_text(encoding="utf-8")
-    if not manifest.strip():
+    raw = _read_manifest(args.task_id, args.manifest_fd)
+    if not raw.strip():
         print("empty-manifest", file=sys.stderr)
         return 6
+    try:
+        manifest = json.loads(raw)
+    except json.JSONDecodeError:
+        print("invalid-manifest", file=sys.stderr)
+        return 6
+    if not isinstance(manifest, dict):
+        print("invalid-manifest", file=sys.stderr)
+        return 6
 
+    capability = _capability(manifest)
+    if capability not in HANDLED_CAPABILITIES:
+        print("unknown-capability:" + str(capability), file=sys.stderr)
+        return 7
+
+    canonical = json.dumps(manifest, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
     result = {
         "ok": True,
         "taskId": args.task_id,
-        "isolation": "bubblewrap",
-        "manifestBytes": len(manifest.encode("utf-8")),
+        "capability": capability,
+        "manifestHash": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+        "workspace": _workspace_listing(args.task_id),
+        "isolation": _isolation_facts(),
     }
     payload = json.dumps(result, separators=(",", ":")) + "\n"
 

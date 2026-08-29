@@ -31,10 +31,6 @@ if grep -Fq 'togglefloating' "$ws"; then
   fail "snap must not togglefloating an already-floating window"
 fi
 
-# Focus must be verified after activation. A stale compositor Lua registry can
-# drop an address-form hl.focus silently ("window not found" for live clients);
-# look the window up from hl.get_windows, retry once, then set lastError as a
-# string — never an object on the string property, never a silent ok.
 grep -Fq 'function _beginFocusVerify' "$ws" || fail "activate verifies focus landed"
 grep -Fq '_beginFocusVerify(target)' "$ws" || fail "activate wires focus verification"
 grep -Fq 'compositor refused focus' "$ws" || fail "focus failure is reported, never silent"
@@ -63,7 +59,8 @@ fi
 if grep -Fq '"fullscreen", "2"' "$ws"; then
   fail "maximize must not dispatch classic fullscreen 2"
 fi
-grep -Fq 'mode = \"maximized\"' "$ws" || fail "maximize uses hl.dsp.window.fullscreen maximized"
+grep -Fq 'function _applyMaximizedRect' "$ws" || fail "maximize applies an explicit work-area rect"
+grep -Fq 'WindowModel.snapRect(geom, "max"' "$ws" || fail "maximize uses the work-area max snap rect"
 grep -Fq 'hl.dsp.window.float' "$ws" || fail "snap issues Lua float before resize/move"
 grep -Fq 'property FileView pinFile' "$ws" || fail "pin FileView is a named property so QtObject can load"
 grep -Fq 'import Quickshell.Hyprland' "$ws" || fail "WindowService reads Hyprland.toplevels for window addresses"
@@ -97,8 +94,11 @@ fi
 grep -Fq 'function _hyprbarsInset' "$ws" || fail "snap inset follows hyprbars:no_bar CSD clients"
 grep -Fq 'function _clientClass' "$ws" || fail "snap inset reads class from hypr toplevels when the clients poll is empty"
 grep -Fq 'WindowModel.coversWorkArea' "$ws" || fail "unmaximize must not restore a work-area-covering box as the normal float"
-grep -Fq 'if (!root._knownAddresses[target]) return false' "$ws" \
-  || fail "a new tiled Chromium must not count as maximized just because it covers the work area"
+if grep -Fq 'Number(rec.height) >= area.height - 48' "$ws"; then
+  fail "isMaximized must not treat a work-area-sized first map as maximize"
+fi
+grep -Fq 'function _persistKind' "$ws" || fail "placed kind is written to window-placements.json"
+grep -Fq 'function _placementKey' "$ws" || fail "persisted kind is keyed by app id"
 grep -Fq 'usesWaylandCsd' "$ws" \
   || fail "new CSD clients must cascade at 1200, not 880"
 grep -Fq 'WindowModel.hyprbarsSnapInset' "$ws" || fail "desktop snap asks WindowModel for hyprbars inset"
@@ -191,7 +191,7 @@ grep -Fq 'function _noteFocus' "$ws" || fail "focus verbs record the compositor 
 grep -Fq 'root._noteFocus(target)' "$ws" || fail "focus and activate call _noteFocus"
 grep -Fq 'Date.now() - root._focusedAt' "$ws" || fail "_activeAddress prefers a just-focused address over a stale activated flag"
 grep -Fq '_lastCycleAddress' "$ws" || fail "commitCycle keeps the highlighted address if the overlay closes first"
-grep -Fq 'native CSD plugin owns fresh-map sizing' "$ws" \
+grep -Fq 'if (csd && !remembered)' "$ws" \
   || fail "WindowService must not double-transform fresh CSD geometry owned by the native plugin"
 grep -Fq 'property bool _clientsSnapshotReady: false' "$ws" \
   || fail "placement hydration must distinguish a valid empty startup snapshot from no snapshot"
@@ -587,6 +587,10 @@ const offscreenSsd = m.clampRect({ x: 40, y: -40, width: 880, height: 560 }, mon
 assert(offscreenSsd.y >= area.y + 32, 'SSD clamp keeps hyprbars caption on the work area')
 const stored = m.parsePlacements(m.serializePlacements({ foot: { x: 48, y: 48, width: 880, height: 560 } }))
 assertEqual(stored.foot.width, 880, 'placements round-trip through JSON')
+const storedKind = m.parsePlacements(m.serializePlacements({ foot: { x: 48, y: 48, width: 880, height: 560, kind: 'max' } }))
+assertEqual(m.placementKind(storedKind.foot), 'max', 'placements persist maximize kind')
+assertEqual(m.placementKind({ kind: 'l' }), 'l', 'placementKind keeps snap kinds')
+assertEqual(m.placementKind({}), 'float', 'placementKind defaults to float')
 const snapped = { x: 0, y: 0, width: 960, height: 1040 }
 assert(m.isSnapped(snapped, mon, 8), '960x1040 at origin is the left snap')
 const snappedBar = { x: 0, y: 32, width: 960, height: 1008 }

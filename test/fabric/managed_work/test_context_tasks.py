@@ -12,6 +12,7 @@ from helper import (
     budget,
     create_context,
     create_task,
+    inspect_intent,
     manifest,
 )
 from omarchy_fabric.managed_work import ManagedWorkError
@@ -152,7 +153,7 @@ class ContextTaskTests(unittest.TestCase):
         safe_task = self.plane.create_task(
             ACTOR,
             title="Tokenizer configuration",
-            intent={"tokenizer": "cl100k_base"},
+            intent=inspect_intent(tokenizer="cl100k_base"),
             context_ids=[],
             budget=budget(),
             idempotency_key="task.tokenizer-safe",
@@ -275,8 +276,9 @@ class ContextTaskTests(unittest.TestCase):
     def test_task_state_machine_stale_revision_and_execution_refusal(self) -> None:
         context = create_context(self.plane)
         task = create_task(self.plane, context_ids=[context["contextId"]])
-        self.assertFalse(task["execution"]["available"])
-        self.assertEqual("managed-execution.not-integrated", task["execution"]["code"])
+        status = ManagedWorkPlane.execution_status()
+        self.assertEqual(status["available"], task["execution"]["available"])
+        self.assertEqual(status["code"], task["execution"]["code"])
         awaiting = self.plane.transition_task(
             ACTOR,
             task["taskId"],
@@ -321,16 +323,14 @@ class ContextTaskTests(unittest.TestCase):
             now=1_005,
         )
         self.assertEqual("failed", failed["state"])
-        self.assert_code(
-            "managed-execution.unavailable",
-            lambda: self.plane.transition_task(
-                ACTOR,
-                task["taskId"],
-                expected_revision=4,
-                target="retrying",
-                now=1_006,
-            ),
+        retried = self.plane.transition_task(
+            ACTOR,
+            task["taskId"],
+            expected_revision=4,
+            target="retrying",
+            now=1_006,
         )
+        self.assertEqual("retrying", retried["state"])
         self.assert_code(
             "access.denied",
             lambda: self.plane.get_task(OTHER_ACTOR, task["taskId"]),
@@ -350,7 +350,8 @@ class ContextTaskTests(unittest.TestCase):
         )
         self.assertEqual("queued", run["state"])
         self.assertEqual(2, len(run["steps"]))
-        self.assertTrue(all(step["state"] == "blocked-unavailable" for step in run["steps"]))
+        expected_step = "planned" if ManagedWorkPlane.execution_status()["available"] else "blocked-unavailable"
+        self.assertTrue(all(step["state"] == expected_step for step in run["steps"]))
         self.assert_code(
             "managed-execution.unavailable",
             lambda: self.plane.transition_run(

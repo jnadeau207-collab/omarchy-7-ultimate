@@ -32,11 +32,11 @@ from pathlib import Path
 import json
 import sys
 
-from sandbox.runner import run_representative_probe
+from sandbox.runner import INSPECT_CAPABILITY, run_representative_inspect
 
 root = Path(sys.argv[1])
-result = run_representative_probe(
-    task_id="task.probe",
+result = run_representative_inspect(
+    task_id="task.inspect",
     workspace=root / "workspace",
     artifacts=root / "artifacts",
     protected_home=root / "protected",
@@ -51,6 +51,10 @@ print(json.dumps({
 }))
 if result.returncode != 0 or not result.result or result.result.get("ok") is not True:
     raise SystemExit("isolated runner failed")
+if result.result.get("capability") != INSPECT_CAPABILITY:
+    raise SystemExit("isolated runner did not execute the declared inspect capability")
+if "visible.txt" not in (result.result.get("workspace") or []):
+    raise SystemExit("inspect artifact did not match the granted workspace")
 if "--unshare-all" not in result.argv:
     raise SystemExit("sandbox did not unshare namespaces")
 joined = " ".join(result.argv)
@@ -72,7 +76,8 @@ import sys
 
 payload = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert payload.get("ok") is True
-assert payload.get("isolation") == "bubblewrap"
+assert payload.get("capability") == "system.info.read"
+assert "visible.txt" in payload.get("workspace", [])
 PY
 
 pass "managed agent sandbox requires real bubblewrap and denies home, desktop IPC, secrets, main Fabric, and network"

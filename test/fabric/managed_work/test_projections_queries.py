@@ -206,7 +206,10 @@ class ProjectionQueryTests(unittest.TestCase):
             now=1_003,
         )
         self.assert_valid(run)
-        self.assertFalse(run["execution"]["available"])
+        self.assertEqual(
+            ManagedWorkPlane.execution_status()["available"],
+            run["execution"]["available"],
+        )
         self.assertTrue(run["manifest"]["networkGranted"])
 
     def test_network_permission_must_cover_the_internet_resource(self) -> None:
@@ -438,7 +441,10 @@ class ProjectionQueryTests(unittest.TestCase):
         for view in sorted(self.plane.QUERY_VIEWS):
             result = self.plane.query(ACTOR, view, limit=10, now=1_010)
             self.assertEqual(view, result["view"])
-            self.assertFalse(result["availability"]["executionAvailable"])
+            self.assertEqual(
+                ManagedWorkPlane.execution_status()["available"],
+                result["availability"]["executionAvailable"],
+            )
             self.assert_valid(result)
         providers = self.plane.query(ACTOR, "agent.providers", now=1_010)
         self.assertTrue(providers["availability"]["available"])

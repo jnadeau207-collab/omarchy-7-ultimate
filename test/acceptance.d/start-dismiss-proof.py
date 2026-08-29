@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Prove Start closes on outside click and on a second Start-orb click.
-
-The Super key already toggled both ways. Mouse did not: the Start panel was a
-440x560 exclusive overlay, so pointer events outside the card never arrived.
-Click-through: the same outside click must raise the window underneath. A
-full-screen MouseArea or HyprlandFocusGrab swallows that click.
-"""
 
 from __future__ import annotations
 
@@ -14,6 +7,11 @@ import json
 import sys
 import time
 from pathlib import Path
+
+def start_chrome() -> dict:
+  root = Path(__file__).resolve().parents[2]
+  return json.loads((root / "default" / "ultimate" / "start-chrome.json").read_text(encoding="utf-8"))
+
 
 HELPER = Path(__file__).resolve().parent / "hyprbars-pointer-proof.py"
 spec = importlib.util.spec_from_file_location("hyprbars_pointer_proof", HELPER)
@@ -98,9 +96,6 @@ def main() -> int:
       if pointer is not None:
         pointer.close()
         time.sleep(0.35)
-      # Create the ABS pointer after the overlay is mapped. A device that
-      # exists before the layer maps does not deliver buttons onto this
-      # Quickshell surface.
       pointer = AbsPointer()
       return pointer
 
@@ -108,8 +103,8 @@ def main() -> int:
     time.sleep(0.35)
     grim("/tmp/start-open.png")
     gw, gh = monitor_size()
+    chrome = start_chrome()
     report["monitor"] = [gw, gh]
-    # Card sits at x=8..448, y=(H-48-560)..(H-48). Aim at the desktop center.
     outside_x, outside_y = gw // 2, max(80, gh // 3)
     report["outside"] = [outside_x, outside_y]
     click(fresh_pointer(), outside_x, outside_y, gw, gh)
@@ -130,7 +125,7 @@ def main() -> int:
 
     summon_start()
     time.sleep(0.25)
-    card_x, card_y = 24, gh - 48 - 560 + 12
+    card_x, card_y = chrome["cardLeftMargin"] + 16, gh - chrome["barHeight"] - chrome["cardHeight"] + 12
     report["card"] = [card_x, card_y]
     click(fresh_pointer(), card_x, card_y, gw, gh)
     if not start_open():

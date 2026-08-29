@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from helper import ACTOR, OTHER_ACTOR, ManagedWorkPlane, budget, create_task, manifest, policy, template
+from helper import ACTOR, OTHER_ACTOR, ManagedWorkPlane, budget, create_task, inspect_intent, manifest, policy, template
 from omarchy_fabric.managed_work import Actor, CapacityLimits, ManagedWorkError
 from omarchy_fabric.managed_work.store import CURRENT_SCHEMA, MIGRATIONS
 
@@ -71,7 +71,7 @@ class RestartAdversarialTests(unittest.TestCase):
             task = plane.create_task(
                 actor,
                 title="Near-frame recovery task",
-                intent={"chunks": ["x" * 16_000] * 3 + ["x" * 5_700]},
+                intent=inspect_intent(chunks=["x" * 16_000] * 3 + ["x" * 5_700]),
                 context_ids=[],
                 budget=budget(),
                 idempotency_key="task.recovery-capacity",
@@ -603,7 +603,7 @@ class RestartAdversarialTests(unittest.TestCase):
             return plane.create_task(
                 ACTOR,
                 title="Concurrent task",
-                intent={"goal": "same"},
+                intent=inspect_intent(goal="same"),
                 context_ids=[],
                 budget=budget(),
                 idempotency_key="task.concurrent",

@@ -1,5 +1,3 @@
-"""Health and diagnostic reporting for the provisional user daemon."""
-
 from __future__ import annotations
 
 import argparse
@@ -10,7 +8,7 @@ import stat
 import sys
 import time
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from .db import FabricDatabase
 from .models import (
@@ -137,13 +135,25 @@ def doctor_report(health: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _query(socket_path: Path, method: str) -> dict[str, Any]:
+TASK_METHODS = {
+    "create": "managed-work.task.create",
+    "list": "managed-work.task.list",
+    "cancel": "managed-work.task.cancel",
+    "recover": "managed-work.task.recover",
+}
+
+
+async def _query(
+    socket_path: Path,
+    method: str,
+    params: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     from .protocol import FabricClient
 
     client = FabricClient(socket_path, client_name="omarchy-fabricctl")
     try:
         await client.connect()
-        result = await client.request(method)
+        result = await client.request(method, params)
         if not isinstance(result, dict):
             raise FabricError(
                 "rpc.invalid-response",
@@ -155,11 +165,47 @@ async def _query(socket_path: Path, method: str) -> dict[str, Any]:
         await client.close()
 
 
+def _payload(raw: str) -> dict[str, Any]:
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise FabricError(
+            "rpc.invalid-params",
+            "Fabric CLI payload is not JSON",
+            "Typed fabricctl verbs require a JSON object payload.",
+            detail=str(error),
+        ) from error
+    if not isinstance(data, dict):
+        raise FabricError(
+            "rpc.invalid-params",
+            "Fabric CLI payload is not an object",
+            "Typed fabricctl verbs require a JSON object payload.",
+        )
+    if "version" not in data:
+        data = {**data, "version": "v0"}
+    return data
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Inspect the provisional Omarchy Fabric daemon")
     parser.add_argument("--socket", type=Path, help="override the Fabric Unix socket path")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
-    parser.add_argument("command", choices=("health", "doctor", "version"))
+    sub = parser.add_subparsers(dest="command", required=True)
+    for name in ("health", "doctor", "version"):
+        sub.add_parser(name)
+    task = sub.add_parser("task")
+    task_sub = task.add_subparsers(dest="task_command", required=True)
+    for name in ("create", "list", "cancel", "recover"):
+        command = task_sub.add_parser(name)
+        command.add_argument("payload", nargs="?", default="{}")
+    context = sub.add_parser("context")
+    context_sub = context.add_subparsers(dest="context_command", required=True)
+    capture = context_sub.add_parser("capture")
+    capture.add_argument("payload")
+    run = sub.add_parser("run")
+    run_sub = run.add_subparsers(dest="run_command", required=True)
+    execute = run_sub.add_parser("execute")
+    execute.add_argument("payload")
     return parser
 
 
@@ -184,24 +230,39 @@ def _print_text(command: str, result: dict[str, Any]) -> None:
         print(f"[{check['status']}] {check['id']}: {check['explanation']}")
 
 
+def _rpc_target(args: argparse.Namespace) -> tuple[str, dict[str, Any] | None, bool]:
+    if args.command == "version":
+        return "version", None, False
+    if args.command in {"health", "doctor"}:
+        return "health", None, False
+    if args.command == "task":
+        return TASK_METHODS[args.task_command], _payload(args.payload), True
+    if args.command == "context":
+        return "managed-work.context.capture", _payload(args.payload), True
+    return "managed-work.run.execute", _payload(args.payload), True
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     from .models import default_socket_path
 
     args = _parser().parse_args(argv)
     try:
         socket_path = args.socket or default_socket_path()
-        method = "version" if args.command == "version" else "health"
-        result = asyncio.run(_query(socket_path, method))
+        method, params, typed = _rpc_target(args)
+        result = asyncio.run(_query(socket_path, method, params))
         if args.command == "doctor":
             result = doctor_report(result)
-        if args.json:
+        if typed or args.json:
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         else:
             _print_text(args.command, result)
+        if typed:
+            return 0
         return 0 if result.get("status", "healthy") == "healthy" else 1
     except FabricError as error:
         payload = {"status": "unavailable", "error": error.to_dict()}
-        if args.json:
+        typed = args.command in {"task", "context", "run"}
+        if typed or args.json:
             print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         else:
             print(f"Fabric: unavailable ({error.code})", file=sys.stderr)

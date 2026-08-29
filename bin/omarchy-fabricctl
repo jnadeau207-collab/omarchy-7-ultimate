@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # omarchy:summary=Inspect the provisional per-user Fabric daemon
-# omarchy:args=[--socket PATH] [--json] <health|doctor|version>
+# omarchy:args=[--socket PATH] [--json] <health|doctor|version|task|context|run> ...
 # omarchy:hidden=true
 
 set -euo pipefail

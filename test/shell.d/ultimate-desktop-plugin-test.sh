@@ -40,12 +40,21 @@ grep -Fq 'exclusiveZone:' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "taskbar sets an explicit exclusive zone so snap reads a bottom inset"
 grep -Fq 'omarchy.ultimate-start' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
   || fail "Start button toggles the Start plugin"
-grep -Fq 'implicitWidth: 440' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'start-chrome.json' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start reads card size from start-chrome.json"
+grep -Fq 'implicitWidth: root.cardWidth' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start maps a card-sized overlay, not a full-screen click sink"
 grep -Fq 'anchors.left: true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start card sits on the bottom-left above the Superbar"
-grep -Fq 'margins.bottom: 48' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'margins.bottom: root.barHeight' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start card sits above the Superbar exclusive zone"
+start_chrome=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["cardWidth"], json.load(open(sys.argv[1]))["cardHeight"], json.load(open(sys.argv[1]))["barHeight"], json.load(open(sys.argv[1]))["cardLeftMargin"])' "$ROOT/default/ultimate/start-chrome.json") \
+  || fail "start-chrome.json is valid JSON"
+[[ $start_chrome == "440 560 48 8" ]] || fail "start-chrome.json names the Start card and Superbar size" "$start_chrome"
+grep -Fq 'start-chrome.json' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "Start click-through reads the same start-chrome.json as Start.qml"
+grep -Fq 'start_chrome.cardWidth' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "Start click-through hit-test uses start-chrome.json cardWidth"
 if grep -Fq 'anchors { top: true; bottom: true; left: true; right: true }' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
   fail "Start must not map a full-screen overlay that swallows outside clicks"
 fi
@@ -604,8 +613,8 @@ grep -Fq 'start-dismiss-proof.py' "$ROOT/test/acceptance.d/windows-native-test.s
   || fail "windows-native harness runs the Start click-through proof"
 [[ -f $ROOT/test/shell.d/start-clickthrough-ipc-test.sh ]] \
   || fail "Start IPC lifecycle test exists for compositor sessions without uinput"
-grep -Fq '440x560 omarchy-start card' "$ROOT/test/shell.d/start-clickthrough-ipc-test.sh" \
-  || fail "Start IPC test asserts the 440x560 card, not a fullscreen overlay"
+grep -Fq 'start-chrome.json' "$ROOT/test/shell.d/start-clickthrough-ipc-test.sh" \
+  || fail "Start IPC test asserts the start-chrome.json card, not a fullscreen overlay"
 grep -Fq 'cycleSnapshot' "$ROOT/test/acceptance.d/hyprbars-pointer-proof.py" \
   || fail "pointer proof aims at the live highlighted Alt+Tab card, not a two-foot layout"
 grep -Fq 'unfocused × closed the focused window' "$ROOT/test/acceptance.d/hyprbars-pointer-proof.py" \

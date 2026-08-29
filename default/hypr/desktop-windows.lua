@@ -1,17 +1,10 @@
--- Desktop Mode windowing: overlapping floats, compositor title bars, work-area snap.
--- Loaded instead of default.hypr.windows when Ultimate mode is desktop.
-
 o.window(".*", { float = true })
 o.window(".*", { tag = "+default-opacity" })
--- Open as an overlapping float. 880×560 is the compositor fallback when
--- WindowService has no per-app placement for that class.
+
 o.window(".*", { size = { 880, 560 } })
--- xdg modal dialogs keep the size they asked for instead of the 880×560 app default.
--- Keep the toolkit's requested size. Do not center on the monitor — a parented
--- xdg dialog must stay on its parent, the way Windows places a message box.
+
 o.window({ modal = true }, { float = true, size = { "window_w", "window_h" } })
 
--- Fix some dragging issues with XWayland.
 o.window(
   {
     class = "^$",
@@ -24,15 +17,10 @@ o.window(
   { no_focus = true }
 )
 
--- browser.lua tiles Chromium for tiling mode. Set this before that file
--- so Desktop Mode keeps Chrome as a float.
 _G.omarchy_desktop_floats = true
 require("default.hypr.apps")
 o.window(".*", { float = true })
 
--- CSD by class from default/ultimate/csd-clients.json (single source of truth).
--- Keep hyprbars on foot/Qt SSD. GTK Files (Nautilus) is in that list so it is
--- not hyprbars + CSD two-row chrome.
 local function repo_root()
   local omarchy = os.getenv("OMARCHY_PATH") or ""
   if omarchy ~= "" then
@@ -42,6 +30,32 @@ local function repo_root()
   src = src:gsub("^@", "")
   local root = src:match("(.+)/default/hypr/desktop%-windows%.lua$")
   return root or ""
+end
+
+local function load_start_chrome()
+  local root = repo_root()
+  if root == "" then
+    return nil, "OMARCHY_PATH is unavailable; cannot locate start-chrome.json"
+  end
+  local file = io.open(root .. "/default/ultimate/start-chrome.json", "r")
+  if not file then
+    return nil, "cannot read start-chrome.json"
+  end
+  local body = file:read("*a")
+  file:close()
+  local chrome = {}
+  for key, value in body:gmatch('"([A-Za-z]+)"%s*:%s*(%d+)') do
+    chrome[key] = tonumber(value)
+  end
+  if not chrome.cardWidth or not chrome.cardHeight or not chrome.barHeight or chrome.cardLeftMargin == nil then
+    return nil, "start-chrome.json is incomplete"
+  end
+  return chrome, nil
+end
+
+local start_chrome, start_chrome_error = load_start_chrome()
+if not start_chrome then
+  error(start_chrome_error)
 end
 
 local function load_csd_patterns()
@@ -65,11 +79,6 @@ local function load_csd_patterns()
   return patterns
 end
 
--- Desktop Mode chrome colors. The semantic resolver publishes a flat
--- chrome-tokens-v0.json compatibility projection next to its canonical
--- design-tokens-v0.json payload. Older revisions still consume the checked-in
--- chrome-tokens.json / chrome-tokens-light.json projections. No color literal
--- or silent default lives in add_hyprbars_buttons.
 local function theme_is_light()
   local home = os.getenv("HOME") or ""
   if home == "" then
@@ -180,30 +189,21 @@ local function require_chrome_tokens()
 end
 
 for _, class_pat in ipairs(load_csd_patterns()) do
-  -- CSD already draws its own shadow and edge. A compositor border + drop
-  -- shadow on top is the dark halo around Chrome.
-  -- 880×560 clips Chromium CSD: min/max fall off the right and only × remains.
+
   o.window(class_pat, { float = true, ["hyprbars:no_bar"] = true, no_shadow = true, no_blur = true, border_size = 0, rounding = 0, size = { 1200, 740 } })
 end
 
--- Lock surfaces are not 880×560 app windows. Fullscreen per output, no hyprbars.
 o.window("org.omarchy.screensaver", { float = true, fullscreen = true, ["hyprbars:no_bar"] = true })
 
--- Tiling mode uses 0.985 so the wallpaper shows through. That plus blur is
--- the grainy haze on every Desktop Mode window. Floats are opaque.
 o.window({ tag = "default-opacity" }, { opacity = "1 1" })
 o.window(".*", { opacity = "1 1" })
 
--- Stock ~/.config/hypr/looknfeel.lua is a copy of the tiling defaults and is
--- required AFTER this file. It restores cyan borders, gaps, and blur-off.
--- apply_desktop_look is called again from hyprland.lua after that file.
 local function apply_desktop_look()
   local chrome = require_chrome_tokens()
   hl.config({
     general = {
       resize_on_border = true,
-      -- Windows resizes on a visible ~4px border. The Hyprland default of 15px
-      -- eats clicks meant for the window behind an overlapping float.
+
       extend_border_grab_area = 4,
       gaps_in = 0,
       gaps_out = 0,
@@ -213,9 +213,7 @@ local function apply_desktop_look()
         inactive_border = "rgba(3a3a3aff)",
       },
     },
-    -- Windows muscle memory is click-to-focus and click-to-raise. follow_mouse
-    -- 1 focuses the window under the cursor without raising it, so a click on
-    -- the exposed part of a background window does not bring it forward.
+
     input = {
       follow_mouse = 0,
     },
@@ -226,9 +224,7 @@ local function apply_desktop_look()
       },
     },
     decoration = {
-      -- Theme packs set rounding 6. hyprbars is square on top of that, so
-      -- only a bottom corner shows as a round chip. Desktop Mode chrome is
-      -- rectangular, like Windows 7.
+
       rounding = 0,
       rounding_power = 2,
       shadow = {
@@ -272,9 +268,7 @@ local function apply_desktop_look()
       },
     },
   })
-  -- looknfeel uses windowsIn popin 87% and a live "windows" parent. Popin
-  -- during minimize leaves the client at an interpolated box off the work
-  -- area, so the caption slides out of reach.
+
   hl.animation({ leaf = "windows", enabled = false })
   hl.animation({ leaf = "windowsIn", enabled = false })
   hl.animation({ leaf = "windowsOut", enabled = false })
@@ -321,9 +315,7 @@ local function load_so(path)
   if not file_exists(path) then
     return false
   end
-  -- A failed plugin load must not abort the lua config. hyprland.lua
-  -- requires monitors after omarchy; an error here skips the ranker
-  -- and this TV's EDID preferred DTD is 4K@30 (no signal).
+
   local ok = pcall(function()
     hl.exec_cmd("hyprctl plugin load " .. path)
   end)
@@ -345,8 +337,7 @@ local function load_hyprbars()
     return true
   end
   local omarchy = os.getenv("OMARCHY_PATH") or ""
-  -- Prefer a checkout-built .so so `omarchy dev link` + make takes effect
-  -- without waiting on sudo install into /usr/lib/hyprland-plugins.
+
   local candidates = {}
   if omarchy ~= "" then
     candidates[#candidates + 1] = omarchy .. "/default/hypr/plugins/hyprbars/hyprbars.so"
@@ -388,8 +379,7 @@ local function add_hyprbars_buttons()
   if not (plugin and plugin.hyprbars and plugin.hyprbars.add_button) then
     return
   end
-  -- hyprbars draws buttons right-to-left, so the user sees min / max / close.
-  -- Snap layouts are maximize-hover (hover_action), drag-to-edge, and Win+Z.
+
   local chrome = require_chrome_tokens()
   local sig = (chrome.captionCloseBgHex or "") .. (chrome.captionMaxBgHex or "") .. (chrome.glassRed or "")
   if _G.omarchy_hyprbars_buttons == sig then
@@ -431,10 +421,6 @@ hl.on("hyprland.start", function()
   load_omarchy_minimize()
 end)
 
--- Start is a 440x560 card. Click-through onto the already-focused window
--- does not change active toplevel, so QML cannot see it. Bind the click
--- only while omarchy-start is mapped, skip the card and Start orb, and
--- pass the event so the window underneath still raises.
 local start_clickthrough_bind = nil
 
 local function start_click_is_on_shell_chrome(pos)
@@ -456,11 +442,15 @@ local function start_click_is_on_shell_chrome(pos)
       end
     end
   end
-  if pos.y >= mh - 48 then
+  local bar = start_chrome.barHeight
+  local left = start_chrome.cardLeftMargin
+  local width = start_chrome.cardWidth
+  local height = start_chrome.cardHeight
+  if pos.y >= mh - bar then
     return true
   end
-  local card_y = mh - 48 - 560
-  if pos.x >= 8 and pos.x < 448 and pos.y >= card_y and pos.y < mh - 48 then
+  local card_y = mh - bar - height
+  if pos.x >= left and pos.x < left + width and pos.y >= card_y and pos.y < mh - bar then
     return true
   end
   return false

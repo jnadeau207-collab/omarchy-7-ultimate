@@ -1,10 +1,3 @@
-"""Durable context, task, automation, and Agent Center query foundation.
-
-This module stores and projects managed work. It intentionally cannot execute a
-process, open a secret store, authorize a mutation, or claim a sandbox exists.
-The future daemon integration must provide those authorities explicitly.
-"""
-
 from __future__ import annotations
 
 import json
@@ -65,6 +58,9 @@ TASK_TRANSITIONS: dict[str, frozenset[str]] = {
 }
 TERMINAL_TASK_STATES = frozenset({"succeeded", "failed", "cancelled"})
 ACTIVE_TASK_STATES = frozenset(TASK_TRANSITIONS) - TERMINAL_TASK_STATES
+SANDBOX_CAPABILITIES = frozenset({"system.info.read"})
+EXECUTION_AVAILABLE_CODE = "managed-execution.bubblewrap"
+EXECUTION_UNAVAILABLE_CODE = "sandbox.unavailable"
 RUN_TRANSITIONS: dict[str, frozenset[str]] = {
     "queued": frozenset({"failed", "cancelled", "running"}),
     "running": frozenset({"waiting", "retrying", "succeeded", "failed", "cancelled", "interrupted"}),
@@ -428,12 +424,28 @@ class ManagedWorkPlane:
 
     @staticmethod
     def execution_status() -> dict[str, Any]:
+        from sandbox.builder import SandboxUnavailable, require_bwrap
+        from sandbox.runner import packaged_runner_source
+
+        try:
+            require_bwrap()
+            packaged_runner_source()
+        except SandboxUnavailable:
+            return {
+                "schemaVersion": "v0",
+                "kind": "managed-execution-status",
+                "available": False,
+                "code": EXECUTION_UNAVAILABLE_CODE,
+                "explanation": "Managed execution fails closed without packaged bubblewrap and the packaged runner.",
+                "legacyInteractiveIncluded": False,
+                "networkDefault": "denied",
+            }
         return {
             "schemaVersion": "v0",
             "kind": "managed-execution-status",
-            "available": False,
-            "code": "managed-execution.not-integrated",
-            "explanation": "Durable managed work is available, but no sandboxed executor is integrated.",
+            "available": True,
+            "code": EXECUTION_AVAILABLE_CODE,
+            "explanation": "Managed tasks execute inside packaged bubblewrap with the packaged runner.",
             "legacyInteractiveIncluded": False,
             "networkDefault": "denied",
         }
@@ -830,6 +842,13 @@ class ManagedWorkPlane:
         if not isinstance(intent_value, dict):
             raise ManagedWorkError("task.intent", "Task intent must be an object.")
         reject_secret_fields(intent_value, field="task intent")
+        capability = intent_value.get("capability")
+        if capability not in SANDBOX_CAPABILITIES:
+            raise ManagedWorkError(
+                "task.capability",
+                "Task create requires a catalog capability from the Phase 2 sandbox allowlist.",
+                detail="missing" if capability is None else str(capability),
+            )
         if not isinstance(context_ids, Sequence) or isinstance(context_ids, (str, bytes)) or len(context_ids) > 64:
             raise ManagedWorkError("task.context", "Task context IDs must be a bounded array.")
         context_values = [stable_id(value, field="context ID") for value in context_ids]
@@ -959,10 +978,10 @@ class ManagedWorkPlane:
         target_value = enum_value(target, field="task state", choices=set(TASK_TRANSITIONS))
         reason_value = bounded_text(reason, field="transition reason", maximum=2048, allow_empty=True)
         reject_secret_fields({"value": reason_value}, field="transition reason")
-        if target_value in {"running", "waiting", "retrying", "succeeded"} and not executor_attested:
+        if target_value in {"running", "waiting", "succeeded"} and not executor_attested:
             raise ManagedWorkError(
                 "managed-execution.unavailable",
-                "A task cannot enter an executor-owned state until the managed executor is integrated.",
+                "A task cannot enter an executor-owned state until the executor attests the run.",
             )
         with self.store.transaction() as connection:
             row = self._task_row(connection, actor, task_id)
@@ -1163,9 +1182,10 @@ class ManagedWorkPlane:
                     current,
                 ),
             )
+            step_state, step_detail = ManagedWorkPlane._run_step_record()
             for sequence, step in enumerate(manifest_value["steps"]):
                 connection.execute(
-                    "INSERT INTO steps(step_id, run_id, principal_id, sequence, label, capability, state, detail_json, created_at) VALUES (?, ?, ?, ?, ?, ?, 'blocked-unavailable', ?, ?)",
+                    "INSERT INTO steps(step_id, run_id, principal_id, sequence, label, capability, state, detail_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         _new_id("step"),
                         run_id,
@@ -1173,7 +1193,8 @@ class ManagedWorkPlane:
                         sequence,
                         step["label"],
                         step["capability"],
-                        canonical_json({"code": "managed-execution.not-integrated"}),
+                        step_state,
+                        canonical_json(step_detail),
                         current,
                     ),
                 )
@@ -1309,9 +1330,12 @@ class ManagedWorkPlane:
                 ),
             )
             parent_steps = connection.execute("SELECT * FROM steps WHERE run_id = ? ORDER BY sequence", (run_id,)).fetchall()
+            step_state, step_detail = ManagedWorkPlane._run_step_record()
+            retry_detail = dict(step_detail)
+            retry_detail["retryOf"] = run_id
             for step in parent_steps:
                 connection.execute(
-                    "INSERT INTO steps(step_id, run_id, principal_id, sequence, label, capability, state, detail_json, created_at) VALUES (?, ?, ?, ?, ?, ?, 'blocked-unavailable', ?, ?)",
+                    "INSERT INTO steps(step_id, run_id, principal_id, sequence, label, capability, state, detail_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         _new_id("step"),
                         new_run_id,
@@ -1319,7 +1343,8 @@ class ManagedWorkPlane:
                         step["sequence"],
                         step["label"],
                         step["capability"],
-                        canonical_json({"code": "managed-execution.not-integrated", "retryOf": run_id}),
+                        step_state,
+                        canonical_json(retry_detail),
                         current,
                     ),
                 )
@@ -2840,11 +2865,18 @@ class ManagedWorkPlane:
         }
 
     @staticmethod
+    def _run_step_record() -> tuple[str, dict[str, Any]]:
+        status = ManagedWorkPlane.execution_status()
+        if status["available"]:
+            return "planned", {"code": status["code"]}
+        return "blocked-unavailable", {"code": status["code"]}
+
+    @staticmethod
     def _query_availability(*, available: bool = True, code: str = "managed-work.query-ready") -> dict[str, Any]:
         return {
             "available": available,
             "code": code,
-            "executionAvailable": False,
+            "executionAvailable": bool(ManagedWorkPlane.execution_status()["available"]),
         }
 
     @staticmethod
