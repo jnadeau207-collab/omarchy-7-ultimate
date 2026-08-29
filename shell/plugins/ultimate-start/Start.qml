@@ -13,6 +13,12 @@ Item {
   property var shell: null
   property var manifest: null
   property bool opened: false
+
+  SemanticProfile {
+    id: productProfile
+    profileId: "product"
+    rtl: Qt.application.layoutDirection === Qt.RightToLeft
+  }
   property string filter: ""
   property bool focusSearch: false
   property int cardWidth: 0
@@ -130,7 +136,7 @@ Item {
       radius: Tokens.radius.large
       border.color: Tokens.chrome.edge
       border.width: 1
-      LayoutMirroring.enabled: Tokens.productProfile.rtl
+      LayoutMirroring.enabled: productProfile.rtl
       LayoutMirroring.childrenInherit: true
 
       HoverHandler {
@@ -152,7 +158,7 @@ Item {
         SearchBox {
           id: searchField
           Layout.fillWidth: true
-          semanticProfile: Tokens.productProfile
+          semanticProfile: productProfile
           onTextChanged: root.filter = text
           Component.onCompleted: searchField.forceActiveFocus()
           Keys.onReturnPressed: {
@@ -224,7 +230,7 @@ Item {
           model: root.entries
           delegate: Item {
             width: ListView.view.width
-            height: Semantics.minimumTarget(Tokens.productProfile)
+            height: Semantics.minimumTarget(productProfile)
             clip: true
             RowLayout {
               anchors.fill: parent
@@ -264,7 +270,7 @@ Item {
           visible: root.entries.length === 0
           Layout.fillWidth: true
           Layout.fillHeight: true
-          semanticProfile: Tokens.productProfile
+          semanticProfile: productProfile
           title: root.filter.length > 0 ? "No matching apps" : "Search for apps"
           message: root.filter.length > 0 ? "Try a different name." : "Chrome, Files, and Agent are pinned. Terminal and Vim stay available from search."
         }
@@ -274,7 +280,7 @@ Item {
           spacing: 8
 
           Button {
-            semanticProfile: Tokens.productProfile
+            semanticProfile: productProfile
             text: modeProfile && modeProfile.mode === "desktop" ? "Power User Mode" : "Desktop Mode"
             onClicked: {
               if (!modeProfile) return
@@ -287,19 +293,19 @@ Item {
           IconButton {
             iconText: "\u26BF"
             tooltipText: "Lock"
-            semanticProfile: Tokens.productProfile
+            semanticProfile: productProfile
             onClicked: { Util.execDetached("omarchy-system-lock"); root.close() }
           }
           IconButton {
             iconText: "\u21BB"
             tooltipText: "Restart"
-            semanticProfile: Tokens.productProfile
+            semanticProfile: productProfile
             onClicked: { Util.execDetached("omarchy-system-reboot"); root.close() }
           }
           IconButton {
             iconText: "\u23FB"
             tooltipText: "Shut down"
-            semanticProfile: Tokens.productProfile
+            semanticProfile: productProfile
             danger: true
             onClicked: { Util.execDetached("omarchy-system-shutdown"); root.close() }
           }
