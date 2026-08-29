@@ -67,4 +67,4 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 
 ## Caption / windowing (not a substitute for the jobs above)
 
-W0 is architecture and product-windowing GO on the reconciled `1334ba30` metal baseline (Hyprland stays; three-button SSD, Files CSD, reopen memory, update-transaction plugins, Start click-through, and measured Chromium float/maximize/restore/snap/F11 geometry). Independent source review plus direct pointer, pixel, health, and visual inspection are complete. The OS remains rejected because the product jobs above are incomplete; current execution authority is `plans/ultimate-product-completion-program-2026-08-26.md`.
+Windowing Gate W0 is Phase 1 of `plans/project-ultimate.md` and is certified only by `W0_GATE.md` (Hyprland stays; three-button SSD, one-row CSD, min/max/restore, LTRB snap, Alt+Tab, Show Desktop, reopen memory, click-to-raise, Start click-through). The OS remains rejected because the product jobs above are incomplete. Founding execution authority is `PRODUCT_DOCTRINE.md` and `plans/project-ultimate.md`.

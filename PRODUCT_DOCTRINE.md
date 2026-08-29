@@ -16,7 +16,7 @@ Underneath: Arch, Wayland, Omarchy's automation/update machinery, Quattro, Linux
 
 Omarchy's own manual says "everything in Omarchy happens via the keyboard" and that a new user initially cannot do anything with the mouse alone. That is not a UX defect in upstream Omarchy — it is what Omarchy is trying to be. This fork deliberately tries to be something else, without destroying what makes Omarchy interesting (see Mode Profiles below).
 
-This product is still **REJECTED** as an OS. Windowing Gate W0 is an **architecture GO** (Hyprland stays). It is not a finished Windows 7 window manager and not a shippable desktop. The “15–20%” figure is a **2026-08-23 slogan**, not a measured KPI; do not use it as current status. Execution after the 2026-08-29 Quattro rebase is [`plans/ultimate-continue-2026-08-29.md`](plans/ultimate-continue-2026-08-29.md) together with [`plans/ultimate-capability-engines-product-ownership-convergence-2026-08-27.md`](plans/ultimate-capability-engines-product-ownership-convergence-2026-08-27.md). Do not declare victory after a shiny taskbar.
+This product is still **REJECTED** as an OS. Windowing Gate W0 is Phase 1 of `plans/project-ultimate.md` (`W0_GATE.md`): Hyprland stays, three-button SSD, one-row CSD, min/max/restore, LTRB snap, Alt+Tab, Show Desktop, reopen memory, click-to-raise, Start click-through. It is not a finished Windows 7 window manager and not a shippable desktop. The “15–20%” figure is a **2026-08-23 slogan**, not a measured KPI; do not use it as current status. Founding execution authority is this file and `plans/project-ultimate.md`. Do not declare victory after a shiny taskbar.
 
 ## The rules
 

@@ -2,7 +2,7 @@
 
 Humans and agents share one semantic capability graph. This file is the agent-side bar. `WINDOWS_NATIVE_ACCEPTANCE.md` is the human smoke test. `WINDOWS_7_ULTIMATE_PARITY.md` is the job list those capabilities must cover.
 
-**Historical freeze:** this matrix was audited at `1334ba30` on 2026-08-26. Several rows are now false against the tree (the capability catalog exists; Agent Center exists as a read-only host). Do not treat the table below as live status. Current execution is [`plans/ultimate-continue-2026-08-29.md`](plans/ultimate-continue-2026-08-29.md). The OS-level pass bar in **Pass bar** still applies.
+**Historical freeze:** this matrix was audited at `1334ba30` on 2026-08-26. Several rows are now false against the tree (the capability catalog exists; Agent Center exists as a read-only host). Do not treat the table below as live status. After W0, remaining fabric work is Phase 2 of `plans/project-ultimate.md`. The OS-level pass bar in **Pass bar** still applies.
 
 **Identity lock:** Windows 7 Ultimate's complete, obvious, mouse-native desktop model rebuilt for 2026, with an agent-native operating fabric underneath every system capability. Not Windows-like Omarchy with AI tools.
 
@@ -43,4 +43,4 @@ Status (tree audited at `1334ba30` on 2026-08-26; metal windowing baseline HDMI-
 
 The OS-level pass is unchanged: a Windows-native tester and an agent can perform the same parity-matrix jobs through the same validators, see the same errors, and undo the same way — and Agent Center is a Desktop Mode surface a mouse user can find without a hotkey.
 
-The historical Phase 2 prototype minimum (2026-08-23) closed useful window-path work in rows 2, 4, 6, 7, 10, 12, 14, and 15. Row 5 is now labeled honestly as an actor-allowlist prototype rather than a security pass. Rows 1, 8, and 9 remain missing; row 11 is a broker without a sandboxed runtime. Current execution authority is `plans/ultimate-product-completion-program-2026-08-26.md`; this is not the OS pass.
+The historical Phase 2 prototype minimum (2026-08-23) closed useful window-path work in rows 2, 4, 6, 7, 10, 12, 14, and 15. Row 5 is now labeled honestly as an actor-allowlist prototype rather than a security pass. Rows 1, 8, and 9 remain missing; row 11 is a broker without a sandboxed runtime. That leftover fabric is Phase 2 of `plans/project-ultimate.md`. This is not the OS pass.
