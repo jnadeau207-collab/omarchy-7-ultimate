@@ -33,3 +33,11 @@ if grep -F 'skip-first-run-update-notification' "$ROOT/install/user/first-run/wi
 fi
 
 pass "first-run uses one lifecycle completion marker"
+
+welcome="$ROOT/install/user/first-run/welcome.sh"
+grep -Fq 'Click Start for apps and places' "$welcome" || fail "Desktop Mode first-run teaches visible Start, not Super+Space"
+if grep -Fq 'Super + K' "$welcome" && ! grep -Fq 'mode == "power-user"' "$welcome"; then
+  fail "Desktop Mode first-run must not teach Super+K"
+fi
+grep -Fq 'mode == "power-user"' "$welcome" || fail "Power User first-run may still teach the cheatsheet"
+pass "first-run welcome is mode-aware"
