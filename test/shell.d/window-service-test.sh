@@ -106,6 +106,17 @@ if grep -Fq 'WindowModel.snapRect(geom, direction, 32)' "$ws"; then
   fail "CSD clients must not always reserve 32px for hyprbars"
 fi
 grep -Fq 'function moveTo' "$ws" || fail "caption drag uses WindowService.moveTo"
+grep -Fq 'property var _desiredRect' "$ws" || fail "moveTo and resizeTo keep the requested box before clamp"
+if awk '
+  $0 ~ /function _intendedRect\(/ { infn = 1 }
+  infn && /_desiredRect\[target\]/ { desired = 1 }
+  infn && /^  function / && $0 !~ /function _intendedRect\(/ { infn = 0 }
+  END { exit desired ? 0 : 1 }
+' "$ws"; then
+  :
+else
+  fail "_intendedRect must compose moveTo and resizeTo from the requested box, not the clamped leftover"
+fi
 grep -Fq 'function _markKnown' "$ws" || fail "explicit move/resize must mark the window known so reopen memory cannot cascade over it"
 grep -Fq 'function _keepFocusAfterClose' "$ws" || fail "close of an unfocused window must keep the focused window in front"
 grep -Fq 'Number(rect.x) < area.x - 4' "$ws" \
