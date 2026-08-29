@@ -469,7 +469,7 @@ Panel {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: Quickshell.screens.length > 1 ? "󰍺" : "󰍹"
+    text: Quickshell.screens.length > 1 ? "▣" : "□"
     onPressed: function(b) { root.toggle() }
     onWheelMoved: function(delta) {
       if (!root.brightnessAvailable) return
@@ -532,7 +532,7 @@ Panel {
             Text {
               id: heroIcon
               textFormat: Text.PlainText
-              text: root.displays.length > 1 ? "󰍺" : "󰍹"
+              text: root.displays.length > 1 ? "▣" : "□"
               color: root.bar.foreground
               font.family: root.bar.fontFamily
               font.pixelSize: Style.font.display
@@ -882,7 +882,7 @@ Panel {
       spacing: Style.space(8)
 
       Text {
-        text: "󰍹"
+        text: "□"
         color: root.bar.foreground
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.title
@@ -904,7 +904,7 @@ Panel {
 
       Text {
         textFormat: Text.PlainText
-        text: monitorRow.display.enabled ? "󰄬" : ""
+        text: monitorRow.display.enabled ? "✓" : ""
         color: root.bar.foreground
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.subtitle

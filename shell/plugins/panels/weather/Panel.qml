@@ -589,7 +589,7 @@ Panel {
             }
 
             Text {
-              text: ""  // nf-fa-map_marker
+              text: "\u25C9"
               color: Qt.darker(root.bar.foreground, 1.4)
               font.family: root.bar.fontFamily
               font.pixelSize: Style.font.body
@@ -649,7 +649,7 @@ Panel {
               Text {
                 textFormat: Text.PlainText
                 anchors.centerIn: parent
-                text: root.savingLocation ? "󰦖" : "✕"
+                text: root.savingLocation ? "↻" : "✕"
                 font.family: root.bar.fontFamily
                 color: Qt.darker(root.bar.foreground, 1.4)
                 font.pixelSize: Style.font.bodySmall

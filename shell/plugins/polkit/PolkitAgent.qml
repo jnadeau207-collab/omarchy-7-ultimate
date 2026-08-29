@@ -292,7 +292,7 @@ Item {
         spacing: Style.space(14)
 
         Text {
-          text: "\uf023"
+          text: "\u26BF"
           color: root.errorFlash ? Color.polkit.textError : root.accent
           font.family: root.fontFamily
           font.pixelSize: Style.font.iconLarge

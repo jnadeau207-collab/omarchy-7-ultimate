@@ -28,7 +28,7 @@ BorderSurface {
 
   // Square by default; consumers can stretch via explicit width/height.
   property int size: Math.max(28, Math.round(Style.spacing.controlHeight * 0.9),
-    semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+    Semantics.minimumTarget(semanticProfile))
   property real glyphSize: Semantics.font(semanticProfile, Style.font.icon)
 
   signal clicked()

@@ -249,4 +249,28 @@ fi
 if grep -Eq 'or (28|30|62)|chrome_hex_rgb\([^)]*,[^)]*,' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "hyprbars adapter has no silent color fallback"
 fi
+grep -Fq 'omarchy-theme-resolve-tokens --active' "$ROOT/bin/omarchy-theme-set" \
+  || fail "theme-set publishes design tokens after the theme swap"
+if grep -Fq 'chrome-tokens-light.json' "$ROOT/default/hypr/desktop-windows.lua"; then
+  fail "hyprbars does not fall back to a static light chrome adapter"
+fi
+if grep -Fq 'default/ultimate/chrome-tokens.json' "$ROOT/default/hypr/desktop-windows.lua"; then
+  fail "hyprbars does not fall back to a static bundled chrome adapter"
+fi
+grep -Fq 'Tokens.chrome.glass' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start consumes resolved semantic chrome"
+if grep -Eq 'Qt\.rgba\(' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start has no private glass color"
+fi
+python3 - "$dark_adapter" "$light_adapter" <<'PY' || exit 1
+import json
+import sys
+
+for path in sys.argv[1:]:
+    adapter = json.load(open(path, encoding="utf-8"))
+    for key in ("borderActiveHex", "borderInactiveHex"):
+        value = adapter.get(key, "")
+        assert isinstance(value, str) and value.startswith("#") and len(value) == 7, f"{path} missing {key}"
+    assert adapter["borderActiveHex"] != adapter["borderInactiveHex"], f"{path} active and inactive borders collapsed"
+PY
 pass "QML and Lua chrome share the resolved contract without private runtime palettes"

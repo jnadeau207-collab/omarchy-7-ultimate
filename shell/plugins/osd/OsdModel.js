@@ -4,34 +4,34 @@ function clamp(value, min, max) {
 
 // The widest glyph `iconFor` can return. The progress OSD sizes its icon
 // column to it so the bar keeps its place as the icon changes.
-var widestIcon = ""
+var widestIcon = "\u266B"
 
 function iconFor(name, percent) {
   var n = String(name || "").toLowerCase()
-  if (n === "volume-muted" || n === "volume-mute" || n === "muted" || n === "mute") return ""
-  if (n === "volume-low") return ""
-  if (n === "volume-medium") return ""
-  if (n === "volume-high" || n === "volume") return ""
-  if (n === "microphone-muted" || n === "microphone-off" || n === "mic-muted" || n === "mic-off") return "󰍭"
-  if (n === "microphone" || n === "mic") return "󰍬"
-  if (n === "keyboard") return "󰌌"
-  if (n === "brightness" || n === "display") return "󰍹"
-  if (n === "touchpad") return "󰟸"
-  if (n === "touch" || n === "touchscreen") return "󰝁"
-  if (n === "reboot" || n === "restart") return "󰜉"
-  if (n === "shutdown" || n === "power" || n === "poweroff") return "󰐥"
-  if (n === "logout" || n === "sign-out" || n === "leave") return "󰍃"
-  if (n === "media" || n === "player") return "󰝚"
-  if (n === "media-source" || n === "player-source") return "󰝚"
-  if (n === "media-play" || n === "player-play") return "󰐊"
-  if (n === "media-pause" || n === "player-pause") return "󰏤"
-  if (n === "media-next" || n === "player-next") return "󰒭"
-  if (n === "media-previous" || n === "player-previous") return "󰒮"
+  if (n === "volume-muted" || n === "volume-mute" || n === "muted" || n === "mute") return "\u2205"
+  if (n === "volume-low") return "\u266A"
+  if (n === "volume-medium") return "\u266B"
+  if (n === "volume-high" || n === "volume") return "\u266B"
+  if (n === "microphone-muted" || n === "microphone-off" || n === "mic-muted" || n === "mic-off") return "\u2715"
+  if (n === "microphone" || n === "mic") return "\u25CF"
+  if (n === "keyboard") return "\u2328"
+  if (n === "brightness" || n === "display") return "\u2600"
+  if (n === "touchpad") return "\u25A1"
+  if (n === "touch" || n === "touchscreen") return "\u25A3"
+  if (n === "reboot" || n === "restart") return "\u21BB"
+  if (n === "shutdown" || n === "power" || n === "poweroff") return "\u23FB"
+  if (n === "logout" || n === "sign-out" || n === "leave") return "\u2190"
+  if (n === "media" || n === "player") return "\u266A"
+  if (n === "media-source" || n === "player-source") return "\u266A"
+  if (n === "media-play" || n === "player-play") return "\u25B6"
+  if (n === "media-pause" || n === "player-pause") return "\u23F8"
+  if (n === "media-next" || n === "player-next") return "\u23ED"
+  if (n === "media-previous" || n === "player-previous") return "\u23EE"
   if (n.length > 0) return name
-  if (percent <= 0) return ""
-  if (percent <= 33) return ""
-  if (percent <= 66) return ""
-  return ""
+  if (percent <= 0) return "\u2205"
+  if (percent <= 33) return "\u266A"
+  if (percent <= 66) return "\u266B"
+  return "\u266B"
 }
 
 function stateForShow(iconName, rawMessage, rawValue, rawMax, rawProgressText, rawDuration) {

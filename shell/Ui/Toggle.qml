@@ -29,8 +29,8 @@ BorderSurface {
   // Override per-instance if a caller wants the opposite.
   property bool rounded: Style.cornerRadius > 0
 
-  property color foreground: semanticProfile ? semanticProfile.textPrimary : Color.foreground
-  property color accent: semanticProfile ? semanticProfile.accent : Color.accent
+  property color foreground: semanticProfile ? semanticProfile.textPrimary : Tokens.text.primary
+  property color accent: semanticProfile ? semanticProfile.accent : Tokens.accent.primary
   property string fontFamily: Style.font.family
   property real titleSize: Semantics.font(semanticProfile, Style.font.subtitle)
   property real descriptionSize: Semantics.font(semanticProfile, Style.font.caption)

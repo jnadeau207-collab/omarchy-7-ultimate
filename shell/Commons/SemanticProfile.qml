@@ -1,9 +1,9 @@
 import QtQuick
 import "SemanticMetrics.js" as Metrics
 
-// Opt-in presentation profile. Shared controls keep their exact historical
-// geometry when semanticProfile is null; gallery and future product surfaces
-// pass one of these to exercise density, scale, large text, motion and RTL.
+// Presentation profile. Controls apply Tokens density and motion when this
+// is null; gallery and product surfaces pass one to override density, scale,
+// large text, motion, and RTL.
 QtObject {
   id: root
 

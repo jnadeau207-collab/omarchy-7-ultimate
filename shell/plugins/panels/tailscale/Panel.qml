@@ -764,7 +764,7 @@ Panel {
       spacing: Style.space(8)
 
       Text {
-        text: "󰒃"
+        text: "◈"
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.heading
@@ -824,7 +824,7 @@ Panel {
 
       Text {
         id: accountGlyph
-        text: ""
+        text: "◉"
         color: accountRow.selectedAccount || accountRow.switchingAccount ? root.foreground : root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
@@ -977,7 +977,7 @@ Panel {
       PanelActionButton {
         id: sendButton
         visible: tailscale.canSendFiles(peerRow.peer)
-        iconText: "󰒊"
+        iconText: "↑"
         tooltipText: "Send files"
         foreground: root.foreground
         fontFamily: root.fontFamily
@@ -987,7 +987,7 @@ Panel {
 
       PanelActionButton {
         id: copyButton
-        iconText: "󰆏"
+        iconText: "⎘"
         foreground: root.foreground
         fontFamily: root.fontFamily
         enabled: peerRow.peerIp !== "" || peerRow.peerName !== "" || peerRow.peerDns !== "" || peerRow.peerIpv6 !== ""
@@ -1102,7 +1102,7 @@ Panel {
       }
 
       Text {
-        text: "󰆏"
+        text: "⎘"
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.icon
@@ -1141,7 +1141,7 @@ Panel {
       Text {
         id: exitNodeGlyph
         textFormat: Text.PlainText
-        text: exitNodeRow.addMullvad ? "+" : (peer && peer.Mullvad === true ? "󰖂" : "󱇢")
+        text: exitNodeRow.addMullvad ? "+" : (peer && peer.Mullvad === true ? "◆" : "◇")
         color: exitNodeRow.activeExitNode || exitNodeRow.settingExitNode || exitNodeRow.addMullvad ? root.foreground : root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
@@ -1217,7 +1217,7 @@ Panel {
       spacing: Style.space(8)
 
       Text {
-        text: "󰖂"
+        text: "◆"
         color: regionRow.current ? root.foreground : root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.body

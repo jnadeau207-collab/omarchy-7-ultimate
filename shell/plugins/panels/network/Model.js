@@ -9,7 +9,7 @@ function parseNetworkStatus(raw) {
 }
 
 function wifiIconFor(strength) {
-  var icons = ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"]
+  var icons = ["\u00B7", "\u2591", "\u2592", "\u2593", "\u2588"]
   var index = Math.max(0, Math.min(4, Math.ceil(strength / 20) - 1))
   return icons[index]
 }
@@ -31,9 +31,9 @@ function connectivityState(kind, connectivity, states, checksEnabled) {
 
 function connectionIcon(kind, signalStrength, connectivity) {
   var restricted = connectivity === "portal" || connectivity === "limited"
-  if (kind === "wifi") return restricted ? "󰤩" : wifiIconFor(signalStrength)
-  if (kind === "ethernet") return restricted ? "󰈂" : "󰈀"
-  return "󰤮"
+  if (kind === "wifi") return restricted ? "\u25B3" : wifiIconFor(signalStrength)
+  if (kind === "ethernet") return restricted ? "\u25A3" : "\u25A0"
+  return "\u25A1"
 }
 
 function formatHeaderSpeed(mbps) {

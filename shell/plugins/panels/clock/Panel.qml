@@ -298,7 +298,7 @@ Panel {
                 // descender, so centering the two boxes leaves the icon
                 // sitting visibly low against the digits.
                 anchors.baseline: heroDate.baseline
-                text: "󰃭"
+                text: "▤"
                 color: heroMouse.containsMouse
                   ? Style.hoverStateColor(root.contentForeground, Color.accent)
                   : root.contentForeground
@@ -734,7 +734,7 @@ Panel {
                 anchors.left: parent.left
                 anchors.leftMargin: -Style.space(8)
                 anchors.verticalCenter: parent.verticalCenter
-                iconText: "󰅁"
+                iconText: "‹"
                 tooltipText: "Previous month"
                 foreground: root.contentForeground
                 fontFamily: root.contentFontFamily
@@ -745,7 +745,7 @@ Panel {
                 anchors.right: parent.right
                 anchors.rightMargin: -Style.space(8)
                 anchors.verticalCenter: parent.verticalCenter
-                iconText: "󰅂"
+                iconText: "›"
                 tooltipText: "Next month"
                 foreground: root.contentForeground
                 fontFamily: root.contentFontFamily

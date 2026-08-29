@@ -9,11 +9,11 @@ Item {
   property string cancelText: "Cancel"
   property string confirmText: "Confirm"
   property int selectedIndex: 1
-  property color background: Color.background
-  property color foreground: Color.foreground
-  property color scrim: Util.alpha(Color.background, 0.7)
-  property color selectedBackground: Util.alpha(Color.foreground, 0.08)
-  property color selectedText: Color.accent
+  property color background: Tokens.surface.base
+  property color foreground: Tokens.text.primary
+  property color scrim: Tokens.surface.overlay
+  property color selectedBackground: Tokens.chrome.hover
+  property color selectedText: Tokens.accent.primary
   property string fontFamily: Style.font.family
   property int cornerRadius: Style.cornerRadius
 

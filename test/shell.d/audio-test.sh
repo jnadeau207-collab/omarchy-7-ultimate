@@ -27,7 +27,7 @@ assertEqual(
 
 const headphones = { ready: true, name: 'bluez_output.airpods', properties: { 'device.product.name': 'AirPods Headphones' } }
 assert(audio.isHeadphones(headphones), 'audio detects headphone devices')
-assertEqual(audio.sinkGlyph(headphones), '󰋋', 'audio uses headphone sink glyph')
+assertEqual(audio.sinkGlyph(headphones), '\u0298', 'audio uses headphone sink glyph')
 assert(audio.sourceGlyph({ ready: true, properties: { 'device.icon-name': 'camera-webcam' } }).length > 0, 'audio maps webcam source glyph')
 
 assertEqual(audio.friendlyStreamLabel('spotify'), 'Spotify', 'audio normalizes known stream labels')

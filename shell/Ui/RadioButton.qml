@@ -31,7 +31,7 @@ Item {
   readonly property int dotSize: Math.max(6, Math.round(circleSize * 0.45))
 
   implicitWidth: circle.implicitWidth
-  implicitHeight: Math.max(circle.implicitHeight, semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+  implicitHeight: Math.max(circle.implicitHeight, Semantics.minimumTarget(semanticProfile))
 
   Accessible.role: Accessible.RadioButton
   Accessible.name: Semantics.text(semanticProfile, label)

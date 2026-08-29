@@ -25,9 +25,9 @@ Row {
 
   property var options: []
   property string value: ""
-  property color foreground: Color.foreground
-  property color background: Color.background
-  property color accent: Color.accent
+  property color foreground: Tokens.text.primary
+  property color background: Tokens.surface.base
+  property color accent: Tokens.accent.primary
   property string fontFamily: Style.font.family
   property real fontSize: Style.font.body
   property bool focusable: true

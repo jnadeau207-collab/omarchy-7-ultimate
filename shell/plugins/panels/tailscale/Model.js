@@ -49,12 +49,12 @@ function isMullvadPeer(peer) {
 
 function osIcon(os) {
   var value = String(os || "").toLowerCase()
-  if (value === "linux") return "󰌽"
-  if (value === "macos" || value === "ios") return "󰀵"
-  if (value === "windows") return "󰍲"
-  if (value === "android") return "󰀲"
-  if (value === "mullvad") return "󰖂"
-  return "󰟀"
+  if (value === "linux") return "\u25A0"
+  if (value === "macos" || value === "ios") return "\u25CB"
+  if (value === "windows") return "\u25A1"
+  if (value === "android") return "\u25B3"
+  if (value === "mullvad") return "\u25C6"
+  return "\u25CF"
 }
 
 function accountLabel(account) {

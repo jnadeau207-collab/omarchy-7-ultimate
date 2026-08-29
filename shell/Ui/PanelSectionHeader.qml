@@ -7,7 +7,7 @@ import qs.Commons
 Text {
   id: root
 
-  property color foreground: Color.foreground
+  property color foreground: Tokens.text.primary
   property string fontFamily: Style.font.family
   property real fontSize: Style.font.caption
 

@@ -410,7 +410,7 @@ Panel {
       spacing: Style.space(8)
 
       Text {
-        text: ""
+        text: "▤"
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.heading
@@ -443,7 +443,7 @@ Panel {
       }
 
       PanelActionButton {
-        iconText: "󰌋"
+        iconText: "↑"
         foreground: root.foreground
         fontFamily: root.fontFamily
         enabled: dropbox.installed && !dropbox.busy

@@ -10,7 +10,7 @@ Item {
   id: root
 
   property bool opened: false
-  property string icon: ""
+  property string icon: "\u266B"
   property string message: ""
   property string iconKey: ""
   property int value: 0
@@ -34,7 +34,7 @@ Item {
   readonly property int barWidth: Style.space(142)
   readonly property int maxMessageWidth: root.mediaOsd ? Style.space(325) : Style.space(190)
 
-  // Nerd Font glyphs draw well outside their monospace cell, so the icon
+  // Some glyphs draw outside their monospace cell, so the icon
   // column is measured by ink rather than by advance width. Progress OSDs pin
   // it to the widest glyph the model can return, so the bar doesn't shift when
   // volume crosses an icon threshold.

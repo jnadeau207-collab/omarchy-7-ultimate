@@ -50,6 +50,8 @@ Item {
       radius: Tokens.radius.large
       border.color: Tokens.border.subtle
       border.width: 1
+      LayoutMirroring.enabled: Tokens.productProfile.rtl
+      LayoutMirroring.childrenInherit: true
 
       ColumnLayout {
         anchors.fill: parent
@@ -83,6 +85,7 @@ Item {
           delegate: Button {
             Layout.fillWidth: true
             text: modelData.label
+            semanticProfile: Tokens.productProfile
             onClicked: root.openDestination(modelData.id)
           }
         }

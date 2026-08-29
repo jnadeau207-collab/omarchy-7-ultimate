@@ -126,10 +126,12 @@ Item {
     Rectangle {
       anchors.fill: parent
       clip: true
-      color: Qt.rgba(0.11, 0.11, 0.12, 0.78)
+      color: Tokens.chrome.glass
       radius: Tokens.radius.large
-      border.color: "#59ffffff"
+      border.color: Tokens.chrome.edge
       border.width: 1
+      LayoutMirroring.enabled: Tokens.productProfile.rtl
+      LayoutMirroring.childrenInherit: true
 
       HoverHandler {
         onHoveredChanged: {
@@ -150,6 +152,7 @@ Item {
         SearchBox {
           id: searchField
           Layout.fillWidth: true
+          semanticProfile: Tokens.productProfile
           onTextChanged: root.filter = text
           Component.onCompleted: searchField.forceActiveFocus()
           Keys.onReturnPressed: {
@@ -221,7 +224,7 @@ Item {
           model: root.entries
           delegate: Item {
             width: ListView.view.width
-            height: 44
+            height: Semantics.minimumTarget(Tokens.productProfile)
             clip: true
             RowLayout {
               anchors.fill: parent
@@ -261,6 +264,7 @@ Item {
           visible: root.entries.length === 0
           Layout.fillWidth: true
           Layout.fillHeight: true
+          semanticProfile: Tokens.productProfile
           title: root.filter.length > 0 ? "No matching apps" : "Search for apps"
           message: root.filter.length > 0 ? "Try a different name." : "Chrome, Files, and Agent are pinned. Terminal and Vim stay available from search."
         }
@@ -270,6 +274,7 @@ Item {
           spacing: 8
 
           Button {
+            semanticProfile: Tokens.productProfile
             text: modeProfile && modeProfile.mode === "desktop" ? "Power User Mode" : "Desktop Mode"
             onClicked: {
               if (!modeProfile) return
@@ -280,18 +285,21 @@ Item {
           Item { Layout.fillWidth: true }
 
           IconButton {
-            iconText: "\uF023"
+            iconText: "\u26BF"
             tooltipText: "Lock"
+            semanticProfile: Tokens.productProfile
             onClicked: { Util.execDetached("omarchy-system-lock"); root.close() }
           }
           IconButton {
             iconText: "\u21BB"
             tooltipText: "Restart"
+            semanticProfile: Tokens.productProfile
             onClicked: { Util.execDetached("omarchy-system-reboot"); root.close() }
           }
           IconButton {
             iconText: "\u23FB"
             tooltipText: "Shut down"
+            semanticProfile: Tokens.productProfile
             danger: true
             onClicked: { Util.execDetached("omarchy-system-shutdown"); root.close() }
           }
