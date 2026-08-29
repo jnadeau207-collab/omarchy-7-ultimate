@@ -59,6 +59,7 @@ TASK_TRANSITIONS: dict[str, frozenset[str]] = {
 TERMINAL_TASK_STATES = frozenset({"succeeded", "failed", "cancelled"})
 ACTIVE_TASK_STATES = frozenset(TASK_TRANSITIONS) - TERMINAL_TASK_STATES
 SANDBOX_CAPABILITIES = frozenset({"system.info.read"})
+OPEN_FIRING_STATES = frozenset({"pending-unavailable", "accepted"})
 EXECUTION_AVAILABLE_CODE = "managed-execution.bubblewrap"
 EXECUTION_UNAVAILABLE_CODE = "sandbox.unavailable"
 RUN_TRANSITIONS: dict[str, frozenset[str]] = {
@@ -1381,6 +1382,13 @@ class ManagedWorkPlane:
         if not isinstance(intent, dict):
             raise ManagedWorkError("automation.intent", "Automation task intent must be an object.")
         reject_secret_fields(intent, field="automation task intent")
+        capability = intent.get("capability")
+        if capability not in SANDBOX_CAPABILITIES:
+            raise ManagedWorkError(
+                "automation.capability",
+                "Automation task templates require a catalog capability from the Phase 2 sandbox allowlist.",
+                detail="missing" if capability is None else str(capability),
+            )
         context_ids = data["contextIds"]
         if not isinstance(context_ids, list) or len(context_ids) > 64:
             raise ManagedWorkError("automation.context", "Automation context IDs must be a bounded array.")
@@ -1393,6 +1401,39 @@ class ManagedWorkPlane:
             "contextIds": normalized_contexts,
             "budget": ManagedWorkPlane._normalize_budget(data["budget"]),
         }
+
+    def _firing_execution_code(self) -> str:
+        return str(self.execution_status()["code"])
+
+    def _admitted_firing_state(self) -> str:
+        if self.execution_status()["available"]:
+            return "accepted"
+        return "pending-unavailable"
+
+    def _admit_firing_task(
+        self,
+        connection: Any,
+        actor: Actor,
+        row: Any,
+        firing_id: str,
+        detail: dict[str, Any],
+        now: float,
+    ) -> None:
+        template = json.loads(row["task_template_json"])
+        task = self.create_task(
+            actor,
+            title=template["title"],
+            intent=template["intent"],
+            context_ids=template["contextIds"],
+            budget=template["budget"],
+            idempotency_key=f"automation.admit.{firing_id}",
+            now=now,
+        )
+        detail["taskId"] = task["taskId"]
+        connection.execute(
+            "UPDATE automation_firings SET detail_json = ? WHERE firing_id = ?",
+            (canonical_json(detail), firing_id),
+        )
 
     @staticmethod
     def _automation_result(row: Any, firings: list[dict[str, Any]] | None = None) -> dict[str, Any]:
@@ -1566,7 +1607,7 @@ class ManagedWorkPlane:
             )
             if state_value == "disabled":
                 pending_rows = connection.execute(
-                    "SELECT firing_id, detail_json FROM automation_firings WHERE automation_id = ? AND state = 'pending-unavailable'",
+                    f"SELECT firing_id, detail_json FROM automation_firings WHERE automation_id = ? AND state IN ({', '.join(repr(state) for state in sorted(OPEN_FIRING_STATES))})",
                     (automation_id,),
                 ).fetchall()
                 for pending in pending_rows:
@@ -1652,7 +1693,7 @@ class ManagedWorkPlane:
                     detail = {
                         "missedCount": count,
                         "policy": policy,
-                        "executionCode": "managed-execution.not-integrated",
+                        "executionCode": self._firing_execution_code(),
                     }
                     connection.execute(
                         "INSERT OR IGNORE INTO automation_firings(firing_id, automation_id, principal_id, trigger_kind, trigger_id, due_at, state, detail_json, created_at) VALUES (?, ?, ?, 'schedule', ?, ?, 'skipped', ?, ?)",
@@ -1670,24 +1711,28 @@ class ManagedWorkPlane:
                 for due_at in selected:
                     firing_id = _new_id("firing")
                     trigger_id = f"schedule.{int(due_at * 1_000_000)}"
+                    firing_state = self._admitted_firing_state()
                     detail = {
                         "missedCount": count,
                         "policy": policy,
-                        "executionCode": "managed-execution.not-integrated",
+                        "executionCode": self._firing_execution_code(),
                     }
                     cursor = connection.execute(
-                        "INSERT OR IGNORE INTO automation_firings(firing_id, automation_id, principal_id, trigger_kind, trigger_id, due_at, state, detail_json, created_at) VALUES (?, ?, ?, 'schedule', ?, ?, 'pending-unavailable', ?, ?)",
+                        "INSERT OR IGNORE INTO automation_firings(firing_id, automation_id, principal_id, trigger_kind, trigger_id, due_at, state, detail_json, created_at) VALUES (?, ?, ?, 'schedule', ?, ?, ?, ?, ?)",
                         (
                             firing_id,
                             row["automation_id"],
                             actor.principal_id,
                             trigger_id,
                             due_at,
+                            firing_state,
                             canonical_json(detail),
                             current,
                         ),
                     )
                     if cursor.rowcount:
+                        if firing_state == "accepted":
+                            self._admit_firing_task(connection, actor, row, firing_id, detail, current)
                         firing = connection.execute("SELECT * FROM automation_firings WHERE firing_id = ?", (firing_id,)).fetchone()
                         created.append(self._firing_result(firing))
                 connection.execute(
@@ -1799,11 +1844,11 @@ class ManagedWorkPlane:
                 detail = {
                     "event": event_projection,
                     "policy": automation_policy,
-                    "executionCode": "managed-execution.not-integrated",
+                    "executionCode": self._firing_execution_code(),
                 }
-                firing_state = "pending-unavailable"
+                firing_state = self._admitted_firing_state()
                 pending = connection.execute(
-                    "SELECT * FROM automation_firings WHERE automation_id = ? AND state = 'pending-unavailable' ORDER BY row_id DESC LIMIT 1",
+                    f"SELECT * FROM automation_firings WHERE automation_id = ? AND state IN ({', '.join(repr(state) for state in sorted(OPEN_FIRING_STATES))}) ORDER BY row_id DESC LIMIT 1",
                     (row["automation_id"],),
                 ).fetchone()
                 if pending is not None and automation_policy["coalescing"] == "earliest":
@@ -1836,6 +1881,8 @@ class ManagedWorkPlane:
                     ),
                 )
                 if cursor.rowcount:
+                    if firing_state == "accepted":
+                        self._admit_firing_task(connection, actor, row, firing_id, detail, current)
                     firing = connection.execute("SELECT * FROM automation_firings WHERE firing_id = ?", (firing_id,)).fetchone()
                     firings.append(self._firing_result(firing))
             for automation_id in {str(row["automation_id"]) for row in novel}:

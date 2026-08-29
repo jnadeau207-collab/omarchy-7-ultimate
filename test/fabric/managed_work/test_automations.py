@@ -23,6 +23,27 @@ class AutomationTests(unittest.TestCase):
             call()
         self.assertEqual(code, caught.exception.code)
 
+    def admitted_state(self) -> str:
+        if ManagedWorkPlane.execution_status()["available"]:
+            return "accepted"
+        return "pending-unavailable"
+
+    def assert_honest_firing(self, firing: dict[str, object], *, skipped: bool = False) -> None:
+        status = ManagedWorkPlane.execution_status()
+        detail = firing["detail"]
+        assert isinstance(detail, dict)
+        self.assertEqual(status["code"], detail["executionCode"])
+        if skipped:
+            self.assertEqual("skipped", firing["state"])
+            self.assertNotIn("taskId", detail)
+            return
+        self.assertEqual(self.admitted_state(), firing["state"])
+        if firing["state"] == "accepted":
+            task = self.plane.get_task(ACTOR, str(detail["taskId"]))
+            self.assertEqual("draft", task["state"])
+            return
+        self.assertNotIn("taskId", detail)
+
     def create_interval(
         self,
         *,
@@ -48,7 +69,7 @@ class AutomationTests(unittest.TestCase):
         self.assertEqual(5, result["missedCount"])
         self.assertEqual(1, result["createdCount"])
         self.assertEqual(1_300, result["firings"][0]["dueAt"])
-        self.assertEqual("pending-unavailable", result["firings"][0]["state"])
+        self.assert_honest_firing(result["firings"][0])
         self.assertEqual(
             ManagedWorkPlane.execution_status()["available"],
             result["execution"]["available"],
@@ -140,7 +161,7 @@ class AutomationTests(unittest.TestCase):
         )
         self.assertEqual(1, first["matchedCount"])
         self.assertEqual(0, duplicate["matchedCount"])
-        self.assertEqual("pending-unavailable", first["firings"][0]["state"])
+        self.assert_honest_firing(first["firings"][0])
         self.assert_code(
             "event.conflict",
             lambda: self.plane.ingest_event(
@@ -160,12 +181,12 @@ class AutomationTests(unittest.TestCase):
             occurred_at=1_104,
             now=1_105,
         )
-        self.assertEqual("pending-unavailable", newest["firings"][0]["state"])
+        self.assert_honest_firing(newest["firings"][0])
         states = [
             firing["state"]
             for firing in self.plane.query(ACTOR, "agent.automations", now=1_106)["items"][0]["firings"]
         ]
-        self.assertEqual(["pending-unavailable", "cancelled"], states)
+        self.assertEqual([self.admitted_state(), "cancelled"], states)
         disabled = self.plane.set_automation_state(
             ACTOR,
             automation["automationId"],
@@ -221,8 +242,8 @@ class AutomationTests(unittest.TestCase):
             occurred_at=1_012,
             now=1_013,
         )
-        self.assertEqual("pending-unavailable", first["firings"][0]["state"])
-        self.assertEqual("skipped", later["firings"][0]["state"])
+        self.assert_honest_firing(first["firings"][0])
+        self.assert_honest_firing(later["firings"][0], skipped=True)
         self.assertEqual("earliest", later["firings"][0]["detail"]["coalesced"]["policy"])
 
     def test_calendar_run_once_selects_latest_even_when_coalescing_is_earliest(self) -> None:
@@ -298,6 +319,22 @@ class AutomationTests(unittest.TestCase):
         self.assertEqual(1_060, self.plane.get_automation(ACTOR, automation["automationId"])["nextDueAt"])
         count = self.plane.store.execute("SELECT COUNT(*) FROM automation_firings").fetchone()[0]
         self.assertEqual(0, count)
+
+    def test_task_template_without_sandbox_capability_is_rejected(self) -> None:
+        broken = template()
+        broken["intent"] = {"goal": "inventory", "readOnly": True}
+        self.assert_code(
+            "automation.capability",
+            lambda: self.plane.create_automation(
+                ACTOR,
+                name="No capability",
+                task_template=broken,
+                trigger={"kind": "event", "topic": "test.event"},
+                policy=policy(),
+                idempotency_key="automation.no-capability",
+                now=1_000,
+            ),
+        )
 
 
 if __name__ == "__main__":
