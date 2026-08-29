@@ -26,7 +26,7 @@ calls="$test_tmp/theme-calls"
 touch "$test_tmp/home/.config/chromium/SingletonLock"
 HOME="$test_tmp/home" PATH="$mock_bin:$PATH" OMARCHY_TEST_THEME_CALLS="$calls" \
   bash "$ROOT/install/user/theme.sh"
-grep -Fx 'Tokyo Night' "$calls" >/dev/null || fail "user theme setup seeds Tokyo Night when no theme exists"
+grep -Fx 'Ultimate Dark' "$calls" >/dev/null || fail "user theme setup seeds Ultimate Dark when no theme exists"
 [[ -f $test_tmp/home/.config/chromium/SingletonLock ]] || fail "runtime user theme setup preserves Chromium's singleton lock"
 
 : >"$calls"
