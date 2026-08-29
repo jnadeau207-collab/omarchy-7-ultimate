@@ -60,6 +60,11 @@ def proof_chrome() -> dict | None:
 def csd_button(win: dict, which: str) -> tuple[int, int]:
   x, y = win["at"]
   w = win["size"][0]
+  klass = str(win.get("class") or "").lower()
+  # Chromium's compositor box is 12px up-left of the painted frame. Caption
+  # glyphs sit on the visible frame, not in that inset.
+  if "chrom" in klass:
+    x, y, w = x + 12, y + 12, w - 12
   # Measured from grim of Google Chrome CSD on this desktop:
   # float 1200x740 glyphs at y+25..34, centers x+w-65 / -33 / -16
   # maximized 1920x1032 glyphs at y+15..24, centers x+w-84 / -52 / -18
@@ -151,6 +156,7 @@ def main() -> int:
   report: dict = {"ok": False}
   pointer = None
   saved_cursor = []
+  saved_chrome = []
   chrome_addr = None
   try:
     saved_cursor = tuck_cursor_windows()
@@ -166,6 +172,15 @@ def main() -> int:
       raise ProofError("refusing to AbsPointer Cursor")
     as_user(["omarchy-shell", "window", "moveTo", chrome_addr, "360", "146"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", chrome_addr, "1200", "740"], wait=True, timeout=5)
+    for other in chrome_windows():
+      if other.get("address") == chrome_addr:
+        continue
+      saved_chrome.append({
+        "address": other.get("address"),
+        "at": list(other.get("at") or [0, 0]),
+        "size": list(other.get("size") or [1200, 740]),
+      })
+      as_user(["omarchy-shell", "window", "minimize", other["address"]], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "focus", chrome_addr], wait=True, timeout=5)
     time.sleep(1.2)
     chrome = client_by_addr(chrome_addr)
@@ -267,6 +282,10 @@ def main() -> int:
       pointer.close()
     try:
       restore_cursor_windows(saved_cursor)
+    except Exception:
+      pass
+    try:
+      restore_cursor_windows(saved_chrome)
     except Exception:
       pass
     try:
