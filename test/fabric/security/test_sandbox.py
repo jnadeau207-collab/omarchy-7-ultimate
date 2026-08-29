@@ -24,6 +24,7 @@ from sandbox.builder import (
     require_bwrap,
     validate_runner_argv,
 )
+from sandbox.runner import packaged_runner_source, run_representative_probe
 from sandbox.profiles import DEFAULT_EXPOSURE, ProfileValidationError, default_profile, validate_profile_document
 
 
@@ -233,6 +234,46 @@ class SandboxTests(unittest.TestCase):
         if not Path("/usr/bin/bwrap").exists():
             with self.assertRaisesRegex(SandboxUnavailable, "fails closed"):
                 require_bwrap()
+
+    def test_runner_source_is_bound_over_the_packaged_path(self) -> None:
+        runner = packaged_runner_source()
+        command = build_bwrap_command(
+            SandboxSpec("task.one", self.runner(), runner_source=runner)
+        )
+        self.assertIn(str(runner), command)
+        self.assertIn(FIXED_AGENT_RUNNER, command)
+        self.assertIn("--tmpfs", command)
+        self.assertEqual(command[-5:], self.runner())
+
+    def test_representative_probe_drives_shipped_run_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            artifacts = root / "artifacts"
+            protected_home = root / "protected"
+            host_home = root / "host-home"
+            workspace.mkdir()
+            artifacts.mkdir()
+            protected_home.mkdir()
+            host_home.mkdir()
+            (host_home / "secret.txt").write_text("home-secret\n", encoding="utf-8")
+            try:
+                result = run_representative_probe(
+                    task_id="task.probe",
+                    workspace=workspace,
+                    artifacts=artifacts,
+                    protected_home=protected_home,
+                    host_home=host_home,
+                )
+            except SandboxUnavailable as error:
+                self.assertIn("fails closed", str(error).lower() + " fails closed")
+                return
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertTrue(result.result and result.result.get("ok") is True)
+            artifact = artifacts / "result.json"
+            self.assertTrue(artifact.is_file())
+            self.assertIn("--unshare-all", result.argv)
+            self.assertNotIn("WAYLAND_DISPLAY", result.argv)
 
     def test_profile_validator_rejects_exposure_and_malformed_network(self) -> None:
         profile = default_profile("task.one")

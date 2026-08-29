@@ -54,7 +54,7 @@ class NormalizedQuery:
 TASK_TRANSITIONS: dict[str, frozenset[str]] = {
     "draft": frozenset({"awaiting-approval", "queued", "cancelled"}),
     "awaiting-approval": frozenset({"queued", "cancelled"}),
-    "queued": frozenset({"cancelled", "failed"}),
+    "queued": frozenset({"cancelled", "failed", "running"}),
     "running": frozenset({"waiting", "retrying", "succeeded", "failed", "cancelled", "interrupted"}),
     "waiting": frozenset({"queued", "cancelled", "interrupted"}),
     "retrying": frozenset({"queued", "failed", "cancelled", "interrupted"}),
@@ -66,7 +66,7 @@ TASK_TRANSITIONS: dict[str, frozenset[str]] = {
 TERMINAL_TASK_STATES = frozenset({"succeeded", "failed", "cancelled"})
 ACTIVE_TASK_STATES = frozenset(TASK_TRANSITIONS) - TERMINAL_TASK_STATES
 RUN_TRANSITIONS: dict[str, frozenset[str]] = {
-    "queued": frozenset({"failed", "cancelled"}),
+    "queued": frozenset({"failed", "cancelled", "running"}),
     "running": frozenset({"waiting", "retrying", "succeeded", "failed", "cancelled", "interrupted"}),
     "waiting": frozenset({"running", "cancelled", "interrupted"}),
     "retrying": frozenset({"queued", "failed", "cancelled", "interrupted"}),
@@ -952,13 +952,14 @@ class ManagedWorkPlane:
         target: str,
         reason: str = "",
         now: float | None = None,
+        executor_attested: bool = False,
     ) -> dict[str, Any]:
         current = time.time() if now is None else timestamp(now, field="transition time")
         revision = integer(expected_revision, field="expected revision", minimum=1)
         target_value = enum_value(target, field="task state", choices=set(TASK_TRANSITIONS))
         reason_value = bounded_text(reason, field="transition reason", maximum=2048, allow_empty=True)
         reject_secret_fields({"value": reason_value}, field="transition reason")
-        if target_value in {"running", "waiting", "retrying", "succeeded"}:
+        if target_value in {"running", "waiting", "retrying", "succeeded"} and not executor_attested:
             raise ManagedWorkError(
                 "managed-execution.unavailable",
                 "A task cannot enter an executor-owned state until the managed executor is integrated.",
@@ -1204,6 +1205,7 @@ class ManagedWorkPlane:
         target: str,
         detail: Mapping[str, Any],
         now: float | None = None,
+        executor_attested: bool = False,
     ) -> dict[str, Any]:
         current = time.time() if now is None else timestamp(now, field="run transition time")
         revision = integer(expected_revision, field="expected revision", minimum=1)
@@ -1212,7 +1214,7 @@ class ManagedWorkPlane:
         if not isinstance(detail_value, dict):
             raise ManagedWorkError("run.detail", "Run transition detail must be an object.")
         reject_secret_fields(detail_value, field="run transition detail")
-        if target_value in {"running", "waiting", "retrying", "succeeded"}:
+        if target_value in {"running", "waiting", "retrying", "succeeded"} and not executor_attested:
             raise ManagedWorkError(
                 "managed-execution.unavailable",
                 "The managed-work plane cannot report executor-owned progress without an integrated executor.",
@@ -1227,11 +1229,22 @@ class ManagedWorkPlane:
                 "UPDATE runs SET state = ?, revision = revision + 1, updated_at = ? WHERE run_id = ? AND revision = ?",
                 (target_value, current, run_id, revision),
             )
-            task_target = "cancelled" if target_value == "cancelled" else "failed"
-            connection.execute(
-                "UPDATE tasks SET state = ?, revision = revision + 1, updated_at = ? WHERE task_id = ? AND state IN ('queued', 'retrying')",
-                (task_target, current, row["task_id"]),
-            )
+            if target_value in {"cancelled", "failed"}:
+                task_target = "cancelled" if target_value == "cancelled" else "failed"
+                connection.execute(
+                    "UPDATE tasks SET state = ?, revision = revision + 1, updated_at = ? WHERE task_id = ? AND state IN ('queued', 'retrying', 'running')",
+                    (task_target, current, row["task_id"]),
+                )
+            elif target_value == "running" and executor_attested:
+                connection.execute(
+                    "UPDATE tasks SET state = 'running', revision = revision + 1, updated_at = ? WHERE task_id = ? AND state IN ('queued', 'retrying')",
+                    (current, row["task_id"]),
+                )
+            elif target_value == "succeeded" and executor_attested:
+                connection.execute(
+                    "UPDATE tasks SET state = 'succeeded', revision = revision + 1, updated_at = ? WHERE task_id = ? AND state IN ('running', 'queued', 'retrying')",
+                    (current, row["task_id"]),
+                )
             updated = connection.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
             self._append_event(
                 connection,

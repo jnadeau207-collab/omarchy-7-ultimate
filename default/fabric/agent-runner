@@ -1,0 +1,87 @@
+#!/usr/bin/python3
+"""Packaged managed-task runner. Executes only inside the Fabric sandbox."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import pathlib
+import sys
+
+
+FORBIDDEN_ENV = (
+    "WAYLAND_DISPLAY",
+    "DISPLAY",
+    "DBUS_SESSION_BUS_ADDRESS",
+    "SSH_AUTH_SOCK",
+    "GNOME_KEYRING_CONTROL",
+    "GNUPGHOME",
+    "OMARCHY_FABRIC_SOCKET",
+)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="omarchy-fabric-agent-runner")
+    parser.add_argument("--task-id", required=True)
+    parser.add_argument("--manifest-fd", required=True)
+    parser.add_argument("--output-fd", required=False)
+    parser.add_argument("--input-fd", required=False)
+    parser.add_argument("--model", required=False)
+    parser.add_argument("--reasoning-effort", required=False)
+    args = parser.parse_args()
+
+    leaked = [name for name in FORBIDDEN_ENV if name in os.environ]
+    if leaked:
+        print("forbidden-env:" + ",".join(leaked), file=sys.stderr)
+        return 2
+
+    if pathlib.Path("/run/omarchy/fabric.sock").exists():
+        print("main-fabric-socket-visible", file=sys.stderr)
+        return 3
+    if pathlib.Path("/run/user").exists():
+        print("session-runtime-visible", file=sys.stderr)
+        return 4
+    if pathlib.Path("/home").exists():
+        for child in pathlib.Path("/home").iterdir():
+            print(f"home-entry-visible:{child.name}", file=sys.stderr)
+            return 5
+
+    manifest = ""
+    try:
+        with os.fdopen(int(args.manifest_fd), "r", closefd=False) as handle:
+            manifest = handle.read()
+    except OSError:
+        manifest = ""
+    if not manifest.strip():
+        workspace_manifest = pathlib.Path(f"/workspace/{args.task_id}/manifest.json")
+        if workspace_manifest.is_file():
+            manifest = workspace_manifest.read_text(encoding="utf-8")
+    if not manifest.strip():
+        print("empty-manifest", file=sys.stderr)
+        return 6
+
+    result = {
+        "ok": True,
+        "taskId": args.task_id,
+        "isolation": "bubblewrap",
+        "manifestBytes": len(manifest.encode("utf-8")),
+    }
+    payload = json.dumps(result, separators=(",", ":")) + "\n"
+
+    artifact = pathlib.Path(f"/artifacts/{args.task_id}/result.json")
+    if artifact.parent.is_dir():
+        artifact.write_text(payload, encoding="utf-8")
+
+    if args.output_fd:
+        with os.fdopen(int(args.output_fd), "w", closefd=False) as handle:
+            handle.write(payload)
+            handle.flush()
+    else:
+        sys.stdout.write(payload)
+        sys.stdout.flush()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
