@@ -328,6 +328,14 @@ def launch_feet(n: int) -> None:
     as_user(["omarchy-shell", "window", "restoreNormal", foot["address"]], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", foot["address"], "880", "560"], wait=True, timeout=5)
 
+  def floated() -> bool:
+    mapped = feet()
+    if len(mapped) < n:
+      return False
+    return all(abs(item["size"][0] - 880) <= 24 and abs(item["size"][1] - 560) <= 24 for item in mapped)
+
+  wait_until("foot windows are overlapping floats", 8, floated)
+
 
 def layer_named(ns: str) -> bool:
   data = json.loads(hypr("-j", "layers") or "{}")

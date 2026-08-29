@@ -230,6 +230,13 @@ launch_feet() {
     omarchy-shell window restoreNormal "$addr" >/dev/null 2>&1 || true
     omarchy-shell window resizeTo "$addr" 880 560 >/dev/null 2>&1 || true
   done < <(foot_addresses)
+  local deadline=$((SECONDS + 8)) ready=0
+  while ((SECONDS < deadline)); do
+    ready=$(hyprctl -j clients | jq '[.[] | select(.class | test("^foot$")) | select((.size[0] - 880 | fabs) <= 24 and (.size[1] - 560 | fabs) <= 24)] | length')
+    (( ready >= want )) && break
+    sleep 0.2
+  done
+  (( ready >= want )) || fail "foot windows are overlapping floats" "ready=$ready want=$want"
 }
 
 restore_native_windows() {
