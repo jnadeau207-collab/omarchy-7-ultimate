@@ -2,6 +2,8 @@
 
 Humans and agents share one semantic capability graph. This file is the agent-side bar. `WINDOWS_NATIVE_ACCEPTANCE.md` is the human smoke test. `WINDOWS_7_ULTIMATE_PARITY.md` is the job list those capabilities must cover.
 
+**Historical freeze:** this matrix was audited at `1334ba30` on 2026-08-26. Several rows are now false against the tree (the capability catalog exists; Agent Center exists as a read-only host). Do not treat the table below as live status. Current execution is [`plans/ultimate-continue-2026-08-29.md`](plans/ultimate-continue-2026-08-29.md). The OS-level pass bar in **Pass bar** still applies.
+
 **Identity lock:** Windows 7 Ultimate's complete, obvious, mouse-native desktop model rebuilt for 2026, with an agent-native operating fabric underneath every system capability. Not Windows-like Omarchy with AI tools.
 
 Status (tree audited at `1334ba30` on 2026-08-26; metal windowing baseline HDMI-A-1 1920×1080):
