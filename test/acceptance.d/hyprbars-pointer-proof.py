@@ -324,6 +324,9 @@ def launch_feet(n: int) -> None:
     as_user(["bash", "-lc", f"nohup foot >/tmp/omarchy-foot-{i}.log 2>&1 & disown"], wait=True)
     time.sleep(0.45)
   wait_until(f"{n} foot windows", 12, lambda: len(feet()) >= n)
+  for foot in feet():
+    as_user(["omarchy-shell", "window", "restoreNormal", foot["address"]], wait=True, timeout=5)
+    as_user(["omarchy-shell", "window", "resizeTo", foot["address"], "880", "560"], wait=True, timeout=5)
 
 
 def layer_named(ns: str) -> bool:
