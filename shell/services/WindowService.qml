@@ -402,6 +402,31 @@ QtObject {
       geom = root._monitorGeom(addr)
       var csd = WindowModel.usesWaylandCsd({ class: c.class, appId: c.initialClass || c.class, initialClass: c.initialClass })
       var remembered = key && root.placements[key] && root.placements[key].width ? root.placements[key] : null
+      var current = root._logicalClientRect(c)
+      var areaNow = WindowModel.workArea(geom)
+      // A parented dialog (or any toolkit-placed window) already has a real
+      // compositor box. Cascading it 280ms later leaves children behind.
+      if (!remembered && current && Number(current.width) > 0 && areaNow && areaNow.width) {
+        if (Math.abs(Number(current.x) - areaNow.x) > 24 || Math.abs(Number(current.y) - areaNow.y) > 24) {
+          known[addr] = true
+          continue
+        }
+      }
+      var pid = Number(c.pid || 0)
+      if (!remembered && pid) {
+        var sibling = false
+        var j
+        for (j = 0; j < list.length; j++) {
+          if (!list[j] || Number(list[j].pid || 0) !== pid) continue
+          if (root._canonAddr(list[j].address) === addr) continue
+          sibling = true
+          break
+        }
+        if (sibling) {
+          known[addr] = true
+          continue
+        }
+      }
       var area = WindowModel.workArea(geom)
       if (remembered && geom && geom.width && (WindowModel.isSnapped(remembered, geom, 8, 32) || WindowModel.isSnapped(remembered, geom, 8, 0) || WindowModel.coversWorkArea(remembered, geom)))
         remembered = null

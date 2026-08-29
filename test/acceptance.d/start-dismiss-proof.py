@@ -154,6 +154,7 @@ def main() -> int:
     wait_until("click-through foot mapped", 8, lambda: proof_foot() is not None)
     foot = proof_foot()
     foot_addr = foot["address"]
+    as_user(["omarchy-shell", "window", "restoreNormal", foot["address"]], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "moveTo", foot["address"], "900", "80"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", foot["address"], "640", "400"], wait=True, timeout=5)
 
