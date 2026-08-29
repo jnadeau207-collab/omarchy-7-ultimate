@@ -1,11 +1,11 @@
 # Welcome to Omarchy!
 
-Omarchy is an [omakase](https://manuals.omamix.org/3/omacom/76/omakase-computing) Linux distribution based on [Arch](https://archlinux.org/), the tiling window manager [Hyprland](https://hypr.land/), and the desktop construction-kit [Quickshell](https://quickshell.org/). It ships with everything a modern, savvy computer user needs to be productive immediately. From [Neovim](https://neovim.io/) (btw) to Chromium, [Obsidian](https://obsidian.md/) to LibreOffice, and Kdenlive to OBS Studio. Hell, even a retro Winamp-style music player is there!
+Omarchy 7 Ultimate is a mouse-native desktop on [Arch](https://archlinux.org/), [Hyprland](https://hypr.land/), and [Quickshell](https://quickshell.org/). The default is **Desktop Mode**: Start, Superbar, window captions, Files, Settings, and Agent Center are on the glass. You should be able to own the PC without a terminal and without memorizing a hotkey.
 
-This isn't just a grab bag of preinstalled packages, though. It's a complete system designed with both aesthetics and productivity in mind. Because a _beautiful_ system is a _motivating_ system, and productivity has always been [downstream from motivation](https://world.hey.com/dhh/beautiful-motivations-6fef7c73). There's zero bloat here: Just everything I use.
+Click **Start** (the orb on the Superbar) for apps and places. **Files** and **Settings** are on the Superbar. Right-click a running app to pin it. Caption buttons minimize, maximize, and close. That is the product.
 
-It's true that developing an eye for the beauty of a TUI-heavy, theme-delighted, tiling-window-managed system like Omarchy can be an acquired taste. But that's why you're here, isn't it? To experience something a little outside of your comfort zone? To embark on a little bit of an adventure into a new way of working with computers? I hope so.
+**Power User Mode** is still Omarchy as a keyboard-first tiling workstation — Neovim, Super+Space, dwindle layouts, the original menu. It is a profile over the same system, not a second OS. Toggle it from Start. The chapters that teach tiling and Super chords describe Power User Mode.
 
-Omarchy isn't like Windows and it's not like macOS either. It's not trying to be as familiar as possible. It's trying to be beautiful and _better_. Embrace the Linux-ness of it all. Manually editing some config files, sure. Heavy on the terminal, definitely.
+This is not Windows with ads, telemetry, or a Microsoft account. It is also not “open a terminal to own the machine.” Agents share the same system capabilities humans use; they do not get a private shell-string back door.
 
 Let's get started with the basics.
