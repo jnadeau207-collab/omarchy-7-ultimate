@@ -158,10 +158,18 @@ def main() -> int:
       w, h = client["size"]
       return x >= 800 and y < 220 and w >= 560 and h >= 300
 
+    def foot_sized():
+      client = proof_foot()
+      if not client:
+        return False
+      w, h = client["size"]
+      return w >= 560 and w <= 720 and h >= 300 and h <= 480
+
     for _attempt in range(4):
       as_user(["omarchy-shell", "window", "restoreNormal", foot_addr], wait=True, timeout=5)
-      as_user(["omarchy-shell", "window", "moveTo", foot_addr, "900", "80"], wait=True, timeout=5)
       as_user(["omarchy-shell", "window", "resizeTo", foot_addr, "640", "400"], wait=True, timeout=5)
+      wait_until("click-through foot sized", 4, foot_sized)
+      as_user(["omarchy-shell", "window", "moveTo", foot_addr, "900", "80"], wait=True, timeout=5)
       time.sleep(0.25)
       live = proof_foot()
       report["click_through_foot"] = None if not live else {"at": live.get("at"), "size": live.get("size")}
