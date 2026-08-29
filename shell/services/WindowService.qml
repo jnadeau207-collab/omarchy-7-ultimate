@@ -413,7 +413,7 @@ QtObject {
         }
       }
       var pid = Number(c.pid || 0)
-      if (!remembered && pid) {
+      if (pid) {
         var sibling = false
         var j
         for (j = 0; j < list.length; j++) {
