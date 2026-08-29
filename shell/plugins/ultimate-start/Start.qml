@@ -170,6 +170,7 @@ Item {
                   source: root.appLibrary ? root.appLibrary.iconSource(modelData.icon || modelData.desktopId) : ""
                 }
                 Text {
+                  textFormat: Text.PlainText
                   width: parent.width
                   horizontalAlignment: Text.AlignHCenter
                   elide: Text.ElideRight
@@ -219,6 +220,7 @@ Item {
                 source: root.appLibrary ? root.appLibrary.iconSource(modelData.icon) : ""
               }
               Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: root.appLibrary ? root.appLibrary.entryName(modelData) : ""
                 color: Tokens.text.primary

@@ -105,6 +105,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       visible: icon.status !== Image.Ready
       anchors.centerIn: parent
       text: root.label ? root.label.charAt(0).toUpperCase() : "?"
@@ -185,6 +186,7 @@ Item {
         spacing: 6
 
         Text {
+          textFormat: Text.PlainText
           width: peekCol.width
           text: root.label
           color: Tokens.text.primary
@@ -206,6 +208,7 @@ Item {
             }
 
             Text {
+              textFormat: Text.PlainText
               anchors.verticalCenter: parent.verticalCenter
               anchors.left: parent.left
               anchors.leftMargin: 6
@@ -298,6 +301,7 @@ Item {
             visible: modelData.action !== "close" || root.running
 
             Text {
+              textFormat: Text.PlainText
               anchors.verticalCenter: parent.verticalCenter
               anchors.left: parent.left
               anchors.leftMargin: 8

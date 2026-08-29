@@ -36,6 +36,7 @@ Column {
   }
 
   Text {
+    textFormat: Text.PlainText
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.title !== ""
     text: Semantics.text(root.semanticProfile, root.title)
@@ -46,6 +47,7 @@ Column {
   }
 
   Text {
+    textFormat: Text.PlainText
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.explanation !== ""
     text: Semantics.text(root.semanticProfile, root.explanation)
@@ -89,6 +91,7 @@ Column {
     color: root.semanticProfile ? root.semanticProfile.surfaceRaised : Tokens.surface.raised
 
     Text {
+      textFormat: Text.PlainText
       id: detailText
       anchors.fill: parent
       anchors.margins: Style.space(6)

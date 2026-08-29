@@ -222,6 +222,7 @@ ShellRoot {
           spacing: Style.space(12)
 
           Text {
+            textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.displayName + " cannot start"
             color: Tokens.text.primary
@@ -231,6 +232,7 @@ ShellRoot {
           }
 
           Text {
+            textFormat: Text.PlainText
             width: parent.width
             text: root.routeCatalogError
             color: Tokens.text.secondary

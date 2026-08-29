@@ -170,6 +170,7 @@ Item {
             spacing: Style.space(3)
 
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.title : "Settings"
               color: Tokens.text.primary
               font.family: Style.font.family
@@ -182,6 +183,7 @@ Item {
             }
 
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."
               color: Tokens.text.secondary
               font.family: Style.font.family
@@ -235,6 +237,7 @@ Item {
                   spacing: Style.space(10)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: SettingsModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
                     font.family: Style.font.family
@@ -259,6 +262,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   text: SettingsModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
                   font.family: Style.font.family
@@ -278,6 +282,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.domainVisible
                   text: SettingsModel.provenance(root.queryState)
                   color: Tokens.text.disabled
@@ -290,6 +295,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.queryState.selectedResourceId !== ""
                   text: "Exact resource: " + SettingsModel.clippedText(root.queryState.selectedResourceId, 180)
                   color: Tokens.text.disabled
@@ -302,6 +308,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.queryState.error && root.queryState.error.detail
                   text: "Detail: " + SettingsModel.clippedText(root.queryState.error ? root.queryState.error.detail : "", 480)
                   color: Tokens.text.disabled
@@ -319,6 +326,7 @@ Item {
                   spacing: Style.space(3)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: "RECOVERY PATHS"
                     color: Tokens.state.warning
                     font.family: Style.font.family
@@ -331,6 +339,7 @@ Item {
                     model: root.queryState.recoveryActions
 
                     delegate: Text {
+                      textFormat: Text.PlainText
                       required property var modelData
 
                       text: "\u2022 " + SettingsModel.clippedText(modelData, 320)
@@ -381,6 +390,7 @@ Item {
                       spacing: Style.space(8)
 
                       Text {
+                        textFormat: Text.PlainText
                         text: modelData.title
                         color: Tokens.text.primary
                         font.family: Style.font.family
@@ -400,6 +410,7 @@ Item {
                     }
 
                     Text {
+                      textFormat: Text.PlainText
                       text: modelData.detail
                       color: Tokens.text.secondary
                       font.family: Style.font.family
@@ -411,6 +422,7 @@ Item {
                     }
 
                     Text {
+                      textFormat: Text.PlainText
                       text: modelData.providerId
                       color: Tokens.text.disabled
                       font.family: Style.font.family
@@ -475,6 +487,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   text: root.queryState.query ? root.queryState.query.coverage : ""
                   color: Tokens.text.secondary
                   font.family: Style.font.family
@@ -486,6 +499,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.queryState.operationActions.length > 0
                   text: "Declared provider operations: " + root.queryState.operationActions.join(", ") +
                     ". Settings exposes no preflight, approval, or execution control until the durable coordinator is integrated."
@@ -542,6 +556,7 @@ Item {
               Accessible.name: clippedNotice.text
 
               Text {
+                textFormat: Text.PlainText
                 id: clippedNotice
                 anchors.fill: parent
                 anchors.margins: Style.space(10)
