@@ -13,6 +13,12 @@ Item {
   property var manifest: null
   property bool opened: false
 
+  SemanticProfile {
+    id: productProfile
+    profileId: "product"
+    rtl: Qt.application.layoutDirection === Qt.RightToLeft
+  }
+
   function open(payloadJson) {
     if (root.shell && root.shell.transientCoordinator)
       root.shell.transientCoordinator.request(root)
@@ -50,7 +56,7 @@ Item {
       radius: Tokens.radius.large
       border.color: Tokens.border.subtle
       border.width: 1
-      LayoutMirroring.enabled: Tokens.productProfile.rtl
+      LayoutMirroring.enabled: productProfile.rtl
       LayoutMirroring.childrenInherit: true
 
       ColumnLayout {
@@ -85,7 +91,7 @@ Item {
           delegate: Button {
             Layout.fillWidth: true
             text: modelData.label
-            semanticProfile: Tokens.productProfile
+            semanticProfile: productProfile
             onClicked: root.openDestination(modelData.id)
           }
         }
