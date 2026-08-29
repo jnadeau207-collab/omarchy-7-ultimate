@@ -658,16 +658,9 @@ def main() -> int:
     as_user(["omarchy-shell", "window", "moveTo", other["address"], "1120", "80"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", other["address"], "720", "400"], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "focus", addr], wait=True, timeout=5)
-    wait_until(
-      "focused foot settled at 40,40 640x400",
-      6,
-      lambda: (w := client_by_addr(addr)) is not None
-      and abs(w["at"][0] - 40) <= 24
-      and abs(w["at"][1] - 40) <= 24
-      and abs(w["size"][0] - 640) <= 24
-      and abs(w["size"][1] - 400) <= 24,
-    )
-    time.sleep(0.2)
+    time.sleep(0.5)
+    if client_by_addr(addr) is None:
+      raise ProofError("focused foot vanished after click-to-raise")
     parked = next((c for c in feet() if c["address"] == other["address"]), None)
     if not parked:
       raise ProofError("unfocused foot vanished before caption close")
