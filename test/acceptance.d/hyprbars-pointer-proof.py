@@ -464,11 +464,16 @@ def main() -> int:
     x, y = foot["at"]
     w, h = foot["size"]
     report["foot0"] = {"addr": addr, "at": [x, y], "size": [w, h]}
-    barx, bary = x + w // 2, y - 16
+    as_user(["omarchy-shell", "window", "focus", addr], wait=True, timeout=5)
+    as_user(["omarchy-shell", "shell", "hide", "omarchy.ultimate-snap-chooser"], wait=True, timeout=5)
+    as_user(["omarchy-shell", "shell", "hide", "omarchy.ultimate-start"], wait=True, timeout=5)
+    as_user(["omarchy-shell", "notifications", "dismissAll"], wait=True, timeout=5)
+    # Left padding of the bar, not the title string and not the RTL buttons.
+    barx, bary = x + 48, y - 16 if y >= 24 else y + 16
     pointer.move(barx, bary, gw, gh)
     time.sleep(0.2)
     wait_until("abs pointer reached the title bar", 4, lambda: cursor_near(barx, bary))
-    pointer.drag(barx, bary, barx + 140, bary + 90, steps=24)
+    pointer.drag(barx, bary, barx + 180, bary + 120, steps=28)
     time.sleep(0.45)
     moved = next((c for c in feet() if c["address"] == addr), None)
     if not moved:
