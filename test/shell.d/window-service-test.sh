@@ -109,24 +109,14 @@ grep -Fq 'function moveTo' "$ws" || fail "caption drag uses WindowService.moveTo
 grep -Fq 'function _markKnown' "$ws" || fail "explicit move/resize must mark the window known so reopen memory cannot cascade over it"
 grep -Fq 'function _keepFocusAfterClose' "$ws" || fail "close of an unfocused window must keep the focused window in front"
 if awk '
-  $0 ~ /function moveTo\(/ { infn = 1 }
+  $0 ~ /function _applyRect\(/ { infn = 1 }
   infn && /_markKnown/ { mark = 1 }
-  infn && /^  function / && $0 !~ /function moveTo\(/ { infn = 0 }
+  infn && /^  function / && $0 !~ /function _applyRect\(/ { infn = 0 }
   END { exit mark ? 0 : 1 }
 ' "$ws"; then
   :
 else
-  fail "moveTo must mark the window known"
-fi
-if awk '
-  $0 ~ /function resizeTo\(/ { infn = 1 }
-  infn && /_markKnown/ { mark = 1 }
-  infn && /^  function / && $0 !~ /function resizeTo\(/ { infn = 0 }
-  END { exit mark ? 0 : 1 }
-' "$ws"; then
-  :
-else
-  fail "resizeTo must mark the window known"
+  fail "_applyRect must mark the window known so reopen memory cannot cascade over it"
 fi
 if awk '
   $0 ~ /function close\(/ { infn = 1 }
@@ -144,24 +134,24 @@ grep -Fq 'function _isLiveClient' "$ws" || fail "commitCycle can tell a live hyp
 if awk '
   $0 ~ /function moveTo\(/ { infn = 1 }
   infn && /_isLockAddress/ { lock = 1 }
-  infn && /clampRect/ { clamp = 1 }
+  infn && /_applyRect/ { apply = 1 }
   infn && /^  function / && $0 !~ /function moveTo\(/ { infn = 0 }
-  END { exit (lock && clamp) ? 0 : 1 }
+  END { exit (lock && apply) ? 0 : 1 }
 ' "$ws"; then
   :
 else
-  fail "moveTo must no-op lock surfaces and clamp onto the work area"
+  fail "moveTo must no-op lock surfaces and apply through _applyRect"
 fi
 if awk '
   $0 ~ /function resizeTo\(/ { infn = 1 }
   infn && /_isLockAddress/ { lock = 1 }
-  infn && /clampRect/ { clamp = 1 }
+  infn && /_applyRect/ { apply = 1 }
   infn && /^  function / && $0 !~ /function resizeTo\(/ { infn = 0 }
-  END { exit (lock && clamp) ? 0 : 1 }
+  END { exit (lock && apply) ? 0 : 1 }
 ' "$ws"; then
   :
 else
-  fail "resizeTo must no-op lock surfaces and clamp onto the work area"
+  fail "resizeTo must no-op lock surfaces and apply through _applyRect"
 fi
 if awk '
   $0 ~ /function restoreLayout\(/ { infn = 1 }
