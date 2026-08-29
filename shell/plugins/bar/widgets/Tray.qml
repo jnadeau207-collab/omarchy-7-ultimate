@@ -269,7 +269,7 @@ BarWidget {
           width: implicitWidth
           height: implicitHeight
           x: root.drawerExtent - root.revealExtent
-          text: "\uf053"
+          text: "\u2039"
           onPressed: function(button) {
             if (button === Qt.RightButton) root.managePopupOpen = !root.managePopupOpen
           }
@@ -351,7 +351,7 @@ BarWidget {
           width: implicitWidth
           height: implicitHeight
           y: root.drawerExtent - root.revealExtent
-          text: "\uf053"
+          text: "\u2039"
           textRotation: 90
           onPressed: function(button) {
             if (button === Qt.RightButton) root.managePopupOpen = !root.managePopupOpen
@@ -484,7 +484,7 @@ BarWidget {
             id: rowPinBtn
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
-            iconText: "\uf08d"
+            iconText: "\u25C9"
             text: rowRoot.isPinned ? "Unpin" : "Pin"
             foreground: root.foreground
             horizontalPadding: 8
@@ -499,7 +499,7 @@ BarWidget {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: rowPinBtn.left
             anchors.rightMargin: Style.space(6)
-            iconText: "\uf06e"
+            iconText: "\u25CE"
             text: rowRoot.isHidden ? "Show" : "Hide"
             foreground: root.foreground
             horizontalPadding: 8
@@ -689,7 +689,7 @@ BarWidget {
                 anchors.left: parent.left
                 width: Style.space(22)
                 horizontalAlignment: Text.AlignHCenter
-                text: menuRow.modelData.checkState === Qt.Checked ? "\uf00c" : ""
+                text: menuRow.modelData.checkState === Qt.Checked ? "\u2713" : ""
                 color: root.foreground
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.bodySmall

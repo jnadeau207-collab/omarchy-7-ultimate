@@ -28,7 +28,7 @@ Item {
         rowSpacing: 1
         columnSpacing: 1
         Repeater {
-          model: ["#c42b1c", "#6ea31c", "#1a6fb5", "#d4a017"]
+          model: [Tokens.caption.close.background, Tokens.state.success, Tokens.accent.primary, Tokens.state.warning]
           Rectangle {
             width: 7
             height: 7

@@ -93,34 +93,22 @@ local function theme_is_light()
   return body:match('mode%s*=%s*"light"') ~= nil
 end
 
-local function chrome_tokens_path(root)
+local function chrome_tokens_path()
   local home = os.getenv("HOME") or ""
-  if home ~= "" then
-    local current = home .. "/.local/state/omarchy/current/chrome-tokens-v0.json"
-    local file = io.open(current, "r")
-    if file then
-      local body = file:read("*a")
-      file:close()
-      local expected_mode = theme_is_light() and "light" or "dark"
-      if body:match('"_mode"%s*:%s*"' .. expected_mode .. '"') then
-        return current
-      end
-    end
+  if home == "" then
+    return nil, "HOME is unavailable; cannot locate resolved chrome tokens"
   end
-  if theme_is_light() then
-    return root .. "/default/ultimate/chrome-tokens-light.json"
-  end
-  return root .. "/default/ultimate/chrome-tokens.json"
+  return home .. "/.local/state/omarchy/current/chrome-tokens-v0.json"
 end
 
 local function load_chrome_tokens()
-  local root = repo_root()
-  if root == "" then
-    return nil, "OMARCHY_PATH is unavailable; cannot locate resolved chrome tokens"
+  local path, path_error = chrome_tokens_path()
+  if not path then
+    return nil, path_error
   end
-  local file = io.open(chrome_tokens_path(root), "r")
+  local file = io.open(path, "r")
   if not file then
-    return nil, "cannot read resolved chrome token adapter at " .. chrome_tokens_path(root)
+    return nil, "cannot read resolved chrome token adapter at " .. path
   end
   local body = file:read("*a")
   file:close()
@@ -138,7 +126,7 @@ local function load_chrome_tokens()
   local required = {
     "glassRed", "glassGreen", "glassBlue", "glassAlphaPct", "hyprbarsTextHex",
     "captionCloseBgHex", "captionCloseFgHex", "captionMaxBgHex", "captionMaxFgHex",
-    "captionMinBgHex", "captionMinFgHex",
+    "captionMinBgHex", "captionMinFgHex", "borderActiveHex", "borderInactiveHex",
   }
   for _, key in ipairs(required) do
     if not tokens[key] or tokens[key] == "" then
@@ -209,8 +197,8 @@ local function apply_desktop_look()
       gaps_out = 0,
       border_size = 1,
       col = {
-        active_border = "rgba(6a6a6aff)",
-        inactive_border = "rgba(3a3a3aff)",
+        active_border = chrome_hex_rgb(chrome, "borderActiveHex"),
+        inactive_border = chrome_hex_rgb(chrome, "borderInactiveHex"),
       },
     },
 
@@ -219,8 +207,8 @@ local function apply_desktop_look()
     },
     group = {
       col = {
-        border_active = "rgba(6a6a6aff)",
-        border_inactive = "rgba(3a3a3aff)",
+        border_active = chrome_hex_rgb(chrome, "borderActiveHex"),
+        border_inactive = chrome_hex_rgb(chrome, "borderInactiveHex"),
       },
     },
     decoration = {

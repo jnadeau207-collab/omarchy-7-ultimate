@@ -22,8 +22,8 @@ TextField {
   property string semanticPlaceholderText: ""
   property string accessibleName: semanticPlaceholderText !== "" ? semanticPlaceholderText : placeholderText
   property string accessibleDescription: ""
-  property color foreground: semanticProfile ? semanticProfile.textPrimary : Color.foreground
-  property color accent: semanticProfile ? semanticProfile.accent : Color.accent
+  property color foreground: semanticProfile ? semanticProfile.textPrimary : Tokens.text.primary
+  property color accent: semanticProfile ? semanticProfile.accent : Tokens.accent.primary
   property color selectionTint: Style.selectionFillFor(foreground, accent)
   property bool password: false
   property real horizontalPadding: Semantics.metric(semanticProfile, Style.spacing.controlPaddingX)

@@ -49,8 +49,8 @@ Item {
   property bool cursorRing: interactive
   property int cursorPad: Semantics.metric(semanticProfile, Style.space(6))
   property bool rounded: Style.cornerRadius > 0
-  property color foreground: semanticProfile ? semanticProfile.textPrimary : Color.foreground
-  property color accent: semanticProfile ? semanticProfile.accent : Color.accent
+  property color foreground: semanticProfile ? semanticProfile.textPrimary : Tokens.text.primary
+  property color accent: semanticProfile ? semanticProfile.accent : Tokens.accent.primary
 
   signal toggled()
   signal hovered(bool isHovered)

@@ -38,7 +38,7 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: root.muted ? "󰍭" : "󰍬"
+    text: root.muted ? "✕" : "●"
     active: root.inUse
     tooltipText: root.muted ? "Microphone muted" : (root.inUse ? "Microphone in use" : "Microphone live")
     onPressed: function(b) {
