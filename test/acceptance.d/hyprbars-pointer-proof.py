@@ -271,6 +271,15 @@ def card_center(index: int, count: int, gw: int, gh: int) -> tuple[int, int]:
   return x, y
 
 
+def cursor_near(x: int, y: int, slop: int = 16) -> bool:
+  raw = hypr("cursorpos").replace(" ", "")
+  try:
+    cx, cy = (int(p) for p in raw.split(","))
+  except ValueError:
+    return False
+  return abs(cx - x) <= slop and abs(cy - y) <= slop
+
+
 def monitor_size() -> tuple[int, int]:
   mons = json.loads(hypr("-j", "monitors") or "[]")
   focused = next((m for m in mons if m.get("focused")), mons[0])
@@ -453,14 +462,20 @@ def main() -> int:
     grim("/tmp/w0-c-switcher-picked.png")
 
     as_user(["omarchy-shell", "shell", "hide", "omarchy.ultimate-task-switcher"], wait=True, timeout=5)
+    pointer.close()
+    time.sleep(0.35)
     launch_feet(1)
+    pointer = AbsPointer()
     foot = feet()[0]
     addr = foot["address"]
     x, y = foot["at"]
     w, h = foot["size"]
     report["foot0"] = {"addr": addr, "at": [x, y], "size": [w, h]}
     barx, bary = x + w // 2, y - 16
-    pointer.drag(barx, bary, barx + 140, bary + 90)
+    pointer.move(barx, bary, gw, gh)
+    time.sleep(0.2)
+    wait_until("abs pointer reached the title bar", 4, lambda: cursor_near(barx, bary))
+    pointer.drag(barx, bary, barx + 140, bary + 90, steps=24)
     time.sleep(0.45)
     moved = next((c for c in feet() if c["address"] == addr), None)
     if not moved:
