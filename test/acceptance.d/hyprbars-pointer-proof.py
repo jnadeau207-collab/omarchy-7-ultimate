@@ -290,6 +290,15 @@ def work_area() -> dict:
   }
 
 
+def is_hidden_client(win: dict | None) -> bool:
+  if not win:
+    return False
+  if win.get("hidden") in (True, 1, "true"):
+    return True
+  workspace = win.get("workspace") or {}
+  return str(workspace.get("name") or "") == "special:minimized"
+
+
 def geometry_is_maximized(win: dict | None) -> bool:
   """Maximize is a work-area float; Hyprland fullscreen=1 is not required."""
   if not win or not win.get("at") or not win.get("size"):
@@ -525,6 +534,8 @@ def main() -> int:
       "fullscreen": None if not restored else restored.get("fullscreen"),
     }
 
+    as_user(["omarchy-shell", "shell", "hide", "omarchy.ultimate-snap-chooser"], wait=True, timeout=5)
+    time.sleep(0.25)
     cap = client_by_addr(addr)
     if not cap:
       raise ProofError("foot vanished before minimize caption click")
@@ -534,7 +545,7 @@ def main() -> int:
     wait_until(
       "hyprbars minimize click hides",
       8,
-      lambda: (w := client_by_addr(addr)) is not None and w.get("hidden") is True,
+      lambda: (w := client_by_addr(addr)) is not None and is_hidden_client(w),
     )
     grim("/tmp/w0-min-click.png")
     report["min_click"] = "hidden"
@@ -544,7 +555,7 @@ def main() -> int:
     wait_until(
       "restore after hyprbars minimize",
       8,
-      lambda: (w := client_by_addr(addr)) is not None and w.get("hidden") in (False, None),
+      lambda: (w := client_by_addr(addr)) is not None and not is_hidden_client(w),
     )
 
     as_user(["omarchy-shell", "window", "restoreNormal", addr], wait=True, timeout=5)
