@@ -461,6 +461,18 @@ def main() -> int:
     pointer = AbsPointer()
     foot = feet()[0]
     addr = foot["address"]
+    as_user(["omarchy-shell", "window", "moveTo", addr, "200", "120"], wait=True, timeout=5)
+    as_user(["omarchy-shell", "window", "resizeTo", addr, "880", "560"], wait=True, timeout=5)
+    wait_until(
+      "drag foot settled at 200,120 880x560",
+      6,
+      lambda: (w := client_by_addr(addr)) is not None
+      and abs(w["at"][0] - 200) <= 24
+      and abs(w["at"][1] - 120) <= 24
+      and abs(w["size"][0] - 880) <= 24
+      and abs(w["size"][1] - 560) <= 24,
+    )
+    foot = client_by_addr(addr)
     x, y = foot["at"]
     w, h = foot["size"]
     report["foot0"] = {"addr": addr, "at": [x, y], "size": [w, h]}
