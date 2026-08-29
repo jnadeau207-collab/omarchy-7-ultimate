@@ -216,13 +216,20 @@ pin_missing() {
 
 launch_feet() {
   local want="$1"
-  local i
+  local i addr
   close_windows "^foot$" >/dev/null 2>&1 || true
   wait_until "previous foot windows are gone" 15 window_absent "^foot$"
   for ((i = 0; i < want; i++)); do
     launch_app foot
   done
   wait_until "$want foot windows are open" 30 foot_at_least "$want"
+  # Reopen memory can restore a previous max/snap for class foot. Proofs that
+  # snap or restoreNormal need a known overlapping float, not that remembered box.
+  while read -r addr; do
+    [[ -n $addr ]] || continue
+    omarchy-shell window restoreNormal "$addr" >/dev/null 2>&1 || true
+    omarchy-shell window resizeTo "$addr" 880 560 >/dev/null 2>&1 || true
+  done < <(foot_addresses)
 }
 
 restore_native_windows() {
