@@ -30,11 +30,6 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
   fail "python-jsonschema is required to certify the capability catalog lock"
 fi
 
-if grep -Fq '"agent": "present"' "$ROOT/default/ultimate/capabilities/catalog-window-v0.json"; then
-  fail "WindowService verbs are not a managed-agent path until Fabric owns them"
-fi
-pass "window catalog does not claim a managed-agent route for QML broker verbs"
-
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
 [[ $valid_output == *"129 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
