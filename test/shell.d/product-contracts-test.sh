@@ -27,8 +27,7 @@ set -e
 pass "product-contract checker fails clearly without python-jsonschema"
 
 if ! python -c 'import jsonschema' >/dev/null 2>&1; then
-  pass "planned python-jsonschema dependency is unavailable; semantic product-contract checks are deferred"
-  exit 0
+  fail "python-jsonschema is required to certify product-contract inventory"
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
