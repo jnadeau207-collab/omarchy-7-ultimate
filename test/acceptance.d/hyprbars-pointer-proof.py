@@ -677,10 +677,18 @@ def main() -> int:
       raise ProofError("unfocused × closed the focused window")
     report["unfocused_close"] = "unmapped other, focused kept"
 
+    pointer.close()
+    time.sleep(0.3)
+    pointer = AbsPointer()
+    still = client_by_addr(addr)
+    if not still:
+      raise ProofError("focused foot vanished before its close click")
     closex, closey = hyprbars_button(still, "close")
     report["close_aim"] = [closex, closey]
     as_user(["omarchy-shell", "shell", "hide", "omarchy.ultimate-snap-chooser"], wait=True, timeout=5)
-    pointer.quick_click(closex, closey)
+    pointer.move(closex, closey, gw, gh)
+    wait_until("abs pointer reached the close caption", 4, lambda: cursor_near(closex, closey))
+    pointer.click(closex, closey)
     wait_until("hyprbars close unmaps the aimed foot", 8, lambda: all(c["address"] != addr for c in feet()))
     report["close"] = "unmapped"
     grim("/tmp/w0-c-close.png")
