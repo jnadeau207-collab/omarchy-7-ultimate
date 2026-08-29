@@ -277,6 +277,37 @@ def monitor_size() -> tuple[int, int]:
   return int(focused["width"]), int(focused["height"])
 
 
+def work_area() -> dict:
+  mons = json.loads(hypr("-j", "monitors") or "[]")
+  focused = next((m for m in mons if m.get("focused")), mons[0])
+  reserved = focused.get("reserved") or [0, 0, 0, 0]
+  left, top, right, bottom = (int(reserved[i]) for i in range(4))
+  return {
+    "x": left,
+    "y": top,
+    "w": int(focused["width"]) - left - right,
+    "h": int(focused["height"]) - top - bottom,
+  }
+
+
+def geometry_is_maximized(win: dict | None) -> bool:
+  """Maximize is a work-area float; Hyprland fullscreen=1 is not required."""
+  if not win or not win.get("at") or not win.get("size"):
+    return False
+  area = work_area()
+  x, y = win["at"]
+  w, h = win["size"]
+  klass = str(win.get("class") or "").lower()
+  if "chrom" in klass:
+    x, y, w, h = x + 12, y + 12, w - 12, h - 12
+  return (
+    abs(x - area["x"]) <= 8
+    and -8 <= (y - area["y"]) <= 40
+    and abs((x + w) - (area["x"] + area["w"])) <= 8
+    and abs((y + h) - (area["y"] + area["h"])) <= 8
+  )
+
+
 def launch_feet(n: int) -> None:
   as_user(["pkill", "-x", "foot"], wait=True)
   time.sleep(0.4)
@@ -432,7 +463,7 @@ def main() -> int:
     time.sleep(0.7)
     topped = next((c for c in feet() if c["address"] == addr), None)
     report["aero_top"] = {"at": None if not topped else topped.get("at"), "size": None if not topped else topped.get("size"), "fullscreen": None if not topped else topped.get("fullscreen")}
-    if not topped or topped.get("fullscreen") != 1:
+    if not topped or not geometry_is_maximized(topped):
       raise ProofError(f"title-bar drag to the top edge did not maximize: {report['aero_top']}")
     grim("/tmp/w0-g-aero-top.png")
     tx, ty = topped["at"]
@@ -441,7 +472,7 @@ def main() -> int:
     time.sleep(0.7)
     away = next((c for c in feet() if c["address"] == addr), None)
     report["aero_away"] = {"at": None if not away else away.get("at"), "size": None if not away else away.get("size"), "fullscreen": None if not away else away.get("fullscreen")}
-    if not away or away.get("fullscreen") not in (0, False, None):
+    if not away or geometry_is_maximized(away):
       raise ProofError(f"drag away from the top edge did not restore: {report['aero_away']}")
     grim("/tmp/w0-g-aero-away.png")
 
@@ -468,7 +499,7 @@ def main() -> int:
     wait_until(
       "hyprbars maximize click maximizes",
       8,
-      lambda: (w := client_by_addr(addr)) is not None and w.get("fullscreen") == 1,
+      lambda: (w := client_by_addr(addr)) is not None and geometry_is_maximized(w),
     )
     grim("/tmp/w0-max-click.png")
     maximized = client_by_addr(addr)
@@ -484,7 +515,7 @@ def main() -> int:
     wait_until(
       "hyprbars maximize click restores",
       8,
-      lambda: (w := client_by_addr(addr)) is not None and w.get("fullscreen") in (0, False, None),
+      lambda: (w := client_by_addr(addr)) is not None and not geometry_is_maximized(w),
     )
     grim("/tmp/w0-max-restore.png")
     restored = client_by_addr(addr)
