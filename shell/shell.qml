@@ -1091,7 +1091,14 @@ ShellRoot {
 
   function windowIpc(result) {
     if (!result || typeof result !== "object")
-      result = { changed: true, error: null }
+      result = {
+        changed: false,
+        error: {
+          title: "Window action did not return a result",
+          explanation: "The window service did not return a structured result. No mutation is assumed.",
+          detail: "missing-result"
+        }
+      }
     return JSON.stringify(result)
   }
 
@@ -1169,12 +1176,12 @@ ShellRoot {
     function snapChooser(address: string): string {
       var target = address || "active"
       shell.summon("omarchy.ultimate-snap-chooser", JSON.stringify({ address: target }))
-      return shell.windowIpc({ changed: true, error: null })
+      return shell.windowIpc({ changed: false, error: null })
     }
 
     function taskView(): string {
       shell.summon("omarchy.ultimate-task-switcher", JSON.stringify({ mode: "taskView" }))
-      return shell.windowIpc({ changed: true, error: null })
+      return shell.windowIpc({ changed: false, error: null })
     }
 
     function createDesktop(): string {
@@ -1275,13 +1282,16 @@ ShellRoot {
       // Card pick waits for overlay unmap. Immediate activate is undone when
       // the layer closes and Hyprland restores the previous client.
       if (address && shell.callIfLoaded("omarchy.ultimate-task-switcher", "pick", address) !== "unknown")
-        return shell.windowIpc({ changed: true, error: null })
+        return shell.windowIpc({ changed: false, error: null })
       shell.hide("omarchy.ultimate-task-switcher")
       if (svc) {
         svc.cancelCycle()
-        if (address) svc.activate(address)
+        if (address) {
+          var activated = svc.activate(address)
+          return shell.windowIpc(activated)
+        }
       }
-      return shell.windowIpc({ changed: true, error: null })
+      return shell.windowIpc({ changed: false, error: null })
     }
 
     function activate(address: string): string {
