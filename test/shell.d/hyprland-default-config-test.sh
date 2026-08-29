@@ -191,6 +191,8 @@ if [[ -s $desktop_err ]]; then
   fail "desktop Hyprland config loads" "$(cat "$desktop_err")"
 fi
 grep -Fq $'SUPER + E	Files' <<<"$desktop_output" || fail "desktop mode binds Win+E to Files"
+grep -Fq $'SUPER + A	Agent' <<<"$desktop_output" || fail "desktop mode binds Win+A to the coding agent"
+grep -Fq $'SUPER + I	Settings' <<<"$desktop_output" || fail "desktop mode binds Win+I to Settings"
 grep -Fq $'SUPER + UP	Snap or maximize window' <<<"$desktop_output" || fail "desktop mode binds Win+Up to snap or maximize"
 grep -Fq $'SUPER + DOWN	Snap, restore, or minimize window' <<<"$desktop_output" || fail "desktop mode binds Win+Down to snap, restore, or minimize"
 grep -Fq $'SUPER + Z	Snap layout chooser' <<<"$desktop_output" || fail "desktop mode binds Win+Z to the snap layout chooser"

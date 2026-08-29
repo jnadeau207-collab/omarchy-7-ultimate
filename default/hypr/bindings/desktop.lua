@@ -3,8 +3,9 @@
 
 o.bind("SUPER + Super_L", "Start", "omarchy-shell shell toggle omarchy.ultimate-start '{}'", { release = true })
 o.bind("SUPER + S", "Search", "omarchy-shell shell summon omarchy.ultimate-start '{\"focusSearch\":true}'")
-o.bind("SUPER + E", "Files", { omarchy = "nautilus" })
-o.bind("SUPER + I", "Settings", "omarchy-shell shell toggle omarchy.ultimate-settings '{}'")
+o.bind("SUPER + E", "Files", "omarchy-launch-files --source desktop")
+o.bind("SUPER + I", "Settings", "omarchy-launch-settings --source desktop")
+o.bind("SUPER + A", "Agent", "omarchy-agent --pick")
 o.bind("SUPER + R", "Run", "omarchy-shell shell toggle omarchy.ultimate-run '{}'")
 o.bind("SUPER + D", "Show desktop", "omarchy-shell window toggleShowDesktop")
 o.bind("SUPER + L", "Lock", "omarchy-system-lock")

@@ -327,6 +327,15 @@ grep -Fq 'WindowModel.compositorMonitor' "$ROOT/shell/services/WindowService.qml
   || fail "snap geometry comes from compositor monitor JSON"
 grep -Fq 'function restoreNormal' "$ROOT/shell/services/WindowService.qml" \
   || fail "WindowService can restore the pre-snap rectangle"
+grep -Fq 'omarchy-launch-files --source desktop' "$ROOT/default/hypr/bindings/desktop.lua" \
+  || fail "Win+E opens the product Files host, not Nautilus"
+grep -Fq 'omarchy-launch-settings --source desktop' "$ROOT/default/hypr/bindings/desktop.lua" \
+  || fail "Win+I opens standalone Settings, not the five-button stub"
+grep -Fq 'omarchy-agent --pick' "$ROOT/default/hypr/bindings/desktop.lua" \
+  || fail "Win+A launches the Omarchy coding agent"
+[[ -f $ROOT/applications/org.omarchy.Agent.desktop ]] || fail "Agent has a Desktop Mode launcher"
+grep -Fq 'Exec=omarchy-agent --pick' "$ROOT/applications/org.omarchy.Agent.desktop" \
+  || fail "Agent launcher uses the same omarchy-agent --pick path as the usage widget"
 grep -Fq 'snapArrow' "$ROOT/default/hypr/bindings/desktop.lua" \
   || fail "Win+Arrow cycles halves then quarters through snapArrow"
 grep -Fq 'snapChooser' "$ROOT/default/hypr/bindings/desktop.lua" \
