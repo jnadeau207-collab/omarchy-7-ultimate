@@ -151,6 +151,41 @@ window_near_rect() {
   ' >/dev/null
 }
 
+# Chromium's compositor box is 12px larger than the visible frame. Snap and
+# maximize target the visible frame via WindowModel.frameBox. Compare that
+# logical rectangle, not the raw hyprctl box.
+window_visible_near_rect() {
+  local addr="$1"
+  local x="$2"
+  local y="$3"
+  local w="$4"
+  local h="$5"
+  hyprctl -j clients | ADDR="$addr" EXPECT_X="$x" EXPECT_Y="$y" EXPECT_W="$w" EXPECT_H="$h" \
+    node -e '
+      const m = require(process.argv[1])
+      const fs = require("fs")
+      const clients = JSON.parse(fs.readFileSync(0, "utf8"))
+      const addr = process.env.ADDR
+      const client = clients.find((c) => c.address === addr)
+      if (!client) process.exit(1)
+      const vis = m.frameRect({
+        x: Number(client.at[0]),
+        y: Number(client.at[1]),
+        width: Number(client.size[0]),
+        height: Number(client.size[1])
+      }, { class: client.class, appId: client.class, fullscreen: Number(client.fullscreen || 0) })
+      const near = (a, b) => Math.abs(a - b) <= 8
+      process.exit(
+        near(vis.x, Number(process.env.EXPECT_X)) &&
+        near(vis.y, Number(process.env.EXPECT_Y)) &&
+        near(vis.width, Number(process.env.EXPECT_W)) &&
+        near(vis.height, Number(process.env.EXPECT_H))
+          ? 0
+          : 1
+      )
+    ' "$ROOT/shell/services/WindowModel.js"
+}
+
 window_is_maximized() {
   local addr="$1"
   local area
@@ -554,10 +589,10 @@ prove_toolkit() {
   while ((tries < 4)); do
     omarchy-shell window snapTo "$addr" r >/dev/null
     sleep 0.6
-    window_near_rect "$addr" "$right_x" "$left_y" "$right_w" "$left_h" && break
+    window_visible_near_rect "$addr" "$right_x" "$left_y" "$right_w" "$left_h" && break
     tries=$((tries + 1))
   done
-  window_near_rect "$addr" "$right_x" "$left_y" "$right_w" "$left_h" \
+  window_visible_near_rect "$addr" "$right_x" "$left_y" "$right_w" "$left_h" \
     || fail "$name snap" "$name did not take the right half (inset $inset): $(hyprctl -j clients | jq --arg a "$addr" '.[] | select(.address == $a) | {class,at,size,xwayland,fullscreen}') work=$(work_area_json)"
   screenshot "success-$name"
   omarchy-shell window close "$addr" >/dev/null 2>&1 || true
