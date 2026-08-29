@@ -441,14 +441,7 @@ def main() -> int:
     report["card_want"] = want
     pointer.move(click_x, click_y, gw, gh)
     time.sleep(0.25)
-    def cursor_near():
-      raw = hypr("cursorpos").replace(" ", "")
-      try:
-        cx, cy = (int(p) for p in raw.split(","))
-      except ValueError:
-        return False
-      return abs(cx - click_x) <= 16 and abs(cy - click_y) <= 16
-    wait_until("abs pointer reached the highlighted card", 4, cursor_near)
+    wait_until("abs pointer reached the highlighted card", 4, lambda: cursor_near(click_x, click_y))
     pointer.button(True)
     time.sleep(0.3)
     pointer.button(False)
