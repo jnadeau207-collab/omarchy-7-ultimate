@@ -242,7 +242,9 @@ class SandboxTests(unittest.TestCase):
         )
         self.assertIn(str(runner), command)
         self.assertIn(FIXED_AGENT_RUNNER, command)
-        self.assertIn("--tmpfs", command)
+        bind_at = command.index(str(runner))
+        self.assertEqual(command[bind_at - 1], "--ro-bind")
+        self.assertEqual(command[bind_at + 1], FIXED_AGENT_RUNNER)
         self.assertEqual(command[-5:], self.runner())
 
     def test_representative_probe_drives_shipped_run_path(self) -> None:
