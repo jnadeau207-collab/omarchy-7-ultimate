@@ -260,6 +260,11 @@ QtObject {
     var geom = root._geomForRect(rect)
     if (geom && geom.width && (WindowModel.isSnapped(rect, geom, 8, 32) || WindowModel.isSnapped(rect, geom, 8, 0)))
       return
+    if (geom && WindowModel.coversWorkArea(rect, geom))
+      return
+    var area = WindowModel.workArea(geom)
+    if (area && area.width && Number(rect.x) < area.x - 4 && Number(rect.y) < area.y - 4)
+      return
     var next = root._copyMap(root.placements)
     next[key] = WindowModel.clampRect(rect, geom)
     root.placements = next
