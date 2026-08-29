@@ -147,10 +147,12 @@ class RuntimeTaskTests(unittest.TestCase):
                 {"taskId": task["taskId"], "idempotencyKey": "run.runtime-execute"},
             )
         except FabricError as error:
-            self.assertEqual("sandbox.unavailable", error.code)
+            self.assertIn(error.code, {"sandbox.unavailable", "sandbox.probe-failed"})
             self.assertNotEqual("managed-execution.unavailable", error.code)
             stored = self.plane.get_task(ACTOR, task["taskId"])
             self.assertNotEqual("succeeded", stored["state"])
+            if error.code == "sandbox.probe-failed":
+                self.fail(error.detail or error.explanation)
             return
         self.assertEqual("sandboxed-run", result["kind"])
         self.assertTrue(result["isolation"]["unshareAll"])
