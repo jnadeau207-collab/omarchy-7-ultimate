@@ -32,6 +32,7 @@ QtObject {
   property var placements: ({})
   property var _knownAddresses: ({})
   property var _lastRect: ({})
+  property var _desiredRect: ({})
   property var _lastAppId: ({})
   property bool _clientsSnapshotReady: false
   property int _cascadeIndex: 0
@@ -179,6 +180,7 @@ QtObject {
   function _trackClientRects() {
     var list = root.clientsIpc || []
     var rects = root._copyMap(root._lastRect)
+    var desired = root._copyMap(root._desiredRect)
     var apps = root._copyMap(root._lastAppId)
     var kinds = root._copyMap(root._placedKind)
     var kindsChanged = false
@@ -216,7 +218,16 @@ QtObject {
         if (areaNow.width && Number(current.y) < areaNow.y)
           root._queueFloatRestore(addr)
       }
-      if (current) rects[addr] = current
+      if (current) {
+        if (prev && !root._placingRect && (
+          Math.abs(Number(current.x) - Number(prev.x)) > 16 ||
+          Math.abs(Number(current.y) - Number(prev.y)) > 16 ||
+          Math.abs(Number(current.width) - Number(prev.width)) > 16 ||
+          Math.abs(Number(current.height) - Number(prev.height)) > 16
+        ))
+          delete desired[addr]
+        rects[addr] = current
+      }
 
       if (fs === 1 && kinds[addr] !== "max") {
         kinds[addr] = "max"
@@ -229,6 +240,7 @@ QtObject {
       if (key) apps[addr] = key
     }
     root._lastRect = rects
+    root._desiredRect = desired
     root._lastAppId = apps
     if (kindsChanged) {
       root._placedKind = kinds
@@ -1161,6 +1173,15 @@ QtObject {
     if (!target || !bounds || !bounds.width || !bounds.height) return
     if (root._placingRect) return
     root._placingRect = true
+    var requested = {
+      x: Number(bounds.x),
+      y: Number(bounds.y),
+      width: Number(bounds.width),
+      height: Number(bounds.height)
+    }
+    var wanted = root._copyMap(root._desiredRect)
+    wanted[target] = requested
+    root._desiredRect = wanted
     var geom = root._monitorGeom(target)
     if (geom && geom.width) bounds = WindowModel.clampRect(bounds, geom, root._hyprbarsInset(target))
     var logical = { x: Number(bounds.x), y: Number(bounds.y), width: Number(bounds.width), height: Number(bounds.height) }
@@ -1180,6 +1201,8 @@ QtObject {
   }
 
   function _intendedRect(target) {
+    var desired = root._desiredRect[target]
+    if (desired && Number(desired.width) > 0 && Number(desired.height) > 0) return desired
     var last = root._lastRect[target]
     if (last && Number(last.width) > 0 && Number(last.height) > 0) return last
     return root._clientRect(target) || {}
