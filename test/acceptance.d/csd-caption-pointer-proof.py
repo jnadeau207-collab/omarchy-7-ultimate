@@ -60,27 +60,13 @@ def proof_chrome() -> dict | None:
 def csd_button(win: dict, which: str) -> tuple[int, int]:
   x, y = win["at"]
   w = win["size"][0]
-  klass = str(win.get("class") or "").lower()
-  # Chromium's compositor box is 12px up-left of the painted frame. Caption
-  # glyphs sit on the visible frame, not in that inset.
-  if "chrom" in klass:
-    x, y, w = x + 12, y + 12, w - 12
-  # Measured from grim of Google Chrome CSD on this desktop:
-  # float 1200x740 glyphs at y+25..34, centers x+w-65 / -33 / -16
-  # maximized 1920x1032 glyphs at y+15..24, centers x+w-84 / -52 / -18
-  # A single x+w-33 hits max while floating and close once maximized.
-  maximized = y < 24 or win.get("fullscreen") == 1
-  if maximized:
-    cy = y + 18
-    offsets = {"close": 18, "max": 52, "min": 84}
-  else:
-    offsets = {"close": 16, "max": 33, "min": 65}
-    # After restore the min dash center (y+29) is a hit-test hole.
-    # y+22 is inside the button on both a fresh float and a restored float.
-    cy = y + (22 if which == "min" else 29)
+  # Measured from grim of this desktop's Google Chrome CSD, compositor box:
+  # glyphs occupy y+13..y+22. Centers from the compositor right edge are
+  # close 12 / max 44 / min 76, float 1212x752 and maximized 1932x1044.
+  offsets = {"close": 12, "max": 44, "min": 76}
   if which not in offsets:
     raise ProofError(f"unknown CSD button {which}")
-  return x + w - offsets[which], cy
+  return x + w - offsets[which], y + 18
 
 
 def close_proof_chromes() -> None:
