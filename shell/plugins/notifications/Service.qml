@@ -689,7 +689,7 @@ Item {
         summary: "No recent notifications",
         body: "",
         image: "",
-        glyph: "󰂚",
+        glyph: "•",
         execArgv: "",
         urgency: NotificationUrgency.Low,
         expireTimeout: 0,

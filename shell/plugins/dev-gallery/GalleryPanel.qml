@@ -509,9 +509,9 @@ Item {
                     { key: "heading",      size: Style.font.heading,      sample: "Panel heading" },
                     { key: "display",      size: Style.font.display,      sample: "Display text" },
                     { key: "displayLarge", size: Style.font.displayLarge, sample: "Display large" },
-                    { key: "iconSmall",    size: Style.font.iconSmall,    sample: "\uf004 \uf005 \uf02d" },
-                    { key: "icon",         size: Style.font.icon,         sample: "\uf004 \uf005 \uf02d" },
-                    { key: "iconLarge",    size: Style.font.iconLarge,    sample: "\uf004 \uf005 \uf02d" }
+                    { key: "iconSmall",    size: Style.font.iconSmall,    sample: "\u2605 \u25C9 \u25A4" },
+                    { key: "icon",         size: Style.font.icon,         sample: "\u2605 \u25C9 \u25A4" },
+                    { key: "iconLarge",    size: Style.font.iconLarge,    sample: "\u2605 \u25C9 \u25A4" }
                   ]
                   delegate: Item {
                     required property var modelData

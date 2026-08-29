@@ -1183,7 +1183,7 @@ Panel {
           Button {
             id: qrAction
             visible: root.canShareWifi
-            iconText: "󰐲"
+            iconText: "▣"
             tooltipText: "Show QR code"
             foreground: root.bar.foreground
             fontFamily: root.bar.fontFamily
@@ -1199,7 +1199,7 @@ Panel {
           Button {
             id: speedAction
             visible: root.canRunSpeedTest
-            iconText: "󰓅"
+            iconText: "↑"
             tooltipText: "Run a speed test"
             foreground: root.bar.foreground
             fontFamily: root.bar.fontFamily
@@ -1858,7 +1858,7 @@ Panel {
           width: parent.width
           anchors.verticalCenter: parent.verticalCenter
           horizontalAlignment: Text.AlignHCenter
-          text: row.forgetVisible ? "󰅙" : "󰌾"
+          text: row.forgetVisible ? "×" : "⚿"
           color: row.forgetVisible ? root.bar.urgent : Qt.darker(root.bar.foreground, 1.4)
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.subtitle
@@ -2037,7 +2037,7 @@ Panel {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         enabled: row.net && pwField.text.length > 0 && (!row.isEnterprise || idField.text.length > 0)
-        iconText: "󰄬"
+        iconText: "✓"
         tooltipText: "Connect"
         foreground: root.bar.foreground
         fontFamily: root.bar.fontFamily

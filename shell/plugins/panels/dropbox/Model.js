@@ -63,10 +63,10 @@ function fileKind(name) {
 
 function fileGlyph(name) {
   var kind = fileKind(name)
-  if (kind === "image") return "󰋩"
-  if (kind === "video") return "󰈫"
-  if (kind === "document") return "󰈙"
-  return "󰈔"
+  if (kind === "image") return "\u25A3"
+  if (kind === "video") return "\u25B6"
+  if (kind === "document") return "\u25A4"
+  return "\u25A1"
 }
 
 function formatBytes(bytes) {

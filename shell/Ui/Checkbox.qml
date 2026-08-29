@@ -29,7 +29,7 @@ Item {
   readonly property int boxSize: Math.max(16, Math.round(Semantics.font(semanticProfile, Style.font.body) * 1.25))
 
   implicitWidth: box.implicitWidth
-  implicitHeight: Math.max(box.implicitHeight, semanticProfile ? Semantics.minimumTarget(semanticProfile) : 0)
+  implicitHeight: Math.max(box.implicitHeight, Semantics.minimumTarget(semanticProfile))
 
   Accessible.role: Accessible.CheckBox
   Accessible.name: Semantics.text(semanticProfile, label)

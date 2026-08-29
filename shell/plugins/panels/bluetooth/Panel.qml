@@ -57,9 +57,9 @@ Panel {
 
   readonly property string icon: {
     if (!adapter) return ""
-    if (!adapter.enabled) return "󰂲"
-    if (connectedDevices.length > 0) return "󰂱"
-    return "󰂯"
+    if (!adapter.enabled) return "✕"
+    if (connectedDevices.length > 0) return "◉"
+    return "○"
   }
 
   property int phraseIndex: 0
@@ -975,7 +975,7 @@ Panel {
       Text {
         id: deviceIcon
         textFormat: Text.PlainText
-        text: row.isConnected ? "󰂱" : "󰂯"
+        text: row.isConnected ? "◉" : "○"
         color: row.statusColor
         font.family: root.bar.fontFamily
         font.pixelSize: Style.font.heading
@@ -1018,7 +1018,7 @@ Panel {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         visible: row.showForgetButton
-        iconText: "󰅙"
+        iconText: "×"
         tooltipText: "Forget"
         foreground: root.bar.foreground
         hoverColor: root.bar.foreground

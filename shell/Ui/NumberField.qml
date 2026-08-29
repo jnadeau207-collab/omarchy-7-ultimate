@@ -10,8 +10,8 @@ Column {
   property int from: 0
   property int to: 100
   property int stepSize: 1
-  property color foreground: Color.foreground
-  property color accent: Color.accent
+  property color foreground: Tokens.text.primary
+  property color accent: Tokens.accent.primary
   property string fontFamily: Style.font.family
   property real fontSize: Style.font.body
   property real fieldWidth: Style.spacing.numberFieldWidth

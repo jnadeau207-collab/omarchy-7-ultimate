@@ -56,7 +56,7 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "\uf021"
+    text: "\u21BB"
     slotSize: Style.bar.statusSlot
     fontSize: Style.font.caption
     tooltipText: "Pending Omarchy Updates"

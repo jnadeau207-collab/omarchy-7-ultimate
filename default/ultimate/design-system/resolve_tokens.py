@@ -103,6 +103,11 @@ def composite(foreground: str, background: str) -> tuple[float, float, float]:
     )
 
 
+def compositor_hex(foreground: str, background: str) -> str:
+    red, green, blue = composite(foreground, background)
+    return f"#{q_round(red * 255):02x}{q_round(green * 255):02x}{q_round(blue * 255):02x}"
+
+
 def relative_luminance(channels: tuple[float, float, float]) -> float:
     def linear(channel: float) -> float:
         return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
@@ -882,6 +887,8 @@ def legacy_chrome_adapter(payload: dict[str, Any]) -> dict[str, str]:
         "captionMaxFgHex": opaque_color(payload["caption"]["maximize"]["foreground"]),
         "captionMinBgHex": opaque_color(payload["caption"]["minimize"]["background"]),
         "captionMinFgHex": opaque_color(payload["caption"]["minimize"]["foreground"]),
+        "borderActiveHex": compositor_hex(payload["border"]["strong"], payload["surface"]["canvas"]),
+        "borderInactiveHex": compositor_hex(payload["border"]["subtle"], payload["surface"]["canvas"]),
     }
 
 

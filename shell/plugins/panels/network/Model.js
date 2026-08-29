@@ -9,7 +9,7 @@ function parseNetworkStatus(raw) {
 }
 
 function wifiIconFor(strength) {
-  var icons = ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"]
+  var icons = ["\u00B7", "\u2591", "\u2592", "\u2593", "\u2588"]
   var index = Math.max(0, Math.min(4, Math.ceil(strength / 20) - 1))
   return icons[index]
 }

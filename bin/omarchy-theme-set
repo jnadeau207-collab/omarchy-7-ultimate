@@ -295,6 +295,11 @@ mv "$NEXT_THEME_PATH" "$CURRENT_THEME_PATH"
 # Store theme name for reference
 echo "$THEME_NAME" >"$HOME/.local/state/omarchy/current/theme.name"
 
+if ! omarchy-theme-resolve-tokens --active >/dev/null; then
+  echo "Failed to publish design tokens for $THEME_NAME" >&2
+  exit 1
+fi
+
 # Make the running shell pick up the new palette immediately while the rest of
 # the theme hooks run.
 colors_payload=$([[ -f $CURRENT_THEME_PATH/colors.toml ]] && base64 -w 0 "$CURRENT_THEME_PATH/colors.toml")

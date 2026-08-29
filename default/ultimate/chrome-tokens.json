@@ -16,5 +16,7 @@
   "captionMaxBgHex": "#c8c8c8",
   "captionMaxFgHex": "#1a1a1a",
   "captionMinBgHex": "#c8c8c8",
-  "captionMinFgHex": "#1a1a1a"
+  "captionMinFgHex": "#1a1a1a",
+  "borderActiveHex": "#51565a",
+  "borderInactiveHex": "#32363b"
 }
