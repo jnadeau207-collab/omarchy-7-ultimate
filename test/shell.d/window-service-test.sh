@@ -276,6 +276,17 @@ grep -Fq 'changed: true, error: null' "$ws" || fail "WindowService success is { 
 grep -Fq 'function invoke' "$ROOT/shell/services/CapabilityBroker.qml" || fail "broker dispatches window verbs"
 grep -Fq 'function windowIpc' "$ROOT/shell/shell.qml" || fail "window IPC serializes the service result"
 if awk '
+  $0 ~ /function windowIpc\(result\)/ { infn = 1 }
+  infn && /changed: true/ { found = 1 }
+  infn && /IpcHandler \{/ { infn = 0 }
+  END { exit found ? 0 : 1 }
+' "$ROOT/shell/shell.qml"; then
+  fail "windowIpc must not invent a successful mutation when the service result is missing"
+fi
+grep -Fq 'detail: "missing-result"' "$ROOT/shell/shell.qml" || fail "windowIpc missing results are an explicit error"
+grep -Fq 'return shell.windowIpc({ changed: false, error: null })' "$ROOT/shell/shell.qml" \
+  || fail "snapChooser and Task View summons must not report a window mutation"
+if awk '
   $0 ~ /IpcHandler \{/ { ipc = 1 }
   ipc && /target: "window"/ { win = 1 }
   win && /function minimize\(address: string\): string/ { infn = 1 }
