@@ -143,6 +143,16 @@ elif mutation == "reader-agent-available":
 elif mutation == "reader-empty-redaction":
     readers["capabilities"][0]["redaction"]["fields"] = []
     save(readers_path, readers)
+elif mutation == "window-agent-without-entry":
+    window_path, window = load("default/ultimate/capabilities/catalog-window-v0.json")
+    capability = next(item for item in window["capabilities"] if item["id"] == "window.maximize")
+    capability["source"]["brokerVerb"] = ""
+    save(window_path, window)
+elif mutation == "window-agent-claim-present":
+    window_path, window = load("default/ultimate/capabilities/catalog-window-v0.json")
+    capability = next(item for item in window["capabilities"] if item["id"] == "window.maximize")
+    capability["availability"]["claim"] = "present"
+    save(window_path, window)
 else:
     raise SystemExit(f"unknown mutation: {mutation}")
 PY
@@ -183,6 +193,8 @@ assert_rejected "unregistered-builtin-reader" "unregistered builtin provider rea
 assert_rejected "phantom-inspect-reader" "capability packages.inspect is not on the packages.provider manifest"
 assert_rejected "reader-agent-available" "must keep availability.agent unavailable"
 assert_rejected "reader-empty-redaction" "has empty redaction.fields"
+assert_rejected "window-agent-without-entry" "window capability window.maximize has availability.agent present without a CapabilityBroker verb"
+assert_rejected "window-agent-claim-present" "window capability window.maximize claims present while the broker is an actor-label allowlist"
 
 if find "$ROOT/default/ultimate/capabilities" "$ROOT/default/ultimate/capability-schema" "$ROOT/default/ultimate/parity" "$ROOT/test/shell.d" -type d -name __pycache__ -print -quit | grep -q .; then
   fail "capability graph checks leave no Python bytecode caches"

@@ -10,7 +10,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from omarchy_fabric.managed_work import Actor, ManagedWorkError, StableOwnerSessionStore
+from helper import inspect_intent, manifest
+from omarchy_fabric.managed_work import Actor, ManagedWorkError, ManagedWorkPlane, StableOwnerSessionStore
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.security import EndpointAdmission, PrincipalKind
 
@@ -88,7 +89,10 @@ class DaemonManagedWorkContractTests(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual("v0", result["schemaVersion"])
                 self.assertEqual(view, result["view"])
-                self.assertFalse(result["availability"]["executionAvailable"])
+                self.assertEqual(
+                    ManagedWorkPlane.execution_status()["available"],
+                    result["availability"]["executionAvailable"],
+                )
 
         rejected = (
             {"view": "agent.tasks"},
@@ -126,7 +130,7 @@ class DaemonManagedWorkContractTests(unittest.IsolatedAsyncioTestCase):
             {
                 "version": "v0",
                 "title": "RPC inventory",
-                "intent": {"goal": "inventory"},
+                "intent": inspect_intent(),
                 "budget": budget(),
                 "idempotencyKey": "task.rpc-create",
             },
@@ -197,6 +201,77 @@ class DaemonManagedWorkContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(0, connection.execute("SELECT COUNT(*) FROM contexts").fetchone()[0])
         self.assertEqual(0, connection.execute("SELECT COUNT(*) FROM idempotency").fetchone()[0])
 
+    async def test_startup_interrupt_recover_and_execute_over_socket(self) -> None:
+        created = await self.request(
+            "managed-work.task.create",
+            {
+                "version": "v0",
+                "title": "Socket inspect",
+                "intent": inspect_intent(),
+                "budget": budget(),
+                "idempotencyKey": "task.socket-execute",
+            },
+        )
+        actor = Actor(self.principal.principal_id, self.principal.session_id)
+        queued = self.daemon.managed_work.transition_task(
+            actor,
+            created["taskId"],
+            expected_revision=created["revision"],
+            target="queued",
+        )
+        planned = self.daemon.managed_work.create_run_plan(
+            actor,
+            queued["taskId"],
+            manifest=manifest(),
+            idempotency_key="run.socket-plant",
+        )
+        with self.daemon.managed_work.store.transaction() as connection:
+            connection.execute(
+                "UPDATE tasks SET state = 'running' WHERE task_id = ?",
+                (queued["taskId"],),
+            )
+            connection.execute(
+                "UPDATE runs SET state = 'running' WHERE run_id = ?",
+                (planned["runId"],),
+            )
+        recovered_count = self.daemon.managed_work.store.recover_interrupted()
+        self.assertGreaterEqual(recovered_count, 1)
+        interrupted = self.daemon.managed_work.get_task(
+            Actor(self.principal.principal_id, self.principal.session_id),
+            created["taskId"],
+        )
+        self.assertEqual("interrupted", interrupted["state"])
+        self.assertNotEqual("succeeded", interrupted["state"])
+        retried = await self.request(
+            "managed-work.task.recover",
+            {
+                "version": "v0",
+                "taskId": interrupted["taskId"],
+                "expectedRevision": interrupted["revision"],
+            },
+        )
+        self.assertEqual("retrying", retried["state"])
+        try:
+            executed = await self.request(
+                "managed-work.run.execute",
+                {
+                    "version": "v0",
+                    "taskId": retried["taskId"],
+                    "idempotencyKey": "run.socket-execute",
+                },
+            )
+        except FabricError as error:
+            self.assertEqual("sandbox.unavailable", error.code)
+            stored = self.daemon.managed_work.get_task(
+                Actor(self.principal.principal_id, self.principal.session_id),
+                retried["taskId"],
+            )
+            self.assertNotEqual("succeeded", stored["state"])
+            return
+        self.assertEqual("sandboxed-run", executed["kind"])
+        self.assertEqual("system.info.read", executed["result"]["capability"])
+        self.assertEqual("succeeded", executed["task"]["state"])
+
 
 @unittest.skipUnless(
     hasattr(socket, "SO_PEERCRED") and hasattr(os, "getuid"),
@@ -256,7 +331,7 @@ class DaemonManagedWorkMetalTests(unittest.IsolatedAsyncioTestCase):
             self.daemon.managed_work.create_task(
                 actor,
                 title=f"Durable task {index}",
-                intent={"goal": "read-only inventory"},
+                intent=inspect_intent(goal="read-only inventory"),
                 context_ids=[principal_context["contextId"]],
                 budget=budget(),
                 idempotency_key=f"task.durable-{index}",

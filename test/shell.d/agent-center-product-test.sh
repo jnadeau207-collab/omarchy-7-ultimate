@@ -84,7 +84,7 @@ assertThrows(
 
 const execution = {
   schemaVersion: 'v0', kind: 'managed-execution-status', available: false,
-  code: 'managed-execution.not-integrated', explanation: 'Execution is unavailable.',
+  code: 'sandbox.unavailable', explanation: 'Execution is unavailable.',
   legacyInteractiveIncluded: false, networkDefault: 'denied'
 }
 

@@ -1,11 +1,11 @@
-"""Redacted desktop context broker for open windows, focus, and selection."""
-
 from __future__ import annotations
 
 import json
 import os
 import socket
+import subprocess
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
 from .managed_work import Actor, ManagedWorkError, ManagedWorkPlane
@@ -33,6 +33,24 @@ EXCLUDED_TITLE_MARKERS = (
     "credential",
     "sudo",
     "authentication",
+)
+WL_PASTE = "/usr/bin/wl-paste"
+SELECTION_LIMIT = 4096
+PASTE_TIMEOUT = 2
+PROTOCOL_MARKERS = (
+    "wayland",
+    "protocol",
+    "connect",
+    "display",
+    "compositor",
+    "no such file",
+    "not found",
+)
+EMPTY_MARKERS = (
+    "nothing is copied",
+    "no selection",
+    "clipboard is empty",
+    "no contents",
 )
 
 
@@ -104,6 +122,109 @@ def _window_record(client: Mapping[str, Any], *, focused: bool) -> dict[str, Any
     }
 
 
+def _selection_excluded() -> dict[str, Any]:
+    return {"available": False, "reason": "selection-excluded", "text": ""}
+
+
+def _selection_empty() -> dict[str, Any]:
+    return {"available": True, "reason": "empty", "text": ""}
+
+
+def _selection_captured(text: str) -> dict[str, Any]:
+    return {"available": True, "reason": "captured", "text": text}
+
+
+def _decode_selection(payload: bytes) -> str:
+    if len(payload) > SELECTION_LIMIT:
+        payload = payload[:SELECTION_LIMIT]
+    return payload.decode("utf-8", errors="replace")
+
+
+def _wl_paste_bin() -> str:
+    path = Path(WL_PASTE)
+    if not path.is_file() or not os.access(path, os.X_OK):
+        raise ManagedWorkError(
+            "context.selection-unavailable",
+            "Desktop selection cannot be captured because wl-paste is unavailable.",
+            detail=WL_PASTE,
+        )
+    return str(path)
+
+
+def _classify_paste_failure(stderr: str) -> str:
+    lowered = stderr.casefold()
+    if any(marker in lowered for marker in EMPTY_MARKERS):
+        return "empty"
+    if any(marker in lowered for marker in PROTOCOL_MARKERS):
+        return "unavailable"
+    return "unavailable"
+
+
+def _run_wl_paste(argv: Sequence[str]) -> tuple[int, bytes, str]:
+    try:
+        completed = subprocess.run(
+            list(argv),
+            capture_output=True,
+            timeout=PASTE_TIMEOUT,
+            check=False,
+        )
+    except FileNotFoundError as error:
+        raise ManagedWorkError(
+            "context.selection-unavailable",
+            "Desktop selection cannot be captured because wl-paste is unavailable.",
+            detail=WL_PASTE,
+        ) from error
+    except subprocess.TimeoutExpired as error:
+        raise ManagedWorkError(
+            "context.selection-unavailable",
+            "Desktop selection cannot be captured because wl-paste timed out.",
+            detail=WL_PASTE,
+        ) from error
+    stderr = (completed.stderr or b"").decode("utf-8", errors="replace")
+    return completed.returncode, completed.stdout or b"", stderr
+
+
+def _paste_text(*, primary: bool) -> dict[str, Any]:
+    binary = _wl_paste_bin()
+    argv = [binary, "--no-newline"]
+    if primary:
+        argv = [binary, "--primary", "--no-newline"]
+    code, stdout, stderr = _run_wl_paste(argv)
+    if code == 0:
+        text = _decode_selection(stdout)
+        if not text:
+            return _selection_empty()
+        return _selection_captured(text)
+    kind = _classify_paste_failure(stderr)
+    if kind == "empty":
+        return _selection_empty()
+    if primary:
+        return {"available": False, "reason": "primary-unavailable", "text": ""}
+    raise ManagedWorkError(
+        "context.selection-unavailable",
+        "Desktop selection cannot be captured because the clipboard protocol is unavailable.",
+        detail=stderr.strip() or WL_PASTE,
+    )
+
+
+def _redact_selection(selection: Mapping[str, Any]) -> dict[str, Any]:
+    text = str(selection.get("text") or "")
+    if any(marker in text.casefold() for marker in EXCLUDED_TITLE_MARKERS):
+        return _selection_excluded()
+    return dict(selection)
+
+
+def _live_selection(*, excluded_focus: bool) -> dict[str, Any]:
+    if excluded_focus:
+        return _selection_excluded()
+    selection = _redact_selection(_paste_text(primary=False))
+    primary = _redact_selection(_paste_text(primary=True))
+    if primary.get("reason") != "primary-unavailable":
+        selection = dict(selection)
+        selection["primary"] = primary
+    return selection
+
+
 def collect_compositor_snapshot() -> dict[str, Any]:
     clients = _hypr_json("clients")
     active = _hypr_json("activewindow")
@@ -123,11 +244,7 @@ def collect_compositor_snapshot() -> dict[str, Any]:
     return {
         "windows": windows,
         "focus": focus,
-        "selection": {
-            "available": False,
-            "reason": "selection-not-exported",
-            "text": "",
-        },
+        "selection": _live_selection(excluded_focus=bool(active) and _excluded_window(active)),
     }
 
 
@@ -152,20 +269,18 @@ def _normalize_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(focus_in, dict) and not _excluded_window(focus_in):
         focus = _window_record(focus_in, focused=True)
     selection_in = snapshot.get("selection")
-    selection = {"available": False, "reason": "selection-not-exported", "text": ""}
-    if isinstance(selection_in, dict):
+    if not isinstance(selection_in, dict):
+        selection = _selection_empty()
+    else:
         text = str(selection_in.get("text") or "")
-        if len(text.encode("utf-8")) > 4096:
+        if len(text.encode("utf-8")) > SELECTION_LIMIT:
             raise ManagedWorkError("context.snapshot", "Selection text exceeds its bound.")
-        lowered = text.casefold()
-        if any(marker in lowered for marker in EXCLUDED_TITLE_MARKERS):
-            selection = {"available": False, "reason": "selection-excluded", "text": ""}
+        if any(marker in text.casefold() for marker in EXCLUDED_TITLE_MARKERS):
+            selection = _selection_excluded()
+        elif text:
+            selection = _selection_captured(text)
         else:
-            selection = {
-                "available": bool(text),
-                "reason": "supplied" if text else "empty",
-                "text": text,
-            }
+            selection = _selection_empty()
     return {"windows": windows, "focus": focus, "selection": selection}
 
 
@@ -175,7 +290,7 @@ def _content_for_source(source: str, snapshot: Mapping[str, Any]) -> dict[str, A
     if source == "focused-application":
         focus = snapshot.get("focus")
         return {"focus": focus, "application": (focus or {}).get("class", "")}
-    return {"selection": snapshot.get("selection") or {"available": False, "reason": "selection-not-exported", "text": ""}}
+    return {"selection": snapshot.get("selection") or _selection_empty()}
 
 
 def capture_desktop_context(

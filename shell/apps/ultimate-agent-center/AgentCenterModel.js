@@ -183,7 +183,7 @@ function validAvailability(value) {
     typeof value.available === "boolean" &&
     typeof value.code === "string" && value.code.length >= 1 && value.code.length <= 160 &&
     /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/.test(value.code) &&
-    value.executionAvailable === false
+    typeof value.executionAvailable === "boolean"
 }
 
 function validExecution(value) {
@@ -198,8 +198,9 @@ function validExecution(value) {
   ]) &&
     value.schemaVersion === QUERY_VERSION &&
     value.kind === "managed-execution-status" &&
-    value.available === false &&
-    value.code === "managed-execution.not-integrated" &&
+    typeof value.available === "boolean" &&
+    ((value.available === true && value.code === "managed-execution.bubblewrap") ||
+      (value.available === false && value.code === "sandbox.unavailable")) &&
     typeof value.explanation === "string" &&
     value.explanation.length >= 1 && value.explanation.length <= 2000 &&
     value.legacyInteractiveIncluded === false &&

@@ -134,9 +134,6 @@ def restore_cursor_windows(saved: list[dict] | None) -> None:
 
 
 def hyprbars_button(win: dict, which: str) -> tuple[int, int]:
-  # hyprbars sits above the client box when there is room. Maximized windows
-  # sit at y≈0, so the caption is inside the top of the box.
-  # desktop-windows.lua: bar_padding 12, button 22, button_padding 8, RTL close/max/min.
   x, y = win["at"]
   w = win["size"][0]
   bar_y = y + 16 if y < 24 else y - 16
@@ -231,8 +228,6 @@ class AbsPointer:
     self.button(False)
 
   def quick_click(self, x: int, y: int) -> None:
-    # Maximize hover_action dwell is 280ms. A slow click parks on □ and
-    # summons the snap chooser instead of maximizing.
     self.move(x, y)
     time.sleep(0.04)
     self.button(True)
@@ -253,8 +248,6 @@ class AbsPointer:
     self.button(False)
 
   def close(self) -> None:
-    # UI_DEV_DESTROY can block on this kernel/libinput pairing. Closing the
-    # fd is enough for the helper to exit; udev removes the node shortly after.
     try:
       os.close(self.fd)
     except OSError:
@@ -326,7 +319,6 @@ def is_hidden_client(win: dict | None) -> bool:
 
 
 def geometry_is_maximized(win: dict | None) -> bool:
-  """Maximize is a work-area float; Hyprland fullscreen=1 is not required."""
   if not win or not win.get("at") or not win.get("size"):
     return False
   area = work_area()
@@ -343,9 +335,6 @@ def geometry_is_maximized(win: dict | None) -> bool:
 
   if covers(x, y, w, h):
     return True
-  # Chromium CSD maximize is either a 12px compositor inset around the work
-  # area or an edge-to-edge work-area box. Only apply the inset when the raw
-  # box does not already cover.
   klass = str(win.get("class") or "").lower()
   if "chrom" in klass:
     return covers(x + 12, y + 12, w - 12, h - 12)
@@ -383,11 +372,6 @@ def grim(path: str) -> None:
 
 
 def pin_session_monitor() -> None:
-  # Do not modeset. This Samsung HDMI panel's preferred mode is 4K@30, which is
-  # no-signal. hyprctl eval hl.monitor(...) re-modesets the NVIDIA card, logs
-  # EDID failures on phantom DP-0, and a later hyprctl reload/reboot reapplies
-  # ~/.config/hypr/monitors.lua. If that file is still stock `preferred`, the
-  # TV goes black until someone SSH-fixes it. Leave the live output alone.
   return
 
 
@@ -457,8 +441,6 @@ def main() -> int:
       if not picked:
         raise ProofError(f"cycle list has no other foot to pick (won't AbsPointer Cursor): {snap}")
       cycle_idx, want = picked
-    # Create the ABS pointer after the overlay is mapped. A device that exists
-    # before the layer maps does not deliver buttons onto this Quickshell surface.
     pointer = AbsPointer()
     gw, gh = monitor_size()
     report["monitor"] = [gw, gh]
@@ -506,7 +488,6 @@ def main() -> int:
     as_user(["omarchy-shell", "shell", "hide", "omarchy.ultimate-snap-chooser"], wait=True, timeout=5)
     as_user(["omarchy-shell", "shell", "hide", "omarchy.ultimate-start"], wait=True, timeout=5)
     as_user(["omarchy-shell", "notifications", "dismissAll"], wait=True, timeout=5)
-    # Left padding of the bar, not the title string and not the RTL buttons.
     barx, bary = x + 48, y - 16 if y >= 24 else y + 16
     pointer.move(barx, bary, gw, gh)
     time.sleep(0.2)
@@ -635,7 +616,6 @@ def main() -> int:
     pointer.move(hx + hw // 2, hy - 16 if hy >= 24 else hy + 16)
     time.sleep(0.12)
     pointer.move(maxx, maxy)
-    # handleButtonHover used to arm on motion and only fire on a later move.
     deadline = time.time() + 1.2
     while time.time() < deadline:
       pointer.move(maxx + (1 if int(time.time() * 10) % 2 else 0), maxy)
@@ -669,7 +649,6 @@ def main() -> int:
       raise ProofError("rear foot vanished before click-to-raise")
     bx, by = behind["at"]
     bw, bh = behind["size"]
-    # addr is 80–800; the rear foot's exposed strip is x>=800.
     raisex, raisey = bx + bw - 48, by + max(64, bh // 2)
     report["click_to_raise_aim"] = [raisex, raisey]
     report["click_to_raise_target"] = behind["address"]

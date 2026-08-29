@@ -1,20 +1,10 @@
 #!/bin/bash
 
-# Executable skeleton for WINDOWS_NATIVE_ACCEPTANCE.md — the forty-task
-# Windows-native release gate, run in the disposable-VM acceptance suite.
-# Cases land here as vertical slices ship; a case with no implementation yet
-# reports "skip" so the manifest stays honest about coverage without failing
-# the suite. When a case gains steps, replace its skip line with real checks
-# using the base-test.sh helpers (pass/fail/wait_until/layer_present/...).
 
 set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-# Do not hyprctl-eval monitor modes here. Ranking is
-# `omarchy-hyprland-monitor-apply --emit-lua` from config/hypr/monitors.lua.
-# This Samsung HDMI TV's EDID preferred DTD is 4K@30 (no-signal). Do not pin
-# HDMI and do not fall back to mode = "preferred".
 PREEXISTING_ADDRS=$(hyprctl -j clients | jq -r '.[].address' | sort)
 
 
@@ -64,7 +54,6 @@ tasks=(
   "shut down"
 )
 
-# The manifest document and the harness task list must never drift apart.
 manifest_tasks=$(grep -cE '^\| [0-9]+ \|' "$MANIFEST")
 if ((manifest_tasks != ${#tasks[@]})); then
   fail "manifest/harness drift" "WINDOWS_NATIVE_ACCEPTANCE.md lists $manifest_tasks tasks; harness enumerates ${#tasks[@]}"
@@ -114,7 +103,6 @@ focused_monitor_json() {
   hyprctl -j monitors | jq -c '.[] | select(.focused == true)'
 }
 
-# Hyprland 0.56 reserved is [left, top, right, bottom], not the older wiki TRBL order.
 work_area_json() {
   focused_monitor_json | jq -c '{
     x: .reserved[0],
@@ -131,8 +119,6 @@ work_area_json() {
 taskbar_reserves_bottom() {
   local area
   area=$(work_area_json)
-  # Desktop Mode's only exclusive chrome is the bottom taskbar. A ghost top
-  # reserved band (the 173px leak) would make snap follow a false work area.
   jq -e '.bottom >= 32 and .left < 16 and .top < 8 and .right < 8' <<<"$area" >/dev/null
 }
 
@@ -151,9 +137,6 @@ window_near_rect() {
   ' >/dev/null
 }
 
-# Chromium's compositor box is 12px larger than the visible frame. Snap and
-# maximize target the visible frame via WindowModel.frameBox. Compare that
-# logical rectangle, not the raw hyprctl box.
 window_visible_near_rect() {
   local addr="$1"
   local x="$2"
@@ -190,11 +173,6 @@ window_is_maximized() {
   local addr="$1"
   local area
   area=$(work_area_json)
-  # Maximize is an explicit work-area float, not Hyprland fullscreen=1.
-  # Floating clients ignore maximized-fullscreen, so WindowService resizes to
-  # the work-area rect. hyprctl size is the client box; hyprbars (~32px) sits
-  # in the top of the work area. The occupied span must meet the work-area
-  # edges within 8px.
   hyprctl -j clients | jq -e --arg addr "$addr" --argjson area "$area" '
     .[] | select(.address == $addr)
     | ((.at[0] - $area.x) | fabs) <= 8
@@ -223,8 +201,6 @@ launch_feet() {
     launch_app foot
   done
   wait_until "$want foot windows are open" 30 foot_at_least "$want"
-  # Reopen memory can restore a previous max/snap for class foot. Proofs that
-  # snap or restoreNormal need a known overlapping float, not that remembered box.
   while read -r addr; do
     [[ -n $addr ]] || continue
     omarchy-shell window restoreNormal "$addr" >/dev/null 2>&1 || true
@@ -250,8 +226,6 @@ restore_native_windows() {
   omarchy-shell window commitCycle >/dev/null 2>&1 || true
   omarchy-shell shell hide omarchy.ultimate-task-switcher >/dev/null 2>&1 || true
   omarchy-shell shell hide omarchy.ultimate-snap-chooser >/dev/null 2>&1 || true
-  # Close only clients this harness mapped. Do not kill the user's Cursor or
-  # already-open Chromium on the live box.
   while read -r addr class; do
     [[ -n $addr ]] || continue
     if grep -Fxq "$addr" <<<"$PREEXISTING_ADDRS"; then
@@ -324,8 +298,6 @@ for task in "${tasks[@]}"; do
     sleep 1
     area=$(work_area_json)
     left_x=$(jq -r .x <<<"$area")
-    # hyprctl at/size is the client box. hyprbars (32px) sits above it, so the
-    # client is inset from the work-area top so the title bar stays on screen.
     left_y=$(jq -r '.y + 32' <<<"$area")
     left_h=$(jq -r '.h - 32' <<<"$area")
     half=$(jq -r '.w / 2 | floor' <<<"$area")
@@ -377,8 +349,6 @@ for task in "${tasks[@]}"; do
   esac
 done
 
-# Maximize is not a numbered acceptance row, but the windowing gate requires it.
-# These extra proofs fail the file if geometry is wrong; they are not a self-graded go.
 launch_feet 1
 mapfile -t addrs < <(foot_addresses)
 (( ${#addrs[@]} >= 1 )) || fail "maximize fills the work area" "no foot window"
@@ -540,8 +510,6 @@ fi
 if [[ -z $second_name ]]; then
   hyprctl output create headless HEADLESS-2 >/dev/null 2>&1 || hyprctl output create headless >/dev/null 2>&1 || true
   sleep 0.5
-  # Prefer the new headless output. Do not pick a disabled phantom DP or the
-  # live HDMI TV — eval'ing those re-modesets the NVIDIA card.
   second_name=$(hyprctl -j monitors | jq -r --arg p "$primary_name" '[.[] | select(.name != $p and (.name | startswith("HEADLESS")))] | .[0].name // empty')
   created_headless=$second_name
 fi
@@ -744,8 +712,6 @@ pass "GTK parented dialog stays small on its parent (${gtk_dw}x${gtk_dh} at ${gt
 layer_present "omarchy-taskbar" || fail "tray chrome" "taskbar layer is missing"
 pass "taskbar tray cluster is mapped"
 
-# Mouse proof: one absolute pointer (USB-tablet class), not relative ydotool.
-# Missing /dev/uinput is a failure, not a skip.
 run_hyprbars_pointer_proof() {
   local script="$ROOT/test/acceptance.d/hyprbars-pointer-proof.py"
   [[ -f $script ]] || fail "hyprbars pointer proof" "missing $script"

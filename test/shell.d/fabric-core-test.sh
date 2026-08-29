@@ -189,6 +189,54 @@ assert all(check["status"] == "pass" for check in doctor["checks"])
 PY
 pass "Fabric health and doctor CLIs exercise the live hello/RPC path"
 
+create_payload='{"title":"CLI inspect","intent":{"goal":"inventory","readOnly":true,"capability":"system.info.read"},"budget":{"timeSeconds":60,"outputBytes":1024,"costMicrounits":0,"network":false},"idempotencyKey":"task.cli-create"}'
+task_json=$(OMARCHY_PATH="$ROOT" bash "$ROOT/bin/omarchy-fabricctl" \
+  --socket "$socket_path" --json task create "$create_payload")
+list_json=$(OMARCHY_PATH="$ROOT" bash "$ROOT/bin/omarchy-fabricctl" \
+  --socket "$socket_path" --json task list '{"limit":10}')
+context_payload='{"source":"open-windows","idempotencyKey":"context.cli-windows","snapshot":{"windows":[{"class":"foot","title":"term","address":"0x1","focused":true}],"focus":{"class":"foot","title":"term","address":"0x1"},"selection":{"text":""}}}'
+context_json=$(OMARCHY_PATH="$ROOT" bash "$ROOT/bin/omarchy-fabricctl" \
+  --socket "$socket_path" --json context capture "$context_payload")
+python3 - "$task_json" "$list_json" "$context_json" <<'PY'
+import json
+import sys
+
+created = json.loads(sys.argv[1])
+listed = json.loads(sys.argv[2])
+captured = json.loads(sys.argv[3])
+assert created.get("state") == "draft", created
+assert created.get("taskId")
+assert any(item.get("task", {}).get("taskId") == created["taskId"] for item in listed["items"])
+assert captured["source"] == "open-windows"
+assert [item["class"] for item in captured["content"]["windows"]] == ["foot"]
+PY
+task_id=$(python3 - "$task_json" <<'PY'
+import json
+import sys
+print(json.loads(sys.argv[1])["taskId"])
+PY
+)
+set +e
+execute_json=$(OMARCHY_PATH="$ROOT" bash "$ROOT/bin/omarchy-fabricctl" \
+  --socket "$socket_path" --json run execute "{\"taskId\":\"$task_id\",\"idempotencyKey\":\"run.cli-execute\"}")
+execute_status=$?
+set -e
+python3 - "$execute_json" "$execute_status" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+status = int(sys.argv[2])
+if status == 0:
+    assert payload["kind"] == "sandboxed-run"
+    assert payload["result"]["capability"] == "system.info.read"
+    assert payload["task"]["state"] == "succeeded"
+else:
+    assert payload["status"] == "unavailable"
+    assert payload["error"]["code"] == "sandbox.unavailable"
+PY
+pass "Fabricctl task, context, and execute verbs return the RPC result object"
+
 kill "$fabric_pid"
 wait "$fabric_pid"
 fabric_pid=""

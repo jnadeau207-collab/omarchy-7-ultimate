@@ -4,27 +4,13 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import "WindowModel.js" as WindowModel
 
-// WindowService: the typed window-management capability behind the Ultimate
-// taskbar, Start, caption chrome, and every window affordance
-// (docs/settings-service-api.md). UI never runs hyprctl and never assembles
-// shell strings; it calls these intent-named verbs. Dispatchers go through
-// Hyprland.dispatch (Quickshell's Hyprland socket), not bash -c.
-//
-// Hyprland 0.55+ parses `dispatch …` as Lua (`hl.dispatch(…)`). Classic token
-// dispatchers (`fullscreen 2`, movewindowpixel, resizeactive) fail on that
-// parser. Verbs below send `hl.dsp.window.*` forms, always naming
-// `window = "address:…"`.
-// Minimize is CWindow::setHidden on the same workspace via the
-// omarchy-minimize plugin (`hl.plugin.omarchy_minimize.*`).
 QtObject {
   id: root
 
   property string lastError: ""
   property var _minimized: ({})
   property var _normalBounds: ({})
-  // Last snap/max verb this service applied. Hyprland.refreshToplevels() does
-  // not wait for lastIpcObject, and hyprctl -j clients is a 400ms poll, so Aero
-  // drag-away cannot trust those boxes right after maximize().
+
   property var _placedKind: ({})
   property bool _desktopShown: false
   property var _batch: []
@@ -32,8 +18,7 @@ QtObject {
   property bool cycling: false
   property int cycleIndex: 0
   property var cycleList: []
-  // Hyprland.toplevels.activated lags the compositor after focus(). Alt+Tab
-  // immediately after a focus verb must not treat the previous window as current.
+
   property string _focusedAddress: ""
   property double _focusedAt: 0
   property string _lastCycleAddress: ""
@@ -113,8 +98,7 @@ QtObject {
         seen[rec.address] = true
       }
     }
-    // setHidden windows can drop out of Hyprland.toplevels while hyprctl
-    // clients still lists them. Keep those buttons on the taskbar.
+
     var clients = root.clientsIpc || []
     for (i = 0; i < clients.length; i++) {
       c = clients[i]
@@ -233,8 +217,7 @@ QtObject {
           root._queueFloatRestore(addr)
       }
       if (current) rects[addr] = current
-      // CSD maximize never calls WindowService.maximize(), so record the
-      // compositor bit here or placement will treat the address as new.
+
       if (fs === 1 && kinds[addr] !== "max") {
         kinds[addr] = "max"
         kindsChanged = true
@@ -247,7 +230,13 @@ QtObject {
     }
     root._lastRect = rects
     root._lastAppId = apps
-    if (kindsChanged) root._placedKind = kinds
+    if (kindsChanged) {
+      root._placedKind = kinds
+      for (addr in kinds) {
+        if (kinds[addr] === "max" || kinds[addr] === "full")
+          root._persistKind(addr, kinds[addr])
+      }
+    }
   }
 
   function _rememberPlacement(address) {
@@ -273,20 +262,36 @@ QtObject {
 
   function _hydrateIfNeeded() {
     if (root._placementsReady) return
-    // Only a successful hyprctl snapshot can define the startup baseline. An
-    // empty snapshot is valid and means the first later client is new; the
-    // default [] before parsing (or after a parse failure) is not evidence.
     if (!root._clientsSnapshotReady) return
     var clients = root.clientsIpc || []
     var init = ({})
+    var kinds = root._copyMap(root._placedKind)
+    var apps = root._copyMap(root._lastAppId)
     var i
     var addr
+    var c
+    var key
+    var fs
+    var pk
     for (i = 0; i < clients.length; i++) {
-      if (!clients[i] || !clients[i].address) continue
-      addr = root._canonAddr(clients[i].address)
-      if (addr) init[addr] = true
+      c = clients[i]
+      if (!c || !c.address) continue
+      addr = root._canonAddr(c.address)
+      if (!addr) continue
+      init[addr] = true
+      key = WindowModel.windowAppId({ class: c.class, appId: c.initialClass || c.class })
+      if (key) apps[addr] = key
+      fs = Number(c.fullscreen || 0)
+      if (fs === 1) kinds[addr] = "max"
+      else if (fs === 2 || fs === 3) kinds[addr] = "full"
+      else if (key && root.placements[key]) {
+        pk = String(root.placements[key].kind || "")
+        if (pk === "max" || pk === "full" || root._isPlacedSnap(pk)) kinds[addr] = pk
+      }
     }
     root._knownAddresses = init
+    root._lastAppId = apps
+    root._placedKind = kinds
     root._placementsReady = true
   }
 
@@ -401,11 +406,32 @@ QtObject {
       }
       geom = root._monitorGeom(addr)
       var csd = WindowModel.usesWaylandCsd({ class: c.class, appId: c.initialClass || c.class, initialClass: c.initialClass })
-      var remembered = key && root.placements[key] && root.placements[key].width ? root.placements[key] : null
+      var remembered = key && root.placements[key] ? root.placements[key] : null
+      var rememberedKind = remembered ? String(remembered.kind || "float") : "float"
+      if (rememberedKind === "max") {
+        if (remembered.width) {
+          var normals = root._copyMap(root._normalBounds)
+          normals[addr] = { x: Number(remembered.x), y: Number(remembered.y), width: Number(remembered.width), height: Number(remembered.height) }
+          root._normalBounds = normals
+        }
+        root._applyMaximizedRect(addr)
+        known[addr] = true
+        continue
+      }
+      if (root._isPlacedSnap(rememberedKind)) {
+        if (remembered.width) {
+          var snapNormals = root._copyMap(root._normalBounds)
+          snapNormals[addr] = { x: Number(remembered.x), y: Number(remembered.y), width: Number(remembered.width), height: Number(remembered.height) }
+          root._normalBounds = snapNormals
+        }
+        root._applySnapKind(addr, rememberedKind)
+        known[addr] = true
+        continue
+      }
+      if (!(remembered && remembered.width)) remembered = null
       var current = root._logicalClientRect(c)
       var areaNow = WindowModel.workArea(geom)
-      // A parented dialog (or any toolkit-placed window) already has a real
-      // compositor box. Cascading it 280ms later leaves children behind.
+
       if (!remembered && current && Number(current.width) > 0 && areaNow && areaNow.width) {
         if (Math.abs(Number(current.x) - areaNow.x) > 24 || Math.abs(Number(current.y) - areaNow.y) > 24) {
           known[addr] = true
@@ -432,8 +458,7 @@ QtObject {
         remembered = null
       if (remembered && area && area.width && Number(remembered.x) < area.x - 4 && Number(remembered.y) < area.y - 4)
         remembered = null
-      // The native CSD plugin owns fresh-map sizing and applies Chromium's
-      // compositor-frame transform. Do not apply it again during hydration.
+
       if (csd && !remembered) {
         known[addr] = true
         continue
@@ -483,10 +508,6 @@ QtObject {
     return 'window = "address:' + String(address || "") + '"'
   }
 
-  // Address handles in the compositor Lua registry go stale after a config
-  // reload ("hl.focus: window not found" for live clients). Look the window
-  // up from hl.get_windows — the same path activateAtCursor uses — then
-  // fall back to the address form if the object is missing.
   function _focusLiveLua(address) {
     var want = root._canonAddr(address)
     if (!/^0x[0-9a-fA-F]+$/.test(want)) return "function() end"
@@ -677,8 +698,7 @@ QtObject {
 
   function _activeAddress() {
     var hinted = root._focusedAddress
-    // focus() updates this immediately. The activated flag can still name
-    // the previous client for a few hundred milliseconds.
+
     if (hinted && (Date.now() - root._focusedAt) < 400)
       return hinted
     var hypr = root._hyprlandToplevels()
@@ -733,6 +753,47 @@ QtObject {
     return next
   }
 
+  function _placementKey(address) {
+    var target = root._canonAddr(address)
+    if (!target) return ""
+    return root._lastAppId[target] || WindowModel.windowAppId(root._record(target) || {}) || ""
+  }
+
+  function _persistKind(address, kind) {
+    var key = root._placementKey(address)
+    if (!key) return
+    var next = root._copyMap(root.placements)
+    var prev = next[key] || {}
+    var rec = {
+      x: Number(prev.x || 0),
+      y: Number(prev.y || 0),
+      width: Number(prev.width || 0),
+      height: Number(prev.height || 0),
+      monitor: String(prev.monitor || "")
+    }
+    var knd = String(kind || "float")
+    if (knd === "" || knd === "normal") knd = "float"
+    rec.kind = knd
+    var bounds = root._normalBounds[address]
+    if (bounds && bounds.width) {
+      rec.x = Number(bounds.x)
+      rec.y = Number(bounds.y)
+      rec.width = Number(bounds.width)
+      rec.height = Number(bounds.height)
+    } else if (knd === "float") {
+      var rect = root._lastRect[address]
+      if (rect && rect.width && !rect.fullscreen) {
+        rec.x = Number(rect.x)
+        rec.y = Number(rect.y)
+        rec.width = Number(rect.width)
+        rec.height = Number(rect.height)
+      }
+    }
+    next[key] = rec
+    root.placements = next
+    root._persistPlacements()
+  }
+
   function _setPlacedKind(address, kind) {
     var target = root._canonAddr(address)
     if (!target) return
@@ -741,11 +802,25 @@ QtObject {
     if (k === "" || k === "float" || k === "normal") delete next[target]
     else next[target] = k
     root._placedKind = next
+    root._persistKind(target, k)
     if (root._isPlacedSnap(k) && root._pendingFloatRestore === target) {
       root._pendingFloatRestore = ""
       if (root.restoreFloatTimer) root.restoreFloatTimer.stop()
       if (root.restoreFloatRetryTimer) root.restoreFloatRetryTimer.stop()
     }
+  }
+
+  function _applyMaximizedRect(target) {
+    var geom = root._monitorGeom(target)
+    if (!geom.width || !geom.height) return false
+    var rect = root._frameBox(target, WindowModel.snapRect(geom, "max", root._hyprbarsInset(target)))
+    var win = root._luaWindow(target)
+    root._setPlacedKind(target, "max")
+    root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + win + " })")
+    root._dispatchLua("hl.dsp.window.float({ action = \"enable\", " + win + " })")
+    root._dispatchLua("hl.dsp.window.resize({ x = " + rect.width + ", y = " + rect.height + ", relative = false, " + win + " })")
+    root._dispatchLua("hl.dsp.window.move({ x = " + rect.x + ", y = " + rect.y + ", relative = false, " + win + " })", true)
+    return true
   }
 
   function _isPlacedSnap(kind) {
@@ -787,9 +862,6 @@ QtObject {
     return WindowModel.hyprbarsSnapInset({ class: cls, appId: cls })
   }
 
-  // hyprctl and Quickshell report the compositor's raw box. Everything above
-  // this boundary uses the visible frame as its coordinate system, so state can
-  // round-trip through the one outgoing _frameBox transform without drift.
   function _logicalClientRect(c) {
     if (!c || !c.at || !c.size || Number(c.size[0]) <= 0 || Number(c.size[1]) <= 0) return null
     var rect = WindowModel.frameRect({
@@ -915,22 +987,11 @@ QtObject {
   function isMaximized(address) {
     var target = root._addr(address)
     if (root._placedKind[target] === "max") return true
-    // hyprctl -j clients is polled; after a maximize dispatcher it can still
-    // hold the previous float. Hyprland.refreshToplevels() does not wait for
-    // lastIpcObject. Prefer the verb we just ran, then compositor bits.
     var live = root._record(target)
     var ipc = root._clientRect(target)
     if (live && Number(live.fullscreen) === 1) return true
     if (ipc && Number(ipc.fullscreen) === 1) return true
-    // First map of a tiled Chromium covers the work area with fullscreen 0.
-    // That is not a user maximize; treating it as one blocked placement and
-    // made CSD □ a no-op.
-    if (!root._knownAddresses[target]) return false
-    var rec = ipc || live
-    var geom = root._monitorGeom(address)
-    if (!rec || !geom.width) return false
-    var area = WindowModel.workArea(geom)
-    return Math.abs(Number(rec.width) - area.width) <= 16 && Number(rec.height) >= area.height - 48
+    return false
   }
 
   function isMinimized(address) {
@@ -946,19 +1007,12 @@ QtObject {
     return root.activate(address)
   }
 
-  // Start click-through: the non-consuming left-click bind dismisses Start via
-  // Quickshell IPC. Unmapping an OnDemand layer then restores the window that
-  // had focus when Start opened, after the click already raised the target.
-  // Do not Hyprland.dispatch from dismissOutside itself — the compositor is
-  // still inside that bind and the socket deadlocks. activateAtCursorTimer
-  // fires after the bind returns.
   function activateAtCursorSoon() {
     root.activateAtCursorTimer.restart()
   }
 
   function activateAtCursor() {
-    // Hit-test in compositor Lua so this does not hyprctl from QML and does
-    // not assemble a shell string around a window address.
+
     root._dispatchLua(
       "function() " +
       "local pos = hl.get_cursor_pos() " +
@@ -982,9 +1036,6 @@ QtObject {
     return root._finish("activateAtCursor", "", root._ok())
   }
 
-  // Alt+Tab and taskbar activation: unhide if needed, then focus. restore()
-  // alone is a no-op for a visible window and is undone if the switcher overlay
-  // unmaps and returns keyboard focus to the previous client.
   function activate(address) {
     var target = root._addr(address)
     if (!target) return root._finish("activate", address, root._err("No window", "There is no window to activate.", ""))
@@ -996,11 +1047,6 @@ QtObject {
     return root._finish("activate", target, root._ok())
   }
 
-  // The compositor can silently drop an address-form hl.focus (stale Lua
-  // window registry after a config reload) while the dispatch itself returns
-  // ok. Look the window up live, retry once after the switcher unmaps, and
-  // put a string on lastError when it still did not land — never an object
-  // on a string property, and never a silent no-op.
   function _beginFocusVerify(target) {
     if (!target) return
     root._pendingFocusAddr = target
@@ -1028,7 +1074,7 @@ QtObject {
       return
     }
     if (root._focusVerifyAttempts < 1) {
-      // One retry: the first dispatch can race the switcher overlay unmap.
+
       root._focusVerifyAttempts++
       root._focusDispatch(target)
       root.focusVerifyTimer.restart()
@@ -1040,26 +1086,13 @@ QtObject {
   function maximize(address) {
     var target = root._addr(address)
     if (!target) return root._finish("maximize", address, root._err("No window", "There is no window to maximize.", ""))
-    // The native CSD button can win before the snap chooser sends its Maximize
-    // action. Keep that action idempotent so it cannot manufacture a
-    // fullscreen-exit event that restores the previous float a moment later.
     if (root.isMaximized(target))
       return root._finish("maximize", target, root._noop())
     var geom = root._monitorGeom(target)
     if (!geom.width || !geom.height) return root._finish("maximize", target, root._err("No monitor", "The window's monitor geometry is unavailable.", ""))
     root._rememberNormal(target)
-    // Hyprland's "maximized" fullscreen mode grows the window box but never
-    // resizes a floating client (foot, Chromium keep their surface size in the
-    // corner). Apply the work-area rect the same explicit way snap does — that
-    // sends a real configure the client honors. hyprbars inset keeps the SSD
-    // caption on-screen; CSD clients inset 0.
-    var rect = root._frameBox(target, WindowModel.snapRect(geom, "max", root._hyprbarsInset(target)))
-    var win = root._luaWindow(target)
-    root._setPlacedKind(target, "max")
-    root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + win + " })")
-    root._dispatchLua("hl.dsp.window.float({ action = \"enable\", " + win + " })")
-    root._dispatchLua("hl.dsp.window.resize({ x = " + rect.width + ", y = " + rect.height + ", relative = false, " + win + " })")
-    root._dispatchLua("hl.dsp.window.move({ x = " + rect.x + ", y = " + rect.y + ", relative = false, " + win + " })", true)
+    if (!root._applyMaximizedRect(target))
+      return root._finish("maximize", target, root._err("No monitor", "The window's monitor geometry is unavailable.", ""))
     return root._finish("maximize", target, root._ok(), { verb: "restoreNormal", address: target })
   }
 
@@ -1103,9 +1136,7 @@ QtObject {
 
   function _restoreFloatOnScreen(target, force) {
     if (!target || root._placingRect) return
-    // A snap dispatched after unmaximize is newer explicit geometry. The
-    // fullscreen-event and polling retries must not overwrite it with the old
-    // normal float.
+
     if (root._isPlacedSnap(root._placedKind[target])) return
     var rec = root._clientRect(target)
     if (!force) {
@@ -1121,8 +1152,6 @@ QtObject {
     root._applyRect(target, bounds)
   }
 
-  // Chromium's visible frame sits inside the box we hand it, so the box has to
-  // grow for the frame to land on the rect we actually want. No-op elsewhere.
   function _frameBox(target, rect) {
     var cls = root._clientClass(target)
     return WindowModel.frameBox(rect, { class: cls, appId: cls })
@@ -1234,10 +1263,7 @@ QtObject {
       root._applySnapKind(target, zone)
       return root._finish("aeroDragEnd", target, root._ok(), { verb: "restoreNormal", address: target })
     }
-    // Interior drop. lastIpcObject and the clients poll can still show the
-    // pre-max float after maximize(), so isMaximized/isSnapped on those boxes
-    // are a no-op. Trust the last verb; if that is also empty, unset
-    // compositor maximize (no-op when the window is already normal).
+
     var placed = root._placedKind[target]
     var rec = root._clientRect(target) || root._record(target)
     if (placed === "max" || placed === "full" || root._isPlacedSnap(placed) || (rec && WindowModel.isSnapped(rec, geom, 8, root._hyprbarsInset(target)))) {
@@ -1304,8 +1330,7 @@ QtObject {
         height: Number(rect.height || 0)
       }], geom, root._hyprbarsInset(list[i]))
       if (captured.windows && captured.windows[0]) {
-        // hyprctl -j clients lags the snap we just dispatched. Remember the
-        // verb so restoreLayout does not replay the previous 880x560 float.
+
         var placed = root._placedKind[list[i]]
         if (root._isPlacedSnap(placed) || placed === "max" || placed === "min" || placed === "full")
           captured.windows[0].kind = placed
@@ -1357,9 +1382,7 @@ QtObject {
     if (!geom.width || !geom.height) return
     if (root.isMaximized(target)) root.unmaximize(target)
     root._rememberNormal(target)
-    // hyprbars draws above hyprctl's client box even with bar_part_of_window.
-    // SSD clients inset 32px (bar_height). CSD clients use hyprbars:no_bar, so
-    // the fused caption is already inside the client box.
+
     var rect = root._frameBox(target, WindowModel.snapRect(geom, direction, root._hyprbarsInset(target)))
     var win = root._luaWindow(target)
     root._setPlacedKind(target, direction)
@@ -1390,9 +1413,7 @@ QtObject {
     var c
     var ws
     var clients = root.clientsIpc || []
-    // Quickshell toplevels keep closed feet. Alt+Tab must not highlight a
-    // ghost address; commitCycle then focuses nothing and leaves the current
-    // window. hyprctl clients is the live set.
+
     for (i = 0; i < clients.length; i++) {
       c = clients[i]
       if (!c || !c.address || c.hidden === true) continue
@@ -1484,10 +1505,7 @@ QtObject {
   function toggleFullscreen(address) {
     var target = root._addr(address)
     if (!target) return root._finish("toggleFullscreen", address, root._err("No window", "There is no window to fullscreen.", ""))
-    // action=toggle is a no-op through hyprctl eval and is racy through
-    // Quickshell when lastIpcObject still says 2 after restoreNormal. Set and
-    // unset are explicit. layout_aware=false is default compositor fullscreen,
-    // not a layout handler that can swallow F11 on overlapping floats.
+
     if (root.isFullscreen(target)) {
       root._setPlacedKind(target, "float")
       root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + root._luaWindow(target) + " })", true)

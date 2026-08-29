@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import importlib.util
 import os
+import sqlite3
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
-from helper import ACTOR, OTHER_ACTOR, ManagedWorkPlane, budget, create_task
+from helper import ACTOR, OTHER_ACTOR, ManagedWorkPlane, budget, create_task, inspect_intent
 from omarchy_fabric.desktop_context import capture_desktop_context
 from omarchy_fabric.managed_runtime import ManagedRuntime
 from omarchy_fabric.managed_work import ManagedWorkError
 from omarchy_fabric.models import FabricError
-from sandbox.builder import SandboxUnavailable
 
 
 class RuntimeTaskTests(unittest.TestCase):
@@ -28,7 +31,7 @@ class RuntimeTaskTests(unittest.TestCase):
             ACTOR,
             {
                 "title": "Inventory probe",
-                "intent": {"goal": "inventory", "readOnly": True},
+                "intent": inspect_intent(),
                 "contextIds": [],
                 "budget": budget(),
                 "idempotencyKey": "task.runtime-create",
@@ -102,7 +105,7 @@ class RuntimeTaskTests(unittest.TestCase):
             ACTOR,
             {
                 "title": "Running work",
-                "intent": {"goal": "inventory"},
+                "intent": inspect_intent(),
                 "contextIds": [],
                 "budget": budget(),
                 "idempotencyKey": "task.runtime-running",
@@ -134,8 +137,8 @@ class RuntimeTaskTests(unittest.TestCase):
         task = self.runtime.create_task(
             ACTOR,
             {
-                "title": "Sandbox probe",
-                "intent": {"kind": "sandbox-probe"},
+                "title": "Sandbox inspect",
+                "intent": inspect_intent(),
                 "contextIds": [],
                 "budget": budget(),
                 "idempotencyKey": "task.runtime-execute",
@@ -147,18 +150,172 @@ class RuntimeTaskTests(unittest.TestCase):
                 {"taskId": task["taskId"], "idempotencyKey": "run.runtime-execute"},
             )
         except FabricError as error:
-            self.assertIn(error.code, {"sandbox.unavailable", "sandbox.probe-failed"})
-            self.assertNotEqual("managed-execution.unavailable", error.code)
+            self.assertEqual("sandbox.unavailable", error.code)
             stored = self.plane.get_task(ACTOR, task["taskId"])
             self.assertNotEqual("succeeded", stored["state"])
-            if error.code == "sandbox.probe-failed":
-                self.fail(error.detail or error.explanation)
             return
         self.assertEqual("sandboxed-run", result["kind"])
         self.assertTrue(result["isolation"]["unshareAll"])
         self.assertEqual("succeeded", result["task"]["state"])
         self.assertEqual("succeeded", result["run"]["state"])
+        self.assertEqual("system.info.read", result["result"]["capability"])
         self.assertEqual(True, result["result"]["ok"])
+        self.assertIn("manifest.json", result["result"]["workspace"])
+
+    def test_create_without_sandbox_capability_fails(self) -> None:
+        with self.assertRaises(FabricError) as refused:
+            self.runtime.create_task(
+                ACTOR,
+                {
+                    "title": "No capability",
+                    "intent": {"goal": "inventory"},
+                    "contextIds": [],
+                    "budget": budget(),
+                    "idempotencyKey": "task.missing-capability",
+                },
+            )
+        self.assertEqual("task.capability", refused.exception.code)
+
+    def test_live_selection_fails_closed_without_protocol(self) -> None:
+        with mock.patch(
+            "omarchy_fabric.desktop_context._hypr_json",
+            side_effect=lambda command: [] if command == "clients" else {},
+        ):
+            with mock.patch(
+                "omarchy_fabric.desktop_context._wl_paste_bin",
+                side_effect=ManagedWorkError(
+                    "context.selection-unavailable",
+                    "Desktop selection cannot be captured because wl-paste is unavailable.",
+                ),
+            ):
+                with self.assertRaises(FabricError) as refused:
+                    self.runtime.capture_context(
+                        ACTOR,
+                        {
+                            "source": "selection",
+                            "idempotencyKey": "context.missing-selection",
+                        },
+                    )
+        self.assertEqual("context.selection-unavailable", refused.exception.code)
+
+    def test_injected_empty_selection_is_available_empty(self) -> None:
+        captured = capture_desktop_context(
+            self.plane,
+            ACTOR,
+            source="selection",
+            snapshot={
+                "windows": [{"class": "foot", "title": "term", "address": "0x1", "focused": True}],
+                "focus": {"class": "foot", "title": "term", "address": "0x1"},
+                "selection": {"text": ""},
+            },
+            idempotency_key="context.empty-selection",
+            now=1_010,
+        )
+        self.assertEqual(True, captured["content"]["selection"]["available"])
+        self.assertEqual("empty", captured["content"]["selection"]["reason"])
+        self.assertEqual("", captured["content"]["selection"]["text"])
+
+    @unittest.skipUnless(
+        os.environ.get("WAYLAND_DISPLAY")
+        and os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
+        and Path("/usr/bin/wl-copy").is_file()
+        and Path("/usr/bin/wl-paste").is_file(),
+        "live Hyprland clipboard",
+    )
+    def test_metal_wl_copy_selection_round_trip(self) -> None:
+        known = "omarchy-fabric-selection-proof"
+        server = subprocess.Popen(
+            ["/usr/bin/wl-copy", "--", known],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        try:
+            captured = capture_desktop_context(
+                self.plane,
+                ACTOR,
+                source="selection",
+                idempotency_key="context.metal-selection",
+                now=1_020,
+            )
+            self.assertEqual(known, captured["content"]["selection"]["text"])
+        finally:
+            server.terminate()
+            try:
+                server.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                server.kill()
+                server.wait(timeout=2)
+        windows = capture_desktop_context(
+            self.plane,
+            ACTOR,
+            source="open-windows",
+            idempotency_key="context.metal-windows",
+            now=1_021,
+        )
+        classes = [item["class"].lower() for item in windows["content"]["windows"]]
+        for banned in ("hyprlock", "pinentry", "pinentry-qt", "pinentry-gtk-2"):
+            self.assertNotIn(banned, classes)
+
+
+def _daemon_process_class():
+    path = Path(__file__).resolve().parents[1] / "core" / "helper.py"
+    spec = importlib.util.spec_from_file_location("fabric_core_helper", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec is not None and spec.loader is not None
+    spec.loader.exec_module(module)
+    return module.DaemonProcess
+
+
+@unittest.skipIf(os.name == "nt", "fabricd requires a Unix socket")
+class FabricdKillInterruptTests(unittest.IsolatedAsyncioTestCase):
+    async def test_killed_fabricd_marks_running_work_interrupted(self) -> None:
+        DaemonProcess = _daemon_process_class()
+        temporary = tempfile.TemporaryDirectory()
+        try:
+            root = Path(temporary.name)
+            daemon = DaemonProcess(root)
+            daemon.start()
+            try:
+                client = await daemon.client("fabric-kill-test")
+                created = await client.request(
+                    "managed-work.task.create",
+                    {
+                        "version": "v0",
+                        "title": "Running across crash",
+                        "intent": inspect_intent(),
+                        "budget": budget(),
+                        "idempotencyKey": "task.fabricd-kill",
+                    },
+                )
+                await client.close()
+                connection = sqlite3.connect(root / "state" / "managed-work.db")
+                try:
+                    connection.execute(
+                        "UPDATE tasks SET state = 'running' WHERE task_id = ?",
+                        (created["taskId"],),
+                    )
+                    connection.commit()
+                finally:
+                    connection.close()
+            finally:
+                daemon.crash()
+            restarted = DaemonProcess(root)
+            restarted.start()
+            try:
+                client = await restarted.client("fabric-kill-reopen")
+                listed = await client.request("managed-work.task.list", {"version": "v0", "limit": 10})
+                await client.close()
+                recovered = next(
+                    item["task"]
+                    for item in listed["items"]
+                    if item.get("task", {}).get("taskId") == created["taskId"]
+                )
+                self.assertEqual("interrupted", recovered["state"])
+                self.assertNotEqual("succeeded", recovered["state"])
+            finally:
+                restarted.stop()
+        finally:
+            temporary.cleanup()
 
 
 class OtherPrincipalTests(unittest.TestCase):
