@@ -87,12 +87,12 @@ applications = {entry["id"]: entry for entry in json.loads((contracts / "applica
 endpoints = {entry["target"]: entry for entry in json.loads((contracts / "ipc-v0.json").read_text())["endpoints"]}
 processes = {entry["id"]: entry for entry in json.loads((contracts / "processes-v0.json").read_text())["processes"]}
 expected = {
-    "files": ("org.omarchy.Files", "omarchy.files", "omarchy-files"),
-    "software": ("org.omarchy.Software", "omarchy.software", "omarchy-software"),
-    "compatibility": ("org.omarchy.Compatibility", "omarchy.compatibility", "omarchy-compatibility"),
+    "files": ("org.omarchy.Files", "omarchy.files", "omarchy-files", True),
+    "software": ("org.omarchy.Software", "omarchy.software", "omarchy-software", False),
+    "compatibility": ("org.omarchy.Compatibility", "omarchy.compatibility", "omarchy-compatibility", False),
 }
 methods = ["activate", "status", "route", "processId", "fabricClientIdentity", "fabricEndpointPrincipal"]
-for application, (desktop_id, ipc_target, scheme) in expected.items():
+for application, (desktop_id, ipc_target, scheme, shipped_pin) in expected.items():
     app = applications[f"app.omarchy.{application}"]
     process_id = f"process.omarchy-ultimate-{application}"
     assert app["availability"] == "present-contract"
@@ -100,7 +100,7 @@ for application, (desktop_id, ipc_target, scheme) in expected.items():
     assert app["processId"] == process_id
     assert app["desktopIds"] == [desktop_id]
     assert app["compositorMatchers"] == [desktop_id]
-    assert app["taskbar"] == {"visibility": "dynamic", "shippedPin": False, "identityJoin": "stable"}
+    assert app["taskbar"] == {"visibility": "dynamic", "shippedPin": shipped_pin, "identityJoin": "stable"}
     assert app["singleInstance"] == {"mode": "reuse-existing", "activation": "deep-link", "state": "contract"}
     assert app["deepLinks"][0]["scheme"] == scheme
     assert app["debtIds"] == ["debt.identity.product-principal-unbound"]
