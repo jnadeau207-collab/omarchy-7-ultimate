@@ -152,6 +152,7 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
             "provider.list",
             "provider.catalog",
             "managed-work.query",
+            "managed-work.task.list",
             "provider.read",
             "events.subscribe",
             "reference.operation.preflight",

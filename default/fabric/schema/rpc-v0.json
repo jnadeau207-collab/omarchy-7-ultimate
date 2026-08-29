@@ -51,6 +51,12 @@
             "provider.list",
             "provider.catalog",
             "managed-work.query",
+            "managed-work.task.create",
+            "managed-work.task.list",
+            "managed-work.task.cancel",
+            "managed-work.task.recover",
+            "managed-work.run.execute",
+            "managed-work.context.capture",
             "provider.read",
             "provider.invoke",
             "reference.operation.preflight",
@@ -87,6 +93,30 @@
               }
             }
           }
+        },
+        {
+          "if": { "properties": { "method": { "const": "managed-work.task.create" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/managedWorkTaskCreateParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "managed-work.task.list" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/managedWorkTaskListParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "managed-work.task.cancel" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/managedWorkTaskIdRevisionParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "managed-work.task.recover" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/managedWorkTaskIdRevisionParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "managed-work.run.execute" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/managedWorkRunExecuteParams" } } }
+        },
+        {
+          "if": { "properties": { "method": { "const": "managed-work.context.capture" } }, "required": ["method"] },
+          "then": { "properties": { "params": { "$ref": "#/$defs/managedWorkContextCaptureParams" } } }
         },
         {
           "if": {
@@ -498,6 +528,67 @@
           "then": { "not": { "anyOf": [{ "required": ["entityType"] }, { "required": ["entityId"] }] } }
         }
       ],
+      "additionalProperties": false
+    },
+    "managedWorkTaskCreateParams": {
+      "type": "object",
+      "required": ["version", "title", "intent", "budget", "idempotencyKey"],
+      "properties": {
+        "version": { "const": "v0" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "intent": { "$ref": "managed-work-v0.json#/$defs/jsonObject" },
+        "contextIds": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "$ref": "common-v0.json#/$defs/stableId" }
+        },
+        "budget": { "$ref": "managed-work-v0.json#/$defs/budget" },
+        "idempotencyKey": { "$ref": "common-v0.json#/$defs/idempotencyKey" }
+      },
+      "additionalProperties": false
+    },
+    "managedWorkTaskListParams": {
+      "type": "object",
+      "required": ["version"],
+      "properties": {
+        "version": { "const": "v0" },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "cursor": { "type": "string", "minLength": 1, "maxLength": 512 }
+      },
+      "additionalProperties": false
+    },
+    "managedWorkTaskIdRevisionParams": {
+      "type": "object",
+      "required": ["version", "taskId", "expectedRevision"],
+      "properties": {
+        "version": { "const": "v0" },
+        "taskId": { "$ref": "common-v0.json#/$defs/stableId" },
+        "expectedRevision": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "managedWorkRunExecuteParams": {
+      "type": "object",
+      "required": ["version", "taskId", "idempotencyKey"],
+      "properties": {
+        "version": { "const": "v0" },
+        "taskId": { "$ref": "common-v0.json#/$defs/stableId" },
+        "idempotencyKey": { "$ref": "common-v0.json#/$defs/idempotencyKey" }
+      },
+      "additionalProperties": false
+    },
+    "managedWorkContextCaptureParams": {
+      "type": "object",
+      "required": ["version", "source", "idempotencyKey"],
+      "properties": {
+        "version": { "const": "v0" },
+        "source": { "enum": ["open-windows", "focused-application", "selection"] },
+        "idempotencyKey": { "$ref": "common-v0.json#/$defs/idempotencyKey" },
+        "accessScope": { "enum": ["principal", "session", "task"] },
+        "sensitivity": { "enum": ["public", "personal", "private", "restricted"] },
+        "ttlSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "snapshot": { "$ref": "managed-work-v0.json#/$defs/jsonObject" }
+      },
       "additionalProperties": false
     },
     "managedWorkMethodResultContract": {

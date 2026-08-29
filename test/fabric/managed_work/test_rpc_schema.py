@@ -57,6 +57,28 @@ class ManagedWorkRpcSchemaTests(unittest.TestCase):
     def assert_request_invalid(self, params: dict[str, object]) -> None:
         self.assertNotEqual([], list(self.request_validator.iter_errors(self.request(params))))
 
+    def test_task_mutation_params_are_closed(self) -> None:
+        create = {
+            "protocol": "omarchy.fabric.rpc/v0",
+            "id": "request.one",
+            "method": "managed-work.task.create",
+            "params": {
+                "version": "v0",
+                "title": "Inventory",
+                "intent": {"goal": "inventory"},
+                "budget": {
+                    "timeSeconds": 60,
+                    "outputBytes": 1024,
+                    "costMicrounits": 0,
+                    "network": False,
+                },
+                "idempotencyKey": "task.schema",
+            },
+        }
+        self.assertEqual([], list(self.request_validator.iter_errors(create)))
+        create["params"]["argv"] = ["/bin/true"]
+        self.assertNotEqual([], list(self.request_validator.iter_errors(create)))
+
     def test_query_params_are_closed_paired_and_view_constrained(self) -> None:
         for view in ManagedWorkPlane.QUERY_VIEWS:
             self.assert_request_valid({"version": "v0", "view": view, "limit": 100})

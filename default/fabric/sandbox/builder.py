@@ -102,6 +102,7 @@ class SandboxSpec:
     binds: tuple[ScopedBind, ...] = ()
     environment: Mapping[str, str] = field(default_factory=dict)
     task_proxy: TaskProxy | None = None
+    runner_source: Path | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.task_id, str) or not _TASK_RE.fullmatch(self.task_id):
@@ -282,13 +283,37 @@ def build_bwrap_command(
         "/workspace",
         "--dir",
         "/artifacts",
-        "--setenv",
-        "HOME",
-        "/nonexistent",
-        "--setenv",
-        "PATH",
-        "/usr/bin",
     ]
+    if spec.runner_source is not None:
+        try:
+            runner_source = Path(spec.runner_source).resolve(strict=True)
+        except OSError as error:
+            raise SandboxViolation("Agent runner source must exist.") from error
+        if runner_source.is_symlink() or not runner_source.is_file():
+            raise SandboxViolation("Agent runner source must be a regular file.")
+        if runner_source.name != "agent-runner":
+            raise SandboxViolation("Agent runner source must be the packaged agent-runner.")
+        command.extend(
+            (
+                "--tmpfs",
+                "/usr/lib/omarchy",
+                "--dir",
+                "/usr/lib/omarchy/fabric",
+                "--ro-bind",
+                str(runner_source),
+                FIXED_AGENT_RUNNER,
+            )
+        )
+    command.extend(
+        [
+            "--setenv",
+            "HOME",
+            "/nonexistent",
+            "--setenv",
+            "PATH",
+            "/usr/bin",
+        ]
+    )
     targets: set[str] = set()
     for bind in spec.binds:
         source = _validate_host_source(bind.source, bind.source_root, protected_home=home)

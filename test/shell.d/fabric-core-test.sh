@@ -16,7 +16,7 @@ import pathlib
 import sys
 
 module_directory = pathlib.Path(sys.argv[1])
-for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health", "provider_builtins", "provider_registry", "reference_operation"):
+for name in ("__init__", "daemon", "protocol", "db", "models", "events", "health", "provider_builtins", "provider_registry", "reference_operation", "managed_runtime", "desktop_context"):
     path = module_directory / f"{name}.py"
     compile(path.read_text(), str(path), "exec")
 PY

@@ -51,6 +51,7 @@ from .protocol import (
     success_response,
     validate_request,
 )
+from .managed_runtime import ManagedRuntime
 from .managed_work import (
     Actor,
     DaemonProjectionBridge,
@@ -549,6 +550,7 @@ class FabricDaemon:
             session_is_active=self.session_bindings.is_active,
         )
         self.managed_work = ManagedWorkPlane(config.managed_work_path)
+        self.managed_runtime = ManagedRuntime(self.managed_work)
         self.managed_projections = DaemonProjectionBridge(
             self.managed_work,
             self.reference_operations,
@@ -1261,6 +1263,18 @@ class FabricDaemon:
             return {"providers": self.typed_providers.catalog()}
         if request.method == "managed-work.query":
             return self._managed_work_query(principal, request.params)
+        if request.method == "managed-work.task.create":
+            return self._managed_work_task_create(principal, request.params)
+        if request.method == "managed-work.task.list":
+            return self._managed_work_task_list(principal, request.params)
+        if request.method == "managed-work.task.cancel":
+            return self._managed_work_task_cancel(principal, request.params)
+        if request.method == "managed-work.task.recover":
+            return self._managed_work_task_recover(principal, request.params)
+        if request.method == "managed-work.run.execute":
+            return self._managed_work_run_execute(principal, request.params)
+        if request.method == "managed-work.context.capture":
+            return self._managed_work_context_capture(principal, request.params)
         if request.method == "provider.read":
             return await self._read_typed_provider(request.params)
         if request.method == "provider.invoke":
@@ -1358,6 +1372,100 @@ class FabricDaemon:
                 change_state="none",
                 recovery_actions=error.recovery_actions,
             ) from error
+
+    def _managed_actor(self, principal: EndpointPrincipal) -> Actor:
+        return Actor(principal.principal_id, principal.session_id)
+
+    def _require_managed_v0(self, params: Mapping[str, Any], *, context: str) -> None:
+        if params.get("version") != "v0":
+            raise FabricError(
+                "managed-work.version-unsupported",
+                "Managed-work version is unsupported",
+                f"This daemon exposes only the closed v0 {context} contract.",
+                change_state="none",
+                recovery_actions=("system.update",),
+            )
+
+    def _managed_work_task_create(
+        self,
+        principal: EndpointPrincipal,
+        params: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        _require_exact_fields(
+            params,
+            required=("version", "title", "intent", "budget", "idempotencyKey"),
+            optional=("contextIds",),
+            context="managed-work task create",
+        )
+        self._require_managed_v0(params, context="task create")
+        return self.managed_runtime.create_task(self._managed_actor(principal), params)
+
+    def _managed_work_task_list(
+        self,
+        principal: EndpointPrincipal,
+        params: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        _require_exact_fields(
+            params,
+            required=("version",),
+            optional=("limit", "cursor"),
+            context="managed-work task list",
+        )
+        self._require_managed_v0(params, context="task list")
+        return self.managed_runtime.list_tasks(self._managed_actor(principal), params)
+
+    def _managed_work_task_cancel(
+        self,
+        principal: EndpointPrincipal,
+        params: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        _require_exact_fields(
+            params,
+            required=("version", "taskId", "expectedRevision"),
+            context="managed-work task cancel",
+        )
+        self._require_managed_v0(params, context="task cancel")
+        return self.managed_runtime.cancel_task(self._managed_actor(principal), params)
+
+    def _managed_work_task_recover(
+        self,
+        principal: EndpointPrincipal,
+        params: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        _require_exact_fields(
+            params,
+            required=("version", "taskId", "expectedRevision"),
+            context="managed-work task recover",
+        )
+        self._require_managed_v0(params, context="task recover")
+        return self.managed_runtime.recover_task(self._managed_actor(principal), params)
+
+    def _managed_work_run_execute(
+        self,
+        principal: EndpointPrincipal,
+        params: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        _require_exact_fields(
+            params,
+            required=("version", "taskId", "idempotencyKey"),
+            context="managed-work run execute",
+        )
+        self._require_managed_v0(params, context="run execute")
+        return self.managed_runtime.execute(self._managed_actor(principal), params)
+
+    def _managed_work_context_capture(
+        self,
+        principal: EndpointPrincipal,
+        params: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        _require_exact_fields(
+            params,
+            required=("version", "source", "idempotencyKey"),
+            optional=("snapshot", "accessScope", "sensitivity", "ttlSeconds"),
+            context="managed-work context capture",
+        )
+        self._require_managed_v0(params, context="context capture")
+        return self.managed_runtime.capture_context(self._managed_actor(principal), params)
 
     def _hello(
         self,
