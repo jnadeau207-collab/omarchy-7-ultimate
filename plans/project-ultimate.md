@@ -124,7 +124,9 @@ Do **not** claim mathematical zero unique Jesse *commits*. Claim zero unique Jes
 
 ## Current position (2026-08-26)
 
-The reconciled baseline is `work`/GitHub/metal `1334ba30`, with `main`/origin/upstream `quattro` at `0ae16948` and exactly two branch heads. Chrome CSD float, restore, native maximize, snap, F11, and focus have independent source review plus direct metal geometry, pointer, pixel, health, and visual proof. The physical right edge and caption controls are no longer clipped.
+**Historical freeze at `1334ba30`.** Do not read this section as the live Git or product position. After the 2026-08-29 Quattro rebase, `main` tracks live `upstream/quattro` and `work` is Ultimate rebased onto it. Execution is [`ultimate-continue-2026-08-29.md`](ultimate-continue-2026-08-29.md). Recovery refs retain the pre-rebase tips.
+
+The reconciled baseline **at the time this paragraph was written** was `work`/GitHub/metal `1334ba30`, with `main`/origin/upstream `quattro` at `0ae16948` and exactly two branch heads. Chrome CSD float, restore, native maximize, snap, F11, and focus have independent source review plus direct metal geometry, pointer, pixel, health, and visual proof. The physical right edge and caption controls are no longer clipped.
 
 The product remains **REJECTED**. The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery, but Settings is still a five-button stub; Start, Superbar, and Task View are functional prototypes; Quick Settings, Notification Center, desktop icons, Agent Center, full typed system services, Files/This PC, Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
 
