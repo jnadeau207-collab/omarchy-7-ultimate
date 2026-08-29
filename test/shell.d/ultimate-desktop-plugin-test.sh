@@ -152,6 +152,10 @@ grep -Fq '"name": "Chrome"' "$ROOT/default/ultimate/taskbar-pins.json" \
   || fail "shipped Desktop Mode pins include Chrome"
 grep -Fq '"name": "Files"' "$ROOT/default/ultimate/taskbar-pins.json" \
   || fail "shipped Desktop Mode pins include Files"
+grep -Fq '"name": "Agent"' "$ROOT/default/ultimate/taskbar-pins.json" \
+  || fail "shipped Desktop Mode pins include Agent"
+grep -Fq '"desktopId": "org.omarchy.Files"' "$ROOT/default/ultimate/taskbar-pins.json" \
+  || fail "shipped Files pin is the product Files host"
 grep -Fq 'shippedPinsPath' "$ROOT/shell/services/WindowService.qml" \
   || fail "WindowService loads shipped pins when the user has none"
 grep -Fq 'omarchy-task-switcher' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
