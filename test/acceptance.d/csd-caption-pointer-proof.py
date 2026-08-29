@@ -185,7 +185,7 @@ def main() -> int:
     wait_until(
       "csd maximize click maximizes",
       8,
-      lambda: (w := client_by_addr(chrome_addr)) is not None and w.get("fullscreen") == 1,
+      lambda: (w := client_by_addr(chrome_addr)) is not None and mod.geometry_is_maximized(w),
     )
     time.sleep(0.6)
     grim("/tmp/w0-csd-max.png")
@@ -205,7 +205,7 @@ def main() -> int:
         return False
       if w.get("hidden") is True:
         raise ProofError(f"CSD restore click minimized instead: {w.get('at')} {w.get('size')} fs={w.get('fullscreen')}")
-      return w.get("fullscreen") in (0, False, None)
+      return not mod.geometry_is_maximized(w)
 
     wait_until("csd maximize click restores", 8, restored)
     if client_by_addr(chrome_addr) is None:
