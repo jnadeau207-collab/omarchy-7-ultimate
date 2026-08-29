@@ -73,6 +73,7 @@ Card {
         border.color: root.toneColor
 
         Text {
+          textFormat: Text.PlainText
           anchors.centerIn: parent
           text: root.definition.symbol
           color: root.toneColor
@@ -83,6 +84,7 @@ Card {
       }
 
       Text {
+        textFormat: Text.PlainText
         Layout.fillWidth: true
         text: Semantics.text(root.semanticProfile, root.resolvedTitle)
         color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
@@ -94,6 +96,7 @@ Card {
       }
 
       Text {
+        textFormat: Text.PlainText
         text: root.definition.id
         color: root.semanticProfile ? root.semanticProfile.textDisabled : Tokens.text.disabled
         font.family: Style.font.family
@@ -102,6 +105,7 @@ Card {
     }
 
     Text {
+      textFormat: Text.PlainText
       width: parent.width
       text: Semantics.text(root.semanticProfile, root.resolvedMessage)
       color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary

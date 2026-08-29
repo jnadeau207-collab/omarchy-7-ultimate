@@ -11,6 +11,7 @@ Rectangle {
   border.color: cellMouse.containsMouse ? Tokens.accent.primary : Tokens.border.subtle
   border.width: 1
   Text {
+    textFormat: Text.PlainText
     anchors.centerIn: parent
     text: cell.label
     color: Tokens.text.primary

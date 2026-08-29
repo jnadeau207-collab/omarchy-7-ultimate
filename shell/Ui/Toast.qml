@@ -53,6 +53,7 @@ Card {
     spacing: Semantics.metric(root.semanticProfile, Style.space(6))
 
     Text {
+      textFormat: Text.PlainText
       text: Semantics.text(root.semanticProfile, root.title)
       color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
       font.family: Style.font.family
@@ -63,6 +64,7 @@ Card {
     }
 
     Text {
+      textFormat: Text.PlainText
       visible: root.message !== ""
       text: Semantics.text(root.semanticProfile, root.message)
       color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary

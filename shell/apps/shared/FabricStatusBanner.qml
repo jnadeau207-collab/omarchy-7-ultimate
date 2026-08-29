@@ -44,6 +44,7 @@ Rectangle {
       spacing: Style.space(2)
 
       Text {
+        textFormat: Text.PlainText
         id: statusTitle
         text: root.connected ? "Fabric connected" : (root.incompatible ? "Fabric update required" : "Fabric unavailable")
         color: Tokens.text.primary
@@ -54,6 +55,7 @@ Rectangle {
       }
 
       Text {
+        textFormat: Text.PlainText
         id: statusDetail
         text: root.connected
           ? "Read-only client " + root.host.fabricIdentity + " has its own endpoint session."

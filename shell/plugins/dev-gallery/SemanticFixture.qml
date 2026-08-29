@@ -86,6 +86,7 @@ Card {
     LayoutMirroring.childrenInherit: true
 
     Text {
+      textFormat: Text.PlainText
       width: parent.width
       text: profile.text(root.label)
       color: profile.textPrimary
@@ -97,6 +98,7 @@ Card {
     }
 
     Text {
+      textFormat: Text.PlainText
       width: parent.width
       text: profile.text(root.density + " density · " + profile.minimumTarget
         + " px minimum target · " + (root.reducedMotion ? "motion off" : "motion on"))

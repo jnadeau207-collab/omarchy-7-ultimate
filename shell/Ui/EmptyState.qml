@@ -18,6 +18,7 @@ Column {
   Accessible.description: Semantics.text(semanticProfile, message)
 
   Text {
+    textFormat: Text.PlainText
     anchors.horizontalCenter: parent.horizontalCenter
     text: root.iconText
     color: root.semanticProfile ? root.semanticProfile.textDisabled : Tokens.text.disabled
@@ -26,6 +27,7 @@ Column {
   }
 
   Text {
+    textFormat: Text.PlainText
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.title !== ""
     text: Semantics.text(root.semanticProfile, root.title)
@@ -36,6 +38,7 @@ Column {
   }
 
   Text {
+    textFormat: Text.PlainText
     anchors.horizontalCenter: parent.horizontalCenter
     visible: root.message !== ""
     text: Semantics.text(root.semanticProfile, root.message)

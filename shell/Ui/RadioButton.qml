@@ -70,6 +70,7 @@ Item {
     }
 
     Text {
+      textFormat: Text.PlainText
       id: labelText
       visible: root.label !== ""
       text: Semantics.text(root.semanticProfile, root.label)

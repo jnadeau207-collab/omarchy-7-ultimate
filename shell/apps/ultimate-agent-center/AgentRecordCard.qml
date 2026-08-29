@@ -46,6 +46,7 @@ Rectangle {
         spacing: Style.space(2)
 
         Text {
+          textFormat: Text.PlainText
           text: root.presentation.title
           color: Tokens.text.primary
           font.family: Style.font.family
@@ -58,6 +59,7 @@ Rectangle {
         }
 
         Text {
+          textFormat: Text.PlainText
           visible: root.presentation.subtitle !== ""
           text: root.presentation.subtitle
           color: Tokens.text.disabled
@@ -78,6 +80,7 @@ Rectangle {
     }
 
     Text {
+      textFormat: Text.PlainText
       visible: root.presentation.body !== ""
       text: root.presentation.body
       color: Tokens.text.secondary
@@ -114,6 +117,7 @@ Rectangle {
             spacing: Style.space(10)
 
             Text {
+              textFormat: Text.PlainText
               text: modelData.label
               color: Tokens.text.disabled
               font.family: Style.font.family
@@ -126,6 +130,7 @@ Rectangle {
             }
 
             Text {
+              textFormat: Text.PlainText
               text: modelData.value
               color: Tokens.text.secondary
               font.family: Style.font.family
@@ -158,6 +163,7 @@ Rectangle {
         spacing: Style.space(4)
 
         Text {
+          textFormat: Text.PlainText
           text: "RECOVERY STATUS"
           color: Tokens.state.warning
           font.family: Style.font.family
@@ -170,6 +176,7 @@ Rectangle {
           model: root.presentation.recoveryActions
 
           delegate: Text {
+            textFormat: Text.PlainText
             required property var modelData
 
             text: "\u2022 " + AgentCenterModel.clippedText(modelData, 320)
