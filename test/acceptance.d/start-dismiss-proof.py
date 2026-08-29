@@ -154,9 +154,6 @@ def main() -> int:
     wait_until("click-through foot mapped", 8, lambda: proof_foot() is not None)
     foot = proof_foot()
     foot_addr = foot["address"]
-    as_user(["omarchy-shell", "window", "restoreNormal", foot["address"]], wait=True, timeout=5)
-    as_user(["omarchy-shell", "window", "moveTo", foot["address"], "900", "80"], wait=True, timeout=5)
-    as_user(["omarchy-shell", "window", "resizeTo", foot["address"], "640", "400"], wait=True, timeout=5)
 
     def foot_ready():
       client = proof_foot()
@@ -166,6 +163,15 @@ def main() -> int:
       w, h = client["size"]
       return x >= 800 and y < 220 and w >= 560 and h >= 300
 
+    for _attempt in range(4):
+      as_user(["omarchy-shell", "window", "restoreNormal", foot_addr], wait=True, timeout=5)
+      as_user(["omarchy-shell", "window", "moveTo", foot_addr, "900", "80"], wait=True, timeout=5)
+      as_user(["omarchy-shell", "window", "resizeTo", foot_addr, "640", "400"], wait=True, timeout=5)
+      time.sleep(0.25)
+      live = proof_foot()
+      report["click_through_foot"] = None if not live else {"at": live.get("at"), "size": live.get("size")}
+      if foot_ready():
+        break
     wait_until("click-through foot placed in the open", 6, foot_ready)
     summon_start()
     time.sleep(0.35)
