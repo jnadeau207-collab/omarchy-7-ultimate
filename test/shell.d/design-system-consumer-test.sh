@@ -53,9 +53,9 @@ checks = {
     "shell/Ui/ToggleSwitch.qml": "Tokens.text.primary",
     "shell/Ui/TextField.qml": "Tokens.accent.primary",
     "shell/Ui/ConfirmDialog.qml": "Tokens.surface.base",
-    "shell/plugins/ultimate-start/Start.qml": "Tokens.productProfile",
+    "shell/plugins/ultimate-start/Start.qml": "semanticProfile: productProfile",
     "shell/plugins/ultimate-taskbar/StartButton.qml": "Tokens.caption.close.background",
-    "shell/Commons/Tokens.qml": "productProfile",
+    "shell/Commons/Tokens.qml": "design-tokens-v0.json",
 }
 for relative, needle in checks.items():
     text = (root / relative).read_text(encoding="utf-8")

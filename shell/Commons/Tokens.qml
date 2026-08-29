@@ -24,13 +24,6 @@ QtObject {
   property int compositorCornerRadius: Style.cornerRadius
   onCompositorCornerRadiusChanged: scheduleResolve()
 
-  readonly property SemanticProfile productProfile: productProfileImpl
-  SemanticProfile {
-    id: productProfileImpl
-    profileId: "product"
-    rtl: Qt.application.layoutDirection === Qt.RightToLeft
-  }
-
   function value(path, fallback) {
     var cursor = payload
     var parts = String(path || "").split(".")
