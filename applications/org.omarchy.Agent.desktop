@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Agent
+GenericName=Coding agent
+Comment=Launch the default Omarchy coding agent, or pick one if none is set
+TryExec=omarchy-agent
+Exec=omarchy-agent --pick
+Icon=system-run
+Terminal=false
+Categories=System;Utility;
+Keywords=agent;ai;claude;codex;grok;copilot;
+StartupNotify=true
+StartupWMClass=org.omarchy.agent

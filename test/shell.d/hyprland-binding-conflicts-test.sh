@@ -157,6 +157,7 @@ mkdir -p "$desktop_home"
 desktop_bindings=$(PATH="$stub_bin:$PATH" list_bindings "$desktop_home")
 [[ -n $desktop_bindings ]] || fail "desktop bindings load for the conflict check"
 grep -Fq $'SUPER + E	Files' <<<"$desktop_bindings" || fail "desktop conflict check sees Win+E"
+grep -Fq $'SUPER + A	Agent' <<<"$desktop_bindings" || fail "desktop conflict check sees Win+A"
 grep -Fq $'ALT + TAB	Switch windows' <<<"$desktop_bindings" || fail "desktop conflict check sees Alt+Tab"
 desktop_duplicates=$(duplicate_signatures <<<"$desktop_bindings")
 while read -r signature; do

@@ -7,10 +7,16 @@
       "icon": "google-chrome"
     },
     {
-      "id": "org.gnome.nautilus",
-      "desktopId": "org.gnome.Nautilus",
+      "id": "org.omarchy.files",
+      "desktopId": "org.omarchy.Files",
       "name": "Files",
-      "icon": "org.gnome.Nautilus"
+      "icon": "system-file-manager"
+    },
+    {
+      "id": "org.omarchy.agent",
+      "desktopId": "org.omarchy.Agent",
+      "name": "Agent",
+      "icon": "system-run"
     }
   ]
 }
