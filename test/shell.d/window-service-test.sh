@@ -110,6 +110,8 @@ grep -Fq 'function _markKnown' "$ws" || fail "explicit move/resize must mark the
 grep -Fq 'function _keepFocusAfterClose' "$ws" || fail "close of an unfocused window must keep the focused window in front"
 grep -Fq 'Number(rect.x) < area.x - 4' "$ws" \
   || fail "reopen memory must not store a CSD compositor box parked past the work-area origin"
+grep -Fq 'var sibling = false' "$ws" \
+  || fail "placement must not cascade a parented dialog's sibling window"
 if awk '
   $0 ~ /function _applyRect\(/ { infn = 1 }
   infn && /_markKnown/ { mark = 1 }
