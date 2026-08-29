@@ -1101,6 +1101,7 @@ QtObject {
     root._placingRect = true
     var geom = root._monitorGeom(target)
     if (geom && geom.width) bounds = WindowModel.clampRect(bounds, geom, root._hyprbarsInset(target))
+    var logical = { x: Number(bounds.x), y: Number(bounds.y), width: Number(bounds.width), height: Number(bounds.height) }
     bounds = root._frameBox(target, bounds)
     var win = root._luaWindow(target)
     root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + win + " })")
@@ -1110,23 +1111,30 @@ QtObject {
     root._dispatchLua("hl.dsp.window.resize({ x = " + Math.round(Number(bounds.width)) + ", y = " + Math.round(Number(bounds.height)) + ", relative = false, " + win + " })")
     root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(bounds.x)) + ", y = " + Math.round(Number(bounds.y)) + ", relative = false, " + win + " })", true)
     root._placingRect = false
+    var rects = root._copyMap(root._lastRect)
+    rects[target] = { x: Number(logical.x), y: Number(logical.y), width: Number(logical.width), height: Number(logical.height) }
+    root._lastRect = rects
     root._markKnown(target)
+  }
+
+  function _intendedRect(target) {
+    var last = root._lastRect[target]
+    if (last && Number(last.width) > 0 && Number(last.height) > 0) return last
+    return root._clientRect(target) || {}
   }
 
   function moveTo(address, x, y) {
     var target = root._addr(address)
     if (!target) return root._finish("moveTo", address, root._err("No window", "There is no window to move.", ""))
     if (root._isLockAddress(target)) return root._finish("moveTo", target, root._ok())
-    var rec = root._clientRect(target) || {}
-    var bounds = WindowModel.clampRect({
+    var rec = root._intendedRect(target)
+    root._setPlacedKind(target, "float")
+    root._applyRect(target, {
       x: Number(x),
       y: Number(y),
       width: Number(rec.width) || 880,
       height: Number(rec.height) || 560
-    }, root._monitorGeom(target), root._hyprbarsInset(target))
-    var box = root._frameBox(target, bounds)
-    root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(box.x)) + ", y = " + Math.round(Number(box.y)) + ", relative = false, " + root._luaWindow(target) + " })")
-    root._markKnown(target)
+    })
     return root._finish("moveTo", target, root._ok())
   }
 
@@ -1134,18 +1142,14 @@ QtObject {
     var target = root._addr(address)
     if (!target) return root._finish("resizeTo", address, root._err("No window", "There is no window to resize.", ""))
     if (root._isLockAddress(target)) return root._finish("resizeTo", target, root._ok())
-    var rec = root._clientRect(target) || {}
-    var bounds = WindowModel.clampRect({
+    var rec = root._intendedRect(target)
+    root._setPlacedKind(target, "float")
+    root._applyRect(target, {
       x: Number(rec.x) || 0,
       y: Number(rec.y) || 0,
       width: Number(w),
       height: Number(h)
-    }, root._monitorGeom(target), root._hyprbarsInset(target))
-    var box = root._frameBox(target, bounds)
-    root._dispatchLua("hl.dsp.window.resize({ x = " + Math.round(Number(box.width)) + ", y = " + Math.round(Number(box.height)) + ", relative = false, " + root._luaWindow(target) + " })")
-    if (Math.round(Number(bounds.x)) !== Math.round(Number(rec.x) || 0) || Math.round(Number(bounds.y)) !== Math.round(Number(rec.y) || 0))
-      root._dispatchLua("hl.dsp.window.move({ x = " + Math.round(Number(box.x)) + ", y = " + Math.round(Number(box.y)) + ", relative = false, " + root._luaWindow(target) + " })")
-    root._markKnown(target)
+    })
     return root._finish("resizeTo", target, root._ok())
   }
 
