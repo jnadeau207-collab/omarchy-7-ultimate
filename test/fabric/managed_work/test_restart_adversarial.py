@@ -152,6 +152,9 @@ class RestartAdversarialTests(unittest.TestCase):
         connection = sqlite3.connect(path)
         try:
             connection.execute("DROP TABLE provider_projections")
+            connection.execute("DROP TABLE automation_firings")
+            for statement in MIGRATIONS[2]:
+                connection.execute(statement)
             connection.execute("UPDATE managed_metadata SET value = '2' WHERE key = 'schema_version'")
             connection.execute("PRAGMA user_version = 2")
             connection.commit()

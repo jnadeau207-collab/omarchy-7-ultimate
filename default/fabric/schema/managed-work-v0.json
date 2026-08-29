@@ -360,7 +360,7 @@
         "triggerKind": { "enum": ["schedule", "event"] },
         "triggerId": { "type": "string", "minLength": 1, "maxLength": 256 },
         "dueAt": { "$ref": "#/$defs/timestamp" },
-        "state": { "enum": ["pending-unavailable", "skipped", "cancelled"] },
+        "state": { "enum": ["pending-unavailable", "skipped", "cancelled", "accepted"] },
         "detail": { "$ref": "#/$defs/jsonObject" },
         "createdAt": { "$ref": "#/$defs/timestamp" }
       },
@@ -564,7 +564,7 @@
       "properties": {
         "schemaVersion": { "const": "v0" },
         "kind": { "const": "managed-work-diagnostics" },
-        "databaseSchema": { "const": 4 },
+        "databaseSchema": { "const": 5 },
         "databaseIntegrity": { "const": "ok" },
         "foreignKeyViolations": { "type": "integer", "minimum": 0 },
         "restartRecoveries": { "type": "integer", "minimum": 0 },
