@@ -24,7 +24,7 @@ from sandbox.builder import (
     require_bwrap,
     validate_runner_argv,
 )
-from sandbox.runner import packaged_runner_source, run_representative_probe
+from sandbox.runner import INSPECT_CAPABILITY, packaged_runner_source, run_representative_inspect
 from sandbox.profiles import DEFAULT_EXPOSURE, ProfileValidationError, default_profile, validate_profile_document
 
 
@@ -106,9 +106,6 @@ class SandboxTests(unittest.TestCase):
             try:
                 os.symlink(target, link, target_is_directory=True)
             except OSError:
-                # Windows without Developer Mode cannot create the adversarial
-                # fixture. Exercise the same fail-closed branch explicitly; the
-                # Linux/VM run creates and tests the real symlink.
                 with mock.patch("sandbox.builder._has_symlink_component", return_value=True):
                     with self.assertRaises(SandboxViolation):
                         build_bwrap_command(
@@ -170,9 +167,6 @@ class SandboxTests(unittest.TestCase):
             else:
                 proxy.touch()
                 main_socket.touch()
-                # This Python build cannot create AF_UNIX fixtures. Still prove
-                # that the builder requires and handles the socket-type check;
-                # Linux/VM runs exercise real socket inodes.
                 socket_probe = mock.patch("sandbox.builder.stat.S_ISSOCK", return_value=True)
             try:
                 with socket_probe:
@@ -247,7 +241,9 @@ class SandboxTests(unittest.TestCase):
         self.assertEqual(command[bind_at + 1], FIXED_AGENT_RUNNER)
         self.assertEqual(command[-5:], self.runner())
 
-    def test_representative_probe_drives_shipped_run_path(self) -> None:
+    @unittest.skipIf(os.name == "nt", "bubblewrap is a Linux security gate")
+    def test_representative_inspect_drives_shipped_run_path(self) -> None:
+        require_bwrap()
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             workspace = root / "workspace"
@@ -259,19 +255,17 @@ class SandboxTests(unittest.TestCase):
             protected_home.mkdir()
             host_home.mkdir()
             (host_home / "secret.txt").write_text("home-secret\n", encoding="utf-8")
-            try:
-                result = run_representative_probe(
-                    task_id="task.probe",
-                    workspace=workspace,
-                    artifacts=artifacts,
-                    protected_home=protected_home,
-                    host_home=host_home,
-                )
-            except SandboxUnavailable as error:
-                self.assertIn("fails closed", str(error).lower() + " fails closed")
-                return
+            result = run_representative_inspect(
+                task_id="task.inspect",
+                workspace=workspace,
+                artifacts=artifacts,
+                protected_home=protected_home,
+                host_home=host_home,
+            )
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertTrue(result.result and result.result.get("ok") is True)
+            self.assertEqual(INSPECT_CAPABILITY, result.result.get("capability"))
+            self.assertEqual(["manifest.json", "visible.txt"], result.result.get("workspace"))
             artifact = artifacts / "result.json"
             self.assertTrue(artifact.is_file())
             self.assertIn("--unshare-all", result.argv)

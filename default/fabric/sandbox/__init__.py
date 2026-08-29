@@ -1,5 +1,3 @@
-"""Fail-closed bubblewrap profiles for managed Fabric tasks."""
-
 from .builder import (
     FIXED_AGENT_RUNNER,
     NetworkScope,
@@ -14,7 +12,7 @@ from .builder import (
     validate_runner_argv,
 )
 from .profiles import DEFAULT_EXPOSURE, default_profile, validate_profile_document
-from .runner import IsolatedRun, packaged_runner_source, run_isolated, run_representative_probe
+from .runner import IsolatedRun, packaged_runner_source, run_isolated, run_representative_inspect
 
 __all__ = [
     "DEFAULT_EXPOSURE",
@@ -32,7 +30,7 @@ __all__ = [
     "prepare_bwrap_command",
     "require_bwrap",
     "run_isolated",
-    "run_representative_probe",
+    "run_representative_inspect",
     "validate_profile_document",
     "validate_runner_argv",
 ]

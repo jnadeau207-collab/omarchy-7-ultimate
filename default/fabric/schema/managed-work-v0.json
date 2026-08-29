@@ -87,13 +87,23 @@
       "properties": {
         "schemaVersion": { "const": "v0" },
         "kind": { "const": "managed-execution-status" },
-        "available": { "const": false },
-        "code": { "const": "managed-execution.not-integrated" },
+        "available": { "type": "boolean" },
+        "code": { "enum": ["managed-execution.bubblewrap", "sandbox.unavailable"] },
         "explanation": { "type": "string", "minLength": 1, "maxLength": 2000 },
         "legacyInteractiveIncluded": { "const": false },
         "networkDefault": { "const": "denied" }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "available": { "const": true } }, "required": ["available"] },
+          "then": { "properties": { "code": { "const": "managed-execution.bubblewrap" } } }
+        },
+        {
+          "if": { "properties": { "available": { "const": false } }, "required": ["available"] },
+          "then": { "properties": { "code": { "const": "sandbox.unavailable" } } }
+        }
+      ]
     },
     "budget": {
       "type": "object",
@@ -717,7 +727,7 @@
           "properties": {
             "available": { "type": "boolean" },
             "code": { "$ref": "#/$defs/id" },
-            "executionAvailable": { "const": false }
+            "executionAvailable": { "type": "boolean" }
           },
           "additionalProperties": false
         },

@@ -9,11 +9,24 @@ if str(FABRIC_ROOT) not in sys.path:
     sys.path.insert(0, str(FABRIC_ROOT))
 
 from omarchy_fabric.managed_work import Actor, ManagedWorkPlane
+from omarchy_fabric.managed_work.plane import SANDBOX_CAPABILITIES
+
+INSPECT_CAPABILITY = next(iter(SANDBOX_CAPABILITIES))
 
 
 ACTOR = Actor("principal.test", "session.one")
 OTHER_ACTOR = Actor("principal.other", "session.other")
 OTHER_SESSION = Actor("principal.test", "session.two")
+
+
+def inspect_intent(**extra: object) -> dict[str, object]:
+    intent: dict[str, object] = {
+        "goal": "inventory",
+        "readOnly": True,
+        "capability": INSPECT_CAPABILITY,
+    }
+    intent.update(extra)
+    return intent
 
 
 def budget(*, network: bool = False) -> dict[str, object]:
@@ -46,7 +59,7 @@ def policy(
 def template(context_ids: list[str] | None = None) -> dict[str, object]:
     return {
         "title": "Scheduled inventory",
-        "intent": {"goal": "inventory"},
+        "intent": inspect_intent(),
         "contextIds": list(context_ids or []),
         "budget": budget(),
     }
@@ -83,7 +96,7 @@ def create_task(
     return plane.create_task(
         actor,
         title="Inspect system state",
-        intent={"goal": "inventory", "readOnly": True},
+        intent=inspect_intent(),
         context_ids=list(context_ids or []),
         budget=budget(),
         idempotency_key=key,

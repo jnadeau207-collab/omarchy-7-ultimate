@@ -22,8 +22,6 @@ function isLockSurface(win) {
   return false
 }
 
-// Canonical CSD classes live in default/ultimate/csd-clients.json.
-// Lua (hyprbars:no_bar) and this module both compile that file.
 var _csdRegexes = null
 
 function compileCsdPatterns(jsonText) {
@@ -69,12 +67,6 @@ function hyprbarsSnapInset(win) {
   return usesWaylandCsd(win) ? 0 : 32
 }
 
-// Chromium paints its visible frame CHROMIUM_FRAME_INSET px right and down of
-// the box the compositor hands it, and its native frame continues to the far
-// edge. Keep the requested visible rectangle stable by expanding the
-// compositor box at both dimensions and shifting its origin back by the same
-// inset. Actual compositor maximize and F11 paint edge-to-edge and must keep
-// their raw geometry. GTK CSD clients such as Nautilus do not need the inset.
 var CHROMIUM_FRAME_INSET = 12
 var _chromiumFrameRegex = /(google-)?chrom(e|ium)|brave-browser|microsoft-edge|vivaldi-stable|helium/i
 
@@ -89,8 +81,6 @@ function chromiumFrameInset(win) {
   return usesChromiumFrame(win) ? CHROMIUM_FRAME_INSET : 0
 }
 
-// Expand a target rect into the compositor coordinates that make Chromium's
-// visible frame land on it. A no-op for every other client.
 function frameBox(rect, win) {
   var inset = chromiumFrameInset(win)
   if (!inset || !rect || !rect.width || !rect.height) return rect
@@ -103,10 +93,6 @@ function frameBox(rect, win) {
   }
 }
 
-// Convert the compositor box back to the visible-frame coordinates used by
-// WindowService state. This is the inverse of frameBox: stored placements,
-// normal bounds, and saved layouts must never accumulate another inset on
-// every maximize/restore cycle.
 function frameRect(box, win) {
   var inset = chromiumFrameInset(win)
   if (!inset || !box || !box.width || !box.height) return box
@@ -119,10 +105,6 @@ function frameRect(box, win) {
   }
 }
 
-// A startup client baseline is valid only after hyprctl exits successfully and
-// returns an actual JSON array. In particular, failed/empty output must not be
-// confused with the valid empty snapshot [] used to classify the next client
-// as newly mapped.
 function parseClientsSnapshot(text, exitCode) {
   if (Number(exitCode) !== 0) return null
   var raw = String(text || "").trim()
@@ -188,9 +170,6 @@ function withoutPin(pins, desktopId) {
   return next
 }
 
-// Hyprland 0.56 `hyprctl -j monitors` reserved is left, top, right, bottom
-// (CReservedArea in HyprCtl.cpp). Older wiki text said top, right, bottom, left;
-// reading that order turns a bottom taskbar into a left inset.
 function reservedLTRB(reserved) {
   var r = reserved || []
   return {
@@ -235,8 +214,6 @@ function snapRect(monitor, side, titleBar) {
   return { x: area.x, y: y, width: half, height: height }
 }
 
-// Quickshell Hyprland.Monitor.width/height can already exclude gaps. Snap must
-// use compositor JSON (hyprctl -j monitors / lastIpcObject) only.
 function compositorMonitor(ipc) {
   ipc = ipc || {}
   return {
@@ -400,7 +377,6 @@ function coversWorkArea(win, monitor, slop) {
     Number(win.y) <= area.y + pad
 }
 
-// Win+Arrow cycle. Returns a snap kind, "max", "min", or "normal".
 function nextSnap(kind, dir) {
   var k = String(kind || "float")
   var d = String(dir || "")
@@ -456,8 +432,6 @@ function nextSnap(kind, dir) {
   return "float"
 }
 
-// After a title-bar drag, map the pointer onto Aero zones. Window box is the
-// wrong input: a maximized client hits every edge at once.
 function aeroZone(pointer, monitor) {
   var area = workArea(monitor)
   var x = Number(pointer && pointer.x)
@@ -545,9 +519,7 @@ function matchLayout(windows, layout) {
     found = null
     if (entry.address) {
       found = takeBy(function(win) { return String(win.address) === String(entry.address) })
-      // A closed address must not steal another live window of the same app.
-      // That turned a second foot's right snap into the leftover float of a
-      // previous test's ghost client.
+
       if (!found) continue
     } else {
       found = takeBy(function(win) {
@@ -616,6 +588,13 @@ function clampRect(rect, monitor, titleBar) {
   if (y + height > area.y + area.height) y = area.y + Math.max(inset, area.height - height)
   if (y < minY) y = minY
   return { x: x, y: y, width: width, height: height, monitor: monitor && monitor.name ? String(monitor.name) : "" }
+}
+
+function placementKind(rec) {
+  var k = String(rec && rec.kind || "float")
+  if (k === "max" || k === "full" || k === "l" || k === "r" || k === "tl" || k === "tr" || k === "bl" || k === "br")
+    return k
+  return "float"
 }
 
 function parsePlacements(raw) {
@@ -733,6 +712,7 @@ if (typeof module !== "undefined") {
     clampRect: clampRect,
     parsePlacements: parsePlacements,
     serializePlacements: serializePlacements,
+    placementKind: placementKind,
     compileCsdPatterns: compileCsdPatterns,
     setCsdClientsJson: setCsdClientsJson,
     csdClassPatterns: csdClassPatterns

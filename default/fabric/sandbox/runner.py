@@ -1,5 +1,3 @@
-"""Execute a prepared bubblewrap command. There is no unsandboxed path."""
-
 from __future__ import annotations
 
 import json
@@ -20,6 +18,8 @@ from .builder import (
     require_bwrap,
     validate_runner_argv,
 )
+
+INSPECT_CAPABILITY = "system.info.read"
 
 
 @dataclass(frozen=True)
@@ -45,6 +45,30 @@ def packaged_runner_source() -> Path:
         except OSError:
             continue
     raise SandboxUnavailable("packaged agent runner is unavailable; managed execution fails closed.")
+
+
+def canonical_manifest(value: Mapping[str, object]) -> str:
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+
+
+def inspect_manifest() -> dict[str, object]:
+    return {
+        "provider": "provider.managed-runtime",
+        "model": "model.sandbox-inspect",
+        "capabilities": [INSPECT_CAPABILITY],
+        "contextIds": [],
+        "workspaceHandles": ["workspace.inspect"],
+        "artifactHandle": "artifact.inspect",
+        "budgets": {
+            "timeSeconds": 60,
+            "outputBytes": 1024,
+            "costMicrounits": 0,
+            "network": False,
+        },
+        "networkGranted": False,
+        "sandboxRequired": True,
+        "steps": [{"label": "Sandboxed inspect", "capability": INSPECT_CAPABILITY}],
+    }
 
 
 def run_isolated(
@@ -92,7 +116,7 @@ def run_isolated(
     )
 
 
-def run_representative_probe(
+def run_representative_inspect(
     *,
     task_id: str,
     workspace: Path,
@@ -101,15 +125,14 @@ def run_representative_probe(
     host_home: Path,
     timeout: float = 15,
 ) -> IsolatedRun:
-    """Drive the shipped builder and runner against a real bubblewrap binary."""
-
     require_bwrap()
     if not isinstance(task_id, str) or not task_id.startswith("task."):
-        raise SandboxViolation("Representative probe task ID must be a stable task identifier.")
+        raise SandboxViolation("Representative inspect task ID must be a stable task identifier.")
     runner = packaged_runner_source()
     workspace.mkdir(parents=True, exist_ok=True)
     artifacts.mkdir(parents=True, exist_ok=True)
-    (workspace / "manifest.json").write_text('{"kind":"sandbox-probe"}', encoding="utf-8")
+    (workspace / "visible.txt").write_text("workspace-visible\n", encoding="utf-8")
+    (workspace / "manifest.json").write_text(canonical_manifest(inspect_manifest()), encoding="utf-8")
     spec = SandboxSpec(
         task_id,
         (FIXED_AGENT_RUNNER, "--task-id", task_id, "--manifest-fd", "3"),

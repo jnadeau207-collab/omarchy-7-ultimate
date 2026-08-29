@@ -49,7 +49,10 @@ class AutomationTests(unittest.TestCase):
         self.assertEqual(1, result["createdCount"])
         self.assertEqual(1_300, result["firings"][0]["dueAt"])
         self.assertEqual("pending-unavailable", result["firings"][0]["state"])
-        self.assertFalse(result["execution"]["available"])
+        self.assertEqual(
+            ManagedWorkPlane.execution_status()["available"],
+            result["execution"]["available"],
+        )
         refreshed = self.plane.get_automation(ACTOR, automation["automationId"])
         self.assertEqual(1_360, refreshed["nextDueAt"])
         replay = self.plane.reconcile_schedules(ACTOR, now=1_300)

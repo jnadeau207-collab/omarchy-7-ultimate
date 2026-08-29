@@ -603,6 +603,27 @@ for item in ipc_paths:
     if actual_targets != item.get("targetMethods", []):
         report(f"window IPC path {name} target methods changed: source={actual_targets}, inventory={item.get('targetMethods', [])}")
 
+for capability in capabilities:
+    capability_id = capability.get("id", "<missing>")
+    if not str(capability_id).startswith("window."):
+        continue
+    availability = capability.get("availability") if isinstance(capability.get("availability"), dict) else {}
+    if availability.get("agent") != "present":
+        continue
+    if availability.get("claim") == "present":
+        report(
+            f"window capability {capability_id} claims present while the broker is an actor-label allowlist"
+        )
+    verb = capability.get("source", {}).get("brokerVerb") if isinstance(capability.get("source"), dict) else None
+    if not verb or verb not in broker_verbs:
+        report(
+            f"window capability {capability_id} has availability.agent present without a CapabilityBroker verb"
+        )
+    if not verb or verb not in actual_ipc:
+        report(
+            f"window capability {capability_id} has availability.agent present without an omarchy-shell window entry point"
+        )
+
 known_surface_refs = {
     *(f"window-service:{item.get('name')}" for item in service_methods),
     *(f"window-ipc:{item.get('name')}" for item in ipc_paths),

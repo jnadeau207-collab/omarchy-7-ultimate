@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import qs.Commons
 import qs.Ui
@@ -14,6 +15,10 @@ Item {
   property bool opened: false
   property string filter: ""
   property bool focusSearch: false
+  property int cardWidth: 0
+  property int cardHeight: 0
+  property int barHeight: 0
+  property int cardLeftMargin: 0
 
   readonly property var appLibrary: shell ? shell.appLibrary : null
   readonly property var modeProfile: shell ? shell.modeProfileService : null
@@ -25,6 +30,20 @@ Item {
   property var focusedWhenOpened: null
   property bool raiseUnderCursorOnClose: false
   property bool launchingFromStart: false
+
+  function applyStartChrome(raw) {
+    var parsed = JSON.parse(String(raw || "{}"))
+    var width = Number(parsed.cardWidth)
+    var height = Number(parsed.cardHeight)
+    var bar = Number(parsed.barHeight)
+    var left = Number(parsed.cardLeftMargin)
+    if (!(width > 0) || !(height > 0) || !(bar > 0) || !(left >= 0))
+      throw "start-chrome.json is incomplete"
+    root.cardWidth = width
+    root.cardHeight = height
+    root.barHeight = bar
+    root.cardLeftMargin = left
+  }
 
   function open(payloadJson) {
     var payload = ({})
@@ -68,15 +87,19 @@ Item {
     root.close()
   }
 
+  FileView {
+    path: root.omarchyPath + "/default/ultimate/start-chrome.json"
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.applyStartChrome(text())
+    onFileChanged: reload()
+  }
+
   Connections {
     target: ToplevelManager
     enabled: root.opened
     function onActiveToplevelChanged() {
       var next = ToplevelManager.activeToplevel
-      // Opening Start Exclusive-focuses the card, so the previous window
-      // unfocuses (next is null — stay open). Clicking that same window
-      // focuses it again; that must close Start. Comparing to
-      // focusedWhenOpened left Start mapped on click-through.
       if (!next)
         return
       if (!root.launchingFromStart)
@@ -85,21 +108,17 @@ Item {
     }
   }
 
-  // The Start card is the only mapped overlay. A full-screen MouseArea (or
-  // HyprlandFocusGrab) swallows the outside click. Windows click-outside
-  // must close Start and still raise the window or Superbar item underneath.
-  // Loader unmaps the card when closed so keepLoaded cannot leave a sink.
   Loader {
     active: root.opened
     sourceComponent: PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    implicitWidth: 440
-    implicitHeight: 560
+    implicitWidth: root.cardWidth
+    implicitHeight: root.cardHeight
     anchors.left: true
     anchors.bottom: true
-    margins.left: 8
-    margins.bottom: 48
+    margins.left: root.cardLeftMargin
+    margins.bottom: root.barHeight
     WlrLayershell.namespace: "omarchy-start"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
