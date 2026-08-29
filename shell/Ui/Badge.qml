@@ -26,6 +26,7 @@ Rectangle {
   color: Util.alpha(_tone, 0.85)
 
   Text {
+    textFormat: Text.PlainText
     id: label
     anchors.centerIn: parent
     text: root.count >= 0 ? (root.count > 99 ? "99+" : String(root.count)) : root.text

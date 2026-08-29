@@ -33,6 +33,7 @@ Rectangle {
         spacing: Style.space(2)
 
         Text {
+          textFormat: Text.PlainText
           text: String(root.record.title || root.record.id || "Unnamed software record")
           color: Tokens.text.primary
           font.family: Style.font.family
@@ -45,6 +46,7 @@ Rectangle {
         }
 
         Text {
+          textFormat: Text.PlainText
           text: String(root.record.subtitle || root.record.kind || "Software evidence")
           color: Tokens.text.secondary
           font.family: Style.font.family
@@ -64,6 +66,7 @@ Rectangle {
     }
 
     Text {
+      textFormat: Text.PlainText
       text: String(root.record.kind || "record") + " \u00b7 " + String(root.record.id || "")
       color: Tokens.text.disabled
       font.family: Style.font.family
@@ -97,6 +100,7 @@ Rectangle {
             Layout.fillWidth: true
             spacing: Style.space(10)
             Text {
+              textFormat: Text.PlainText
               text: modelData.label
               color: Tokens.text.disabled
               font.family: Style.font.family
@@ -108,6 +112,7 @@ Rectangle {
               Layout.alignment: Qt.AlignTop
             }
             Text {
+              textFormat: Text.PlainText
               text: modelData.value
               color: Tokens.text.secondary
               font.family: Style.font.family

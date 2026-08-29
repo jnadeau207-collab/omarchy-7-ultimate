@@ -82,6 +82,7 @@ BorderSurface {
       radius: Style.cornerRadius
     }
     contentItem: Text {
+      textFormat: Text.PlainText
       text: Semantics.text(root.semanticProfile, root.tooltipText)
       color: Tokens.text.primary
       font.family: Style.font.family
@@ -90,6 +91,7 @@ BorderSurface {
   }
 
   Text {
+    textFormat: Text.PlainText
     anchors.centerIn: parent
     text: root.iconText
     color: root._fg

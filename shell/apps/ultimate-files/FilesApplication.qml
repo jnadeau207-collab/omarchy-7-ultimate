@@ -131,6 +131,7 @@ Item {
             Layout.fillWidth: true
             spacing: Style.space(3)
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.title : "Files"
               color: Tokens.text.primary
               font.family: Style.font.family
@@ -142,6 +143,7 @@ Item {
               Layout.fillWidth: true
             }
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.description : "The requested Files route is unavailable."
               color: Tokens.text.secondary
               font.family: Style.font.family
@@ -208,6 +210,7 @@ Item {
                   Layout.fillWidth: true
                   spacing: Style.space(10)
                   Text {
+                    textFormat: Text.PlainText
                     text: FilesModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
                     font.family: Style.font.family
@@ -227,6 +230,7 @@ Item {
                   }
                 }
                 Text {
+                  textFormat: Text.PlainText
                   text: FilesModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
                   font.family: Style.font.family
@@ -237,6 +241,7 @@ Item {
                   Layout.fillWidth: true
                 }
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.queryState.revision !== ""
                   text: "Revision " + root.queryState.revision + " \u00b7 generation " + root.queryState.providerGeneration + " \u00b7 " + root.queryState.totalRecords + " source record" + (root.queryState.totalRecords === 1 ? "" : "s")
                   color: Tokens.text.disabled

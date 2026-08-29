@@ -152,6 +152,7 @@ Item {
             spacing: Style.space(3)
 
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.title : "Agent Center"
               color: Tokens.text.primary
               font.family: Style.font.family
@@ -162,6 +163,7 @@ Item {
             }
 
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."
               color: Tokens.text.secondary
               font.family: Style.font.family
@@ -216,6 +218,7 @@ Item {
                   spacing: Style.space(10)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: AgentCenterModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
                     font.family: Style.font.family
@@ -236,6 +239,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   text: AgentCenterModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
                   font.family: Style.font.family
@@ -254,6 +258,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.entityId !== ""
                   text: "Selected " + root.entityType + ": " + AgentCenterModel.clippedText(root.entityId, 180)
                   color: Tokens.text.disabled
@@ -264,6 +269,7 @@ Item {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.queryState.error !== null && !!root.queryState.error.detail
                   text: root.queryState.error
                     ? "Detail: " + AgentCenterModel.clippedText(root.queryState.error.detail, 480)
@@ -283,6 +289,7 @@ Item {
                   spacing: Style.space(3)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: "RECOVERY PATHS"
                     color: Tokens.state.warning
                     font.family: Style.font.family
@@ -295,6 +302,7 @@ Item {
                     model: root.queryState.recoveryActions
 
                     delegate: Text {
+                      textFormat: Text.PlainText
                       required property var modelData
 
                       text: "\u2022 " + AgentCenterModel.clippedText(modelData, 320)
@@ -339,6 +347,7 @@ Item {
                     spacing: Style.space(2)
 
                     Text {
+                      textFormat: Text.PlainText
                       text: String(modelData.value)
                       color: Tokens.text.primary
                       font.family: Style.font.family
@@ -348,6 +357,7 @@ Item {
                     }
 
                     Text {
+                      textFormat: Text.PlainText
                       text: modelData.label
                       color: Tokens.text.secondary
                       font.family: Style.font.family
@@ -372,6 +382,7 @@ Item {
               Accessible.name: summaryText.text
 
               Text {
+                textFormat: Text.PlainText
                 id: summaryText
                 anchors.fill: parent
                 anchors.margins: Style.space(10)
@@ -421,6 +432,7 @@ Item {
               }
 
               Text {
+                textFormat: Text.PlainText
                 text: root.queryState.clipped
                   ? "Display bound reached at " + AgentCenterModel.MAX_VISIBLE_ITEMS + " records."
                   : root.queryState.items.length + " records loaded; another page is available."

@@ -116,6 +116,7 @@ Item {
             border.width: 1
 
             Text {
+              textFormat: Text.PlainText
               anchors.centerIn: parent
               width: parent.width - 8
               wrapMode: Text.Wrap
@@ -182,6 +183,7 @@ Item {
               border.color: Number(modelData) === Number(root.viewDesktop) ? Tokens.accent.primary : Tokens.border.subtle
               border.width: 1
               Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 text: "Desktop " + modelData
                 color: Tokens.text.primary
@@ -232,6 +234,7 @@ Item {
             radius: Tokens.radius.small
             color: Tokens.surface.raised
             Text {
+              textFormat: Text.PlainText
               anchors.verticalCenter: parent.verticalCenter
               anchors.left: parent.left
               anchors.leftMargin: 12

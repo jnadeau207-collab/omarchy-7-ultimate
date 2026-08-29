@@ -163,6 +163,7 @@ Item {
             Layout.fillWidth: true
             spacing: Style.space(3)
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.title : "Compatibility Center"
               color: Tokens.text.primary
               font.family: Style.font.family
@@ -174,6 +175,7 @@ Item {
               Layout.fillWidth: true
             }
             Text {
+              textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.description : "The requested Compatibility Center route is unavailable."
               color: Tokens.text.secondary
               font.family: Style.font.family
@@ -218,6 +220,7 @@ Item {
                   Layout.fillWidth: true
                   spacing: Style.space(10)
                   Text {
+                    textFormat: Text.PlainText
                     text: CompatibilityModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
                     font.family: Style.font.family
@@ -231,6 +234,7 @@ Item {
                   Ui.Button { visible: root.canRetry; text: root.queryState.phase === "offline" ? "Reconnect" : "Retry"; focusable: true; bordered: true; onClicked: root.retryState() }
                 }
                 Text {
+                  textFormat: Text.PlainText
                   text: CompatibilityModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
                   font.family: Style.font.family
@@ -241,6 +245,7 @@ Item {
                   Layout.fillWidth: true
                 }
                 Text {
+                  textFormat: Text.PlainText
                   visible: root.queryState.revision !== "" || root.queryState.providerGeneration > 0
                   text: (root.queryState.revision !== "" ? "Revision " + root.queryState.revision + " \u00b7 " : "") + "assurance " + root.queryState.assurance + " \u00b7 generation " + root.queryState.providerGeneration + " \u00b7 " + root.queryState.totalRecords + " source record" + (root.queryState.totalRecords === 1 ? "" : "s")
                   color: Tokens.text.disabled

@@ -99,6 +99,7 @@ Item {
           layoutDirection: root.semanticProfile && root.semanticProfile.rtl ? Qt.RightToLeft : Qt.LeftToRight
 
           Text {
+            textFormat: Text.PlainText
             text: root.definition.symbol
             color: root.toneColor
             font.family: Style.font.family
@@ -107,6 +108,7 @@ Item {
           }
 
           Text {
+            textFormat: Text.PlainText
             width: parent.width - x
             text: Semantics.text(root.semanticProfile, root.resolvedTitle)
             color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
@@ -119,6 +121,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           width: parent.width
           text: Semantics.text(root.semanticProfile, root.resolvedMessage)
           color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
@@ -129,6 +132,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           width: parent.width
           visible: root.recoveryText !== ""
           text: Semantics.text(root.semanticProfile, root.recoveryText)

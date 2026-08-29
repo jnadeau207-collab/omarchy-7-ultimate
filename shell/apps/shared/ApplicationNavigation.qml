@@ -25,6 +25,7 @@ Rectangle {
     spacing: Style.space(10)
 
     Text {
+      textFormat: Text.PlainText
       text: root.title
       color: Tokens.text.primary
       font.family: Style.font.family
@@ -59,6 +60,7 @@ Rectangle {
         readonly property bool beginsSection: index === 0 || root.routes[index - 1].section !== modelData.section
 
         Text {
+          textFormat: Text.PlainText
           id: sectionLabel
           visible: parent.beginsSection
           anchors.left: parent.left

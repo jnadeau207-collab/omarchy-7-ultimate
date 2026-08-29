@@ -192,6 +192,7 @@ Column {
     }
 
     Text {
+      textFormat: Text.PlainText
       anchors.verticalCenter: parent.verticalCenter
       text: "last action: " + root.lastAction
       color: Tokens.text.secondary
