@@ -197,7 +197,7 @@ grep -Fq 'WindowModel.parseClientsSnapshot(clientsStdout.text, exitCode)' "$ws" 
   || fail "placement hydration must reject failed or missing hyprctl output"
 grep -Fq 'root._logicalClientRect(c)' "$ws" \
   || fail "compositor client boxes are normalized before WindowService stores them"
-grep -Fq 'var box = root._frameBox(target, bounds)' "$ws" \
+grep -Fq 'root._frameBox(target, bounds)' "$ws" \
   || fail "direct move and resize verbs transform logical rectangles at compositor egress"
 grep -Fq 'root._isPlacedSnap(root._placedKind[target])' "$ws" \
   || fail "queued unmaximize restores must not overwrite a newer explicit snap"
