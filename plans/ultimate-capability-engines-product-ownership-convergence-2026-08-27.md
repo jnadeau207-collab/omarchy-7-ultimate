@@ -1,6 +1,6 @@
 # Ultimate Capability Engines and Product Ownership Convergence — 2026-08-27
 
-This is the next broad execution tranche under `plans/ultimate-product-completion-program-2026-08-26.md`. It joins the provisional Fabric foundations, durable managed-work store, typed domain families, standalone product applications, shell surfaces, package repository, ISO repository, and physical machine into one continuous convergence program. It is deliberately not a sequence of tiny named slices. The fleet rolls from one dependency-cleared ownership area into the next until the entire exit state below is satisfied.
+This is a later product-ownership tranche under the eleven phases in `plans/project-ultimate.md`. It is not W0, not founding authority, and not a replacement for that taxonomy. It joins the provisional Fabric foundations, durable managed-work store, typed domain families, standalone product applications, shell surfaces, package repository, ISO repository, and physical machine into one continuous convergence program after Phase 1 is closed. It is deliberately not a sequence of tiny named slices. The fleet rolls from one dependency-cleared ownership area into the next until the entire exit state below is satisfied.
 
 ## Outcome
 

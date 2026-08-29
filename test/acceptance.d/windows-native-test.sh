@@ -11,10 +11,10 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-# Do not hyprctl-eval monitor modes here. This Samsung HDMI TV's preferred
-# mode is 4K@30 (no-signal). Runtime modesets on the NVIDIA card plus a later
-# reload/reboot of stock `preferred` in monitors.lua black the panel. The
-# live output is already pinned in ~/.config/hypr/monitors.lua.
+# Do not hyprctl-eval monitor modes here. Ranking is
+# `omarchy-hyprland-monitor-apply --emit-lua` from config/hypr/monitors.lua.
+# This Samsung HDMI TV's EDID preferred DTD is 4K@30 (no-signal). Do not pin
+# HDMI and do not fall back to mode = "preferred".
 PREEXISTING_ADDRS=$(hyprctl -j clients | jq -r '.[].address' | sort)
 
 

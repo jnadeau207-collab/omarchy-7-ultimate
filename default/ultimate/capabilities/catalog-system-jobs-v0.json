@@ -91,7 +91,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:desktop.icons.manage",
         "brokerVerb": null
       }
@@ -277,7 +277,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:desktop.context-menu.open",
         "brokerVerb": null
       }
@@ -371,7 +371,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:files.trash.manage",
         "brokerVerb": null
       }
@@ -1114,7 +1114,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:printers.manage",
         "brokerVerb": null
       }
@@ -1205,7 +1205,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:devices.inspect",
         "brokerVerb": null
       }
@@ -1299,7 +1299,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:software.installed.manage",
         "brokerVerb": null
       }
@@ -1392,7 +1392,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:apps.defaults.set",
         "brokerVerb": null
       }
@@ -1486,7 +1486,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:accounts.manage",
         "brokerVerb": null
       }
@@ -1580,7 +1580,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:credentials.manage",
         "brokerVerb": null
       }
@@ -2052,7 +2052,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:update.history.read",
         "brokerVerb": null
       }
@@ -2143,7 +2143,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:update.history.read",
         "brokerVerb": null
       }
@@ -2523,7 +2523,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:storage.disk.manage",
         "brokerVerb": null
       }
@@ -2705,7 +2705,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:resources.inspect",
         "brokerVerb": null
       }
@@ -2799,7 +2799,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:services.manage",
         "brokerVerb": null
       }
@@ -2892,7 +2892,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:tasks.schedule",
         "brokerVerb": null
       }
@@ -3078,7 +3078,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:remote-desktop.manage",
         "brokerVerb": null
       }
@@ -3173,7 +3173,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:storage.encryption.manage",
         "brokerVerb": null
       }
@@ -3267,7 +3267,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:sharing.smb.connect",
         "brokerVerb": null
       }
@@ -3453,7 +3453,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:accessibility.configure",
         "brokerVerb": null
       }
@@ -3546,7 +3546,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:files.associations.set",
         "brokerVerb": null
       }
@@ -3923,7 +3923,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:compatibility.install",
         "brokerVerb": null
       }
@@ -4017,7 +4017,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:compatibility.uninstall",
         "brokerVerb": null
       }
@@ -4205,7 +4205,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:gaming.proton.manage",
         "brokerVerb": null
       }
@@ -4298,7 +4298,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:privacy.manage",
         "brokerVerb": null
       }
@@ -4484,7 +4484,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:agents.center.manage",
         "brokerVerb": null
       }
@@ -4581,7 +4581,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:os.install",
         "brokerVerb": null
       }
@@ -5694,7 +5694,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:apps.startup.disable",
         "brokerVerb": null
       }
@@ -5878,7 +5878,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:system.info.read",
         "brokerVerb": null
       }
@@ -5971,7 +5971,7 @@
         ]
       },
       "source": {
-        "file": "plans/ultimate-product-completion-program-2026-08-26.md",
+        "file": "plans/project-ultimate.md",
         "symbol": "planned:troubleshooting.audio.run",
         "brokerVerb": null
       }
