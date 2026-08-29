@@ -241,7 +241,7 @@ Item {
           Layout.fillWidth: true
           Layout.fillHeight: true
           title: root.filter.length > 0 ? "No matching apps" : "Search for apps"
-          message: root.filter.length > 0 ? "Try a different name." : "Chrome, Files, and other programs show here. Terminal and Vim stay available from search."
+          message: root.filter.length > 0 ? "Try a different name." : "Chrome, Files, and Agent are pinned. Terminal and Vim stay available from search."
         }
 
         RowLayout {
