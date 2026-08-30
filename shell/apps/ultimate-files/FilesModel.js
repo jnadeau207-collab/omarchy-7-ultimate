@@ -5,6 +5,13 @@ var MAX_CATALOG_ENTRIES = 128
 var MAX_SOURCE_RECORDS = 256
 var MAX_VISIBLE_RECORDS = 96
 var MAX_TEXT = 480
+var PLACE_LOCATION_ORDER = {
+  "files.location.home": 0,
+  "files.location.desktop": 1,
+  "files.location.documents": 2,
+  "files.location.downloads": 3,
+  "files.location.pictures": 4
+}
 
 var ROUTES = [
   { routeId: "files.overview", action: "inspect", capability: "files.inspect", kind: "overview", arguments: {} },
@@ -289,6 +296,29 @@ function entryRecord(entry, index) {
   return { id: entry.id, kind: "entry", title: clippedText(entry.name, 240), subtitle: clippedText(entry.relativePath, 320), status: entry.kind, tone: entry.kind === "symlink" ? "warning" : "neutral", details: details, order: index }
 }
 
+function locationEntryCount(entries, locationId) {
+  var count = 0
+  for (var i = 0; i < entries.length; i++) if (entries[i].locationId === locationId) count++
+  return count
+}
+
+function placeEntries(entries) {
+  var selected = []
+  for (var i = 0; i < entries.length; i++) {
+    if (!hasOwn(PLACE_LOCATION_ORDER, entries[i].locationId)) continue
+    selected.push(entries[i])
+  }
+  selected.sort(function (left, right) {
+    var leftOrder = PLACE_LOCATION_ORDER[left.locationId]
+    var rightOrder = PLACE_LOCATION_ORDER[right.locationId]
+    if (leftOrder !== rightOrder) return leftOrder - rightOrder
+    if (left.id < right.id) return -1
+    if (left.id > right.id) return 1
+    return 0
+  })
+  return selected
+}
+
 function locationRecord(location, index) {
   if (!isObject(location) || !validLocation(location)) return null
   var details = [detail("Kind", location.kind), detail("Writable", location.writable === true ? "Yes" : "No"), detail("Root revision", location.rootToken)]
@@ -331,10 +361,23 @@ function normalizeResult(state, result) {
       for (var mountIndex = 0; mountIndex < mounts.length; mountIndex++) if (!validMount(mounts[mountIndex])) return { error: "A Files mount is invalid." }
       for (var recentIndex = 0; recentIndex < value.state.recent.length; recentIndex++) if (!validRecent(value.state.recent[recentIndex])) return { error: "A Files recent-item reference is invalid." }
       if (state.query.kind === "overview" || state.query.kind === "this-pc") {
+        var shownLocations = []
         for (var i = 0; i < locations.length; i++) {
           if (state.query.kind === "this-pc" && ["network", "trash"].indexOf(locations[i].kind) >= 0) continue
-          var location = locationRecord(locations[i], records.length)
+          shownLocations.push(locations[i])
+        }
+        shownLocations.sort(function (left, right) {
+          var leftOrder = hasOwn(PLACE_LOCATION_ORDER, left.id) ? PLACE_LOCATION_ORDER[left.id] : 50
+          var rightOrder = hasOwn(PLACE_LOCATION_ORDER, right.id) ? PLACE_LOCATION_ORDER[right.id] : 50
+          if (leftOrder !== rightOrder) return leftOrder - rightOrder
+          if (left.id < right.id) return -1
+          if (left.id > right.id) return 1
+          return 0
+        })
+        for (var loc = 0; loc < shownLocations.length; loc++) {
+          var location = locationRecord(shownLocations[loc], records.length)
           if (!location) return { error: "A Files location is invalid." }
+          location.details.push(detail("Entries", String(locationEntryCount(value.state.entries, shownLocations[loc].id))))
           records.push(location)
         }
         for (var j = 0; j < mounts.length; j++) {
@@ -342,6 +385,12 @@ function normalizeResult(state, result) {
           var mount = mountRecord(mounts[j], records.length)
           if (!mount) return { error: "A Files mount is invalid." }
           records.push(mount)
+        }
+        var placed = placeEntries(value.state.entries)
+        for (var p = 0; p < placed.length; p++) {
+          var item = entryRecord(placed[p], records.length)
+          if (!item) return { error: "A Files entry is invalid." }
+          records.push(item)
         }
       } else if (state.query.kind === "network") {
         for (var k = 0; k < locations.length; k++) if (locations[k].kind === "network" || locations[k].kind === "mount") {

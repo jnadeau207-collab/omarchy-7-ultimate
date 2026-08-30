@@ -128,6 +128,37 @@ picturesController.receiveResult('pictures-2', {
 })
 assert(picturesController.state.phase === 'available', 'Pictures browse stays available when only the workspace catalog is degraded')
 assert(picturesController.state.records.length === 1 && picturesController.state.records[0].title === 'sunset.png', 'Pictures browse keeps the location entries')
+
+const thisPcState = Files.baseState('files.this-pc', {}, 'loading')
+thisPcState.providerEntry = catalog('files.provider', fileActions, 'degraded').providers[0]
+const thisPcResult = {
+  provider: 'files.provider', providerVersion: 'v0', generation: 4, action: 'inspect', capability: 'files.inspect', observedAt: 22,
+  value: {
+    schemaVersion: 'v0', provider: 'files.provider', providerVersion: 'v0', action: 'inspect',
+    availability: { state: 'degraded', read: true, operation: false, reasons: [] },
+    revision: revA,
+    state: {
+      schemaVersion: 'v0', workspaceId: 'files.workspace.primary',
+      locations: [
+        { id: 'files.location.home', kind: 'home', label: 'Home', state: 'available', writable: true, rootToken: revA, reason: null },
+        { id: 'files.location.desktop', kind: 'desktop', label: 'Desktop', state: 'available', writable: true, rootToken: revA, reason: null },
+        { id: 'files.location.pictures', kind: 'pictures', label: 'Pictures', state: 'available', writable: true, rootToken: revA, reason: null }
+      ],
+      entries: [
+        { id: 'files.entry.bashrc', locationId: 'files.location.home', parentId: null, name: '.bashrc', relativePath: '.bashrc', kind: 'file', sizeBytes: 12, modifiedNs: 1, mimeType: 'text/plain', hidden: true, writable: true, identity: revB, symlinkTargetState: null, trash: null },
+        { id: 'files.entry.note', locationId: 'files.location.desktop', parentId: null, name: 'note.txt', relativePath: 'note.txt', kind: 'file', sizeBytes: 4, modifiedNs: 1, mimeType: 'text/plain', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }
+      ],
+      mounts: [],
+      recent: []
+    }
+  }
+}
+const normalizedThisPc = Files.normalizeResult(thisPcState, thisPcResult)
+assert(!normalizedThisPc.error, 'This PC accepts a degraded inspect inventory')
+assert(normalizedThisPc.records.some(record => record.kind === 'entry' && record.title === '.bashrc'), 'This PC shows Home records from the inspect inventory')
+assert(normalizedThisPc.records.some(record => record.kind === 'entry' && record.title === 'note.txt'), 'This PC shows Desktop records from the inspect inventory')
+assert(normalizedThisPc.records.some(record => record.kind === 'location' && record.title === 'Home' && record.details.some(field => field.label === 'Entries' && field.value === '1')), 'This PC Home card reports its remaining inventory count')
+assert(normalizedThisPc.records.findIndex(record => record.kind === 'location' && record.title === 'Home') === 0, 'This PC lists the Home location before later places')
 assert(Files.normalizeResult(fileReadState, { ...fileResult, value: { ...fileResult.value, shell: 'rm -rf /' } }).error, 'Files rejects extra response fields')
 
 equal(Software.requestParameters(Software.baseState('software.catalog', { query: 'editor' }, 'loading')), {

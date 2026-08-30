@@ -106,6 +106,11 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
                 if item["locationId"] == "files.location.pictures"
             ]
             self.assertIn("sunset.png", {item["name"] for item in pictures_entries})
+            home_entries = [
+                item for item in inventory["state"]["entries"]
+                if item["locationId"] == "files.location.home"
+            ]
+            self.assertGreater(len(home_entries), 0)
             locations = {item["id"]: item for item in inventory["state"]["locations"]}
             self.assertEqual(locations["files.location.pictures"]["state"], "available")
             reason_codes = {reason["code"] for reason in inventory["availability"]["reasons"]}
@@ -124,6 +129,54 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(trash_browse["availability"]["state"], "unavailable")
             self.assertEqual(trash_browse["availability"]["reasons"][0]["code"], "files.location-absent")
+
+    async def test_byte_bound_keeps_home_and_pictures_when_both_are_fat(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            pictures = home / "Pictures"
+            desktop = home / "Desktop"
+            pictures.mkdir()
+            desktop.mkdir()
+            (desktop / "note.txt").write_text("desktop")
+            pad = "x" * 80
+            for index in range(80):
+                (pictures / f"shot-{index:03d}-{pad}.png").write_text("photo")
+            for index in range(80):
+                (home / f"dotfile-{index:03d}.txt").write_text("home")
+            config = ROOT / "default" / "ultimate" / "files" / "locations-v0.json"
+            provider = files.build_provider(home=home, config_path=config)
+            inventory = await provider.read("inspect", {})
+            by_location: dict[str, list[str]] = {}
+            for item in inventory["state"]["entries"]:
+                by_location.setdefault(item["locationId"], []).append(item["name"])
+            self.assertGreaterEqual(len(by_location.get("files.location.home", [])), 1)
+            self.assertGreaterEqual(len(by_location.get("files.location.pictures", [])), 1)
+            self.assertGreaterEqual(len(by_location.get("files.location.desktop", [])), 1)
+            self.assertIn("note.txt", by_location["files.location.desktop"])
+            self.assertEqual(inventory["availability"]["state"], "degraded")
+            self.assertFalse(inventory["availability"]["operation"])
+            reason_codes = {reason["code"] for reason in inventory["availability"]["reasons"]}
+            self.assertIn("files.operation-read-only", reason_codes)
+            self.assertIn("files.inventory-truncated", reason_codes)
+            browse = await provider.read(
+                "browse",
+                {"locationId": "files.location.pictures", "relativePath": "", "includeHidden": False, "limit": 20},
+            )
+            self.assertGreater(len(browse["entries"]), 0)
+            self.assertEqual(browse["availability"]["state"], "available")
+
+    def test_eviction_takes_surplus_pictures_before_home_floor(self) -> None:
+        pictures = [
+            {"id": f"files.entry.picture-{index}", "locationId": "files.location.pictures", "parentId": None}
+            for index in range(20)
+        ]
+        home = [
+            {"id": f"files.entry.home-{index}", "locationId": "files.location.home", "parentId": None}
+            for index in range(files.LOCATION_ENTRY_FLOOR)
+        ]
+        entries = pictures + home
+        index = files._evictable_leaf_index(entries, set())
+        self.assertEqual(entries[index]["locationId"], "files.location.pictures")
 
     def test_path_normalizer_rejects_every_escape_vocabulary(self) -> None:
         for candidate in ("..", "../x", "x/..", "/x", "x/", "x//y", "x\\y", "x\x00y", "x/./y", "x\ny"):
