@@ -32,6 +32,7 @@ Item {
   // default/ultimate/chrome-tokens.json and chrome-tokens-light.json files are
   // generated compatibility adapters. Locked pre-contract reference for the
   // visual regression suite: Qt.rgba(0.11, 0.11, 0.12, 0.62).
+  readonly property bool highContrast: Tokens.accessibility.highContrast
   readonly property color chromeBar: Tokens.chrome.glass
   readonly property color chromeHover: Tokens.chrome.hover
   readonly property color chromeActive: Tokens.chrome.active
@@ -39,7 +40,8 @@ Item {
   readonly property color chromeMenu: Tokens.chrome.menu
   readonly property color chromeGlow: Tokens.chrome.glow
   readonly property color chromeStart: Tokens.chrome.start
-  readonly property color chromeEdge: Tokens.chrome.edge
+  readonly property color chromeEdge: highContrast ? Tokens.border.strong : Tokens.chrome.edge
+  readonly property int chromeEdgeWidth: highContrast ? 2 : 1
   property color background: chromeBar
   property var moduleSlots: []
   readonly property var windowService: shell ? shell.windowService : null
@@ -294,7 +296,7 @@ Item {
           anchors.top: parent.top
           anchors.left: parent.left
           anchors.right: parent.right
-          height: 1
+          height: root.chromeEdgeWidth
           z: 2
           color: root.chromeEdge
         }
@@ -382,7 +384,7 @@ Item {
             implicitWidth: tooltipLabel.implicitWidth + 20
             implicitHeight: tooltipLabel.implicitHeight + 14
             color: Tokens.chrome.menu
-            borderSpec: Border.surfaceSpec("tooltip", "border", Tokens.chrome.edge, 1)
+            borderSpec: Border.surfaceSpec("tooltip", "border", root.chromeEdge, root.chromeEdgeWidth)
             radius: Style.cornerRadius
 
             Text {

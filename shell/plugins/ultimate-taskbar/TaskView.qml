@@ -39,9 +39,9 @@ Item {
         height: 8
         radius: 1
         color: "transparent"
-        border.width: 1
+        border.width: bar && bar.highContrast ? 2 : 1
         border.color: Tokens.text.primary
-        opacity: 0.7
+        opacity: bar && bar.highContrast ? 1 : 0.7
       }
       Rectangle {
         x: 0
@@ -50,9 +50,9 @@ Item {
         height: 8
         radius: 1
         color: Tokens.surface.base
-        border.width: 1
+        border.width: bar && bar.highContrast ? 2 : 1
         border.color: Tokens.text.primary
-        opacity: 0.95
+        opacity: 1
       }
     }
   }
