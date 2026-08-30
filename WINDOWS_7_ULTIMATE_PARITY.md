@@ -32,7 +32,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Credential Manager | missing | |
 | Power Options | prototype | `omarchy.power` panel. Not Power Options. Forty-task "Change power mode" is pending. |
 | Sound | prototype | `omarchy.audio` panel. Forty-task volume/headphones rows pending. |
-| Display | prototype | Settings → Display hosts the existing `omarchy.monitor` panel (scale, brightness, arrangement). Typed Display service is Phase 5. |
+| Display | prototype | Settings → Display reads Fabric `display.inspect` (connector, mode, scale, position). Typed Display writers remain Phase 5. |
 | Firewall | plumbing | `install/config/firewall.sh` / ufw on by default (`manual/35-networking.md`). No Firewall Settings surface. |
 | Update | plumbing / prototype | Heritage `omarchy.system-update` widget; Superbar does not load it. `omarchy-update` + snapshots. No Update history Settings page. Forty-task rows 28–29 pending. |
 | Backup & Restore | plumbing | Snapper via `omarchy-snapshot`. No Backup and Restore UI. |
@@ -62,7 +62,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Modern display (scaling, HDR, night light) | prototype / plumbing | Monitor panel + `omarchy.nightlight` service. Forty-task scaling and night light pending. |
 | Proton / gaming | missing | Steam install is forty-task pending; no Gaming / Proton surface. |
 | Privacy | missing | Doctrine refuses telemetry; no Privacy Settings. |
-| Agent Fabric | prototype (window) | See `AGENT_NATIVE_ACCEPTANCE.md`. WindowService + `CapabilityBroker` (results, permit, ledger, window undo). Display/audio/network still panels. |
+| Agent Fabric | prototype (window) | See `AGENT_NATIVE_ACCEPTANCE.md`. WindowService + `CapabilityBroker` (results, permit, ledger, window undo). Settings Display reads `display.inspect`. Superbar still hosts audio/network/bluetooth/power panels. Typed writers remain Phase 5. |
 | Agent Center | prototype | `org.omarchy.AgentCenter` is a snappable Superbar pin and Start destination. Overview reads owner-scoped managed-work counts from Fabric. Inspect tasks can be created, run, cancelled, and recovered for `system.info.read`. Context capture covers the five desktop sources. Consent and provider operations stay outside Agent Center. Usage stays one section. `omarchy.agents` remains a launch shim. |
 
 ## Caption / windowing (not a substitute for the jobs above)
