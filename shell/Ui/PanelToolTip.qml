@@ -9,22 +9,22 @@ import qs.Commons
 //     text: "Forget network"
 //   }
 //
-// Defaults pull from [tooltip] in shell.toml via Color.tooltip.*. Override
-// the panel* properties per-instance only when you need a tooltip that
-// intentionally diverges from the theme.
+// Defaults bind the same chrome/text tokens Superbar tooltips use.
+// Override the panel* properties per-instance only when you need a tooltip
+// that intentionally diverges from the theme.
 //
 // Property names are prefixed `panel*` to avoid clashing with ToolTip's
 // built-in `background`/`font` properties.
 ToolTip {
   id: root
 
-  property color panelForeground: Color.tooltip.text
-  property color panelBackground: Color.tooltip.background
-  property color panelBorder: Color.tooltip.border
+  property color panelForeground: Tokens.text.primary
+  property color panelBackground: Tokens.chrome.menu
+  property color panelBorder: Tokens.chrome.edge
   property string fontFamily: Style.font.family
   property real fontSize: Style.font.bodySmall
 
-  readonly property var panelBorderSpec: Border.localOrSurfaceSpec("tooltip", "border", panelBorder, Color.tooltip.border, Style.normalBorderWidth)
+  readonly property var panelBorderSpec: Border.localOrSurfaceSpec("tooltip", "border", panelBorder, Tokens.chrome.edge, Style.normalBorderWidth)
 
   delay: 400
   padding: 0

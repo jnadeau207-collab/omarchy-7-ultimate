@@ -49,17 +49,22 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 checks = {
-    "shell/Ui/Button.qml": "Tokens.text.primary",
+    "shell/Ui/Button.qml": "Tokens.chrome.menu",
+    "shell/Ui/PanelToolTip.qml": "Tokens.chrome.menu",
     "shell/Ui/Toggle.qml": "Tokens.accent.primary",
     "shell/Ui/ToggleSwitch.qml": "Tokens.text.primary",
     "shell/Ui/TextField.qml": "Tokens.accent.primary",
-    "shell/Ui/ConfirmDialog.qml": "Tokens.surface.base",
+    "shell/Ui/ConfirmDialog.qml": "Tokens.state.danger",
     "shell/plugins/ultimate-start/Start.qml": "Tokens.typography.family",
     "shell/plugins/ultimate-taskbar/StartButton.qml": "Tokens.caption.close.background",
     "shell/plugins/ultimate-taskbar/Taskbar.qml": "Tokens.chrome.menu",
     "shell/Ui/WidgetButton.qml": "Tokens.state.danger",
     "shell/plugins/desktop-icons/DesktopIcons.qml": "Tokens.typography.family",
-    "shell/plugins/lock/LockView.qml": "Tokens.text.primary",
+    "shell/plugins/lock/LockView.qml": "Tokens.surface.canvas",
+    "shell/plugins/lock/Service.qml": "Tokens.surface.canvas",
+    "shell/plugins/notifications/components/NotificationCard.qml": "Tokens.chrome.menu",
+    "shell/plugins/panels/clock/Panel.qml": "Tokens.accent.primary",
+    "shell/plugins/agents/Panel.qml": "Tokens.chrome.menu",
     "shell/Commons/Tokens.qml": "design-tokens-v0.json",
 }
 for relative, needle in checks.items():
@@ -68,6 +73,9 @@ for relative, needle in checks.items():
         raise SystemExit(f"{relative} does not bind {needle}")
     if relative.startswith("shell/Ui/") and "Color.foreground" in text:
         raise SystemExit(f"{relative} still defaults through Color.foreground")
+    for leak in ("Color.tooltip", "Color.notifications", "Color.urgent", "Color.background"):
+        if leak in text and relative != "shell/Commons/Tokens.qml":
+            raise SystemExit(f"{relative} still defaults through {leak}")
 PY
 pass "kit and consumer chrome default through the resolved token pipeline"
 

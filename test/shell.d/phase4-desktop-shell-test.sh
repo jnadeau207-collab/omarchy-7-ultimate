@@ -288,8 +288,19 @@ grep -Fq 'SystemClock' "$ROOT/shell/plugins/lock/LockView.qml" \
   || fail "lock shows a clock"
 grep -Fq 'Tokens.text.primary' "$ROOT/shell/plugins/lock/LockView.qml" \
   || fail "lock reads text from the token pipeline"
+grep -Fq 'Tokens.surface.canvas' "$ROOT/shell/plugins/lock/LockView.qml" \
+  || fail "lock fill reads canvas from the token pipeline"
 if grep -Fq 'Color.lock' "$ROOT/shell/plugins/lock/LockView.qml"; then
   fail "lock must not keep a private Color.lock palette"
+fi
+if grep -Fq 'Color.background' "$ROOT/shell/plugins/lock/LockView.qml"; then
+  fail "lock must not keep a private Color.background fill"
+fi
+if grep -Fq 'Color.tooltip' "$ROOT/shell/Ui/PanelToolTip.qml" "$ROOT/shell/Ui/Button.qml"; then
+  fail "Phase 4 shared tooltips must not keep Color.tooltip"
+fi
+if grep -Fq 'Color.notifications' "$ROOT/shell/plugins/notifications/components/NotificationCard.qml"; then
+  fail "Phase 4 NC card must not keep Color.notifications"
 fi
 pass "lock shows clock and user"
 
