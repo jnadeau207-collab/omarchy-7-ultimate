@@ -739,8 +739,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "omarchy-launch-nautilus",
+        "file": "bin/omarchy-launch-files",
+        "symbol": "omarchy-launch-files",
         "brokerVerb": null
       }
     },
