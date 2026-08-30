@@ -56,6 +56,8 @@ checks = {
     "shell/Ui/ConfirmDialog.qml": "Tokens.surface.base",
     "shell/plugins/ultimate-start/Start.qml": "Tokens.typography.family",
     "shell/plugins/ultimate-taskbar/StartButton.qml": "Tokens.caption.close.background",
+    "shell/plugins/ultimate-taskbar/Taskbar.qml": "Tokens.chrome.menu",
+    "shell/Ui/WidgetButton.qml": "Tokens.state.danger",
     "shell/plugins/desktop-icons/DesktopIcons.qml": "Tokens.typography.family",
     "shell/plugins/lock/LockView.qml": "Tokens.text.primary",
     "shell/Commons/Tokens.qml": "design-tokens-v0.json",

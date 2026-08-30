@@ -240,6 +240,11 @@ grep -Fq 'design-tokens-v0.json' "$ROOT/shell/Commons/Tokens.qml" \
   || fail "QML Tokens consumes the canonical resolved payload"
 grep -Fq 'Tokens.chrome.glass' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar consumes resolved semantic chrome"
+grep -Fq 'Tokens.chrome.menu' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar tooltips consume resolved chrome tokens"
+if grep -Fq 'Color.tooltip' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"; then
+  fail "Superbar tooltip is not a second Color.tooltip palette"
+fi
 grep -Fq 'chrome-tokens-v0.json' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars consumes the generated canonical adapter"
 if grep -Eq '^[[:space:]]*(readonly[[:space:]]+)?property color chrome[A-Za-z]*:.*(Qt\.rgba|"#)' \
