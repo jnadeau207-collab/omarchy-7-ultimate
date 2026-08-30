@@ -33,7 +33,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "network.inspect",
     supportsResource: true,
-    coverage: "Network interfaces and Wi-Fi radio state are readable. Connection and radio changes remain unavailable from Settings."
+    coverage: "Network inventory is readable from network.inspect (Wi-Fi radio, interfaces, connection status). Radio and connection changes remain unavailable from Settings."
   },
   {
     routeId: "settings.bluetooth.overview",
@@ -1009,12 +1009,6 @@ function observedText(value) {
 
 function hostedPanel(routeId) {
   var id = String(routeId || "")
-  if (id === "settings.network.overview") return {
-    source: "plugins/panels/network/Panel.qml",
-    pluginId: "omarchy.network",
-    label: "Live Network panel",
-    honesty: "This page hosts the existing Network panel (Wi-Fi, ethernet). Typed Network service remains Phase 5."
-  }
   if (id === "settings.bluetooth.overview") return {
     source: "plugins/panels/bluetooth/Panel.qml",
     pluginId: "omarchy.bluetooth",
