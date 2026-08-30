@@ -71,8 +71,8 @@ assertThrows(
 )
 assertEqual(Model.queryForRoute('settings.not-real'), null, 'unknown Settings routes fail closed before transport')
 
+assertEqual(Model.hostedPanel('settings.display.overview'), null, 'Display reads Fabric inspect instead of hosting the Process monitor panel')
 const hosted = [
-  ['settings.display.overview', 'plugins/panels/monitor/Panel.qml', 'omarchy.monitor'],
   ['settings.audio.overview', 'plugins/panels/audio/Panel.qml', 'omarchy.audio'],
   ['settings.network.overview', 'plugins/panels/network/Panel.qml', 'omarchy.network'],
   ['settings.bluetooth.overview', 'plugins/panels/bluetooth/Panel.qml', 'omarchy.bluetooth'],
@@ -87,6 +87,26 @@ for (const [routeId, source, pluginId] of hosted) {
   assert(String(spec.honesty).includes('Phase 5'), `${routeId} labels typed services as Phase 5`)
 }
 assertEqual(Model.hostedPanel('settings.accessibility.overview'), null, 'Accessibility stays an honest Fabric page; no accessibility panel exists')
+const displayResource = Model.normalizeLeafResource({
+  id: `display.output.${'d'.repeat(64)}`,
+  label: 'HDMI-A-1',
+  kind: 'output',
+  enabled: true,
+  focused: true,
+  mode: { width: 1920, height: 1080, refreshHz: 60 },
+  position: { x: 0, y: 0 },
+  scale: 1,
+  transform: 0,
+  mirrorOf: null,
+  dpms: true,
+  state: { available: false, percent: null }
+}, 0)
+assert(displayResource, 'display.inspect resources project into Settings records')
+assertEqual(displayResource.label, 'HDMI-A-1', 'Display records keep the connector label')
+const displayDetail = Object.fromEntries((displayResource.details || []).map(field => [field.label, field.value]))
+assertEqual(displayDetail['Mode Width'], '1920', 'Display records surface host mode width')
+assertEqual(displayDetail['Mode Height'], '1080', 'Display records surface host mode height')
+assertEqual(displayDetail.Scale, '1', 'Display records surface host scale')
 assertEqual(Model.hostedPanel('settings.input.overview'), null, 'Input stays an honest Fabric page; keyboard layout is a bar widget, not a panel')
 assertEqual(Model.hostedPanel('settings.overview'), null, 'Settings home is not a hosted panel')
 
@@ -330,7 +350,7 @@ rejectedController = Model.createController({
 rejectedController.setConnected(true)
 assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
 JS
-pass "Settings hosts Display, Sound, Network, Bluetooth, and Power panels"
+pass "Settings hosts Sound, Network, Bluetooth, and Power panels; Display reads Fabric inspect"
 
 entrypoint="$ROOT/shell/ultimate-settings.qml"
 application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
@@ -393,7 +413,10 @@ grep -Fq 'hostedPanel(' "$model" \
 if grep -Fq 'plugins/' "$application"; then
   fail "Settings application QML does not hard-code plugin paths"
 fi
-pass "Settings Display/Sound/Network/Bluetooth/Power pages host existing panels"
+if grep -Fq 'plugins/panels/monitor/Panel.qml' "$model"; then
+  fail "Settings Display map does not host the Process monitor panel"
+fi
+pass "Settings Sound/Network/Bluetooth/Power pages host existing panels; Display reads Fabric"
 
 for panel in monitor audio network bluetooth power; do
   grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/panels/$panel/Panel.qml" \
