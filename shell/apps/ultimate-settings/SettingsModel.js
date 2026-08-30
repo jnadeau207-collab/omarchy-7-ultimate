@@ -1039,6 +1039,12 @@ function hostedPanel(routeId) {
     label: "Live Power panel",
     honesty: "This page hosts the existing Power panel (profile, battery). Typed Power service remains Phase 5."
   }
+  if (id === "settings.personalization.overview") return {
+    source: "Ui/SettingsPersonalizationHost.qml",
+    pluginId: "omarchy.image-picker",
+    label: "Live Personalization picker",
+    honesty: "This page hosts the existing image picker for theme packs and wallpapers. Typed Personalization service remains Phase 5."
+  }
   return null
 }
 

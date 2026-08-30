@@ -23,7 +23,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Search | prototype | Start `SearchBox` filters installed apps. Not a system Search (files, settings, control panel, history). |
 | Explorer / This PC | prototype | `org.omarchy.Files` is a snappable product window with Home, This PC, Desktop, Documents, Downloads, Pictures, Recent, Search, Trash, and Network routes over `files.provider`. Start Computer uses the published This PC desktop action; Start Pictures uses the Pictures action. Desktop Mode `SUPER + E` launches product Files (`default/hypr/bindings/desktop.lua`). This is not Dolphin and not a full Explorer; Power User `SUPER + SHIFT + F` still opens Nautilus. |
 | Network | prototype | `omarchy.network` panel; still `Process` / `bash -c` / nmcli, not a typed Network service. |
-| Personalization | plumbing / prototype | Theme packs + image picker. No Personalization Settings app. Superbar glass and hyprbars caption read `default/ultimate/chrome-tokens.json`; light theme still does not propagate, and caption buttons stay a private palette. |
+| Personalization | prototype | Settings → Personalization hosts the existing image picker for theme packs and wallpapers. Typed Personalization service is Phase 5. Superbar glass and hyprbars caption read `default/ultimate/chrome-tokens.json`; light theme still does not fully propagate. |
 | Devices & Printers | missing | Forty-task "Add a printer" is pending. |
 | Device Manager | missing | |
 | Programs and Features | missing | No Software Center; no Programs and Features. |

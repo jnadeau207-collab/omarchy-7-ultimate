@@ -21,6 +21,9 @@ Item {
   property int selectedIndex: 0
   property bool imagesLoaded: false
   property bool opened: false
+  property bool embedMode: false
+  property string embedApplyKind: ""
+  property bool overlayReady: false
   property bool showLabels: false
   property bool filterable: false
   property bool layoutSettled: false
@@ -38,13 +41,17 @@ Item {
   property color scrim: Color.imagePicker.scrim
   property color selectedBorder: Color.imagePicker.selectedBorder
   property color unselectedBorder: Color.imagePicker.unselectedBorder
-  property int expandedWidth: 768
-  property int expandedHeight: 475
-  property int sliceWidth: 108
-  property int sliceHeight: 432
-  property int sliceSpacing: -30
-  property int skewOffset: 28
+  property int expandedWidth: embedMode ? Math.max(240, Math.min(embedHost.width - 24, 640)) : 768
+  property int expandedHeight: embedMode ? Math.max(160, Math.min(embedHost.height - (bottomChromeHeight + 36), 280)) : 475
+  property int sliceWidth: embedMode ? 72 : 108
+  property int sliceHeight: embedMode ? Math.max(120, expandedHeight - 40) : 432
+  property int sliceSpacing: embedMode ? -16 : -30
+  property int skewOffset: embedMode ? 16 : 28
   property int bottomChromeHeight: showLabels ? (filterable ? 104 : 74) : (filterable ? 60 : 30)
+
+  implicitWidth: embedMode ? (parent ? parent.width : 0) : 0
+  implicitHeight: embedMode ? (parent ? parent.height : 0) : 0
+  anchors.fill: embedMode ? parent : undefined
 
   onOpenedChanged: if (!opened) layoutSettled = false
 
@@ -82,8 +89,18 @@ Item {
   function currentLabel() {
     var path = currentPath()
     if (!path) return filterText ? "No matches" : ""
-
+    if (root.embedApplyKind === "theme") return ImagePickerModel.themeLabelForPath(path)
     return labelForPath(path)
+  }
+
+  function applyEmbedded(path) {
+    if (root.embedApplyKind === "theme") {
+      var name = ImagePickerModel.themeNameForPath(path)
+      if (!name) return
+      Util.execDetached("omarchy-theme-set " + Util.shellQuote(name))
+      return
+    }
+    Util.execDetached("omarchy-theme-bg-set " + Util.shellQuote(path))
   }
 
   function itemMatches(index) {
@@ -151,6 +168,10 @@ Item {
 
   function applySelected() {
     var path = currentPath()
+    if (root.embedMode) {
+      if (path) root.applyEmbedded(path)
+      return
+    }
     if (!path || !selectionFile) {
       cancel()
       return
@@ -194,7 +215,7 @@ Item {
   }
 
   function loadRows(rows, reveal) {
-    var newImages = ImagePickerModel.loadRows(rows)
+    var newImages = ImagePickerModel.loadRows(rows, root.embedApplyKind === "theme" ? "path" : "")
 
     root.loadedImageRows = rows
     root.selectedIndex = root.indexForSelectedImage(newImages)
@@ -320,8 +341,31 @@ Item {
   }
 
   function close() {
+    if (root.embedMode) return
     cancel()
   }
+
+  function startEmbedded() {
+    if (!root.embedMode) return
+    root.showLabels = true
+    root.filterable = true
+    root.openSelector(root.imageDirs, root.imageRows, root.selectedImage, "", "", true, true)
+  }
+
+  Timer {
+    id: overlayArm
+    interval: 0
+    onTriggered: {
+      if (!root.embedMode) {
+        root.overlayReady = true
+        return
+      }
+      if (root.embedApplyKind !== "" && root.imageDirs !== "")
+        root.startEmbedded()
+    }
+  }
+
+  Component.onCompleted: overlayArm.start()
 
   function preloadRows(nextImageRows, nextSelectedImage, nextShowLabels, nextFilterable) {
     // Theme/background set hooks can warm selector rows after a picker was
@@ -359,37 +403,22 @@ Item {
     onExited: root.releaseNextDoneFile()
   }
 
-  PanelWindow {
-    id: panel
+  Item {
+    id: embedHost
+    visible: root.embedMode
+    anchors.fill: parent
+  }
 
-    visible: root.opened
-    anchors { top: true; bottom: true; left: true; right: true }
-    color: "transparent"
-    WlrLayershell.namespace: "omarchy-image-selector"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: root.opened && root.imagesLoaded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    exclusionMode: ExclusionMode.Ignore
+  Item {
+    id: card
+    parent: root.embedMode ? embedHost : (overlayLoader.item ? overlayLoader.item.pageHost : embedHost)
+    visible: root.opened && root.imagesLoaded && root.layoutSettled && root.imageArray.length > 0
+    width: root.embedMode ? embedHost.width : Math.min((parent ? parent.width : 800) - 80, root.expandedWidth + 13 * (root.sliceWidth + root.sliceSpacing) + 40)
+    height: root.embedMode ? embedHost.height : root.expandedHeight + Style.space(30) + root.bottomChromeHeight
+    anchors.centerIn: root.embedMode ? undefined : parent
+    anchors.fill: root.embedMode ? parent : undefined
 
-    Rectangle {
-      anchors.fill: parent
-      visible: root.opened && root.imagesLoaded
-      color: root.scrim
-    }
-
-    MouseArea {
-      anchors.fill: parent
-      enabled: root.opened && root.imagesLoaded
-      onClicked: root.cancel()
-    }
-
-    Item {
-      id: card
-      visible: root.opened && root.imagesLoaded && root.layoutSettled && root.imageArray.length > 0
-      width: Math.min(parent.width - 80, root.expandedWidth + 13 * (root.sliceWidth + root.sliceSpacing) + 40)
-      height: root.expandedHeight + Style.space(30) + root.bottomChromeHeight
-      anchors.centerIn: parent
-
-        MouseArea { anchors.fill: parent; onClicked: {} }
+    MouseArea { anchors.fill: parent; onClicked: {} }
 
         Item {
           id: carousel
@@ -577,6 +606,37 @@ Item {
           horizontalAlignment: Text.AlignHCenter
           elide: Text.ElideRight
         }
+  }
+
+  Loader {
+    id: overlayLoader
+    active: root.overlayReady
+    sourceComponent: PanelWindow {
+      visible: root.opened
+      anchors { top: true; bottom: true; left: true; right: true }
+      color: "transparent"
+      WlrLayershell.namespace: "omarchy-image-selector"
+      WlrLayershell.layer: WlrLayer.Overlay
+      WlrLayershell.keyboardFocus: root.opened && root.imagesLoaded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+      exclusionMode: ExclusionMode.Ignore
+      readonly property alias pageHost: overlayCardHost
+
+      Rectangle {
+        anchors.fill: parent
+        visible: root.opened && root.imagesLoaded
+        color: root.scrim
+      }
+
+      MouseArea {
+        anchors.fill: parent
+        enabled: root.opened && root.imagesLoaded
+        onClicked: root.cancel()
+      }
+
+      Item {
+        id: overlayCardHost
+        anchors.fill: parent
+      }
     }
   }
 }
