@@ -117,11 +117,38 @@ function parseClientsSnapshot(text, exitCode) {
   }
 }
 
+function idContainsBounded(haystack, needle) {
+  var at = haystack.indexOf(needle)
+  if (at < 0) return false
+  if (at === 0 && haystack.length === needle.length) return true
+  var after = haystack.charAt(at + needle.length)
+  if (after && after !== "." && after !== "-" && after !== "_") return false
+  if (at === 0) return true
+  var before = haystack.charAt(at - 1)
+  return before === "." || before === "-" || before === "_"
+}
+
+function pinMatchIds(pin) {
+  var ids = []
+  var id = normalizeId(pin && pin.id)
+  var desktopId = normalizeId(pin && pin.desktopId)
+  if (id) ids.push(id)
+  if (desktopId && desktopId !== id) ids.push(desktopId)
+  return ids
+}
+
 function windowMatchesPin(win, pin) {
   var app = windowAppId(win)
-  var pinId = normalizeId(pin && (pin.id || pin.desktopId))
-  if (!app || !pinId) return false
-  if (app === pinId || app.indexOf(pinId) !== -1 || pinId.indexOf(app) !== -1) return true
+  if (!app) return false
+  var ids = pinMatchIds(pin)
+  var i
+  var pinId
+  for (i = 0; i < ids.length; i++) {
+    pinId = ids[i]
+    if (app === pinId) return true
+    if (idContainsBounded(app, pinId) || idContainsBounded(pinId, app)) return true
+  }
+  pinId = ids[0] || ""
   if ((pinId === "google-chrome" || pinId === "google-chrome-stable") && (app === "chromium" || app.indexOf("chrom") === 0))
     return true
   return false
