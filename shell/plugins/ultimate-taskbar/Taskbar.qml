@@ -381,8 +381,8 @@ Item {
             id: tooltipBubble
             implicitWidth: tooltipLabel.implicitWidth + 20
             implicitHeight: tooltipLabel.implicitHeight + 14
-            color: Color.tooltip.background
-            borderSpec: Border.surfaceSpec("tooltip", "border", Color.tooltip.border, 1)
+            color: Tokens.chrome.menu
+            borderSpec: Border.surfaceSpec("tooltip", "border", Tokens.chrome.edge, 1)
             radius: Style.cornerRadius
 
             Text {
@@ -390,7 +390,7 @@ Item {
               textFormat: Text.PlainText
               anchors.centerIn: parent
               text: root.tooltipText
-              color: Color.tooltip.text
+              color: Tokens.text.primary
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
               horizontalAlignment: Text.AlignHCenter
