@@ -141,6 +141,15 @@ assertEqual(rows[0].title, 'Files', 'preview keeps the window title')
 assertEqual(rows[0].workspace, '2', 'preview keeps the workspace id')
 assertEqual(rows[0].minimized, true, 'preview keeps minimized state')
 
+const qvectorWindows = {
+  length: 1,
+  0: { address: '0xac', title: 'Agent Center', workspaceId: 1, minimized: false }
+}
+const qvectorRows = Preview.previewRows(qvectorWindows)
+assertEqual(qvectorRows.length, 1, 'Quickshell window lists stay previewable')
+assertEqual(qvectorRows[0].title, 'Agent Center', 'QVector window title survives')
+assertEqual(qvectorRows[0].workspace, '1', 'QVector workspace id survives')
+
 assertEqual(
   notifications.badgeCountForApp([{ app: 'Google Chrome' }, { app: 'Files' }], 'google-chrome', 'Chrome'),
   1,
