@@ -106,6 +106,28 @@ const normalizedFiles = Files.normalizeResult(fileReadState, fileResult)
 assert(!normalizedFiles.error && normalizedFiles.records.length === 1, 'Files accepts exact current-generation query results')
 assert(normalizedFiles.records[0].details.some(field => field.label === 'Relative path' && field.value === 'README.md'), 'Files preserves bounded file provenance fields')
 assert(Files.normalizeResult(fileReadState, { ...fileResult, generation: 3 }).error, 'Files rejects obsolete provider generations')
+
+const picturesControllerStates = []
+let picturesRequest = 0
+const picturesController = Files.createController({
+  send() { return `pictures-${++picturesRequest}` },
+  cancel() { return true },
+  onState(state) { picturesControllerStates.push(state) }
+})
+picturesController.activate('files.pictures', {})
+picturesController.setConnected(true)
+picturesController.receiveResult('pictures-1', catalog('files.provider', fileActions, 'degraded'))
+picturesController.receiveResult('pictures-2', {
+  provider: 'files.provider', providerVersion: 'v0', generation: 4, action: 'browse', capability: 'files.browse', observedAt: 21,
+  value: {
+    schemaVersion: 'v0', provider: 'files.provider', providerVersion: 'v0', action: 'browse',
+    availability: { state: 'available', read: true, operation: false, reasons: [] },
+    revision: revA, truncated: false,
+    entries: [{ id: 'files.entry.sunset', locationId: 'files.location.pictures', parentId: null, name: 'sunset.png', relativePath: 'sunset.png', kind: 'file', sizeBytes: 8, modifiedNs: 1, mimeType: 'image/png', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }]
+  }
+})
+assert(picturesController.state.phase === 'available', 'Pictures browse stays available when only the workspace catalog is degraded')
+assert(picturesController.state.records.length === 1 && picturesController.state.records[0].title === 'sunset.png', 'Pictures browse keeps the location entries')
 assert(Files.normalizeResult(fileReadState, { ...fileResult, value: { ...fileResult.value, shell: 'rm -rf /' } }).error, 'Files rejects extra response fields')
 
 equal(Software.requestParameters(Software.baseState('software.catalog', { query: 'editor' }, 'loading')), {

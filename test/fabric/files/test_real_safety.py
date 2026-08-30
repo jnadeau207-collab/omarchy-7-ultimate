@@ -106,11 +106,24 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
                 if item["locationId"] == "files.location.pictures"
             ]
             self.assertIn("sunset.png", {item["name"] for item in pictures_entries})
+            locations = {item["id"]: item for item in inventory["state"]["locations"]}
+            self.assertEqual(locations["files.location.pictures"]["state"], "available")
+            reason_codes = {reason["code"] for reason in inventory["availability"]["reasons"]}
+            self.assertNotIn("files.location-absent", reason_codes)
+            self.assertNotIn("files.location-unavailable", reason_codes)
             browse = await provider.read(
                 "browse",
                 {"locationId": "files.location.pictures", "relativePath": "", "includeHidden": False, "limit": 20},
             )
             self.assertIn("sunset.png", {item["name"] for item in browse["entries"]})
+            self.assertEqual(browse["availability"]["state"], "available")
+            self.assertEqual(browse["availability"]["reasons"], [])
+            trash_browse = await provider.read(
+                "browse",
+                {"locationId": "files.location.trash", "relativePath": "", "includeHidden": False, "limit": 20},
+            )
+            self.assertEqual(trash_browse["availability"]["state"], "unavailable")
+            self.assertEqual(trash_browse["availability"]["reasons"][0]["code"], "files.location-absent")
 
     def test_path_normalizer_rejects_every_escape_vocabulary(self) -> None:
         for candidate in ("..", "../x", "x/..", "/x", "x/", "x//y", "x\\y", "x\x00y", "x/./y", "x\ny"):

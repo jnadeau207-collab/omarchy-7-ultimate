@@ -413,7 +413,7 @@ class RealFilesBackend:
             entries.extend(scanned)
             path_to_entry.update(mapping)
             truncated = truncated or was_truncated
-            if location["reason"] is not None:
+            if location["reason"] is not None and location["reason"]["code"] != "files.location-absent":
                 reasons.append(FabricError(**_fabric_error_kwargs(location["reason"])))
         if truncated:
             reasons.append(_reason(
@@ -577,6 +577,19 @@ class RealFilesBackend:
             else:
                 root_fd = open_directory_path_no_follow(root)
             opened = os.fstat(root_fd)
+        except FileNotFoundError:
+            absent = _reason(
+                "files.location-absent" if not definition["required"] else "files.location-unavailable",
+                f"{definition['label']} is unavailable",
+                (
+                    f"{definition['label']} has not been created on this host."
+                    if not definition["required"]
+                    else "The location root cannot be opened as a real no-follow directory."
+                ),
+                detail=location_id,
+                retryable=False,
+            )
+            return _location_unavailable(location_id, definition, absent), [], {}, False
         except (OSError, ValueError):
             return _location_unavailable(location_id, definition, unavailable), [], {}, False
         root_identity = state_revision({"device": opened.st_dev, "inode": opened.st_ino, "ctimeNs": opened.st_ctime_ns})
@@ -919,6 +932,35 @@ def _inspect(_arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str
     return {**_metadata("inspect", snapshot), "state": thaw(snapshot.state) if snapshot.state is not None else None}
 
 
+def _location_query_availability(snapshot: StateSnapshot, location_id: str) -> dict[str, Any]:
+    if snapshot.state is None:
+        return availability_payload(snapshot)
+    matches = [location for location in snapshot.state["locations"] if location["id"] == location_id]
+    if len(matches) != 1:
+        missing = _reason(
+            "files.location-unavailable",
+            "Location is unavailable",
+            "The selected location is not present in the current workspace.",
+            detail=location_id,
+        )
+        return {"state": "unavailable", "read": False, "operation": False, "reasons": [missing.to_dict()]}
+    location = matches[0]
+    if location["state"] == "available":
+        return {"state": "available", "read": True, "operation": False, "reasons": []}
+    reason = location["reason"]
+    copied = None
+    if reason is not None:
+        copied = {key: value for key, value in dict(reason).items()}
+        if "recoveryActions" in copied:
+            copied["recoveryActions"] = list(copied["recoveryActions"])
+    return {
+        "state": location["state"] if location["state"] in {"degraded", "unavailable"} else "unavailable",
+        "read": location["state"] != "unavailable",
+        "operation": False,
+        "reasons": [copied] if copied else [],
+    }
+
+
 def _browse(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     relative = normalize_relative_path(arguments["relativePath"], allow_empty=True)
     entries: list[dict[str, Any]] = []
@@ -929,7 +971,9 @@ def _browse(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, 
                 entries.append(thaw(entry))
     entries.sort(key=lambda item: (item["kind"] != "directory", item["name"].casefold(), item["id"]))
     limit = arguments["limit"]
-    return {**_metadata("browse", snapshot), "entries": entries[:limit], "truncated": len(entries) > limit}
+    metadata = _metadata("browse", snapshot)
+    metadata["availability"] = _location_query_availability(snapshot, arguments["locationId"])
+    return {**metadata, "entries": entries[:limit], "truncated": len(entries) > limit}
 
 
 def _search(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:

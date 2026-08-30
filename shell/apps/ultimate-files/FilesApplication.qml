@@ -18,7 +18,7 @@ Item {
   readonly property var visibleRoutes: filteredRoutes(navigation.query)
   readonly property bool busy: queryState.phase === "catalog-loading" || queryState.phase === "loading"
   readonly property bool canRetry: !busy && ["offline", "missing", "unavailable", "denied", "interrupted", "stale", "failed"].indexOf(queryState.phase) >= 0
-  readonly property bool showRecords: ["ready", "degraded", "partial", "empty"].indexOf(queryState.phase) >= 0
+  readonly property bool showRecords: ["ready", "available", "degraded", "partial", "empty"].indexOf(queryState.phase) >= 0
   readonly property int recordColumns: contentScroll.availableWidth >= 1050 ? 2 : 1
 
   focus: true
@@ -65,7 +65,7 @@ Item {
 
   function statusBorder() {
     if (["failed", "denied", "unavailable"].indexOf(queryState.phase) >= 0) return Tokens.state.danger
-    if (["ready", "empty"].indexOf(queryState.phase) >= 0) return Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+    if (["ready", "available", "empty"].indexOf(queryState.phase) >= 0) return Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
     return Tokens.state.warning
   }
 
