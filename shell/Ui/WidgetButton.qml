@@ -92,7 +92,7 @@ Item {
   implicitHeight: fixedHeight > 0 ? fixedHeight : (vertical ? Math.max(12, label.implicitHeight + scaledVerticalPadding * 2) : barSize)
 
   Behavior on opacity {
-    NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+    NumberAnimation { duration: Semantics.duration(null, 140); easing.type: Easing.OutCubic }
   }
 
   Text {
@@ -111,7 +111,7 @@ Item {
 
     Behavior on color {
       enabled: !root.bar || root.bar.foregroundAnimationEnabled
-      ColorAnimation { duration: 160 }
+      ColorAnimation { duration: Semantics.duration(null, 160) }
     }
   }
 
