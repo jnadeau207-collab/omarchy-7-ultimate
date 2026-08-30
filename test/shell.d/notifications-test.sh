@@ -720,6 +720,10 @@ assert(
   'notifications clear IPC forgets the recorded history'
 )
 assert(
+  /function dismiss\(summary: string\): string \{[\s\S]*service\.dismissHistoryEntry\(entry\)/.test(serviceQml),
+  'notifications dismiss by summary also forgets matching Notification Center history'
+)
+assert(
   !/pendingModel|pastModel/.test(serviceQml),
   'notifications service keeps no in-memory history models'
 )
