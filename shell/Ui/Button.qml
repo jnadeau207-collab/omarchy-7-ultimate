@@ -56,12 +56,12 @@ BorderSurface {
   topPadding: verticalPadding
   bottomPadding: verticalPadding
 
-  // Tooltip palette. Auto-rendered if tooltipText is set. Defaults pull
-  // from [tooltip] in shell.toml; override per-instance only when a button
+  // Tooltip palette. Auto-rendered if tooltipText is set. Defaults bind
+  // Tokens.chrome / Tokens.text; override per-instance only when a button
   // intentionally wants a tooltip that diverges from the theme.
-  property color tooltipBackground: Color.tooltip.background
-  property color tooltipForeground: Color.tooltip.text
-  property color tooltipBorder: Color.tooltip.border
+  property color tooltipBackground: Tokens.chrome.menu
+  property color tooltipForeground: Tokens.text.primary
+  property color tooltipBorder: Tokens.chrome.edge
 
   signal clicked()
   signal rightClicked()
@@ -85,7 +85,7 @@ BorderSurface {
   readonly property string _displayText: Semantics.text(semanticProfile, text)
   readonly property bool _showFocusRing: focusable && (activeFocus || forceFocusVisible)
   readonly property color _selectedColor: Style.selectedStateColor(root.foreground, root.accent)
-  readonly property var _tooltipBorderSpec: Border.localOrSurfaceSpec("tooltip", "border", root.tooltipBorder, Color.tooltip.border, Math.max(1, Style.normalBorderWidth))
+  readonly property var _tooltipBorderSpec: Border.localOrSurfaceSpec("tooltip", "border", root.tooltipBorder, Tokens.chrome.edge, Math.max(1, Style.normalBorderWidth))
   readonly property var _focusBorderSpec: semanticProfile && semanticProfile.highContrast
     ? Border.flat(semanticProfile.focusRing, semanticProfile.focusWidth)
     : Border.controlSpec("focus", root.foreground, root.accent)

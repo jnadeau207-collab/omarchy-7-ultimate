@@ -98,10 +98,10 @@ Item {
               width: Style.space(88)
               height: Style.space(34)
               color: selected
-                ? (destructive ? Util.alpha(Color.urgent, 0.22) : root.selectedBackground)
+                ? (destructive ? Util.alpha(Tokens.state.danger, 0.22) : root.selectedBackground)
                 : "transparent"
               borderSpec: Border.flat(destructive
-                ? (selected ? Color.urgent : Util.alpha(Color.urgent, 0.56))
+                ? (selected ? Tokens.state.danger : Util.alpha(Tokens.state.danger, 0.56))
                 : (selected ? root.selectedText : Util.alpha(root.foreground, 0.38)), Style.normalBorderWidth)
               radius: 0
 
@@ -109,7 +109,7 @@ Item {
                 textFormat: Text.PlainText
                 anchors.centerIn: parent
                 text: modelData
-                color: destructive ? (selected ? Color.urgent : root.foreground) : (selected ? root.selectedText : root.foreground)
+                color: destructive ? (selected ? Tokens.state.danger : root.foreground) : (selected ? root.selectedText : root.foreground)
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption
               }
