@@ -364,6 +364,47 @@ class RealInventoryTests(unittest.IsolatedAsyncioTestCase):
                     self.assertNotIn("bash", argv[0])
                     self.assertNotIn("-c", argv)
 
+    async def test_display_inspect_treats_hyprctl_none_as_no_mirror(self) -> None:
+        fixture = load_fixture("display")
+        monitors = copy.deepcopy(fixture["monitors"])
+        for monitor in monitors:
+            if monitor.get("mirrorOf") == "":
+                monitor["mirrorOf"] = "none"
+        result = await display.build_provider(
+            runner=FixtureRunner({display.MONITORS_COMMAND.argv: json.dumps(monitors)})
+        ).read("inspect", {})
+        self.assertTrue(result["availability"]["read"])
+        by_label = {resource["label"]: resource for resource in result["resources"]}
+        self.assertIsNone(by_label["eDP-1"]["mirrorOf"])
+        self.assertIsNone(by_label["HDMI-A-1"]["mirrorOf"])
+        self.assertEqual(by_label["DP-1"]["mirrorOf"], stable_resource_id("display", "output", "eDP-1"))
+
+        metal = [
+            {
+                "name": "HDMI-A-1",
+                "disabled": False,
+                "width": 1920,
+                "height": 1080,
+                "refreshRate": 60.0,
+                "x": 0,
+                "y": 0,
+                "scale": 1.0,
+                "transform": 0,
+                "focused": True,
+                "mirrorOf": "none",
+                "dpmsStatus": True,
+            }
+        ]
+        metal_result = await display.build_provider(
+            runner=FixtureRunner({display.MONITORS_COMMAND.argv: json.dumps(metal)})
+        ).read("inspect", {})
+        self.assertTrue(metal_result["availability"]["read"])
+        output = metal_result["resources"][0]
+        self.assertEqual(output["label"], "HDMI-A-1")
+        self.assertEqual(output["mode"], {"width": 1920, "height": 1080, "refreshHz": 60.0})
+        self.assertEqual(output["scale"], 1.0)
+        self.assertIsNone(output["mirrorOf"])
+
     async def test_inventory_identity_and_revision_ignore_probe_order_and_transient_audio_index(self) -> None:
         for module in MODULES:
             first = await module.build_provider(runner=fixture_runner(module)).read("inspect", {})

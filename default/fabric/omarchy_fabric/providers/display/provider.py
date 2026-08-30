@@ -153,11 +153,18 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
                 "refreshHz": _number(monitor.get("refreshRate"), "refresh rate", 0, 1000),
             }
         mirror_value = monitor.get("mirrorOf")
-        if mirror_value is not None and not isinstance(mirror_value, str):
+        if mirror_value is None:
+            mirror_native = None
+        elif not isinstance(mirror_value, str):
             raise ValueError("hyprctl monitor mirror target is invalid")
-        mirror_native = mirror_value or None
-        if mirror_native is not None and mirror_native not in identities:
-            raise ValueError("hyprctl monitor mirrors an unknown connector")
+        elif mirror_value in ("", "none"):
+            # Hyprland emits "none" when the output is not mirroring; older
+            # fixtures use an empty string for the same sentinel.
+            mirror_native = None
+        else:
+            mirror_native = _label(mirror_value)
+            if mirror_native not in identities:
+                raise ValueError("hyprctl monitor mirrors an unknown connector")
         resources.append(
             {
                 "id": identities[name],

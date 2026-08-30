@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "display.inspect",
     supportsResource: true,
-    coverage: "Display inventory is readable. Changes remain unavailable until the durable operation coordinator is connected to Settings."
+    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position). Resolution, scale, arrangement, and brightness changes remain unavailable from Settings."
   },
   {
     routeId: "settings.audio.overview",
@@ -1009,12 +1009,6 @@ function observedText(value) {
 
 function hostedPanel(routeId) {
   var id = String(routeId || "")
-  if (id === "settings.display.overview") return {
-    source: "plugins/panels/monitor/Panel.qml",
-    pluginId: "omarchy.monitor",
-    label: "Live Display panel",
-    honesty: "This page hosts the existing Display panel (scale, brightness, arrangement). Typed Display service remains Phase 5."
-  }
   if (id === "settings.audio.overview") return {
     source: "plugins/panels/audio/Panel.qml",
     pluginId: "omarchy.audio",
@@ -1076,6 +1070,7 @@ if (typeof module !== "undefined") {
     providerEntry: providerEntry,
     operationActions: operationActions,
     validateReadResult: validateReadResult,
+    normalizeLeafResource: normalizeLeafResource,
     normalizedRecords: normalizedRecords,
     acceptedReadState: acceptedReadState,
     baseState: baseState,
