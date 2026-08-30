@@ -489,6 +489,19 @@ assertEqual(m.parseClientsSnapshot('{"error":true}', 0), null, 'non-array client
 assertEqual(m.frameBox(wantRect, { class: 'foot' }).x, 300, 'other clients keep the rect they asked for')
 assertEqual(m.frameBox(wantRect, { class: 'foot' }).width, 900, 'other clients keep their width')
 assert(m.windowMatchesPin({ class: 'chromium' }, { id: 'google-chrome' }), 'Chromium still lights the Chrome pin')
+assert(m.windowMatchesPin({ class: 'org.omarchy.AgentCenter' }, { id: 'org.omarchy.agent-center', desktopId: 'org.omarchy.AgentCenter' }), 'Agent Center lights its own pin')
+assert(!m.windowMatchesPin({ class: 'org.omarchy.AgentCenter' }, { id: 'org.omarchy.agent', desktopId: 'org.omarchy.Agent' }), 'Agent Center does not light the Agent pin')
+assert(m.windowMatchesPin({ class: 'google-chrome-stable' }, { id: 'google-chrome' }), 'chrome-stable still lights the Chrome pin at a hyphen boundary')
+
+const agentGroups = m.buildGroups(
+  [{ address: '0xac', class: 'org.omarchy.AgentCenter', title: 'Agent Center' }],
+  [
+    { id: 'org.omarchy.agent', desktopId: 'org.omarchy.Agent', name: 'Agent', icon: 'system-run' },
+    { id: 'org.omarchy.agent-center', desktopId: 'org.omarchy.AgentCenter', name: 'Agent Center', icon: 'system-run' }
+  ]
+)
+assertEqual(agentGroups[0].windows.length, 0, 'Agent pin stays empty when only Agent Center is open')
+assertEqual(agentGroups[1].windows.length, 1, 'Agent Center window joins the Agent Center pin')
 assert(
   shipped.every(pin => pin.id !== 'foot' && pin.desktopId !== 'foot' && pin.id !== 'vim'),
   'shipped pins do not make foot or vim first class'

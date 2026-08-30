@@ -189,3 +189,12 @@ pins = json.loads((pathlib.Path(os.environ["HOME"]) / ".local/state/omarchy/ulti
 assert sum(1 for pin in pins if pin["desktopId"] == "org.omarchy.AgentCenter") == 1
 PY
 pass "Agent Center pin migration does not duplicate the pin"
+
+mkdir -p "$HOME/.local/share/applications"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042100.sh"
+[[ -f $HOME/.local/share/applications/org.omarchy.AgentCenter.desktop ]] \
+  || fail "Agent Center launcher is published into the user applications dir"
+grep -Fq 'Actions=Tasks;Approvals;Automations;' \
+  "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
+  || fail "published Agent Center launcher keeps desktop actions"
+pass "Agent Center desktop launcher is published for jump lists"
