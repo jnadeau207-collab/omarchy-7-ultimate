@@ -115,8 +115,14 @@ grep -Fq 'LayoutMirroring.enabled: productProfile.rtl' "$ROOT/shell/plugins/ulti
   || fail "Start mirrors through the product SemanticProfile"
 grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start RTL can be summoned on the existing SemanticProfile without a locale pack"
-grep -Fq 'root.summonedRtl || Qt.application.layoutDirection === Qt.RightToLeft' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'root.summonedRtl || (root.shell && root.shell.summonedRtl) || Qt.application.layoutDirection === Qt.RightToLeft' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start RTL keeps the Qt layoutDirection bind"
+grep -Fq 'property bool summonedRtl: false' "$ROOT/shell/shell.qml" \
+  || fail "shell owns the shared Start RTL summon flag"
+grep -Fq 'LayoutMirroring.enabled: root.rtl' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar mirrors through the shared RTL path"
+grep -Fq 'shell.summonedRtl' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar reads the shared Start RTL summon flag"
 if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
   fail "Start RTL is not an invented Accessibility Settings surface"
 fi

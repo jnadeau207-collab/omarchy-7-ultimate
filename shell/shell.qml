@@ -32,6 +32,9 @@ ShellRoot {
   }
 
   property string home: Quickshell.env("HOME")
+  // Start summon {"rtl":true} is the product RTL switch. Superbar reads the
+  // same flag so the bar and Start share one direction without a locale pack.
+  property bool summonedRtl: false
 
   // The omarchy-shell host is the long-running entry point. Plugins live in
   // sibling directories under plugins/. OMARCHY_PATH is provided by the uwsm
