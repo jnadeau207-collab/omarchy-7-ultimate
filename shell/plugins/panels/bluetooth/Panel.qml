@@ -14,6 +14,7 @@ Panel {
   ipcTarget: "omarchy.bluetooth"
   property bool chromeVisible: true
   property Item hostAnchor: null
+  property bool embedMode: false
   // manageIpc: false so this panel can own the single IpcHandler the target
   // permits — needed for the toggleBluetooth method below.
   manageIpc: false
@@ -499,9 +500,31 @@ Panel {
     if (selectedIndex < 0) selectedIndex = 0
   }
 
-  visible: adapter !== null
-  implicitWidth: chromeVisible ? button.implicitWidth : 0
-  implicitHeight: button.implicitHeight
+  visible: embedMode || adapter !== null
+  implicitWidth: embedMode ? (parent ? parent.width : 0) : (chromeVisible ? button.implicitWidth : 0)
+  implicitHeight: embedMode ? (parent ? parent.height : 0) : button.implicitHeight
+  anchors.fill: embedMode ? parent : undefined
+
+  function adoptOverlayPage() {
+    if (root.embedMode || !root.chromeVisible) return
+    var overlay = overlayLoader.item
+    if (!overlay || !overlay.pageHost) return
+    keyCatcher.parent = overlay.pageHost
+    keyCatcher.anchors.fill = overlay.pageHost
+  }
+
+  Timer {
+    id: overlayArm
+    interval: 0
+    onTriggered: {
+      if (!root.embedMode && root.chromeVisible)
+        root.overlayReady = true
+    }
+  }
+
+  property bool overlayReady: false
+
+  Component.onCompleted: overlayArm.start()
 
   // BlueZ rejects StartDiscovery while the adapter is still powering up, and
   // discovery can also time out on its own. While the panel is open, keep
@@ -511,7 +534,7 @@ Panel {
     interval: 1000
     repeat: true
     triggeredOnStart: true
-    running: root.opened && root.adapter !== null && root.adapter.enabled && !root.adapter.discovering
+    running: (root.opened || root.embedMode) && root.adapter !== null && root.adapter.enabled && !root.adapter.discovering
     onTriggered: {
       root.owesDiscoveryStop = true
       root.adapter.discovering = true
@@ -596,7 +619,7 @@ Panel {
   Timer {
     id: phraseTimer
     interval: 2800
-    running: root.opened && root.rotatingPhrases
+    running: (root.opened || root.embedMode) && root.rotatingPhrases
     repeat: true
     onTriggered: phraseSwap.restart()
   }
@@ -640,6 +663,7 @@ Panel {
   }
 
   IpcHandler {
+    enabled: !root.embedMode
     target: "omarchy.bluetooth"
 
     function open() { root.open() }
@@ -662,15 +686,10 @@ Panel {
     }
   }
 
-  KeyboardPanel {
-    id: panel
-    anchorItem: root.hostAnchor || button
-    owner: root
-    bar: root.bar
-    open: root.opened
-    focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(380))
-    contentHeight: panel.fittedContentHeight(column.implicitHeight)
+  Item {
+    id: embedHost
+    visible: !overlayLoader.active
+    anchors.fill: parent
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -881,6 +900,22 @@ Panel {
         }
       }
     }
+  }
+
+  Loader {
+    id: overlayLoader
+    active: root.overlayReady
+    sourceComponent: KeyboardPanel {
+      id: panel
+      anchorItem: root.hostAnchor || button
+      owner: root
+      bar: root.bar
+      open: root.opened
+      focusTarget: keyCatcher
+      contentWidth: panel.fittedContentWidth(Style.space(380))
+      contentHeight: panel.fittedContentHeight(column.implicitHeight)
+    }
+    onLoaded: root.adoptOverlayPage()
   }
 
   // Two-line device row showing name + live status. Pending state is owned

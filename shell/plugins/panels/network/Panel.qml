@@ -14,6 +14,7 @@ Panel {
   ipcTarget: "omarchy.network"
   property bool chromeVisible: true
   property Item hostAnchor: null
+  property bool embedMode: false
   // manageIpc: false so this panel can own the single IpcHandler the target
   // permits — needed for the toggleNetwork method below.
   manageIpc: false
@@ -210,6 +211,7 @@ Panel {
   }
 
   IpcHandler {
+    enabled: !root.embedMode
     target: "omarchy.network"
 
     function open() { root.open() }
@@ -473,7 +475,7 @@ Panel {
   onConnectionKeyChanged: Qt.callLater(checkConnectivity)
   onConnectivityChecksEnabledChanged: Qt.callLater(checkConnectivity)
   onHasCaptivePortalChanged: {
-    if (hasCaptivePortal && opened && passwordSsid === "") {
+    if (hasCaptivePortal && (opened || embedMode) && passwordSsid === "") {
       focusSection = "portal"
       cursorActive = true
     } else if (!hasCaptivePortal && focusSection === "portal") {
@@ -858,10 +860,32 @@ Panel {
     runNetworkAction("forget", net ? networkForSsid(net.ssid) : null, function(network) { network.forget() })
   }
 
-  implicitWidth: chromeVisible ? button.implicitWidth : 0
-  implicitHeight: button.implicitHeight
+  implicitWidth: embedMode ? (parent ? parent.width : 0) : (chromeVisible ? button.implicitWidth : 0)
+  implicitHeight: embedMode ? (parent ? parent.height : 0) : button.implicitHeight
+  anchors.fill: embedMode ? parent : undefined
 
-  Component.onCompleted: refresh()
+  function adoptOverlayPage() {
+    if (root.embedMode || !root.chromeVisible) return
+    var overlay = overlayLoader.item
+    if (!overlay || !overlay.pageHost) return
+    keyCatcher.parent = overlay.pageHost
+    keyCatcher.anchors.fill = overlay.pageHost
+  }
+
+  Timer {
+    id: overlayArm
+    interval: 0
+    onTriggered: {
+      if (!root.embedMode && root.chromeVisible)
+        root.overlayReady = true
+      if (root.embedMode)
+        root.refresh()
+    }
+  }
+
+  property bool overlayReady: false
+
+  Component.onCompleted: overlayArm.start()
 
   // Pulls everything we want about the active route's interface in one shot.
   Process {
@@ -914,7 +938,7 @@ Panel {
     id: bandPoll
     interval: 4000
     repeat: true
-    running: root.opened
+    running: root.opened || root.embedMode
     onTriggered: {
       if (bandProc.running) return
       bandProc.command = ["omarchy-network-band"]
@@ -951,14 +975,14 @@ Panel {
     id: detailsPoll
     interval: 1500
     repeat: true
-    running: root.opened
+    running: root.opened || root.embedMode
     onTriggered: if (!detailsProc.running) detailsProc.running = true
   }
 
   Timer {
     id: connectionPhraseTimer
     interval: 2800
-    running: root.opened && !root.restricted && (root.info.type === "ethernet" || (root.info.type === "wifi" && root.canDisconnect))
+    running: (root.opened || root.embedMode) && !root.restricted && (root.info.type === "ethernet" || (root.info.type === "wifi" && root.canDisconnect))
     repeat: true
     onTriggered: connectionPhraseSwap.restart()
   }
@@ -1036,15 +1060,10 @@ Panel {
   // outside-click via an overlay MouseArea + Region mask that lets the bar
   // remain clickable, fade animation, popout coordination). What stays
   // here is the wifi-specific UI inside.
-  KeyboardPanel {
-    id: panel
-    anchorItem: root.hostAnchor || button
-    owner: root
-    bar: root.bar
-    open: root.opened
-    focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(380))
-    contentHeight: panel.fittedContentHeight(column.implicitHeight)
+  Item {
+    id: embedHost
+    visible: !overlayLoader.active
+    anchors.fill: parent
 
     // Catches all unhandled keys for keyboard navigation. AfterItem priority
     // lets the passphrase TextField (a child via focus chain) get its keys
@@ -1641,6 +1660,22 @@ Panel {
       }
     }
     }
+  }
+
+  Loader {
+    id: overlayLoader
+    active: root.overlayReady
+    sourceComponent: KeyboardPanel {
+      id: panel
+      anchorItem: root.hostAnchor || button
+      owner: root
+      bar: root.bar
+      open: root.opened
+      focusTarget: keyCatcher
+      contentWidth: panel.fittedContentWidth(Style.space(380))
+      contentHeight: panel.fittedContentHeight(column.implicitHeight)
+    }
+    onLoaded: root.adoptOverlayPage()
   }
 
   // One Wi-Fi band pill. `active` (fill) is the band actually in use and

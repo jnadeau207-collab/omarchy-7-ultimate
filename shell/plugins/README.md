@@ -17,7 +17,7 @@ User-installed plugins live alongside these conceptually but on disk under
 | Ultimate taskbar | `omarchy.ultimate-taskbar` | `bar`                | `ultimate-taskbar/Taskbar.qml`        |
 | Start         | `omarchy.ultimate-start`  | `menu`                  | `ultimate-start/Start.qml`            |
 | Run           | `omarchy.ultimate-run`    | `menu`                  | `ultimate-run/Run.qml`                |
-| Settings dest.| `omarchy.ultimate-settings` | `menu`                | `ultimate-settings/Settings.qml`      |
+| Settings dest.| `omarchy.ultimate-settings` | `menu`                | `ultimate-settings/Settings.qml` (launches `org.omarchy.Settings`) |
 | Task switcher | `omarchy.ultimate-task-switcher` | `overlay`          | `ultimate-task-switcher/Switcher.qml` |
 | Snap chooser  | `omarchy.ultimate-snap-chooser` | `overlay`           | `ultimate-snap-chooser/Chooser.qml`   |
 | Image picker  | `omarchy.image-picker`    | `overlay`               | `image-picker/ImagePicker.qml`        |
