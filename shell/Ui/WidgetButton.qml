@@ -73,8 +73,21 @@ Item {
   // text rather than with the slot it sits in. Zero on icon-only buttons.
   readonly property real labelWidth: label.visible ? label.implicitWidth : 0
 
+  readonly property bool highContrast: Tokens.accessibility.highContrast
+
   visible: hasVisualContent || keepSpace
   opacity: !hasVisualContent || concealed ? 0 : (dimmed ? 0.45 : 1)
+
+  Rectangle {
+    visible: root.highContrast
+    anchors.fill: parent
+    anchors.margins: 3
+    radius: Tokens.radius.small
+    color: "transparent"
+    border.color: Tokens.border.strong
+    border.width: 2
+    z: -1
+  }
   implicitWidth: fixedWidth > 0 ? fixedWidth : (vertical ? barSize : Math.max(12, label.implicitWidth + scaledHorizontalMargin * 2))
   implicitHeight: fixedHeight > 0 ? fixedHeight : (vertical ? Math.max(12, label.implicitHeight + scaledVerticalPadding * 2) : barSize)
 

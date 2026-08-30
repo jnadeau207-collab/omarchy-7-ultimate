@@ -119,7 +119,7 @@ BarWidget {
           height: 4
           radius: 1
           color: Tokens.text.primary
-          opacity: 0.9
+          opacity: Tokens.accessibility.highContrast ? 1 : 0.9
         }
       }
     }

@@ -20,9 +20,9 @@ Item {
 
   Rectangle {
     anchors.fill: parent
-    color: mouse.containsMouse ? bar.chromeGlow : Tokens.chrome.edge
-    border.color: Tokens.border.subtle
-    border.width: 1
+    color: mouse.containsMouse ? bar.chromeGlow : (bar && bar.highContrast ? Tokens.border.strong : Tokens.chrome.edge)
+    border.color: bar && bar.highContrast ? Tokens.border.strong : Tokens.border.subtle
+    border.width: bar && bar.highContrast ? 2 : 1
   }
 
   MouseArea {

@@ -503,6 +503,18 @@ pass "Files and Settings launchers are published for Start jump lists"
 
 grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar clock uses the token UI family"
+grep -Fq 'Tokens.accessibility.highContrast' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar glass reads Tokens.accessibility"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar HC glass uses stronger Tokens.border"
+grep -Fq 'bar.highContrast' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
+  || fail "Start orb HC stroke is not a private color"
+grep -Fq 'bar.highContrast' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "task buttons read Superbar high-contrast chrome"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/plugins/ultimate-taskbar/TrayCluster.qml" \
+  || fail "tray cluster reads Tokens.border.strong"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/Ui/WidgetButton.qml" \
+  || fail "clock and tray marks read Tokens.border.strong"
 grep -Fq 'hasVisualContent: true' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml" \
   || fail "Quick Settings Superbar mark is drawn, not a leftover glyph"
 if grep -Fq '⊞' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml"; then

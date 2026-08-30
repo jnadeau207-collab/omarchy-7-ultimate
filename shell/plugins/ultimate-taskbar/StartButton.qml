@@ -33,16 +33,16 @@ Item {
       : root.startOpen ? bar.chromeStart
       : mouse.containsMouse ? bar.chromeHover
       : Tokens.chrome.glass
-    border.color: root.startOpen ? bar.chromeGlow : Tokens.chrome.edge
-    border.width: root.startOpen ? 2 : 1
+    border.color: root.startOpen ? bar.chromeGlow : (bar ? bar.chromeEdge : Tokens.chrome.edge)
+    border.width: root.startOpen || (bar && bar.highContrast) ? 2 : 1
 
     Rectangle {
       anchors.fill: parent
       anchors.margins: 2
       radius: width / 2
       color: "transparent"
-      border.width: 1
-      border.color: Qt.rgba(Tokens.chrome.glow.r, Tokens.chrome.glow.g, Tokens.chrome.glow.b, root.startOpen ? 0.55 : 0.18)
+      border.width: (bar && bar.highContrast) ? 2 : 1
+      border.color: Qt.rgba(Tokens.chrome.glow.r, Tokens.chrome.glow.g, Tokens.chrome.glow.b, root.startOpen || (bar && bar.highContrast) ? 0.55 : 0.18)
     }
 
     Grid {
