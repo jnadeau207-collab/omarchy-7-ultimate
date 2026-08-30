@@ -245,6 +245,22 @@ grep -Fq 'Tokens.chrome.menu' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"
 if grep -Fq 'Color.tooltip' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"; then
   fail "Superbar tooltip is not a second Color.tooltip palette"
 fi
+if grep -Fq 'Color.tooltip' "$ROOT/shell/Ui/PanelToolTip.qml" "$ROOT/shell/Ui/Button.qml"; then
+  fail "shared tooltips are not a second Color.tooltip palette"
+fi
+grep -Fq 'Tokens.chrome.menu' "$ROOT/shell/Ui/PanelToolTip.qml" \
+  || fail "shared PanelToolTip consumes resolved chrome tokens"
+grep -Fq 'Tokens.surface.canvas' "$ROOT/shell/plugins/lock/LockView.qml" \
+  || fail "lock fill consumes resolved surface tokens"
+if grep -Fq 'Color.background' "$ROOT/shell/plugins/lock/LockView.qml" "$ROOT/shell/plugins/lock/Service.qml"; then
+  fail "lock fill is not a private Color.background"
+fi
+if grep -Fq 'Color.urgent' "$ROOT/shell/Ui/ConfirmDialog.qml"; then
+  fail "ConfirmDialog danger is not Color.urgent"
+fi
+if grep -Fq 'Color.notifications' "$ROOT/shell/plugins/notifications/components/NotificationCard.qml"; then
+  fail "NC card is not a second Color.notifications palette"
+fi
 grep -Fq 'chrome-tokens-v0.json' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars consumes the generated canonical adapter"
 if grep -Eq '^[[:space:]]*(readonly[[:space:]]+)?property color chrome[A-Za-z]*:.*(Qt\.rgba|"#)' \

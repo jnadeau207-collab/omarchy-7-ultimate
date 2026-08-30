@@ -90,7 +90,7 @@ Item {
 
   Rectangle {
     anchors.fill: parent
-    color: Color.background
+    color: Tokens.surface.canvas
 
     Image {
       id: wallpaper
