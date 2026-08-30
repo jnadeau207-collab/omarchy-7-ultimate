@@ -98,6 +98,22 @@ const searched = search.visibleEntries(
 ).map(entry => search.entryName(entry))
 assertDeepEqual(searched, ['Foot'], 'search still finds Foot')
 assertEqual(search.unwrapEntry({ entry: foot, score: 1 }), foot, 'unwrapEntry reads the desktop entry off a sort row')
+assertDeepEqual(search.withRecent(['vim'], 'Chrome.desktop'), ['chrome', 'vim'], 'Start recents put the launched id first')
+assertDeepEqual(search.withRecent(['chrome', 'files'], 'chrome'), ['chrome', 'files'], 'Start recents do not duplicate a launch')
+assertEqual(search.withRecent(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], 'i').length, 8, 'Start recents stay bounded')
+assertDeepEqual(search.parseRecents(search.serializeRecents(['chrome'])), ['chrome'], 'Start recents round-trip')
+const grouped = search.programRows([
+  { id: '1password', name: '1Password' },
+  { id: 'aether', name: 'Aether' },
+  { id: 'basecamp', name: 'Basecamp' }
+], '')
+assertEqual(grouped[0].kind, 'letter', 'All programs inserts a letter row')
+assertEqual(grouped[0].letter, '#', 'names that are not A-Z share one bucket')
+assertEqual(grouped[1].kind, 'app', 'the app follows its letter')
+assertEqual(grouped[2].letter, 'A', 'Aether opens the A bucket')
+assertEqual(search.programRows([{ id: 'aether', name: 'Aether' }], 'ae')[0].kind, 'app', 'search results stay a flat list')
+assertEqual(search.recentEntries(['chromium', 'missing'], [chromium, foot], 6, []).map(e => e.id).join(','), 'chromium', 'recents resolve live desktop entries only')
+assertEqual(search.recentEntries(['chromium'], [chromium], 6, ['chromium']).length, 0, 'recents do not repeat a pinned app')
 
 // The menu's Apps submenu is the launcher now: app rows launch and uninstall
 // through the shared app library instead of running commands themselves.
@@ -130,8 +146,16 @@ assert(
 
 assert(
   /function launch\(desktopId, name\) \{[\s\S]*?uwsm-app[\s\S]*?\n  \}/.test(appLibraryQml) &&
-    appLibraryQml.includes('Util.execDetached("uwsm-app -- gtk-launch "'),
+    appLibraryQml.includes('Util.execDetached("uwsm-app -- gtk-launch "') &&
+    appLibraryQml.includes('root.recordLaunch(id)'),
   'app library launches desktop entries through gtk-launch in their own scope'
+)
+
+assert(
+  /function launchAction\([\s\S]*?uwsm-app -- /.test(appLibraryQml) &&
+    appLibraryQml.includes('function launchCommand(command)') &&
+    appLibraryQml.includes('root.omarchyPath + "/bin/" + bin'),
+  'app library runs desktop Actions through uwsm and resolves omarchy-* from OMARCHY_PATH'
 )
 
 assert(

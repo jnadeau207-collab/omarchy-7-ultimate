@@ -35,7 +35,7 @@
       "required": ["id", "kind", "label", "state", "writable", "rootToken", "reason"],
       "properties": {
         "id": {"$ref": "#/$defs/stableId"},
-        "kind": {"type": "string", "enum": ["this-pc", "home", "desktop", "documents", "downloads", "trash", "mount", "network"]},
+        "kind": {"type": "string", "enum": ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "trash", "mount", "network"]},
         "label": {"type": "string", "minLength": 1, "maxLength": 160},
         "state": {"type": "string", "enum": ["available", "degraded", "unavailable"]},
         "writable": {"type": "boolean"},

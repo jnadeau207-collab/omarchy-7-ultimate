@@ -633,6 +633,22 @@ const leftMon = { name: 'Virtual-1', x: 0, y: 0, width: 1920, height: 1080 }
 const rightMon = { name: 'HEADLESS-2', x: 1920, y: 0, width: 1920, height: 1080 }
 assertEqual(m.neighborMonitor([leftMon, rightMon], leftMon, 'r').name, 'HEADLESS-2', 'Win+Shift+Right picks the monitor to the right')
 assertEqual(m.neighborMonitor([leftMon, rightMon], leftMon, 'l'), null, 'Win+Shift+Left does nothing on the leftmost monitor')
+assertEqual(m.primaryMonitorName([rightMon, leftMon]), 'Virtual-1', 'primary Superbar is the leftmost output, not the first listed')
+assertEqual(m.primaryMonitorName([{ name: 'DP-2', id: 1, x: 0, y: 0 }, { name: 'HDMI-A-1', id: 0, x: 1920, y: 0 }]), 'HDMI-A-1', 'Hyprland monitor id 0 wins over sort order')
+assert(m.isPrimaryScreen('Virtual-1', [leftMon, rightMon]), 'left output is the primary Superbar')
+assert(!m.isPrimaryScreen('HEADLESS-2', [leftMon, rightMon]), 'right output is a secondary Superbar')
+assert(m.isPrimaryScreen('only', []), 'a missing monitor list still shows the notification cluster')
+assert(m.showsNotificationCluster(true), 'primary Superbar owns tray, clock, and Quick Settings')
+assert(!m.showsNotificationCluster(false), 'secondary Superbar does not duplicate the notification cluster')
+const chromePin = { id: 'chrome', pinned: true, windows: [{ address: '0x1', monitorName: 'Virtual-1' }] }
+const filesRun = { id: 'files', pinned: false, windows: [{ address: '0x2', monitorName: 'HEADLESS-2' }] }
+assert(m.groupVisibleOnScreen(chromePin, 'HEADLESS-2', false), 'pins stay on every Superbar')
+assert(m.groupVisibleOnScreen(filesRun, 'HEADLESS-2', false), 'a running group appears on the output that owns it')
+assert(!m.groupVisibleOnScreen(filesRun, 'Virtual-1', false), 'a secondary bar does not show another output\'s unpinned group')
+assertEqual(m.groupsForScreen([chromePin, filesRun], 'HEADLESS-2', false).map((g) => g.id).join(','), 'chrome,files', 'secondary Superbar is pins plus local windows')
+assertEqual(m.startToggleAction('', 'HDMI-A-1'), 'open', 'Start opens on the clicked Superbar')
+assertEqual(m.startToggleAction('HDMI-A-1', 'HDMI-A-1'), 'close', 'Start on the same Superbar closes')
+assertEqual(m.startToggleAction('HDMI-A-1', 'HEADLESS-2'), 'move', 'Start on another Superbar moves instead of closing')
 
 const csdJson = fs.readFileSync(path.join(root, 'default/ultimate/csd-clients.json'), 'utf8')
 const csd = JSON.parse(csdJson)

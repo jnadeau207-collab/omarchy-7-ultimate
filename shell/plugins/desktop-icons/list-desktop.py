@@ -31,16 +31,36 @@ def desktop_dir() -> pathlib.Path:
     return fallback
 
 
+def desktop_fields(path: pathlib.Path) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    if path.suffix != ".desktop":
+        return fields
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if "=" not in line or line.startswith("#") or line.startswith("["):
+                continue
+            key, value = line.split("=", 1)
+            if key in {"Name", "Icon", "Exec"} and key not in fields:
+                fields[key] = value.strip()
+    except OSError:
+        return {}
+    return fields
+
+
+def desktop_command(exec_line: str) -> str:
+    command = []
+    for part in exec_line.split():
+        if part.startswith("%"):
+            continue
+        command.append(part)
+    return " ".join(command)
+
+
 def desktop_icon(path: pathlib.Path) -> str:
+    icon = desktop_fields(path).get("Icon", "")
+    if icon:
+        return icon
     if path.suffix == ".desktop":
-        try:
-            for line in path.read_text(encoding="utf-8").splitlines():
-                if line.startswith("Icon="):
-                    icon = line.split("=", 1)[1].strip()
-                    if icon:
-                        return icon
-        except OSError:
-            pass
         return "application-x-executable"
     if path.is_dir():
         return "folder"
@@ -48,15 +68,9 @@ def desktop_icon(path: pathlib.Path) -> str:
 
 
 def desktop_name(path: pathlib.Path) -> str:
-    if path.suffix == ".desktop":
-        try:
-            for line in path.read_text(encoding="utf-8").splitlines():
-                if line.startswith("Name="):
-                    name = line.split("=", 1)[1].strip()
-                    if name:
-                        return name
-        except OSError:
-            pass
+    name = desktop_fields(path).get("Name", "")
+    if name:
+        return name
     return path.name
 
 
@@ -69,11 +83,14 @@ def main() -> None:
         for path in sorted(root.iterdir(), key=lambda p: p.name.casefold()):
             if path.name.startswith("."):
                 continue
+            fields = desktop_fields(path)
+            command = desktop_command(fields.get("Exec", "")) if fields.get("Exec") else ""
             items.append({
                 "name": desktop_name(path),
                 "path": str(path),
                 "icon": desktop_icon(path),
-                "kind": "directory" if path.is_dir() else "file",
+                "kind": "application" if path.suffix == ".desktop" else "directory" if path.is_dir() else "file",
+                "command": command,
             })
     print(json.dumps({"directory": str(root), "items": items}, separators=(",", ":")))
 

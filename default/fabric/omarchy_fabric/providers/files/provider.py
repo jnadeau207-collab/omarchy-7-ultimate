@@ -48,8 +48,22 @@ LOCATION_CATALOG = {
     "desktop": ("desktop", "xdg-desktop", False),
     "documents": ("documents", "xdg-documents", False),
     "downloads": ("downloads", "xdg-download", False),
+    "pictures": ("pictures", "xdg-pictures", False),
     "trash": ("trash", "freedesktop-trash", False),
 }
+
+# Start places must survive the bounded inventory. Home is scanned last and
+# evicted first so a deep $HOME tree cannot hide Pictures or Desktop.
+SCAN_PRIORITY = {
+    "this-pc": 0,
+    "pictures": 1,
+    "desktop": 2,
+    "documents": 3,
+    "downloads": 4,
+    "trash": 5,
+    "home": 6,
+}
+HOME_LOCATION_ID = "files.location.home"
 
 SCHEMA_FILES = (
     "files-empty-arguments-v0.json",
@@ -371,7 +385,10 @@ class RealFilesBackend:
         path_to_entry: dict[str, str] = {}
         limits = self.config["limits"]
         truncated = False
-        for definition in self.config["locations"]:
+        for definition in sorted(
+            self.config["locations"],
+            key=lambda item: (SCAN_PRIORITY.get(item["key"], 50), item["key"]),
+        ):
             location_id = f"files.location.{definition['key']}"
             if definition["source"] == "virtual":
                 locations.append({
@@ -421,11 +438,7 @@ class RealFilesBackend:
         }
         while len(canonical_json(state).encode("utf-8")) > MAX_REAL_STATE_BYTES and state["entries"]:
             parent_ids = {entry["parentId"] for entry in state["entries"] if entry["parentId"] is not None}
-            removable_index = max(
-                index
-                for index, entry in enumerate(state["entries"])
-                if entry["id"] not in parent_ids
-            )
+            removable_index = _evictable_leaf_index(state["entries"], parent_ids)
             removed = state["entries"].pop(removable_index)
             state["recent"] = [item for item in state["recent"] if item["entryId"] != removed["id"]]
             truncated = True
@@ -497,7 +510,7 @@ class RealFilesBackend:
                 if not line or line.startswith("#") or "=" not in line:
                     continue
                 key, raw_value = line.split("=", 1)
-                if key not in {"XDG_DESKTOP_DIR", "XDG_DOCUMENTS_DIR", "XDG_DOWNLOAD_DIR"}:
+                if key not in {"XDG_DESKTOP_DIR", "XDG_DOCUMENTS_DIR", "XDG_DOWNLOAD_DIR", "XDG_PICTURES_DIR"}:
                     continue
                 if len(raw_value) < 2 or raw_value[0] != '"' or raw_value[-1] != '"':
                     raise ValueError("user dirs value is not a quoted literal")
@@ -533,6 +546,7 @@ class RealFilesBackend:
             "xdg-desktop": user_dirs.get("XDG_DESKTOP_DIR", self.home / "Desktop"),
             "xdg-documents": user_dirs.get("XDG_DOCUMENTS_DIR", self.home / "Documents"),
             "xdg-download": user_dirs.get("XDG_DOWNLOAD_DIR", self.home / "Downloads"),
+            "xdg-pictures": user_dirs.get("XDG_PICTURES_DIR", self.home / "Pictures"),
             "freedesktop-trash": self.home / ".local" / "share" / "Trash" / "files",
         }
 
@@ -880,6 +894,14 @@ def _unescape_xdg_value(value: str) -> str:
     if "\x00" in normalized or any(unicodedata.category(character) in {"Cc", "Cf", "Cs"} for character in normalized):
         raise ValueError("user dirs value contains a control character")
     return normalized
+
+
+def _evictable_leaf_index(entries: list[Mapping[str, Any]], parent_ids: set[str]) -> int:
+    leaves = [index for index, entry in enumerate(entries) if entry["id"] not in parent_ids]
+    if not leaves:
+        raise ValueError("files inventory has no leaf entries to evict")
+    home_leaves = [index for index in leaves if entries[index]["locationId"] == HOME_LOCATION_ID]
+    return max(home_leaves or leaves)
 
 
 def _metadata(action: str, snapshot: StateSnapshot) -> dict[str, Any]:

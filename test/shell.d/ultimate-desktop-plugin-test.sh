@@ -39,7 +39,16 @@ grep -Fq 'omarchy-taskbar' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
 grep -Fq 'exclusiveZone:' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "taskbar sets an explicit exclusive zone so snap reads a bottom inset"
 grep -Fq 'omarchy.ultimate-start' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
-  || fail "Start button toggles the Start plugin"
+  || fail "Start button summons the Start plugin"
+grep -Fq 'JSON.stringify({ screen: screenName })' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
+  || fail "Start orb tells Start which Superbar was clicked"
+grep -Fq 'restoreFocusOnClose' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start orb close restores the previously focused window"
+grep -Fq 'start-owner.json' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start publishes the owning output for click-through"
+if grep -Fq 'toggle("omarchy.ultimate-start"' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml"; then
+  fail "Start orb must summon with a screen, not blindly toggle"
+fi
 grep -Fq 'start-chrome.json' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start reads card size from start-chrome.json"
 grep -Fq 'implicitWidth: root.cardWidth' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
@@ -141,9 +150,35 @@ if grep -Eq '^import QtQuick.Controls' "$ROOT/shell/Ui/SearchBox.qml"; then
   fail "SearchBox must not import QtQuick.Controls; that shadows qs.Ui.TextField with a white QQC field"
 fi
 pass "SearchBox uses the kit TextField"
-if grep -B2 'tooltipText: "Lock"' "$ROOT/shell/plugins/ultimate-start/Start.qml" | grep -q '\\u23FB'; then
-  fail "Lock must not reuse the shut-down power-symbol glyph"
+if awk '
+  $0 ~ /function close\(\)/ { infn = 1 }
+  infn && /powerMenu/ { found = 1 }
+  infn && /^  function / && $0 !~ /function close\(\)/ { infn = 0 }
+  END { exit found ? 0 : 1 }
+' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start close must not touch the power flyout id inside the Loader"
 fi
+if grep -Fq 'PopupWindow' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start power flyout must live on the Start card, not a PopupWindow"
+fi
+grep -Fq 'morePowerOpen' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start power flyout uses a card-owned open flag"
+grep -Fq 'Pin to taskbar' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start right-click can pin to the Superbar"
+grep -Fq 'windowService.pin' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pin writes the Superbar pin file"
+grep -Fq 'jumpListFor' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start context menu reuses Superbar jump lists"
+grep -Fq 'text: "Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start shows a labeled Shut down control"
+grep -Fq 'omarchy-system-lock' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start power flyout can lock"
+grep -Fq 'omarchy-system-logout' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start power flyout can log off"
+grep -Fq '\u26BF' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start lock keeps the squared-key glyph"
+grep -Fq '\u23FB' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start shut down keeps the power-symbol glyph"
 pass "Start lock glyph is distinct from shut down"
 grep -Fq 'fillMode: Image.PreserveAspectFit' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start app icons scale into the row instead of painting at native SVG size"
@@ -169,6 +204,10 @@ grep -Fq 'shippedPinsPath' "$ROOT/shell/services/WindowService.qml" \
   || fail "WindowService loads shipped pins when the user has none"
 grep -Fq 'omarchy-task-switcher' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
   || fail "task switcher uses a distinct layer namespace"
+grep -Fq 'WindowPreview.previewRows' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
+  || fail "Task View uses the same live preview rows as Superbar peeks"
+grep -Fq 'text: "Task View"' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
+  || fail "Task View names itself"
 grep -Fq 'virtio-vga,xres=1920,yres=1080' "$ROOT/test/vm/vm-run.ps1" \
   || fail "Desktop Mode VM launcher pins virtio-vga to 1920x1080 so preferred is not 640x480@240"
 grep -Fq 'gtk,zoom-to-fit=on' "$ROOT/test/vm/vm-run.ps1" \
@@ -562,6 +601,10 @@ if grep -Fq 'persistShellConfig' "$ROOT/shell/shell.qml" && awk '
 fi
 grep -Fq '"Close group"' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "grouped Superbar close is labeled Close group"
+grep -Fq '"Close window"' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "Superbar jump list can close one window"
+grep -Fq 'function closeActiveWindow' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "Close window closes the active window, not the whole group"
 grep -Fq 'function windowIpc' "$ROOT/shell/shell.qml" \
   || fail "window IPC serializes { changed, error }"
 grep -Fq 'CapabilityBroker' "$ROOT/shell/shell.qml" \

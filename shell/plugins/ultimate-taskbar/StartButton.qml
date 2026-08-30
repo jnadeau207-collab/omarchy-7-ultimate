@@ -5,6 +5,7 @@ import qs.Ui
 Item {
   id: root
   property var bar: null
+  property var hostWindow: null
   readonly property bool startOpen: !!(bar && bar.shell && typeof bar.shell.isPluginOpen === "function"
     && bar.shell.isPluginOpen("omarchy.ultimate-start"))
   implicitWidth: 56
@@ -12,6 +13,15 @@ Item {
   Accessible.role: Accessible.Button
   Accessible.name: "Start"
   Accessible.description: "Open the Start menu"
+  HoverHandler {
+    id: hover
+    onHoveredChanged: {
+      if (!root.bar) return
+      if (hovered) root.bar.showTooltip(root, "Start")
+      else if (!mouse.containsMouse) root.bar.hideTooltip(root)
+    }
+  }
+  readonly property bool tooltipHovered: visible && (mouse.containsMouse || hover.hovered)
 
   Rectangle {
     id: orb
@@ -58,9 +68,16 @@ Item {
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
+    onContainsMouseChanged: {
+      if (!root.bar) return
+      if (containsMouse || hover.hovered) root.bar.showTooltip(root, "Start")
+      else root.bar.hideTooltip(root)
+    }
     onClicked: {
-      if (root.bar && root.bar.shell)
-        root.bar.shell.toggle("omarchy.ultimate-start", "{}")
+      if (!root.bar || !root.bar.shell) return
+      var screenName = root.hostWindow && root.hostWindow.screen
+        ? String(root.hostWindow.screen.name || "") : ""
+      root.bar.shell.summon("omarchy.ultimate-start", JSON.stringify({ screen: screenName }))
     }
   }
 }

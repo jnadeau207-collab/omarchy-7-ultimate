@@ -411,34 +411,74 @@ end)
 
 local start_clickthrough_bind = nil
 
+local function start_owner_screen()
+  local home = os.getenv("HOME") or ""
+  local file = io.open(home .. "/.local/state/omarchy/ultimate/start-owner.json", "r")
+  if not file then
+    return ""
+  end
+  local raw = file:read("*a") or ""
+  file:close()
+  return raw:match('"screen"%s*:%s*"([^"]*)"') or ""
+end
+
+local function monitor_at_point(pos, mons)
+  if type(mons) ~= "table" then
+    return nil
+  end
+  for _, mon in pairs(mons) do
+    if type(mon) == "table" and mon.width and mon.height then
+      local mx = tonumber(mon.x) or 0
+      local my = tonumber(mon.y) or 0
+      if pos.x >= mx and pos.x < mx + mon.width and pos.y >= my and pos.y < my + mon.height then
+        return mon
+      end
+    end
+  end
+  return nil
+end
+
 local function start_click_is_on_shell_chrome(pos)
   if not pos or pos.x == nil or pos.y == nil then
     return true
   end
-  local mh = 1080
+  local mx, my, mh = 0, 0, 1080
+  local mon_name = ""
   local ok, mons = pcall(function()
     return hl.get_monitors()
   end)
   if ok and type(mons) == "table" then
-    for _, mon in pairs(mons) do
-      if type(mon) == "table" and mon.height then
-        if mon.focused or mon.focus then
-          mh = mon.height
+    local mon = monitor_at_point(pos, mons)
+    if not mon then
+      for _, candidate in pairs(mons) do
+        if type(candidate) == "table" and candidate.height and (candidate.focused or candidate.focus) then
+          mon = candidate
           break
         end
-        mh = mon.height
       end
+    end
+    if type(mon) == "table" then
+      mx = tonumber(mon.x) or 0
+      my = tonumber(mon.y) or 0
+      mh = mon.height or mh
+      mon_name = tostring(mon.name or "")
     end
   end
   local bar = start_chrome.barHeight
   local left = start_chrome.cardLeftMargin
   local width = start_chrome.cardWidth
   local height = start_chrome.cardHeight
-  if pos.y >= mh - bar then
+  local local_x = pos.x - mx
+  local local_y = pos.y - my
+  if local_y >= mh - bar then
     return true
   end
+  local owner = start_owner_screen()
+  if owner ~= "" and mon_name ~= "" and owner ~= mon_name then
+    return false
+  end
   local card_y = mh - bar - height
-  if pos.x >= left and pos.x < left + width and pos.y >= card_y and pos.y < mh - bar then
+  if local_x >= left and local_x < left + width and local_y >= card_y and local_y < mh - bar then
     return true
   end
   return false

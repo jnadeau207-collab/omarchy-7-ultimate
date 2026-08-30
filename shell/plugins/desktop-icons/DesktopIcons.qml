@@ -26,6 +26,11 @@ Item {
   }
 
   function openItem(item) {
+    var command = String(item && item.command || "")
+    if (command && root.appLibrary && typeof root.appLibrary.launchCommand === "function") {
+      Util.execDetached("uwsm-app -- " + root.appLibrary.launchCommand(command))
+      return
+    }
     var path = String(item && item.path || "")
     if (!path) return
     Util.execArgv(["xdg-open", path])
@@ -115,7 +120,7 @@ Item {
                 elide: Text.ElideRight
                 text: modelData.name
                 color: Tokens.text.primary
-                font.family: Style.font.family
+                font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
               }
             }

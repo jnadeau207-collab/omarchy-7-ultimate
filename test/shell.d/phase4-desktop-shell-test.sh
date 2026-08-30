@@ -54,6 +54,42 @@ for leftover in (
 PY
 pass "Desktop Mode overlay composes Quick Settings instead of five panel icons"
 
+grep -Fq 'import "." as Files' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files application registers FilesRecordCard from its directory"
+grep -Fq 'Files.FilesRecordCard' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "This PC records use the Files record card type"
+grep -Fq 'actionId: "ThisPC"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start Computer opens the Files This PC action"
+grep -Fq 'actionId: "Pictures"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start Pictures opens the Files Pictures action"
+if grep -Fq 'xdg-open' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start places must not fall through to xdg-open / Nautilus"
+fi
+grep -Fq 'icon: "system-file-manager"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start Files place uses the Files desktop icon, not a Settings gear"
+python3 - "$ROOT" <<'PY' || fail "Files, Software, and Compatibility launchers are executable for uwsm-app"
+from pathlib import Path
+import subprocess
+import sys
+
+root = Path(sys.argv[1])
+wanted = {
+    "bin/omarchy-launch-files",
+    "bin/omarchy-launch-software",
+    "bin/omarchy-launch-compatibility",
+}
+staged = subprocess.check_output(["git", "-C", str(root), "ls-files", "--stage", *sorted(wanted)], text=True)
+modes = {}
+for line in staged.splitlines():
+    mode, _sha, rest = line.split(None, 2)
+    path = rest.split("\t", 1)[-1]
+    modes[path] = mode
+missing = [path for path in wanted if modes.get(path) != "100755"]
+if missing:
+    raise SystemExit(f"not executable in git: {missing} {modes}")
+PY
+grep -Fq 'function placeAction' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start places reuse published desktop actions"
 grep -Fq 'name: "Agent Center"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start exposes Agent Center as a destination"
 grep -Fq 'org.omarchy.Files' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
@@ -160,20 +196,28 @@ with tempfile.TemporaryDirectory() as tmp:
     desktop = Path(tmp) / "Desktop"
     desktop.mkdir()
     (desktop / "notes.txt").write_text("hello\n", encoding="utf-8")
+    (desktop / "Computer.desktop").write_text(
+        "[Desktop Entry]\nName=Computer\nExec=omarchy-launch-files --source desktop files.this-pc\nIcon=computer\n",
+        encoding="utf-8",
+    )
     env = os.environ.copy()
     env["HOME"] = tmp
     env["XDG_DESKTOP_DIR"] = str(desktop)
     out = subprocess.check_output(["python3", str(root / "shell/plugins/desktop-icons/list-desktop.py")], env=env, text=True)
     data = json.loads(out)
     assert data["directory"] == str(desktop)
-    assert data["items"][0]["name"] == "notes.txt"
-    assert data["items"][0]["kind"] == "file"
+    by_name = {item["name"]: item for item in data["items"]}
+    assert by_name["notes.txt"]["kind"] == "file"
+    assert by_name["Computer"]["kind"] == "application"
+    assert by_name["Computer"]["command"] == "omarchy-launch-files --source desktop files.this-pc"
     env["XDG_DESKTOP_DIR"] = tmp
     out = subprocess.check_output(["python3", str(root / "shell/plugins/desktop-icons/list-desktop.py")], env=env, text=True)
     data = json.loads(out)
     assert data["directory"] == str(Path(tmp) / "Desktop"), data
     assert data["directory"] != tmp
-    assert data["items"][0]["name"] == "notes.txt"
+    names = [item["name"] for item in data["items"]]
+    assert "notes.txt" in names
+    assert "Computer" in names
 PY
 pass "desktop icon lister reads the real Desktop directory"
 
@@ -181,6 +225,12 @@ pass "desktop icon lister reads the real Desktop directory"
   || fail "Desktop Mode ships a Files desktop shortcut"
 [[ -f $ROOT/default/ultimate/desktop/Computer.desktop ]] \
   || fail "Desktop Mode ships a Computer desktop shortcut"
+grep -Fq 'files.this-pc' "$ROOT/default/ultimate/desktop/Computer.desktop" \
+  || fail "Desktop Computer shortcut opens Files This PC"
+grep -Fq 'launchCommand' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
+  || fail "Desktop shortcuts launch through the same AppLibrary path as Start"
+grep -Fq 'uwsm-app --' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
+  || fail "Desktop shortcuts use the uwsm session graph"
 grep -Fq 'xdg-user-dirs-update --set DESKTOP "$HOME/Desktop"' "$ROOT/bin/omarchy-provision-user" \
   || fail "new users keep a real Desktop directory"
 if grep -Fq 'xdg-user-dirs-update --set DESKTOP "$HOME"' "$ROOT/bin/omarchy-provision-user"; then
@@ -203,6 +253,8 @@ grep -Fq 'text: "Calendar"' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
   || fail "clock panel names itself Calendar"
 pass "calendar surface is the clock panel"
 
+grep -Fq 'OMARCHY_PATH' "$ROOT/shell/services/desktop-actions.py" \
+  || fail "desktop-action index reads product launchers from OMARCHY_PATH"
 grep -Fq 'function jumpListFor' "$ROOT/shell/services/AppLibrary.qml" \
   || fail "AppLibrary exposes jump lists"
 grep -Fq 'Open new window' "$ROOT/shell/services/JumpList.js" \
@@ -363,6 +415,32 @@ grep -Fq 'Icon=org.omarchy.AgentCenter' "$HOME/.local/share/applications/org.oma
   || fail "published Agent Center launcher uses the distinct mark"
 pass "Agent Center mark is published"
 
+OMARCHY_PATH="$ROOT" python3 "$ROOT/shell/services/desktop-actions.py" | python3 -c '
+import json, sys
+idx = json.load(sys.stdin)
+files = idx.get("org.omarchy.Files") or []
+names = [row.get("name") for row in files]
+assert "This PC" in names, names
+assert "Pictures" in names, names
+assert "Recent" in names, names
+assert "Trash" in names, names
+settings = idx.get("org.omarchy.Settings") or []
+assert any(row.get("name") == "Display" for row in settings), settings
+'
+pass "product desktop Actions are indexed from OMARCHY_PATH"
+
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042600.sh"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042700.sh"
+[[ -f $HOME/.local/share/applications/org.omarchy.Files.desktop ]] \
+  || fail "Files launcher is published into the user applications dir"
+grep -Fq 'Actions=ThisPC;Pictures;Recent;Trash;' \
+  "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
+  || fail "published Files launcher keeps This PC, Pictures, Recent, and Trash"
+grep -Fq 'Actions=Display;Network;Accessibility;' \
+  "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
+  || fail "published Settings launcher keeps Display, Network, and Accessibility"
+pass "Files and Settings launchers are published for Start jump lists"
+
 grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar clock uses the token UI family"
 grep -Fq 'hasVisualContent: true' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml" \
@@ -376,3 +454,64 @@ if grep -Fq '◎' "$ROOT/shell/plugins/notifications/BarWidget.qml"; then
   fail "Notification Center Superbar mark is not a leftover bullseye glyph"
 fi
 pass "Superbar notification-area marks are drawn chrome"
+
+grep -Fq 'function showTooltip' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar hosts hover tooltips"
+grep -Fq 'tooltipHovered' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
+  || fail "Start orb reports tooltip hover"
+grep -Fq 'HoverHandler' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
+  || fail "Start orb hover uses the layer HoverHandler"
+grep -Fq 'text: "Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start has a labeled Shut down control"
+grep -Fq 'placeholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start search names the job"
+grep -Fq 'text: "Recent"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start has a Recent section for launched programs"
+grep -Fq 'kind === "letter"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "All programs is letter-grouped"
+grep -Fq 'start-recents.json' "$ROOT/shell/services/AppLibrary.qml" \
+  || fail "launches persist Start recents"
+grep -Fq 'folder-pictures' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start places keep icons"
+grep -Fq 'function groupsOnScreen' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar filters task groups per output"
+grep -Fq 'showsNotificationCluster' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar keeps the notification cluster on the primary output"
+grep -Fq 'payload.screen' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start opens on the Superbar that summoned it"
+grep -Fq 'restoreFocusOnClose' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start restores focus only when the same orb closes it"
+grep -Fq 'start-owner.json' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "Start click-through knows which output owns the card"
+grep -Fq 'Pin to taskbar' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start right-click can pin to the Superbar"
+grep -Fq 'Unpin from taskbar' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start right-click can unpin from the Superbar"
+grep -Fq 'windowService.pin' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pin uses the Superbar pin verb"
+grep -Fq 'windowService.unpin' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start unpin uses the Superbar unpin verb"
+grep -Fq 'acceptedButtons: Qt.LeftButton | Qt.RightButton' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start tiles accept a right-click"
+grep -Fq 'pinMenuJumpList' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start context menu hosts the same jump list as Superbar"
+grep -Fq 'id: startCard' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pin menu lives on the Start card"
+grep -Fq 'mapToItem(startCard' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pin menu positions inside the Start card"
+grep -Fq 'morePowerOpen' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start power flyout is a card-owned flag, not a PopupWindow"
+grep -Fq 'function toggleMorePower' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start power flyout toggles on the Start card"
+if grep -Fq 'PopupWindow' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start power flyout must live on the Start card, not a PopupWindow"
+fi
+if awk '
+  $0 ~ /function close\(\)/ { infn = 1 }
+  infn && /pinMenu\.visible/ { found = 1 }
+  infn && /^  function / && $0 !~ /function close\(\)/ { infn = 0 }
+  END { exit found ? 0 : 1 }
+' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start close must not touch the pin menu id inside the Loader"
+fi
+pass "Superbar tooltips and Start power flyout are product chrome"

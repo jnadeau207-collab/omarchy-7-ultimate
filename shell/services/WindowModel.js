@@ -637,6 +637,73 @@ function serializePlacements(placements) {
   return JSON.stringify({ placements: placements || {} }, null, 2) + "\n"
 }
 
+function windowMonitorName(win) {
+  if (!win) return ""
+  return String(win.monitorName || win.monitor || "")
+}
+
+function primaryMonitorName(monitors) {
+  var named = []
+  var i
+  for (i = 0; i < (monitors || []).length; i++) {
+    if (monitors[i] && monitors[i].name) named.push(monitors[i])
+  }
+  if (named.length === 0) return ""
+  if (named.length === 1) return String(named[0].name)
+  for (i = 0; i < named.length; i++) {
+    if (Number(named[i].id) === 0) return String(named[i].name)
+  }
+  named.sort(function(a, b) {
+    var ax = Number(a.x || 0)
+    var ay = Number(a.y || 0)
+    var bx = Number(b.x || 0)
+    var by = Number(b.y || 0)
+    if (ax !== bx) return ax - bx
+    if (ay !== by) return ay - by
+    return String(a.name).localeCompare(String(b.name))
+  })
+  return String(named[0].name)
+}
+
+function isPrimaryScreen(screenName, monitors) {
+  var primary = primaryMonitorName(monitors)
+  if (!primary || !screenName) return true
+  return String(screenName) === primary
+}
+
+function showsNotificationCluster(isPrimary) {
+  return isPrimary === true
+}
+
+function groupVisibleOnScreen(group, screenName, isPrimary) {
+  if (isPrimary) return true
+  if (group && group.pinned) return true
+  var wins = (group && group.windows) || []
+  var i
+  for (i = 0; i < wins.length; i++) {
+    if (windowMonitorName(wins[i]) === String(screenName || "")) return true
+  }
+  return false
+}
+
+function groupsForScreen(groups, screenName, isPrimary) {
+  var out = []
+  var i
+  groups = groups || []
+  for (i = 0; i < groups.length; i++) {
+    if (groupVisibleOnScreen(groups[i], screenName, isPrimary)) out.push(groups[i])
+  }
+  return out
+}
+
+function startToggleAction(openScreen, clickedScreen) {
+  var open = String(openScreen || "")
+  var clicked = String(clickedScreen || "")
+  if (open && clicked && open !== clicked) return "move"
+  if (open) return "close"
+  return "open"
+}
+
 function buildGroups(windows, pins) {
   var list = []
   var used = ({})
@@ -712,6 +779,13 @@ if (typeof module !== "undefined") {
     withPin: withPin,
     withoutPin: withoutPin,
     buildGroups: buildGroups,
+    windowMonitorName: windowMonitorName,
+    primaryMonitorName: primaryMonitorName,
+    isPrimaryScreen: isPrimaryScreen,
+    showsNotificationCluster: showsNotificationCluster,
+    groupVisibleOnScreen: groupVisibleOnScreen,
+    groupsForScreen: groupsForScreen,
+    startToggleAction: startToggleAction,
     reservedLTRB: reservedLTRB,
     workArea: workArea,
     snapRect: snapRect,
