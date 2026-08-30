@@ -123,6 +123,19 @@ Item {
     if (!id) return
     root.recordLaunch(id)
     root.beginLaunchFeedback(name)
+    // Product launchers live under $OMARCHY_PATH/bin. gtk-launch resolves the
+    // desktop Exec name against uwsm-app's PATH, which does not search that
+    // tree, so Superbar/Start pins of omarchy-* apps fail as "not executable"
+    // / "command not found". Jump actions already quote the full path.
+    var command = JumpList.actionCommand(root.entryByDesktopId(id))
+    if (command) {
+      var space = command.indexOf(" ")
+      var bin = space < 0 ? command : command.slice(0, space)
+      if (bin.indexOf("omarchy-") === 0 || (root.omarchyPath && bin.indexOf(root.omarchyPath + "/bin/omarchy-") === 0)) {
+        Util.execDetached("uwsm-app -- " + root.launchCommand(command))
+        return
+      }
+    }
     // Start gtk-launch inside a scope under app-graphical.slice so apps do not
     // inherit wayland-wm@.service. Keeping gtk-launch as the desktop-entry
     // resolver supports IDs with spaces and entries that UWSM rejects.
@@ -131,7 +144,7 @@ Item {
   }
 
   function launchCommand(command) {
-    var raw = String(command || "").trim()
+    var raw = String(command || "").trim().replace(/\s+%[A-Za-z@]/g, "")
     if (!raw) return ""
     var space = raw.indexOf(" ")
     var bin = space < 0 ? raw : raw.slice(0, space)
