@@ -17,7 +17,7 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Desktop and Personalization",
-        "path": "Desktop; Start > Personalization"
+        "path": "Desktop; Start > Settings > Personalization"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Wallpaper can be restored; destructive trash operations require guarded undo.",
@@ -158,8 +158,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Network panel",
-        "path": "Superbar > Network"
+        "surface": "Settings Network",
+        "path": "Start > Settings > Network"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Capture the previous connection and expose reconnect or disconnect compensation.",
@@ -177,7 +177,7 @@
       "id": "parity.personalization",
       "kind": "parity-job",
       "sourceLabel": "Personalization",
-      "sourceStatus": "plumbing / prototype",
+      "sourceStatus": "prototype",
       "claim": "prototype",
       "capabilityIds": [
         "desktop.wallpaper.set",
@@ -185,8 +185,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Image picker and theme menu",
-        "path": "Start > Personalization"
+        "surface": "Settings Personalization",
+        "path": "Start > Settings > Personalization"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Capture the previous wallpaper and theme and offer guarded undo.",
@@ -369,8 +369,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Power panel",
-        "path": "Superbar > Power"
+        "surface": "Settings Power",
+        "path": "Start > Settings > Power"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Capture and restore the prior profile.",
@@ -397,8 +397,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Sound panel",
-        "path": "Superbar > Sound"
+        "surface": "Settings Sound",
+        "path": "Start > Settings > Sound"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Capture prior routes and levels; troubleshooting must report each applied repair.",
@@ -424,8 +424,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Monitor panel",
-        "path": "Superbar > Display"
+        "surface": "Settings Display",
+        "path": "Start > Settings > Display"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Timed display changes must automatically roll back unless kept.",
@@ -1116,7 +1116,7 @@
         "agents.center.manage"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Agent Center",
         "path": "Superbar > Agent Center"
       },

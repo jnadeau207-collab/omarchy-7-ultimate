@@ -48,7 +48,7 @@ Scope not delivered by W0 and now owned by the current program:
 - hyprbars is still not an ISO-mirror pacman package.
 - Tokyo Night seed, nvim-as-txt, TTY first-boot, no product ISO.
 - Chrome install-as-product, games, and “install any Windows app” are later phases.
-- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Settings app is Phase 5.
+- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Typed Settings services are Phase 5; the Settings window already hosts existing panels.
 
 ## Preserved W0 outcome and packaging debt
 
@@ -129,7 +129,7 @@ Do **not** claim mathematical zero unique Jesse *commits*. Claim zero unique Jes
 
 After the Quattro rebase, `main` tracks live `upstream/quattro` and `work` is Ultimate rebased onto it. Recovery refs retain the pre-rebase tips. Do not merge `work` into `main` as the OS.
 
-The product remains **REJECTED**. Windowing Gate W0 is Phase 1 only (`W0_GATE.md`). The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery. Desktop Mode now ships two-pane Start, desktop icons on the real XDG Desktop directory, Quick Settings, Notification Center, calendar, lock, and Agent Center as a Superbar pin and Start destination. Superbar presentation is an orb, stacked clock, drawn Quick Settings and Notification Center marks, live peeks, jump lists, and badges over the plugin cluster. Settings is still a five-button stub. Full typed system services, Files/This PC, Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
+The product remains **REJECTED**. Windowing Gate W0 is Phase 1 only (`W0_GATE.md`). The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery. Desktop Mode now ships two-pane Start, desktop icons on the real XDG Desktop directory, Quick Settings, Notification Center, calendar, lock, and Agent Center as a Superbar pin and Start destination. Superbar presentation is an orb, stacked clock, drawn Quick Settings and Notification Center marks, live peeks, jump lists, and badges over the plugin cluster. Settings is a snappable window that hosts existing Display, Sound, Network, Bluetooth, Power, and Personalization panels; typed Settings services remain Phase 5. Files/This PC exist as a product window prototype (location availability is honest; workspace inspect stays degraded; Recycle is Phase 6). Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
 
 The named phases below are the live program. After W0: Phase 2 leftover fabric (persistent tasks, context broker, sandboxed runtime), then Phases 3–11 in order. Overlay programs written after this taxonomy do not replace it.
 
@@ -147,7 +147,7 @@ Claims from the 2026-08-22 course-correction that this turn **verified in the tr
 - Peek captures live window thumbnails for mapped clients — true. Group close label is **Close group** / **Close window**; the action still closes every window in the group; peek × closes one.
 - Three caption buttons (visible min / max / close); maximize hover summons snap chooser; `formatWindowCmd` lives in `barDeco.cpp` — true. 880×560 is fallback only; `window-placements.json` remembers per-app floats — true live (foot 1000×620 at `[120,80]` reopened). `omarchy-update` rebuilds plugins after system packages — true. `--disable-features=WaylandWindowDecorations` must not return — true. `hyprland-plugin-hyprbars` is not in `install/omarchy-other.packages` — true.
 - Six numbered forty-task rows automated (20–25) — true. The same harness also runs unnumbered proofs after the loop — true, live exit 0 this session. Pointer proof includes maximize hover and unfocused addressed close — true.
-- WindowService is the first fabric provider with `{ changed, error }`, broker, ledger, and invertible restore tokens — true. Full OS capability graph, sandboxed runtime, and Agent Center UI are still missing.
+- WindowService is the first fabric provider with `{ changed, error }`, broker, ledger, and invertible restore tokens — true. The leftover catalog and checkout Fabric unit are live; most catalog claims stay missing. Agent Center is a Superbar/Start destination; `parity.agent-center` stays missing. Typed Display/Audio/Network services remain Phase 5.
 
 **Nuance / disagreement:**
 
