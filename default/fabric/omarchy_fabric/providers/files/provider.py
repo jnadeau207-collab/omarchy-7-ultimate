@@ -52,8 +52,9 @@ LOCATION_CATALOG = {
     "trash": ("trash", "freedesktop-trash", False),
 }
 
-# Start places must survive the bounded inventory. Home is scanned last and
-# evicted first so a deep $HOME tree cannot hide Pictures or Desktop.
+# Start places must survive the bounded inventory. Home is scanned last so a
+# deep $HOME tree cannot hide Pictures or Desktop. Byte-bound eviction then
+# keeps a floor of records per place instead of deleting every Home leaf.
 SCAN_PRIORITY = {
     "this-pc": 0,
     "pictures": 1,
@@ -64,6 +65,14 @@ SCAN_PRIORITY = {
     "home": 6,
 }
 HOME_LOCATION_ID = "files.location.home"
+PLACE_LOCATION_IDS = frozenset({
+    HOME_LOCATION_ID,
+    "files.location.desktop",
+    "files.location.documents",
+    "files.location.downloads",
+    "files.location.pictures",
+})
+LOCATION_ENTRY_FLOOR = 8
 
 SCHEMA_FILES = (
     "files-empty-arguments-v0.json",
@@ -385,10 +394,14 @@ class RealFilesBackend:
         path_to_entry: dict[str, str] = {}
         limits = self.config["limits"]
         truncated = False
-        for definition in sorted(
+        scan_order = sorted(
             self.config["locations"],
             key=lambda item: (SCAN_PRIORITY.get(item["key"], 50), item["key"]),
-        ):
+        )
+        remaining_place_scans = sum(
+            1 for item in scan_order if f"files.location.{item['key']}" in PLACE_LOCATION_IDS
+        )
+        for definition in scan_order:
             location_id = f"files.location.{definition['key']}"
             if definition["source"] == "virtual":
                 locations.append({
@@ -401,12 +414,19 @@ class RealFilesBackend:
                     "reason": None,
                 })
                 continue
+            reserved = 0
+            if location_id in PLACE_LOCATION_IDS:
+                remaining_place_scans -= 1
+                reserved = LOCATION_ENTRY_FLOOR * remaining_place_scans
             root = roots.get(definition["source"])
             location, scanned, mapping, was_truncated = self._scan_location(
                 location_id,
                 definition,
                 root,
-                maximum=max(0, limits["entries"] - len(entries)),
+                maximum=max(
+                    LOCATION_ENTRY_FLOOR if location_id in PLACE_LOCATION_IDS else 0,
+                    limits["entries"] - len(entries) - reserved,
+                ),
                 depth=limits["depth"],
             )
             locations.append(location)
@@ -909,12 +929,35 @@ def _unescape_xdg_value(value: str) -> str:
     return normalized
 
 
+def _counts_by_location(entries: list[Mapping[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for entry in entries:
+        location_id = entry["locationId"]
+        counts[location_id] = counts.get(location_id, 0) + 1
+    return counts
+
+
+def _location_surplus(entry: Mapping[str, Any], counts: Mapping[str, int]) -> int:
+    location_id = entry["locationId"]
+    floor = LOCATION_ENTRY_FLOOR if location_id in PLACE_LOCATION_IDS else 0
+    return counts[location_id] - floor
+
+
 def _evictable_leaf_index(entries: list[Mapping[str, Any]], parent_ids: set[str]) -> int:
     leaves = [index for index, entry in enumerate(entries) if entry["id"] not in parent_ids]
     if not leaves:
         raise ValueError("files inventory has no leaf entries to evict")
-    home_leaves = [index for index in leaves if entries[index]["locationId"] == HOME_LOCATION_ID]
-    return max(home_leaves or leaves)
+    counts = _counts_by_location(entries)
+    above_floor = [index for index in leaves if _location_surplus(entries[index], counts) > 0]
+    keep_last = [index for index in leaves if counts[entries[index]["locationId"]] > 1]
+    candidates = above_floor or keep_last or leaves
+    return max(
+        candidates,
+        key=lambda index: (
+            _location_surplus(entries[index], counts) if above_floor else counts[entries[index]["locationId"]],
+            index,
+        ),
+    )
 
 
 def _metadata(action: str, snapshot: StateSnapshot) -> dict[str, Any]:
