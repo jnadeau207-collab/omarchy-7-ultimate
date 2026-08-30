@@ -42,7 +42,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "bluetooth.inspect",
     supportsResource: true,
-    coverage: "Bluetooth controllers and devices are readable. Discovery, pairing, and connection controls remain unavailable from Settings."
+    coverage: "Bluetooth inventory is readable from bluetooth.inspect (controller power, discovering, paired and connected devices). Discovery, pairing, and connection changes remain unavailable from Settings."
   },
   {
     routeId: "settings.input.overview",
@@ -1009,12 +1009,6 @@ function observedText(value) {
 
 function hostedPanel(routeId) {
   var id = String(routeId || "")
-  if (id === "settings.bluetooth.overview") return {
-    source: "plugins/panels/bluetooth/Panel.qml",
-    pluginId: "omarchy.bluetooth",
-    label: "Live Bluetooth panel",
-    honesty: "This page hosts the existing Bluetooth panel (adapters, pairing). Typed Bluetooth service remains Phase 5."
-  }
   if (id === "settings.power.overview") return {
     source: "plugins/panels/power/Panel.qml",
     pluginId: "omarchy.power",

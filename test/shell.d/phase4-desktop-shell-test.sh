@@ -99,7 +99,7 @@ grep -Fq 'org.omarchy.Settings' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
 grep -Fq 'Ui.SettingsHostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml" \
   || fail "Settings window hosts existing panel pages"
 grep -Fq 'function hostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
-  || fail "Settings maps Bluetooth/Power onto existing panels"
+  || fail "Settings maps Power onto an existing panel"
 if grep -Fq 'plugins/panels/monitor/Panel.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
   fail "Settings Display does not host the Process/hyprctl monitor panel"
 fi
@@ -109,12 +109,17 @@ fi
 if grep -Fq 'plugins/panels/network/Panel.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
   fail "Settings Network does not host the Process/nmcli network panel"
 fi
+if grep -Fq 'plugins/panels/bluetooth/Panel.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
+  fail "Settings Bluetooth does not host the Process/bluetoothctl panel"
+fi
 grep -Fq 'display.inspect' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
   || fail "Settings Display reads the existing Fabric display.inspect inventory"
 grep -Fq 'audio.inspect' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
   || fail "Settings Sound reads the existing Fabric audio.inspect inventory"
 grep -Fq 'network.inspect' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
   || fail "Settings Network reads the existing Fabric network.inspect inventory"
+grep -Fq 'bluetooth.inspect' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
+  || fail "Settings Bluetooth reads the existing Fabric bluetooth.inspect inventory"
 grep -Fq 'Ui/SettingsPersonalizationHost.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
   || fail "Settings Personalization hosts the existing image picker"
 grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/image-picker/ImagePicker.qml" \
