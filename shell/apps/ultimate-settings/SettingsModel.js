@@ -24,7 +24,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "audio.inspect",
     supportsResource: true,
-    coverage: "Audio output inventory is readable. Volume and routing changes remain unavailable from Settings."
+    coverage: "Audio output inventory is readable from audio.inspect (sink, default, mute, channel volume, ports). Volume and routing changes remain unavailable from Settings."
   },
   {
     routeId: "settings.network.overview",
@@ -1009,12 +1009,6 @@ function observedText(value) {
 
 function hostedPanel(routeId) {
   var id = String(routeId || "")
-  if (id === "settings.audio.overview") return {
-    source: "plugins/panels/audio/Panel.qml",
-    pluginId: "omarchy.audio",
-    label: "Live Sound panel",
-    honesty: "This page hosts the existing Sound panel (output, input, volume). Typed Audio service remains Phase 5."
-  }
   if (id === "settings.network.overview") return {
     source: "plugins/panels/network/Panel.qml",
     pluginId: "omarchy.network",
