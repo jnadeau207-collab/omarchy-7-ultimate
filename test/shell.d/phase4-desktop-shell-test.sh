@@ -100,6 +100,10 @@ grep -Fq 'Ui.SettingsHostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsAp
   || fail "Settings window hosts existing panel pages"
 grep -Fq 'function hostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
   || fail "Settings maps Display/Sound/Network/Bluetooth/Power onto existing panels"
+grep -Fq 'Ui/SettingsPersonalizationHost.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
+  || fail "Settings Personalization hosts the existing image picker"
+grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/image-picker/ImagePicker.qml" \
+  || fail "image picker can embed inside Settings chrome"
 if grep -Fq 'id: "omarchy.monitor"' "$ROOT/shell/plugins/ultimate-settings/Settings.qml"; then
   fail "Settings is not a five-button overlay that dismisses into floating panels"
 fi
@@ -466,6 +470,7 @@ assert "Recent" in names, names
 assert "Trash" in names, names
 settings = idx.get("org.omarchy.Settings") or []
 assert any(row.get("name") == "Display" for row in settings), settings
+assert any(row.get("name") == "Personalization" for row in settings), settings
 '
 pass "product desktop Actions are indexed from OMARCHY_PATH"
 
@@ -480,9 +485,9 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
 grep -Fq 'Actions=ThisPC;Pictures;Recent;Trash;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
   || fail "published Files launcher keeps This PC, Pictures, Recent, and Trash"
-grep -Fq 'Actions=Display;Network;Accessibility;' \
+grep -Fq 'Actions=Display;Network;Personalization;Accessibility;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
-  || fail "published Settings launcher keeps Display, Network, and Accessibility"
+  || fail "published Settings launcher keeps Display, Network, Personalization, and Accessibility"
 pass "Files and Settings launchers are published for Start jump lists"
 
 grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
