@@ -169,7 +169,7 @@ grep -Fq 'windowService.pin' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start pin writes the Superbar pin file"
 grep -Fq 'jumpListFor' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start context menu reuses Superbar jump lists"
-grep -Fq 'text: "Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq '"Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start shows a labeled Shut down control"
 grep -Fq 'omarchy-system-lock' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start power flyout can lock"

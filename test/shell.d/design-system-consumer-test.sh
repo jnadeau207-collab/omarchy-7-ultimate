@@ -121,3 +121,16 @@ if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/plugins/ultimate-st
   fail "Start RTL is not an invented Accessibility Settings surface"
 fi
 pass "Start RTL binds the existing SemanticProfile path"
+
+grep -Fq 'payload.pseudoLocale === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pseudo-locale can be summoned on the existing SemanticProfile without a translation pack"
+grep -Fq 'pseudoLocale: root.summonedPseudoLocale || root.summonedLocale === "pseudo"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pseudo-locale binds the product SemanticProfile"
+grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start places consume Semantics.text through the product profile"
+grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start search placeholder consumes the SemanticProfile text transform"
+if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start pseudo-locale is not an invented Accessibility Settings surface"
+fi
+pass "Start pseudo-locale binds the existing SemanticProfile path"

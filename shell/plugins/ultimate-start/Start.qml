@@ -15,10 +15,14 @@ Item {
   property bool opened: false
 
   property bool summonedRtl: false
+  property bool summonedPseudoLocale: false
+  property string summonedLocale: "en-US"
   SemanticProfile {
     id: productProfile
     profileId: "product"
     rtl: root.summonedRtl || Qt.application.layoutDirection === Qt.RightToLeft
+    pseudoLocale: root.summonedPseudoLocale || root.summonedLocale === "pseudo"
+    locale: root.summonedLocale
   }
   property string filter: ""
   property bool focusSearch: false
@@ -113,6 +117,8 @@ Item {
     }
     root.focusSearch = payload.focusSearch === true
     root.summonedRtl = payload.rtl === true
+    root.summonedPseudoLocale = payload.pseudoLocale === true
+    root.summonedLocale = payload.locale ? String(payload.locale) : (root.summonedPseudoLocale ? "pseudo" : "en-US")
     root.filter = ""
     if (!root.opened) {
       root.focusedWhenOpened = ToplevelManager.activeToplevel
@@ -149,6 +155,8 @@ Item {
     root.opened = false
     root.filter = ""
     root.summonedRtl = false
+    root.summonedPseudoLocale = false
+    root.summonedLocale = "en-US"
     root.focusedWhenOpened = null
     root.focusReturn = ""
     root.ownerScreenName = ""
@@ -366,7 +374,7 @@ Item {
             id: searchField
             Layout.fillWidth: true
             semanticProfile: productProfile
-            placeholderText: "Search programs"
+            semanticPlaceholderText: "Search programs"
             onTextChanged: root.filter = text
             Component.onCompleted: searchField.forceActiveFocus()
             Keys.onReturnPressed: {
@@ -377,7 +385,7 @@ Item {
 
           Text {
             visible: root.pins.length > 0 && root.filter.length === 0
-            text: "Pinned"
+            text: productProfile.text("Pinned")
             color: Tokens.text.secondary
             font.pixelSize: Style.font.bodySmall
             font.family: Tokens.typography.family
@@ -438,7 +446,7 @@ Item {
 
           Text {
             visible: root.recentApps.length > 0 && root.filter.length === 0
-            text: "Recent"
+            text: productProfile.text("Recent")
             color: Tokens.text.secondary
             font.pixelSize: Style.font.bodySmall
             font.family: Tokens.typography.family
@@ -497,7 +505,7 @@ Item {
 
           Text {
             visible: root.filter.length === 0
-            text: "All programs"
+            text: productProfile.text("All programs")
             color: Tokens.text.secondary
             font.pixelSize: Style.font.bodySmall
             font.family: Tokens.typography.family
@@ -625,7 +633,7 @@ Item {
             Text {
               textFormat: Text.PlainText
               Layout.fillWidth: true
-              text: root.userName.length > 0 ? root.userName : "Local account"
+              text: root.userName.length > 0 ? root.userName : productProfile.text("Local account")
               color: Tokens.text.primary
               font.family: Tokens.typography.family
               font.pixelSize: Style.font.subtitle
@@ -663,7 +671,7 @@ Item {
                 anchors.right: parent.right
                 anchors.leftMargin: 36
                 textFormat: Text.PlainText
-                text: modelData.name
+                text: productProfile.text(modelData.name)
                 color: Tokens.text.primary
                 font.family: Tokens.typography.family
                 font.pixelSize: Style.font.body
@@ -694,7 +702,7 @@ Item {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               anchors.left: parent.left
-              text: modeProfile && modeProfile.mode === "desktop" ? "Power User Mode" : "Desktop Mode"
+              text: productProfile.text(modeProfile && modeProfile.mode === "desktop" ? "Power User Mode" : "Desktop Mode")
               color: modeMouse.containsMouse ? Tokens.text.primary : Tokens.text.secondary
               font.family: Tokens.typography.family
               font.pixelSize: Style.font.bodySmall
@@ -806,7 +814,7 @@ Item {
                   anchors.verticalCenter: parent.verticalCenter
                   anchors.left: parent.left
                   anchors.leftMargin: 32
-                  text: modelData.label
+                  text: productProfile.text(modelData.label)
                   color: Tokens.text.primary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.body
@@ -913,7 +921,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 8
-                text: root.isPinnedId(root.desktopIdOf(root.pinMenuItem)) ? "Unpin from taskbar" : "Pin to taskbar"
+                text: productProfile.text(root.isPinnedId(root.desktopIdOf(root.pinMenuItem)) ? "Unpin from taskbar" : "Pin to taskbar")
                 color: Tokens.text.primary
                 font.family: Tokens.typography.family
                 font.pixelSize: Style.font.body
