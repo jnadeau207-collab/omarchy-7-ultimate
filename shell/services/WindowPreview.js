@@ -30,8 +30,12 @@ function previewRow(win) {
   }
 }
 
+function isLengthList(value) {
+  return !!value && typeof value !== "function" && typeof value.length === "number"
+}
+
 function previewRows(windows) {
-  var list = Array.isArray(windows) ? windows : []
+  var list = isLengthList(windows) ? windows : []
   var out = []
   for (var i = 0; i < list.length; i++) {
     var row = previewRow(list[i])
