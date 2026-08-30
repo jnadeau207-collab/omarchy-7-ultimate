@@ -99,12 +99,17 @@ grep -Fq 'org.omarchy.Settings' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
 grep -Fq 'Ui.SettingsHostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml" \
   || fail "Settings window hosts existing panel pages"
 grep -Fq 'function hostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
-  || fail "Settings maps Sound/Network/Bluetooth/Power onto existing panels"
+  || fail "Settings maps Network/Bluetooth/Power onto existing panels"
 if grep -Fq 'plugins/panels/monitor/Panel.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
   fail "Settings Display does not host the Process/hyprctl monitor panel"
 fi
+if grep -Fq 'plugins/panels/audio/Panel.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
+  fail "Settings Sound does not host the Process/pactl audio panel"
+fi
 grep -Fq 'display.inspect' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
   || fail "Settings Display reads the existing Fabric display.inspect inventory"
+grep -Fq 'audio.inspect' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
+  || fail "Settings Sound reads the existing Fabric audio.inspect inventory"
 grep -Fq 'Ui/SettingsPersonalizationHost.qml' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
   || fail "Settings Personalization hosts the existing image picker"
 grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/image-picker/ImagePicker.qml" \
