@@ -428,26 +428,45 @@ function normalizeResult(state, result) {
   return { value: value, records: records, totalRecords: total, clipped: clipped, truncated: truncated, selectedMissing: selectedMissing, observedAt: result.observedAt }
 }
 
+function locationById(locations, locationId) {
+  if (!Array.isArray(locations)) return null
+  for (var i = 0; i < locations.length; i++) if (locations[i].id === locationId) return locations[i]
+  return null
+}
+
+function pageAvailability(query, value) {
+  var availability = value.availability
+  if (query.kind !== "this-pc" || value.action !== "inspect" || !isObject(value.state)) return availability
+  if (availability.state === "unavailable" || availability.read === false) return availability
+  var thisPc = locationById(value.state.locations, "files.location.this-pc")
+  if (!thisPc) return availability
+  if (thisPc.state === "available") return { state: "available", read: true, operation: false, reasons: [] }
+  var reasons = isObject(thisPc.reason) ? [thisPc.reason] : []
+  if (thisPc.state === "degraded") return { state: "degraded", read: true, operation: false, reasons: reasons }
+  return { state: "unavailable", read: false, operation: false, reasons: reasons }
+}
+
 function acceptedState(previous, result) {
   var normalized = normalizeResult(previous, result)
   if (normalized.error) return failureState(previous, responseError(normalized.error))
+  var page = pageAvailability(previous.query, normalized.value)
   var next = cloneState(previous)
   next.records = normalized.records
   next.totalRecords = normalized.totalRecords
   next.clipped = normalized.clipped
   next.truncated = normalized.truncated
   next.selectedMissing = normalized.selectedMissing
-  next.availability = normalized.value.availability.state
+  next.availability = page.state
   next.revision = normalized.value.revision || ""
   next.observedAt = normalized.observedAt
   next.requestId = ""
   next.error = null
-  next.reasons = copyArray(normalized.value.availability.reasons)
-  if (normalized.value.availability.state === "unavailable" || normalized.value.availability.read === false) next.phase = "unavailable"
+  next.reasons = copyArray(page.reasons)
+  if (page.state === "unavailable" || page.read === false) next.phase = "unavailable"
   else if (normalized.truncated || normalized.clipped) next.phase = "partial"
-  else if (normalized.value.availability.state === "degraded") next.phase = "degraded"
+  else if (page.state === "degraded") next.phase = "degraded"
   else if (normalized.records.length === 0) next.phase = "empty"
-  else if (normalized.value.availability.state === "available") next.phase = "available"
+  else if (page.state === "available") next.phase = "available"
   else next.phase = "ready"
   return next
 }
