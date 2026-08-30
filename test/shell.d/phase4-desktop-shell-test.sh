@@ -96,6 +96,42 @@ grep -Fq 'org.omarchy.Files' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start exposes Files as a destination"
 grep -Fq 'org.omarchy.Settings' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start exposes Settings as a destination"
+grep -Fq 'Ui.SettingsHostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml" \
+  || fail "Settings window hosts existing panel pages"
+grep -Fq 'function hostedPanel' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" \
+  || fail "Settings maps Display/Sound/Network/Bluetooth/Power onto existing panels"
+if grep -Fq 'id: "omarchy.monitor"' "$ROOT/shell/plugins/ultimate-settings/Settings.qml"; then
+  fail "Settings is not a five-button overlay that dismisses into floating panels"
+fi
+python3 - "$ROOT" <<'PY' || fail "hosted Settings pages keep KeyboardPanel out of the Settings process"
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+panels = [
+    "shell/plugins/panels/monitor/Panel.qml",
+    "shell/plugins/panels/audio/Panel.qml",
+    "shell/plugins/panels/network/Panel.qml",
+    "shell/plugins/panels/bluetooth/Panel.qml",
+    "shell/plugins/panels/power/Panel.qml",
+]
+for rel in panels:
+    text = (root / rel).read_text(encoding="utf-8")
+    if "id: embedHost" not in text:
+        raise SystemExit(f"{rel} missing embedHost")
+    if "property bool embedMode" not in text:
+        raise SystemExit(f"{rel} missing embedMode")
+    if "id: overlayLoader" not in text:
+        raise SystemExit(f"{rel} missing overlayLoader")
+    if "overlayReady" not in text:
+        raise SystemExit(f"{rel} arms KeyboardPanel only after Settings inject")
+    if "function adoptOverlayPage" not in text:
+        raise SystemExit(f"{rel} missing overlay adopt")
+keyboard = (root / "shell/Ui/KeyboardPanel.qml").read_text(encoding="utf-8")
+if "pageHost" not in keyboard:
+    raise SystemExit("KeyboardPanel does not expose pageHost for Superbar overlay adopt")
+PY
+pass "Settings embeds panel pages without constructing a layer-shell KeyboardPanel"
 grep -Fq 'All programs' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start keeps an All programs list"
 grep -Fq 'Pictures' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

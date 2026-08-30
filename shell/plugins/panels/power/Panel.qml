@@ -15,6 +15,7 @@ Panel {
   manageIpc: false
   property bool chromeVisible: true
   property Item hostAnchor: null
+  property bool embedMode: false
   property var batteryInfo: ({})
   property var systemInfo: ({})
   property var profiles: []
@@ -177,6 +178,7 @@ Panel {
   }
 
   IpcHandler {
+    enabled: !root.embedMode
     target: "omarchy.power"
 
     function open() { root.open() }
@@ -203,9 +205,31 @@ Panel {
 
   onBatteryPresentChanged: if (!batteryPresent) close()
 
-  visible: batteryPresent
-  implicitWidth: chromeVisible && batteryPresent ? button.implicitWidth : 0
-  implicitHeight: batteryPresent ? button.implicitHeight : 0
+  visible: embedMode || batteryPresent
+  implicitWidth: embedMode ? (parent ? parent.width : 0) : (chromeVisible && batteryPresent ? button.implicitWidth : 0)
+  implicitHeight: embedMode ? (parent ? parent.height : 0) : (batteryPresent ? button.implicitHeight : 0)
+  anchors.fill: embedMode ? parent : undefined
+
+  function adoptOverlayPage() {
+    if (root.embedMode || !root.chromeVisible) return
+    var overlay = overlayLoader.item
+    if (!overlay || !overlay.pageHost) return
+    keyCatcher.parent = overlay.pageHost
+    keyCatcher.anchors.fill = overlay.pageHost
+  }
+
+  Timer {
+    id: overlayArm
+    interval: 0
+    onTriggered: {
+      if (!root.embedMode && root.chromeVisible)
+        root.overlayReady = true
+    }
+  }
+
+  property bool overlayReady: false
+
+  Component.onCompleted: overlayArm.start()
 
   Process {
     id: batteryProc
@@ -230,7 +254,7 @@ Panel {
     onExited: root.refresh()
   }
 
-  Timer { interval: 5000; running: root.opened; repeat: true; onTriggered: root.refresh() }
+  Timer { interval: 5000; running: root.opened || root.embedMode; repeat: true; onTriggered: root.refresh() }
 
   // Rotate the status phrase while the panel is open and we're in a
   // rotating state (charging or on battery). The text swap is wrapped in a
@@ -238,7 +262,7 @@ Panel {
   Timer {
     id: phraseTimer
     interval: 2800
-    running: root.opened && root.rotatingPhrases
+    running: (root.opened || root.embedMode) && root.rotatingPhrases
     repeat: true
     triggeredOnStart: false
     onTriggered: phraseSwap.restart()
@@ -292,15 +316,10 @@ Panel {
     }
   }
 
-  KeyboardPanel {
-    id: panel
-    anchorItem: root.hostAnchor || button
-    owner: root
-    bar: root.bar
-    open: root.opened && root.batteryPresent
-    focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(380))
-    contentHeight: panel.fittedContentHeight(column.implicitHeight)
+  Item {
+    id: embedHost
+    visible: !overlayLoader.active
+    anchors.fill: parent
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -508,6 +527,22 @@ Panel {
         }
       }
     }
+  }
+
+  Loader {
+    id: overlayLoader
+    active: root.overlayReady
+    sourceComponent: KeyboardPanel {
+      id: panel
+      anchorItem: root.hostAnchor || button
+      owner: root
+      bar: root.bar
+      open: root.opened && root.batteryPresent
+      focusTarget: keyCatcher
+      contentWidth: panel.fittedContentWidth(Style.space(380))
+      contentHeight: panel.fittedContentHeight(column.implicitHeight)
+    }
+    onLoaded: root.adoptOverlayPage()
   }
 
   component InfoPair: Row {

@@ -16,6 +16,8 @@ Item {
   property var queryState: SettingsModel.baseState(SettingsModel.OVERVIEW_ROUTE, {}, "offline")
 
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
+  readonly property var hostedSpec: SettingsModel.hostedPanel(host ? host.currentRoute : "")
+  readonly property bool hostedPage: hostedSpec !== null
   readonly property var visibleRoutes: filteredRoutes(navigation.query)
   readonly property bool queryBusy: queryState.phase === "catalog-loading" || queryState.phase === "loading"
   readonly property bool overviewVisible: queryState.phase === "overview"
@@ -184,7 +186,9 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              text: root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."
+              text: root.hostedPage && root.hostedSpec
+                ? root.hostedSpec.honesty
+                : (root.currentRoute ? root.currentRoute.description : "The requested route is unavailable.")
               color: Tokens.text.secondary
               font.family: Style.font.family
               font.pixelSize: Style.font.body
@@ -196,14 +200,22 @@ Item {
           }
 
           Ui.Badge {
-            text: SettingsModel.phaseBadge(root.queryState)
-            tone: SettingsModel.phaseTone(root.queryState)
+            text: root.hostedPage ? "LIVE PANEL" : SettingsModel.phaseBadge(root.queryState)
+            tone: root.hostedPage ? "info" : SettingsModel.phaseTone(root.queryState)
             Layout.alignment: Qt.AlignTop
           }
         }
 
+        Ui.SettingsHostedPanel {
+          visible: root.hostedPage
+          sourcePath: root.hostedSpec ? root.hostedSpec.source : ""
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+        }
+
         Controls.ScrollView {
           id: contentScroll
+          visible: !root.hostedPage
           Layout.fillWidth: true
           Layout.fillHeight: true
           contentWidth: availableWidth

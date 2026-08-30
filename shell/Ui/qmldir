@@ -38,6 +38,7 @@ ProgressRing 1.0 ProgressRing.qml
 RadioButton 1.0 RadioButton.qml
 ScreenMoveRemap 1.0 ScreenMoveRemap.qml
 SearchBox 1.0 SearchBox.qml
+SettingsHostedPanel 1.0 SettingsHostedPanel.qml
 PopupCard 1.0 PopupCard.qml
 SearchableDropdown 1.0 SearchableDropdown.qml
 SpeedTestOverlay 1.0 SpeedTestOverlay.qml

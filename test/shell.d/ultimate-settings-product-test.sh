@@ -71,6 +71,23 @@ assertThrows(
 )
 assertEqual(Model.queryForRoute('settings.not-real'), null, 'unknown Settings routes fail closed before transport')
 
+const hosted = [
+  ['settings.display.overview', 'plugins/panels/monitor/Panel.qml', 'omarchy.monitor'],
+  ['settings.audio.overview', 'plugins/panels/audio/Panel.qml', 'omarchy.audio'],
+  ['settings.network.overview', 'plugins/panels/network/Panel.qml', 'omarchy.network'],
+  ['settings.bluetooth.overview', 'plugins/panels/bluetooth/Panel.qml', 'omarchy.bluetooth'],
+  ['settings.power.overview', 'plugins/panels/power/Panel.qml', 'omarchy.power']
+]
+for (const [routeId, source, pluginId] of hosted) {
+  const spec = Model.hostedPanel(routeId)
+  assert(spec !== null, `${routeId} hosts an existing panel`)
+  assertEqual(spec.source, source, `${routeId} hosts ${source}`)
+  assertEqual(spec.pluginId, pluginId, `${routeId} names ${pluginId}`)
+  assert(String(spec.honesty).includes('Phase 5'), `${routeId} labels typed services as Phase 5`)
+}
+assertEqual(Model.hostedPanel('settings.accessibility.overview'), null, 'Accessibility stays an honest Fabric page')
+assertEqual(Model.hostedPanel('settings.overview'), null, 'Settings home is not a hosted panel')
+
 function actionContract(capability, mode) {
   return {
     capability,
@@ -311,6 +328,7 @@ rejectedController = Model.createController({
 rejectedController.setConnected(true)
 assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
 JS
+pass "Settings hosts Display, Sound, Network, Bluetooth, and Power panels"
 
 entrypoint="$ROOT/shell/ultimate-settings.qml"
 application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
@@ -363,3 +381,30 @@ grep -Fq 'text: "CHANGES UNAVAILABLE"' "$application" \
 grep -Fq 'no direct commands, mutation, preflight, approval, or execution authority' "$application" \
   || fail "Settings states its read-only authority boundary"
 pass "Settings exposes no false operation or preflight affordance"
+
+grep -Fq 'Ui.SettingsHostedPanel' "$application" \
+  || fail "Settings hosts existing panel pages inside its chrome"
+grep -Fq 'LIVE PANEL' "$application" \
+  || fail "Settings labels hosted pages as live panels"
+grep -Fq 'hostedPanel(' "$model" \
+  || fail "Settings owns a closed hosted-panel map"
+if grep -Fq 'plugins/' "$application"; then
+  fail "Settings application QML does not hard-code plugin paths"
+fi
+pass "Settings Display/Sound/Network/Bluetooth/Power pages host existing panels"
+
+for panel in monitor audio network bluetooth power; do
+  grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/panels/$panel/Panel.qml" \
+    || fail "$panel panel can embed inside Settings chrome"
+  grep -Fq 'id: embedHost' "$ROOT/shell/plugins/panels/$panel/Panel.qml" \
+    || fail "$panel panel reparents its page into Settings"
+done
+pass "Existing panels support Settings embed mode"
+
+stub="$ROOT/shell/plugins/ultimate-settings/Settings.qml"
+if grep -Fq 'omarchy.monitor' "$stub"; then
+  fail "Settings stub no longer toggles the Display overlay"
+fi
+grep -Fq 'org.omarchy.Settings' "$stub" \
+  || fail "Settings stub launches the Settings window"
+pass "Settings overlay stub launches the Settings window"

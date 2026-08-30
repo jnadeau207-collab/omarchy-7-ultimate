@@ -32,7 +32,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Credential Manager | missing | |
 | Power Options | prototype | `omarchy.power` panel. Not Power Options. Forty-task "Change power mode" is pending. |
 | Sound | prototype | `omarchy.audio` panel. Forty-task volume/headphones rows pending. |
-| Display | prototype | `omarchy.monitor` panel (`hyprctl keyword monitor`, `omarchy-hyprland-monitor-scaling`). Not Display Settings. |
+| Display | prototype | Settings → Display hosts the existing `omarchy.monitor` panel (scale, brightness, arrangement). Typed Display service is Phase 5. |
 | Firewall | plumbing | `install/config/firewall.sh` / ufw on by default (`manual/35-networking.md`). No Firewall Settings surface. |
 | Update | plumbing / prototype | Heritage `omarchy.system-update` widget; Superbar does not load it. `omarchy-update` + snapshots. No Update history Settings page. Forty-task rows 28–29 pending. |
 | Backup & Restore | plumbing | Snapper via `omarchy-snapshot`. No Backup and Restore UI. |
