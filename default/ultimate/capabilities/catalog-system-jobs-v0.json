@@ -170,9 +170,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Personalization",
+        "surface": "Settings",
         "label": "Choose desktop background",
-        "path": "Start > Personalization > Background"
+        "path": "Start > Settings > Personalization"
       },
       "agentCenterLabel": "Choose desktop background",
       "proofIds": {
@@ -819,9 +819,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Connect to Wi-Fi",
-        "path": "Superbar > Network"
+        "path": "Start > Settings > Network"
       },
       "agentCenterLabel": "Connect to Wi-Fi",
       "proofIds": {
@@ -913,9 +913,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Manage network connections",
-        "path": "Superbar > Network"
+        "path": "Start > Settings > Network"
       },
       "agentCenterLabel": "Manage network connections",
       "proofIds": {
@@ -1006,9 +1006,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Personalization",
+        "surface": "Settings",
         "label": "Choose a theme",
-        "path": "Start > Personalization"
+        "path": "Start > Settings > Personalization"
       },
       "agentCenterLabel": "Choose a theme",
       "proofIds": {
@@ -1659,9 +1659,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Choose power mode",
-        "path": "Superbar > Power"
+        "path": "Start > Settings > Power"
       },
       "agentCenterLabel": "Choose power mode",
       "proofIds": {
@@ -1752,9 +1752,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Choose audio output",
-        "path": "Superbar > Sound"
+        "path": "Start > Settings > Sound"
       },
       "agentCenterLabel": "Choose audio output",
       "proofIds": {
@@ -1845,9 +1845,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Configure displays",
-        "path": "Superbar > Display"
+        "path": "Start > Settings > Display"
       },
       "agentCenterLabel": "Configure displays",
       "proofIds": {
@@ -4754,9 +4754,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Adjust output volume",
-        "path": "Superbar > Sound"
+        "path": "Start > Settings > Sound"
       },
       "agentCenterLabel": "Adjust output volume",
       "proofIds": {
