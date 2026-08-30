@@ -13,7 +13,7 @@ Keywords=settings;display;sound;network;bluetooth;input;power;accessibility;upda
 MimeType=x-scheme-handler/omarchy-settings;
 StartupNotify=true
 StartupWMClass=org.omarchy.Settings
-Actions=Display;Network;Accessibility;
+Actions=Display;Network;Personalization;Accessibility;
 
 [Desktop Action Display]
 Name=Display
@@ -22,6 +22,10 @@ Exec=omarchy-launch-settings --source desktop settings.display.overview
 [Desktop Action Network]
 Name=Network & Internet
 Exec=omarchy-launch-settings --source desktop settings.network.overview
+
+[Desktop Action Personalization]
+Name=Personalization
+Exec=omarchy-launch-settings --source desktop settings.personalization.overview
 
 [Desktop Action Accessibility]
 Name=Accessibility

@@ -9,6 +9,8 @@ const fs = require('fs')
 const picker = requireFromRoot('shell/plugins/image-picker/ImagePickerModel.js')
 
 assertEqual(picker.nameForPath('/themes/nord-river.png'), 'nord-river', 'image picker strips directory and extension')
+assertEqual(picker.themeNameForPath('/omarchy/themes/nord/preview.png'), 'nord', 'theme pack label uses the theme directory')
+assertEqual(picker.themeLabelForPath('/omarchy/themes/nord/preview.png'), 'Nord', 'theme pack display label title-cases the directory')
 assertEqual(picker.labelForPath('/themes/nord_river.png'), 'Nord River', 'image picker builds display labels')
 
 const rows = [
@@ -29,6 +31,17 @@ assertDeepEqual(
     { filePath: '/themes/a/plain', fileName: 'plain', thumbnailPath: '/themes/a/plain' }
   ],
   'image picker parses rows and dedupes by file name'
+)
+assertDeepEqual(
+  picker.loadRows([
+    '/themes/nord/preview.png\t/cache/nord.jpg',
+    '/themes/gruvbox/preview.png\t/cache/gruvbox.jpg'
+  ].join('\n'), 'path'),
+  [
+    { filePath: '/themes/nord/preview.png', fileName: 'preview.png', thumbnailPath: '/cache/nord.jpg' },
+    { filePath: '/themes/gruvbox/preview.png', fileName: 'preview.png', thumbnailPath: '/cache/gruvbox.jpg' }
+  ],
+  'theme pack rows keep one preview per theme directory'
 )
 
 assert(picker.itemMatches(images, 0, 'river'), 'image picker matches file names')

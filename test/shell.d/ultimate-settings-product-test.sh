@@ -76,7 +76,8 @@ const hosted = [
   ['settings.audio.overview', 'plugins/panels/audio/Panel.qml', 'omarchy.audio'],
   ['settings.network.overview', 'plugins/panels/network/Panel.qml', 'omarchy.network'],
   ['settings.bluetooth.overview', 'plugins/panels/bluetooth/Panel.qml', 'omarchy.bluetooth'],
-  ['settings.power.overview', 'plugins/panels/power/Panel.qml', 'omarchy.power']
+  ['settings.power.overview', 'plugins/panels/power/Panel.qml', 'omarchy.power'],
+  ['settings.personalization.overview', 'Ui/SettingsPersonalizationHost.qml', 'omarchy.image-picker']
 ]
 for (const [routeId, source, pluginId] of hosted) {
   const spec = Model.hostedPanel(routeId)
@@ -85,7 +86,8 @@ for (const [routeId, source, pluginId] of hosted) {
   assertEqual(spec.pluginId, pluginId, `${routeId} names ${pluginId}`)
   assert(String(spec.honesty).includes('Phase 5'), `${routeId} labels typed services as Phase 5`)
 }
-assertEqual(Model.hostedPanel('settings.accessibility.overview'), null, 'Accessibility stays an honest Fabric page')
+assertEqual(Model.hostedPanel('settings.accessibility.overview'), null, 'Accessibility stays an honest Fabric page; no accessibility panel exists')
+assertEqual(Model.hostedPanel('settings.input.overview'), null, 'Input stays an honest Fabric page; keyboard layout is a bar widget, not a panel')
 assertEqual(Model.hostedPanel('settings.overview'), null, 'Settings home is not a hosted panel')
 
 function actionContract(capability, mode) {

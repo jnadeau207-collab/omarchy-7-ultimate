@@ -2,14 +2,25 @@ function nameForPath(path) {
   return String(path || "").split("/").pop().replace(/\.[^/.]+$/, "")
 }
 
+function themeNameForPath(path) {
+  var parts = String(path || "").replace(/\\/g, "/").split("/")
+  if (parts.length < 2) return nameForPath(path)
+  return parts[parts.length - 2]
+}
+
 function labelForPath(path) {
   return nameForPath(path).replace(/[-_]+/g, " ").replace(/\b\w/g, function(match) { return match.toUpperCase() })
 }
 
-function loadRows(rows) {
+function themeLabelForPath(path) {
+  return themeNameForPath(path).replace(/[-_]+/g, " ").replace(/\b\w/g, function(match) { return match.toUpperCase() })
+}
+
+function loadRows(rows, uniqueBy) {
   var images = []
   var seen = {}
   var paths = String(rows || "").split("\n")
+  var keyField = uniqueBy === "path" ? "path" : "fileName"
 
   for (var i = 0; i < paths.length; i++) {
     var row = paths[i]
@@ -20,8 +31,9 @@ function loadRows(rows) {
     if (!path) continue
 
     var fileName = path.split("/").pop()
-    if (seen[fileName]) continue
-    seen[fileName] = true
+    var key = keyField === "path" ? path : fileName
+    if (seen[key]) continue
+    seen[key] = true
 
     images.push({
       filePath: path,
@@ -39,8 +51,11 @@ function itemMatches(images, index, filterText) {
   if (!needle) return true
 
   var path = String(images[index].filePath || "")
+  var theme = themeNameForPath(path).toLowerCase()
   return nameForPath(path).toLowerCase().indexOf(needle) !== -1
       || labelForPath(path).toLowerCase().indexOf(needle) !== -1
+      || theme.indexOf(needle) !== -1
+      || themeLabelForPath(path).toLowerCase().indexOf(needle) !== -1
 }
 
 function firstMatchingIndex(images, filterText) {
@@ -85,7 +100,9 @@ function nextSelectedIndexForFilter(images, selectedIndex, filterText) {
 if (typeof module !== "undefined") {
   module.exports = {
     nameForPath: nameForPath,
+    themeNameForPath: themeNameForPath,
     labelForPath: labelForPath,
+    themeLabelForPath: themeLabelForPath,
     loadRows: loadRows,
     itemMatches: itemMatches,
     firstMatchingIndex: firstMatchingIndex,
