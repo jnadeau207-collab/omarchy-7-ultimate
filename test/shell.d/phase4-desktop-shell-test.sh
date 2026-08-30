@@ -579,6 +579,10 @@ grep -Fq 'function groupsOnScreen' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar
   || fail "Superbar filters task groups per output"
 grep -Fq 'showsNotificationCluster' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar keeps the notification cluster on the primary output"
+grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start RTL is the existing SemanticProfile summon flag"
+grep -Fq 'LayoutMirroring.enabled: productProfile.rtl' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start card mirrors when the product profile is RTL"
 grep -Fq 'payload.screen' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start opens on the Superbar that summoned it"
 grep -Fq 'restoreFocusOnClose' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

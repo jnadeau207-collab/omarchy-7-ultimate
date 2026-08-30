@@ -14,10 +14,11 @@ Item {
   property var manifest: null
   property bool opened: false
 
+  property bool summonedRtl: false
   SemanticProfile {
     id: productProfile
     profileId: "product"
-    rtl: Qt.application.layoutDirection === Qt.RightToLeft
+    rtl: root.summonedRtl || Qt.application.layoutDirection === Qt.RightToLeft
   }
   property string filter: ""
   property bool focusSearch: false
@@ -111,6 +112,7 @@ Item {
       return
     }
     root.focusSearch = payload.focusSearch === true
+    root.summonedRtl = payload.rtl === true
     root.filter = ""
     if (!root.opened) {
       root.focusedWhenOpened = ToplevelManager.activeToplevel
@@ -146,6 +148,7 @@ Item {
     }
     root.opened = false
     root.filter = ""
+    root.summonedRtl = false
     root.focusedWhenOpened = null
     root.focusReturn = ""
     root.ownerScreenName = ""
