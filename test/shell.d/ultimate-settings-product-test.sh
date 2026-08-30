@@ -72,8 +72,8 @@ assertThrows(
 assertEqual(Model.queryForRoute('settings.not-real'), null, 'unknown Settings routes fail closed before transport')
 
 assertEqual(Model.hostedPanel('settings.display.overview'), null, 'Display reads Fabric inspect instead of hosting the Process monitor panel')
+assertEqual(Model.hostedPanel('settings.audio.overview'), null, 'Sound reads Fabric inspect instead of hosting the Process audio panel')
 const hosted = [
-  ['settings.audio.overview', 'plugins/panels/audio/Panel.qml', 'omarchy.audio'],
   ['settings.network.overview', 'plugins/panels/network/Panel.qml', 'omarchy.network'],
   ['settings.bluetooth.overview', 'plugins/panels/bluetooth/Panel.qml', 'omarchy.bluetooth'],
   ['settings.power.overview', 'plugins/panels/power/Panel.qml', 'omarchy.power'],
@@ -107,6 +107,23 @@ const displayDetail = Object.fromEntries((displayResource.details || []).map(fie
 assertEqual(displayDetail['Mode Width'], '1920', 'Display records surface host mode width')
 assertEqual(displayDetail['Mode Height'], '1080', 'Display records surface host mode height')
 assertEqual(displayDetail.Scale, '1', 'Display records surface host scale')
+const audioResource = Model.normalizeLeafResource({
+  id: `audio.sink.${'a'.repeat(64)}`,
+  label: 'Starship/Matisse HD Audio Controller Digital Stereo (IEC958)',
+  kind: 'sink',
+  default: true,
+  physical: true,
+  ports: [],
+  activePort: null,
+  state: { muted: false, channels: { 'front-left': 40, 'front-right': 40 } }
+}, 0)
+assert(audioResource, 'audio.inspect resources project into Settings records')
+assertEqual(audioResource.label, 'Starship/Matisse HD Audio Controller Digital Stereo (IEC958)', 'Sound records keep the sink label')
+const audioDetail = Object.fromEntries((audioResource.details || []).map(field => [field.label, field.value]))
+assertEqual(audioDetail.Muted, 'No', 'Sound records surface host mute')
+assertEqual(audioDetail['Channels Front Left'], '40', 'Sound records surface host left channel volume')
+assertEqual(audioDetail['Channels Front Right'], '40', 'Sound records surface host right channel volume')
+assertEqual(audioDetail.Default, 'Yes', 'Sound records surface the default sink')
 assertEqual(Model.hostedPanel('settings.input.overview'), null, 'Input stays an honest Fabric page; keyboard layout is a bar widget, not a panel')
 assertEqual(Model.hostedPanel('settings.overview'), null, 'Settings home is not a hosted panel')
 
@@ -350,7 +367,7 @@ rejectedController = Model.createController({
 rejectedController.setConnected(true)
 assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
 JS
-pass "Settings hosts Sound, Network, Bluetooth, and Power panels; Display reads Fabric inspect"
+pass "Settings hosts Network, Bluetooth, and Power panels; Display and Sound read Fabric inspect"
 
 entrypoint="$ROOT/shell/ultimate-settings.qml"
 application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
@@ -416,7 +433,10 @@ fi
 if grep -Fq 'plugins/panels/monitor/Panel.qml' "$model"; then
   fail "Settings Display map does not host the Process monitor panel"
 fi
-pass "Settings Sound/Network/Bluetooth/Power pages host existing panels; Display reads Fabric"
+if grep -Fq 'plugins/panels/audio/Panel.qml' "$model"; then
+  fail "Settings Sound map does not host the Process audio panel"
+fi
+pass "Settings Network/Bluetooth/Power pages host existing panels; Display and Sound read Fabric"
 
 for panel in monitor audio network bluetooth power; do
   grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/panels/$panel/Panel.qml" \
