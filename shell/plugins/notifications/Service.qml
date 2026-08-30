@@ -986,6 +986,16 @@ Item {
           hit = true
         }
       }
+      var history = service.centerRows
+      if (Array.isArray(history)) {
+        for (var h = history.length - 1; h >= 0; h--) {
+          var entry = history[h]
+          if (entry && String(entry.summary || "").indexOf(needle) !== -1) {
+            service.dismissHistoryEntry(entry)
+            hit = true
+          }
+        }
+      }
       return hit ? "ok" : "none"
     }
 
