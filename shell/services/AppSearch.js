@@ -59,6 +59,85 @@ function isDeveloperTool(entry) {
   return false
 }
 
+function letterOf(name) {
+  var ch = String(name || "").charAt(0).toUpperCase()
+  if (ch >= "A" && ch <= "Z") return ch
+  return "#"
+}
+
+function parseRecents(raw) {
+  try {
+    var parsed = JSON.parse(String(raw || "{}"))
+    if (parsed && Array.isArray(parsed.ids)) {
+      var ids = []
+      var i
+      for (i = 0; i < parsed.ids.length; i++) {
+        var id = normalizeEntryId({ id: parsed.ids[i] })
+        if (id) ids.push(id)
+      }
+      return ids
+    }
+  } catch (e) {
+  }
+  return []
+}
+
+function serializeRecents(ids) {
+  return JSON.stringify({ ids: ids || [] }, null, 2) + "\n"
+}
+
+function withRecent(ids, desktopId) {
+  var id = normalizeEntryId({ id: desktopId })
+  if (!id) return ids || []
+  var next = [id]
+  var i
+  for (i = 0; i < (ids || []).length; i++) {
+    if (normalizeEntryId({ id: ids[i] }) !== id) next.push(String(ids[i]))
+  }
+  return next.slice(0, 8)
+}
+
+function recentEntries(ids, values, limit, excludeIds) {
+  var cap = Number(limit) > 0 ? Number(limit) : 8
+  var skip = ({})
+  var byId = ({})
+  var i
+  for (i = 0; i < (excludeIds || []).length; i++)
+    skip[normalizeEntryId({ id: excludeIds[i] })] = true
+  for (i = 0; i < (values || []).length; i++) {
+    var entry = unwrapEntry(values[i])
+    var nid = normalizeEntryId(entry)
+    if (nid && !byId[nid]) byId[nid] = entry
+  }
+  var out = []
+  for (i = 0; i < (ids || []).length && out.length < cap; i++) {
+    var id = normalizeEntryId({ id: ids[i] })
+    if (!id || skip[id] || !byId[id]) continue
+    out.push(byId[id])
+  }
+  return out
+}
+
+function programRows(entries, query) {
+  var rows = []
+  var searching = String(query || "").trim().length > 0
+  var last = ""
+  var i
+  for (i = 0; i < (entries || []).length; i++) {
+    var entry = unwrapEntry(entries[i])
+    if (!entry) continue
+    if (!searching) {
+      var letter = letterOf(entryName(entry))
+      if (letter !== last) {
+        rows.push({ kind: "letter", letter: letter })
+        last = letter
+      }
+    }
+    rows.push({ kind: "app", entry: entry })
+  }
+  return rows
+}
+
 function visibleEntries(rows, query, hideDeveloperTools) {
   var hide = !!hideDeveloperTools && String(query || "").trim().length === 0
   var out = []
@@ -201,6 +280,12 @@ if (typeof module !== "undefined") {
     sortedEntries: sortedEntries,
     unwrapEntry: unwrapEntry,
     isDeveloperTool: isDeveloperTool,
-    visibleEntries: visibleEntries
+    visibleEntries: visibleEntries,
+    letterOf: letterOf,
+    parseRecents: parseRecents,
+    serializeRecents: serializeRecents,
+    withRecent: withRecent,
+    recentEntries: recentEntries,
+    programRows: programRows
   }
 }

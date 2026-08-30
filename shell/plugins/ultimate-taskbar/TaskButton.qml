@@ -32,6 +32,33 @@ Item {
   }
   readonly property string label: group && group.name ? group.name : ""
   readonly property string iconName: group && (group.icon || group.desktopId) ? (group.icon || group.desktopId) : ""
+  HoverHandler {
+    id: hover
+    onHoveredChanged: {
+      if (!root.bar || peek.visible || menu.visible) return
+      if (hovered) root.bar.showTooltip(root, root.label)
+      else if (!mouse.containsMouse) root.bar.hideTooltip(root)
+    }
+  }
+  readonly property bool tooltipHovered: visible && (mouse.containsMouse || hover.hovered) && !peek.visible && !menu.visible
+
+  function closeActiveWindow() {
+    if (!windowService || windows.length === 0) return
+    var i
+    for (i = 0; i < windows.length; i++) {
+      if (windowService.isActive(windows[i].address)) {
+        windowService.close(windows[i].address)
+        return
+      }
+    }
+    windowService.close(windows[0].address)
+  }
+
+  function closeGroupWindows() {
+    if (!windowService) return
+    var i
+    for (i = 0; i < windows.length; i++) windowService.close(windows[i].address)
+  }
 
   implicitWidth: 56
   implicitHeight: parent ? parent.height : 48
@@ -124,7 +151,7 @@ Item {
       text: root.label ? root.label.charAt(0).toUpperCase() : "?"
       color: Tokens.text.primary
       font.pixelSize: Style.font.body
-      font.family: "sans-serif"
+      font.family: Tokens.typography.family
     }
 
     Badge {
@@ -161,6 +188,10 @@ Item {
       root.activate()
     }
     onContainsMouseChanged: {
+      if (root.bar) {
+        if (containsMouse && !menu.visible && !peek.visible) root.bar.showTooltip(root, root.label)
+        else root.bar.hideTooltip(root)
+      }
       if (mouse.containsMouse && root.running && !menu.visible) peekTimer.restart()
       else {
         peekTimer.stop()
@@ -192,6 +223,7 @@ Item {
     anchor.rect.y: -8
 
     onVisibleChanged: {
+      if (visible && root.bar) root.bar.hideTooltip(root)
       if (!visible || !windowService) return
       var rows = root.previewRows
       var i
@@ -221,7 +253,7 @@ Item {
           text: root.label
           color: Tokens.text.primary
           font.pixelSize: Style.font.body
-          font.family: "sans-serif"
+          font.family: Tokens.typography.family
           elide: Text.ElideRight
         }
 
@@ -278,7 +310,7 @@ Item {
               text: modelData.title + (modelData.minimized ? " (minimized)" : "")
               color: Tokens.text.primary
               font.pixelSize: Style.font.bodySmall
-              font.family: "sans-serif"
+              font.family: Tokens.typography.family
               elide: Text.ElideRight
             }
 
@@ -292,7 +324,7 @@ Item {
               text: modelData.workspace ? ("Desktop " + modelData.workspace) : ""
               color: Tokens.text.secondary
               font.pixelSize: Style.font.bodySmall
-              font.family: "sans-serif"
+              font.family: Tokens.typography.family
               elide: Text.ElideRight
             }
 
@@ -305,7 +337,7 @@ Item {
               text: "×"
               color: Tokens.text.primary
               font.pixelSize: Style.font.body
-              font.family: "sans-serif"
+              font.family: Tokens.typography.family
               visible: windowService ? true : false
             }
 
@@ -348,6 +380,7 @@ Item {
     anchor.window: root.hostWindow
     anchor.item: root
     anchor.edges: Edges.Top | Edges.Left
+    onVisibleChanged: if (visible && root.bar) root.bar.hideTooltip(root)
     anchor.gravity: Edges.Top | Edges.Right
     anchor.rect.y: -4
 
@@ -382,7 +415,7 @@ Item {
               text: modelData.name
               color: Tokens.text.primary
               font.pixelSize: Style.font.body
-              font.family: "sans-serif"
+              font.family: Tokens.typography.family
               elide: Text.ElideRight
             }
 
@@ -401,12 +434,15 @@ Item {
         Repeater {
           model: [
             { label: (group && group.pinned) ? "Unpin from taskbar" : "Pin to taskbar", action: "pin" },
-            { label: (windows.length > 1) ? "Close group" : "Close window", action: "close" }
+            { label: "Close window", action: "close-window" },
+            { label: "Close group", action: "close-group" }
           ]
           delegate: Item {
             width: col.width
             height: 28
-            visible: modelData.action !== "close" || root.running
+            visible: modelData.action === "pin" ||
+              (modelData.action === "close-window" && root.running) ||
+              (modelData.action === "close-group" && windows.length > 1)
 
             Text {
               textFormat: Text.PlainText
@@ -416,7 +452,7 @@ Item {
               text: modelData.label
               color: Tokens.text.primary
               font.pixelSize: Style.font.body
-              font.family: "sans-serif"
+              font.family: Tokens.typography.family
             }
 
             MouseArea {
@@ -425,9 +461,8 @@ Item {
               onClicked: {
                 if (modelData.action === "pin" && root.bar && typeof root.bar.togglePin === "function")
                   root.bar.togglePin(group)
-                if (modelData.action === "close") {
-                  for (var i = 0; i < windows.length; i++) windowService.close(windows[i].address)
-                }
+                if (modelData.action === "close-window") root.closeActiveWindow()
+                if (modelData.action === "close-group") root.closeGroupWindows()
                 menu.visible = false
               }
             }

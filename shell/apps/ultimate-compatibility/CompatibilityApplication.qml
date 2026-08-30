@@ -6,6 +6,7 @@ import qs.Ui as Ui
 import qs.apps.shared as Shared
 
 import "CompatibilityModel.js" as CompatibilityModel
+import "." as Compatibility
 
 Item {
   id: root
@@ -377,7 +378,7 @@ Item {
               rowSpacing: Style.space(12)
               Repeater {
                 model: root.queryState.records
-                delegate: CompatibilityRecordCard {
+                delegate: Compatibility.CompatibilityRecordCard {
                   required property var modelData
                   record: modelData
                   selected: root.queryState.entityId !== "" && modelData.id === root.queryState.entityId

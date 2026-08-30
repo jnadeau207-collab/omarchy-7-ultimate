@@ -65,7 +65,7 @@ import sys
 
 root = pathlib.Path(sys.argv[1])
 expected = {
-    "ultimate-files": ({"location", "entry", "mount"}, {"files.overview", "files.this-pc", "files.desktop", "files.documents", "files.downloads", "files.recent", "files.search", "files.trash", "files.network"}),
+    "ultimate-files": ({"location", "entry", "mount"}, {"files.overview", "files.this-pc", "files.desktop", "files.documents", "files.downloads", "files.pictures", "files.recent", "files.search", "files.trash", "files.network"}),
     "ultimate-software": ({"software", "installation", "operation"}, {"software.catalog", "software.installed", "software.adoption", "software.history"}),
     "ultimate-compatibility": ({"deployment"}, {"compatibility.overview", "compatibility.decide", "compatibility.deployments"}),
 }

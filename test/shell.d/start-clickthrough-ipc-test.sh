@@ -7,6 +7,11 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 start_chrome_vals=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["cardWidth"], d["cardHeight"], d["barHeight"], d["cardLeftMargin"])' "$ROOT/default/ultimate/start-chrome.json")
 read -r START_CARD_W START_CARD_H START_BAR_H START_CARD_LEFT <<<"$start_chrome_vals"
 
+if ! command -v hyprctl >/dev/null 2>&1; then
+  pass "hyprctl is not available; skipping Start IPC lifecycle"
+  exit 0
+fi
+
 require_compositor "Start IPC click-through lifecycle"
 require_command jq
 require_command hyprctl

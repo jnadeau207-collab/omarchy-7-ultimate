@@ -12,6 +12,7 @@ var ROUTES = [
   { routeId: "files.desktop", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.desktop", relativePath: "", includeHidden: false, limit: 96 } },
   { routeId: "files.documents", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.documents", relativePath: "", includeHidden: false, limit: 96 } },
   { routeId: "files.downloads", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.downloads", relativePath: "", includeHidden: false, limit: 96 } },
+  { routeId: "files.pictures", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.pictures", relativePath: "", includeHidden: false, limit: 96 } },
   { routeId: "files.recent", action: "recent", capability: "files.recent.read", kind: "entries", arguments: { limit: 96 } },
   { routeId: "files.search", action: "search", capability: "files.search", kind: "entries", arguments: null },
   { routeId: "files.trash", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.trash", relativePath: "", includeHidden: false, limit: 96 } },
@@ -234,7 +235,7 @@ function detail(label, value) {
 
 function validLocation(location) {
   return exactKeys(location, ["id", "kind", "label", "state", "writable", "rootToken", "reason"]) && stableId(location.id) &&
-    ["this-pc", "home", "desktop", "documents", "downloads", "trash", "mount", "network"].indexOf(location.kind) >= 0 &&
+    ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "trash", "mount", "network"].indexOf(location.kind) >= 0 &&
     typeof location.label === "string" && location.label.length >= 1 && location.label.length <= 160 &&
     ["available", "degraded", "unavailable"].indexOf(location.state) >= 0 && typeof location.writable === "boolean" && revision(location.rootToken) &&
     (location.reason === null || validReason(location.reason))

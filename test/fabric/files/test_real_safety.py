@@ -90,6 +90,28 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(any(reason["code"] == "files.recent-invalid" for reason in inventory["availability"]["reasons"]))
             self.assertEqual(inventory["state"]["recent"], [])
 
+    async def test_start_places_survive_a_fat_home_inventory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            pictures = home / "Pictures"
+            pictures.mkdir()
+            (pictures / "sunset.png").write_text("photo")
+            for index in range(256):
+                (home / f"noise-{index:03d}.txt").write_text("pad")
+            config = ROOT / "default" / "ultimate" / "files" / "locations-v0.json"
+            provider = files.build_provider(home=home, config_path=config)
+            inventory = await provider.read("inspect", {})
+            pictures_entries = [
+                item for item in inventory["state"]["entries"]
+                if item["locationId"] == "files.location.pictures"
+            ]
+            self.assertIn("sunset.png", {item["name"] for item in pictures_entries})
+            browse = await provider.read(
+                "browse",
+                {"locationId": "files.location.pictures", "relativePath": "", "includeHidden": False, "limit": 20},
+            )
+            self.assertIn("sunset.png", {item["name"] for item in browse["entries"]})
+
     def test_path_normalizer_rejects_every_escape_vocabulary(self) -> None:
         for candidate in ("..", "../x", "x/..", "/x", "x/", "x//y", "x\\y", "x\x00y", "x/./y", "x\ny"):
             with self.subTest(candidate=repr(candidate)), self.assertRaises(ValueError):
