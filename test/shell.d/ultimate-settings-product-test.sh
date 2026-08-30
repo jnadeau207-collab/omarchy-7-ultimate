@@ -73,8 +73,8 @@ assertEqual(Model.queryForRoute('settings.not-real'), null, 'unknown Settings ro
 
 assertEqual(Model.hostedPanel('settings.display.overview'), null, 'Display reads Fabric inspect instead of hosting the Process monitor panel')
 assertEqual(Model.hostedPanel('settings.audio.overview'), null, 'Sound reads Fabric inspect instead of hosting the Process audio panel')
+assertEqual(Model.hostedPanel('settings.network.overview'), null, 'Network reads Fabric inspect instead of hosting the Process nmcli panel')
 const hosted = [
-  ['settings.network.overview', 'plugins/panels/network/Panel.qml', 'omarchy.network'],
   ['settings.bluetooth.overview', 'plugins/panels/bluetooth/Panel.qml', 'omarchy.bluetooth'],
   ['settings.power.overview', 'plugins/panels/power/Panel.qml', 'omarchy.power'],
   ['settings.personalization.overview', 'Ui/SettingsPersonalizationHost.qml', 'omarchy.image-picker']
@@ -124,6 +124,29 @@ assertEqual(audioDetail.Muted, 'No', 'Sound records surface host mute')
 assertEqual(audioDetail['Channels Front Left'], '40', 'Sound records surface host left channel volume')
 assertEqual(audioDetail['Channels Front Right'], '40', 'Sound records surface host right channel volume')
 assertEqual(audioDetail.Default, 'Yes', 'Sound records surface the default sink')
+const networkRadio = Model.normalizeLeafResource({
+  id: 'network.radio.wifi',
+  label: 'Wi-Fi radio',
+  kind: 'wifi-radio',
+  state: { managerRunning: true, hardwareEnabled: false, enabled: true }
+}, 0)
+assert(networkRadio, 'network.inspect radio resources project into Settings records')
+assertEqual(networkRadio.label, 'Wi-Fi radio', 'Network records keep the Wi-Fi radio label')
+const radioDetail = Object.fromEntries((networkRadio.details || []).map(field => [field.label, field.value]))
+assertEqual(radioDetail.Enabled, 'Yes', 'Network records surface host Wi-Fi radio enabled')
+assertEqual(radioDetail['Hardware Enabled'], 'No', 'Network records surface host Wi-Fi hardware missing as not enabled')
+assertEqual(radioDetail['Manager Running'], 'Yes', 'Network records surface host NetworkManager running')
+const networkIface = Model.normalizeLeafResource({
+  id: `network.interface.${'b'.repeat(64)}`,
+  label: 'enp4s0',
+  kind: 'ethernet',
+  state: { status: 'connected', connection: 'enp4s0' }
+}, 0)
+assert(networkIface, 'network.inspect interface resources project into Settings records')
+assertEqual(networkIface.label, 'enp4s0', 'Network records keep the interface label')
+const ifaceDetail = Object.fromEntries((networkIface.details || []).map(field => [field.label, field.value]))
+assertEqual(ifaceDetail.Status, 'connected', 'Network records surface host interface status')
+assertEqual(ifaceDetail.Connection, 'enp4s0', 'Network records surface host connection name')
 assertEqual(Model.hostedPanel('settings.input.overview'), null, 'Input stays an honest Fabric page; keyboard layout is a bar widget, not a panel')
 assertEqual(Model.hostedPanel('settings.overview'), null, 'Settings home is not a hosted panel')
 
@@ -367,7 +390,7 @@ rejectedController = Model.createController({
 rejectedController.setConnected(true)
 assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
 JS
-pass "Settings hosts Network, Bluetooth, and Power panels; Display and Sound read Fabric inspect"
+pass "Settings hosts Bluetooth and Power panels; Display, Sound, and Network read Fabric inspect"
 
 entrypoint="$ROOT/shell/ultimate-settings.qml"
 application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
@@ -436,7 +459,10 @@ fi
 if grep -Fq 'plugins/panels/audio/Panel.qml' "$model"; then
   fail "Settings Sound map does not host the Process audio panel"
 fi
-pass "Settings Network/Bluetooth/Power pages host existing panels; Display and Sound read Fabric"
+if grep -Fq 'plugins/panels/network/Panel.qml' "$model"; then
+  fail "Settings Network map does not host the Process nmcli panel"
+fi
+pass "Settings Bluetooth/Power pages host existing panels; Display, Sound, and Network read Fabric"
 
 for panel in monitor audio network bluetooth power; do
   grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/panels/$panel/Panel.qml" \
