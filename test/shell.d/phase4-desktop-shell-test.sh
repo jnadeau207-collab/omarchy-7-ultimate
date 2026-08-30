@@ -533,9 +533,9 @@ grep -Fq 'tooltipHovered' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml"
   || fail "Start orb reports tooltip hover"
 grep -Fq 'HoverHandler' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
   || fail "Start orb hover uses the layer HoverHandler"
-grep -Fq 'text: "Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq '"Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a labeled Shut down control"
-grep -Fq 'placeholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start search names the job"
 grep -Fq 'def _location_query_availability' "$ROOT/default/fabric/omarchy_fabric/providers/files/provider.py" \
   || fail "Files browse reports the selected location availability"
@@ -567,7 +567,7 @@ print('ok - Start open does not touch searchField before the card Loader is acti
 if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent an Accessibility destination"
 fi
-grep -Fq 'text: "Recent"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'productProfile.text("Recent")' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a Recent section for launched programs"
 grep -Fq 'kind === "letter"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "All programs is letter-grouped"
@@ -579,6 +579,12 @@ grep -Fq 'function groupsOnScreen' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar
   || fail "Superbar filters task groups per output"
 grep -Fq 'showsNotificationCluster' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar keeps the notification cluster on the primary output"
+grep -Fq 'payload.pseudoLocale === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pseudo-locale is the existing SemanticProfile summon flag"
+grep -Fq 'pseudoLocale: root.summonedPseudoLocale || root.summonedLocale === "pseudo"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start pseudo-locale binds the product SemanticProfile"
+grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start places run through the existing SemanticProfile text transform"
 grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start RTL is the existing SemanticProfile summon flag"
 grep -Fq 'LayoutMirroring.enabled: productProfile.rtl' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
