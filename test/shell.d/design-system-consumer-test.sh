@@ -110,3 +110,14 @@ if grep -Eq 'property color chrome[A-Za-z]*:.*(Qt\.rgba|"#)' "$ROOT/shell/plugin
   fail "Superbar has no private high-contrast chrome color"
 fi
 pass "Superbar consumer chrome binds Tokens.accessibility and Tokens.border.strong"
+
+grep -Fq 'LayoutMirroring.enabled: productProfile.rtl' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start mirrors through the product SemanticProfile"
+grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start RTL can be summoned on the existing SemanticProfile without a locale pack"
+grep -Fq 'root.summonedRtl || Qt.application.layoutDirection === Qt.RightToLeft' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start RTL keeps the Qt layoutDirection bind"
+if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
+  fail "Start RTL is not an invented Accessibility Settings surface"
+fi
+pass "Start RTL binds the existing SemanticProfile path"
