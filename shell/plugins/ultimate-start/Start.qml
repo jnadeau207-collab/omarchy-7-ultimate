@@ -167,6 +167,43 @@ Item {
           Keys.onEscapePressed: root.close()
         }
 
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 8
+          visible: root.filter.length === 0
+
+          Button {
+            semanticProfile: productProfile
+            text: "Files"
+            Layout.fillWidth: true
+            onClicked: {
+              root.launchingFromStart = true
+              if (root.appLibrary) root.appLibrary.launch("org.omarchy.Files", "Files")
+              root.close()
+            }
+          }
+          Button {
+            semanticProfile: productProfile
+            text: "Settings"
+            Layout.fillWidth: true
+            onClicked: {
+              root.launchingFromStart = true
+              if (root.appLibrary) root.appLibrary.launch("org.omarchy.Settings", "Settings")
+              root.close()
+            }
+          }
+          Button {
+            semanticProfile: productProfile
+            text: "Agent Center"
+            Layout.fillWidth: true
+            onClicked: {
+              root.launchingFromStart = true
+              if (root.appLibrary) root.appLibrary.launch("org.omarchy.AgentCenter", "Agent Center")
+              root.close()
+            }
+          }
+        }
+
         Text {
           visible: root.pins.length > 0 && root.filter.length === 0
           text: "Pinned"
@@ -272,7 +309,7 @@ Item {
           Layout.fillHeight: true
           semanticProfile: productProfile
           title: root.filter.length > 0 ? "No matching apps" : "Search for apps"
-          message: root.filter.length > 0 ? "Try a different name." : "Chrome, Files, and Agent are pinned. Terminal and Vim stay available from search."
+          message: root.filter.length > 0 ? "Try a different name." : "Chrome, Files, Agent, and Agent Center are pinned. Settings, Files, and Agent Center stay on this card. Terminal and Vim stay available from search."
         }
 
         RowLayout {

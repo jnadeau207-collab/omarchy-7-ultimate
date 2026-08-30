@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Ui
+import "../../services/WindowPreview.js" as WindowPreview
 
 Item {
   id: root
@@ -12,8 +13,15 @@ Item {
   property var group: ({})
   property var windowService: bar && bar.shell ? bar.shell.windowService : null
   property var appLibrary: bar && bar.shell ? bar.shell.appLibrary : null
+  property var notificationService: bar && bar.shell ? bar.shell.firstPartyServiceFor("omarchy.notifications") : null
 
   readonly property var windows: group && group.windows ? group.windows : []
+  readonly property var previewRows: WindowPreview.previewRows(windows)
+  readonly property var jumpList: appLibrary ? appLibrary.jumpListFor(group && group.desktopId ? group.desktopId : "") : []
+  readonly property int badgeCount: {
+    var _rev = notificationService ? notificationService.centerRevision : 0
+    return notificationService ? notificationService.badgeCountForApp(group.desktopId, group.name) : 0
+  }
   readonly property bool running: windows.length > 0
   readonly property bool active: {
     if (!windowService) return false
@@ -113,6 +121,14 @@ Item {
       font.pixelSize: Style.font.body
       font.family: "sans-serif"
     }
+
+    Badge {
+      visible: root.badgeCount > 0
+      count: root.badgeCount
+      tone: "danger"
+      anchors.right: parent.right
+      anchors.top: parent.top
+    }
   }
 
   MouseArea {
@@ -196,10 +212,10 @@ Item {
         }
 
         Repeater {
-          model: windows
+          model: previewRows
           delegate: Item {
             width: peekCol.width
-            height: 28
+            height: 44
 
             Rectangle {
               anchors.fill: parent
@@ -207,15 +223,43 @@ Item {
               color: rowMouse.containsMouse ? bar.chromeHover : "transparent"
             }
 
-            Text {
-              textFormat: Text.PlainText
+            Image {
+              id: peekIcon
               anchors.verticalCenter: parent.verticalCenter
               anchors.left: parent.left
               anchors.leftMargin: 6
+              width: 28
+              height: 28
+              fillMode: Image.PreserveAspectFit
+              sourceSize.width: 28 * Screen.devicePixelRatio
+              sourceSize.height: 28 * Screen.devicePixelRatio
+              source: root.appLibrary ? root.appLibrary.iconSource(root.iconName) : ""
+            }
+
+            Text {
+              textFormat: Text.PlainText
+              anchors.top: parent.top
+              anchors.topMargin: 4
+              anchors.left: peekIcon.right
+              anchors.leftMargin: 6
               anchors.right: peekClose.left
               anchors.rightMargin: 4
-              text: (modelData.title || modelData.appId || "Window") + (modelData.minimized ? " (minimized)" : "")
+              text: modelData.title + (modelData.minimized ? " (minimized)" : "")
               color: Tokens.text.primary
+              font.pixelSize: Style.font.bodySmall
+              font.family: "sans-serif"
+              elide: Text.ElideRight
+            }
+
+            Text {
+              textFormat: Text.PlainText
+              anchors.bottom: parent.bottom
+              anchors.bottomMargin: 4
+              anchors.left: peekIcon.right
+              anchors.leftMargin: 6
+              anchors.right: peekClose.left
+              text: modelData.workspace ? ("Desktop " + modelData.workspace) : ""
+              color: Tokens.text.secondary
               font.pixelSize: Style.font.bodySmall
               font.family: "sans-serif"
               elide: Text.ElideRight
@@ -267,7 +311,7 @@ Item {
     id: menu
     visible: false
     color: "transparent"
-    implicitWidth: 160
+    implicitWidth: 220
     implicitHeight: col.implicitHeight + 12
     anchor.window: root.hostWindow
     anchor.item: root
@@ -289,6 +333,38 @@ Item {
         anchors.top: parent.top
         anchors.margins: 6
         spacing: 2
+
+        Repeater {
+          model: root.jumpList
+          delegate: Item {
+            width: col.width
+            height: 28
+
+            Text {
+              textFormat: Text.PlainText
+              anchors.verticalCenter: parent.verticalCenter
+              anchors.left: parent.left
+              anchors.leftMargin: 8
+              anchors.right: parent.right
+              anchors.rightMargin: 8
+              text: modelData.name
+              color: Tokens.text.primary
+              font.pixelSize: Style.font.body
+              font.family: "sans-serif"
+              elide: Text.ElideRight
+            }
+
+            MouseArea {
+              anchors.fill: parent
+              hoverEnabled: true
+              onClicked: {
+                if (root.appLibrary)
+                  root.appLibrary.launchAction(group.desktopId, modelData, group.name)
+                menu.visible = false
+              }
+            }
+          }
+        }
 
         Repeater {
           model: [

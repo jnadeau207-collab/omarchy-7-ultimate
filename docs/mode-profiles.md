@@ -11,12 +11,12 @@ Do not build two operating systems. A profile is a set of feature flags and defa
 
 Flags mean **the capability exists in this profile today**, not "we intend to ship it." `default/ultimate/profiles/desktop.json` and `power-user.json` stay false for unimplemented surfaces. `ModeProfileService.qml` first-frame defaults must match `desktop.json`.
 
-Verified against the tree (2026-08-27):
+Verified against the tree (2026-08-29):
 
 - `desktopIcons` is false. There is no desktop icon surface (only a gallery label).
-- `quickSettings` is false. There is no Quick Settings composition. Superbar `TrayCluster.qml` hard-loads audio/bluetooth/network/monitor/power panels plus `Tray.qml` and clock — that is a notification-area cluster, not Quick Settings.
-- `notificationCenter` is false. `omarchy.notifications` is a toast daemon with on-disk history (`docs/notifications.md`). That is not a Notification Center product surface.
-- `taskbar` / `startMenu` are true in Desktop Mode: `omarchy.ultimate-taskbar` and `omarchy.ultimate-start` exist. They are prototypes (see doctrine honesty), not Windows 7 quality.
+- `quickSettings` is true in Desktop Mode. `omarchy.quick-settings` composes tiles over the existing audio/bluetooth/network/monitor/power/nightlight/notification services. Power User Mode keeps the flag false; heritage chrome still uses the individual panel icons.
+- `notificationCenter` is true in Desktop Mode. `omarchy.notifications` is both the toast daemon and a Superbar Notification Center (`BarWidget.qml` + `Center.qml`). `showHistory` still replays toasts for the existing keybinding; the mouse path opens the center.
+- `taskbar` / `startMenu` are true in Desktop Mode: `omarchy.ultimate-taskbar` and `omarchy.ultimate-start` exist.
 - `systemTray` is true: Superbar loads `bar/widgets/Tray.qml`; the heritage bar has `omarchy.tray`.
 - `snapLayouts` is true: `omarchy.ultimate-snap-chooser` exists. Muscle-memory API is still maximize-hover or drag-to-edge, not a fourth caption button.
 - `taskView` is true: `omarchy.ultimate-task-switcher` has a `taskView` mode (desktop list + window titles). It is not Windows Task View quality.
@@ -68,7 +68,7 @@ omarchy mode set power-user
 
 Desktop Mode does not rewrite `~/.config/omarchy/shell.json`. `shell.qml` computes an effective config: when `features.taskbar` is on and `features.topBar` is off, `bar.id` becomes `omarchy.ultimate-taskbar` and `bar.position` becomes `bottom`. Plugin enable/disable and Settings still persist the on-disk file, so switching back to Power User Mode restores the heritage bar without a migration.
 
-That overlay currently **sets a Desktop Mode notification-area layout** that includes `omarchy.agents`, without writing it to disk. Superbar `TrayCluster.qml` loads those ids from `barConfig` through `BarWidgetRegistry`. Preserve the Quattro plugin model under Windows-quality Superbar presentation. Until Agent Center exists, `omarchy.agents` stays visible in Desktop Mode (empty-state copy if no usage files).
+That overlay currently **sets a Desktop Mode notification-area layout** of Quick Settings, Notification Center, `omarchy.agents`, tray, and clock, without writing it to disk. Superbar `TrayCluster.qml` loads those ids from `barConfig` through `BarWidgetRegistry`. The five control panels stay summonable from Quick Settings tiles (hosted, chrome-hidden instances) rather than as their own Superbar icons. `omarchy.agents` remains the usage launch shim beside the pinned Agent Center toplevel.
 
 ## Hyprland
 

@@ -12,6 +12,8 @@ Panel {
   id: root
   moduleName: "omarchy.bluetooth"
   ipcTarget: "omarchy.bluetooth"
+  property bool chromeVisible: true
+  property Item hostAnchor: null
   // manageIpc: false so this panel can own the single IpcHandler the target
   // permits — needed for the toggleBluetooth method below.
   manageIpc: false
@@ -498,7 +500,7 @@ Panel {
   }
 
   visible: adapter !== null
-  implicitWidth: button.implicitWidth
+  implicitWidth: chromeVisible ? button.implicitWidth : 0
   implicitHeight: button.implicitHeight
 
   // BlueZ rejects StartDiscovery while the adapter is still powering up, and
@@ -650,6 +652,7 @@ Panel {
 
   BarIconButton {
     id: button
+    visible: root.chromeVisible
     anchors.fill: parent
     bar: root.bar
     text: root.icon
@@ -661,7 +664,7 @@ Panel {
 
   KeyboardPanel {
     id: panel
-    anchorItem: button
+    anchorItem: root.hostAnchor || button
     owner: root
     bar: root.bar
     open: root.opened

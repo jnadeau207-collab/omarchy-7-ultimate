@@ -26,8 +26,11 @@ Every on-screen popup is mirrored to its own file under
 `omarchy-update` performs. When a toast leaves the screen — expiry, dismissal,
 or click — its file moves into `notifications/history/`, trimmed to the newest
 ten. That directory *is* the history: `showHistory` replays exactly what has
-been moved in there. Referenced avatars/images are copied into
-`notifications/images/`, because senders delete their originals on close.
+been moved in there as toasts (the existing keybinding). The Superbar
+Notification Center (`omarchy.notifications` bar-widget) reads the same
+directory into a history panel without replaying toasts. Referenced
+avatars/images are copied into `notifications/images/`, because senders
+delete their originals on close.
 
 `replaces_id` updates never produce a second notification signal: the server
 writes new content onto the object the service already holds, so the service
