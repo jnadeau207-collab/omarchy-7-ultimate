@@ -167,6 +167,15 @@ Item {
 
   function launchEntry(entry) {
     if (!entry || !appLibrary) return
+    if (entry.kind === "destination" || entry.actionId || entry.command) {
+      root.launchPlace({
+        name: appLibrary.entryName(entry) || entry.name,
+        desktopId: entry.desktopId || entry.id,
+        actionId: entry.actionId || "",
+        command: entry.command || ""
+      })
+      return
+    }
     root.launchingFromStart = true
     root.raiseUnderCursorOnClose = false
     appLibrary.launch(entry.id, appLibrary.entryName(entry))
@@ -246,10 +255,22 @@ Item {
     if (!place) return
     if (place.actionId) {
       var action = root.placeAction(place)
-      if (!action) return
+      if (action) {
+        root.launchingFromStart = true
+        root.raiseUnderCursorOnClose = false
+        root.appLibrary.launchAction(place.desktopId, action, place.name)
+        root.close()
+        return
+      }
+    }
+    if (place.command && root.appLibrary) {
       root.launchingFromStart = true
       root.raiseUnderCursorOnClose = false
-      root.appLibrary.launchAction(place.desktopId, action, place.name)
+      root.appLibrary.launchAction(place.desktopId, {
+        command: place.command,
+        kind: "desktop-action",
+        name: place.name
+      }, place.name)
       root.close()
       return
     }

@@ -118,6 +118,153 @@ function recentEntries(ids, values, limit, excludeIds) {
   return out
 }
 
+// Closed Start search destinations: existing Settings pages and Start places.
+// Not file-content search. Accessibility is not invented here.
+var START_DESTINATIONS = [
+  {
+    id: "omarchy.start.display",
+    name: "Display",
+    genericName: "Settings",
+    comment: "Open Settings Display",
+    keywords: ["display", "monitor", "resolution", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    actionId: "Display"
+  },
+  {
+    id: "omarchy.start.sound",
+    name: "Sound",
+    genericName: "Settings",
+    comment: "Open Settings Sound",
+    keywords: ["sound", "audio", "volume", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    command: "omarchy-launch-settings --source desktop settings.audio.overview"
+  },
+  {
+    id: "omarchy.start.network",
+    name: "Network & Internet",
+    genericName: "Settings",
+    comment: "Open Settings Network",
+    keywords: ["network", "internet", "wifi", "ethernet", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    actionId: "Network"
+  },
+  {
+    id: "omarchy.start.bluetooth",
+    name: "Bluetooth & devices",
+    genericName: "Settings",
+    comment: "Open Settings Bluetooth",
+    keywords: ["bluetooth", "devices", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    command: "omarchy-launch-settings --source desktop settings.bluetooth.overview"
+  },
+  {
+    id: "omarchy.start.power",
+    name: "Power & battery",
+    genericName: "Settings",
+    comment: "Open Settings Power",
+    keywords: ["power", "battery", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    command: "omarchy-launch-settings --source desktop settings.power.overview"
+  },
+  {
+    id: "omarchy.start.personalization",
+    name: "Personalization",
+    genericName: "Settings",
+    comment: "Open Settings Personalization",
+    keywords: ["personalization", "theme", "wallpaper", "background", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    actionId: "Personalization"
+  },
+  {
+    id: "omarchy.start.files",
+    name: "Files",
+    genericName: "File Manager",
+    comment: "Open Files",
+    keywords: ["files", "folders", "explorer"],
+    icon: "system-file-manager",
+    desktopId: "org.omarchy.Files"
+  },
+  {
+    id: "omarchy.start.pictures",
+    name: "Pictures",
+    genericName: "Files",
+    comment: "Open Pictures",
+    keywords: ["pictures", "photos", "images"],
+    icon: "folder-pictures",
+    desktopId: "org.omarchy.Files",
+    actionId: "Pictures"
+  },
+  {
+    id: "omarchy.start.computer",
+    name: "Computer",
+    genericName: "This PC",
+    comment: "Open This PC",
+    keywords: ["computer", "this pc", "thispc"],
+    icon: "computer",
+    desktopId: "org.omarchy.Files",
+    actionId: "ThisPC"
+  },
+  {
+    id: "omarchy.start.settings",
+    name: "Settings",
+    genericName: "System Settings",
+    comment: "Open Settings",
+    keywords: ["settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings"
+  },
+  {
+    id: "omarchy.start.agent-center",
+    name: "Agent Center",
+    genericName: "Agents",
+    comment: "Open Agent Center",
+    keywords: ["agent", "agents", "agent center"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter"
+  }
+]
+
+function destinationEntry(spec) {
+  return {
+    id: spec.id,
+    name: spec.name,
+    genericName: spec.genericName || "",
+    comment: spec.comment || "",
+    keywords: spec.keywords || [],
+    icon: spec.icon || "",
+    desktopId: spec.desktopId,
+    actionId: spec.actionId || "",
+    command: spec.command || "",
+    kind: "destination"
+  }
+}
+
+function searchDestinations(query, values) {
+  if (!String(query || "").trim()) return []
+  var haveApp = ({})
+  var i
+  for (i = 0; i < (values || []).length; i++) {
+    var entry = unwrapEntry(values[i])
+    if (!entry || entry.noDisplay) continue
+    var nid = normalizeEntryId(entry)
+    if (nid) haveApp[nid] = true
+  }
+  var out = []
+  for (i = 0; i < START_DESTINATIONS.length; i++) {
+    var spec = START_DESTINATIONS[i]
+    var coversApp = !spec.actionId && !spec.command
+    if (coversApp && haveApp[normalizeEntryId({ id: spec.desktopId })]) continue
+    out.push(destinationEntry(spec))
+  }
+  return out
+}
+
 function programRows(entries, query) {
   var rows = []
   var searching = String(query || "").trim().length > 0
@@ -286,6 +433,8 @@ if (typeof module !== "undefined") {
     serializeRecents: serializeRecents,
     withRecent: withRecent,
     recentEntries: recentEntries,
-    programRows: programRows
+    programRows: programRows,
+    searchDestinations: searchDestinations,
+    START_DESTINATIONS: START_DESTINATIONS
   }
 }
