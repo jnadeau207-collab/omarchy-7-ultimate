@@ -54,7 +54,12 @@ Item {
   }
 
   function sortedEntries(query) {
-    var values = DesktopEntries.applications.values || []
+    var raw = DesktopEntries.applications.values || []
+    var values = []
+    var i
+    for (i = 0; i < raw.length; i++) values.push(raw[i])
+    var dests = AppSearch.searchDestinations(query, values)
+    for (i = 0; i < dests.length; i++) values.push(dests[i])
     return AppSearch.sortedEntries(values, query, function(entry) { return root.isHiddenEntry(entry) })
   }
 
