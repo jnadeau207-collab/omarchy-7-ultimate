@@ -6,7 +6,7 @@
       "id": "parity.desktop-icons-wallpaper-context-menu-recycle",
       "kind": "parity-job",
       "sourceLabel": "Desktop (icons, wallpaper, context menu, Recycle)",
-      "sourceStatus": "prototype / missing",
+      "sourceStatus": "prototype",
       "claim": "prototype",
       "capabilityIds": [
         "desktop.icons.manage",
@@ -120,8 +120,8 @@
       "id": "parity.explorer-this-pc",
       "kind": "parity-job",
       "sourceLabel": "Explorer / This PC",
-      "sourceStatus": "missing as product",
-      "claim": "missing",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
       "capabilityIds": [
         "files.this-pc.open",
         "files.folder.create",
@@ -131,8 +131,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Files (legacy Nautilus)",
-        "path": "Superbar > Files"
+        "surface": "Files",
+        "path": "Start > Computer; Superbar > Files > This PC"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "File mutations require conflict-safe undo and truthful partial-change reporting.",
@@ -1110,7 +1110,7 @@
       "id": "parity.agent-center",
       "kind": "parity-job",
       "sourceLabel": "Agent Center",
-      "sourceStatus": "missing",
+      "sourceStatus": "prototype",
       "claim": "missing",
       "capabilityIds": [
         "agents.center.manage"
