@@ -58,6 +58,9 @@ checks = {
     "shell/plugins/ultimate-start/Start.qml": "Tokens.typography.family",
     "shell/plugins/ultimate-taskbar/StartButton.qml": "Tokens.caption.close.background",
     "shell/plugins/ultimate-taskbar/Taskbar.qml": "Tokens.chrome.menu",
+    "shell/plugins/ultimate-taskbar/TaskButton.qml": "Tokens.border.strong",
+    "shell/plugins/ultimate-taskbar/TrayCluster.qml": "Tokens.border.strong",
+    "shell/Ui/WidgetButton.qml": "Tokens.border.strong",
     "shell/Ui/WidgetButton.qml": "Tokens.state.danger",
     "shell/plugins/desktop-icons/DesktopIcons.qml": "Tokens.typography.family",
     "shell/plugins/lock/LockView.qml": "Tokens.surface.canvas",
@@ -86,3 +89,24 @@ grep -Fq 'fontFamily: Tokens.typography.family' "$ROOT/shell/Ui/Button.qml" \
 grep -Fq 'font.family: Tokens.typography.family' "$ROOT/shell/Ui/TextField.qml" \
   || fail "kit TextField uses the token UI family"
 pass "consumer typography defaults to Liberation Sans"
+
+grep -Fq 'Tokens.accessibility.highContrast' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar glass reads Tokens.accessibility"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar HC glass edge uses Tokens.border.strong"
+grep -Fq 'bar.highContrast' "$ROOT/shell/plugins/ultimate-taskbar/StartButton.qml" \
+  || fail "Start orb consumes Superbar high-contrast chrome"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "task buttons consume Tokens.border.strong under high contrast"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/plugins/ultimate-taskbar/TrayCluster.qml" \
+  || fail "tray cluster consumes Tokens.border.strong under high contrast"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/Ui/WidgetButton.qml" \
+  || fail "Superbar clock and tray marks consume Tokens.border.strong under high contrast"
+grep -Fq 'Tokens.accessibility.highContrast' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml" \
+  || fail "Quick Settings Superbar mark consumes Tokens.accessibility"
+grep -Fq 'Tokens.accessibility.highContrast' "$ROOT/shell/plugins/notifications/BarWidget.qml" \
+  || fail "Notification Center Superbar mark consumes Tokens.accessibility"
+if grep -Eq 'property color chrome[A-Za-z]*:.*(Qt\.rgba|"#)' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"; then
+  fail "Superbar has no private high-contrast chrome color"
+fi
+pass "Superbar consumer chrome binds Tokens.accessibility and Tokens.border.strong"

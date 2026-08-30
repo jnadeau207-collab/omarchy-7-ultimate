@@ -31,6 +31,13 @@ Item {
     anchors.fill: parent
     spacing: 0
 
+    Rectangle {
+      visible: bar && bar.highContrast
+      width: bar && bar.highContrast ? 2 : 0
+      height: row.height
+      color: Tokens.border.strong
+    }
+
     Repeater {
       model: root.clusterEntries
       delegate: Loader {

@@ -116,8 +116,8 @@ Item {
       : root.active ? bar.chromeActive
       : root.running ? bar.chromeHover
       : "transparent"
-    border.color: root.active ? bar.chromeGlow : (root.running ? Tokens.border.subtle : "transparent")
-    border.width: root.running || root.active ? 1 : 0
+    border.color: root.active ? bar.chromeGlow : (root.running || (bar && bar.highContrast) ? (bar && bar.highContrast ? Tokens.border.strong : Tokens.border.subtle) : "transparent")
+    border.width: root.running || root.active || (bar && bar.highContrast) ? (bar && bar.highContrast ? 2 : 1) : 0
 
     Rectangle {
       visible: root.running
@@ -127,7 +127,7 @@ Item {
       anchors.leftMargin: 6
       anchors.rightMargin: 6
       anchors.bottomMargin: 3
-      height: root.active ? 3 : 2
+      height: root.active ? (bar && bar.highContrast ? 4 : 3) : (bar && bar.highContrast ? 3 : 2)
       radius: 1
       color: bar.chromeGlow
     }
@@ -236,8 +236,8 @@ Item {
       anchors.fill: parent
       color: bar.chromeMenu
       radius: Tokens.radius.medium
-      border.color: Tokens.border.subtle
-      border.width: 1
+      border.color: bar && bar.highContrast ? Tokens.border.strong : Tokens.border.subtle
+      border.width: bar && bar.highContrast ? 2 : 1
 
       Column {
         id: peekCol
@@ -388,8 +388,8 @@ Item {
       anchors.fill: parent
       color: bar.chromeMenu
       radius: Tokens.radius.medium
-      border.color: Tokens.border.subtle
-      border.width: 1
+      border.color: bar && bar.highContrast ? Tokens.border.strong : Tokens.border.subtle
+      border.width: bar && bar.highContrast ? 2 : 1
 
       Column {
         id: col

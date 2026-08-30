@@ -262,6 +262,10 @@ grep -Fq 'design-tokens-v0.json' "$ROOT/shell/Commons/Tokens.qml" \
   || fail "QML Tokens consumes the canonical resolved payload"
 grep -Fq 'Tokens.chrome.glass' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar consumes resolved semantic chrome"
+grep -Fq 'Tokens.accessibility.highContrast' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar glass consumes the high-contrast token switch"
+grep -Fq 'Tokens.border.strong' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar HC edge consumes resolved Tokens.border.strong"
 grep -Fq 'Tokens.chrome.menu' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar tooltips consume resolved chrome tokens"
 if grep -Fq 'Color.tooltip' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"; then
