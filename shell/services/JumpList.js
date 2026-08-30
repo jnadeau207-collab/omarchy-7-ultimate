@@ -10,26 +10,31 @@ function normalizeDesktopId(id) {
 }
 
 function copyLengthList(value) {
-  if (!value || value.length === undefined) return []
+  if (!isLengthList(value)) return []
   var out = []
   for (var i = 0; i < value.length; i++) out.push(value[i])
   return out
 }
 
+function isLengthList(value) {
+  return !!value && typeof value !== "function" && typeof value.length === "number"
+}
+
 function actionList(entry) {
   if (!entry) return []
   var raw = entry.actions
-  if (!raw) return []
-  if (Array.isArray(raw) || raw.length !== undefined) return copyLengthList(raw)
-  if (raw.values && (Array.isArray(raw.values) || raw.values.length !== undefined))
+  if (!raw || typeof raw === "function") return []
+  if (isLengthList(raw)) return copyLengthList(raw)
+  if (raw.values && typeof raw.values !== "function" && isLengthList(raw.values))
     return copyLengthList(raw.values)
   return []
 }
 
 function actionCommand(action) {
   if (!action) return ""
-  if (Array.isArray(action.command) && action.command.length > 0)
-    return action.command.map(function(part) { return String(part) }).join(" ")
+  if (isLengthList(action.command) && action.command.length > 0)
+    return copyLengthList(action.command).map(function(part) { return String(part) }).join(" ")
+  if (typeof action.execString === "string" && action.execString.length > 0) return action.execString
   if (typeof action.exec === "string" && action.exec.length > 0) return action.exec
   if (typeof action.command === "string" && action.command.length > 0) return action.command
   return ""

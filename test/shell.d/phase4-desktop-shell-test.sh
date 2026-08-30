@@ -113,6 +113,25 @@ const withActions = JumpList.jumpListFor({
 assertEqual(withActions.length, 2, 'jump list drops actions that cannot launch')
 assertEqual(withActions[1].name, 'Trash', 'launchable desktop actions stay on the jump list')
 
+const qvectorCommand = { length: 3, 0: 'omarchy-launch-agent-center', 1: '--source', 2: 'desktop' }
+const fromQuickshell = JumpList.jumpListFor({
+  id: 'org.omarchy.AgentCenter',
+  actions: { length: 1, 0: { id: 'Tasks', name: 'Tasks & Runs', command: qvectorCommand } }
+}, 'org.omarchy.AgentCenter')
+assertEqual(fromQuickshell.length, 2, 'Quickshell QVector command lists stay launchable')
+assertEqual(fromQuickshell[1].name, 'Tasks & Runs', 'DesktopAction name survives a QVector command')
+assertEqual(
+  fromQuickshell[1].command,
+  'omarchy-launch-agent-center --source desktop',
+  'QVector command parts join into one launch line'
+)
+
+const fromExecString = JumpList.jumpListFor({
+  id: 'org.omarchy.AgentCenter',
+  actions: [{ id: 'Approvals', name: 'Pending Approvals', execString: 'omarchy-launch-agent-center --source desktop agent.approvals' }]
+}, 'org.omarchy.AgentCenter')
+assertEqual(fromExecString[1].name, 'Pending Approvals', 'DesktopAction execString is a launchable command')
+
 const rows = Preview.previewRows([
   { address: '0x1', title: 'Files', workspaceId: 2, minimized: true },
   { address: '', title: 'ghost' }
