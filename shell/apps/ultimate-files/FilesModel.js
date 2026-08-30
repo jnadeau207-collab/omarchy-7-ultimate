@@ -396,8 +396,9 @@ function acceptedState(previous, result) {
   next.reasons = copyArray(normalized.value.availability.reasons)
   if (normalized.value.availability.state === "unavailable" || normalized.value.availability.read === false) next.phase = "unavailable"
   else if (normalized.truncated || normalized.clipped) next.phase = "partial"
-  else if (normalized.value.availability.state === "degraded" || previous.providerEntry.state === "degraded") next.phase = "degraded"
+  else if (normalized.value.availability.state === "degraded") next.phase = "degraded"
   else if (normalized.records.length === 0) next.phase = "empty"
+  else if (normalized.value.availability.state === "available") next.phase = "available"
   else next.phase = "ready"
   return next
 }
@@ -526,7 +527,7 @@ function stateTitle(state) {
   var phase = String(state && state.phase || "offline")
   if (phase === "catalog-loading") return "Loading Files provider"
   if (phase === "loading") return "Reading trusted file metadata"
-  if (phase === "ready") return "Current file metadata"
+  if (phase === "ready" || phase === "available") return "Current file metadata"
   if (phase === "partial") return "Partial bounded results"
   if (phase === "degraded") return "Files is read-only or degraded"
   if (phase === "empty") return state && state.selectedMissing ? "Requested item is absent" : "No matching items"
@@ -549,13 +550,13 @@ function stateExplanation(state) {
   if (state.phase === "empty") return state.selectedMissing ? "The exact deep-linked identity was not present in this revision." : "The provider returned a valid empty result."
   if (state.phase === "missing") return "The code-owned files.provider identity was not present in the current catalog."
   if (state.phase === "unavailable") return "The provider reported no trusted readable state for this route."
-  if (state.phase === "ready") return "Every visible record comes from the current files.provider revision."
+  if (state.phase === "ready" || state.phase === "available") return "Every visible record comes from the current files.provider revision."
   return "Connect to the owner-scoped Fabric daemon to read Files state."
 }
 
 function phaseTone(state) {
   var phase = String(state && state.phase || "offline")
-  if (phase === "ready" || phase === "empty") return "success"
+  if (phase === "ready" || phase === "available" || phase === "empty") return "success"
   if (phase === "failed" || phase === "denied" || phase === "unavailable") return "danger"
   return "warning"
 }

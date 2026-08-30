@@ -514,6 +514,12 @@ grep -Fq 'text: "Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a labeled Shut down control"
 grep -Fq 'placeholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start search names the job"
+grep -Fq 'def _location_query_availability' "$ROOT/default/fabric/omarchy_fabric/providers/files/provider.py" \
+  || fail "Files browse reports the selected location availability"
+grep -Fq 'files.location-absent' "$ROOT/default/fabric/omarchy_fabric/providers/files/provider.py" \
+  || fail "optional missing Files locations stay location-local"
+grep -Fq 'next.phase = "available"' "$ROOT/shell/apps/ultimate-files/FilesModel.js" \
+  || fail "Files Pictures can show AVAILABLE without inheriting catalog degradation"
 grep -Fq 'function searchDestinations' "$ROOT/shell/services/AppSearch.js" \
   || fail "Start search injects Settings and place destinations"
 grep -Fq 'AppSearch.searchDestinations(query, values)' "$ROOT/shell/services/AppLibrary.qml" \
