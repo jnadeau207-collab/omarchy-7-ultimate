@@ -190,6 +190,8 @@ grep -Fq 'clip: true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start panel clips overflowing icon paints"
 grep -Fq 'visibleEntries' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start unwraps AppSearch rows and hides developer tools from the idle list"
+grep -Fq 'kind === "destination"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start search destinations launch through place actions"
 grep -Fq 'developerToolsInStart' "$ROOT/default/ultimate/profiles/desktop.json" \
   || fail "desktop profile declares developerToolsInStart"
 grep -Fq '"name": "Chrome"' "$ROOT/default/ultimate/taskbar-pins.json" \

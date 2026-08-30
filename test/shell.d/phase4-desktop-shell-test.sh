@@ -514,6 +514,24 @@ grep -Fq 'text: "Shut down"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a labeled Shut down control"
 grep -Fq 'placeholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start search names the job"
+grep -Fq 'function searchDestinations' "$ROOT/shell/services/AppSearch.js" \
+  || fail "Start search injects Settings and place destinations"
+grep -Fq 'AppSearch.searchDestinations(query, values)' "$ROOT/shell/services/AppLibrary.qml" \
+  || fail "AppLibrary merges Start destinations into app search"
+grep -Fq 'entry.kind === "destination"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start launches search destinations through place / jump actions"
+python3 -c "
+from pathlib import Path
+text = Path(r'$ROOT/shell/plugins/ultimate-start/Start.qml').read_text()
+start = text.index('function open(payloadJson)')
+end = text.index('function close()')
+body = text[start:end]
+assert 'searchField' not in body, body
+print('ok - Start open does not touch searchField before the card Loader is active')
+"
+if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent an Accessibility destination"
+fi
 grep -Fq 'text: "Recent"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a Recent section for launched programs"
 grep -Fq 'kind === "letter"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

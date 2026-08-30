@@ -115,6 +115,42 @@ assertEqual(search.programRows([{ id: 'aether', name: 'Aether' }], 'ae')[0].kind
 assertEqual(search.recentEntries(['chromium', 'missing'], [chromium, foot], 6, []).map(e => e.id).join(','), 'chromium', 'recents resolve live desktop entries only')
 assertEqual(search.recentEntries(['chromium'], [chromium], 6, ['chromium']).length, 0, 'recents do not repeat a pinned app')
 
+assertEqual(search.searchDestinations('', []).length, 0, 'idle Start does not inject destinations')
+const destApps = [
+  { id: 'org.omarchy.Settings', name: 'Settings' },
+  { id: 'org.omarchy.Files', name: 'Files' },
+  { id: 'org.omarchy.AgentCenter', name: 'Agent Center' }
+]
+const dispDest = search.searchDestinations('disp', destApps).map(row => row.name)
+assert(dispDest.indexOf('Display') >= 0, 'disp search includes Settings Display')
+assert(dispDest.indexOf('Accessibility') < 0, 'disp search does not invent Accessibility')
+const personDest = search.sortedEntries(destApps.concat(search.searchDestinations('person', destApps)), 'person')
+assertEqual(search.entryName(personDest[0].entry), 'Personalization', 'person ranks Personalization first')
+assertEqual(personDest[0].entry.actionId, 'Personalization', 'Personalization uses the Settings jump action')
+const pictDest = search.sortedEntries(destApps.concat(search.searchDestinations('pict', destApps)), 'pict')
+assertEqual(search.entryName(pictDest[0].entry), 'Pictures', 'pict ranks Pictures first')
+assertEqual(pictDest[0].entry.actionId, 'Pictures', 'Pictures uses the Files jump action')
+const computerDest = search.sortedEntries(destApps.concat(search.searchDestinations('this pc', destApps)), 'this pc')
+assertEqual(search.entryName(computerDest[0].entry), 'Computer', 'this pc ranks Computer / This PC')
+assertEqual(computerDest[0].entry.actionId, 'ThisPC', 'Computer uses the Files This PC action')
+const destNames = search.START_DESTINATIONS.map(row => row.name)
+assert(destNames.indexOf('Display') >= 0, 'destinations include Display')
+assert(destNames.indexOf('Sound') >= 0, 'destinations include Sound')
+assert(destNames.indexOf('Network & Internet') >= 0, 'destinations include Network')
+assert(destNames.indexOf('Bluetooth & devices') >= 0, 'destinations include Bluetooth')
+assert(destNames.indexOf('Power & battery') >= 0, 'destinations include Power')
+assert(destNames.indexOf('Personalization') >= 0, 'destinations include Personalization')
+assert(destNames.indexOf('Pictures') >= 0, 'destinations include Pictures')
+assert(destNames.indexOf('Computer') >= 0, 'destinations include Computer')
+assert(destNames.indexOf('Accessibility') < 0, 'destinations do not invent Accessibility')
+const skipped = search.searchDestinations('files', destApps).map(row => row.name)
+assert(skipped.indexOf('Files') < 0, 'Files destination is not duplicated when the app exists')
+assert(search.searchDestinations('files', []).some(row => row.name === 'Files'), 'Files destination exists when the app is absent')
+assert(
+  !search.START_DESTINATIONS.some(row => /content|full.?text|file.?search/i.test(JSON.stringify(row))),
+  'destinations are launch paths, not file-content search'
+)
+
 // The menu's Apps submenu is the launcher now: app rows launch and uninstall
 // through the shared app library instead of running commands themselves.
 const activateMatch = menuQml.match(/function activateIndex\(index, fromPointer\) \{([\s\S]*?)\n  \}/)
