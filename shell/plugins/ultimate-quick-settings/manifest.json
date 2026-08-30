@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "omarchy.quick-settings",
+  "name": "Quick Settings",
+  "version": "1.0.0",
+  "author": "Omarchy",
+  "description": "Desktop Mode Quick Settings composition over existing panel services",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Quick Settings",
+    "description": "Tiles for Wi-Fi, Bluetooth, sound, display, night light, DND, power, Settings, and Agent Center",
+    "category": "System",
+    "allowMultiple": false
+  }
+}

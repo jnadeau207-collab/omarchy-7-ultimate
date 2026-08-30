@@ -422,6 +422,34 @@ function popupPlacement(barPosition, barClearance, gapsOut) {
 // They belong in it — they're the newest notifications there are — but the
 // directory read races their archival, so they're carried across by hand and
 // keyed by file name (timestamp + id) to drop the copy the read already saw.
+function rowMatchesApp(row, desktopId, name) {
+  if (!row) return false
+  var app = String(row.app || "").toLowerCase()
+  var icon = String(row.appIcon || "").toLowerCase()
+  var needles = [desktopId, name]
+  for (var i = 0; i < needles.length; i++) {
+    var needle = String(needles[i] || "").toLowerCase()
+    if (!needle) continue
+    if (needle.slice(-8) === ".desktop") needle = needle.slice(0, -8)
+    var shortId = needle
+    var dot = needle.lastIndexOf(".")
+    if (dot >= 0) shortId = needle.slice(dot + 1)
+    if (app === needle || icon === needle || app === shortId) return true
+    if (shortId && (app.indexOf(shortId) >= 0 || icon.indexOf(shortId) >= 0)) return true
+  }
+  return false
+}
+
+function badgeCountForApp(rows, desktopId, name) {
+  if (!String(desktopId || "") && !String(name || "")) return 0
+  var list = Array.isArray(rows) ? rows : []
+  var n = 0
+  for (var i = 0; i < list.length; i++) {
+    if (rowMatchesApp(list[i], desktopId, name)) n++
+  }
+  return n
+}
+
 function historyRows(raw, liveRows, normalUrgency, limit) {
   var max = limit === undefined || limit === null ? 10 : Number(limit)
   if (isNaN(max)) max = 10
@@ -465,6 +493,8 @@ if (typeof module !== "undefined") {
     replacementSnapshot: replacementSnapshot,
     historyEntry: historyEntry,
     parseSettings: parseSettings,
+    rowMatchesApp: rowMatchesApp,
+    badgeCountForApp: badgeCountForApp,
     historyRows: historyRows,
     popupEntry: popupEntry,
     popupFileName: popupFileName,

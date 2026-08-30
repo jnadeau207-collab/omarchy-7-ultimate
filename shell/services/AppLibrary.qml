@@ -4,6 +4,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import qs.Commons
 import "AppSearch.js" as AppSearch
+import "JumpList.js" as JumpList
 
 // Shared desktop-application library: the sorted entry list with hidden-entry
 // filtering, the icon fallback index, launch feedback, and entry removal.
@@ -82,6 +83,22 @@ Item {
     if (!iconIndexScan.running) iconIndexScan.running = true
   }
 
+  function entryByDesktopId(desktopId) {
+    var want = JumpList.normalizeDesktopId(desktopId)
+    if (!want) return null
+    var values = DesktopEntries.applications.values || []
+    for (var i = 0; i < values.length; i++) {
+      var entry = values[i]
+      if (!entry) continue
+      if (JumpList.normalizeDesktopId(entry.id) === want) return entry
+    }
+    return null
+  }
+
+  function jumpListFor(desktopId) {
+    return JumpList.jumpListFor(root.entryByDesktopId(desktopId), desktopId)
+  }
+
   function launch(desktopId, name) {
     var id = String(desktopId || "")
     if (!id) return
@@ -91,6 +108,15 @@ Item {
     // resolver supports IDs with spaces and entries that UWSM rejects.
     // Keep the .desktop suffix or ids like org.telegram.desktop won't resolve.
     Util.execDetached("uwsm-app -- gtk-launch " + Util.shellQuote(id + ".desktop"))
+  }
+
+  function launchAction(desktopId, action, name) {
+    if (!action || action.kind === "open-new" || !action.command) {
+      root.launch(desktopId, name)
+      return
+    }
+    root.beginLaunchFeedback(name || action.name || desktopId)
+    Util.execDetached(String(action.command))
   }
 
   function remove(desktopId, name) {

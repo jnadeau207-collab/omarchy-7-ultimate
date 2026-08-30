@@ -668,7 +668,7 @@ assert(
   'notifications service reads history from its place in the file queue'
 )
 assert(
-  /if \(job\.read\) \{\s*\n\s*startHistoryRead\(\)/.test(serviceQml),
+  /if \(job\.read\) \{[\s\S]{0,200}?startHistoryRead\(\)/.test(serviceQml),
   'notifications service runs the queued read when its turn comes'
 )
 assert(

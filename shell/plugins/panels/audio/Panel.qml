@@ -12,6 +12,8 @@ Panel {
   id: root
   moduleName: "omarchy.audio"
   ipcTarget: "omarchy.audio"
+  property bool chromeVisible: true
+  property Item hostAnchor: null
 
   readonly property var sink: Pipewire.defaultAudioSink
   readonly property var source: Pipewire.defaultAudioSource
@@ -568,8 +570,8 @@ Panel {
     return Model.streamRepresentsPlayer(node, player, mprisPlayers, displayAudioStreams)
   }
 
-  implicitWidth: button.implicitWidth
-  implicitHeight: button.implicitHeight
+  implicitWidth: chromeVisible ? button.implicitWidth : 0
+  implicitHeight: chromeVisible ? button.implicitHeight : 0
 
   PwObjectTracker { objects: root.candidateSinks }
   PwObjectTracker { objects: root.candidateSources }
@@ -627,6 +629,7 @@ Panel {
 
   BarIconButton {
     id: button
+    visible: root.chromeVisible
     anchors.fill: parent
     bar: root.bar
     text: root.outputIcon()
@@ -647,7 +650,7 @@ Panel {
 
   KeyboardPanel {
     id: panel
-    anchorItem: button
+    anchorItem: root.hostAnchor || button
     owner: root
     bar: root.bar
     open: root.opened

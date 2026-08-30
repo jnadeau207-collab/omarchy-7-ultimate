@@ -12,6 +12,8 @@ Panel {
   id: root
   moduleName: "omarchy.network"
   ipcTarget: "omarchy.network"
+  property bool chromeVisible: true
+  property Item hostAnchor: null
   // manageIpc: false so this panel can own the single IpcHandler the target
   // permits — needed for the toggleNetwork method below.
   manageIpc: false
@@ -856,7 +858,7 @@ Panel {
     runNetworkAction("forget", net ? networkForSsid(net.ssid) : null, function(network) { network.forget() })
   }
 
-  implicitWidth: button.implicitWidth
+  implicitWidth: chromeVisible ? button.implicitWidth : 0
   implicitHeight: button.implicitHeight
 
   Component.onCompleted: refresh()
@@ -1010,6 +1012,7 @@ Panel {
 
   BarIconButton {
     id: button
+    visible: root.chromeVisible
     anchors.fill: parent
     bar: root.bar
     text: root.icon
@@ -1035,7 +1038,7 @@ Panel {
   // here is the wifi-specific UI inside.
   KeyboardPanel {
     id: panel
-    anchorItem: button
+    anchorItem: root.hostAnchor || button
     owner: root
     bar: root.bar
     open: root.opened

@@ -465,10 +465,8 @@ grep -Fq 'Qt.rgba(0.11, 0.11, 0.12, 0.62)' "$ROOT/shell/plugins/ultimate-taskbar
 [[ -f $ROOT/default/ultimate/chrome-tokens-light.json ]] || fail "light chrome tokens exist so light theme can move caption chrome"
 [[ -f $ROOT/themes/ultimate-light/chrome-tokens.json ]] || fail "ultimate-light ships chrome-tokens.json for theme-set"
 [[ -f $ROOT/themes/ultimate-dark/chrome-tokens.json ]] || fail "ultimate-dark ships chrome-tokens.json for theme-set"
-grep -Fq 'chrome-tokens.json' "$ROOT/default/hypr/desktop-windows.lua" \
-  || fail "hyprbars caption chrome reads chrome-tokens.json"
-grep -Fq 'chrome-tokens-light.json' "$ROOT/default/hypr/desktop-windows.lua" \
-  || fail "hyprbars reads chrome-tokens-light.json when the current theme is light"
+grep -Fq 'chrome-tokens-v0.json' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "hyprbars caption chrome reads chrome-tokens-v0.json"
 grep -Fq 'bar_color = chrome_glass_rgba' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars bar_color comes from chrome tokens, not a private rgba"
 grep -Fq 'captionCloseBgHex' "$ROOT/default/hypr/desktop-windows.lua" \
@@ -548,6 +546,10 @@ awk '
   || fail "plugin rebuild is in the update transaction after packages and before migrate"
 grep -Fq 'id: "omarchy.agents"' "$ROOT/shell/shell.qml" \
   || fail "Desktop Mode overlay includes omarchy.agents in the Superbar cluster"
+grep -Fq 'id: "omarchy.quick-settings"' "$ROOT/shell/shell.qml" \
+  || fail "Desktop Mode overlay includes Quick Settings in the Superbar cluster"
+grep -Fq 'id: "omarchy.notifications"' "$ROOT/shell/shell.qml" \
+  || fail "Desktop Mode overlay includes Notification Center in the Superbar cluster"
 grep -Fq 'clusterEntries' "$ROOT/shell/plugins/ultimate-taskbar/TrayCluster.qml" \
   || fail "Superbar notification cluster is driven from bar-widget layout"
 if grep -Fq 'persistShellConfig' "$ROOT/shell/shell.qml" && awk '

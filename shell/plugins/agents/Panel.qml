@@ -64,6 +64,11 @@ Panel {
     root.close()
   }
 
+  function launchAgentCenter() {
+    if (root.bar) root.bar.run("omarchy-launch-agent-center")
+    root.close()
+  }
+
   // ---------------------------------------------------------------- limits
   //
   // Both providers report the same two shapes: a short rolling session window
@@ -294,9 +299,9 @@ Panel {
     return candidates
   }
 
-  // Desktop Mode keeps the usage glyph visible until Agent Center exists, even
-  // on a machine that has never run a coding agent. The empty panel copy is the
-  // honest state, not a missing Superbar slot.
+  // Desktop Mode keeps the usage glyph visible as a launch shim to Agent Center.
+  // The empty panel copy is the honest state on a machine that has never run a
+  // coding agent, not a missing Superbar slot.
   visible: true
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
@@ -456,6 +461,15 @@ Panel {
             font.pixelSize: Style.font.body
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
+          }
+
+          Button {
+            width: parent.width
+            text: "Open Agent Center"
+            bordered: true
+            foreground: root.foreground
+            fontFamily: root.fontFamily
+            onClicked: root.launchAgentCenter()
           }
 
           // ---------- Provider switch ----------
