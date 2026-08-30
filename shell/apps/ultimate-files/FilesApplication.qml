@@ -6,6 +6,7 @@ import qs.Ui as Ui
 import qs.apps.shared as Shared
 
 import "FilesModel.js" as FilesModel
+import "." as Files
 
 Item {
   id: root
@@ -263,7 +264,7 @@ Item {
               rowSpacing: Style.space(12)
               Repeater {
                 model: root.queryState.records
-                delegate: FilesRecordCard {
+                delegate: Files.FilesRecordCard {
                   required property var modelData
                   record: modelData
                   selected: root.queryState.entityId !== "" && modelData.id === root.queryState.entityId

@@ -6,6 +6,7 @@ import qs.Ui as Ui
 import qs.apps.shared as Shared
 
 import "SoftwareModel.js" as SoftwareModel
+import "." as Software
 
 Item {
   id: root
@@ -253,7 +254,7 @@ Item {
               rowSpacing: Style.space(12)
               Repeater {
                 model: root.queryState.records
-                delegate: SoftwareRecordCard {
+                delegate: Software.SoftwareRecordCard {
                   required property var modelData
                   record: modelData
                   selected: root.queryState.entityId !== "" && modelData.id === root.queryState.entityId

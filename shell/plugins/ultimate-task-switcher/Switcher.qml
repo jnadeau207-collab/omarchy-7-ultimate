@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Commons
 import qs.Ui
+import "../../services/WindowPreview.js" as WindowPreview
 
 Item {
   id: root
@@ -14,12 +15,25 @@ Item {
   property bool opened: false
   property string pendingActivate: ""
   property string mode: "switcher"
+  property string ownerScreenName: ""
+  property var ownerScreen: null
   property int viewDesktop: 1
+  onViewDesktopChanged: if (root.opened && root.mode === "taskView") root.captureViewPreviews()
 
   readonly property var windowService: shell ? shell.windowService : null
   readonly property var cycleList: windowService ? windowService.cycleList : []
   readonly property int cycleIndex: windowService ? windowService.cycleIndex : 0
   readonly property var desktopIds: windowService ? windowService.desktopIds : []
+  readonly property var viewPreviewRows: WindowPreview.previewRows(root.viewWindowsFor(root.viewDesktop))
+
+  function captureViewPreviews() {
+    if (!windowService) return
+    var rows = root.viewPreviewRows
+    var i
+    for (i = 0; i < rows.length; i++) {
+      if (rows[i].capturable) windowService._capturePreview(rows[i].address)
+    }
+  }
 
   Timer {
     id: activateAfterHide
@@ -33,16 +47,32 @@ Item {
     }
   }
 
+  function screenByName(name) {
+    if (!name) return null
+    var i
+    for (i = 0; i < Quickshell.screens.length; i++) {
+      if (String(Quickshell.screens[i].name || "") === String(name)) return Quickshell.screens[i]
+    }
+    return null
+  }
+
   function open(payloadJson) {
     root.mode = "switcher"
+    root.ownerScreenName = ""
+    root.ownerScreen = null
     try {
       var payload = JSON.parse(payloadJson || "{}")
       if (payload && payload.mode) root.mode = String(payload.mode)
+      if (payload && payload.screen) {
+        root.ownerScreenName = String(payload.screen)
+        root.ownerScreen = root.screenByName(root.ownerScreenName)
+      }
     } catch (e) {
     }
     if (windowService && windowService.activeDesktopId)
       root.viewDesktop = windowService.activeDesktopId
     root.opened = true
+    if (root.mode === "taskView") root.captureViewPreviews()
   }
 
   function close() {
@@ -78,6 +108,7 @@ Item {
     sourceComponent: PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
+    screen: root.ownerScreen
     anchors { top: true; bottom: true; left: true; right: true }
     WlrLayershell.namespace: "omarchy-task-switcher"
     WlrLayershell.layer: WlrLayer.Overlay
@@ -129,7 +160,7 @@ Item {
               }
               color: Tokens.text.primary
               font.pixelSize: Style.font.bodySmall
-              font.family: "sans-serif"
+              font.family: Tokens.typography.family
               elide: Text.ElideRight
             }
 
@@ -147,8 +178,8 @@ Item {
     Rectangle {
       visible: root.mode === "taskView"
       anchors.centerIn: parent
-      width: Math.min(parent.width - 64, 920)
-      height: Math.min(parent.height - 80, 520)
+      width: Math.min(parent.width - 64, 1100)
+      height: Math.min(parent.height - 80, 640)
       color: Tokens.surface.glass
       radius: Tokens.radius.large
       border.color: Tokens.border.subtle
@@ -165,10 +196,11 @@ Item {
         spacing: 12
 
         Text {
-          text: "Desktops"
+          text: "Task View"
           color: Tokens.text.primary
-          font.pixelSize: Style.font.body
-          font.family: "sans-serif"
+          font.pixelSize: Style.font.title
+          font.family: Tokens.typography.family
+          font.bold: true
         }
 
         Row {
@@ -188,7 +220,7 @@ Item {
                 text: "Desktop " + modelData
                 color: Tokens.text.primary
                 font.pixelSize: Style.font.bodySmall
-                font.family: "sans-serif"
+                font.family: Tokens.typography.family
               }
               MouseArea {
                 anchors.fill: parent
@@ -212,7 +244,7 @@ Item {
               text: "New"
               color: Tokens.text.primary
               font.pixelSize: Style.font.bodySmall
-              font.family: "sans-serif"
+              font.family: Tokens.typography.family
             }
             MouseArea {
               anchors.fill: parent
@@ -226,30 +258,72 @@ Item {
           }
         }
 
-        Repeater {
-          model: root.viewWindowsFor(root.viewDesktop)
-          delegate: Rectangle {
-            width: parent.width
-            height: 44
-            radius: Tokens.radius.small
-            color: Tokens.surface.raised
-            Text {
-              textFormat: Text.PlainText
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.left: parent.left
-              anchors.leftMargin: 12
-              anchors.right: parent.right
-              anchors.rightMargin: 12
-              text: (modelData.title || modelData.appId || "Window") + (modelData.minimized ? " (minimized)" : "")
-              color: Tokens.text.primary
-              font.pixelSize: Style.font.body
-              font.family: "sans-serif"
-              elide: Text.ElideRight
-            }
-            MouseArea {
-              anchors.fill: parent
-              cursorShape: Qt.PointingHandCursor
-              onClicked: root.pick(String(modelData.address || ""))
+        Flow {
+          width: parent.width
+          spacing: 10
+          Repeater {
+            model: root.viewPreviewRows
+            delegate: Rectangle {
+              width: 240
+              height: 188
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.border.subtle
+              border.width: 1
+
+              Image {
+                id: viewThumb
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 8
+                height: 120
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: false
+                source: {
+                  var _rev = windowService ? windowService.previewRevision : 0
+                  return (windowService && modelData.capturable) ? windowService._previewPath(modelData.address) : ""
+                }
+                visible: status === Image.Ready
+              }
+
+              Rectangle {
+                visible: !viewThumb.visible
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 8
+                height: 120
+                radius: Tokens.radius.small
+                color: Tokens.surface.base
+                Text {
+                  anchors.centerIn: parent
+                  text: modelData.minimized ? "Minimized" : "No preview"
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                }
+              }
+
+              Text {
+                textFormat: Text.PlainText
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: 10
+                text: modelData.title + (modelData.minimized ? " (minimized)" : "")
+                color: Tokens.text.primary
+                font.pixelSize: Style.font.body
+                font.family: Tokens.typography.family
+                elide: Text.ElideRight
+              }
+
+              MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.pick(String(modelData.address || ""))
+              }
             }
           }
         }

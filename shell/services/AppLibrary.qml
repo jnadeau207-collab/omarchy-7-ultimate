@@ -24,6 +24,8 @@ Item {
   property var iconIndex: ({})
   property var pendingIconIndex: ({})
   property var actionIndex: ({})
+  property var recentIds: []
+  readonly property string recentsPath: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/omarchy/ultimate/start-recents.json"
 
   property int launchSerial: 0
   property int launchToplevelCount: 0
@@ -62,6 +64,19 @@ Item {
 
   function visibleEntries(query, hideDeveloperTools) {
     return AppSearch.visibleEntries(root.sortedEntries(query), query, hideDeveloperTools)
+  }
+
+  function programRows(query, hideDeveloperTools) {
+    return AppSearch.programRows(root.visibleEntries(query, hideDeveloperTools), query)
+  }
+
+  function recentEntries(limit, excludeIds) {
+    return AppSearch.recentEntries(root.recentIds, DesktopEntries.applications.values || [], limit, excludeIds)
+  }
+
+  function recordLaunch(desktopId) {
+    root.recentIds = AppSearch.withRecent(root.recentIds, desktopId)
+    recentsFile.setText(AppSearch.serializeRecents(root.recentIds))
   }
 
   function iconSource(icon) {
@@ -106,6 +121,7 @@ Item {
   function launch(desktopId, name) {
     var id = String(desktopId || "")
     if (!id) return
+    root.recordLaunch(id)
     root.beginLaunchFeedback(name)
     // Start gtk-launch inside a scope under app-graphical.slice so apps do not
     // inherit wayland-wm@.service. Keeping gtk-launch as the desktop-entry
@@ -114,13 +130,27 @@ Item {
     Util.execDetached("uwsm-app -- gtk-launch " + Util.shellQuote(id + ".desktop"))
   }
 
+  function launchCommand(command) {
+    var raw = String(command || "").trim()
+    if (!raw) return ""
+    var space = raw.indexOf(" ")
+    var bin = space < 0 ? raw : raw.slice(0, space)
+    var rest = space < 0 ? "" : raw.slice(space)
+    if (bin.charAt(0) === "/") return raw
+    if (bin.indexOf("omarchy-") === 0 && root.omarchyPath)
+      return Util.shellQuote(root.omarchyPath + "/bin/" + bin) + rest
+    return raw
+  }
+
   function launchAction(desktopId, action, name) {
     if (!action || action.kind === "open-new" || !action.command) {
       root.launch(desktopId, name)
       return
     }
     root.beginLaunchFeedback(name || action.name || desktopId)
-    Util.execDetached(String(action.command))
+    // Desktop Actions keep their Exec line, but omarchy-* verbs live under
+    // $OMARCHY_PATH/bin. uwsm-app's PATH does not search that tree.
+    Util.execDetached("uwsm-app -- " + root.launchCommand(action.command))
   }
 
   function remove(desktopId, name) {
@@ -267,6 +297,16 @@ Item {
     id: iconIndexDebounce
     interval: 750
     onTriggered: if (!iconIndexScan.running) iconIndexScan.running = true
+  }
+
+  FileView {
+    id: recentsFile
+    path: root.recentsPath
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.recentIds = AppSearch.parseRecents(text())
+    onFileChanged: reload()
+    onLoadFailed: root.recentIds = []
   }
 
   FileView {

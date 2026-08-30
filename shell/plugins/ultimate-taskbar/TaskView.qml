@@ -5,10 +5,20 @@ import qs.Ui
 Item {
   id: root
   property var bar: null
+  property var hostWindow: null
   implicitWidth: 44
   implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
   Accessible.name: "Task View"
+  HoverHandler {
+    id: hover
+    onHoveredChanged: {
+      if (!root.bar) return
+      if (hovered) root.bar.showTooltip(root, "Task View")
+      else if (!mouse.containsMouse) root.bar.hideTooltip(root)
+    }
+  }
+  readonly property bool tooltipHovered: visible && (mouse.containsMouse || hover.hovered)
 
   Rectangle {
     anchors.fill: parent
@@ -52,9 +62,20 @@ Item {
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
+    onContainsMouseChanged: {
+      if (!root.bar) return
+      if (containsMouse) root.bar.showTooltip(root, "Task View")
+      else root.bar.hideTooltip(root)
+    }
     onClicked: {
-      if (root.bar && root.bar.shell && typeof root.bar.shell.summon === "function")
-        root.bar.shell.summon("omarchy.ultimate-task-switcher", JSON.stringify({ mode: "taskView" }))
+      if (root.bar && root.bar.shell && typeof root.bar.shell.summon === "function") {
+        var screenName = root.hostWindow && root.hostWindow.screen
+          ? String(root.hostWindow.screen.name || "") : ""
+        root.bar.shell.summon("omarchy.ultimate-task-switcher", JSON.stringify({
+          mode: "taskView",
+          screen: screenName
+        }))
+      }
     }
   }
 }

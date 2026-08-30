@@ -59,6 +59,16 @@
       "argumentSchema": {}
     },
     {
+      "id": "files.pictures",
+      "section": "Locations",
+      "title": "Pictures",
+      "description": "Bounded metadata for the canonical Pictures location without reading file contents.",
+      "keywords": ["pictures", "photos", "folder", "files"],
+      "providerId": "files.provider",
+      "deepLink": { "host": "pictures", "path": "" },
+      "argumentSchema": {}
+    },
+    {
       "id": "files.recent",
       "section": "Activity",
       "title": "Recent",

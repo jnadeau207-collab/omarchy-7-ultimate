@@ -9,15 +9,19 @@ Exec=omarchy-launch-files --source desktop %u
 Icon=system-file-manager
 Terminal=false
 Categories=System;FileTools;FileManager;
-Keywords=files;folders;desktop;documents;downloads;trash;network;
+Keywords=files;folders;desktop;documents;downloads;pictures;trash;network;
 MimeType=x-scheme-handler/omarchy-files;
 StartupNotify=true
 StartupWMClass=org.omarchy.Files
-Actions=ThisPC;Recent;Trash;
+Actions=ThisPC;Pictures;Recent;Trash;
 
 [Desktop Action ThisPC]
 Name=This PC
 Exec=omarchy-launch-files --source desktop files.this-pc
+
+[Desktop Action Pictures]
+Name=Pictures
+Exec=omarchy-launch-files --source desktop files.pictures
 
 [Desktop Action Recent]
 Name=Recent

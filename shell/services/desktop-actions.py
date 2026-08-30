@@ -5,10 +5,14 @@ import pathlib
 
 
 def desktop_dirs() -> list[pathlib.Path]:
-    dirs = [
+    dirs = []
+    omarchy = os.environ.get("OMARCHY_PATH")
+    if omarchy:
+        dirs.append(pathlib.Path(omarchy) / "applications")
+    dirs.extend([
         pathlib.Path.home() / ".local" / "share" / "applications",
         pathlib.Path("/usr/share/applications"),
-    ]
+    ])
     extra = os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share")
     for raw in extra.split(":"):
         if raw:
