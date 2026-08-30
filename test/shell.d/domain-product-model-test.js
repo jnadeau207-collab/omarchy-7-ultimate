@@ -140,6 +140,7 @@ const thisPcResult = {
     state: {
       schemaVersion: 'v0', workspaceId: 'files.workspace.primary',
       locations: [
+        { id: 'files.location.this-pc', kind: 'this-pc', label: 'This PC', state: 'available', writable: false, rootToken: revA, reason: null },
         { id: 'files.location.home', kind: 'home', label: 'Home', state: 'available', writable: true, rootToken: revA, reason: null },
         { id: 'files.location.desktop', kind: 'desktop', label: 'Desktop', state: 'available', writable: true, rootToken: revA, reason: null },
         { id: 'files.location.pictures', kind: 'pictures', label: 'Pictures', state: 'available', writable: true, rootToken: revA, reason: null }
@@ -159,6 +160,30 @@ assert(normalizedThisPc.records.some(record => record.kind === 'entry' && record
 assert(normalizedThisPc.records.some(record => record.kind === 'entry' && record.title === 'note.txt'), 'This PC shows Desktop records from the inspect inventory')
 assert(normalizedThisPc.records.some(record => record.kind === 'location' && record.title === 'Home' && record.details.some(field => field.label === 'Entries' && field.value === '1')), 'This PC Home card reports its remaining inventory count')
 assert(normalizedThisPc.records.findIndex(record => record.kind === 'location' && record.title === 'Home') === 0, 'This PC lists the Home location before later places')
+let thisPcRequest = 0
+const thisPcAccepted = Files.createController({
+  send() { return `this-pc-${++thisPcRequest}` },
+  cancel() { return true },
+  onState() {}
+})
+thisPcAccepted.activate('files.this-pc', {})
+thisPcAccepted.setConnected(true)
+thisPcAccepted.receiveResult('this-pc-1', catalog('files.provider', fileActions, 'degraded'))
+thisPcAccepted.receiveResult('this-pc-2', thisPcResult)
+assert(thisPcAccepted.state.phase === 'available', 'This PC reports the virtual this-pc location, not workspace degradation')
+assert(thisPcAccepted.state.availability === 'available', 'This PC page availability stays location-local')
+assert(thisPcResult.value.availability.state === 'degraded', 'This PC inspect payload keeps the workspace degraded')
+let homeRequest = 0
+const homeAccepted = Files.createController({
+  send() { return `home-${++homeRequest}` },
+  cancel() { return true },
+  onState() {}
+})
+homeAccepted.activate('files.overview', {})
+homeAccepted.setConnected(true)
+homeAccepted.receiveResult('home-1', catalog('files.provider', fileActions, 'degraded'))
+homeAccepted.receiveResult('home-2', { ...thisPcResult, action: 'inspect' })
+assert(homeAccepted.state.phase === 'degraded', 'Files Home keeps workspace inspect degradation')
 assert(Files.normalizeResult(fileReadState, { ...fileResult, value: { ...fileResult.value, shell: 'rm -rf /' } }).error, 'Files rejects extra response fields')
 
 equal(Software.requestParameters(Software.baseState('software.catalog', { query: 'editor' }, 'loading')), {

@@ -524,6 +524,8 @@ grep -Fq 'LOCATION_ENTRY_FLOOR' "$ROOT/default/fabric/omarchy_fabric/providers/f
   || fail "Files byte-bound eviction keeps a per-location record floor"
 grep -Fq 'function placeEntries' "$ROOT/shell/apps/ultimate-files/FilesModel.js" \
   || fail "Files Home and This PC surface place records from the inspect inventory"
+grep -Fq 'function pageAvailability' "$ROOT/shell/apps/ultimate-files/FilesModel.js" \
+  || fail "This PC reports the virtual this-pc location instead of workspace degradation"
 grep -Fq 'function searchDestinations' "$ROOT/shell/services/AppSearch.js" \
   || fail "Start search injects Settings and place destinations"
 grep -Fq 'AppSearch.searchDestinations(query, values)' "$ROOT/shell/services/AppLibrary.qml" \
