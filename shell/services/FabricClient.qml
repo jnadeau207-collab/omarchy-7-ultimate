@@ -41,6 +41,8 @@ Item {
   property bool _compatibilityBlocked: false
   property var _lastError: null
   property var _engine: null
+  property bool _cyclingSocket: false
+  property int _wireGeneration: 0
 
   signal connectionReady(var hello)
   signal requestSucceeded(string requestId, var result)
@@ -66,9 +68,31 @@ Item {
     root._engine.start(Date.now())
   }
 
+  function _wire() {
+    return wireLoader.item
+  }
+
   function _stopEngine() {
     if (root._engine) root._engine.stop(Date.now())
-    wire.connected = false
+    if (root._wire()) root._wire().connected = false
+  }
+
+  function _recycleWire(connectAfter) {
+    root._wireGeneration += 1
+    var generation = root._wireGeneration
+    root._cyclingSocket = true
+    if (root._wire()) root._wire().connected = false
+    wireLoader.active = false
+    root._cyclingSocket = false
+    if (connectAfter !== true) return
+    Qt.callLater(function() {
+      if (generation !== root._wireGeneration) return
+      if (!root.active || root.socketPath === "") return
+      wireLoader.active = true
+      if (!root._wire()) return
+      root._wire().path = root.socketPath
+      root._wire().connected = true
+    })
   }
 
   function request(method, params) {
@@ -118,16 +142,19 @@ Item {
         onState: function(snapshot) { root._applySnapshot(snapshot) },
         onConnectNeeded: function() {
           if (!root.active || root.socketPath === "") return
-          wire.path = root.socketPath
-          wire.connected = true
+          // Quickshell Socket binds an inode for the life of the object.
+          // Toggling path/connected on the same instance never opens a
+          // replaced fabric.sock; destroy and create a new Socket instead.
+          root._recycleWire(true)
         },
         onCloseNeeded: function(reason) {
-          wire.connected = false
+          if (root._wire()) root._wire().connected = false
         },
         sendFrame: function(frame) {
-          if (!wire.connected) return false
-          wire.write(frame)
-          wire.flush()
+          var sock = root._wire()
+          if (!sock || !sock.connected) return false
+          sock.write(frame)
+          sock.flush()
           return true
         },
         onReady: function(hello) { root.connectionReady(hello) },
@@ -152,40 +179,48 @@ Item {
 
   Component.onDestruction: root._stopEngine()
 
-  Socket {
-    id: wire
-    path: root.socketPath
-    connected: false
+  Component {
+    id: wireFactory
+    Socket {
+      id: instance
+      connected: false
 
-    // Empty splitMarker yields arbitrary independently decoded chunks. This is
-    // bounded only because the provisional adapter rejects every non-ASCII raw
-    // or escaped value; one ASCII byte always maps to one QString character.
-    parser: SplitParser {
-      splitMarker: ""
-      onRead: function(data) {
-        if (root._engine) root._engine.receiveChunk(data, Date.now())
+      // Empty splitMarker yields arbitrary independently decoded chunks. This is
+      // bounded only because the provisional adapter rejects every non-ASCII raw
+      // or escaped value; one ASCII byte always maps to one QString character.
+      parser: SplitParser {
+        splitMarker: ""
+        onRead: function(data) {
+          if (root._engine) root._engine.receiveChunk(data, Date.now())
+        }
+      }
+
+      onConnectedChanged: {
+        if (!root._engine || root._cyclingSocket) return
+        if (connected) root._engine.transportOpened(Date.now())
+        else root._engine.transportClosed(null, Date.now())
+      }
+
+      onError: function(error) {
+        if (!root._engine) return
+        root._engine.transportClosed({
+          code: "daemon.socket-error",
+          title: "Fabric socket failed",
+          explanation: "Quickshell could not maintain the owner-scoped Fabric socket.",
+          detail: String(error),
+          retryable: true,
+          changeState: "unknown",
+          recoveryActions: ["fabric.reconnect"]
+        }, Date.now())
+        instance.connected = false
       }
     }
+  }
 
-    onConnectedChanged: {
-      if (!root._engine) return
-      if (connected) root._engine.transportOpened(Date.now())
-      else root._engine.transportClosed(null, Date.now())
-    }
-
-    onError: function(error) {
-      if (!root._engine) return
-      root._engine.transportClosed({
-        code: "daemon.socket-error",
-        title: "Fabric socket failed",
-        explanation: "Quickshell could not maintain the owner-scoped Fabric socket.",
-        detail: String(error),
-        retryable: true,
-        changeState: "unknown",
-        recoveryActions: ["fabric.reconnect"]
-      }, Date.now())
-      wire.connected = false
-    }
+  Loader {
+    id: wireLoader
+    active: false
+    sourceComponent: wireFactory
   }
 
   Timer {

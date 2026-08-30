@@ -379,6 +379,7 @@ function FabricEngine(options) {
   this.rxBytes = 0
   this.reconnectAttempt = 0
   this.reconnectAt = null
+  this.connectDeadline = null
 }
 
 FabricEngine.prototype._call = function(name, args) {
@@ -454,6 +455,7 @@ FabricEngine.prototype.stop = function(now) {
   this.compatibilityBlocked = false
   this.disconnectExpected = needsCloseFeedback
   this.reconnectAt = null
+  this.connectDeadline = null
   this.connectInFlight = false
   this.ready = false
   this.lastError = null
@@ -467,14 +469,22 @@ FabricEngine.prototype.stop = function(now) {
 }
 
 FabricEngine.prototype.retry = function(now) {
+  if (!this.wanted || this.ready || this.disconnectExpected) return false
   if (
-    !this.wanted || this.ready || this.transportUp || this.connectInFlight ||
-    this.disconnectExpected || (!this.compatibilityBlocked && this.state !== "reconnecting")
+    !this.compatibilityBlocked &&
+    this.state !== "reconnecting" &&
+    this.state !== "connecting"
   ) return false
   this.compatibilityBlocked = false
   this.lastError = null
   this.reconnectAttempt = 0
   this.reconnectAt = nonNegativeNumber(now, 0)
+  this.connectDeadline = null
+  if (this.connectInFlight || this.transportUp) {
+    this.connectInFlight = false
+    this.transportUp = false
+    this._call("onCloseNeeded", [this.lastError])
+  }
   this._setState("connecting")
   this.tick(now)
   return true
@@ -501,6 +511,18 @@ FabricEngine.prototype.tick = function(now) {
     }
   }
   if (
+    this.connectInFlight && this.connectDeadline !== null &&
+    current >= this.connectDeadline
+  ) {
+    this.transportClosed(fabricError(
+      "daemon.socket-error",
+      "Fabric socket failed",
+      "The owner-scoped Fabric socket did not accept the connection before the client deadline.",
+      { retryable: true, changeState: "unknown", recoveryActions: ["fabric.reconnect"] }
+    ), current)
+    return
+  }
+  if (
     this.wanted && !this.compatibilityBlocked && !this.disconnectExpected &&
     !this.transportUp && !this.connectInFlight &&
     this.reconnectAt !== null && current >= this.reconnectAt
@@ -508,6 +530,7 @@ FabricEngine.prototype.tick = function(now) {
     this.reconnectAt = null
     this.suppressDisconnectFeedback = false
     this.connectInFlight = true
+    this.connectDeadline = current + this.requestTimeoutMs
     this._setState("connecting")
     this._call("onConnectNeeded", [])
   } else {
@@ -522,6 +545,7 @@ FabricEngine.prototype.transportOpened = function(now) {
     return
   }
   this.connectInFlight = false
+  this.connectDeadline = null
   this.suppressDisconnectFeedback = false
   this.transportUp = true
   this.ready = false
@@ -559,6 +583,7 @@ FabricEngine.prototype.transportClosed = function(reason, now) {
     this.suppressDisconnectFeedback = true
     this.transportUp = false
     this.connectInFlight = false
+    this.connectDeadline = null
     this.ready = false
     this.rxBuffer = ""
     this.rxBytes = 0
@@ -581,8 +606,10 @@ FabricEngine.prototype.transportClosed = function(reason, now) {
     }
     return
   }
+  var stuckConnect = this.connectInFlight && !this.transportUp
   this.transportUp = false
   this.connectInFlight = false
+  this.connectDeadline = null
   this.ready = false
   var truncated = this.rxBytes > 0 || this.rxBuffer.length > 0
   this.rxBuffer = ""
@@ -605,6 +632,7 @@ FabricEngine.prototype.transportClosed = function(reason, now) {
   }
   this.lastError = error
   this._failAll(error)
+  if (stuckConnect) this._call("onCloseNeeded", [error])
   if (!this.wanted) {
     this._setState("disabled")
   } else if (this.compatibilityBlocked) {
