@@ -14,6 +14,7 @@ Panel {
   ipcTarget: "omarchy.audio"
   property bool chromeVisible: true
   property Item hostAnchor: null
+  property bool embedMode: false
 
   readonly property var sink: Pipewire.defaultAudioSink
   readonly property var source: Pipewire.defaultAudioSource
@@ -570,8 +571,30 @@ Panel {
     return Model.streamRepresentsPlayer(node, player, mprisPlayers, displayAudioStreams)
   }
 
-  implicitWidth: chromeVisible ? button.implicitWidth : 0
-  implicitHeight: chromeVisible ? button.implicitHeight : 0
+  implicitWidth: embedMode ? (parent ? parent.width : 0) : (chromeVisible ? button.implicitWidth : 0)
+  implicitHeight: embedMode ? (parent ? parent.height : 0) : (chromeVisible ? button.implicitHeight : 0)
+  anchors.fill: embedMode ? parent : undefined
+
+  function adoptOverlayPage() {
+    if (root.embedMode || !root.chromeVisible) return
+    var overlay = overlayLoader.item
+    if (!overlay || !overlay.pageHost) return
+    keyCatcher.parent = overlay.pageHost
+    keyCatcher.anchors.fill = overlay.pageHost
+  }
+
+  Timer {
+    id: overlayArm
+    interval: 0
+    onTriggered: {
+      if (!root.embedMode && root.chromeVisible)
+        root.overlayReady = true
+    }
+  }
+
+  property bool overlayReady: false
+
+  Component.onCompleted: overlayArm.start()
 
   PwObjectTracker { objects: root.candidateSinks }
   PwObjectTracker { objects: root.candidateSources }
@@ -580,7 +603,7 @@ Panel {
   PwNodePeakMonitor {
     id: inputPeakMonitor
     node: root.source
-    enabled: root.opened && !!root.source
+    enabled: (root.opened || root.embedMode) && !!root.source
   }
 
   Process {
@@ -603,7 +626,7 @@ Panel {
 
   Timer {
     interval: 5000
-    running: root.opened
+    running: root.opened || root.embedMode
     repeat: true
     triggeredOnStart: true
     onTriggered: if (!sinkAvailabilityProc.running) sinkAvailabilityProc.running = true
@@ -648,15 +671,10 @@ Panel {
     }
   }
 
-  KeyboardPanel {
-    id: panel
-    anchorItem: root.hostAnchor || button
-    owner: root
-    bar: root.bar
-    open: root.opened
-    focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(380))
-    contentHeight: panel.fittedContentHeight(panelColumn.implicitHeight, Style.space(560))
+  Item {
+    id: embedHost
+    visible: !overlayLoader.active
+    anchors.fill: parent
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -1004,6 +1022,22 @@ Panel {
         }
       }
     }
+  }
+
+  Loader {
+    id: overlayLoader
+    active: root.overlayReady
+    sourceComponent: KeyboardPanel {
+      id: panel
+      anchorItem: root.hostAnchor || button
+      owner: root
+      bar: root.bar
+      open: root.opened
+      focusTarget: keyCatcher
+      contentWidth: panel.fittedContentWidth(Style.space(380))
+      contentHeight: panel.fittedContentHeight(panelColumn.implicitHeight, Style.space(560))
+    }
+    onLoaded: root.adoptOverlayPage()
   }
 
   // ---- Reusable inline components ----

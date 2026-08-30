@@ -1,9 +1,6 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
 import qs.Commons
-import qs.Ui
 
 Item {
   id: root
@@ -13,96 +10,28 @@ Item {
   property var manifest: null
   property bool opened: false
 
-  SemanticProfile {
-    id: productProfile
-    profileId: "product"
-    rtl: Qt.application.layoutDirection === Qt.RightToLeft
-  }
-
   function open(payloadJson) {
-    if (root.shell && root.shell.transientCoordinator)
-      root.shell.transientCoordinator.request(root)
-    root.opened = true
+    var route = ""
+    try {
+      var payload = payloadJson ? JSON.parse(payloadJson) : {}
+      route = String(payload.routeId || payload.route || "")
+    } catch (e) {
+      route = ""
+    }
+    if (root.shell && root.shell.appLibrary) {
+      if (route !== "") {
+        var command = root.shell.appLibrary.launchCommand("omarchy-launch-settings --source desktop " + route)
+        if (command) Util.execDetached("uwsm-app -- " + command)
+      } else {
+        root.shell.appLibrary.launch("org.omarchy.Settings", "Settings")
+      }
+    }
+    root.close()
   }
 
   function close() {
     if (root.shell && root.shell.transientCoordinator)
       root.shell.transientCoordinator.release(root)
     root.opened = false
-  }
-
-  function openDestination(id) {
-    if (root.shell) root.shell.toggle(id, "{}")
-    root.close()
-  }
-
-  PanelWindow {
-    visible: root.opened
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    implicitWidth: 360
-    implicitHeight: 420
-    WlrLayershell.namespace: "omarchy-settings"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    anchors.bottom: true
-    anchors.right: true
-    margins.bottom: 48
-    margins.right: 12
-
-    Rectangle {
-      anchors.fill: parent
-      color: Tokens.surface.glass
-      radius: Tokens.radius.large
-      border.color: Tokens.border.subtle
-      border.width: 1
-      LayoutMirroring.enabled: productProfile.rtl
-      LayoutMirroring.childrenInherit: true
-
-      ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 16
-        spacing: 10
-
-        Text {
-          text: "Settings"
-          color: Tokens.text.primary
-          font.family: Style.font.family
-          font.pixelSize: Style.font.heading
-        }
-
-        Text {
-          text: "These destinations open the existing system surfaces. A full Settings app lands in a later slice."
-          color: Tokens.text.secondary
-          wrapMode: Text.WordWrap
-          Layout.fillWidth: true
-          font.family: Style.font.family
-          font.pixelSize: Style.font.bodySmall
-        }
-
-        Repeater {
-          model: [
-            { label: "Display", id: "omarchy.monitor" },
-            { label: "Sound", id: "omarchy.audio" },
-            { label: "Network", id: "omarchy.network" },
-            { label: "Bluetooth", id: "omarchy.bluetooth" },
-            { label: "Power", id: "omarchy.power" }
-          ]
-          delegate: Button {
-            Layout.fillWidth: true
-            text: modelData.label
-            semanticProfile: productProfile
-            onClicked: root.openDestination(modelData.id)
-          }
-        }
-
-        Item { Layout.fillHeight: true }
-      }
-    }
-
-    PanelKeyCatcher {
-      anchors.fill: parent
-      onCloseRequested: root.close()
-    }
   }
 }

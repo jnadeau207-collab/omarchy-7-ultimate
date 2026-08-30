@@ -1007,6 +1007,41 @@ function observedText(value) {
   }
 }
 
+function hostedPanel(routeId) {
+  var id = String(routeId || "")
+  if (id === "settings.display.overview") return {
+    source: "plugins/panels/monitor/Panel.qml",
+    pluginId: "omarchy.monitor",
+    label: "Live Display panel",
+    honesty: "This page hosts the existing Display panel (scale, brightness, arrangement). Typed Display service remains Phase 5."
+  }
+  if (id === "settings.audio.overview") return {
+    source: "plugins/panels/audio/Panel.qml",
+    pluginId: "omarchy.audio",
+    label: "Live Sound panel",
+    honesty: "This page hosts the existing Sound panel (output, input, volume). Typed Audio service remains Phase 5."
+  }
+  if (id === "settings.network.overview") return {
+    source: "plugins/panels/network/Panel.qml",
+    pluginId: "omarchy.network",
+    label: "Live Network panel",
+    honesty: "This page hosts the existing Network panel (Wi-Fi, ethernet). Typed Network service remains Phase 5."
+  }
+  if (id === "settings.bluetooth.overview") return {
+    source: "plugins/panels/bluetooth/Panel.qml",
+    pluginId: "omarchy.bluetooth",
+    label: "Live Bluetooth panel",
+    honesty: "This page hosts the existing Bluetooth panel (adapters, pairing). Typed Bluetooth service remains Phase 5."
+  }
+  if (id === "settings.power.overview") return {
+    source: "plugins/panels/power/Panel.qml",
+    pluginId: "omarchy.power",
+    label: "Live Power panel",
+    honesty: "This page hosts the existing Power panel (profile, battery). Typed Power service remains Phase 5."
+  }
+  return null
+}
+
 function provenance(state) {
   if (!state || !state.query || state.query.providerId === "") return "Read-only provider catalog"
   var entry = state.providerEntry
@@ -1049,6 +1084,7 @@ if (typeof module !== "undefined") {
     phaseTone: phaseTone,
     toneForRecord: toneForRecord,
     observedText: observedText,
-    provenance: provenance
+    provenance: provenance,
+    hostedPanel: hostedPanel
   }
 }
