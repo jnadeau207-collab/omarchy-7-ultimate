@@ -281,6 +281,16 @@ Panel {
           width: Math.max(calendarScroll.width, gridColumn.width)
           spacing: Style.space(8)
 
+          Text {
+            width: parent.width
+            text: "Calendar"
+            color: root.contentForeground
+            font.family: root.contentFontFamily
+            font.pixelSize: Style.font.heading
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+          }
+
           // ---- Hero: today, centered. Once the view has stepped back
           //      it is also the way home — clicking the date you are
           //      looking for beats hunting for a reset button.

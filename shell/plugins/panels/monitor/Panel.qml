@@ -11,6 +11,8 @@ Panel {
   moduleName: "omarchy.monitor"
   ipcTarget: "omarchy.monitor"
   manageIpc: false
+  property bool chromeVisible: true
+  property Item hostAnchor: null
 
   // manageIpc: false so this panel can own the single IpcHandler the target
   // permits — needed for the brightness + state methods below.
@@ -346,7 +348,7 @@ Panel {
     setTextSize(textSizeStops[idx])
   }
 
-  implicitWidth: button.implicitWidth
+  implicitWidth: chromeVisible ? button.implicitWidth : 0
   implicitHeight: button.implicitHeight
 
   Component.onCompleted: refresh()
@@ -467,6 +469,7 @@ Panel {
 
   BarIconButton {
     id: button
+    visible: root.chromeVisible
     anchors.fill: parent
     bar: root.bar
     text: Quickshell.screens.length > 1 ? "▣" : "□"
@@ -483,7 +486,7 @@ Panel {
 
   KeyboardPanel {
     id: panel
-    anchorItem: button
+    anchorItem: root.hostAnchor || button
     owner: root
     bar: root.bar
     open: root.opened

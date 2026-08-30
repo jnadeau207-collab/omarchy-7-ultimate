@@ -13,6 +13,8 @@ Panel {
   // manageIpc: false so this panel can own the single IpcHandler the target
   // permits — needed for the togglePercentage method below.
   manageIpc: false
+  property bool chromeVisible: true
+  property Item hostAnchor: null
   property var batteryInfo: ({})
   property var systemInfo: ({})
   property var profiles: []
@@ -202,7 +204,7 @@ Panel {
   onBatteryPresentChanged: if (!batteryPresent) close()
 
   visible: batteryPresent
-  implicitWidth: batteryPresent ? button.implicitWidth : 0
+  implicitWidth: chromeVisible && batteryPresent ? button.implicitWidth : 0
   implicitHeight: batteryPresent ? button.implicitHeight : 0
 
   Process {
@@ -275,6 +277,7 @@ Panel {
 
   BarIconButton {
     id: button
+    visible: root.chromeVisible
     anchors.fill: parent
     bar: root.bar
     text: root.showPercentage && !vertical
@@ -291,7 +294,7 @@ Panel {
 
   KeyboardPanel {
     id: panel
-    anchorItem: button
+    anchorItem: root.hostAnchor || button
     owner: root
     bar: root.bar
     open: root.opened && root.batteryPresent

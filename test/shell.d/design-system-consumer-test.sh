@@ -17,6 +17,7 @@ trees = [
     root / "shell/plugins/osd",
     root / "shell/plugins/polkit",
     root / "shell/plugins/notifications",
+    root / "shell/plugins/ultimate-quick-settings",
     root / "shell/plugins/bar/widgets",
     root / "shell/plugins/panels",
 ]

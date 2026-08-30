@@ -189,11 +189,8 @@ ShellRoot {
       next.bar.position = "bottom"
       if (!Util.isPlainObject(next.bar.layout)) next.bar.layout = {}
       next.bar.layout.right = [
-        { id: "omarchy.bluetooth" },
-        { id: "omarchy.network" },
-        { id: "omarchy.audio" },
-        { id: "omarchy.monitor" },
-        { id: "omarchy.power" },
+        { id: "omarchy.quick-settings" },
+        { id: "omarchy.notifications" },
         { id: "omarchy.agents" },
         { id: "omarchy.tray" },
         { id: "omarchy.clock" }

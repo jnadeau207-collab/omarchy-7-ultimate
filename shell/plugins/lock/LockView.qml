@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import Quickshell
 import qs.Commons
 import qs.Ui
 
@@ -17,6 +18,7 @@ Item {
   property string passwordText: ""
   property bool syncingPasswordText: false
 
+  readonly property string userName: String(Quickshell.env("USER") || Quickshell.env("LOGNAME") || "")
   readonly property string placeholderText: "Enter Password"
   readonly property int fieldWidth: 381
   readonly property int fieldHeight: 67
@@ -117,6 +119,39 @@ Item {
       hoverEnabled: true
       onClicked: { root.wakeRequested(); root.forcePasswordFocus() }
       onPositionChanged: root.wakeRequested()
+    }
+
+    SystemClock {
+      id: lockClock
+      precision: SystemClock.Minutes
+    }
+
+    Column {
+      id: identity
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: inputField.top
+      anchors.bottomMargin: 28
+      spacing: 6
+
+      Text {
+        textFormat: Text.PlainText
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: Qt.formatTime(lockClock.date, "HH:mm")
+        color: Color.lock.text
+        font.family: Style.font.family
+        font.pixelSize: Math.round(Style.font.heading * 2.2)
+        font.bold: true
+      }
+
+      Text {
+        textFormat: Text.PlainText
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: root.userName.length > 0
+        text: root.userName
+        color: Color.lock.placeholder
+        font.family: Style.font.family
+        font.pixelSize: Style.font.heading
+      }
     }
 
     BorderSurface {

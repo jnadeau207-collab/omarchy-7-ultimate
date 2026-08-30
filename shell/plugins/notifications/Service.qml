@@ -445,8 +445,61 @@ Item {
     runNextPopupFileJob()
   }
 
-  function enqueueHistoryRead() {
-    popupFileQueue = popupFileQueue.concat([{ read: true }])
+  property var centerRows: []
+  property int centerRevision: 0
+  property string historyReadPurpose: "replay"
+
+  readonly property int unreadCount: {
+    var _rev = centerRevision
+    var n = 0
+    var rows = Array.isArray(centerRows) ? centerRows : []
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] && rows[i].originalId !== -1) n++
+    }
+    return n
+  }
+
+  function badgeCount() {
+    return unreadCount
+  }
+
+  function badgeCountForApp(desktopId, name) {
+    var _rev = centerRevision
+    return NotificationLogic.badgeCountForApp(centerRows, desktopId, name)
+  }
+
+  function applyCenterHistory(raw) {
+    service.centerRows = NotificationLogic.historyRows(
+      raw, liveRowsForReplay(), NotificationUrgency.Normal, service.historyLimit)
+    service.centerRevision++
+  }
+
+  function refreshCenterHistory() {
+    if (readHistoryProc.running || service.historyReadQueued) return "ok"
+    service.historyReadPurpose = "center"
+    service.historyReadQueued = true
+    enqueueHistoryRead("center")
+    return "ok"
+  }
+
+  function openCenter() {
+    if (shell && typeof shell.summon === "function") {
+      if (shell.isPluginOpen("omarchy.notifications")) return "ok"
+      return shell.summon("omarchy.notifications", "") ? "ok" : "unavailable"
+    }
+    return "unavailable"
+  }
+
+  function dismissHistoryEntry(entry) {
+    if (!entry) return
+    enqueuePopupFileJob(["bash", "-c",
+      "rm -f \"$1/$2\" \"$3/${2%.json}\"-*", "--",
+      historyDir, NotificationLogic.popupFileName(entry), imagesDir],
+      function() { service.refreshCenterHistory() })
+  }
+
+  function enqueueHistoryRead(purpose) {
+    popupFileQueue = popupFileQueue.concat([{ read: true, purpose: purpose || "replay" }])
     runNextPopupFileJob()
   }
 
@@ -458,6 +511,7 @@ Item {
     popupFileQueue = popupFileQueue.slice(1)
 
     if (job.read) {
+      service.historyReadPurpose = job.purpose || "replay"
       startHistoryRead()
       return
     }
@@ -582,7 +636,10 @@ Item {
       imagesDir]
     for (var i = 0; i < persistable.copies.length; i++)
       command.push(persistable.copies[i].from, persistable.copies[i].to)
-    enqueuePopupFileJob(command, done)
+    enqueuePopupFileJob(command, function() {
+      service.refreshCenterHistory()
+      if (done) done()
+    })
   }
 
   function clearHistory() {
@@ -591,7 +648,8 @@ Item {
       "  [[ -e $f ]] || continue\n" +
       "  stale=\"${f##*/}\"\n" +
       "  rm -f \"$f\" \"$2/${stale%.json}\"-*\n" +
-      "done", "--", historyDir, imagesDir])
+      "done", "--", historyDir, imagesDir],
+      function() { service.refreshCenterHistory() })
   }
 
   // A restart can kill a queued job between its cp and its JSON write,
@@ -616,7 +674,10 @@ Item {
     onExited: service.runNextPopupFileJob()
     stdout: StdioCollector {
       waitForEnd: true
-      onStreamFinished: service.replayHistory(text)
+      onStreamFinished: {
+        if (service.historyReadPurpose === "center") service.applyCenterHistory(text)
+        else service.replayHistory(text)
+      }
     }
   }
 
@@ -849,6 +910,7 @@ Item {
       // Safe beside the restore read: it only re-persists entries whose
       // JSON exists, exactly the images the sweep keeps.
       service.sweepOrphanImages()
+      service.refreshCenterHistory()
     })
   }
 
@@ -880,6 +942,10 @@ Item {
     // Replay the notifications that have been moved into the history dir.
     function showHistory(): string {
       return service.showRecentHistory()
+    }
+
+    function openCenter(): string {
+      return service.openCenter()
     }
 
     // `clear` forgets the recorded history; the toasts on screen stay put.
