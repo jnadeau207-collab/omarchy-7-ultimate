@@ -582,7 +582,7 @@
       "required": ["version", "source", "idempotencyKey"],
       "properties": {
         "version": { "const": "v0" },
-        "source": { "enum": ["open-windows", "focused-application", "selection"] },
+        "source": { "enum": ["open-windows", "focused-application", "selection", "virtual-desktops", "mode-profile"] },
         "idempotencyKey": { "$ref": "common-v0.json#/$defs/idempotencyKey" },
         "accessScope": { "enum": ["principal", "session", "task"] },
         "sensitivity": { "enum": ["public", "personal", "private", "restricted"] },

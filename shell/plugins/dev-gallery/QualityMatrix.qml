@@ -10,8 +10,19 @@ Column {
 
   property bool hasCursor: false
   property string lastAction: "none"
+  property string isolatePresentation: ""
   property alias focusAnchor: titleLabel
   readonly property bool hovered: matrixHover.hovered
+  readonly property bool isolating: isolatePresentation !== ""
+  readonly property var visiblePresentationCases: {
+    if (!isolating) return presentationCases
+    var out = []
+    var i
+    for (i = 0; i < presentationCases.length; i++) {
+      if (presentationCases[i].id === isolatePresentation) out.push(presentationCases[i])
+    }
+    return out
+  }
   readonly property var operationStates: [
     { id: "success", message: "The update installed.", progress: 1 },
     { id: "no-op", message: "Everything was already current.", progress: 1 },
@@ -59,6 +70,7 @@ Column {
   }
 
   Grid {
+    visible: !root.isolating
     width: parent.width
     columns: 2
     spacing: Style.space(8)
@@ -105,15 +117,15 @@ Column {
 
   Grid {
     width: parent.width
-    columns: 2
+    columns: root.isolating ? 1 : 2
     spacing: Style.space(8)
 
     Repeater {
-      model: root.presentationCases
+      model: root.visiblePresentationCases
 
       SemanticFixture {
         required property var modelData
-        width: (root.width - Style.space(8)) / 2
+        width: root.isolating ? root.width : (root.width - Style.space(8)) / 2
         caseId: modelData.id
         label: modelData.label
         dark: modelData.dark
@@ -131,6 +143,7 @@ Column {
   }
 
   Text {
+    visible: !root.isolating
     text: "Operation dialogs"
     color: Tokens.text.primary
     font.family: Style.font.family
@@ -139,6 +152,7 @@ Column {
   }
 
   Grid {
+    visible: !root.isolating
     width: parent.width
     columns: 2
     spacing: Style.space(8)
@@ -169,6 +183,7 @@ Column {
   }
 
   Row {
+    visible: !root.isolating
     spacing: Style.space(8)
 
     Button {

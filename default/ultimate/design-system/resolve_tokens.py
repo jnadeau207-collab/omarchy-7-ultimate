@@ -740,7 +740,7 @@ def build_payload(
             },
         },
         "typography": {
-            "family": "monospace",
+            "family": "Liberation Sans",
             "sizesPx": sizes,
             "weights": {"regular": 400, "medium": 500, "semibold": 600, "bold": 700},
         },

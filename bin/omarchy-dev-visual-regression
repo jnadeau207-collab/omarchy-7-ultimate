@@ -1,0 +1,155 @@
+#!/bin/bash
+
+# omarchy:hidden=true
+# omarchy:summary=Compare the Ultimate visual-regression gallery against committed goldens
+# omarchy:args=[check|compare <a.png> <b.png>|hash <file.png>]
+
+set -euo pipefail
+
+[[ -n ${OMARCHY_PATH:-} ]] || {
+  echo "OMARCHY_PATH is not set" >&2
+  exit 1
+}
+
+quality_dir=${OMARCHY_VISUAL_DIR:-$OMARCHY_PATH/default/ultimate/quality}
+contract="$quality_dir/visual-regression-v0.json"
+goldens_dir="$quality_dir/visual-goldens"
+command=${1:-check}
+
+hash_png() {
+  python3 - "$1" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+if not path.is_file():
+    raise SystemExit(f"missing PNG: {path}")
+data = path.read_bytes()
+if data[:8] != b"\x89PNG\r\n\x1a\n":
+    raise SystemExit(f"not a PNG: {path}")
+print(hashlib.sha256(data).hexdigest())
+PY
+}
+
+compare_png() {
+  python3 - "$1" "$2" <<'PY'
+import pathlib
+import sys
+
+left = pathlib.Path(sys.argv[1]).read_bytes()
+right = pathlib.Path(sys.argv[2]).read_bytes()
+if left[:8] != b"\x89PNG\r\n\x1a\n" or right[:8] != b"\x89PNG\r\n\x1a\n":
+    raise SystemExit("compare requires two PNG files")
+if left == right:
+    print("visual match")
+    raise SystemExit(0)
+print("visual mismatch")
+raise SystemExit(1)
+PY
+}
+
+check_gallery() {
+  python3 - "$contract" "$goldens_dir" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+
+contract_path = pathlib.Path(sys.argv[1])
+goldens_dir = pathlib.Path(sys.argv[2])
+contract = json.loads(contract_path.read_text(encoding="utf-8"))
+errors = []
+
+if contract.get("schemaVersion") != "quality-v0":
+    errors.append("schemaVersion must be quality-v0")
+if contract.get("galleryId") != "ultimate-visual-regression-v0":
+    errors.append("galleryId must be ultimate-visual-regression-v0")
+if contract.get("algorithm") != "sha256-png-bytes":
+    errors.append("algorithm must be sha256-png-bytes")
+
+surfaces = contract.get("surfaces")
+if not isinstance(surfaces, list) or len(surfaces) < 10:
+    errors.append("visual regression gallery must name at least ten surfaces")
+
+ids = []
+gallery_hashes = []
+for surface in surfaces or []:
+    surface_id = surface.get("id")
+    filename = surface.get("file")
+    kind = surface.get("kind")
+    if not surface_id or not filename or kind not in {"desktop-chrome", "state-gallery"}:
+        errors.append(f"invalid surface: {surface}")
+        continue
+    if surface_id in ids:
+        errors.append(f"duplicate surface id: {surface_id}")
+    ids.append(surface_id)
+    golden = goldens_dir / filename
+    if not golden.is_file():
+        errors.append(f"missing golden: {golden}")
+        continue
+    data = golden.read_bytes()
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        errors.append(f"golden is not a PNG: {golden}")
+        continue
+    digest = hashlib.sha256(data).hexdigest()
+    expected = surface.get("sha256")
+    if expected and expected != digest:
+        errors.append(f"{surface_id}: sha256 mismatch")
+    elif not expected:
+        errors.append(f"{surface_id}: golden is present but sha256 is not recorded")
+    if kind == "state-gallery":
+        gallery_hashes.append((surface_id, digest))
+
+required = {
+    "start",
+    "superbar",
+    "agent-center-overview",
+    "lock-preview",
+    "quick-settings",
+    "notification-center",
+    "dark-comfortable-pointer",
+    "light-compact-keyboard-pseudo",
+    "dark-touch-rtl-long",
+    "light-comfortable-rtl-two-x",
+}
+missing = sorted(required - set(ids))
+if missing:
+    errors.append("missing required surfaces: " + ", ".join(missing))
+
+seen_gallery = {}
+for surface_id, digest in gallery_hashes:
+    if digest in seen_gallery:
+        errors.append(
+            f"state-gallery goldens must be distinct: {seen_gallery[digest]} and {surface_id} share a hash"
+        )
+    seen_gallery[digest] = surface_id
+
+if errors:
+    print("\n".join(errors), file=sys.stderr)
+    raise SystemExit(1)
+print(f"visual regression gallery valid: {len(ids)} surfaces")
+PY
+}
+
+case "$command" in
+  check)
+    (($# <= 1)) || { echo "check takes no additional arguments" >&2; exit 1; }
+    check_gallery
+    ;;
+  compare)
+    (($# == 3)) || { echo "usage: omarchy-dev-visual-regression compare <a.png> <b.png>" >&2; exit 1; }
+    compare_png "$2" "$3"
+    ;;
+  hash)
+    (($# == 2)) || { echo "usage: omarchy-dev-visual-regression hash <file.png>" >&2; exit 1; }
+    hash_png "$2"
+    ;;
+  -h|--help)
+    echo "Usage: omarchy-dev-visual-regression [check|compare <a.png> <b.png>|hash <file.png>]"
+    ;;
+  *)
+    echo "expected check, compare, or hash" >&2
+    exit 1
+    ;;
+esac

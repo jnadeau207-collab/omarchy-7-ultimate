@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Agent Center
+Comment=Open Agent Center
+Exec=omarchy-launch-agent-center --source desktop
+Icon=org.omarchy.AgentCenter
+Terminal=false
+Categories=System;
+StartupNotify=true
+StartupWMClass=org.omarchy.AgentCenter

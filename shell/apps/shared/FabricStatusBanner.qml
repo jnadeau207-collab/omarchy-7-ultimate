@@ -58,7 +58,7 @@ Rectangle {
         textFormat: Text.PlainText
         id: statusDetail
         text: root.connected
-          ? "Read-only client " + root.host.fabricIdentity + " has its own endpoint session."
+          ? "Client " + root.host.fabricIdentity + " has its own endpoint session."
           : (root.incompatible
             ? "This app and the Fabric daemon do not share a compatible protocol."
             : "Provider-backed state stays unavailable until the owner-scoped Fabric connection is ready.")

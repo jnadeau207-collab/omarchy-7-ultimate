@@ -8,6 +8,9 @@ QtObject {
   id: root
 
   property string lastError: ""
+  property string omarchyPath: Quickshell.env("OMARCHY_PATH")
+  property int previewRevision: 0
+  property var _previewQueue: []
   property var _minimized: ({})
   property var _normalBounds: ({})
 
@@ -903,6 +906,54 @@ QtObject {
     return rect
   }
 
+  function _previewFile(address) {
+    var id = String(address || "").replace(/[^A-Za-z0-9]/g, "_")
+    if (!id) return ""
+    return root.home + "/.local/state/omarchy/ultimate/window-previews/" + id + ".png"
+  }
+
+  function _previewPath(address) {
+    var file = root._previewFile(address)
+    if (!file) return ""
+    return "file://" + file + "?rev=" + root.previewRevision
+  }
+
+  function _capturePreview(address) {
+    var addr = root._canonAddr(address)
+    if (!addr) return
+    var queue = root._previewQueue || []
+    var i
+    for (i = 0; i < queue.length; i++) {
+      if (queue[i] === addr) return
+    }
+    root._previewQueue = queue.concat([addr])
+    root._runNextPreview()
+  }
+
+  function _runNextPreview() {
+    if (previewCapture.running) return
+    var queue = root._previewQueue || []
+    if (!queue.length) return
+    var addr = queue[0]
+    root._previewQueue = queue.slice(1)
+    var dest = root._previewFile(addr)
+    var rect = root._logicalClientRect(root._clientIpc(addr))
+    if (!dest || !rect || rect.minimized || !(rect.width >= 8) || !(rect.height >= 8) || !root.omarchyPath) {
+      Qt.callLater(root._runNextPreview)
+      return
+    }
+    previewCapture.command = [
+      "bash",
+      root.omarchyPath + "/shell/services/capture-window-preview.sh",
+      String(Math.round(rect.x)),
+      String(Math.round(rect.y)),
+      String(Math.round(rect.width)),
+      String(Math.round(rect.height)),
+      dest
+    ]
+    previewCapture.running = true
+  }
+
   function _rememberNormal(address) {
     var rec = root._clientRect(address)
     if (!rec || rec.fullscreen || rec.minimized) return
@@ -1601,6 +1652,14 @@ QtObject {
     }
     root._dispatchLua('hl.dsp.window.move({ monitor = "' + dest.name + '", ' + root._luaWindow(target) + " })", true)
     return root._finish("moveToMonitor", target, root._ok())
+  }
+
+  property Process previewCapture: Process {
+    running: false
+    onExited: {
+      if (exitCode === 0) root.previewRevision += 1
+      Qt.callLater(root._runNextPreview)
+    }
   }
 
   property Process ensurePinsDir: Process {

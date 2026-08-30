@@ -31,7 +31,7 @@ Rectangle {
     anchors.centerIn: parent
     text: root.count >= 0 ? (root.count > 99 ? "99+" : String(root.count)) : root.text
     color: Tokens.surface.base
-    font.family: Style.font.family
+    font.family: Tokens.typography.family
     font.pixelSize: Style.font.bodySmall
     font.bold: true
   }

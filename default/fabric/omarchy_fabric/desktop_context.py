@@ -11,7 +11,13 @@ from typing import Any
 from .managed_work import Actor, ManagedWorkError, ManagedWorkPlane
 from .managed_work.validation import require_context_source
 
-DESKTOP_SOURCES = frozenset({"open-windows", "focused-application", "selection"})
+DESKTOP_SOURCES = frozenset({
+    "open-windows",
+    "focused-application",
+    "selection",
+    "virtual-desktops",
+    "mode-profile",
+})
 EXCLUDED_WINDOW_CLASSES = frozenset(
     {
         "hyprlock",
@@ -245,6 +251,91 @@ def collect_compositor_snapshot() -> dict[str, Any]:
         "windows": windows,
         "focus": focus,
         "selection": _live_selection(excluded_focus=bool(active) and _excluded_window(active)),
+        "desktops": [],
+        "mode": "",
+        "features": {},
+    }
+
+
+def collect_virtual_desktops() -> dict[str, Any]:
+    workspaces = _hypr_json("workspaces")
+    active = _hypr_json("activeworkspace")
+    if not isinstance(workspaces, list):
+        workspaces = []
+    if not isinstance(active, dict):
+        active = {}
+    active_id = str(active.get("id") or active.get("name") or "")
+    desktops = []
+    for item in workspaces[:64]:
+        if not isinstance(item, dict):
+            continue
+        ident = str(item.get("id") or item.get("name") or "")
+        if not ident:
+            continue
+        desktops.append(
+            {
+                "id": ident,
+                "name": str(item.get("name") or ident),
+                "active": ident == active_id or bool(item.get("focused", False)),
+            }
+        )
+    return {
+        "windows": [],
+        "focus": None,
+        "selection": _selection_empty(),
+        "desktops": desktops,
+        "mode": "",
+        "features": {},
+    }
+
+
+def collect_mode_profile() -> dict[str, Any]:
+    home = os.environ.get("HOME") or ""
+    omarchy = os.environ.get("OMARCHY_PATH") or ""
+    mode = "desktop"
+    mode_path = Path(home) / ".local/state/omarchy/ultimate/mode"
+    if mode_path.is_file():
+        raw = mode_path.read_text(encoding="utf-8").strip()
+        if raw == "power-user":
+            mode = "power-user"
+        elif raw and raw != "desktop":
+            raise ManagedWorkError(
+                "context.mode-invalid",
+                "Mode profile capture refused an unknown mode file value.",
+                detail=raw,
+            )
+    features: dict[str, bool] = {}
+    profile_path = Path(omarchy) / "default/ultimate/profiles" / f"{mode}.json"
+    if not profile_path.is_file():
+        raise ManagedWorkError(
+            "context.mode-unavailable",
+            "Mode profile capture cannot read the shipped profile contract.",
+            detail=str(profile_path),
+        )
+    try:
+        parsed = json.loads(profile_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ManagedWorkError(
+            "context.mode-unavailable",
+            "Mode profile capture refused a malformed profile contract.",
+            detail=type(error).__name__,
+        ) from error
+    raw_features = parsed.get("features") if isinstance(parsed, dict) else None
+    if not isinstance(raw_features, dict):
+        raise ManagedWorkError(
+            "context.mode-unavailable",
+            "Mode profile capture requires a features object.",
+        )
+    for key, value in raw_features.items():
+        if isinstance(key, str):
+            features[key] = value is True
+    return {
+        "windows": [],
+        "focus": None,
+        "selection": _selection_empty(),
+        "desktops": [],
+        "mode": mode,
+        "features": features,
     }
 
 
@@ -281,7 +372,38 @@ def _normalize_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
             selection = _selection_captured(text)
         else:
             selection = _selection_empty()
-    return {"windows": windows, "focus": focus, "selection": selection}
+    desktops_in = snapshot.get("desktops", [])
+    if not isinstance(desktops_in, list) or len(desktops_in) > 64:
+        raise ManagedWorkError("context.snapshot", "Desktop snapshot must be a bounded array.")
+    desktops = []
+    for item in desktops_in:
+        if not isinstance(item, dict):
+            raise ManagedWorkError("context.snapshot", "Each desktop record must be an object.")
+        ident = str(item.get("id") or item.get("name") or "")
+        if not ident:
+            continue
+        desktops.append(
+            {
+                "id": ident,
+                "name": str(item.get("name") or ident),
+                "active": bool(item.get("active", False)),
+            }
+        )
+    mode = str(snapshot.get("mode") or "")
+    features_in = snapshot.get("features", {})
+    if features_in is None:
+        features_in = {}
+    if not isinstance(features_in, dict):
+        raise ManagedWorkError("context.snapshot", "Mode features must be an object.")
+    features = {str(key): value is True for key, value in features_in.items()}
+    return {
+        "windows": windows,
+        "focus": focus,
+        "selection": selection,
+        "desktops": desktops,
+        "mode": mode,
+        "features": features,
+    }
 
 
 def _content_for_source(source: str, snapshot: Mapping[str, Any]) -> dict[str, Any]:
@@ -290,6 +412,10 @@ def _content_for_source(source: str, snapshot: Mapping[str, Any]) -> dict[str, A
     if source == "focused-application":
         focus = snapshot.get("focus")
         return {"focus": focus, "application": (focus or {}).get("class", "")}
+    if source == "virtual-desktops":
+        return {"desktops": list(snapshot.get("desktops") or [])}
+    if source == "mode-profile":
+        return {"mode": str(snapshot.get("mode") or "desktop"), "features": dict(snapshot.get("features") or {})}
     return {"selection": snapshot.get("selection") or _selection_empty()}
 
 
@@ -309,10 +435,17 @@ def capture_desktop_context(
     if source_value not in DESKTOP_SOURCES:
         raise ManagedWorkError(
             "context.source-unsupported",
-            "Desktop context capture accepts open-windows, focused-application, and selection only.",
+            "Desktop context capture accepts open-windows, focused-application, selection, virtual-desktops, and mode-profile only.",
             detail=source_value,
         )
-    data = _normalize_snapshot(snapshot) if snapshot is not None else collect_compositor_snapshot()
+    if snapshot is not None:
+        data = _normalize_snapshot(snapshot)
+    elif source_value == "virtual-desktops":
+        data = collect_virtual_desktops()
+    elif source_value == "mode-profile":
+        data = collect_mode_profile()
+    else:
+        data = collect_compositor_snapshot()
     return plane.capture_context(
         actor,
         source=source_value,

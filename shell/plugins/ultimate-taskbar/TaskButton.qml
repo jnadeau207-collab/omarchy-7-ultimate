@@ -33,7 +33,7 @@ Item {
   readonly property string label: group && group.name ? group.name : ""
   readonly property string iconName: group && (group.icon || group.desktopId) ? (group.icon || group.desktopId) : ""
 
-  implicitWidth: 52
+  implicitWidth: 56
   implicitHeight: parent ? parent.height : 48
 
   function activate() {
@@ -82,20 +82,25 @@ Item {
 
   Rectangle {
     anchors.fill: parent
-    anchors.margins: 4
-    radius: Tokens.radius.small
+    anchors.margins: 3
+    radius: Tokens.radius.medium
     color: mouse.pressed ? bar.chromePressed
       : mouse.containsMouse ? bar.chromeHover
       : root.active ? bar.chromeActive
+      : root.running ? bar.chromeHover
       : "transparent"
+    border.color: root.active ? bar.chromeGlow : (root.running ? Tokens.border.subtle : "transparent")
+    border.width: root.running || root.active ? 1 : 0
 
     Rectangle {
       visible: root.running
       anchors.bottom: parent.bottom
-      anchors.horizontalCenter: parent.horizontalCenter
-      anchors.bottomMargin: 2
-      width: root.active ? 16 : (windows.length > 1 ? 12 : 8)
-      height: 2
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.leftMargin: 6
+      anchors.rightMargin: 6
+      anchors.bottomMargin: 3
+      height: root.active ? 3 : 2
       radius: 1
       color: bar.chromeGlow
     }
@@ -103,11 +108,11 @@ Item {
     Image {
       id: icon
       anchors.centerIn: parent
-      width: 32
-      height: 32
+      width: 36
+      height: 36
       fillMode: Image.PreserveAspectFit
-      sourceSize.width: 32 * Screen.devicePixelRatio
-      sourceSize.height: 32 * Screen.devicePixelRatio
+      sourceSize.width: 36 * Screen.devicePixelRatio
+      sourceSize.height: 36 * Screen.devicePixelRatio
       source: root.appLibrary ? root.appLibrary.iconSource(root.iconName) : ""
       visible: status === Image.Ready
     }
@@ -178,13 +183,22 @@ Item {
     id: peek
     visible: false
     color: "transparent"
-    implicitWidth: 220
+    implicitWidth: 280
     implicitHeight: peekCol.implicitHeight + 16
     anchor.window: root.hostWindow
     anchor.item: root
     anchor.edges: Edges.Top | Edges.Left
     anchor.gravity: Edges.Top | Edges.Right
     anchor.rect.y: -8
+
+    onVisibleChanged: {
+      if (!visible || !windowService) return
+      var rows = root.previewRows
+      var i
+      for (i = 0; i < rows.length; i++) {
+        if (rows[i].capturable) windowService._capturePreview(rows[i].address)
+      }
+    }
 
     Rectangle {
       anchors.fill: parent
@@ -215,7 +229,7 @@ Item {
           model: previewRows
           delegate: Item {
             width: peekCol.width
-            height: 44
+            height: peekThumb.height + 44 + (peekThumb.visible ? 4 : 0)
 
             Rectangle {
               anchors.fill: parent
@@ -224,8 +238,25 @@ Item {
             }
 
             Image {
+              id: peekThumb
+              anchors.top: parent.top
+              anchors.left: parent.left
+              anchors.right: parent.right
+              height: status === Image.Ready ? 132 : 0
+              fillMode: Image.PreserveAspectCrop
+              asynchronous: true
+              cache: false
+              source: {
+                var _rev = windowService ? windowService.previewRevision : 0
+                return (windowService && modelData.capturable) ? windowService._previewPath(modelData.address) : ""
+              }
+              visible: status === Image.Ready
+            }
+
+            Image {
               id: peekIcon
-              anchors.verticalCenter: parent.verticalCenter
+              anchors.top: peekThumb.bottom
+              anchors.topMargin: peekThumb.visible ? 4 : 8
               anchors.left: parent.left
               anchors.leftMargin: 6
               width: 28
@@ -238,8 +269,8 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              anchors.top: parent.top
-              anchors.topMargin: 4
+              anchors.top: peekThumb.bottom
+              anchors.topMargin: peekThumb.visible ? 4 : 4
               anchors.left: peekIcon.right
               anchors.leftMargin: 6
               anchors.right: peekClose.left
@@ -267,7 +298,8 @@ Item {
 
             Text {
               id: peekClose
-              anchors.verticalCenter: parent.verticalCenter
+              anchors.top: peekThumb.bottom
+              anchors.topMargin: peekThumb.visible ? 10 : 8
               anchors.right: parent.right
               anchors.rightMargin: 6
               text: "×"
@@ -289,10 +321,10 @@ Item {
             }
 
             MouseArea {
-              anchors.verticalCenter: parent.verticalCenter
+              anchors.top: peekThumb.bottom
               anchors.right: parent.right
               width: 22
-              height: parent.height
+              height: 44
               z: 2
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor

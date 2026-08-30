@@ -34,6 +34,7 @@ BarWidget {
   readonly property bool showsSeconds: Model.clockNeedsSeconds(activeFormat)
   readonly property string displayText: formatted(displayDate)
   readonly property var verticalLines: displayText.split("\n")
+  readonly property bool stackedLabel: !vertical && verticalLines.length > 1
 
   function refresh() {
     displayDate = new Date()
@@ -147,9 +148,10 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: root.vertical ? "" : root.displayText
-    labelVisible: !root.vertical
-    hasVisualContent: root.vertical ? root.verticalLines.length > 0 : text !== ""
+    text: root.vertical || root.stackedLabel ? "" : root.displayText
+    labelVisible: !root.vertical && !root.stackedLabel
+    hasVisualContent: root.vertical || root.stackedLabel ? root.verticalLines.length > 0 : text !== ""
+    fixedWidth: root.stackedLabel ? Math.max(48, stackedClock.implicitWidth + Style.space(16)) : -1
     fixedHeight: root.vertical ? root.verticalLines.length * Style.bar.iconSlot : -1
     horizontalMargin: 8.75
     verticalPadding: 8.75
@@ -178,6 +180,27 @@ BarWidget {
             ? button.fontSize * 0.9
             : button.fontSize
           color: button.foreground
+        }
+      }
+    }
+
+    Column {
+      id: stackedClock
+      visible: root.stackedLabel
+      anchors.centerIn: parent
+      spacing: 0
+
+      Repeater {
+        model: root.verticalLines
+
+        Text {
+          required property string modelData
+          textFormat: Text.PlainText
+          text: modelData
+          color: button.foreground
+          font.family: button.fontFamily
+          font.pixelSize: Style.font.caption
+          horizontalAlignment: Text.AlignHCenter
         }
       }
     }

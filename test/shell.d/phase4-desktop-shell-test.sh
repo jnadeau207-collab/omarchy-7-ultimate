@@ -38,6 +38,7 @@ for needle in (
     'id: "omarchy.agents"',
     'id: "omarchy.tray"',
     'id: "omarchy.clock"',
+    'format: "HH:mm\\nddd M/d"',
 ):
     if needle not in body:
         raise SystemExit(f"overlay missing {needle}")
@@ -53,13 +54,21 @@ for leftover in (
 PY
 pass "Desktop Mode overlay composes Quick Settings instead of five panel icons"
 
-grep -Fq 'text: "Agent Center"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'name: "Agent Center"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start exposes Agent Center as a destination"
 grep -Fq 'org.omarchy.Files' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start exposes Files as a destination"
 grep -Fq 'org.omarchy.Settings' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start exposes Settings as a destination"
-pass "Start has Files, Settings, and Agent Center destinations"
+grep -Fq 'All programs' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start keeps an All programs list"
+grep -Fq 'Pictures' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start keeps a Pictures place"
+grep -Fq 'Computer' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start keeps a Computer place"
+grep -Fq 'userInitial' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start shows the session account"
+pass "Start has Files, Settings, Agent Center, places, and All programs"
 
 grep -Fq 'launchAgentCenter' "$ROOT/shell/plugins/agents/Panel.qml" \
   || fail "agents panel can open Agent Center"
@@ -67,15 +76,127 @@ grep -Fq 'Open Agent Center' "$ROOT/shell/plugins/agents/Panel.qml" \
   || fail "agents panel shows Open Agent Center"
 pass "agents panel is a launch shim to Agent Center"
 
-jq -e '.pins[-1].desktopId == "org.omarchy.AgentCenter"' \
+jq -e '.pins[-1].desktopId == "org.omarchy.AgentCenter" and .pins[-1].icon == "org.omarchy.AgentCenter"' \
   "$ROOT/default/ultimate/taskbar-pins.json" >/dev/null \
-  || fail "shipped Superbar pins include Agent Center"
+  || fail "shipped Superbar pins include Agent Center with its own mark"
 pass "Agent Center is a shipped Superbar pin"
+
+grep -Fq 'Icon=org.omarchy.AgentCenter' "$ROOT/applications/org.omarchy.AgentCenter.desktop" \
+  || fail "Agent Center desktop entry uses a distinct icon"
+grep -Fq 'Icon=system-run' "$ROOT/applications/org.omarchy.Agent.desktop" \
+  || fail "Agent keeps system-run so the two marks stay different"
+[[ -f $ROOT/default/icons/hicolor/scalable/apps/org.omarchy.AgentCenter.svg ]] \
+  || fail "Agent Center ships a scalable mark"
+pass "Agent Center icon is distinct from Agent"
+
+jq -e '.id == "omarchy.desktop-icons" and (.kinds | index("service"))' \
+  "$ROOT/shell/plugins/desktop-icons/manifest.json" >/dev/null \
+  || fail "desktop icons are a first-party service plugin"
+grep -Fq 'desktopIcons' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
+  || fail "desktop icon surface is gated by the profile flag"
+grep -Fq 'omarchy-desktop-icons' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
+  || fail "desktop icon surface uses its own layer namespace"
+pass "desktop icon surface exists"
+
+python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["cardWidth"], json.load(open(sys.argv[1]))["cardHeight"])' \
+  "$ROOT/default/ultimate/start-chrome.json" | grep -Fx '720 640' >/dev/null \
+  || fail "Start chrome is the two-pane 720x640 card"
+[[ -f $ROOT/default/systemd/user/omarchy-fabric-checkout.service ]] \
+  || fail "checkout Fabric unit exists for machines without /usr/bin/omarchy-fabricd"
+if grep -Fx 'ProtectKernelTunables=yes' "$ROOT/default/systemd/user/omarchy-fabric-checkout.service" >/dev/null; then
+  fail "checkout Fabric unit ProtectKernelTunables prevents bubblewrap from mounting /proc"
+fi
+if grep -Fx 'ProtectKernelLogs=yes' "$ROOT/default/systemd/user/omarchy-fabric-checkout.service" >/dev/null; then
+  fail "checkout Fabric unit ProtectKernelLogs prevents bubblewrap from mounting /proc"
+fi
+pass "Start chrome and checkout Fabric unit are shipped"
+
+python3 - "$ROOT" <<'PY' || fail "desktop-actions parser reads Chrome-style Actions"
+from pathlib import Path
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+root = Path(sys.argv[1])
+desktop = """[Desktop Entry]
+Name=Chrome
+Exec=google-chrome %U
+Actions=NewWindow;NewIncognitoWindow;
+
+[Desktop Action NewWindow]
+Name=New Window
+Exec=google-chrome
+
+[Desktop Action NewIncognitoWindow]
+Name=New Incognito Window
+Exec=google-chrome --incognito
+"""
+with tempfile.TemporaryDirectory() as tmp:
+    apps = Path(tmp) / ".local" / "share" / "applications"
+    apps.mkdir(parents=True)
+    (apps / "google-chrome.desktop").write_text(desktop, encoding="utf-8")
+    env = os.environ.copy()
+    env["HOME"] = tmp
+    env["XDG_DATA_DIRS"] = tmp
+    out = subprocess.check_output(["python3", str(root / "shell/services/desktop-actions.py")], env=env, text=True)
+    data = json.loads(out)
+    assert data["google-chrome"][1]["name"] == "New Incognito Window"
+    assert "--incognito" in data["google-chrome"][1]["command"]
+PY
+pass "desktop-actions parser reads Chrome-style Actions"
+
+python3 - "$ROOT" <<'PY' || fail "desktop icon lister reads the real Desktop directory"
+from pathlib import Path
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+root = Path(sys.argv[1])
+with tempfile.TemporaryDirectory() as tmp:
+    desktop = Path(tmp) / "Desktop"
+    desktop.mkdir()
+    (desktop / "notes.txt").write_text("hello\n", encoding="utf-8")
+    env = os.environ.copy()
+    env["HOME"] = tmp
+    env["XDG_DESKTOP_DIR"] = str(desktop)
+    out = subprocess.check_output(["python3", str(root / "shell/plugins/desktop-icons/list-desktop.py")], env=env, text=True)
+    data = json.loads(out)
+    assert data["directory"] == str(desktop)
+    assert data["items"][0]["name"] == "notes.txt"
+    assert data["items"][0]["kind"] == "file"
+    env["XDG_DESKTOP_DIR"] = tmp
+    out = subprocess.check_output(["python3", str(root / "shell/plugins/desktop-icons/list-desktop.py")], env=env, text=True)
+    data = json.loads(out)
+    assert data["directory"] == str(Path(tmp) / "Desktop"), data
+    assert data["directory"] != tmp
+    assert data["items"][0]["name"] == "notes.txt"
+PY
+pass "desktop icon lister reads the real Desktop directory"
+
+[[ -f $ROOT/default/ultimate/desktop/Files.desktop ]] \
+  || fail "Desktop Mode ships a Files desktop shortcut"
+[[ -f $ROOT/default/ultimate/desktop/Computer.desktop ]] \
+  || fail "Desktop Mode ships a Computer desktop shortcut"
+grep -Fq 'xdg-user-dirs-update --set DESKTOP "$HOME/Desktop"' "$ROOT/bin/omarchy-provision-user" \
+  || fail "new users keep a real Desktop directory"
+if grep -Fq 'xdg-user-dirs-update --set DESKTOP "$HOME"' "$ROOT/bin/omarchy-provision-user"; then
+  fail "provision-user must not fold Desktop back into HOME"
+fi
+pass "Desktop Mode keeps a real Desktop directory"
 
 grep -Fq 'userName' "$ROOT/shell/plugins/lock/LockView.qml" \
   || fail "lock shows the session user"
 grep -Fq 'SystemClock' "$ROOT/shell/plugins/lock/LockView.qml" \
   || fail "lock shows a clock"
+grep -Fq 'Tokens.text.primary' "$ROOT/shell/plugins/lock/LockView.qml" \
+  || fail "lock reads text from the token pipeline"
+if grep -Fq 'Color.lock' "$ROOT/shell/plugins/lock/LockView.qml"; then
+  fail "lock must not keep a private Color.lock palette"
+fi
 pass "lock shows clock and user"
 
 grep -Fq 'text: "Calendar"' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
@@ -88,6 +209,19 @@ grep -Fq 'Open new window' "$ROOT/shell/services/JumpList.js" \
   || fail "Superbar jump lists include Open new window"
 grep -Fq 'previewRows' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "Superbar peek uses the structured preview model"
+grep -Fq '_capturePreview' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "Superbar peek captures live window thumbnails"
+grep -Fq 'capture-window-preview.sh' "$ROOT/shell/services/WindowService.qml" \
+  || fail "window preview capture uses the grim helper"
+[[ -f $ROOT/shell/services/capture-window-preview.sh ]] \
+  || fail "window preview capture helper exists"
+if bash "$ROOT/shell/services/capture-window-preview.sh" a 0 100 100 /tmp/peek.png 2>/dev/null; then
+  fail "preview helper rejects non-integer geometry"
+fi
+if bash "$ROOT/shell/services/capture-window-preview.sh" 0 0 1 1 /tmp/peek.png 2>/dev/null; then
+  fail "preview helper rejects geometry that is too small"
+fi
+pass "window preview helper rejects invalid geometry"
 grep -Fq 'badgeCount' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "Superbar task buttons show notification badges"
 pass "Superbar has jump lists, structured previews, and badges"
@@ -132,14 +266,28 @@ const fromExecString = JumpList.jumpListFor({
 }, 'org.omarchy.AgentCenter')
 assertEqual(fromExecString[1].name, 'Pending Approvals', 'DesktopAction execString is a launchable command')
 
+const fromIndex = JumpList.jumpListFor(null, 'google-chrome', {
+  'google-chrome': [{ id: 'NewIncognitoWindow', name: 'New Incognito Window', command: 'google-chrome --incognito', kind: 'desktop-action' }]
+})
+assertEqual(fromIndex.length, 2, 'jump lists fall back to parsed desktop Actions')
+assertEqual(fromIndex[1].name, 'New Incognito Window', 'Chrome extra Actions stay on the jump list')
+assertDeepEqual(JumpList.desktopIdAliases('google-chrome').slice(0, 2), ['google-chrome', 'google-chrome-stable'], 'Chrome desktop ids alias')
+
 const rows = Preview.previewRows([
-  { address: '0x1', title: 'Files', workspaceId: 2, minimized: true },
+  { address: '0x1', title: 'Files', workspaceId: 2, minimized: true, at: [10, 20], size: [800, 600] },
   { address: '', title: 'ghost' }
 ])
 assertEqual(rows.length, 1, 'preview model drops windows without an address')
 assertEqual(rows[0].title, 'Files', 'preview keeps the window title')
 assertEqual(rows[0].workspace, '2', 'preview keeps the workspace id')
 assertEqual(rows[0].minimized, true, 'preview keeps minimized state')
+assertEqual(rows[0].capturable, false, 'minimized windows do not invent a thumbnail')
+assertEqual(rows[0].width, 800, 'preview keeps compositor width')
+
+const mapped = Preview.previewRow({ address: '0x2', title: 'Chrome', at: [100, 80], size: [1280, 720], hidden: false })
+assertEqual(mapped.capturable, true, 'mapped windows expose geometry for grim')
+assertEqual(mapped.x, 100, 'preview keeps compositor x')
+assertEqual(Preview.geometry({ size: [0, 10] }), null, 'zero-area windows have no geometry')
 
 const qvectorWindows = {
   length: 1,
@@ -207,3 +355,24 @@ grep -Fq 'Actions=Tasks;Approvals;Automations;' \
   "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
   || fail "published Agent Center launcher keeps desktop actions"
 pass "Agent Center desktop launcher is published for jump lists"
+
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042200.sh"
+[[ -f $HOME/.local/share/icons/hicolor/scalable/apps/org.omarchy.AgentCenter.svg ]] \
+  || fail "Agent Center mark is published into the user icon theme"
+grep -Fq 'Icon=org.omarchy.AgentCenter' "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
+  || fail "published Agent Center launcher uses the distinct mark"
+pass "Agent Center mark is published"
+
+grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar clock uses the token UI family"
+grep -Fq 'hasVisualContent: true' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml" \
+  || fail "Quick Settings Superbar mark is drawn, not a leftover glyph"
+if grep -Fq '⊞' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml"; then
+  fail "Quick Settings Superbar mark is not a leftover boxed-plus glyph"
+fi
+grep -Fq 'hasVisualContent: true' "$ROOT/shell/plugins/notifications/BarWidget.qml" \
+  || fail "Notification Center Superbar mark is drawn, not a leftover glyph"
+if grep -Fq '◎' "$ROOT/shell/plugins/notifications/BarWidget.qml"; then
+  fail "Notification Center Superbar mark is not a leftover bullseye glyph"
+fi
+pass "Superbar notification-area marks are drawn chrome"

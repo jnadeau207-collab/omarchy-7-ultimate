@@ -13,7 +13,7 @@ Flags mean **the capability exists in this profile today**, not "we intend to sh
 
 Verified against the tree (2026-08-29):
 
-- `desktopIcons` is false. There is no desktop icon surface (only a gallery label).
+- `desktopIcons` is true in Desktop Mode. `omarchy.desktop-icons` lists the real XDG Desktop directory on a click-through Bottom layer. Power User Mode keeps the flag false.
 - `quickSettings` is true in Desktop Mode. `omarchy.quick-settings` composes tiles over the existing audio/bluetooth/network/monitor/power/nightlight/notification services. Power User Mode keeps the flag false; heritage chrome still uses the individual panel icons.
 - `notificationCenter` is true in Desktop Mode. `omarchy.notifications` is both the toast daemon and a Superbar Notification Center (`BarWidget.qml` + `Center.qml`). `showHistory` still replays toasts for the existing keybinding; the mouse path opens the center.
 - `taskbar` / `startMenu` are true in Desktop Mode: `omarchy.ultimate-taskbar` and `omarchy.ultimate-start` exist.

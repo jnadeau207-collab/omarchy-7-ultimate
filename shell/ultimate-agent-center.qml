@@ -15,6 +15,6 @@ Shared.ProductAppHost {
   ipcTarget: "omarchy.agent-center"
   routeCatalogPath: "apps/ultimate-agent-center/routes-v1.json"
   fabricIdentity: "omarchy-agent-center"
-  fabricAllowedMethods: ["managed-work.query"]
+  fabricAllowedMethods: ["managed-work.query", "managed-work.task.create", "managed-work.task.cancel", "managed-work.task.recover", "managed-work.context.capture", "managed-work.run.execute"]
   applicationSourcePath: "apps/ultimate-agent-center/AgentCenterApplication.qml"
 }

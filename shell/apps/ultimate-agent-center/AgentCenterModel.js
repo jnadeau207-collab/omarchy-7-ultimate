@@ -1,5 +1,33 @@
 var QUERY_METHOD = "managed-work.query"
 var QUERY_VERSION = "v0"
+var WORK_METHODS = {
+  create: "managed-work.task.create",
+  cancel: "managed-work.task.cancel",
+  recover: "managed-work.task.recover",
+  capture: "managed-work.context.capture",
+  execute: "managed-work.run.execute"
+}
+var ALLOWED_WORK_METHODS = [
+  QUERY_METHOD,
+  WORK_METHODS.create,
+  WORK_METHODS.cancel,
+  WORK_METHODS.recover,
+  WORK_METHODS.capture,
+  WORK_METHODS.execute
+]
+var CONTEXT_SOURCES = [
+  "open-windows",
+  "focused-application",
+  "selection",
+  "virtual-desktops",
+  "mode-profile"
+]
+var INSPECT_CAPABILITY = "system.info.read"
+var TERMINAL_TASK_STATES = {
+  succeeded: true,
+  failed: true,
+  cancelled: true
+}
 var PAGE_SIZE = 20
 var MAX_VISIBLE_ITEMS = 100
 var MAX_CURSOR_LENGTH = 1024
@@ -91,6 +119,71 @@ function normalizedArguments(view, value) {
       throw new Error("This route has no entity selector.")
   }
   return { entityType: entityType, entityId: entityId }
+}
+
+function inspectTaskCreateParams(nowMs) {
+  var stamp = String(nowMs || "")
+  if (!/^[0-9]+$/.test(stamp)) throw new Error("Inspect task create requires a millisecond timestamp.")
+  return {
+    version: QUERY_VERSION,
+    title: "Inspect system information",
+    intent: { goal: "inventory", readOnly: true, capability: INSPECT_CAPABILITY },
+    budget: { timeSeconds: 600, outputBytes: 1048576, costMicrounits: 50000, network: false },
+    idempotencyKey: "task.inspect." + stamp
+  }
+}
+
+function captureContextParams(source, nowMs) {
+  var stamp = String(nowMs || "")
+  if (!/^[0-9]+$/.test(stamp)) throw new Error("Context capture requires a millisecond timestamp.")
+  if (CONTEXT_SOURCES.indexOf(String(source || "")) < 0) throw new Error("The context source is not on the desktop capture list.")
+  return {
+    version: QUERY_VERSION,
+    source: String(source),
+    idempotencyKey: "context." + source + "." + stamp,
+    accessScope: "principal",
+    sensitivity: "personal",
+    ttlSeconds: 600
+  }
+}
+
+function taskRevisionParams(taskId, revision) {
+  if (!validOpaqueId(taskId)) throw new Error("The task ID is invalid.")
+  var expected = Number(revision)
+  if (!isFinite(expected) || expected < 1 || Math.floor(expected) !== expected)
+    throw new Error("The task revision is invalid.")
+  return {
+    version: QUERY_VERSION,
+    taskId: String(taskId),
+    expectedRevision: expected
+  }
+}
+
+function executeRunParams(taskId, nowMs) {
+  var stamp = String(nowMs || "")
+  if (!/^[0-9]+$/.test(stamp)) throw new Error("Inspect run execute requires a millisecond timestamp.")
+  if (!validOpaqueId(taskId)) throw new Error("The task ID is invalid.")
+  return {
+    version: QUERY_VERSION,
+    taskId: String(taskId),
+    idempotencyKey: "run.execute." + String(taskId) + "." + stamp
+  }
+}
+
+function taskWorkActions(task) {
+  if (!isObject(task) || !task.taskId) return []
+  var state = String(task.state || "")
+  var actions = []
+  if (state === "draft" || state === "queued") {
+    actions.push({ id: "execute", label: "Run inspect", method: WORK_METHODS.execute })
+  }
+  if (!TERMINAL_TASK_STATES[state]) {
+    actions.push({ id: "cancel", label: "Cancel task", method: WORK_METHODS.cancel })
+  }
+  if (state === "interrupted") {
+    actions.push({ id: "recover", label: "Recover task", method: WORK_METHODS.recover })
+  }
+  return actions
 }
 
 function requestParameters(view, argumentsValue, cursor) {
@@ -368,6 +461,7 @@ function QueryController(options) {
   this.connected = false
   this.generation = 0
   this.activeRequestId = ""
+  this.activeWorkId = ""
   this.pending = Object.create(null)
   this.sending = false
   this.synchronousFailure = null
@@ -497,10 +591,44 @@ QueryController.prototype.loadMore = function() {
   return this._start(true)
 }
 
+QueryController.prototype.sendWork = function(method, params) {
+  if (!this.connected || this.activeRequestId !== "" || this.activeWorkId !== "") return false
+  if (ALLOWED_WORK_METHODS.indexOf(method) < 0 || method === QUERY_METHOD) return false
+  this.sending = true
+  this.synchronousFailure = null
+  var requestId = String(this.send(method, params) || "")
+  this.sending = false
+  if (requestId === "") {
+    var error = this.synchronousFailure || structuredError(
+      "agent-center.request-rejected",
+      "Agent Center request rejected",
+      "The constrained Fabric client did not accept the managed-work verb.",
+      "",
+      ["fabric.reconnect"]
+    )
+    this.synchronousFailure = null
+    this._setState(failureState(this.state, error))
+    return false
+  }
+  this.activeWorkId = requestId
+  this.pending[requestId] = {
+    generation: this.generation,
+    view: this.state.view,
+    kind: "work"
+  }
+  return true
+}
+
 QueryController.prototype.receiveResult = function(requestId, result) {
   var id = String(requestId || "")
   var ticket = this.pending[id]
-  if (!ticket || id !== this.activeRequestId || ticket.generation !== this.generation || ticket.view !== this.state.view)
+  if (!ticket || ticket.generation !== this.generation) return false
+  if (ticket.kind === "work") {
+    delete this.pending[id]
+    if (this.activeWorkId === id) this.activeWorkId = ""
+    return this._start(false)
+  }
+  if (id !== this.activeRequestId || ticket.view !== this.state.view)
     return false
   delete this.pending[id]
   this.activeRequestId = ""
@@ -515,7 +643,14 @@ QueryController.prototype.receiveFailure = function(requestId, error) {
     return true
   }
   var ticket = this.pending[id]
-  if (!ticket || id !== this.activeRequestId || ticket.generation !== this.generation || ticket.view !== this.state.view)
+  if (!ticket || ticket.generation !== this.generation) return false
+  if (ticket.kind === "work") {
+    delete this.pending[id]
+    if (this.activeWorkId === id) this.activeWorkId = ""
+    this._setState(failureState(this.state, error))
+    return true
+  }
+  if (id !== this.activeRequestId || ticket.view !== this.state.view)
     return false
   delete this.pending[id]
   this.activeRequestId = ""
@@ -602,7 +737,8 @@ function taskPresentation(item) {
     tone: toneForState(task.state),
     body: task.intent ? compactJson(task.intent) : "",
     details: details,
-    recoveryActions: task.state === "interrupted" ? ["Review the latest run and durable history"] : []
+    recoveryActions: task.state === "interrupted" ? ["Review the latest run and durable history"] : [],
+    workActions: taskWorkActions(task)
   }
 }
 
@@ -680,7 +816,7 @@ function presentation(view, item) {
   if (view === "agent.troubleshooting") return {
     title: "Managed-work database", subtitle: "Schema " + String(item.databaseSchema),
     status: String(item.databaseIntegrity || "unknown"), tone: toneForState(item.databaseIntegrity),
-    body: "Execution is unavailable by contract. Diagnostics are owner-scoped and read-only.",
+    body: "Diagnostics are owner-scoped and read-only. Agent Center cannot start, consent to, or recover work.",
     details: [detail("Foreign-key violations", item.foreignKeyViolations), detail("Restart recoveries", item.restartRecoveries), detail("History pruned through", item.historyPrunedThrough), detail("Owned records", compactJson(item.ownerCounts || {})), detail("Capacity", compactJson(item.capacities || {}))],
     recoveryActions: copyArray(item.recoveryActions)
   }
@@ -696,6 +832,16 @@ function overviewMetrics(summary) {
     { label: "Unavailable firings", value: Number(summary.pendingUnavailableFirings || 0) },
     { label: "Live contexts", value: Number(summary.liveContexts || 0) }
   ]
+}
+
+function overviewExplanation(summary) {
+  var prefix = "Counts come from the stable account owner."
+  var execution = isObject(summary) ? summary.execution : null
+  if (execution && execution.available === true && execution.code === "managed-execution.bubblewrap")
+    return prefix + " Inspect tasks execute inside packaged bubblewrap. Agent Center can create, run, cancel, and recover that inspect work."
+  if (execution && execution.available === false)
+    return prefix + " Managed execution is unavailable (" + clippedText(execution.code || "sandbox.unavailable") + ")."
+  return prefix + " Agent Center can create inspect tasks and capture desktop context."
 }
 
 function stateTitle(state) {
@@ -729,7 +875,7 @@ function stateExplanation(state) {
     ? clippedText(state.error.explanation) : "Fabric did not return a usable closed v0 response."
   if (state.phase === "partial") return "Fabric marked this result partial. Only the returned records are shown, and the state is not presented as complete."
   if (state.clipped) return "The local display bound of " + MAX_VISIBLE_ITEMS + " records was reached. Refresh or follow a stable entity link for a narrower read."
-  if (state.view === "agent.overview") return "Counts come from the stable account owner. Managed execution remains unavailable by contract."
+  if (state.view === "agent.overview") return overviewExplanation(state.summary)
   return state.items.length + " current record" + (state.items.length === 1 ? " is" : "s are") + " visible from the managed-work query plane."
 }
 
@@ -770,6 +916,15 @@ if (typeof module !== "undefined") {
     QUERY_METHOD: QUERY_METHOD,
     QUERY_VERSION: QUERY_VERSION,
     QUERY_VIEWS: QUERY_VIEWS,
+    WORK_METHODS: WORK_METHODS,
+    ALLOWED_WORK_METHODS: ALLOWED_WORK_METHODS,
+    CONTEXT_SOURCES: CONTEXT_SOURCES,
+    INSPECT_CAPABILITY: INSPECT_CAPABILITY,
+    inspectTaskCreateParams: inspectTaskCreateParams,
+    captureContextParams: captureContextParams,
+    taskRevisionParams: taskRevisionParams,
+    executeRunParams: executeRunParams,
+    taskWorkActions: taskWorkActions,
     PAGE_SIZE: PAGE_SIZE,
     MAX_VISIBLE_ITEMS: MAX_VISIBLE_ITEMS,
     MAX_CURSOR_LENGTH: MAX_CURSOR_LENGTH,
@@ -784,6 +939,7 @@ if (typeof module !== "undefined") {
     timestampText: timestampText,
     presentation: presentation,
     overviewMetrics: overviewMetrics,
+    overviewExplanation: overviewExplanation,
     stateTitle: stateTitle,
     stateExplanation: stateExplanation,
     phaseBadge: phaseBadge,

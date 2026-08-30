@@ -142,6 +142,21 @@ const itemFixtures = {
 }
 
 assertEqual(Model.validateResponse('agent.overview', result('agent.overview')), '', 'overview accepts its closed summary-only result')
+assert(
+  Model.overviewExplanation(summaryFor('agent.overview')).includes('sandbox.unavailable'),
+  'overview copy reports unavailable execution from the live summary'
+)
+assert(
+  Model.overviewExplanation({
+    ...summaryFor('agent.overview'),
+    execution: { ...execution, available: true, code: 'managed-execution.bubblewrap', explanation: 'bubblewrap' }
+  }).includes('bubblewrap'),
+  'overview copy reports bubblewrap when the live summary is ready'
+)
+assert(
+  Model.presentation('agent.troubleshooting', itemFixtures['agent.troubleshooting']).body.includes('read-only'),
+  'troubleshooting stays a read-only inspector and does not claim execution is absent'
+)
 for (const [view, item] of Object.entries(itemFixtures)) {
   assertEqual(Model.validateResponse(view, result(view, [item])), '', `${view} accepts only its real backend item shape`)
   const card = Model.presentation(view, item)
@@ -198,7 +213,7 @@ const controller = Model.createController({
 })
 
 assert(controller.setConnected(true), 'connecting starts the current overview read')
-assertEqual(sent.at(-1).method, 'managed-work.query', 'controller can send only the least-privilege managed-work query')
+assertEqual(sent.at(-1).method, 'managed-work.query', 'connecting still starts with the managed-work query')
 const staleOverview = sent.at(-1).id
 controller.activate('agent.tasks', {})
 assertDeepEqual(cancelled, [staleOverview], 'route activation locally cancels the superseded correlation')
@@ -273,6 +288,51 @@ rejectedController = Model.createController({
 rejectedController.setConnected(true)
 assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
 
+assertDeepEqual(
+  Model.inspectTaskCreateParams(1700000000000),
+  {
+    version: 'v0',
+    title: 'Inspect system information',
+    intent: { goal: 'inventory', readOnly: true, capability: 'system.info.read' },
+    budget: { timeSeconds: 600, outputBytes: 1048576, costMicrounits: 50000, network: false },
+    idempotencyKey: 'task.inspect.1700000000000'
+  },
+  'inspect task create uses the Phase 2 sandbox capability'
+)
+assertDeepEqual(
+  Model.captureContextParams('virtual-desktops', 1700000000001),
+  {
+    version: 'v0',
+    source: 'virtual-desktops',
+    idempotencyKey: 'context.virtual-desktops.1700000000001',
+    accessScope: 'principal',
+    sensitivity: 'personal',
+    ttlSeconds: 600
+  },
+  'context capture names a desktop source'
+)
+assertDeepEqual(
+  Model.taskWorkActions({ taskId: 'task.one', state: 'draft', revision: 1 }).map(action => action.id),
+  ['execute', 'cancel'],
+  'draft inspect tasks expose run and cancel'
+)
+
+let workController
+const workSent = []
+workController = Model.createController({
+  send: (method, params) => {
+    const id = `work.${workSent.length}`
+    workSent.push({ id, method, params })
+    return id
+  }
+})
+workController.setConnected(true)
+workController.receiveResult(workSent[0].id, result('agent.overview'))
+assert(workController.sendWork(Model.WORK_METHODS.create, Model.inspectTaskCreateParams(9)), 'controller can create an inspect task')
+assertEqual(workSent.at(-1).method, 'managed-work.task.create', 'inspect create uses the existing Fabric verb')
+assert(workController.receiveResult(workSent.at(-1).id, { taskId: 'task.created' }), 'inspect create refreshes the current view')
+assertEqual(workSent.at(-1).method, 'managed-work.query', 'a successful inspect create rereads the current view')
+
 const longText = `prefix\u0000${'x'.repeat(5000)}`
 const clipped = Model.clippedText(longText)
 assert(clipped.length <= 640 && clipped.endsWith('\u2026') && !clipped.includes('\u0000'), 'display text strips controls and has a hard length bound')
@@ -283,11 +343,12 @@ application="$ROOT/shell/apps/ultimate-agent-center/AgentCenterApplication.qml"
 card="$ROOT/shell/apps/ultimate-agent-center/AgentRecordCard.qml"
 host="$ROOT/shell/apps/shared/ProductAppHost.qml"
 
-grep -Fqx '  fabricAllowedMethods: ["managed-work.query"]' "$entrypoint" || fail "Agent Center allowlist is exactly managed-work.query"
-if grep -En 'provider\.catalog|reference\.operation|get\(|provider\.read|provider\.invoke' "$entrypoint" "$application" "$card"; then
-  fail "Agent Center contains no legacy or mutating Fabric method"
+grep -Fqx '  fabricAllowedMethods: ["managed-work.query", "managed-work.task.create", "managed-work.task.cancel", "managed-work.task.recover", "managed-work.context.capture", "managed-work.run.execute"]' "$entrypoint" \
+  || fail "Agent Center allowlist is the closed managed-work query and inspect-work set"
+if grep -En 'provider\.catalog|reference\.operation|provider\.read|provider\.invoke' "$entrypoint" "$application" "$card"; then
+  fail "Agent Center contains no legacy or provider-mutating Fabric method"
 fi
-pass "Agent Center allowlist contains only managed-work.query"
+pass "Agent Center allowlist is the closed managed-work inspect-work set"
 
 grep -Fq 'function cancelFabric(requestId)' "$host" || fail "Product host exposes local correlation cancellation"
 grep -Fq 'return fabric.cancel(String(requestId || ""))' "$host" || fail "Product host cancellation delegates only to FabricClient.cancel"
@@ -301,6 +362,6 @@ pass "Agent Center read controls are keyboard and accessibility complete"
 
 if grep -En '(^|[^A-Za-z])(Process[[:space:]]*\{|Quickshell\.execDetached|execDetached\(|pkexec|sudo|hyprctl|systemctl|approve|operation\.cancel|operation\.start)' \
   "$application" "$card" "$ROOT/shell/apps/ultimate-agent-center/AgentCenterModel.js"; then
-  fail "Agent Center presentation contains no command, approval, or operation mutation path"
+  fail "Agent Center presentation contains no command, consent, or operation mutation path"
 fi
-pass "Agent Center remains command-free and read-only"
+pass "Agent Center stays command-free and uses only managed-work inspect verbs"

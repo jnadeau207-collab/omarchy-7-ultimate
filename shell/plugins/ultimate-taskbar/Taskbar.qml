@@ -21,7 +21,7 @@ Item {
   property int barSize: Tokens.components.taskbarHeight
   property bool vertical: false
   property string position: "bottom"
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property color foreground: Tokens.text.primary
   property color barForeground: Tokens.text.primary
   property color urgent: Tokens.state.danger
@@ -210,7 +210,7 @@ Item {
 
           StartButton {
             bar: root
-            Layout.preferredWidth: 76
+            Layout.preferredWidth: 56
             Layout.fillHeight: true
           }
 
@@ -226,7 +226,7 @@ Item {
               bar: root
               hostWindow: barWindow
               group: modelData
-              Layout.preferredWidth: 52
+              Layout.preferredWidth: 56
               Layout.fillHeight: true
             }
           }
@@ -240,7 +240,7 @@ Item {
 
           ShowDesktop {
             bar: root
-            Layout.preferredWidth: 8
+            Layout.preferredWidth: 14
             Layout.fillHeight: true
           }
         }

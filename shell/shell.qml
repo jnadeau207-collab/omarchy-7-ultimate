@@ -193,7 +193,7 @@ ShellRoot {
         { id: "omarchy.notifications" },
         { id: "omarchy.agents" },
         { id: "omarchy.tray" },
-        { id: "omarchy.clock" }
+        { id: "omarchy.clock", format: "HH:mm\nddd M/d" }
       ]
     }
     return next
