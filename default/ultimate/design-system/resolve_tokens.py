@@ -116,6 +116,41 @@ def relative_luminance(channels: tuple[float, float, float]) -> float:
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue
 
 
+def mix_opaque(start: str, target: str, amount: float) -> str:
+    _, start_red, start_green, start_blue = color_channels(opaque_color(start))
+    _, target_red, target_green, target_blue = color_channels(opaque_color(target))
+    amount = max(0.0, min(1.0, amount))
+    return "#{:02x}{:02x}{:02x}".format(
+        q_round(start_red + (target_red - start_red) * amount),
+        q_round(start_green + (target_green - start_green) * amount),
+        q_round(start_blue + (target_blue - start_blue) * amount),
+    )
+
+
+def contrasting_ink(background: str) -> str:
+    back = composite(opaque_color(background), "#ffffff")
+    return "#000000" if relative_luminance(back) > 0.5 else "#ffffff"
+
+
+def lift_contrast(foreground: str, background: str, target: str, minimum: float) -> str:
+    if contrast_ratio(foreground, background) + 1e-9 >= minimum:
+        return foreground
+    lo = 0.0
+    hi = 1.0
+    best = target
+    for _ in range(24):
+        mid = (lo + hi) / 2
+        candidate = mix_opaque(foreground, target, mid)
+        if contrast_ratio(candidate, background) + 1e-9 >= minimum:
+            best = candidate
+            hi = mid
+        else:
+            lo = mid
+    if contrast_ratio(best, background) + 1e-9 < minimum:
+        return target
+    return best
+
+
 def contrast_ratio(foreground: str, background: str) -> float:
     # Token contrast is measured against the token's RGB stop. Translucent
     # glass is composited by the compositor over arbitrary wallpaper; treating
@@ -577,6 +612,18 @@ def apply_explicit_overrides(payload: dict[str, Any], shell: dict[str, Any], pal
     if payload["accessibility"]["highContrast"]:
         payload["border"]["strong"] = payload["text"]["primary"]
         payload["focus"]["ringWidthPx"] = max(2, payload["focus"]["ringWidthPx"])
+        payload["text"]["secondary"] = lift_contrast(
+            payload["text"]["secondary"],
+            payload["surface"]["base"],
+            payload["text"]["primary"],
+            4.5,
+        )
+        payload["selection"]["foreground"] = lift_contrast(
+            payload["selection"]["foreground"],
+            payload["selection"]["background"],
+            contrasting_ink(payload["selection"]["background"]),
+            4.5,
+        )
 
 
 def build_payload(

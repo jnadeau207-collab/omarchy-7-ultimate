@@ -140,6 +140,7 @@ scale = 1.25
 
 [tokens-accessibility]
 reduced-motion = true
+high-contrast = true
 large-text = true
 text-scale = 1.4
 
@@ -182,9 +183,30 @@ assert payload["motion"]["reduced"] is True
 assert payload["motion"]["fastMs"] == payload["motion"]["normalMs"] == payload["motion"]["slowMs"] == 0
 assert payload["accessibility"]["largeText"] is True
 assert payload["accessibility"]["textScale"] == 1.4
+assert payload["accessibility"]["highContrast"] is True
+assert payload["accessibility"]["contrast"]["secondaryText"] >= 4.5
+assert payload["accessibility"]["contrast"]["selectionText"] >= 4.5
+assert payload["border"]["strong"] == payload["text"]["primary"]
+assert payload["focus"]["ringWidthPx"] >= 2
 assert payload["chrome"]["glow"] == "#654321"
 assert payload["radii"] == {"small": 5, "medium": 9, "large": 13}
 print("ok - layered shell overrides resolve typography, density, accessibility, radii, color, and component metrics")
+PY
+
+cat >"$tmpdir/tokyo-hc.toml" <<'TOML'
+[tokens-accessibility]
+high-contrast = true
+TOML
+tokyo_hc="$tmpdir/tokyo-hc.json"
+"$resolver" --colors "$ROOT/themes/tokyo-night/colors.toml" --shell "$tmpdir/tokyo-hc.toml" \
+  --output "$tokyo_hc" >/dev/null \
+  || fail "tokyo-night high-contrast publishes by lifting secondary text"
+python3 - "$tokyo_hc" <<'PY' || exit 1
+import json, sys
+payload = json.load(open(sys.argv[1], encoding="utf-8"))
+assert payload["accessibility"]["highContrast"] is True
+assert payload["accessibility"]["contrast"]["secondaryText"] >= 4.5
+print("ok - tokyo-night high-contrast lifts muted secondary text")
 PY
 
 sentinel="$tmpdir/last-known-good.json"
