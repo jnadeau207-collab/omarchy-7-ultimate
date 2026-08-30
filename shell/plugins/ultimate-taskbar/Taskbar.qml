@@ -33,6 +33,7 @@ Item {
   // generated compatibility adapters. Locked pre-contract reference for the
   // visual regression suite: Qt.rgba(0.11, 0.11, 0.12, 0.62).
   readonly property bool highContrast: Tokens.accessibility.highContrast
+  readonly property bool rtl: (shell && shell.summonedRtl) || Qt.application.layoutDirection === Qt.RightToLeft
   readonly property color chromeBar: Tokens.chrome.glass
   readonly property color chromeHover: Tokens.chrome.hover
   readonly property color chromeActive: Tokens.chrome.active
@@ -309,6 +310,8 @@ Item {
         RowLayout {
           anchors.fill: parent
           spacing: 0
+          LayoutMirroring.enabled: root.rtl
+          LayoutMirroring.childrenInherit: true
 
           StartButton {
             bar: root

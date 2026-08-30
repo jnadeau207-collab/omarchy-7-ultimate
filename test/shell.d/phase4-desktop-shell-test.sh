@@ -589,6 +589,12 @@ grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start RTL is the existing SemanticProfile summon flag"
 grep -Fq 'LayoutMirroring.enabled: productProfile.rtl' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start card mirrors when the product profile is RTL"
+grep -Fq 'shell.summonedRtl' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start publishes RTL onto the shared shell flag"
+grep -Fq 'LayoutMirroring.enabled: root.rtl' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar mirrors when Start RTL is summoned"
+grep -Fq 'Qt.application.layoutDirection === Qt.RightToLeft' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar RTL keeps the Qt layoutDirection bind"
 grep -Fq 'payload.screen' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start opens on the Superbar that summoned it"
 grep -Fq 'restoreFocusOnClose' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

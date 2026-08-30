@@ -20,7 +20,7 @@ Item {
   SemanticProfile {
     id: productProfile
     profileId: "product"
-    rtl: root.summonedRtl || Qt.application.layoutDirection === Qt.RightToLeft
+    rtl: root.summonedRtl || (root.shell && root.shell.summonedRtl) || Qt.application.layoutDirection === Qt.RightToLeft
     pseudoLocale: root.summonedPseudoLocale || root.summonedLocale === "pseudo"
     locale: root.summonedLocale
   }
@@ -117,6 +117,7 @@ Item {
     }
     root.focusSearch = payload.focusSearch === true
     root.summonedRtl = payload.rtl === true
+    if (root.shell) root.shell.summonedRtl = root.summonedRtl
     root.summonedPseudoLocale = payload.pseudoLocale === true
     root.summonedLocale = payload.locale ? String(payload.locale) : (root.summonedPseudoLocale ? "pseudo" : "en-US")
     root.filter = ""
@@ -155,6 +156,7 @@ Item {
     root.opened = false
     root.filter = ""
     root.summonedRtl = false
+    if (root.shell) root.shell.summonedRtl = false
     root.summonedPseudoLocale = false
     root.summonedLocale = "en-US"
     root.focusedWhenOpened = null
