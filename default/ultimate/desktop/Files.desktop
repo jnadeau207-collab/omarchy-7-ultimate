@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Files
+Comment=Open Files
+Exec=omarchy-launch-files --source desktop
+Icon=system-file-manager
+Terminal=false
+Categories=System;FileManager;
+StartupNotify=true

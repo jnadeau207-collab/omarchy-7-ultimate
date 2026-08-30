@@ -22,7 +22,7 @@
       "id": "org.omarchy.agent-center",
       "desktopId": "org.omarchy.AgentCenter",
       "name": "Agent Center",
-      "icon": "system-run"
+      "icon": "org.omarchy.AgentCenter"
     }
   ]
 }

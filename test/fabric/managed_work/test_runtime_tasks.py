@@ -14,6 +14,8 @@ from omarchy_fabric.desktop_context import capture_desktop_context
 from omarchy_fabric.managed_runtime import ManagedRuntime
 from omarchy_fabric.managed_work import ManagedWorkError
 from omarchy_fabric.models import FabricError
+from omarchy_fabric.protocol import _validate_remote_error
+from sandbox.runner import IsolatedRun
 
 
 class RuntimeTaskTests(unittest.TestCase):
@@ -86,6 +88,33 @@ class RuntimeTaskTests(unittest.TestCase):
             now=1_002,
         )
         self.assertEqual("visible phrase", selection["content"]["selection"]["text"])
+        desktops = capture_desktop_context(
+            self.plane,
+            ACTOR,
+            source="virtual-desktops",
+            snapshot={
+                **snapshot,
+                "desktops": [
+                    {"id": "1", "name": "Desktop 1", "active": True},
+                    {"id": "2", "name": "Desktop 2", "active": False},
+                ],
+            },
+            idempotency_key="context.desktops",
+            now=1_002.5,
+        )
+        self.assertEqual("1", desktops["content"]["desktops"][0]["id"])
+        self.assertTrue(desktops["content"]["desktops"][0]["active"])
+        profile = capture_desktop_context(
+            self.plane,
+            ACTOR,
+            source="mode-profile",
+            snapshot={**snapshot, "mode": "desktop", "features": {"taskbar": True, "topBar": False}},
+            idempotency_key="context.mode",
+            now=1_002.75,
+        )
+        self.assertEqual("desktop", profile["content"]["mode"])
+        self.assertEqual(True, profile["content"]["features"]["taskbar"])
+        self.assertEqual(False, profile["content"]["features"]["topBar"])
         with self.assertRaises(ManagedWorkError) as excluded:
             capture_desktop_context(
                 self.plane,
@@ -151,6 +180,7 @@ class RuntimeTaskTests(unittest.TestCase):
             )
         except FabricError as error:
             self.assertEqual("sandbox.unavailable", error.code)
+            _validate_remote_error(error.to_dict())
             stored = self.plane.get_task(ACTOR, task["taskId"])
             self.assertNotEqual("succeeded", stored["state"])
             return
@@ -161,6 +191,35 @@ class RuntimeTaskTests(unittest.TestCase):
         self.assertEqual("system.info.read", result["result"]["capability"])
         self.assertEqual(True, result["result"]["ok"])
         self.assertIn("manifest.json", result["result"]["workspace"])
+
+    def test_failed_sandbox_run_error_is_wire_valid(self) -> None:
+        task = self.runtime.create_task(
+            ACTOR,
+            {
+                "title": "Sandbox inspect",
+                "intent": inspect_intent(),
+                "contextIds": [],
+                "budget": budget(),
+                "idempotencyKey": "task.runtime-wire-failed",
+            },
+        )
+        failed = IsolatedRun(
+            returncode=1,
+            stdout="",
+            stderr="bwrap: Can't mount proc on /newroot/proc: Operation not permitted",
+            argv=("/usr/bin/bwrap", "--unshare-all", "--proc", "/proc"),
+            result=None,
+        )
+        with mock.patch.object(self.runtime, "_run_sandbox", return_value=(failed, ["manifest.json"])):
+            with self.assertRaises(FabricError) as refused:
+                self.runtime.execute(
+                    ACTOR,
+                    {"taskId": task["taskId"], "idempotencyKey": "run.runtime-wire-failed"},
+                )
+        self.assertEqual("sandbox.run-failed", refused.exception.code)
+        _validate_remote_error(refused.exception.to_dict())
+        stored = self.plane.get_task(ACTOR, task["taskId"])
+        self.assertNotEqual("succeeded", stored["state"])
 
     def test_create_without_sandbox_capability_fails(self) -> None:
         with self.assertRaises(FabricError) as refused:

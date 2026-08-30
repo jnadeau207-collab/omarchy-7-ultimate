@@ -17,8 +17,9 @@ QtObject {
   property string mode: "desktop"
   property string description: "Consumer default profile: floating windows, Superbar, Start, visible-before-memorable affordances. Windows muscle memory is the API. Flags are capabilities that exist, not intentions."
   // Match desktop.json so the first frame is Desktop Mode before FileView lands.
+  // desktopIcons is true because omarchy.desktop-icons exists.
   property var features: ({
-    desktopIcons: false,
+    desktopIcons: true,
     taskbar: true,
     startMenu: true,
     systemTray: true,

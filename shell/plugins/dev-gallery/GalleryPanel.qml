@@ -28,12 +28,15 @@ Item {
     // scrolling from the top each time. Unknown section names are
     // ignored — the gallery opens at its default position.
     var requested = ""
+    var requestedPresentation = ""
     if (payloadJson) {
       try {
         var parsed = JSON.parse(String(payloadJson))
         if (parsed && typeof parsed.section === "string") requested = parsed.section
+        if (parsed && typeof parsed.presentation === "string") requestedPresentation = parsed.presentation
       } catch (e) { /* ignore */ }
     }
+    qualityMatrix.isolatePresentation = requestedPresentation
 
     // Defer the section assignment + focus so the FloatingWindow's
     // content tree is mounted. The hasCursor bindings on each demo

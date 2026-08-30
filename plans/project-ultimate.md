@@ -48,7 +48,7 @@ Scope not delivered by W0 and now owned by the current program:
 - hyprbars is still not an ISO-mirror pacman package.
 - Tokyo Night seed, nvim-as-txt, TTY first-boot, no product ISO.
 - Chrome install-as-product, games, and “install any Windows app” are later phases.
-- Peek thumbnails, jump lists, Agent Center UI, Settings app.
+- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Settings app is Phase 5.
 
 ## Preserved W0 outcome and packaging debt
 
@@ -58,10 +58,10 @@ The four product-windowing debts from 2026-08-22 are **closed** on metal. Left f
 
 ## Taskbar / Start / Settings honesty (known defects, not features)
 
-- Superbar is a prototype, not the masterpiece. Notification-area cluster is driven from `barConfig.layout.right` + `BarWidgetRegistry` (`TrayCluster.qml`). Desktop Mode overlay includes `omarchy.agents` without rewriting `shell.json`. Chrome hexes include `#1b1b1b` `#333333` `#3a3a3a` `#4a4a4a` `#e8943a` `#9cbc0d` `#55ffffff`. hyprbars `bar_color` is `rgba(1a1a1acc)`. `Variants` already draws a bar per `Quickshell.screens` — missing is multi-monitor **policy**, not rendering.
-- Start is a 440×560 glass launcher (search + pins + app list + Power User footer toggle), not Windows 7 Start. Outside-click, orb re-toggle, the shared transient coordinator, and compositor-delivered click-through are landed and proved. Remaining infrastructure work is monitor/seat/anchor-aware ownership and a focus-restoration stack without regressing click-through.
+- Superbar is still job-incomplete (multi-monitor policy, caption private palette, group-close still closes every window). Presentation now includes the Start orb, stacked-window Task View mark, drawn Quick Settings and Notification Center marks, two-line clock, live peeks, jump lists, and badges. Notification-area cluster is driven from `barConfig.layout.right` + `BarWidgetRegistry` (`TrayCluster.qml`). Desktop Mode overlay includes Quick Settings, Notification Center, agents, tray, and clock without rewriting `shell.json`. Chrome hexes include `#1b1b1b` `#333333` `#3a3a3a` `#4a4a4a` `#e8943a` `#9cbc0d` `#55ffffff`. hyprbars `bar_color` is `rgba(1a1a1acc)`. `Variants` already draws a bar per `Quickshell.screens`.
+- Start is a two-pane 720×640 launcher (search + pins + All programs on the left; account, Files, Pictures, Computer, Settings, Agent Center, and power on the right). Outside-click, orb re-toggle, the shared transient coordinator, and compositor-delivered click-through are landed and proved. Remaining infrastructure work is monitor/seat/anchor-aware ownership and a focus-restoration stack without regressing click-through.
 - Settings (`omarchy.ultimate-settings`) is a stub: five buttons (Display, Sound, Network, Bluetooth, Power) that toggle existing panels.
-- Peek is a title list. Right-click is pin/unpin and **Close group** / **Close window** (label follows `windows.length`). Peek × closes one.
+- Peek captures a live grim thumbnail of each mapped window's compositor rectangle. Minimized or zero-area windows stay title-only; the peek does not invent a bitmap. Right-click is pin/unpin and **Close group** / **Close window** (label follows `windows.length`). Peek × closes one.
 - `feature()` is only consulted in `shell.qml` (`taskbar`/`topBar`) and `Start.qml` (`developerToolsInStart`).
 
 ## Doctrine (do not weaken)
@@ -128,7 +128,7 @@ Do **not** claim mathematical zero unique Jesse *commits*. Claim zero unique Jes
 
 After the Quattro rebase, `main` tracks live `upstream/quattro` and `work` is Ultimate rebased onto it. Recovery refs retain the pre-rebase tips. Do not merge `work` into `main` as the OS.
 
-The product remains **REJECTED**. Windowing Gate W0 is Phase 1 only (`W0_GATE.md`). The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery, but Settings is still a five-button stub; Start, Superbar, and Task View are functional prototypes; Quick Settings, Notification Center, desktop icons, Agent Center, full typed system services, Files/This PC, Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
+The product remains **REJECTED**. Windowing Gate W0 is Phase 1 only (`W0_GATE.md`). The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery. Desktop Mode now ships two-pane Start, desktop icons on the real XDG Desktop directory, Quick Settings, Notification Center, calendar, lock, and Agent Center as a Superbar pin and Start destination. Superbar presentation is an orb, stacked clock, drawn Quick Settings and Notification Center marks, live peeks, jump lists, and badges over the plugin cluster. Settings is still a five-button stub. Full typed system services, Files/This PC, Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
 
 The named phases below are the live program. After W0: Phase 2 leftover fabric (persistent tasks, context broker, sandboxed runtime), then Phases 3–11 in order. Overlay programs written after this taxonomy do not replace it.
 
@@ -143,7 +143,7 @@ Claims from the 2026-08-22 course-correction that this turn **verified in the tr
 - Superbar cluster from bar-widget registry; Desktop Mode overlay includes `omarchy.agents`; disk `shell.json` not rewritten — true (`overlayShellConfig`, `TrayCluster.qml`, live disk `bar.id` unset / `position: top`).
 - Start is a launcher — true (`Start.qml`).
 - Settings is a stub — true (`ultimate-settings/Settings.qml` says so).
-- Peek is titles — true. Group close label is **Close group** / **Close window**; the action still closes every window in the group; peek × closes one.
+- Peek captures live window thumbnails for mapped clients — true. Group close label is **Close group** / **Close window**; the action still closes every window in the group; peek × closes one.
 - Three caption buttons (visible min / max / close); maximize hover summons snap chooser; `formatWindowCmd` lives in `barDeco.cpp` — true. 880×560 is fallback only; `window-placements.json` remembers per-app floats — true live (foot 1000×620 at `[120,80]` reopened). `omarchy-update` rebuilds plugins after system packages — true. `--disable-features=WaylandWindowDecorations` must not return — true. `hyprland-plugin-hyprbars` is not in `install/omarchy-other.packages` — true.
 - Six numbered forty-task rows automated (20–25) — true. The same harness also runs unnumbered proofs after the loop — true, live exit 0 this session. Pointer proof includes maximize hover and unfocused addressed close — true.
 - WindowService is the first fabric provider with `{ changed, error }`, broker, ledger, and invertible restore tokens — true. Full OS capability graph, sandboxed runtime, and Agent Center UI are still missing.
@@ -165,7 +165,7 @@ The named phases below are the product taxonomy and the execution order. Do not 
 
 Done enough to build on: doctrine, acceptance manifests, profiles, token layer, service convention, test/acceptance harness skeleton. That foundation is on `work`.
 
-Still open: visual regression gallery.
+Visual regression gallery is on `work`: `default/ultimate/quality/visual-regression-v0.json`, committed PNG goldens, and `omarchy-dev-visual-regression`.
 
 ### Phase 1 — Windowing Gate W0
 
@@ -177,7 +177,7 @@ The forty-task harness rows 20–25 were necessary and not sufficient for the OS
 
 Historical prototype minimum (2026-08-23): WindowService `{ changed, error }`, caller-labeled local-session allowlist (ui/ipc/agent/undo), ledger `~/.local/state/omarchy/ultimate/capability-ledger.json`, window undo via recorded `restoreNormal` / `restoreLayout`, Superbar cluster from `BarWidgetRegistry` with `omarchy.agents` visible. Same WindowService verbs from QML and `omarchy-shell window`. This was a useful first-provider milestone, not a defensible permission/security pass.
 
-Still missing on purpose: full parity-graph catalog (row 1), persistent Agent Center tasks (8), rich context broker (9), sandboxed Agent Runtime (11). Display/Audio/Network stay panels until Phase 5. Agent Center UI is Phase 4.
+Catalog jobs stay honest: most rows remain `claim: "missing"` and `parity.agent-center` is not present. Persistent inspect tasks, five-source context capture (`open-windows`, `focused-application`, `selection`, `virtual-desktops`, `mode-profile`), and bubblewrap `system.info.read` execution are live on the checkout Fabric unit. Display/Audio/Network stay panels until Phase 5.
 
 ### Phase 3 — Design system
 

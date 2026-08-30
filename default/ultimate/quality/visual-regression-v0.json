@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "quality-v0",
+  "galleryId": "ultimate-visual-regression-v0",
+  "algorithm": "sha256-png-bytes",
+  "goldensDir": "visual-goldens",
+  "surfaces": [
+    {
+      "id": "start",
+      "file": "start.png",
+      "kind": "desktop-chrome",
+      "sha256": "3a6e92b1b103b5073bbadd397ac8f1d9b346bf8d4fb9d7ce6fbcb20a29fb1125"
+    },
+    {
+      "id": "superbar",
+      "file": "superbar.png",
+      "kind": "desktop-chrome",
+      "sha256": "5d7e5ccbdd445ac50b59a1565c9c346d26338e580080558c856accd4c9f40937"
+    },
+    {
+      "id": "agent-center-overview",
+      "file": "agent-center-overview.png",
+      "kind": "desktop-chrome",
+      "sha256": "641d9ac25b1e38f006a7e51d0b1d47c612b43b711e79fd6d5d578fa763bd77e0"
+    },
+    {
+      "id": "lock-preview",
+      "file": "lock-preview.png",
+      "kind": "desktop-chrome",
+      "sha256": "5c5c8c5a88643b885aa29fcaab4035f7e6c9feecfb8707354cf0cc2c41b9dcc2"
+    },
+    {
+      "id": "quick-settings",
+      "file": "quick-settings.png",
+      "kind": "desktop-chrome",
+      "sha256": "9ff289951a385f190c9d3ba621c4f77c01dfd1dc4e180f8a16b97d5477d371b2"
+    },
+    {
+      "id": "notification-center",
+      "file": "notification-center.png",
+      "kind": "desktop-chrome",
+      "sha256": "55b022dc5f4c53681c99086fd941e5666022746f890baaa6f537969ccb6d0f49"
+    },
+    {
+      "id": "dark-comfortable-pointer",
+      "file": "gallery-dark-comfortable-pointer.png",
+      "kind": "state-gallery",
+      "sha256": "055e0646fb6919a60a9db53a74d21ff646b54f960a7fa62cf50fa057b779ebab"
+    },
+    {
+      "id": "light-compact-keyboard-pseudo",
+      "file": "gallery-light-compact-keyboard-pseudo.png",
+      "kind": "state-gallery",
+      "sha256": "4357d060e343e54488c7ba80fce953b9f8d01f2e383d6628b5f58f1009f181f7"
+    },
+    {
+      "id": "dark-touch-rtl-long",
+      "file": "gallery-dark-touch-rtl-long.png",
+      "kind": "state-gallery",
+      "sha256": "3ff29cbe8be4e906d76cd263e9e49b4c2a72597c5de33348a30b9bed37c2ff18"
+    },
+    {
+      "id": "light-comfortable-rtl-two-x",
+      "file": "gallery-light-comfortable-rtl-two-x.png",
+      "kind": "state-gallery",
+      "sha256": "4e5b935f4e3a792ecee83caabfa56ad3e3ac86b9a1762e9140666fa64652e473"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Computer
+Comment=Open This PC
+Exec=omarchy-launch-files --source desktop files.this-pc
+Icon=computer
+Terminal=false
+Categories=System;
+StartupNotify=true

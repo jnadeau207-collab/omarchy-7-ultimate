@@ -45,7 +45,7 @@ TextField {
   echoMode: password ? TextInput.Password : TextInput.Normal
   placeholderText: semanticPlaceholderText !== ""
     ? Semantics.text(semanticProfile, semanticPlaceholderText) : ""
-  font.family: Style.font.family
+  font.family: Tokens.typography.family
   font.pixelSize: Semantics.font(semanticProfile, Style.font.body)
   color: foreground
   selectionColor: selectionTint

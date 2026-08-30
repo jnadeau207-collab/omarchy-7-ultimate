@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "omarchy.desktop-icons",
+  "name": "Desktop Icons",
+  "version": "1.0.0",
+  "author": "Omarchy",
+  "description": "Desktop Mode icon surface for the real XDG Desktop directory",
+  "kinds": [
+    "service"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "DesktopIcons.qml"
+  }
+}

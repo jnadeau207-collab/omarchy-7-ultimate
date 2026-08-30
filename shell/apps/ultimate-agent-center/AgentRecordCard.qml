@@ -12,6 +12,10 @@ Rectangle {
   required property var record
   property string selectedEntityType: ""
   property string selectedEntityId: ""
+  property bool actionsEnabled: false
+  readonly property var workActions: presentation.workActions || []
+
+  signal workRequested(var action)
 
   readonly property var presentation: AgentCenterModel.presentation(view, record)
   readonly property bool selected: AgentCenterModel.selectedIdentity(
@@ -76,6 +80,24 @@ Rectangle {
         text: String(root.presentation.status || "unknown").toUpperCase()
         tone: root.presentation.tone
         Layout.alignment: Qt.AlignTop
+      }
+    }
+
+    Flow {
+      visible: root.actionsEnabled && root.workActions.length > 0
+      Layout.fillWidth: true
+      spacing: Style.space(8)
+
+      Repeater {
+        model: root.workActions
+        delegate: Ui.Button {
+          required property var modelData
+          text: modelData.label
+          tooltipText: modelData.label
+          focusable: true
+          bordered: true
+          onClicked: root.workRequested(modelData)
+        }
       }
     }
 

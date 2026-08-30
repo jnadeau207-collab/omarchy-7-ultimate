@@ -72,7 +72,28 @@ function desktopActions(entry) {
   return out
 }
 
-function jumpListFor(entry, desktopId) {
+function desktopIdAliases(id) {
+  var value = normalizeDesktopId(id)
+  var aliases = [value]
+  if (value === "google-chrome") {
+    aliases.push("google-chrome-stable")
+    aliases.push("chromium")
+  }
+  if (value === "google-chrome-stable") aliases.push("google-chrome")
+  return aliases
+}
+
+function indexedActions(actionIndex, desktopId) {
+  if (!actionIndex) return []
+  var aliases = desktopIdAliases(desktopId)
+  for (var i = 0; i < aliases.length; i++) {
+    var rows = actionIndex[aliases[i]]
+    if (isLengthList(rows) && rows.length > 0) return copyLengthList(rows)
+  }
+  return []
+}
+
+function jumpListFor(entry, desktopId, actionIndex) {
   var id = normalizeDesktopId(desktopId || (entry && entry.id) || "")
   var items = [{
     id: "",
@@ -81,7 +102,9 @@ function jumpListFor(entry, desktopId) {
     kind: "open-new",
     desktopId: id
   }]
-  return items.concat(desktopActions(entry))
+  var fromEntry = desktopActions(entry)
+  if (fromEntry.length > 0) return items.concat(fromEntry)
+  return items.concat(indexedActions(actionIndex, id))
 }
 
 if (typeof module !== "undefined") {
@@ -90,6 +113,8 @@ if (typeof module !== "undefined") {
     actionList: actionList,
     actionCommand: actionCommand,
     desktopActions: desktopActions,
+    desktopIdAliases: desktopIdAliases,
+    indexedActions: indexedActions,
     jumpListFor: jumpListFor
   }
 }
