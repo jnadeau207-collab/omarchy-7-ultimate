@@ -7,6 +7,8 @@ Item {
   property var bar: null
   implicitWidth: 44
   implicitHeight: parent ? parent.height : 40
+  Accessible.role: Accessible.Button
+  Accessible.name: "Task View"
 
   Rectangle {
     anchors.fill: parent
@@ -16,24 +18,31 @@ Item {
       : mouse.containsMouse ? bar.chromeHover
       : "transparent"
 
-    Column {
+    Item {
       anchors.centerIn: parent
-      spacing: 3
-      Repeater {
-        model: 2
-        Row {
-          spacing: 3
-          Repeater {
-            model: 2
-            Rectangle {
-              width: 7
-              height: 5
-              radius: 1
-              color: Tokens.text.primary
-              opacity: 0.85
-            }
-          }
-        }
+      width: 16
+      height: 12
+      Rectangle {
+        x: 4
+        y: 0
+        width: 12
+        height: 8
+        radius: 1
+        color: "transparent"
+        border.width: 1
+        border.color: Tokens.text.primary
+        opacity: 0.7
+      }
+      Rectangle {
+        x: 0
+        y: 4
+        width: 12
+        height: 8
+        radius: 1
+        color: Tokens.surface.base
+        border.width: 1
+        border.color: Tokens.text.primary
+        opacity: 0.95
       }
     }
   }

@@ -41,7 +41,7 @@ BorderSurface {
   property color accent: semanticProfile ? semanticProfile.accent : Tokens.accent.primary
 
   // Sizing.
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property real fontSize: Semantics.font(semanticProfile, Style.font.body)
   property real iconSize: Semantics.font(semanticProfile, Style.font.icon)
   property real textMaximumWidth: 0

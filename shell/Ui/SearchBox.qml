@@ -23,7 +23,7 @@ TextField {
     visible: root.text.length === 0
     text: "\u2315"
     color: Tokens.text.secondary
-    font.family: Style.font.family
+    font.family: Tokens.typography.family
     font.pixelSize: root.font.pixelSize
     anchors.left: parent.left
     anchors.leftMargin: Style.space(9)

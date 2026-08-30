@@ -50,7 +50,7 @@ grep -Fq 'margins.bottom: root.barHeight' "$ROOT/shell/plugins/ultimate-start/St
   || fail "Start card sits above the Superbar exclusive zone"
 start_chrome=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["cardWidth"], json.load(open(sys.argv[1]))["cardHeight"], json.load(open(sys.argv[1]))["barHeight"], json.load(open(sys.argv[1]))["cardLeftMargin"])' "$ROOT/default/ultimate/start-chrome.json") \
   || fail "start-chrome.json is valid JSON"
-[[ $start_chrome == "440 560 48 8" ]] || fail "start-chrome.json names the Start card and Superbar size" "$start_chrome"
+[[ $start_chrome == "720 640 48 8" ]] || fail "start-chrome.json names the Start card and Superbar size" "$start_chrome"
 grep -Fq 'start-chrome.json' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "Start click-through reads the same start-chrome.json as Start.qml"
 grep -Fq 'start_chrome.cardWidth' "$ROOT/default/hypr/desktop-windows.lua" \
@@ -579,7 +579,7 @@ grep -Fq 'WindowModel.isLockSurface' "$ROOT/shell/services/WindowService.qml" \
   || fail "reopen memory must not cascade the screensaver into an 880x560 foot"
 grep -Fq 'org.omarchy.screensaver' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "Desktop Mode fullscreen screensaver is excluded from hyprbars"
-grep -Fq 'sourceSize.width: 32 * Screen.devicePixelRatio' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+grep -Fq 'sourceSize.width: 36 * Screen.devicePixelRatio' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "Superbar icons request a device-pixel sourceSize so they are not washed out"
 grep -Fq 'function _hydrateIfNeeded' "$ROOT/shell/services/WindowService.qml" \
   || fail "reopen memory hydrates existing windows without cascading them"

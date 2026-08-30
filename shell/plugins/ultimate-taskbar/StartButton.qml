@@ -1,48 +1,54 @@
 import QtQuick
-import QtQuick.Layouts
 import qs.Commons
 import qs.Ui
 
 Item {
   id: root
   property var bar: null
-  implicitWidth: 76
+  readonly property bool startOpen: !!(bar && bar.shell && typeof bar.shell.isPluginOpen === "function"
+    && bar.shell.isPluginOpen("omarchy.ultimate-start"))
+  implicitWidth: 56
   implicitHeight: parent ? parent.height : 40
+  Accessible.role: Accessible.Button
+  Accessible.name: "Start"
+  Accessible.description: "Open the Start menu"
 
   Rectangle {
-    anchors.fill: parent
-    anchors.margins: 4
-    radius: Tokens.radius.small
+    id: orb
+    anchors.centerIn: parent
+    width: 40
+    height: 40
+    radius: 20
     color: mouse.pressed ? bar.chromePressed
+      : root.startOpen ? bar.chromeStart
       : mouse.containsMouse ? bar.chromeHover
-      : "transparent"
+      : Tokens.chrome.glass
+    border.color: root.startOpen ? bar.chromeGlow : Tokens.chrome.edge
+    border.width: root.startOpen ? 2 : 1
 
-    Row {
+    Rectangle {
+      anchors.fill: parent
+      anchors.margins: 2
+      radius: width / 2
+      color: "transparent"
+      border.width: 1
+      border.color: Qt.rgba(Tokens.chrome.glow.r, Tokens.chrome.glow.g, Tokens.chrome.glow.b, root.startOpen ? 0.55 : 0.18)
+    }
+
+    Grid {
       anchors.centerIn: parent
-      spacing: 6
-
-      Grid {
-        anchors.verticalCenter: parent.verticalCenter
-        columns: 2
-        rows: 2
-        rowSpacing: 1
-        columnSpacing: 1
-        Repeater {
-          model: [Tokens.caption.close.background, Tokens.state.success, Tokens.caption.maximize.background, Tokens.state.warning]
-          Rectangle {
-            width: 7
-            height: 7
-            color: modelData
-          }
+      columns: 2
+      rows: 2
+      rowSpacing: 2
+      columnSpacing: 2
+      Repeater {
+        model: [Tokens.caption.close.background, Tokens.caption.maximize.background, Tokens.state.info, Tokens.state.success]
+        Rectangle {
+          width: 8
+          height: 8
+          radius: 1
+          color: modelData
         }
-      }
-
-      Text {
-        anchors.verticalCenter: parent.verticalCenter
-        text: "Start"
-        color: Tokens.text.primary
-        font.pixelSize: Style.font.body
-        font.family: "sans-serif"
       }
     }
   }

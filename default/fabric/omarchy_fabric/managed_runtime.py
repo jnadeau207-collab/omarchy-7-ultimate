@@ -165,7 +165,7 @@ class ManagedRuntime:
                 status["code"],
                 "Sandboxed managed execution failed closed",
                 status["explanation"],
-                change_state="failed",
+                change_state="none",
                 recovery_actions=("system.install-bubblewrap",),
             )
         try:
@@ -235,7 +235,7 @@ class ManagedRuntime:
                 "Sandboxed managed execution failed closed",
                 "Managed tasks execute only inside bubblewrap; missing isolation is a failed security gate.",
                 detail=str(error),
-                change_state="failed",
+                change_state="complete",
                 recovery_actions=("system.install-bubblewrap",),
             ) from error
 
@@ -262,7 +262,7 @@ class ManagedRuntime:
                 "Sandboxed managed execution failed",
                 "The isolated runner did not return a matching inspect artifact.",
                 detail=isolated.stderr or isolated.stdout,
-                change_state="failed",
+                change_state="complete",
             )
         succeeded = self.plane.transition_run(
             actor,

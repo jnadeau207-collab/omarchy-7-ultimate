@@ -257,8 +257,10 @@ fi
 if grep -Fq 'default/ultimate/chrome-tokens.json' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "hyprbars does not fall back to a static bundled chrome adapter"
 fi
-grep -Fq 'Tokens.chrome.glass' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'Tokens.surface.base' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start consumes resolved semantic chrome"
+grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start consumes resolved typography tokens"
 if grep -Eq 'Qt\.rgba\(' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
   fail "Start has no private glass color"
 fi

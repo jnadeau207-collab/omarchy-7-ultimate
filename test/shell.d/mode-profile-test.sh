@@ -13,9 +13,9 @@ jq -e '.mode == "desktop" and .features.taskbar == true and .features.topBar == 
   || fail "desktop profile enables taskbar and Start, not the top bar, and keeps developer tools out of idle Start"
 pass "desktop profile enables taskbar and Start, not the top bar"
 
-jq -e '.features.desktopIcons == false and .features.quickSettings == true and .features.notificationCenter == true' "$desktop" >/dev/null \
-  || fail "desktop profile enables Quick Settings and Notification Center, not desktop icons"
-pass "desktop profile enables Quick Settings and Notification Center"
+jq -e '.features.desktopIcons == true and .features.quickSettings == true and .features.notificationCenter == true' "$desktop" >/dev/null \
+  || fail "desktop profile enables desktop icons, Quick Settings, and Notification Center"
+pass "desktop profile enables desktop icons, Quick Settings, and Notification Center"
 
 jq -e '.features.desktopIcons == false and .features.quickSettings == false and .features.notificationCenter == false' "$power" >/dev/null \
   || fail "power-user profile keeps Desktop/Quick Settings/Notification Center off the heritage chrome"
@@ -34,8 +34,8 @@ power_features=$(jq -r '.features | keys[]' "$power" | sort)
 [[ $features == "$power_features" ]] || fail "both profiles declare the same feature keys"
 pass "both profiles declare the same feature keys"
 
-grep -Fq 'desktopIcons: false' "$ROOT/shell/services/ModeProfileService.qml" \
-  || fail "ModeProfileService first-frame defaults must not claim desktop icons"
+grep -Fq 'desktopIcons: true' "$ROOT/shell/services/ModeProfileService.qml" \
+  || fail "ModeProfileService first-frame defaults must match desktop icons"
 grep -Fq 'quickSettings: true' "$ROOT/shell/services/ModeProfileService.qml" \
   || fail "ModeProfileService first-frame defaults must match desktop Quick Settings"
 grep -Fq 'notificationCenter: true' "$ROOT/shell/services/ModeProfileService.qml" \

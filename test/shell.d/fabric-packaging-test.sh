@@ -38,6 +38,12 @@ grep -Fx 'WantedBy=graphical-session.target' "$service" >/dev/null ||
 if grep -Eq 'Exec(Start|StartPre)=.*/(ba)?sh|Exec(Start|StartPre)=.*[[:space:]]-c([[:space:]]|$)' "$service"; then
   fail "Fabric service launches a shell instead of fixed package commands"
 fi
+if grep -Fx 'ProtectKernelTunables=yes' "$service" >/dev/null; then
+  fail "ProtectKernelTunables prevents bubblewrap from mounting /proc for sandboxed runs"
+fi
+if grep -Fx 'ProtectKernelLogs=yes' "$service" >/dev/null; then
+  fail "ProtectKernelLogs prevents bubblewrap from mounting /proc for sandboxed runs"
+fi
 pass "Fabric user unit has fixed argv, session ordering, bounded restart, and owner-only directory contracts"
 
 [[ $(<"$contract") == "omarchy.fabric.package/v0" ]] ||

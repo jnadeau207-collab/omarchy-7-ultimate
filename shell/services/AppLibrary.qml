@@ -23,6 +23,7 @@ Item {
   // whenever the app list changes, so newly installed apps get their icon live.
   property var iconIndex: ({})
   property var pendingIconIndex: ({})
+  property var actionIndex: ({})
 
   property int launchSerial: 0
   property int launchToplevelCount: 0
@@ -84,19 +85,22 @@ Item {
   }
 
   function entryByDesktopId(desktopId) {
-    var want = JumpList.normalizeDesktopId(desktopId)
-    if (!want) return null
+    var aliases = JumpList.desktopIdAliases(desktopId)
+    if (aliases.length === 0) return null
     var values = DesktopEntries.applications.values || []
-    for (var i = 0; i < values.length; i++) {
-      var entry = values[i]
-      if (!entry) continue
-      if (JumpList.normalizeDesktopId(entry.id) === want) return entry
+    for (var a = 0; a < aliases.length; a++) {
+      var want = aliases[a]
+      for (var i = 0; i < values.length; i++) {
+        var entry = values[i]
+        if (!entry) continue
+        if (JumpList.normalizeDesktopId(entry.id) === want) return entry
+      }
     }
     return null
   }
 
   function jumpListFor(desktopId) {
-    return JumpList.jumpListFor(root.entryByDesktopId(desktopId), desktopId)
+    return JumpList.jumpListFor(root.entryByDesktopId(desktopId), desktopId, root.actionIndex)
   }
 
   function launch(desktopId, name) {
@@ -243,6 +247,20 @@ Item {
     onExited: root.iconIndex = root.pendingIconIndex
   }
 
+  Process {
+    id: actionIndexScan
+    command: ["python3", root.omarchyPath + "/shell/services/desktop-actions.py"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          root.actionIndex = JSON.parse(String(text || "{}"))
+        } catch (e) {
+          root.actionIndex = ({})
+        }
+      }
+    }
+  }
+
   // Coalesces bursts of app-list changes (a package install touches many
   // entries) into a single rescan.
   Timer {
@@ -291,6 +309,7 @@ Item {
     function onValuesChanged() {
       hiddenEntryScan.running = true
       iconIndexDebounce.restart()
+      if (!actionIndexScan.running) actionIndexScan.running = true
       root.appsChanged()
     }
   }
@@ -298,5 +317,6 @@ Item {
   Component.onCompleted: {
     hiddenEntryScan.running = true
     iconIndexScan.running = true
+    actionIndexScan.running = true
   }
 }

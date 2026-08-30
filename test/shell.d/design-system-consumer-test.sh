@@ -54,8 +54,9 @@ checks = {
     "shell/Ui/ToggleSwitch.qml": "Tokens.text.primary",
     "shell/Ui/TextField.qml": "Tokens.accent.primary",
     "shell/Ui/ConfirmDialog.qml": "Tokens.surface.base",
-    "shell/plugins/ultimate-start/Start.qml": "semanticProfile: productProfile",
+    "shell/plugins/ultimate-start/Start.qml": "Tokens.typography.family",
     "shell/plugins/ultimate-taskbar/StartButton.qml": "Tokens.caption.close.background",
+    "shell/plugins/lock/LockView.qml": "Tokens.text.primary",
     "shell/Commons/Tokens.qml": "design-tokens-v0.json",
 }
 for relative, needle in checks.items():
@@ -66,3 +67,11 @@ for relative, needle in checks.items():
         raise SystemExit(f"{relative} still defaults through Color.foreground")
 PY
 pass "kit and consumer chrome default through the resolved token pipeline"
+
+grep -Fq '"family": "Liberation Sans"' "$ROOT/default/ultimate/design-system/resolve_tokens.py" \
+  || fail "consumer typography defaults to a UI family, not the terminal alias"
+grep -Fq 'fontFamily: Tokens.typography.family' "$ROOT/shell/Ui/Button.qml" \
+  || fail "kit Button uses the token UI family"
+grep -Fq 'font.family: Tokens.typography.family' "$ROOT/shell/Ui/TextField.qml" \
+  || fail "kit TextField uses the token UI family"
+pass "consumer typography defaults to Liberation Sans"

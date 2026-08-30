@@ -24,6 +24,9 @@ Item {
   readonly property var overviewMetrics: AgentCenterModel.overviewMetrics(queryState.summary)
   readonly property bool queryBusy: queryState.phase === "loading"
   readonly property bool canRefresh: host && host.fabricReady && !queryBusy
+  readonly property bool canMutate: host && host.fabricReady && !queryBusy &&
+    !(root.controller && root.controller.activeWorkId)
+  readonly property var contextSources: AgentCenterModel.CONTEXT_SOURCES
   readonly property bool canLoadMore: host && host.fabricReady && !queryBusy &&
     queryState.nextCursor !== null && !queryState.clipped
 
@@ -70,6 +73,28 @@ Item {
     if (!root.controller) return
     if (root.host && root.host.fabricReady) root.controller.refresh()
     else if (root.host) root.host.retryFabric()
+  }
+
+  function sendWork(method, params) {
+    if (!root.controller || !root.canMutate) return
+    root.controller.sendWork(method, params)
+  }
+
+  function createInspectTask() {
+    sendWork(AgentCenterModel.WORK_METHODS.create, AgentCenterModel.inspectTaskCreateParams(Date.now()))
+  }
+
+  function captureContext(source) {
+    sendWork(AgentCenterModel.WORK_METHODS.capture, AgentCenterModel.captureContextParams(source, Date.now()))
+  }
+
+  function runTaskAction(action, record) {
+    if (!action || !record || !record.task) return
+    var now = Date.now()
+    if (action.id === "execute")
+      sendWork(action.method, AgentCenterModel.executeRunParams(record.task.taskId, now))
+    else if (action.id === "cancel" || action.id === "recover")
+      sendWork(action.method, AgentCenterModel.taskRevisionParams(record.task.taskId, record.task.revision))
   }
 
   function summaryLine() {
@@ -236,6 +261,15 @@ Item {
                     bordered: true
                     onClicked: root.retryQuery()
                   }
+
+                  Ui.Button {
+                    visible: root.canMutate && (root.queryState.view === "agent.overview" || root.queryState.view === "agent.tasks")
+                    text: "Create inspect task"
+                    tooltipText: "Create a durable system.info.read inspect task"
+                    focusable: true
+                    bordered: true
+                    onClicked: root.createInspectTask()
+                  }
                 }
 
                 Text {
@@ -313,6 +347,24 @@ Item {
                       Layout.fillWidth: true
                     }
                   }
+                }
+              }
+            }
+
+            Flow {
+              visible: root.canMutate && root.queryState.view === "agent.context"
+              Layout.fillWidth: true
+              spacing: Style.space(8)
+
+              Repeater {
+                model: root.contextSources
+                delegate: Ui.Button {
+                  required property var modelData
+                  text: "Capture " + String(modelData)
+                  tooltipText: "Capture the " + String(modelData) + " desktop context source"
+                  focusable: true
+                  bordered: true
+                  onClicked: root.captureContext(modelData)
                 }
               }
             }
@@ -404,6 +456,8 @@ Item {
                 record: modelData
                 selectedEntityType: root.entityType
                 selectedEntityId: root.entityId
+                actionsEnabled: root.canMutate
+                onWorkRequested: function(action) { root.runTaskAction(action, modelData) }
               }
             }
 
@@ -446,7 +500,7 @@ Item {
 
             Text {
               visible: root.queryState.phase === "ready" || root.queryState.phase === "empty" || root.queryState.phase === "partial"
-              text: "Read-only managed-work v0 \u00b7 no execution, approval, or recovery action is available from Agent Center"
+              text: "Managed-work v0 \u00b7 inspect tasks can be created, run, cancelled, and recovered. Consent and provider operations stay outside Agent Center."
               color: Tokens.text.disabled
               font.family: Style.font.family
               font.pixelSize: Style.font.caption

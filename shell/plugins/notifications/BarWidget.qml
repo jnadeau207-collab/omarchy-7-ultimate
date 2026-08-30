@@ -71,9 +71,27 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "◎"
+    text: ""
+    hasVisualContent: true
+    keepSpace: true
+    fixedWidth: 36
     tooltipText: "Notification Center"
     onPressed: function(b) { root.togglePanel() }
+
+    Column {
+      anchors.centerIn: parent
+      spacing: 2
+      Repeater {
+        model: 3
+        Rectangle {
+          width: 12
+          height: 2
+          radius: 1
+          color: Tokens.text.primary
+          opacity: 0.9
+        }
+      }
+    }
 
     Badge {
       visible: root.badgeCount > 0

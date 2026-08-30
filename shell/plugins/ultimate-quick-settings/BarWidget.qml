@@ -99,8 +99,29 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "⊞"
+    text: ""
+    hasVisualContent: true
+    keepSpace: true
+    fixedWidth: 36
     tooltipText: "Quick Settings"
     onPressed: function(b) { root.togglePanel() }
+
+    Grid {
+      anchors.centerIn: parent
+      columns: 3
+      rows: 3
+      rowSpacing: 2
+      columnSpacing: 2
+      Repeater {
+        model: 9
+        Rectangle {
+          width: 4
+          height: 4
+          radius: 1
+          color: Tokens.text.primary
+          opacity: 0.9
+        }
+      }
+    }
   }
 }
