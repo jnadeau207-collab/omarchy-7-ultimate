@@ -147,14 +147,17 @@ assert(
 assert(
   /function launch\(desktopId, name\) \{[\s\S]*?uwsm-app[\s\S]*?\n  \}/.test(appLibraryQml) &&
     appLibraryQml.includes('Util.execDetached("uwsm-app -- gtk-launch "') &&
+    appLibraryQml.includes('JumpList.actionCommand(root.entryByDesktopId(id))') &&
+    appLibraryQml.includes('root.launchCommand(command)') &&
     appLibraryQml.includes('root.recordLaunch(id)'),
-  'app library launches desktop entries through gtk-launch in their own scope'
+  'app library launches omarchy-* Exec through OMARCHY_PATH and other entries through gtk-launch'
 )
 
 assert(
   /function launchAction\([\s\S]*?uwsm-app -- /.test(appLibraryQml) &&
     appLibraryQml.includes('function launchCommand(command)') &&
-    appLibraryQml.includes('root.omarchyPath + "/bin/" + bin'),
+    appLibraryQml.includes('root.omarchyPath + "/bin/" + bin') &&
+    appLibraryQml.includes('.replace(/\\s+%[A-Za-z@]/g, "")'),
   'app library runs desktop Actions through uwsm and resolves omarchy-* from OMARCHY_PATH'
 )
 
