@@ -229,6 +229,10 @@ grep -Fq 'files.this-pc' "$ROOT/default/ultimate/desktop/Computer.desktop" \
   || fail "Desktop Computer shortcut opens Files This PC"
 grep -Fq 'launchCommand' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
   || fail "Desktop shortcuts launch through the same AppLibrary path as Start"
+grep -Fq 'JumpList.actionCommand(root.entryByDesktopId(id))' "$ROOT/shell/services/AppLibrary.qml" \
+  || fail "Superbar pin launch reads the desktop Exec before gtk-launch"
+grep -Fq 'root.omarchyPath + "/bin/omarchy-"' "$ROOT/shell/services/AppLibrary.qml" \
+  || fail "Superbar pin launch quotes omarchy-* from OMARCHY_PATH"
 grep -Fq 'uwsm-app --' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
   || fail "Desktop shortcuts use the uwsm session graph"
 grep -Fq 'xdg-user-dirs-update --set DESKTOP "$HOME/Desktop"' "$ROOT/bin/omarchy-provision-user" \
@@ -431,6 +435,10 @@ pass "product desktop Actions are indexed from OMARCHY_PATH"
 
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042600.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042700.sh"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042800.sh"
+chmod +x "$ROOT/bin/omarchy-launch-files"
+[[ -x $ROOT/bin/omarchy-launch-files ]] \
+  || fail "Files launcher stays executable after the Superbar pin repair"
 [[ -f $HOME/.local/share/applications/org.omarchy.Files.desktop ]] \
   || fail "Files launcher is published into the user applications dir"
 grep -Fq 'Actions=ThisPC;Pictures;Recent;Trash;' \
