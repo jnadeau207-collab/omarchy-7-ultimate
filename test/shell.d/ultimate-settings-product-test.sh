@@ -74,8 +74,8 @@ assertEqual(Model.queryForRoute('settings.not-real'), null, 'unknown Settings ro
 assertEqual(Model.hostedPanel('settings.display.overview'), null, 'Display reads Fabric inspect instead of hosting the Process monitor panel')
 assertEqual(Model.hostedPanel('settings.audio.overview'), null, 'Sound reads Fabric inspect instead of hosting the Process audio panel')
 assertEqual(Model.hostedPanel('settings.network.overview'), null, 'Network reads Fabric inspect instead of hosting the Process nmcli panel')
+assertEqual(Model.hostedPanel('settings.bluetooth.overview'), null, 'Bluetooth reads Fabric inspect instead of hosting the Process bluetoothctl panel')
 const hosted = [
-  ['settings.bluetooth.overview', 'plugins/panels/bluetooth/Panel.qml', 'omarchy.bluetooth'],
   ['settings.power.overview', 'plugins/panels/power/Panel.qml', 'omarchy.power'],
   ['settings.personalization.overview', 'Ui/SettingsPersonalizationHost.qml', 'omarchy.image-picker']
 ]
@@ -147,6 +147,28 @@ assertEqual(networkIface.label, 'enp4s0', 'Network records keep the interface la
 const ifaceDetail = Object.fromEntries((networkIface.details || []).map(field => [field.label, field.value]))
 assertEqual(ifaceDetail.Status, 'connected', 'Network records surface host interface status')
 assertEqual(ifaceDetail.Connection, 'enp4s0', 'Network records surface host connection name')
+const bluetoothController = Model.normalizeLeafResource({
+  id: `bluetooth.controller.${'c'.repeat(64)}`,
+  label: 'Omarchy Box',
+  kind: 'controller',
+  state: { powered: true, discovering: false }
+}, 0)
+assert(bluetoothController, 'bluetooth.inspect controller resources project into Settings records')
+assertEqual(bluetoothController.label, 'Omarchy Box', 'Bluetooth records keep the controller label')
+const controllerDetail = Object.fromEntries((bluetoothController.details || []).map(field => [field.label, field.value]))
+assertEqual(controllerDetail.Powered, 'Yes', 'Bluetooth records surface host controller power')
+assertEqual(controllerDetail.Discovering, 'No', 'Bluetooth records surface host discovering state')
+const bluetoothDevice = Model.normalizeLeafResource({
+  id: `bluetooth.device.${'e'.repeat(64)}`,
+  label: 'Headphones',
+  kind: 'device',
+  state: { paired: true, connected: true }
+}, 0)
+assert(bluetoothDevice, 'bluetooth.inspect device resources project into Settings records')
+assertEqual(bluetoothDevice.label, 'Headphones', 'Bluetooth records keep the device label')
+const deviceDetail = Object.fromEntries((bluetoothDevice.details || []).map(field => [field.label, field.value]))
+assertEqual(deviceDetail.Paired, 'Yes', 'Bluetooth records surface host paired state')
+assertEqual(deviceDetail.Connected, 'Yes', 'Bluetooth records surface host connected state')
 assertEqual(Model.hostedPanel('settings.input.overview'), null, 'Input stays an honest Fabric page; keyboard layout is a bar widget, not a panel')
 assertEqual(Model.hostedPanel('settings.overview'), null, 'Settings home is not a hosted panel')
 
@@ -390,7 +412,7 @@ rejectedController = Model.createController({
 rejectedController.setConnected(true)
 assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
 JS
-pass "Settings hosts Bluetooth and Power panels; Display, Sound, and Network read Fabric inspect"
+pass "Settings hosts the Power panel; Display, Sound, Network, and Bluetooth read Fabric inspect"
 
 entrypoint="$ROOT/shell/ultimate-settings.qml"
 application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
@@ -462,7 +484,10 @@ fi
 if grep -Fq 'plugins/panels/network/Panel.qml' "$model"; then
   fail "Settings Network map does not host the Process nmcli panel"
 fi
-pass "Settings Bluetooth/Power pages host existing panels; Display, Sound, and Network read Fabric"
+if grep -Fq 'plugins/panels/bluetooth/Panel.qml' "$model"; then
+  fail "Settings Bluetooth map does not host the Process bluetoothctl panel"
+fi
+pass "Settings Power page hosts an existing panel; Display, Sound, Network, and Bluetooth read Fabric"
 
 for panel in monitor audio network bluetooth power; do
   grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/panels/$panel/Panel.qml" \
