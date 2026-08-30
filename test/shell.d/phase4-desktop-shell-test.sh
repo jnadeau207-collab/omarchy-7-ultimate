@@ -515,6 +515,16 @@ grep -Fq 'Tokens.border.strong' "$ROOT/shell/plugins/ultimate-taskbar/TrayCluste
   || fail "tray cluster reads Tokens.border.strong"
 grep -Fq 'Tokens.border.strong' "$ROOT/shell/Ui/WidgetButton.qml" \
   || fail "clock and tray marks read Tokens.border.strong"
+grep -Fq 'Semantics.duration(null, 140)' "$ROOT/shell/Ui/WidgetButton.qml" \
+  || fail "Superbar WidgetButton opacity follows reduced motion"
+grep -Fq 'Semantics.duration(null, 160)' "$ROOT/shell/Ui/WidgetButton.qml" \
+  || fail "Superbar WidgetButton color follows reduced motion"
+grep -Fq 'Semantics.duration(null, 140)' "$ROOT/shell/Ui/KeyboardPanel.qml" \
+  || fail "QS, NC, and calendar panel fade follows reduced motion"
+grep -Fq 'Semantics.duration(null, 100)' "$ROOT/shell/plugins/notifications/components/NotificationCard.qml" \
+  || fail "Notification card hover follows reduced motion"
+grep -Fq 'Semantics.duration(null, 160)' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
+  || fail "calendar bars follow reduced motion"
 grep -Fq 'hasVisualContent: true' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml" \
   || fail "Quick Settings Superbar mark is drawn, not a leftover glyph"
 if grep -Fq '⊞' "$ROOT/shell/plugins/ultimate-quick-settings/BarWidget.qml"; then

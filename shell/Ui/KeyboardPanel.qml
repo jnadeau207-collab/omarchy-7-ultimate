@@ -391,7 +391,7 @@ PanelWindow {
 
     Behavior on opacity {
       enabled: !root.popoutSwitching && !root.popoutSwitchClosing
-      NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+      NumberAnimation { duration: Semantics.duration(null, 140); easing.type: Easing.OutCubic }
     }
 
     // Swallow clicks on the card so they don't bubble to the dismissal
@@ -412,7 +412,7 @@ PanelWindow {
 
       Behavior on opacity {
         enabled: root.popoutSwitching
-        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Semantics.duration(null, 140); easing.type: Easing.OutCubic }
       }
     }
   }

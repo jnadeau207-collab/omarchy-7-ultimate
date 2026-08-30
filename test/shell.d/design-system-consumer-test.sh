@@ -140,3 +140,30 @@ if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/plugins/ultimate-st
   fail "Start pseudo-locale is not an invented Accessibility Settings surface"
 fi
 pass "Start pseudo-locale binds the existing SemanticProfile path"
+
+grep -Fq 'Semantics.duration(null, 140)' "$ROOT/shell/Ui/WidgetButton.qml" \
+  || fail "Superbar WidgetButton opacity uses Semantics.duration"
+grep -Fq 'Semantics.duration(null, 160)' "$ROOT/shell/Ui/WidgetButton.qml" \
+  || fail "Superbar WidgetButton color uses Semantics.duration"
+if grep -Eq 'duration: (100|140|160)(;| )' "$ROOT/shell/Ui/WidgetButton.qml"; then
+  fail "Superbar WidgetButton does not hard-code hover duration"
+fi
+grep -Fq 'Semantics.duration(null, 140)' "$ROOT/shell/Ui/KeyboardPanel.qml" \
+  || fail "QS, NC, and calendar KeyboardPanel fade uses Semantics.duration"
+if grep -Eq 'duration: 140;' "$ROOT/shell/Ui/KeyboardPanel.qml"; then
+  fail "KeyboardPanel does not hard-code panel fade duration"
+fi
+grep -Fq 'Semantics.duration(null, 100)' "$ROOT/shell/plugins/notifications/components/NotificationCard.qml" \
+  || fail "Notification card hover uses Semantics.duration"
+if grep -Eq 'duration: 100' "$ROOT/shell/plugins/notifications/components/NotificationCard.qml"; then
+  fail "Notification card does not hard-code hover duration"
+fi
+grep -Fq 'Semantics.duration(null, 160)' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
+  || fail "calendar year and life bars use Semantics.duration"
+if grep -Eq 'duration: 160;' "$ROOT/shell/plugins/panels/clock/Panel.qml"; then
+  fail "calendar panel does not hard-code bar duration"
+fi
+if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/Ui/WidgetButton.qml"; then
+  fail "reduced motion is not an invented Accessibility Settings surface"
+fi
+pass "Superbar, QS, NC, and calendar motion bind Semantics.duration"

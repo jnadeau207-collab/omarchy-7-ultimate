@@ -465,7 +465,7 @@ Panel {
                   radius: parent.radius
                   color: Style.selectedStateColor(root.contentForeground, Tokens.accent.primary)
 
-                  Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                  Behavior on width { NumberAnimation { duration: Semantics.duration(null, 160); easing.type: Easing.OutCubic } }
                 }
               }
             }
@@ -523,7 +523,7 @@ Panel {
                   radius: parent.radius
                   color: Style.selectedStateColor(root.contentForeground, Tokens.accent.primary)
 
-                  Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                  Behavior on width { NumberAnimation { duration: Semantics.duration(null, 160); easing.type: Easing.OutCubic } }
                 }
               }
 
