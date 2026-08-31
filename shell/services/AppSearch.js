@@ -281,6 +281,16 @@ var START_DESTINATIONS = [
     actionId: "Downloads"
   },
   {
+    id: "omarchy.start.recent-files",
+    name: "Recent",
+    genericName: "Files",
+    comment: "Open Recent files",
+    keywords: ["recent files", "recent"],
+    icon: "document-open-recent",
+    desktopId: "org.omarchy.Files",
+    actionId: "Recent"
+  },
+  {
     id: "omarchy.start.settings",
     name: "Settings",
     genericName: "System Settings",
