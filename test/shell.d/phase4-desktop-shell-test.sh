@@ -725,6 +725,10 @@ grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/ultimate-run/Run.qml"
   || fail "Run chrome text uses the shared Start SemanticProfile"
 grep -Fq 'root.chromeText("Run")' "$ROOT/shell/plugins/ultimate-run/Run.qml" \
   || fail "Run heading consumes Semantics.text"
+grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/ultimate-snap-chooser/Chooser.qml" \
+  || fail "Snap chooser chrome text uses the shared Start SemanticProfile"
+grep -Fq 'root.chromeText("Snap")' "$ROOT/shell/plugins/ultimate-snap-chooser/Chooser.qml" \
+  || fail "Snap chooser heading consumes Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places run through the existing SemanticProfile text transform"
 grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
