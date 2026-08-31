@@ -463,6 +463,10 @@ grep -Fq 'markStale(root.queryState.requestId)' "$application" \
   || fail "Settings enforces a bounded stale-read deadline"
 pass "Settings isolates superseded and stale request generations"
 
+grep -Fq 'readonly property var productProfile: host && host.productProfile ? host.productProfile : null' "$application" \
+  || fail "Settings reads the standalone host SemanticProfile"
+grep -Fq 'semanticProfile: root.productProfile' "$application" \
+  || fail "Settings chrome verbs consume the host SemanticProfile"
 grep -Fq 'focusable: true' "$application" || fail "Settings controls participate in keyboard focus"
 grep -Fq 'Keys.onPressed:' "$application" || fail "Settings exposes a keyboard refresh path"
 grep -Fq 'Accessible.role:' "$application" || fail "Settings state surfaces declare accessibility roles"

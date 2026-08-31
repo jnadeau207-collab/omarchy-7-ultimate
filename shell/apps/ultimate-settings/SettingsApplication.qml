@@ -14,6 +14,7 @@ Item {
   property var host: null
   property var controller: null
   property var queryState: SettingsModel.baseState(SettingsModel.OVERVIEW_ROUTE, {}, "offline")
+  readonly property var productProfile: host && host.productProfile ? host.productProfile : null
 
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
   readonly property var hostedSpec: SettingsModel.hostedPanel(host ? host.currentRoute : "")
@@ -140,6 +141,7 @@ Item {
     Shared.ApplicationNavigation {
       id: navigation
       title: "Settings"
+      semanticProfile: root.productProfile
       routes: root.visibleRoutes
       currentRoute: root.host ? root.host.currentRoute : ""
       Layout.preferredWidth: root.width < 900 ? 210 : root.width > 1450 ? 300 : 260
@@ -160,6 +162,7 @@ Item {
 
         Shared.FabricStatusBanner {
           host: root.host
+          semanticProfile: root.productProfile
           Layout.fillWidth: true
         }
 
@@ -173,7 +176,7 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              text: root.currentRoute ? root.currentRoute.title : "Settings"
+              text: Semantics.text(root.productProfile, root.currentRoute ? root.currentRoute.title : "Settings")
               color: Tokens.text.primary
               font.family: Style.font.family
               font.pixelSize: Style.font.heading
@@ -267,6 +270,7 @@ Item {
                     tooltipText: root.queryState.phase === "offline"
                       ? "Reconnect to Fabric and read current provider state"
                       : "Refresh the provider catalog and current route"
+                    semanticProfile: root.productProfile
                     focusable: true
                     bordered: true
                     onClicked: root.retryState()
@@ -288,6 +292,7 @@ Item {
                 Ui.ProgressBar {
                   visible: root.queryBusy
                   indeterminate: true
+                  semanticProfile: root.productProfile
                   accessibleName: root.queryState.phase === "catalog-loading"
                     ? "Loading Settings provider catalog" : "Loading current Settings provider state"
                   Layout.fillWidth: true
@@ -339,7 +344,7 @@ Item {
 
                   Text {
                     textFormat: Text.PlainText
-                    text: "RECOVERY PATHS"
+                    text: Semantics.text(root.productProfile, "RECOVERY PATHS")
                     color: Tokens.state.warning
                     font.family: Style.font.family
                     font.pixelSize: Style.font.caption
@@ -448,6 +453,7 @@ Item {
                     Ui.Button {
                       text: "Open " + modelData.title
                       tooltipText: "Open the read-only " + modelData.title + " Settings route"
+                      semanticProfile: root.productProfile
                       accessibleDescription: modelData.status + ". " + modelData.detail
                       focusable: true
                       bordered: true
@@ -483,7 +489,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
-                    text: "Coverage"
+                    text: Semantics.text(root.productProfile, "Coverage")
                     color: Tokens.text.primary
                     font.family: Style.font.family
                     font.pixelSize: Style.font.title
@@ -548,6 +554,7 @@ Item {
 
             Ui.EmptyState {
               visible: root.queryState.phase === "empty"
+              semanticProfile: root.productProfile
               Layout.fillWidth: true
               Layout.topMargin: Style.space(16)
               title: root.queryState.selectedMissing ? "Requested resource is absent" : "No resources reported"
@@ -583,7 +590,7 @@ Item {
 
             Text {
               visible: !root.queryBusy
-              text: "Read-only Fabric provider state \u00b7 no direct commands, mutation, preflight, approval, or execution authority"
+              text: Semantics.text(root.productProfile, "Read-only Fabric provider state \u00b7 no direct commands, mutation, preflight, approval, or execution authority")
               color: Tokens.text.disabled
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
