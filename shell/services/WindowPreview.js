@@ -61,7 +61,52 @@ function onActiveDesktop(win, activeDesktopId) {
   return Number(winId) === id
 }
 
-function previewRow(win, activeDesktopId) {
+function sameOutput(a, b) {
+  var left = String((a && (a.monitorName || a.monitor)) || "")
+  var right = String((b && (b.monitorName || b.monitor)) || "")
+  if (!left || !right) return true
+  return left === right
+}
+
+function rectsOverlap(a, b) {
+  var left = geometry(a)
+  var right = geometry(b)
+  if (!left || !right) return false
+  if (left.x + left.width <= right.x || right.x + right.width <= left.x) return false
+  if (left.y + left.height <= right.y || right.y + right.height <= left.y) return false
+  return true
+}
+
+function focusRank(win) {
+  var n = Number(win && win.focusHistoryID)
+  if (!isFinite(n)) return null
+  return n
+}
+
+function coversWindow(other, win) {
+  if (!other || !win) return false
+  if (String(other.address || "") === String(win.address || "")) return false
+  if (other.minimized === true || other.hidden === true) return false
+  if (other.mapped === false) return false
+  if (!sameOutput(other, win)) return false
+  if (!onActiveDesktop(other, workspaceIdOf(win))) return false
+  if (!rectsOverlap(other, win)) return false
+  var otherRank = focusRank(other)
+  var winRank = focusRank(win)
+  if (otherRank === null || winRank === null) return true
+  return otherRank < winRank
+}
+
+function isOccluded(win, others) {
+  var list = isLengthList(others) ? others : []
+  var i
+  for (i = 0; i < list.length; i++) {
+    if (coversWindow(list[i], win)) return true
+  }
+  return false
+}
+
+function previewRow(win, activeDesktopId, others) {
   if (!win) return null
   var box = geometry(win)
   var minimized = win.minimized === true || win.hidden === true
@@ -76,7 +121,7 @@ function previewRow(win, activeDesktopId) {
     y: box ? box.y : 0,
     width: box ? box.width : 0,
     height: box ? box.height : 0,
-    capturable: !!(box && !minimized && onActiveDesktop(win, activeDesktopId))
+    capturable: !!(box && !minimized && onActiveDesktop(win, activeDesktopId) && !isOccluded(win, others))
   }
 }
 
@@ -84,11 +129,12 @@ function isLengthList(value) {
   return !!value && typeof value !== "function" && typeof value.length === "number"
 }
 
-function previewRows(windows, activeDesktopId) {
+function previewRows(windows, activeDesktopId, others) {
   var list = isLengthList(windows) ? windows : []
+  var occluders = isLengthList(others) ? others : []
   var out = []
   for (var i = 0; i < list.length; i++) {
-    var row = previewRow(list[i], activeDesktopId)
+    var row = previewRow(list[i], activeDesktopId, occluders)
     if (row && row.address) out.push(row)
   }
   return out
@@ -102,6 +148,9 @@ if (typeof module !== "undefined") {
     previewRows: previewRows,
     geometry: geometry,
     onActiveDesktop: onActiveDesktop,
-    workspaceIdOf: workspaceIdOf
+    workspaceIdOf: workspaceIdOf,
+    rectsOverlap: rectsOverlap,
+    isOccluded: isOccluded,
+    coversWindow: coversWindow
   }
 }

@@ -24,7 +24,7 @@ Item {
   readonly property var cycleList: windowService ? windowService.cycleList : []
   readonly property int cycleIndex: windowService ? windowService.cycleIndex : 0
   readonly property var desktopIds: windowService ? windowService.desktopIds : []
-  readonly property var viewPreviewRows: WindowPreview.previewRows(root.viewWindowsFor(root.viewDesktop))
+  readonly property var viewPreviewRows: WindowPreview.previewRows(root.viewWindowsFor(root.viewDesktop), root.viewDesktop, windowService ? windowService.windows : [])
 
   function captureViewPreviews() {
     if (!windowService) return
