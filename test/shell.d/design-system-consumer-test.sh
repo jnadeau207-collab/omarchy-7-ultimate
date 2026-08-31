@@ -164,6 +164,10 @@ grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/agents/Panel.qml" \
   || fail "agents panel chrome text uses the shared Superbar SemanticProfile"
 grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/plugins/agents/Panel.qml" \
   || fail "agents panel Open Agent Center consumes Semantics.text"
+grep -Fq 'pseudoLocale: !!(shell && shell.summonedPseudoLocale)' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
+  || fail "Task View chrome reads the shared Start pseudo-locale summon flag"
+grep -Fq 'root.chromeText("Task View")' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
+  || fail "Task View heading consumes Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places consume Semantics.text through the product profile"
 grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

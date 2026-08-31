@@ -220,8 +220,8 @@ grep -Fq 'omarchy-task-switcher' "$ROOT/shell/plugins/ultimate-task-switcher/Swi
   || fail "task switcher uses a distinct layer namespace"
 grep -Fq 'WindowPreview.previewRows' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
   || fail "Task View uses the same live preview rows as Superbar peeks"
-grep -Fq 'text: "Task View"' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
-  || fail "Task View names itself"
+grep -Fq 'root.chromeText("Task View")' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
+  || fail "Task View names itself through Semantics.text"
 grep -Fq 'virtio-vga,xres=1920,yres=1080' "$ROOT/test/vm/vm-run.ps1" \
   || fail "Desktop Mode VM launcher pins virtio-vga to 1920x1080 so preferred is not 640x480@240"
 grep -Fq 'gtk,zoom-to-fit=on' "$ROOT/test/vm/vm-run.ps1" \
