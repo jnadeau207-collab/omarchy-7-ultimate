@@ -581,6 +581,7 @@ assert "Downloads" in names, names
 assert "Pictures" in names, names
 assert "Recent" in names, names
 assert "Trash" in names, names
+assert "Search" in names, names
 settings = idx.get("org.omarchy.Settings") or []
 assert any(row.get("name") == "Display" for row in settings), settings
 assert any(row.get("name") == "Personalization" for row in settings), settings
@@ -612,14 +613,15 @@ OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042600.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042700.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042800.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042900.sh"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043000.sh"
 chmod +x "$ROOT/bin/omarchy-launch-files"
 [[ -x $ROOT/bin/omarchy-launch-files ]] \
   || fail "Files launcher stays executable after the Superbar pin repair"
 [[ -f $HOME/.local/share/applications/org.omarchy.Files.desktop ]] \
   || fail "Files launcher is published into the user applications dir"
-grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;' \
+grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Search;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
-  || fail "published Files launcher keeps This PC, Desktop, Documents, Downloads, Pictures, Recent, and Trash"
+  || fail "published Files launcher keeps This PC, Desktop, Documents, Downloads, Pictures, Recent, Trash, and Search"
 grep -Fq 'Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
   || fail "published Settings launcher keeps inspect pages plus the honest missing Accessibility and System actions"
@@ -711,6 +713,9 @@ if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/services/AppSearch.
 fi
 if grep -Fq 'id: "omarchy.start.system"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent a System information destination"
+fi
+if grep -Fq 'id: "omarchy.start.files-search"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent an in-app Files Search destination"
 fi
 grep -Fq 'productProfile.text("Recent")' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a Recent section for launched programs"
