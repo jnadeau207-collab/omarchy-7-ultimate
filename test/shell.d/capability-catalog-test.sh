@@ -300,6 +300,18 @@ if desktop_menu.get("status") != "missing" or desktop_menu.get("path"):
 process_inspect = by_id["process.inspect"]["humanRoute"]
 if process_inspect.get("status") != "planned" or process_inspect.get("path"):
     raise SystemExit(f"process.inspect invents an Administration Task Manager: {process_inspect}")
+startup = by_id["apps.startup.disable"]["humanRoute"]
+if startup.get("status") != "missing" or startup.get("path"):
+    raise SystemExit(f"apps.startup.disable invents a Task Manager Startup page: {startup}")
+native27 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.27")
+if native27["humanRoute"].get("path"):
+    raise SystemExit(f"windows-native.27 invents a Task Manager Startup page: {native27['humanRoute']}")
+resources = by_id["resources.inspect"]["humanRoute"]
+if resources.get("status") != "missing" or resources.get("path"):
+    raise SystemExit(f"resources.inspect invents a Resource Monitor destination: {resources}")
+parity_resources = next(job for job in jobs_lock["jobs"] if job["id"] == "parity.resource-monitor")
+if parity_resources.get("claim") == "present" or parity_resources["humanRoute"].get("path"):
+    raise SystemExit(f"parity.resource-monitor invents a Task Manager Resource Monitor: {parity_resources}")
 
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
@@ -333,10 +345,13 @@ def invented_settings_or_start(path):
     return False
 
 jobs = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
-for row in writers["capabilities"] + jobs["jobs"]:
+for row in writers["capabilities"] + readers["capabilities"] + jobs["jobs"]:
     route = row.get("humanRoute") or {}
-    if invented_settings_or_start(route.get("path") or ""):
+    path = route.get("path") or ""
+    if invented_settings_or_start(path):
         raise SystemExit(f"{row.get('id')} invents a Settings or Start path: {route}")
+    if "Task Manager" in path:
+        raise SystemExit(f"{row.get('id')} invents a Task Manager destination: {route}")
 
 agent_center = next(job for job in jobs["jobs"] if job["id"] == "parity.agent-center")
 if agent_center.get("claim") == "present" or agent_center.get("agentAvailability") == "present":
