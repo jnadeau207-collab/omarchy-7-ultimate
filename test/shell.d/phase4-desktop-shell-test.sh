@@ -557,9 +557,9 @@ mkdir -p "$HOME/.local/share/applications"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042100.sh"
 [[ -f $HOME/.local/share/applications/org.omarchy.AgentCenter.desktop ]] \
   || fail "Agent Center launcher is published into the user applications dir"
-grep -Fq 'Actions=Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
+grep -Fq 'Actions=Overview;Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
   "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
-  || fail "published Agent Center launcher keeps every existing Agent Center jump action"
+  || fail "published Agent Center launcher keeps Overview plus every existing inspect jump action"
 pass "Agent Center desktop launcher is published for jump lists"
 
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042200.sh"
@@ -595,6 +595,7 @@ assert any(row.get("name") == "Input" for row in settings), settings
 assert any(row.get("name") == "Accessibility" for row in settings), settings
 assert any(row.get("name") == "System information" for row in settings), settings
 agents = idx.get("org.omarchy.AgentCenter") or []
+assert any(row.get("name") == "Overview" for row in agents), agents
 assert any(row.get("name") == "Tasks & Runs" for row in agents), agents
 assert any(row.get("name") == "Pending Approvals" for row in agents), agents
 assert any(row.get("name") == "Automations" for row in agents), agents
@@ -614,6 +615,7 @@ OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042700.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042800.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042900.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043000.sh"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043100.sh"
 chmod +x "$ROOT/bin/omarchy-launch-files"
 [[ -x $ROOT/bin/omarchy-launch-files ]] \
   || fail "Files launcher stays executable after the Superbar pin repair"
@@ -625,6 +627,12 @@ grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Searc
 grep -Fq 'Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
   || fail "published Settings launcher keeps inspect pages plus the honest missing Accessibility and System actions"
+grep -Fq 'Actions=Overview;Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
+  "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
+  || fail "published Agent Center launcher keeps Overview on the jump list"
+if grep -Fq 'id: "omarchy.start.agent-overview"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent a second Agent Center Overview destination"
+fi
 pass "Files and Settings launchers are published for Start jump lists"
 
 grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
@@ -720,6 +728,9 @@ if grep -Fq 'id: "omarchy.start.system"' "$ROOT/shell/services/AppSearch.js"; th
 fi
 if grep -Fq 'id: "omarchy.start.files-search"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent an in-app Files Search destination"
+fi
+if grep -Fq 'id: "omarchy.start.agent-overview"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent a second Agent Center Overview destination"
 fi
 grep -Fq 'productProfile.text("Recent")' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a Recent section for launched programs"
