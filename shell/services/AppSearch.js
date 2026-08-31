@@ -267,6 +267,76 @@ var START_DESTINATIONS = [
     keywords: ["agent", "agents", "agent center"],
     icon: "org.omarchy.AgentCenter",
     desktopId: "org.omarchy.AgentCenter"
+  },
+  {
+    id: "omarchy.start.agent-tasks",
+    name: "Tasks & Runs",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Tasks",
+    keywords: ["tasks", "runs", "managed work"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Tasks"
+  },
+  {
+    id: "omarchy.start.agent-approvals",
+    name: "Pending Approvals",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Approvals",
+    keywords: ["approvals", "pending approvals"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Approvals"
+  },
+  {
+    id: "omarchy.start.agent-automations",
+    name: "Automations",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Automations",
+    keywords: ["automations", "schedule", "automation"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Automations"
+  },
+  {
+    id: "omarchy.start.agent-activity",
+    name: "Activity & operations",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Activity",
+    keywords: ["activity", "operations", "operation ledger"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Activity"
+  },
+  {
+    id: "omarchy.start.agent-history",
+    name: "History",
+    genericName: "Agent Center",
+    comment: "Open Agent Center History",
+    keywords: ["history", "ledger", "completed"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "History"
+  },
+  {
+    id: "omarchy.start.agent-context",
+    name: "Context",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Context",
+    keywords: ["context", "snapshot", "selection"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Context"
+  },
+  {
+    id: "omarchy.start.agent-usage",
+    name: "Usage",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Usage",
+    keywords: ["usage", "cost", "tokens", "budget"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Usage"
   }
 ]
 
