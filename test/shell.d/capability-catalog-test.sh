@@ -282,6 +282,21 @@ if native9["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > D
 native38 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.38")
 if native38["humanRoute"].get("path") != "Settings jump list > System information":
     raise SystemExit(f"windows-native.38 invents a Start System page: {native38['humanRoute']}")
+processes = by_id["processes.inspect"]["humanRoute"]
+if processes.get("status") != "planned" or processes.get("path"):
+    raise SystemExit(f"processes.inspect invents a Task Manager destination: {processes}")
+parity_task_manager = next(job for job in jobs_lock["jobs"] if job["id"] == "parity.task-manager")
+if parity_task_manager.get("claim") == "present" or parity_task_manager["humanRoute"].get("path"):
+    raise SystemExit(f"parity.task-manager invents a Superbar Task Manager: {parity_task_manager}")
+native26 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.26")
+if native26["humanRoute"].get("path"):
+    raise SystemExit(f"windows-native.26 invents a Superbar Task Manager: {native26['humanRoute']}")
+desktop_icons = by_id["desktop.icons.manage"]["humanRoute"]
+if desktop_icons.get("status") != "missing" or desktop_icons.get("path"):
+    raise SystemExit(f"desktop.icons.manage invents a desktop destination: {desktop_icons}")
+desktop_menu = by_id["desktop.context-menu.open"]["humanRoute"]
+if desktop_menu.get("status") != "missing" or desktop_menu.get("path"):
+    raise SystemExit(f"desktop.context-menu.open invents a desktop context-menu API: {desktop_menu}")
 
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
