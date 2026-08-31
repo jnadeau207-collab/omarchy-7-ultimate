@@ -1353,7 +1353,7 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Files",
-        "path": "Superbar > Files > Downloads"
+        "path": "Start > Downloads; Superbar > Files > Downloads"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Read-only navigation requires no recovery.",

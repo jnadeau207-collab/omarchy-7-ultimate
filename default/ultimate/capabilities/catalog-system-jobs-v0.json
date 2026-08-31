@@ -4847,7 +4847,7 @@
         "status": "visible",
         "surface": "Files",
         "label": "Open Downloads",
-        "path": "Superbar > Files > Downloads"
+        "path": "Start > Downloads; Superbar > Files > Downloads"
       },
       "agentCenterLabel": "Open Downloads",
       "proofIds": {
@@ -4859,8 +4859,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-downloads",
+        "file": "bin/omarchy-launch-files",
+        "symbol": "omarchy-launch-files",
         "brokerVerb": null
       }
     },
