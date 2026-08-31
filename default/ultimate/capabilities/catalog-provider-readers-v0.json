@@ -1781,7 +1781,7 @@
         "status": "planned",
         "surface": "Administration",
         "label": "View processes",
-        "path": "Administration > Task Manager"
+        "path": ""
       },
       "agentCenterLabel": "Inspect processes",
       "proofIds": {
