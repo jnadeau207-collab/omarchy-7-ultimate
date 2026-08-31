@@ -13,24 +13,48 @@ Keywords=settings;display;sound;network;bluetooth;input;power;apps;defaults;acce
 MimeType=x-scheme-handler/omarchy-settings;
 StartupNotify=true
 StartupWMClass=org.omarchy.Settings
-Actions=Display;Network;Personalization;Accessibility;Apps;
+Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;
 
 [Desktop Action Display]
 Name=Display
 Exec=omarchy-launch-settings --source desktop settings.display.overview
 
+[Desktop Action Sound]
+Name=Sound
+Exec=omarchy-launch-settings --source desktop settings.audio.overview
+
 [Desktop Action Network]
 Name=Network & Internet
 Exec=omarchy-launch-settings --source desktop settings.network.overview
+
+[Desktop Action Bluetooth]
+Name=Bluetooth & devices
+Exec=omarchy-launch-settings --source desktop settings.bluetooth.overview
+
+[Desktop Action Power]
+Name=Power & battery
+Exec=omarchy-launch-settings --source desktop settings.power.overview
 
 [Desktop Action Personalization]
 Name=Personalization
 Exec=omarchy-launch-settings --source desktop settings.personalization.overview
 
-[Desktop Action Accessibility]
-Name=Accessibility
-Exec=omarchy-launch-settings --source desktop settings.accessibility.overview
-
 [Desktop Action Apps]
 Name=Apps
 Exec=omarchy-launch-settings --source desktop settings.apps.overview
+
+[Desktop Action Input]
+Name=Input
+Exec=omarchy-launch-settings --source desktop settings.input.overview
+
+[Desktop Action Update]
+Name=Update
+Exec=omarchy-launch-settings --source desktop settings.update.overview
+
+[Desktop Action Recovery]
+Name=Recovery
+Exec=omarchy-launch-settings --source desktop settings.recovery.overview
+
+[Desktop Action Accessibility]
+Name=Accessibility
+Exec=omarchy-launch-settings --source desktop settings.accessibility.overview

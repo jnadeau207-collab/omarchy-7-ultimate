@@ -139,7 +139,7 @@ var START_DESTINATIONS = [
     keywords: ["sound", "audio", "volume", "settings"],
     icon: "org.omarchy.Settings",
     desktopId: "org.omarchy.Settings",
-    command: "omarchy-launch-settings --source desktop settings.audio.overview"
+    actionId: "Sound"
   },
   {
     id: "omarchy.start.network",
@@ -159,7 +159,7 @@ var START_DESTINATIONS = [
     keywords: ["bluetooth", "devices", "settings"],
     icon: "org.omarchy.Settings",
     desktopId: "org.omarchy.Settings",
-    command: "omarchy-launch-settings --source desktop settings.bluetooth.overview"
+    actionId: "Bluetooth"
   },
   {
     id: "omarchy.start.power",
@@ -169,7 +169,7 @@ var START_DESTINATIONS = [
     keywords: ["power", "battery", "settings"],
     icon: "org.omarchy.Settings",
     desktopId: "org.omarchy.Settings",
-    command: "omarchy-launch-settings --source desktop settings.power.overview"
+    actionId: "Power"
   },
   {
     id: "omarchy.start.personalization",
@@ -199,7 +199,7 @@ var START_DESTINATIONS = [
     keywords: ["update", "upgrade", "updates", "settings"],
     icon: "org.omarchy.Settings",
     desktopId: "org.omarchy.Settings",
-    command: "omarchy-launch-settings --source desktop settings.update.overview"
+    actionId: "Update"
   },
   {
     id: "omarchy.start.recovery",
@@ -209,7 +209,7 @@ var START_DESTINATIONS = [
     keywords: ["recovery", "restore", "restore point", "rollback", "settings"],
     icon: "org.omarchy.Settings",
     desktopId: "org.omarchy.Settings",
-    command: "omarchy-launch-settings --source desktop settings.recovery.overview"
+    actionId: "Recovery"
   },
   {
     id: "omarchy.start.input",
@@ -219,7 +219,7 @@ var START_DESTINATIONS = [
     keywords: ["input", "keyboard", "mouse", "touchpad", "layout", "settings"],
     icon: "org.omarchy.Settings",
     desktopId: "org.omarchy.Settings",
-    command: "omarchy-launch-settings --source desktop settings.input.overview"
+    actionId: "Input"
   },
   {
     id: "omarchy.start.files",
