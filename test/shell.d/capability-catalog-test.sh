@@ -246,6 +246,16 @@ if (
     or system_info.get("path") != "Settings jump list > System information"
 ):
     raise SystemExit(f"system.info.read route is {system_info}")
+accessibility = by_id["accessibility.configure"]["humanRoute"]
+if (
+    accessibility.get("status") != "missing"
+    or accessibility.get("path") != "Settings jump list > Accessibility"
+):
+    raise SystemExit(f"accessibility.configure invents or underclaims Accessibility: {accessibility}")
+jobs_a11y = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
+parity_a11y = next(job for job in jobs_a11y["jobs"] if job["id"] == "parity.accessibility")
+if parity_a11y.get("claim") == "present" or parity_a11y["humanRoute"].get("path") != "Settings jump list > Accessibility":
+    raise SystemExit(f"parity.accessibility invents a present Accessibility engine: {parity_a11y}")
 this_pc = by_id["files.this-pc.open"]["humanRoute"]
 if this_pc.get("path") != "Start > Computer; Superbar > Files > This PC":
     raise SystemExit(f"files.this-pc.open invents or underclaims This PC: {this_pc}")
