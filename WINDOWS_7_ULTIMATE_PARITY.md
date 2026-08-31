@@ -30,7 +30,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Default Programs | missing | Forty-task "Change the default browser" is pending. |
 | User Accounts | missing | |
 | Credential Manager | missing | |
-| Power Options | prototype | `omarchy.power` panel. Not Power Options. Forty-task "Change power mode" is pending. |
+| Power Options | prototype | Settings → Power reads Fabric `power.inspect` (AC/battery source, active profile, available profiles, battery). Typed profile/sleep writers remain Phase 5. Superbar still hosts the heritage `omarchy.power` panel. |
 | Sound | prototype | Settings → Sound reads Fabric `audio.inspect` (sinks, default, mute, channel volume). Typed Audio writers remain Phase 5. Superbar still hosts the heritage `omarchy.audio` panel. |
 | Display | prototype | Settings → Display reads Fabric `display.inspect` (connector, mode, scale, position). Typed Display writers remain Phase 5. |
 | Firewall | plumbing | `install/config/firewall.sh` / ufw on by default (`manual/35-networking.md`). No Firewall Settings surface. |
@@ -62,7 +62,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Modern display (scaling, HDR, night light) | prototype / plumbing | Monitor panel + `omarchy.nightlight` service. Forty-task scaling and night light pending. |
 | Proton / gaming | missing | Steam install is forty-task pending; no Gaming / Proton surface. |
 | Privacy | missing | Doctrine refuses telemetry; no Privacy Settings. |
-| Agent Fabric | prototype (window) | See `AGENT_NATIVE_ACCEPTANCE.md`. WindowService + `CapabilityBroker` (results, permit, ledger, window undo). Settings Display, Sound, Network, and Bluetooth read `display.inspect` / `audio.inspect` / `network.inspect` / `bluetooth.inspect`. Superbar still hosts audio/network/bluetooth/power panels. Typed writers remain Phase 5. |
+| Agent Fabric | prototype (window) | See `AGENT_NATIVE_ACCEPTANCE.md`. WindowService + `CapabilityBroker` (results, permit, ledger, window undo). Settings Display, Sound, Network, Bluetooth, and Power read `display.inspect` / `audio.inspect` / `network.inspect` / `bluetooth.inspect` / `power.inspect`. Superbar still hosts audio/network/bluetooth/power panels. Typed writers remain Phase 5. |
 | Agent Center | prototype | `org.omarchy.AgentCenter` is a snappable Superbar pin and Start destination. Overview reads owner-scoped managed-work counts from Fabric. Inspect tasks can be created, run, cancelled, and recovered for `system.info.read`. Context capture covers the five desktop sources. Consent and provider operations stay outside Agent Center. Usage stays one section. `omarchy.agents` remains a launch shim. |
 
 ## Caption / windowing (not a substitute for the jobs above)

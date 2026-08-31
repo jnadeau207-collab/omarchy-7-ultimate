@@ -75,8 +75,8 @@ assertEqual(Model.hostedPanel('settings.display.overview'), null, 'Display reads
 assertEqual(Model.hostedPanel('settings.audio.overview'), null, 'Sound reads Fabric inspect instead of hosting the Process audio panel')
 assertEqual(Model.hostedPanel('settings.network.overview'), null, 'Network reads Fabric inspect instead of hosting the Process nmcli panel')
 assertEqual(Model.hostedPanel('settings.bluetooth.overview'), null, 'Bluetooth reads Fabric inspect instead of hosting the Process bluetoothctl panel')
+assertEqual(Model.hostedPanel('settings.power.overview'), null, 'Power reads Fabric inspect instead of hosting the Process power panel')
 const hosted = [
-  ['settings.power.overview', 'plugins/panels/power/Panel.qml', 'omarchy.power'],
   ['settings.personalization.overview', 'Ui/SettingsPersonalizationHost.qml', 'omarchy.image-picker']
 ]
 for (const [routeId, source, pluginId] of hosted) {
@@ -169,6 +169,20 @@ assertEqual(bluetoothDevice.label, 'Headphones', 'Bluetooth records keep the dev
 const deviceDetail = Object.fromEntries((bluetoothDevice.details || []).map(field => [field.label, field.value]))
 assertEqual(deviceDetail.Paired, 'Yes', 'Bluetooth records surface host paired state')
 assertEqual(deviceDetail.Connected, 'Yes', 'Bluetooth records surface host connected state')
+const powerResource = Model.normalizeLeafResource({
+  id: 'power.profile.current',
+  label: 'Power profile',
+  kind: 'profile',
+  battery: null,
+  state: { source: 'ac', activeProfile: 'balanced', availableProfiles: ['balanced', 'performance', 'power-saver'] }
+}, 0)
+assert(powerResource, 'power.inspect resources project into Settings records')
+assertEqual(powerResource.label, 'Power profile', 'Power records keep the profile label')
+const powerDetail = Object.fromEntries((powerResource.details || []).map(field => [field.label, field.value]))
+assertEqual(powerDetail.Source, 'ac', 'Power records surface host AC/battery source')
+assertEqual(powerDetail['Active Profile'], 'balanced', 'Power records surface the active profile')
+assertEqual(powerDetail['Available Profiles'], 'balanced, performance, power-saver', 'Power records surface available profiles')
+assertEqual(powerDetail.Battery, 'Not reported', 'Desktop hosts without a battery stay null, not mocked')
 assertEqual(Model.hostedPanel('settings.input.overview'), null, 'Input stays an honest Fabric page; keyboard layout is a bar widget, not a panel')
 assertEqual(Model.hostedPanel('settings.overview'), null, 'Settings home is not a hosted panel')
 
@@ -412,7 +426,7 @@ rejectedController = Model.createController({
 rejectedController.setConnected(true)
 assertEqual(rejectedController.state.phase, 'denied', 'synchronous local allowlist rejection is correlated honestly')
 JS
-pass "Settings hosts the Power panel; Display, Sound, Network, and Bluetooth read Fabric inspect"
+pass "Settings hosts Personalization; Display, Sound, Network, Bluetooth, and Power read Fabric inspect"
 
 entrypoint="$ROOT/shell/ultimate-settings.qml"
 application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
@@ -487,7 +501,10 @@ fi
 if grep -Fq 'plugins/panels/bluetooth/Panel.qml' "$model"; then
   fail "Settings Bluetooth map does not host the Process bluetoothctl panel"
 fi
-pass "Settings Power page hosts an existing panel; Display, Sound, Network, and Bluetooth read Fabric"
+if grep -Fq 'plugins/panels/power/Panel.qml' "$model"; then
+  fail "Settings Power map does not host the Process power panel"
+fi
+pass "Settings Personalization hosts a picker; Display, Sound, Network, Bluetooth, and Power read Fabric"
 
 for panel in monitor audio network bluetooth power; do
   grep -Fq 'property bool embedMode: false' "$ROOT/shell/plugins/panels/$panel/Panel.qml" \
