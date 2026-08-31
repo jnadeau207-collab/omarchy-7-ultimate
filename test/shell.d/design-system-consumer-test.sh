@@ -144,6 +144,10 @@ grep -Fq 'Semantics.text(root.productProfile, "Quick Settings")' "$ROOT/shell/pl
   || fail "Quick Settings heading consumes Semantics.text"
 grep -Fq 'Semantics.text(root.productProfile, "Notification Center")' "$ROOT/shell/plugins/notifications/Center.qml" \
   || fail "Notification Center heading consumes Semantics.text"
+grep -Fq 'text: "Clear"' "$ROOT/shell/plugins/notifications/Center.qml" \
+  || fail "Notification Center Clear stays a chrome verb"
+grep -B3 -A1 'text: "Clear"' "$ROOT/shell/plugins/notifications/Center.qml" | grep -Fq 'semanticProfile: root.productProfile' \
+  || fail "Notification Center Clear consumes Semantics.text"
 grep -Fq 'Semantics.text(root.semanticProfile, root.tooltipText)' "$ROOT/shell/Ui/WidgetButton.qml" \
   || fail "Superbar WidgetButton tooltips consume Semantics.text"
 grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
