@@ -591,6 +591,10 @@ grep -Fq 'id: "omarchy.quick-settings"' "$ROOT/shell/shell.qml" \
   || fail "Desktop Mode overlay includes Quick Settings in the Superbar cluster"
 grep -Fq 'id: "omarchy.notifications"' "$ROOT/shell/shell.qml" \
   || fail "Desktop Mode overlay includes Notification Center in the Superbar cluster"
+grep -Fq 'id: "omarchy.system-update"' "$ROOT/shell/shell.qml" \
+  || fail "Desktop Mode overlay includes the existing system-update plugin widget"
+grep -Fq 'id: "omarchy.keyboard-layout"' "$ROOT/shell/shell.qml" \
+  || fail "Desktop Mode overlay includes the existing keyboard-layout plugin widget"
 grep -Fq 'clusterEntries' "$ROOT/shell/plugins/ultimate-taskbar/TrayCluster.qml" \
   || fail "Superbar notification cluster is driven from bar-widget layout"
 if grep -Fq 'persistShellConfig' "$ROOT/shell/shell.qml" && awk '
