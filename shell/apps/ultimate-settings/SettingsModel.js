@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "power.inspect",
     supportsResource: true,
-    coverage: "Power source, battery, and profile state are readable. Profile, sleep, lock, and lid changes remain unavailable from Settings."
+    coverage: "Power inventory is readable from power.inspect (AC/battery source, active profile, available profiles, battery percentage). Profile, sleep, lock, and lid changes remain unavailable from Settings."
   },
   {
     routeId: "settings.accessibility.overview",
@@ -1009,12 +1009,6 @@ function observedText(value) {
 
 function hostedPanel(routeId) {
   var id = String(routeId || "")
-  if (id === "settings.power.overview") return {
-    source: "plugins/panels/power/Panel.qml",
-    pluginId: "omarchy.power",
-    label: "Live Power panel",
-    honesty: "This page hosts the existing Power panel (profile, battery). Typed Power service remains Phase 5."
-  }
   if (id === "settings.personalization.overview") return {
     source: "Ui/SettingsPersonalizationHost.qml",
     pluginId: "omarchy.image-picker",
