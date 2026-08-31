@@ -246,6 +246,9 @@ if (
     or system_info.get("path") != "Settings jump list > System information"
 ):
     raise SystemExit(f"system.info.read route is {system_info}")
+this_pc = by_id["files.this-pc.open"]["humanRoute"]
+if this_pc.get("path") != "Start > Computer; Superbar > Files > This PC":
+    raise SystemExit(f"files.this-pc.open invents or underclaims This PC: {this_pc}")
 jobs_lock = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
 native38 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.38")
 if native38["humanRoute"].get("path") != "Settings jump list > System information":
