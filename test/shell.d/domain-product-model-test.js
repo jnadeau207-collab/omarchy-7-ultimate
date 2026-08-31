@@ -87,7 +87,10 @@ equal(Files.requestParameters(Files.baseState('files.search', { query: 'quarterl
   provider: 'files.provider', action: 'search',
   arguments: { query: 'quarterly report', locationIds: [], includeHidden: false, limit: 96 }
 }, 'Files search constructs a bounded typed request')
+throws(() => Files.requestParameters(Files.baseState('files.search', {}, 'loading')), 'Files refuses an empty search request')
 throws(() => Files.normalizedSelection(Files.queryForRoute('files.search'), { query: 'x'.repeat(121) }), 'Files rejects overlong search text')
+assert(Files.isIdleSearch(Files.baseState('files.search', {}, 'loading')), 'Empty Files search is idle until a query is typed')
+assert(!Files.isIdleSearch(Files.baseState('files.search', { query: 'readme' }, 'loading')), 'A typed Files search is not idle')
 throws(() => Files.normalizedSelection(Files.queryForRoute('files.overview'), { entityType: 'location' }), 'Files rejects half-bound entity links')
 assert(Files.catalogEntry(catalog('files.provider', fileActions), Files.queryForRoute('files.recent')).entry.manifest.provider === 'files.provider', 'Files admits the exact provider manifest')
 assert(Files.catalogEntry(catalog('files.provider', { ...fileActions, recent: { ...fileActions.recent, mode: 'operation' } }), Files.queryForRoute('files.recent')).error, 'Files rejects a mutating read-action substitution')
@@ -106,6 +109,35 @@ const normalizedFiles = Files.normalizeResult(fileReadState, fileResult)
 assert(!normalizedFiles.error && normalizedFiles.records.length === 1, 'Files accepts exact current-generation query results')
 assert(normalizedFiles.records[0].details.some(field => field.label === 'Relative path' && field.value === 'README.md'), 'Files preserves bounded file provenance fields')
 assert(Files.normalizeResult(fileReadState, { ...fileResult, generation: 3 }).error, 'Files rejects obsolete provider generations')
+
+let idleSearchRequest = 0
+const idleSearchSent = []
+const idleSearch = Files.createController({
+  send(method, parameters) {
+    const id = `idle-search-${++idleSearchRequest}`
+    idleSearchSent.push({ id, method, parameters })
+    return id
+  },
+  cancel() { return true },
+  onState() {}
+})
+idleSearch.setConnected(true)
+assert(idleSearchSent.length === 1 && idleSearchSent[0].method === 'provider.catalog', 'Idle Files search still catalogs when connecting')
+idleSearch.activate('files.search', {})
+assert(idleSearch.state.phase === 'empty', 'Idle Files search is an empty ready-to-type state')
+assert(idleSearch.state.records.length === 0 && idleSearch.state.error === null, 'Idle Files search does not invent results or a contract failure')
+assert(!idleSearchSent.some(row => row.method === 'provider.read'), 'Idle Files search does not send a typed-contract-violating search read')
+assert(Files.stateTitle(idleSearch.state) === 'Type a search query', 'Idle Files search asks for a query instead of reporting failure')
+assert(Files.stateExplanation(idleSearch.state).indexOf('Enter a query') === 0, 'Idle Files search explains the ready-to-type metadata search')
+const idleSentAfterActivate = idleSearchSent.length
+idleSearch.activate('files.search', {})
+assert(idleSearchSent.length === idleSentAfterActivate, 'Reopening idle Files search does not start catalog or search reads')
+idleSearch.activate('files.search', { query: 'readme' })
+const typedCatalog = idleSearchSent[idleSearchSent.length - 1]
+assert(typedCatalog.method === 'provider.catalog', 'Typed Files search catalogs before the bounded search read')
+idleSearch.receiveResult(typedCatalog.id, catalog('files.provider', fileActions))
+const typedSearch = idleSearchSent[idleSearchSent.length - 1]
+assert(typedSearch.method === 'provider.read' && typedSearch.parameters.action === 'search' && typedSearch.parameters.arguments.query === 'readme', 'Typed Files search still sends the bounded search read')
 
 const picturesControllerStates = []
 let picturesRequest = 0

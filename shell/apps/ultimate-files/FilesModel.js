@@ -201,9 +201,30 @@ function catalogEntry(response, query) {
   return { entry: found }
 }
 
+function isIdleSearch(state) {
+  return !!(state && state.query && state.query.routeId === "files.search" && state.searchQuery === "")
+}
+
+function idleSearchState(previous) {
+  var next = cloneState(previous)
+  next.phase = "empty"
+  next.requestId = ""
+  next.records = []
+  next.totalRecords = 0
+  next.clipped = false
+  next.truncated = false
+  next.selectedMissing = false
+  next.error = null
+  next.reasons = []
+  return next
+}
+
 function requestArguments(state) {
   var query = state.query
-  if (query.routeId === "files.search") return { query: state.searchQuery, locationIds: [], includeHidden: false, limit: 96 }
+  if (query.routeId === "files.search") {
+    if (state.searchQuery === "") throw new Error("Files search requires a non-empty query.")
+    return { query: state.searchQuery, locationIds: [], includeHidden: false, limit: 96 }
+  }
   var source = query.arguments || {}
   var result = {}
   var keys = Object.keys(source)
@@ -509,6 +530,7 @@ Controller.prototype._send = function(kind, method, params) {
   return true
 }
 Controller.prototype._startRead = function() {
+  if (isIdleSearch(this.state)) { this._setState(idleSearchState(this.state)); return true }
   var lookup = catalogEntry(this.catalogResponse, this.state.query)
   if (lookup.error) { this._setState(failureState(this.state, responseError(lookup.error))); return false }
   var prepared = cloneState(this.state)
@@ -552,6 +574,7 @@ Controller.prototype.activate = function(routeId, argumentsValue) {
   var next = baseState(routeId, argumentsValue, this.connected ? "loading" : "offline")
   this._setState(next)
   if (!this.connected || next.phase === "failed") return false
+  if (isIdleSearch(next)) { this._setState(idleSearchState(next)); return true }
   if (this.catalogResponse) return this._startRead()
   return this._send("catalog", CATALOG_METHOD, {})
 }
@@ -598,7 +621,10 @@ function stateTitle(state) {
   if (phase === "ready" || phase === "available") return "Current file metadata"
   if (phase === "partial") return "Partial bounded results"
   if (phase === "degraded") return "Files is read-only or degraded"
-  if (phase === "empty") return state && state.selectedMissing ? "Requested item is absent" : "No matching items"
+  if (phase === "empty") {
+    if (isIdleSearch(state)) return "Type a search query"
+    return state && state.selectedMissing ? "Requested item is absent" : "No matching items"
+  }
   if (phase === "missing") return "Files provider is not registered"
   if (phase === "unavailable") return "Files state is unavailable"
   if (phase === "denied") return "Files read was denied"
@@ -615,7 +641,10 @@ function stateExplanation(state) {
   if (state.phase === "loading") return "Only bounded location-relative metadata is being read; file contents are never requested."
   if (state.phase === "partial") return "The provider or this surface reached a declared result bound. No omitted records are inferred."
   if (state.phase === "degraded") return state.reasons.length > 0 ? clippedText(state.reasons[0].explanation, 1000) : "Trusted read state is visible, while host mutations remain unavailable."
-  if (state.phase === "empty") return state.selectedMissing ? "The exact deep-linked identity was not present in this revision." : "The provider returned a valid empty result."
+  if (state.phase === "empty") {
+    if (isIdleSearch(state)) return "Enter a query to search trusted file names and relative paths. File contents are never read."
+    return state.selectedMissing ? "The exact deep-linked identity was not present in this revision." : "The provider returned a valid empty result."
+  }
   if (state.phase === "missing") return "The code-owned files.provider identity was not present in the current catalog."
   if (state.phase === "unavailable") return "The provider reported no trusted readable state for this route."
   if (state.phase === "ready" || state.phase === "available") return "Every visible record comes from the current files.provider revision."
@@ -632,6 +661,6 @@ function phaseTone(state) {
 if (typeof module !== "undefined") module.exports = {
   ROUTES: ROUTES, queryForRoute: queryForRoute, requestParameters: requestParameters,
   normalizedSelection: normalizedSelection, catalogEntry: catalogEntry, normalizeResult: normalizeResult,
-  baseState: baseState, createController: createController, stateTitle: stateTitle,
-  stateExplanation: stateExplanation, phaseTone: phaseTone
+  baseState: baseState, createController: createController, isIdleSearch: isIdleSearch,
+  stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone
 }
