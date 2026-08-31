@@ -174,6 +174,7 @@ assert(destNames.indexOf('Providers & accounts') >= 0, 'destinations include Age
 assert(destNames.indexOf('Artifacts') >= 0, 'destinations include Agent Center Artifacts')
 assert(destNames.indexOf('Troubleshooting') >= 0, 'destinations include Agent Center Troubleshooting')
 assert(destNames.indexOf('Accessibility') < 0, 'destinations do not invent Accessibility')
+assert(destNames.indexOf('System information') < 0, 'destinations do not invent System information')
 const appsDest = search.sortedEntries(destApps.concat(search.searchDestinations('default', destApps)), 'default')
 assertEqual(search.entryName(appsDest[0].entry), 'Apps', 'default ranks Settings Apps / Default Programs')
 assertEqual(appsDest[0].entry.actionId, 'Apps', 'Apps uses the Settings jump action')

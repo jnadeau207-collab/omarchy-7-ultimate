@@ -87,6 +87,7 @@ for (const [routeId, source, pluginId] of hosted) {
   assert(String(spec.honesty).includes('Phase 5'), `${routeId} labels typed services as Phase 5`)
 }
 assertEqual(Model.hostedPanel('settings.accessibility.overview'), null, 'Accessibility stays an honest Fabric page; no accessibility panel exists')
+assertEqual(Model.hostedPanel('settings.system.overview'), null, 'System stays an honest Fabric page; no system-information panel exists')
 const displayResource = Model.normalizeLeafResource({
   id: `display.output.${'d'.repeat(64)}`,
   label: 'HDMI-A-1',
