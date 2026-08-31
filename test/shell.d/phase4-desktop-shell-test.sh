@@ -703,6 +703,8 @@ grep -Fq 'Semantics.text(chromeProfile, root.placeholderText)' "$ROOT/shell/plug
   || fail "lock password chrome consumes Semantics.text"
 grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-agent-center/AgentCenterApplication.qml" \
   || fail "Agent Center chrome buttons consume Semantics.text"
+grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml" \
+  || fail "Settings chrome verbs consume the host SemanticProfile"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places run through the existing SemanticProfile text transform"
 grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
