@@ -16,6 +16,17 @@ Item {
 
   readonly property var windowService: shell ? shell.windowService : null
 
+  SemanticProfile {
+    id: chromeProfile
+    profileId: "product"
+    rtl: !!(shell && shell.summonedRtl)
+    pseudoLocale: !!(shell && shell.summonedPseudoLocale)
+  }
+
+  function chromeText(value) {
+    return Semantics.text(chromeProfile, value)
+  }
+
   function open(payloadJson) {
     root.target = "active"
     try {
@@ -96,7 +107,7 @@ Item {
 
         Text {
           width: parent.width
-          text: "Snap"
+          text: root.chromeText("Snap")
           color: Tokens.text.primary
           font.pixelSize: Style.font.body
           font.family: "sans-serif"
@@ -113,7 +124,7 @@ Item {
             delegate: SnapCell {
               width: 124
               height: 56
-              label: modelData.label
+              label: root.chromeText(modelData.label)
               onPicked: root.pick(modelData.side)
             }
           }
@@ -133,7 +144,7 @@ Item {
             delegate: SnapCell {
               width: 190
               height: 64
-              label: modelData.label
+              label: root.chromeText(modelData.label)
               onPicked: root.pick(modelData.side)
             }
           }
@@ -149,7 +160,7 @@ Item {
             delegate: SnapCell {
               width: 190
               height: 40
-              label: modelData.label
+              label: root.chromeText(modelData.label)
               onPicked: {
                 if (modelData.action === "save") root.saveLayout()
                 else root.restoreLayout()
