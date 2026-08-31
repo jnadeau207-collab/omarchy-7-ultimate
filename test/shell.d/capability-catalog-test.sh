@@ -297,6 +297,9 @@ if desktop_icons.get("status") != "missing" or desktop_icons.get("path"):
 desktop_menu = by_id["desktop.context-menu.open"]["humanRoute"]
 if desktop_menu.get("status") != "missing" or desktop_menu.get("path"):
     raise SystemExit(f"desktop.context-menu.open invents a desktop context-menu API: {desktop_menu}")
+process_inspect = by_id["process.inspect"]["humanRoute"]
+if process_inspect.get("status") != "planned" or process_inspect.get("path"):
+    raise SystemExit(f"process.inspect invents an Administration Task Manager: {process_inspect}")
 
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
