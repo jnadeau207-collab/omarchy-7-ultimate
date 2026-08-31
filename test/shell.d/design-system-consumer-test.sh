@@ -172,6 +172,10 @@ grep -Fq 'pseudoLocale: !!(shell && shell.summonedPseudoLocale)' "$ROOT/shell/pl
   || fail "Task View chrome reads the shared Start pseudo-locale summon flag"
 grep -Fq 'root.chromeText("Task View")' "$ROOT/shell/plugins/ultimate-task-switcher/Switcher.qml" \
   || fail "Task View heading consumes Semantics.text"
+grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/bar/widgets/Tray.qml" \
+  || fail "tray manage chrome text uses the shared Superbar SemanticProfile"
+grep -Fq 'root.chromeText("Tray icons")' "$ROOT/shell/plugins/bar/widgets/Tray.qml" \
+  || fail "tray manage heading consumes Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places consume Semantics.text through the product profile"
 grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

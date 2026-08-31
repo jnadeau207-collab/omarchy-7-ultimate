@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
@@ -18,6 +19,10 @@ BarWidget {
   property var activeTrayAnchor: null
   readonly property color foreground: bar ? bar.foreground : Color.foreground
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property var productProfile: bar && bar.productProfile ? bar.productProfile : null
+  function chromeText(value) {
+    return Semantics.text(productProfile, value)
+  }
   readonly property var pinnedIds: settings.pinned instanceof Array ? settings.pinned : []
   readonly property var hiddenIds: settings.hidden instanceof Array ? settings.hidden : []
   readonly property var pinnedItems: bucket("pinned")
@@ -178,6 +183,18 @@ BarWidget {
       if (classifyItem(item) === category) result.push(item)
     }
     return result
+  }
+
+  function toggleManage() {
+    root.managePopupOpen = !root.managePopupOpen
+  }
+
+  IpcHandler {
+    target: "omarchy.tray"
+
+    function toggleManage(): void {
+      root.broadcast("toggleManage")
+    }
   }
 
   function persistTrayState(pinned, hidden) {
@@ -410,7 +427,7 @@ BarWidget {
       spacing: Style.space(8)
 
       Text {
-        text: "Tray icons"
+        text: root.chromeText("Tray icons")
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
@@ -418,7 +435,7 @@ BarWidget {
       }
 
       Text {
-        text: "Pinned icons stay visible. Hidden icons never show."
+        text: root.chromeText("Pinned icons stay visible. Hidden icons never show.")
         color: Qt.darker(root.foreground, 1.4)
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
@@ -428,7 +445,7 @@ BarWidget {
 
       Text {
         visible: root.allItems.length === 0
-        text: "No tray items reporting."
+        text: root.chromeText("No tray items reporting.")
         color: Qt.darker(root.foreground, 1.5)
         font.family: root.fontFamily
         font.pixelSize: Style.font.bodySmall
@@ -452,7 +469,7 @@ BarWidget {
             if (tt) return tt
             var id = String(modelData.id || "")
             var slash = id.lastIndexOf("/")
-            return slash !== -1 ? id.substring(slash + 1) : (id || "Unknown")
+            return slash !== -1 ? id.substring(slash + 1) : (id || root.chromeText("Unknown"))
           }
           readonly property bool isPinned: root.pinnedIds.indexOf(itemId) !== -1
           readonly property bool isHidden: root.hiddenIds.indexOf(itemId) !== -1
@@ -484,6 +501,7 @@ BarWidget {
             id: rowPinBtn
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
+            semanticProfile: root.productProfile
             iconText: "\u25C9"
             text: rowRoot.isPinned ? "Unpin" : "Pin"
             foreground: root.foreground
@@ -499,6 +517,7 @@ BarWidget {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: rowPinBtn.left
             anchors.rightMargin: Style.space(6)
+            semanticProfile: root.productProfile
             iconText: "\u25CE"
             text: rowRoot.isHidden ? "Show" : "Hide"
             foreground: root.foreground
