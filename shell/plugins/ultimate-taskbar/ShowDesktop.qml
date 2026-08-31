@@ -7,12 +7,12 @@ Item {
   implicitWidth: 14
   implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
-  Accessible.name: "Show desktop"
+  Accessible.name: bar && bar.chromeText ? bar.chromeText("Show desktop") : "Show desktop"
   HoverHandler {
     id: hover
     onHoveredChanged: {
       if (!root.bar) return
-      if (hovered) root.bar.showTooltip(root, "Show desktop")
+      if (hovered) root.bar.showTooltip(root, root.bar.chromeText("Show desktop"))
       else if (!mouse.containsMouse) root.bar.hideTooltip(root)
     }
   }
@@ -32,7 +32,7 @@ Item {
     cursorShape: Qt.PointingHandCursor
     onContainsMouseChanged: {
       if (!root.bar) return
-      if (containsMouse) root.bar.showTooltip(root, "Show desktop")
+      if (containsMouse) root.bar.showTooltip(root, root.bar.chromeText("Show desktop"))
       else root.bar.hideTooltip(root)
     }
     onClicked: {

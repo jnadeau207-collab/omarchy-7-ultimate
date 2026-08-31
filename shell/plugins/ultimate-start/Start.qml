@@ -21,7 +21,7 @@ Item {
     id: productProfile
     profileId: "product"
     rtl: root.summonedRtl || (root.shell && root.shell.summonedRtl) || Qt.application.layoutDirection === Qt.RightToLeft
-    pseudoLocale: root.summonedPseudoLocale || root.summonedLocale === "pseudo"
+    pseudoLocale: root.summonedPseudoLocale || (root.shell && root.shell.summonedPseudoLocale) || root.summonedLocale === "pseudo"
     locale: root.summonedLocale
   }
   property string filter: ""
@@ -117,8 +117,11 @@ Item {
     }
     root.focusSearch = payload.focusSearch === true
     root.summonedRtl = payload.rtl === true
-    if (root.shell) root.shell.summonedRtl = root.summonedRtl
     root.summonedPseudoLocale = payload.pseudoLocale === true
+    if (root.shell) {
+      root.shell.summonedRtl = root.summonedRtl
+      root.shell.summonedPseudoLocale = root.summonedPseudoLocale
+    }
     root.summonedLocale = payload.locale ? String(payload.locale) : (root.summonedPseudoLocale ? "pseudo" : "en-US")
     root.filter = ""
     if (!root.opened) {
@@ -156,7 +159,6 @@ Item {
     root.opened = false
     root.filter = ""
     root.summonedRtl = false
-    if (root.shell) root.shell.summonedRtl = false
     root.summonedPseudoLocale = false
     root.summonedLocale = "en-US"
     root.focusedWhenOpened = null

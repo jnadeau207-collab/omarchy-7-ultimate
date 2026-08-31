@@ -685,8 +685,16 @@ grep -Fq 'showsNotificationCluster' "$ROOT/shell/plugins/ultimate-taskbar/Taskba
   || fail "Superbar keeps the notification cluster on the primary output"
 grep -Fq 'payload.pseudoLocale === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start pseudo-locale is the existing SemanticProfile summon flag"
-grep -Fq 'pseudoLocale: root.summonedPseudoLocale || root.summonedLocale === "pseudo"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'pseudoLocale: root.summonedPseudoLocale || (root.shell && root.shell.summonedPseudoLocale) || root.summonedLocale === "pseudo"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start pseudo-locale binds the product SemanticProfile"
+grep -Fq 'root.shell.summonedPseudoLocale = root.summonedPseudoLocale' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start publishes pseudo-locale onto the shared shell flag"
+grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar chrome text uses the shared SemanticProfile"
+grep -Fq 'Semantics.text(root.productProfile, "Quick Settings")' "$ROOT/shell/plugins/ultimate-quick-settings/Panel.qml" \
+  || fail "Quick Settings heading consumes Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Notification Center")' "$ROOT/shell/plugins/notifications/Center.qml" \
+  || fail "Notification Center heading consumes Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places run through the existing SemanticProfile text transform"
 grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
