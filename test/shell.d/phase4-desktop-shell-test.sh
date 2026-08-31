@@ -252,6 +252,41 @@ with tempfile.TemporaryDirectory() as tmp:
 PY
 pass "desktop-actions parser reads Chrome-style Actions"
 
+python3 - "$ROOT" <<'PY' || fail "desktop-actions synthesizes Chrome extra Actions from a stub Exec"
+from pathlib import Path
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+root = Path(sys.argv[1])
+desktop = """[Desktop Entry]
+Name=Google Chrome
+Exec=/home/jesse/.local/opt/google/chrome/google-chrome --ozone-platform=wayland %U
+Icon=google-chrome
+Type=Application
+"""
+with tempfile.TemporaryDirectory() as tmp:
+    apps = Path(tmp) / ".local" / "share" / "applications"
+    apps.mkdir(parents=True)
+    (apps / "google-chrome.desktop").write_text(desktop, encoding="utf-8")
+    env = os.environ.copy()
+    env["HOME"] = tmp
+    env["XDG_DATA_DIRS"] = tmp
+    out = subprocess.check_output(["python3", str(root / "shell/services/desktop-actions.py")], env=env, text=True)
+    data = json.loads(out)
+    rows = data["google-chrome"]
+    assert [row["name"] for row in rows] == ["New Window", "New Incognito Window"]
+    assert rows[0]["command"].startswith("/home/jesse/.local/opt/google/chrome/google-chrome")
+    assert "--incognito" not in rows[0]["command"]
+    assert rows[1]["command"].endswith(" --incognito")
+    assert "/usr/bin/chromium" not in rows[0]["command"]
+    assert "/usr/bin/chromium" not in rows[1]["command"]
+    assert "%U" not in rows[0]["command"]
+PY
+pass "desktop-actions synthesizes Chrome extra Actions from a stub Exec"
+
 python3 - "$ROOT" <<'PY' || fail "desktop icon lister reads the real Desktop directory"
 from pathlib import Path
 import json
