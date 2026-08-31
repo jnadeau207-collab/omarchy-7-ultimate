@@ -249,7 +249,26 @@ if (
 this_pc = by_id["files.this-pc.open"]["humanRoute"]
 if this_pc.get("path") != "Start > Computer; Superbar > Files > This PC":
     raise SystemExit(f"files.this-pc.open invents or underclaims This PC: {this_pc}")
+downloads = by_id["files.downloads.open"]
+if downloads["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > Downloads":
+    raise SystemExit(f"files.downloads.open invents or underclaims Downloads: {downloads['humanRoute']}")
+if downloads.get("source", {}).get("file") != "bin/omarchy-launch-files":
+    raise SystemExit(f"files.downloads.open still names an absent Files launcher: {downloads.get('source')}")
+if "nautilus" in str(downloads.get("source", {}).get("symbol") or "").lower():
+    raise SystemExit(f"files.downloads.open still names Nautilus: {downloads.get('source')}")
+for row in writers["capabilities"]:
+    capability_id = row.get("id") or ""
+    if capability_id in {"files.this-pc.open", "files.downloads.open"}:
+        source = row.get("source") or {}
+        named = f"{source.get('file') or ''} {source.get('symbol') or ''}".lower()
+        if "nautilus" in named:
+            raise SystemExit(f"{capability_id} still names Nautilus for a published Files location: {source}")
+        if source.get("file") != "bin/omarchy-launch-files":
+            raise SystemExit(f"{capability_id} does not name product Files: {source}")
 jobs_lock = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
+native9 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.9")
+if native9["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > Downloads":
+    raise SystemExit(f"windows-native.9 still names Superbar Files without Start Downloads: {native9['humanRoute']}")
 native38 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.38")
 if native38["humanRoute"].get("path") != "Settings jump list > System information":
     raise SystemExit(f"windows-native.38 invents a Start System page: {native38['humanRoute']}")
