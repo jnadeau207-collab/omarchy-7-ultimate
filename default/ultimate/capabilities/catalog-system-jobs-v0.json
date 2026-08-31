@@ -3441,7 +3441,7 @@
         "status": "missing",
         "surface": "Settings",
         "label": "Ease of Access",
-        "path": ""
+        "path": "Settings jump list > Accessibility"
       },
       "agentCenterLabel": "Ease of Access",
       "proofIds": {
