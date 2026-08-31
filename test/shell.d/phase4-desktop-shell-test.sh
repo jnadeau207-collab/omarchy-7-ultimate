@@ -439,6 +439,11 @@ assertEqual(
   1,
   'badges count notifications for the matching app'
 )
+assertEqual(
+  notifications.badgeCountForApp([{ app: 'Agent Center' }], 'org.omarchy.Agent', 'Agent'),
+  0,
+  'Agent badges do not inherit Agent Center toasts'
+)
 assertEqual(notifications.badgeCountForApp([{ app: 'Files' }], '', ''), 0, 'badges do not invent a match from empty ids')
 
 assertDeepEqual(
@@ -549,7 +554,7 @@ grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;' \
   || fail "published Files launcher keeps This PC, Desktop, Documents, Downloads, Pictures, Recent, and Trash"
 grep -Fq 'Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
-  || fail "published Settings launcher keeps inspect-backed Settings jump actions"
+  || fail "published Settings launcher keeps inspect pages plus the honest missing Accessibility action"
 pass "Files and Settings launchers are published for Start jump lists"
 
 grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
