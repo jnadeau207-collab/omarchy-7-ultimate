@@ -16,7 +16,7 @@ Item {
   property var notificationService: bar && bar.shell ? bar.shell.firstPartyServiceFor("omarchy.notifications") : null
 
   readonly property var windows: group && group.windows ? group.windows : []
-  readonly property var previewRows: WindowPreview.previewRows(windows)
+  readonly property var previewRows: WindowPreview.previewRows(windows, windowService ? windowService.activeDesktopId : null)
   readonly property var jumpList: appLibrary ? appLibrary.jumpListFor(group && group.desktopId ? group.desktopId : "") : []
   readonly property int badgeCount: {
     var _rev = notificationService ? notificationService.centerRevision : 0

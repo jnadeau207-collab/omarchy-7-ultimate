@@ -424,6 +424,12 @@ const mapped = Preview.previewRow({ address: '0x2', title: 'Chrome', at: [100, 8
 assertEqual(mapped.capturable, true, 'mapped windows expose geometry for grim')
 assertEqual(mapped.x, 100, 'preview keeps compositor x')
 assertEqual(Preview.geometry({ size: [0, 10] }), null, 'zero-area windows have no geometry')
+const otherDesktop = Preview.previewRow({ address: '0x3', title: 'Chrome', workspaceId: 2, at: [64, 48], size: [1024, 687], hidden: false }, 1)
+assertEqual(otherDesktop.capturable, false, 'off-desktop windows do not grim the current screen')
+assertEqual(otherDesktop.workspace, '2', 'off-desktop peek keeps the workspace label')
+const activeDesktop = Preview.previewRow({ address: '0x4', title: 'Files', workspaceId: 1, x: 64, y: 48, width: 1100, height: 760, hidden: false }, 1)
+assertEqual(activeDesktop.capturable, true, 'active-desktop window records stay capturable')
+assert(!Preview.onActiveDesktop({ workspaceId: 2 }, 1), 'workspace 2 is not the active desktop')
 
 const qvectorWindows = {
   length: 1,
