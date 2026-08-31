@@ -7,6 +7,7 @@ Rectangle {
   id: root
 
   property string title: ""
+  property var semanticProfile: null
   property var routes: []
   property string currentRoute: ""
   property alias query: search.text
@@ -26,7 +27,7 @@ Rectangle {
 
     Text {
       textFormat: Text.PlainText
-      text: root.title
+      text: Semantics.text(root.semanticProfile, root.title)
       color: Tokens.text.primary
       font.family: Style.font.family
       font.pixelSize: Style.font.title
@@ -38,6 +39,7 @@ Rectangle {
       id: search
       Layout.fillWidth: true
       semanticPlaceholderText: "Search"
+      semanticProfile: root.semanticProfile
       accessibleName: "Search " + root.title
     }
 
@@ -67,7 +69,7 @@ Rectangle {
           anchors.right: parent.right
           anchors.top: parent.top
           anchors.topMargin: parent.index === 0 ? 0 : Style.space(6)
-          text: parent.modelData.section.toUpperCase()
+          text: Semantics.text(root.semanticProfile, parent.modelData.section.toUpperCase())
           color: Tokens.text.disabled
           font.family: Style.font.family
           font.pixelSize: Style.font.caption
@@ -80,6 +82,7 @@ Rectangle {
           anchors.right: parent.right
           anchors.bottom: parent.bottom
           text: parent.modelData.title
+          semanticProfile: root.semanticProfile
           leftAlign: true
           focusable: true
           selected: root.currentRoute === parent.modelData.id
@@ -92,6 +95,7 @@ Rectangle {
         visible: routeList.count === 0
         anchors.centerIn: parent
         width: Math.min(parent.width, 260)
+        semanticProfile: root.semanticProfile
         title: "No matching destinations"
         message: "Try a different search."
       }

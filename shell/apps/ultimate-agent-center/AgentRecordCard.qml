@@ -13,6 +13,7 @@ Rectangle {
   property string selectedEntityType: ""
   property string selectedEntityId: ""
   property bool actionsEnabled: false
+  property var semanticProfile: null
   readonly property var workActions: presentation.workActions || []
 
   signal workRequested(var action)
@@ -94,6 +95,7 @@ Rectangle {
           required property var modelData
           text: modelData.label
           tooltipText: modelData.label
+          semanticProfile: root.semanticProfile
           focusable: true
           bordered: true
           onClicked: root.workRequested(modelData)
@@ -186,7 +188,7 @@ Rectangle {
 
         Text {
           textFormat: Text.PlainText
-          text: "RECOVERY STATUS"
+          text: Semantics.text(root.semanticProfile, "RECOVERY STATUS")
           color: Tokens.state.warning
           font.family: Style.font.family
           font.pixelSize: Style.font.caption
