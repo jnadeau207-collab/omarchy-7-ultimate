@@ -160,6 +160,7 @@ assert(destNames.indexOf('Documents') >= 0, 'destinations include Files Document
 assert(destNames.indexOf('Downloads') >= 0, 'destinations include Files Downloads')
 assert(destNames.indexOf('Recent') >= 0, 'destinations include Files Recent')
 assert(!destNames.some(name => name === 'Trash'), 'destinations do not invent Files Trash')
+assert(!search.START_DESTINATIONS.some(row => row.actionId === 'Search'), 'destinations do not invent in-app Files Search')
 assert(!destNames.some(name => name === 'Music'), 'destinations do not invent Files Music')
 assert(!destNames.some(name => name === 'Videos'), 'destinations do not invent Files Videos')
 assert(destNames.indexOf('Tasks & Runs') >= 0, 'destinations include Agent Center Tasks')
