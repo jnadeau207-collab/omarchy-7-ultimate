@@ -196,6 +196,52 @@ assert_rejected "reader-empty-redaction" "has empty redaction.fields"
 assert_rejected "window-agent-without-entry" "window capability window.maximize has availability.agent present without a CapabilityBroker verb"
 assert_rejected "window-agent-claim-present" "window capability window.maximize claims present while the broker is an actor-label allowlist"
 
+python3 - "$ROOT" <<'PY' || fail "leftover catalog routes stay honest after Settings inspect hosting"
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+readers = json.loads((root / "default/ultimate/capabilities/catalog-provider-readers-v0.json").read_text(encoding="utf-8"))
+writers = json.loads((root / "default/ultimate/capabilities/catalog-system-jobs-v0.json").read_text(encoding="utf-8"))
+by_id = {row["id"]: row for row in readers["capabilities"] + writers["capabilities"]}
+
+inspect_routes = {
+    "audio.inspect": ("Settings", "Settings > Sound"),
+    "bluetooth.inspect": ("Settings", "Settings > Bluetooth"),
+    "display.inspect": ("Settings", "Settings > Display"),
+    "input.inspect": ("Settings", "Settings > Input"),
+    "network.inspect": ("Settings", "Settings > Network"),
+    "power.inspect": ("Settings", "Settings > Power"),
+    "defaults.inspect": ("Settings", "Settings > Apps"),
+    "update.inspect": ("Settings", "Settings > Update"),
+    "recovery.inspect": ("Settings", "Settings > Recovery"),
+}
+for capability_id, (surface, path) in inspect_routes.items():
+    route = by_id[capability_id]["humanRoute"]
+    if route.get("surface") != surface or route.get("path") != path:
+        raise SystemExit(f"{capability_id} inspect route is {route}")
+
+writer_routes = {
+    "audio.output.manage": ("Quick Settings", "Superbar > Quick Settings > Sound"),
+    "audio.volume.set": ("Quick Settings", "Superbar > Quick Settings > Sound"),
+    "bluetooth.audio.pair": ("Quick Settings", "Superbar > Quick Settings > Bluetooth"),
+    "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
+    "network.manage": ("Quick Settings", "Superbar > Quick Settings > Network"),
+    "network.wifi.connect": ("Quick Settings", "Superbar > Quick Settings > Wi-Fi"),
+    "power.profile.set": ("Quick Settings", "Superbar > Quick Settings > Power"),
+}
+for capability_id, (surface, path) in writer_routes.items():
+    route = by_id[capability_id]["humanRoute"]
+    if route.get("surface") != surface or route.get("path") != path:
+        raise SystemExit(f"{capability_id} writer route is {route}")
+
+locale = by_id["locale.configure"]["humanRoute"]
+if locale.get("status") != "planned" or locale.get("path"):
+    raise SystemExit(f"locale.configure invents a Settings page: {locale}")
+PY
+pass "leftover catalog routes stay honest after Settings inspect hosting"
+
 if find "$ROOT/default/ultimate/capabilities" "$ROOT/default/ultimate/capability-schema" "$ROOT/default/ultimate/parity" "$ROOT/test/shell.d" -type d -name __pycache__ -print -quit | grep -q .; then
   fail "capability graph checks leave no Python bytecode caches"
 fi
