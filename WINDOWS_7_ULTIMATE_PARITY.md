@@ -25,10 +25,10 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Network | prototype | Settings → Network reads Fabric `network.inspect` (Wi-Fi radio, interfaces, connection status). Typed Network writers remain Phase 5. Superbar still hosts the heritage `omarchy.network` panel. |
 | Personalization | prototype | Settings → Personalization hosts the existing image picker for theme packs and wallpapers. Typed Personalization service is Phase 5. Superbar glass, Superbar tooltips, Start, and hyprbars captions read the same resolved `Tokens.chrome` / `Tokens.caption` payload; `omarchy-theme-set` republishes `chrome-tokens-v0.json` for dark and light packs. |
 | Devices & Printers | missing / prototype | Settings → Bluetooth reads Fabric `bluetooth.inspect` (controller power, paired/connected devices). Typed pair/connect writers remain Phase 5. Superbar still hosts the heritage `omarchy.bluetooth` panel. Printer add is forty-task pending. |
-| Device Manager | missing | |
+| Device Manager | missing | Fabric `device.inspect` exists. The leftover catalog keeps it planned as Administration > Devices; it does not invent a Settings Device Manager page. |
 | Programs and Features | missing | No Software Center; no Programs and Features. |
 | Default Programs | prototype | Settings → Apps reads Fabric `defaults.inspect` (MIME/protocol associations and default applications). Typed default writers remain Phase 5. Forty-task "Change the default browser" is pending. |
-| User Accounts | missing | |
+| User Accounts | missing | Fabric `account.inspect` exists. The leftover catalog keeps it planned as Administration > Accounts; it does not invent a Settings or Start Accounts page. |
 | Credential Manager | missing | |
 | Power Options | prototype | Settings → Power reads Fabric `power.inspect` (AC/battery source, active profile, available profiles, battery). Typed profile/sleep writers remain Phase 5. Superbar still hosts the heritage `omarchy.power` panel. |
 | Sound | prototype | Settings → Sound reads Fabric `audio.inspect` (sinks, default, mute, channel volume). Typed Audio writers remain Phase 5. Superbar still hosts the heritage `omarchy.audio` panel. |

@@ -312,6 +312,24 @@ if resources.get("status") != "missing" or resources.get("path"):
 parity_resources = next(job for job in jobs_lock["jobs"] if job["id"] == "parity.resource-monitor")
 if parity_resources.get("claim") == "present" or parity_resources["humanRoute"].get("path"):
     raise SystemExit(f"parity.resource-monitor invents a Task Manager Resource Monitor: {parity_resources}")
+admin_readers = {
+    "account.inspect": "Administration > Accounts",
+    "device.inspect": "Administration > Devices",
+    "firewall.inspect": "Administration > Firewall and Sharing",
+    "printer.inspect": "Administration > Devices and Printers",
+    "schedule.inspect": "Administration > Services and Schedules",
+    "service.inspect": "Administration > Services and Schedules",
+    "storage.inspect": "Administration > Storage",
+}
+for capability_id, path in admin_readers.items():
+    row = by_id[capability_id]
+    route = row["humanRoute"]
+    if row.get("availability", {}).get("claim") == "present":
+        raise SystemExit(f"{capability_id} invents a present Administration page: {row.get('availability')}")
+    if route.get("status") != "planned" or route.get("path") != path:
+        raise SystemExit(f"{capability_id} Administration route is {route}")
+    if path.startswith(("Settings", "Start", "Superbar")):
+        raise SystemExit(f"{capability_id} invents a Settings/Start/Superbar Administration page: {route}")
 
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
