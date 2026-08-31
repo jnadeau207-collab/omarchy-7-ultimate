@@ -13,7 +13,11 @@ Keywords=agent;task;automation;approval;activity;usage;provider;history;context;
 MimeType=x-scheme-handler/omarchy-agent;
 StartupNotify=true
 StartupWMClass=org.omarchy.AgentCenter
-Actions=Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;
+Actions=Overview;Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;
+
+[Desktop Action Overview]
+Name=Overview
+Exec=omarchy-launch-agent-center --source desktop agent.overview
 
 [Desktop Action Tasks]
 Name=Tasks & Runs
