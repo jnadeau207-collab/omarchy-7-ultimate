@@ -727,7 +727,7 @@
         "status": "visible",
         "surface": "Files",
         "label": "Open This PC",
-        "path": "Superbar > Files"
+        "path": "Start > Computer; Superbar > Files > This PC"
       },
       "agentCenterLabel": "Open This PC",
       "proofIds": {
