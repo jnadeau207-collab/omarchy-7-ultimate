@@ -655,6 +655,8 @@ grep -Fq 'omarchy-snap-chooser' "$ROOT/shell/plugins/ultimate-snap-chooser/Choos
   || fail "snap chooser uses a distinct layer namespace"
 grep -Fq 'root.chromeText("Run")' "$ROOT/shell/plugins/ultimate-run/Run.qml" \
   || fail "Run names itself through Semantics.text"
+grep -Fq 'root.chromeText("Snap")' "$ROOT/shell/plugins/ultimate-snap-chooser/Chooser.qml" \
+  || fail "Snap chooser names itself through Semantics.text"
 pass "desktop Hyprland path floats windows, uses hyprbars, and allows maximize"
 
 [[ -f $ROOT/test/vm/vm-run.ps1 ]] || fail "portable VM helper exists"
