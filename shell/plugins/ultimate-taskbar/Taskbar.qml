@@ -34,6 +34,16 @@ Item {
   // visual regression suite: Qt.rgba(0.11, 0.11, 0.12, 0.62).
   readonly property bool highContrast: Tokens.accessibility.highContrast
   readonly property bool rtl: (shell && shell.summonedRtl) || Qt.application.layoutDirection === Qt.RightToLeft
+  SemanticProfile {
+    id: chromeProfile
+    profileId: "product"
+    rtl: root.rtl
+    pseudoLocale: !!(shell && shell.summonedPseudoLocale)
+  }
+  readonly property var productProfile: chromeProfile
+  function chromeText(value) {
+    return Semantics.text(chromeProfile, value)
+  }
   readonly property color chromeBar: Tokens.chrome.glass
   readonly property color chromeHover: Tokens.chrome.hover
   readonly property color chromeActive: Tokens.chrome.active

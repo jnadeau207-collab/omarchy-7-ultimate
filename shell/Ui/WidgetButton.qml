@@ -27,6 +27,7 @@ Item {
   property bool hasVisualContent: text !== ""
   property var revealHost: bar
   property string tooltipText: ""
+  property var semanticProfile: bar && bar.productProfile ? bar.productProfile : null
   property var registeredBar: null
 
   signal pressed(int button)
@@ -63,7 +64,7 @@ Item {
     enabled: root.interactive
     onHoveredChanged: {
       if (!root.bar) return
-      if (hovered) root.bar.showTooltip(root, root.tooltipText)
+      if (hovered) root.bar.showTooltip(root, Semantics.text(root.semanticProfile, root.tooltipText))
       else root.bar.hideTooltip(root)
     }
   }
@@ -124,7 +125,7 @@ Item {
     cursorShape: root.pressable ? Qt.PointingHandCursor : Qt.ArrowCursor
     onEntered: {
       if (root.bar) {
-        root.bar.showTooltip(root, root.tooltipText)
+        root.bar.showTooltip(root, Semantics.text(root.semanticProfile, root.tooltipText))
       }
       if (root.maintainIndicatorReveal && root.revealHost && root.revealHost.setIndicatorItemHovered)
         root.revealHost.setIndicatorItemHovered(true)

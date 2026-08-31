@@ -487,7 +487,7 @@ Item {
               anchors.verticalCenter: parent.verticalCenter
               anchors.left: parent.left
               anchors.leftMargin: 8
-              text: modelData.label
+              text: root.bar && root.bar.chromeText ? root.bar.chromeText(modelData.label) : modelData.label
               color: Tokens.text.primary
               font.pixelSize: Style.font.body
               font.family: Tokens.typography.family

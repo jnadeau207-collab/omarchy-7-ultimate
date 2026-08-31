@@ -19,6 +19,7 @@ Panel {
   readonly property bool dndOn: notificationService ? notificationService.doNotDisturb === true : false
   readonly property color contentForeground: bar ? bar.foreground : Tokens.text.primary
   readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property var productProfile: bar && bar.productProfile ? bar.productProfile : null
 
   function open() {
     if (root.notificationService && typeof root.notificationService.refreshCenterHistory === "function")
@@ -80,7 +81,7 @@ Panel {
           Text {
             textFormat: Text.PlainText
             Layout.fillWidth: true
-            text: "Notification Center"
+            text: Semantics.text(root.productProfile, "Notification Center")
             color: root.contentForeground
             font.family: root.contentFontFamily
             font.pixelSize: Style.font.heading
@@ -88,12 +89,14 @@ Panel {
           }
 
           Button {
+            semanticProfile: root.productProfile
             text: root.dndOn ? "Focus on" : "Focus off"
             bordered: true
             onClicked: root.toggleDnd()
           }
 
           Button {
+            semanticProfile: root.productProfile
             text: "Clear"
             bordered: true
             enabled: root.rows.length > 0
@@ -104,7 +107,7 @@ Panel {
         Text {
           visible: root.rows.length === 0
           width: parent.width
-          text: "No recent notifications"
+          text: Semantics.text(root.productProfile, "No recent notifications")
           color: Tokens.text.secondary
           font.family: root.contentFontFamily
           font.pixelSize: Style.font.body

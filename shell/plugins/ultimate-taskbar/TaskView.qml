@@ -9,12 +9,12 @@ Item {
   implicitWidth: 44
   implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
-  Accessible.name: "Task View"
+  Accessible.name: bar && bar.chromeText ? bar.chromeText("Task View") : "Task View"
   HoverHandler {
     id: hover
     onHoveredChanged: {
       if (!root.bar) return
-      if (hovered) root.bar.showTooltip(root, "Task View")
+      if (hovered) root.bar.showTooltip(root, root.bar.chromeText("Task View"))
       else if (!mouse.containsMouse) root.bar.hideTooltip(root)
     }
   }
@@ -64,7 +64,7 @@ Item {
     cursorShape: Qt.PointingHandCursor
     onContainsMouseChanged: {
       if (!root.bar) return
-      if (containsMouse) root.bar.showTooltip(root, "Task View")
+      if (containsMouse) root.bar.showTooltip(root, root.bar.chromeText("Task View"))
       else root.bar.hideTooltip(root)
     }
     onClicked: {
