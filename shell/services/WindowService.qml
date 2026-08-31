@@ -116,6 +116,16 @@ QtObject {
       out.push(rec)
       seen[addr] = true
     }
+    for (i = 0; i < out.length; i++) {
+      rec = out[i]
+      if (!rec || !rec.address) continue
+      for (var j = 0; j < clients.length; j++) {
+        c = clients[j]
+        if (!c || root._canonAddr(c.address) !== rec.address) continue
+        if (c.focusHistoryID != null) rec.focusHistoryID = Number(c.focusHistoryID)
+        break
+      }
+    }
     return out
   }
   readonly property var desktopWindows: WindowModel.windowsOnDesktop(root.windows, root.activeDesktopId)
@@ -627,7 +637,8 @@ QtObject {
       minimized: hidden || !!root._minimized[address],
       monitorName: mon ? String(mon.name || "") : "",
       xwayland: ipc.xwayland === true,
-      modal: ipc.modal === true || String(ipc.contentType || "") === "dialog" || String(ipc.xdgTag || "").indexOf("dialog") >= 0
+      modal: ipc.modal === true || String(ipc.contentType || "") === "dialog" || String(ipc.xdgTag || "").indexOf("dialog") >= 0,
+      focusHistoryID: ipc.focusHistoryID != null ? Number(ipc.focusHistoryID) : (client && client.focusHistoryID != null ? Number(client.focusHistoryID) : undefined)
     }
   }
 
@@ -656,7 +667,8 @@ QtObject {
       minimized: hidden,
       monitorName: String(c.monitor || ""),
       xwayland: c.xwayland === true,
-      modal: c.modal === true
+      modal: c.modal === true,
+      focusHistoryID: c.focusHistoryID != null ? Number(c.focusHistoryID) : undefined
     }
   }
 

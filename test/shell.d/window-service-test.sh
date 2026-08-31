@@ -240,6 +240,10 @@ else
   fail "saveLayout must stamp the snap verb so restoreLayout is not a lagged 880x560 float"
 fi
 grep -Fq 'function _clientRecords' "$ws" || fail "restoreLayout matches against live hyprctl clients"
+grep -Fq 'focusHistoryID' "$ws" \
+  || fail "window records keep focusHistoryID so peeks can refuse occluded grim"
+grep -Fq 'rec.focusHistoryID = Number(c.focusHistoryID)' "$ws" \
+  || fail "window records copy focusHistoryID from live hyprctl clients"
 grep -Fq 'WindowModel.buildGroups(root.windows, root.pins)' "$ws" \
   || fail "Superbar groups include running windows on every desktop, not only the active one"
 if grep -Fq 'WindowModel.buildGroups(root.desktopWindows, root.pins)' "$ws"; then
@@ -415,6 +419,11 @@ pass "shell registers a window IPC target"
 run_node_test <<'JS'
 const fs = require('fs')
 const m = requireFromRoot('shell/services/WindowModel.js')
+const Preview = requireFromRoot('shell/services/WindowPreview.js')
+const filesUnder = { address: '0xf', title: 'Files', workspaceId: 1, at: [64, 48], size: [1100, 760], focusHistoryID: 4 }
+const settingsTop = { address: '0xs', title: 'Settings', workspaceId: 1, at: [64, 48], size: [1100, 760], focusHistoryID: 0 }
+assertEqual(Preview.previewRow(filesUnder, 1, [filesUnder, settingsTop]).capturable, false, 'occluded Files does not grim Settings pixels')
+assertEqual(Preview.previewRow(settingsTop, 1, [filesUnder, settingsTop]).capturable, true, 'the topmost Settings window stays capturable')
 
 assertEqual(m.normalizeId('Firefox.desktop'), 'firefox', 'normalizeId strips .desktop and case')
 assertEqual(m.windowAppId({ appId: 'org.mozilla.firefox' }), 'org.mozilla.firefox', 'windowAppId reads appId')

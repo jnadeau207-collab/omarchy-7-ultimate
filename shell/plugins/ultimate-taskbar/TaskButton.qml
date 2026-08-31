@@ -16,7 +16,8 @@ Item {
   property var notificationService: bar && bar.shell ? bar.shell.firstPartyServiceFor("omarchy.notifications") : null
 
   readonly property var windows: group && group.windows ? group.windows : []
-  readonly property var previewRows: WindowPreview.previewRows(windows, windowService ? windowService.activeDesktopId : null)
+  readonly property var previewRows: WindowPreview.previewRows(windows, windowService ? windowService.activeDesktopId : null, windowService ? windowService.windows : [])
+  readonly property bool peekPointerOver: mouse.containsMouse || hover.hovered || peekHover.hovered
   readonly property var jumpList: appLibrary ? appLibrary.jumpListFor(group && group.desktopId ? group.desktopId : "") : []
   readonly property int badgeCount: {
     var _rev = notificationService ? notificationService.centerRevision : 0
@@ -35,6 +36,7 @@ Item {
   HoverHandler {
     id: hover
     onHoveredChanged: {
+      root.syncPeekPointer()
       if (!root.bar || peek.visible || menu.visible) return
       if (hovered) root.bar.showTooltip(root, root.label)
       else if (!mouse.containsMouse) root.bar.hideTooltip(root)
@@ -192,12 +194,19 @@ Item {
         if (containsMouse && !menu.visible && !peek.visible) root.bar.showTooltip(root, root.label)
         else root.bar.hideTooltip(root)
       }
-      if (mouse.containsMouse && root.running && !menu.visible) peekTimer.restart()
-      else {
-        peekTimer.stop()
-        peek.visible = false
-      }
+      root.syncPeekPointer()
     }
+  }
+
+  function syncPeekPointer() {
+    if (root.peekPointerOver && root.running && !menu.visible) {
+      peekLeaveTimer.stop()
+      if (!peek.visible) peekTimer.restart()
+      return
+    }
+    peekTimer.stop()
+    if (peek.visible) peekLeaveTimer.restart()
+    else peek.visible = false
   }
 
   Timer {
@@ -205,8 +214,17 @@ Item {
     interval: 400
     repeat: false
     onTriggered: {
-      if (mouse.containsMouse && root.running && !menu.visible)
+      if (root.peekPointerOver && root.running && !menu.visible)
         peek.visible = true
+    }
+  }
+
+  Timer {
+    id: peekLeaveTimer
+    interval: 200
+    repeat: false
+    onTriggered: {
+      if (!root.peekPointerOver) peek.visible = false
     }
   }
 
@@ -238,6 +256,11 @@ Item {
       radius: Tokens.radius.medium
       border.color: bar && bar.highContrast ? Tokens.border.strong : Tokens.border.subtle
       border.width: bar && bar.highContrast ? 2 : 1
+
+      HoverHandler {
+        id: peekHover
+        onHoveredChanged: root.syncPeekPointer()
+      }
 
       Column {
         id: peekCol

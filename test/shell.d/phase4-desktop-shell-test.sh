@@ -349,6 +349,10 @@ grep -Fq 'Open new window' "$ROOT/shell/services/JumpList.js" \
   || fail "Superbar jump lists include Open new window"
 grep -Fq 'previewRows' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "Superbar peek uses the structured preview model"
+grep -Fq 'peekLeaveTimer' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "Superbar peek stays held across the button-to-card gap"
+grep -Fq 'windowService.windows' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "Superbar peek occlusion sees every window, not only the group"
 grep -Fq '_capturePreview' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "Superbar peek captures live window thumbnails"
 grep -Fq 'capture-window-preview.sh' "$ROOT/shell/services/WindowService.qml" \
@@ -443,6 +447,13 @@ assertEqual(otherDesktop.workspace, '2', 'off-desktop peek keeps the workspace l
 const activeDesktop = Preview.previewRow({ address: '0x4', title: 'Files', workspaceId: 1, x: 64, y: 48, width: 1100, height: 760, hidden: false }, 1)
 assertEqual(activeDesktop.capturable, true, 'active-desktop window records stay capturable')
 assert(!Preview.onActiveDesktop({ workspaceId: 2 }, 1), 'workspace 2 is not the active desktop')
+const filesUnder = { address: '0xf', title: 'Files', workspaceId: 1, at: [64, 48], size: [1100, 760], focusHistoryID: 4 }
+const settingsTop = { address: '0xs', title: 'Settings', workspaceId: 1, at: [64, 48], size: [1100, 760], focusHistoryID: 0 }
+assertEqual(Preview.previewRow(filesUnder, 1, [filesUnder, settingsTop]).capturable, false, 'occluded Files does not grim Settings pixels')
+assertEqual(Preview.previewRow(settingsTop, 1, [filesUnder, settingsTop]).capturable, true, 'the topmost Settings window stays capturable')
+const beside = { address: '0xt', title: 'Terminal', workspaceId: 1, at: [1200, 48], size: [400, 300], focusHistoryID: 2 }
+assertEqual(Preview.previewRow(beside, 1, [filesUnder, settingsTop, beside]).capturable, true, 'non-overlapping windows stay capturable')
+assertEqual(Preview.previewRow(filesUnder, 1, [filesUnder, { address: '0x2', title: 'Chrome', workspaceId: 2, at: [64, 48], size: [1100, 760], focusHistoryID: 0 }]).capturable, true, 'another desktop does not occlude this one')
 
 const qvectorWindows = {
   length: 1,

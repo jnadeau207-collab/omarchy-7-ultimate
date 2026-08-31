@@ -140,6 +140,10 @@ grep -Fq 'hostWindow: barWindow' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.q
   || fail "taskbar peek/menu popups anchor to the PanelWindow, not QsWindow.window"
 grep -Fq 'anchor.window: root.hostWindow' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "TaskButton PopupWindow anchors to the taskbar PanelWindow"
+grep -Fq 'id: peekLeaveTimer' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "TaskButton peek uses a leave delay so the pointer can enter the card"
+grep -Fq 'id: peekHover' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "TaskButton peek stays hovered while the pointer is on the card"
 if grep -Fq 'QsWindow' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml"; then
   fail "TaskButton must not bind PopupAnchor to QsWindow.window during PanelWindow complete"
 fi
