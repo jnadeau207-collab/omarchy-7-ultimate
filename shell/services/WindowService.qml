@@ -120,7 +120,7 @@ QtObject {
   }
   readonly property var desktopWindows: WindowModel.windowsOnDesktop(root.windows, root.activeDesktopId)
   readonly property var desktopIds: WindowModel.desktopIds(root.workspacesIpc)
-  readonly property var groups: WindowModel.buildGroups(root.desktopWindows, root.pins)
+  readonly property var groups: WindowModel.buildGroups(root.windows, root.pins)
   readonly property string pinsPath: root.home + "/.local/state/omarchy/ultimate/taskbar-pins.json"
   readonly property string layoutPath: root.home + "/.local/state/omarchy/ultimate/window-layout.json"
   readonly property string placementsPath: root.home + "/.local/state/omarchy/ultimate/window-placements.json"

@@ -240,6 +240,12 @@ else
   fail "saveLayout must stamp the snap verb so restoreLayout is not a lagged 880x560 float"
 fi
 grep -Fq 'function _clientRecords' "$ws" || fail "restoreLayout matches against live hyprctl clients"
+grep -Fq 'WindowModel.buildGroups(root.windows, root.pins)' "$ws" \
+  || fail "Superbar groups include running windows on every desktop, not only the active one"
+if grep -Fq 'WindowModel.buildGroups(root.desktopWindows, root.pins)' "$ws"; then
+  fail "Superbar groups must not hide running apps that live on another desktop"
+fi
+pass "Superbar groups keep running windows across desktops"
 if awk '
   $0 ~ /function _addressesOnDesktop\(/ { infn = 1 }
   infn && /clientsIpc/ { found = 1 }
