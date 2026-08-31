@@ -182,6 +182,46 @@ var START_DESTINATIONS = [
     actionId: "Personalization"
   },
   {
+    id: "omarchy.start.apps",
+    name: "Apps",
+    genericName: "Settings",
+    comment: "Open Settings Apps",
+    keywords: ["apps", "defaults", "default programs", "associations", "startup", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    actionId: "Apps"
+  },
+  {
+    id: "omarchy.start.update",
+    name: "Update",
+    genericName: "Settings",
+    comment: "Open Settings Update",
+    keywords: ["update", "upgrade", "updates", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    command: "omarchy-launch-settings --source desktop settings.update.overview"
+  },
+  {
+    id: "omarchy.start.recovery",
+    name: "Recovery",
+    genericName: "Settings",
+    comment: "Open Settings Recovery",
+    keywords: ["recovery", "restore", "restore point", "rollback", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    command: "omarchy-launch-settings --source desktop settings.recovery.overview"
+  },
+  {
+    id: "omarchy.start.input",
+    name: "Input",
+    genericName: "Settings",
+    comment: "Open Settings Input",
+    keywords: ["input", "keyboard", "mouse", "touchpad", "layout", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    command: "omarchy-launch-settings --source desktop settings.input.overview"
+  },
+  {
     id: "omarchy.start.files",
     name: "Files",
     genericName: "File Manager",

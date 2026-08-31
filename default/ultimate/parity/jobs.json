@@ -204,7 +204,7 @@
       "id": "parity.devices-printers",
       "kind": "parity-job",
       "sourceLabel": "Devices & Printers",
-      "sourceStatus": "missing",
+      "sourceStatus": "missing / prototype",
       "claim": "missing",
       "capabilityIds": [
         "printers.manage"
@@ -283,16 +283,16 @@
       "id": "parity.default-programs",
       "kind": "parity-job",
       "sourceLabel": "Default Programs",
-      "sourceStatus": "missing",
-      "claim": "missing",
+      "sourceStatus": "prototype",
+      "claim": "prototype",
       "capabilityIds": [
         "apps.defaults.set",
         "files.associations.set"
       ],
       "humanRoute": {
-        "status": "planned",
-        "surface": "Settings",
-        "path": "Start > Settings > Default apps"
+        "status": "visible",
+        "surface": "Settings Apps",
+        "path": "Start > Settings > Apps"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior associations and offer guarded undo.",
@@ -476,8 +476,8 @@
         "update.history.read"
       ],
       "humanRoute": {
-        "status": "planned",
-        "surface": "Settings",
+        "status": "visible",
+        "surface": "Settings Update",
         "path": "Start > Settings > Update"
       },
       "agentAvailability": "unavailable",
@@ -529,9 +529,9 @@
         "recovery.restore-point.rollback"
       ],
       "humanRoute": {
-        "status": "planned",
-        "surface": "System Restore",
-        "path": "Start > System Restore"
+        "status": "visible",
+        "surface": "Settings Recovery",
+        "path": "Start > Settings > Recovery"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore operations are durable, restart-safe, and reconcile the actual booted snapshot.",
