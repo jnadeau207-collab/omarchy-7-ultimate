@@ -505,6 +505,9 @@ idx = json.load(sys.stdin)
 files = idx.get("org.omarchy.Files") or []
 names = [row.get("name") for row in files]
 assert "This PC" in names, names
+assert "Desktop" in names, names
+assert "Documents" in names, names
+assert "Downloads" in names, names
 assert "Pictures" in names, names
 assert "Recent" in names, names
 assert "Trash" in names, names
@@ -541,9 +544,9 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
   || fail "Files launcher stays executable after the Superbar pin repair"
 [[ -f $HOME/.local/share/applications/org.omarchy.Files.desktop ]] \
   || fail "Files launcher is published into the user applications dir"
-grep -Fq 'Actions=ThisPC;Pictures;Recent;Trash;' \
+grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
-  || fail "published Files launcher keeps This PC, Pictures, Recent, and Trash"
+  || fail "published Files launcher keeps This PC, Desktop, Documents, Downloads, Pictures, Recent, and Trash"
 grep -Fq 'Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
   || fail "published Settings launcher keeps inspect-backed Settings jump actions"

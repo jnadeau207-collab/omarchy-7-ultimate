@@ -13,11 +13,23 @@ Keywords=files;folders;desktop;documents;downloads;pictures;trash;network;
 MimeType=x-scheme-handler/omarchy-files;
 StartupNotify=true
 StartupWMClass=org.omarchy.Files
-Actions=ThisPC;Pictures;Recent;Trash;
+Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;
 
 [Desktop Action ThisPC]
 Name=This PC
 Exec=omarchy-launch-files --source desktop files.this-pc
+
+[Desktop Action Desktop]
+Name=Desktop
+Exec=omarchy-launch-files --source desktop files.desktop
+
+[Desktop Action Documents]
+Name=Documents
+Exec=omarchy-launch-files --source desktop files.documents
+
+[Desktop Action Downloads]
+Name=Downloads
+Exec=omarchy-launch-files --source desktop files.downloads
 
 [Desktop Action Pictures]
 Name=Pictures
