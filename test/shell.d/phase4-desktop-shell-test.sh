@@ -507,6 +507,7 @@ assert "Trash" in names, names
 settings = idx.get("org.omarchy.Settings") or []
 assert any(row.get("name") == "Display" for row in settings), settings
 assert any(row.get("name") == "Personalization" for row in settings), settings
+assert any(row.get("name") == "Apps" for row in settings), settings
 '
 pass "product desktop Actions are indexed from OMARCHY_PATH"
 
@@ -521,9 +522,9 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
 grep -Fq 'Actions=ThisPC;Pictures;Recent;Trash;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
   || fail "published Files launcher keeps This PC, Pictures, Recent, and Trash"
-grep -Fq 'Actions=Display;Network;Personalization;Accessibility;' \
+grep -Fq 'Actions=Display;Network;Personalization;Accessibility;Apps;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
-  || fail "published Settings launcher keeps Display, Network, Personalization, and Accessibility"
+  || fail "published Settings launcher keeps Display, Network, Personalization, Accessibility, and Apps"
 pass "Files and Settings launchers are published for Start jump lists"
 
 grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
@@ -586,6 +587,14 @@ grep -Fq 'function pageAvailability' "$ROOT/shell/apps/ultimate-files/FilesModel
   || fail "This PC reports the virtual this-pc location instead of workspace degradation"
 grep -Fq 'function searchDestinations' "$ROOT/shell/services/AppSearch.js" \
   || fail "Start search injects Settings and place destinations"
+grep -Fq 'id: "omarchy.start.apps"' "$ROOT/shell/services/AppSearch.js" \
+  || fail "Start search includes Settings Apps"
+grep -Fq 'id: "omarchy.start.update"' "$ROOT/shell/services/AppSearch.js" \
+  || fail "Start search includes Settings Update"
+grep -Fq 'id: "omarchy.start.recovery"' "$ROOT/shell/services/AppSearch.js" \
+  || fail "Start search includes Settings Recovery"
+grep -Fq 'id: "omarchy.start.input"' "$ROOT/shell/services/AppSearch.js" \
+  || fail "Start search includes Settings Input"
 grep -Fq 'AppSearch.searchDestinations(query, values)' "$ROOT/shell/services/AppLibrary.qml" \
   || fail "AppLibrary merges Start destinations into app search"
 grep -Fq 'entry.kind === "destination"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
