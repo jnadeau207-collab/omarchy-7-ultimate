@@ -819,9 +819,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Settings",
+        "surface": "Quick Settings",
         "label": "Connect to Wi-Fi",
-        "path": "Start > Settings > Network"
+        "path": "Superbar > Quick Settings > Wi-Fi"
       },
       "agentCenterLabel": "Connect to Wi-Fi",
       "proofIds": {
@@ -913,9 +913,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Settings",
+        "surface": "Quick Settings",
         "label": "Manage network connections",
-        "path": "Start > Settings > Network"
+        "path": "Superbar > Quick Settings > Network"
       },
       "agentCenterLabel": "Manage network connections",
       "proofIds": {
@@ -1659,9 +1659,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Settings",
+        "surface": "Quick Settings",
         "label": "Choose power mode",
-        "path": "Start > Settings > Power"
+        "path": "Superbar > Quick Settings > Power"
       },
       "agentCenterLabel": "Choose power mode",
       "proofIds": {
@@ -1752,9 +1752,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Settings",
+        "surface": "Quick Settings",
         "label": "Choose audio output",
-        "path": "Start > Settings > Sound"
+        "path": "Superbar > Quick Settings > Sound"
       },
       "agentCenterLabel": "Choose audio output",
       "proofIds": {
@@ -1845,9 +1845,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Settings",
+        "surface": "Quick Settings",
         "label": "Configure displays",
-        "path": "Start > Settings > Display"
+        "path": "Superbar > Quick Settings > Display"
       },
       "agentCenterLabel": "Configure displays",
       "proofIds": {
@@ -3348,7 +3348,7 @@
         "status": "planned",
         "surface": "Settings",
         "label": "Region and language",
-        "path": "Start > Settings > Time and language"
+        "path": ""
       },
       "agentCenterLabel": "Region and language",
       "proofIds": {
@@ -4663,7 +4663,7 @@
         "status": "visible",
         "surface": "Quick Settings",
         "label": "Pair Bluetooth headphones",
-        "path": "Superbar > Bluetooth"
+        "path": "Superbar > Quick Settings > Bluetooth"
       },
       "agentCenterLabel": "Pair Bluetooth headphones",
       "proofIds": {
@@ -4754,9 +4754,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Settings",
+        "surface": "Quick Settings",
         "label": "Adjust output volume",
-        "path": "Start > Settings > Sound"
+        "path": "Superbar > Quick Settings > Sound"
       },
       "agentCenterLabel": "Adjust output volume",
       "proofIds": {

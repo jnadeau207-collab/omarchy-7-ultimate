@@ -74,9 +74,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "View audio outputs",
-        "path": "Superbar > Sound"
+        "path": "Settings > Sound"
       },
       "agentCenterLabel": "Inspect audio outputs",
       "proofIds": {
@@ -164,9 +164,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "View Bluetooth devices",
-        "path": "Superbar > Bluetooth"
+        "path": "Settings > Bluetooth"
       },
       "agentCenterLabel": "Inspect Bluetooth devices",
       "proofIds": {
@@ -254,9 +254,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "View displays",
-        "path": "Superbar > Display"
+        "path": "Settings > Display"
       },
       "agentCenterLabel": "Inspect displays",
       "proofIds": {
@@ -343,9 +343,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Superbar",
+        "surface": "Settings",
         "label": "View keyboard layout",
-        "path": "Superbar > Keyboard Layout"
+        "path": "Settings > Input"
       },
       "agentCenterLabel": "Inspect keyboards",
       "proofIds": {
@@ -434,9 +434,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "View network state",
-        "path": "Superbar > Network"
+        "path": "Settings > Network"
       },
       "agentCenterLabel": "Inspect network state",
       "proofIds": {
@@ -523,9 +523,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "View power state",
-        "path": "Superbar > Power"
+        "path": "Settings > Power"
       },
       "agentCenterLabel": "Inspect power state",
       "proofIds": {
