@@ -32,9 +32,13 @@ ShellRoot {
   }
 
   property string home: Quickshell.env("HOME")
-  // Start summon {"rtl":true} is the product RTL switch. Superbar reads the
-  // same flag so the bar and Start share one direction without a locale pack.
+  // Start summon {"rtl":true} / {"pseudoLocale":true} is the product switch.
+  // Superbar, Quick Settings, and Notification Center read the same flags so
+  // chrome shares one SemanticProfile without a locale pack. The next Start
+  // open writes both flags from that payload; Start close does not invent a
+  // session locale by leaving a different switch behind.
   property bool summonedRtl: false
+  property bool summonedPseudoLocale: false
 
   // The omarchy-shell host is the long-running entry point. Plugins live in
   // sibling directories under plugins/. OMARCHY_PATH is provided by the uwsm

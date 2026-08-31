@@ -130,14 +130,31 @@ pass "Start RTL binds the existing SemanticProfile path"
 
 grep -Fq 'payload.pseudoLocale === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start pseudo-locale can be summoned on the existing SemanticProfile without a translation pack"
-grep -Fq 'pseudoLocale: root.summonedPseudoLocale || root.summonedLocale === "pseudo"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+grep -Fq 'pseudoLocale: root.summonedPseudoLocale || (root.shell && root.shell.summonedPseudoLocale) || root.summonedLocale === "pseudo"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start pseudo-locale binds the product SemanticProfile"
+grep -Fq 'property bool summonedPseudoLocale: false' "$ROOT/shell/shell.qml" \
+  || fail "shell owns the shared Start pseudo-locale summon flag"
+grep -Fq 'root.shell.summonedPseudoLocale = root.summonedPseudoLocale' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
+  || fail "Start publishes pseudo-locale onto the shared shell flag"
+grep -Fq 'pseudoLocale: !!(shell && shell.summonedPseudoLocale)' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar reads the shared Start pseudo-locale summon flag"
+grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar chrome text uses the shared SemanticProfile"
+grep -Fq 'Semantics.text(root.productProfile, "Quick Settings")' "$ROOT/shell/plugins/ultimate-quick-settings/Panel.qml" \
+  || fail "Quick Settings heading consumes Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Notification Center")' "$ROOT/shell/plugins/notifications/Center.qml" \
+  || fail "Notification Center heading consumes Semantics.text"
+grep -Fq 'Semantics.text(root.semanticProfile, root.tooltipText)' "$ROOT/shell/Ui/WidgetButton.qml" \
+  || fail "Superbar WidgetButton tooltips consume Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places consume Semantics.text through the product profile"
 grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start search placeholder consumes the SemanticProfile text transform"
 if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/plugins/ultimate-start/Start.qml"; then
   fail "Start pseudo-locale is not an invented Accessibility Settings surface"
+fi
+if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"; then
+  fail "Superbar pseudo-locale is not an invented Accessibility Settings surface"
 fi
 pass "Start pseudo-locale binds the existing SemanticProfile path"
 

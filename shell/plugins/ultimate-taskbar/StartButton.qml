@@ -11,13 +11,13 @@ Item {
   implicitWidth: 56
   implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
-  Accessible.name: "Start"
-  Accessible.description: "Open the Start menu"
+  Accessible.name: bar && bar.chromeText ? bar.chromeText("Start") : "Start"
+  Accessible.description: bar && bar.chromeText ? bar.chromeText("Open the Start menu") : "Open the Start menu"
   HoverHandler {
     id: hover
     onHoveredChanged: {
       if (!root.bar) return
-      if (hovered) root.bar.showTooltip(root, "Start")
+      if (hovered) root.bar.showTooltip(root, root.bar.chromeText("Start"))
       else if (!mouse.containsMouse) root.bar.hideTooltip(root)
     }
   }
@@ -70,7 +70,7 @@ Item {
     cursorShape: Qt.PointingHandCursor
     onContainsMouseChanged: {
       if (!root.bar) return
-      if (containsMouse || hover.hovered) root.bar.showTooltip(root, "Start")
+      if (containsMouse || hover.hovered) root.bar.showTooltip(root, root.bar.chromeText("Start"))
       else root.bar.hideTooltip(root)
     }
     onClicked: {

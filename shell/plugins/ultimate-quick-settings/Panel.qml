@@ -27,6 +27,7 @@ Panel {
   readonly property bool dndOn: notificationService ? notificationService.doNotDisturb === true : false
   readonly property color contentForeground: bar ? bar.foreground : Tokens.text.primary
   readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property var productProfile: bar && bar.productProfile ? bar.productProfile : null
 
   function open() {
     root.controller.show()
@@ -130,7 +131,7 @@ Panel {
         Text {
           textFormat: Text.PlainText
           width: parent.width
-          text: "Quick Settings"
+          text: Semantics.text(root.productProfile, "Quick Settings")
           color: root.contentForeground
           font.family: root.contentFontFamily
           font.pixelSize: Style.font.heading
@@ -165,7 +166,7 @@ Panel {
                   Text {
                     textFormat: Text.PlainText
                     width: parent.width
-                    text: modelData.label
+                    text: Semantics.text(root.productProfile, modelData.label)
                     color: Tokens.text.primary
                     font.family: root.contentFontFamily
                     font.pixelSize: Style.font.body
@@ -175,7 +176,7 @@ Panel {
                   Text {
                     textFormat: Text.PlainText
                     width: parent.width
-                    text: root.tileStatus(modelData)
+                    text: Semantics.text(root.productProfile, root.tileStatus(modelData))
                     color: root.tileActive(modelData) ? Tokens.accent.primary : Tokens.text.secondary
                     font.family: root.contentFontFamily
                     font.pixelSize: Style.font.bodySmall
