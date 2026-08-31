@@ -26,6 +26,17 @@ Item {
   readonly property var desktopIds: windowService ? windowService.desktopIds : []
   readonly property var viewPreviewRows: WindowPreview.previewRows(root.viewWindowsFor(root.viewDesktop), root.viewDesktop, windowService ? windowService.windows : [])
 
+  SemanticProfile {
+    id: chromeProfile
+    profileId: "product"
+    rtl: !!(shell && shell.summonedRtl)
+    pseudoLocale: !!(shell && shell.summonedPseudoLocale)
+  }
+
+  function chromeText(value) {
+    return Semantics.text(chromeProfile, value)
+  }
+
   function captureViewPreviews() {
     if (!windowService) return
     var rows = root.viewPreviewRows
@@ -196,7 +207,7 @@ Item {
         spacing: 12
 
         Text {
-          text: "Task View"
+          text: root.chromeText("Task View")
           color: Tokens.text.primary
           font.pixelSize: Style.font.title
           font.family: Tokens.typography.family
@@ -217,7 +228,7 @@ Item {
               Text {
                 textFormat: Text.PlainText
                 anchors.centerIn: parent
-                text: "Desktop " + modelData
+                text: root.chromeText("Desktop " + modelData)
                 color: Tokens.text.primary
                 font.pixelSize: Style.font.bodySmall
                 font.family: Tokens.typography.family
@@ -241,7 +252,7 @@ Item {
             border.width: 1
             Text {
               anchors.centerIn: parent
-              text: "New"
+              text: root.chromeText("New")
               color: Tokens.text.primary
               font.pixelSize: Style.font.bodySmall
               font.family: Tokens.typography.family
@@ -299,7 +310,7 @@ Item {
                 color: Tokens.surface.base
                 Text {
                   anchors.centerIn: parent
-                  text: modelData.minimized ? "Minimized" : "No preview"
+                  text: root.chromeText(modelData.minimized ? "Minimized" : "No preview")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
@@ -312,7 +323,7 @@ Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.margins: 10
-                text: modelData.title + (modelData.minimized ? " (minimized)" : "")
+                text: modelData.title + (modelData.minimized ? root.chromeText(" (minimized)") : "")
                 color: Tokens.text.primary
                 font.pixelSize: Style.font.body
                 font.family: Tokens.typography.family
