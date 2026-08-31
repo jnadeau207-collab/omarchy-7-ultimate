@@ -38,7 +38,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Backup & Restore | plumbing | Snapper via `omarchy-snapshot`. No Backup and Restore UI. |
 | System Restore | plumbing | Settings → Recovery reads Fabric `recovery.inspect` (restore-point inventory). Same snapshot/rollback path. Typed restore writers remain Phase 5. Forty-task rows 30–31 pending. |
 | Disk Management | missing | |
-| Task Manager | missing as product | `btop` is the Activity TUI (`manual/21-tuis.md`). Not Task Manager. The leftover catalog keeps `processes.inspect` planned with an empty path; it does not invent Superbar > Task Manager. |
+| Task Manager | missing as product | `btop` is the Activity TUI (`manual/21-tuis.md`). Not Task Manager. The leftover catalog keeps `processes.inspect` and `process.inspect` planned with empty paths; it does not invent Superbar or Administration Task Manager. |
 | Resource Monitor | missing | |
 | Services | missing | |
 | Task Scheduler | missing | |
