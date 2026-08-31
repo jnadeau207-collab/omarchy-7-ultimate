@@ -146,6 +146,18 @@ grep -Fq 'Semantics.text(root.productProfile, "Notification Center")' "$ROOT/she
   || fail "Notification Center heading consumes Semantics.text"
 grep -Fq 'Semantics.text(root.semanticProfile, root.tooltipText)' "$ROOT/shell/Ui/WidgetButton.qml" \
   || fail "Superbar WidgetButton tooltips consume Semantics.text"
+grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
+  || fail "Calendar chrome text uses the shared Superbar SemanticProfile"
+grep -Fq 'root.chromeText("Calendar")' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
+  || fail "Calendar heading consumes Semantics.text"
+grep -Fq 'pseudoLocale: !!(shell && shell.summonedPseudoLocale)' "$ROOT/shell/plugins/lock/LockView.qml" \
+  || fail "lock chrome reads the shared Start pseudo-locale summon flag"
+grep -Fq 'Semantics.text(chromeProfile, root.placeholderText)' "$ROOT/shell/plugins/lock/LockView.qml" \
+  || fail "lock password chrome consumes Semantics.text"
+grep -Fq 'text: "Refresh"' "$ROOT/shell/apps/ultimate-agent-center/AgentCenterApplication.qml" \
+  || fail "Agent Center Refresh stays a chrome verb"
+grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-agent-center/AgentCenterApplication.qml" \
+  || fail "Agent Center chrome verbs consume Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places consume Semantics.text through the product profile"
 grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

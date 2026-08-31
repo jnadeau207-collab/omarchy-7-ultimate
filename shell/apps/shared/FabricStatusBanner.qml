@@ -7,6 +7,7 @@ Rectangle {
   id: root
 
   required property var host
+  property var semanticProfile: null
 
   readonly property bool connected: host && host.fabricReady
   readonly property bool incompatible: host && host.fabricConnectionState === "incompatible"
@@ -46,7 +47,7 @@ Rectangle {
       Text {
         textFormat: Text.PlainText
         id: statusTitle
-        text: root.connected ? "Fabric connected" : (root.incompatible ? "Fabric update required" : "Fabric unavailable")
+        text: Semantics.text(root.semanticProfile, root.connected ? "Fabric connected" : (root.incompatible ? "Fabric update required" : "Fabric unavailable"))
         color: Tokens.text.primary
         font.family: Style.font.family
         font.pixelSize: Style.font.body
@@ -73,6 +74,7 @@ Rectangle {
     Ui.Button {
       visible: !root.connected
       text: "Try again"
+      semanticProfile: root.semanticProfile
       focusable: true
       onClicked: root.host.retryFabric()
       Layout.alignment: Qt.AlignVCenter

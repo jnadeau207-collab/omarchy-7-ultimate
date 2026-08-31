@@ -77,6 +77,10 @@ Panel {
   // contract instantiates it bare).
   readonly property color contentForeground: bar ? bar.foreground : Tokens.text.primary
   readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property var productProfile: bar && bar.productProfile ? bar.productProfile : null
+  function chromeText(value) {
+    return Semantics.text(productProfile, value)
+  }
 
   readonly property int cellWidth: Style.space(52)
   readonly property int cellHeight: Style.space(34)
@@ -283,7 +287,7 @@ Panel {
 
           Text {
             width: parent.width
-            text: "Calendar"
+            text: root.chromeText("Calendar")
             color: root.contentForeground
             font.family: root.contentFontFamily
             font.pixelSize: Style.font.heading
@@ -346,7 +350,7 @@ Panel {
 
               PanelToolTip {
                 visible: heroMouse.containsMouse
-                text: "Back to today"
+                text: root.chromeText("Back to today")
                 fontFamily: root.contentFontFamily
               }
             }
@@ -379,7 +383,7 @@ Panel {
 
                 Text {
                   anchors.verticalCenter: parent.verticalCenter
-                  text: "BORN"
+                  text: root.chromeText("BORN")
                   color: Qt.darker(root.contentForeground, 1.5)
                   font.family: root.contentFontFamily
                   font.pixelSize: Style.font.bodySmall
@@ -402,7 +406,7 @@ Panel {
                   anchors.verticalCenter: parent.verticalCenter
                   anchors.verticalCenterOffset: 0
                   leftPadding: Style.space(6)
-                  text: "LIVE TO"
+                  text: root.chromeText("LIVE TO")
                   color: Qt.darker(root.contentForeground, 1.5)
                   font.family: root.contentFontFamily
                   font.pixelSize: Style.font.bodySmall
@@ -489,7 +493,7 @@ Panel {
                 id: lifeLabel
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: "LIFE"
+                text: root.chromeText("LIFE")
                 color: Qt.darker(root.contentForeground, 1.5)
                 font.family: root.contentFontFamily
                 font.pixelSize: Style.font.bodySmall
@@ -539,7 +543,7 @@ Panel {
 
                 PanelToolTip {
                   visible: lifeMouse.containsMouse
-                  text: "Memento Mori"
+                  text: root.chromeText("Memento Mori")
                   fontFamily: root.contentFontFamily
                 }
               }
@@ -588,7 +592,7 @@ Panel {
 
                   Text {
                     anchors.centerIn: parent
-                    text: "W"
+                    text: root.chromeText("W")
                     color: weekStartMouse.containsMouse
                       ? Style.hoverStateColor(root.contentForeground, Tokens.accent.primary)
                       : Qt.darker(root.contentForeground, 1.9)
@@ -608,7 +612,7 @@ Panel {
 
                   PanelToolTip {
                     visible: weekStartMouse.containsMouse
-                    text: "Start weeks on " + root.nextWeekStartLabel
+                    text: root.chromeText("Start weeks on " + root.nextWeekStartLabel)
                     fontFamily: root.contentFontFamily
                   }
                 }
