@@ -256,6 +256,11 @@ jobs_a11y = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").
 parity_a11y = next(job for job in jobs_a11y["jobs"] if job["id"] == "parity.accessibility")
 if parity_a11y.get("claim") == "present" or parity_a11y["humanRoute"].get("path") != "Settings jump list > Accessibility":
     raise SystemExit(f"parity.accessibility invents a present Accessibility engine: {parity_a11y}")
+files_inspect = by_id["files.inspect"]["humanRoute"]
+if files_inspect.get("path") != "Start > Files; Superbar > Files > Home":
+    raise SystemExit(f"files.inspect invents or underclaims Files Home: {files_inspect}")
+if by_id["files.inspect"].get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.inspect must not mark Files Home AVAILABLE")
 this_pc = by_id["files.this-pc.open"]["humanRoute"]
 if this_pc.get("path") != "Start > Computer; Superbar > Files > This PC":
     raise SystemExit(f"files.this-pc.open invents or underclaims This PC: {this_pc}")

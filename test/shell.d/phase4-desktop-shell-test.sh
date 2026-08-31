@@ -574,6 +574,7 @@ import json, sys
 idx = json.load(sys.stdin)
 files = idx.get("org.omarchy.Files") or []
 names = [row.get("name") for row in files]
+assert "Home" in names, names
 assert "This PC" in names, names
 assert "Desktop" in names, names
 assert "Documents" in names, names
@@ -618,14 +619,15 @@ OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042900.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043000.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043100.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043200.sh"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043300.sh"
 chmod +x "$ROOT/bin/omarchy-launch-files"
 [[ -x $ROOT/bin/omarchy-launch-files ]] \
   || fail "Files launcher stays executable after the Superbar pin repair"
 [[ -f $HOME/.local/share/applications/org.omarchy.Files.desktop ]] \
   || fail "Files launcher is published into the user applications dir"
-grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Search;' \
+grep -Fq 'Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Search;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
-  || fail "published Files launcher keeps This PC, Desktop, Documents, Downloads, Pictures, Recent, Trash, and Search"
+  || fail "published Files launcher keeps Home plus This PC, Desktop, Documents, Downloads, Pictures, Recent, Trash, and Search"
 grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
   || fail "published Settings launcher keeps Settings home plus inspect pages and the honest missing Accessibility and System actions"
@@ -637,6 +639,9 @@ if grep -Fq 'id: "omarchy.start.agent-overview"' "$ROOT/shell/services/AppSearch
 fi
 if grep -Fq 'id: "omarchy.start.settings-home"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent a second Settings home destination"
+fi
+if grep -Fq 'id: "omarchy.start.files-home"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent a second Files Home destination"
 fi
 pass "Files and Settings launchers are published for Start jump lists"
 
@@ -739,6 +744,9 @@ if grep -Fq 'id: "omarchy.start.agent-overview"' "$ROOT/shell/services/AppSearch
 fi
 if grep -Fq 'id: "omarchy.start.settings-home"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent a second Settings home destination"
+fi
+if grep -Fq 'id: "omarchy.start.files-home"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent a second Files Home destination"
 fi
 grep -Fq 'productProfile.text("Recent")' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a Recent section for launched programs"
