@@ -487,9 +487,9 @@ mkdir -p "$HOME/.local/share/applications"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042100.sh"
 [[ -f $HOME/.local/share/applications/org.omarchy.AgentCenter.desktop ]] \
   || fail "Agent Center launcher is published into the user applications dir"
-grep -Fq 'Actions=Tasks;Approvals;Automations;Activity;History;Context;Usage;' \
+grep -Fq 'Actions=Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
   "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
-  || fail "published Agent Center launcher keeps Phase 4 Agent Center jump actions"
+  || fail "published Agent Center launcher keeps every existing Agent Center jump action"
 pass "Agent Center desktop launcher is published for jump lists"
 
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042200.sh"
@@ -526,6 +526,10 @@ assert any(row.get("name") == "Activity & operations" for row in agents), agents
 assert any(row.get("name") == "History" for row in agents), agents
 assert any(row.get("name") == "Context" for row in agents), agents
 assert any(row.get("name") == "Usage" for row in agents), agents
+assert any(row.get("name") == "Permissions & trust" for row in agents), agents
+assert any(row.get("name") == "Providers & accounts" for row in agents), agents
+assert any(row.get("name") == "Artifacts" for row in agents), agents
+assert any(row.get("name") == "Troubleshooting" for row in agents), agents
 '
 pass "product desktop Actions are indexed from OMARCHY_PATH"
 
