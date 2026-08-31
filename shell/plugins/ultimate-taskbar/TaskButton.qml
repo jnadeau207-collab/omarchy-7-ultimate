@@ -345,7 +345,7 @@ Item {
               anchors.leftMargin: 6
               anchors.right: peekClose.left
               anchors.rightMargin: 4
-              text: modelData.title + (modelData.minimized ? " (minimized)" : "")
+              text: modelData.title + (modelData.minimized ? (root.bar && root.bar.chromeText ? root.bar.chromeText(" (minimized)") : " (minimized)") : "")
               color: Tokens.text.primary
               font.pixelSize: Style.font.bodySmall
               font.family: Tokens.typography.family
@@ -359,7 +359,7 @@ Item {
               anchors.left: peekIcon.right
               anchors.leftMargin: 6
               anchors.right: peekClose.left
-              text: modelData.workspace ? ("Desktop " + modelData.workspace) : ""
+              text: modelData.workspace ? (root.bar && root.bar.chromeText ? root.bar.chromeText("Desktop " + modelData.workspace) : ("Desktop " + modelData.workspace)) : ""
               color: Tokens.text.secondary
               font.pixelSize: Style.font.bodySmall
               font.family: Tokens.typography.family
