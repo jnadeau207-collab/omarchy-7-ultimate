@@ -341,6 +341,10 @@ grep -Fq 'OMARCHY_PATH' "$ROOT/shell/services/desktop-actions.py" \
   || fail "desktop-action index reads product launchers from OMARCHY_PATH"
 grep -Fq 'function jumpListFor' "$ROOT/shell/services/AppLibrary.qml" \
   || fail "AppLibrary exposes jump lists"
+grep -Fq 'JumpList.iconNameFor(value)' "$ROOT/shell/services/AppLibrary.qml" \
+  || fail "AppLibrary resolves compositor icon aliases"
+grep -Fq 'JumpList.sameDesktopId(entry.id, want)' "$ROOT/shell/services/AppLibrary.qml" \
+  || fail "AppLibrary matches desktop ids case-insensitively"
 grep -Fq 'Open new window' "$ROOT/shell/services/JumpList.js" \
   || fail "Superbar jump lists include Open new window"
 grep -Fq 'previewRows' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
@@ -408,6 +412,15 @@ const fromIndex = JumpList.jumpListFor(null, 'google-chrome', {
 assertEqual(fromIndex.length, 2, 'jump lists fall back to parsed desktop Actions')
 assertEqual(fromIndex[1].name, 'New Incognito Window', 'Chrome extra Actions stay on the jump list')
 assertDeepEqual(JumpList.desktopIdAliases('google-chrome').slice(0, 2), ['google-chrome', 'google-chrome-stable'], 'Chrome desktop ids alias')
+assert(JumpList.sameDesktopId('org.omarchy.Settings', 'org.omarchy.settings'), 'desktop ids match case-insensitively')
+assertEqual(JumpList.iconNameFor('org.omarchy.terminal'), 'foot', 'Omarchy terminal uses the foot icon')
+assertEqual(JumpList.iconNameFor('TUI.float'), 'foot', 'TUI float windows use the foot icon')
+assertEqual(JumpList.iconNameFor('org.omarchy.Settings'), '', 'Settings keeps its desktop Icon=')
+const fromLower = JumpList.jumpListFor(null, 'org.omarchy.settings', {
+  'org.omarchy.Settings': [{ id: 'Display', name: 'Display', command: 'omarchy-launch-settings --source desktop settings.display.overview', kind: 'desktop-action' }]
+})
+assertEqual(fromLower.length, 2, 'unpinned Settings groups still see desktop Actions')
+assertEqual(fromLower[1].name, 'Display', 'lowercase compositor ids join the Settings jump list')
 
 const rows = Preview.previewRows([
   { address: '0x1', title: 'Files', workspaceId: 2, minimized: true, at: [10, 20], size: [800, 600] },

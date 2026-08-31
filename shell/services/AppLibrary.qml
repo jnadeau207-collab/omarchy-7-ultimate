@@ -93,8 +93,27 @@ Item {
     // lookup can resolve an app name such as "zoom" to an action icon instead.
     var found = root.iconIndex[value]
     if (found) return Util.fileUrl(found)
-    var themed = Quickshell.iconPath(value, true)
-    if (themed.length > 0) return themed
+    var aliased = JumpList.iconNameFor(value)
+    if (aliased) {
+      found = root.iconIndex[aliased]
+      if (found) return Util.fileUrl(found)
+      var themedAlias = Quickshell.iconPath(aliased, true)
+      if (themedAlias.length > 0) return themedAlias
+    }
+    var entry = root.entryByDesktopId(value)
+    var entryIcon = entry ? String(entry.icon || "") : ""
+    if (entryIcon && entryIcon !== value) {
+      found = root.iconIndex[entryIcon]
+      if (found) return Util.fileUrl(found)
+      var themedEntry = Quickshell.iconPath(entryIcon, true)
+      if (themedEntry.length > 0) return themedEntry
+    }
+    // Reverse-DNS compositor ids are not icon names. A themed fallback here
+    // painted org.omarchy.terminal as the Settings gear.
+    if (value.indexOf(".") < 0) {
+      var themed = Quickshell.iconPath(value, true)
+      if (themed.length > 0) return themed
+    }
     return Quickshell.iconPath("application-x-executable", true)
   }
 
@@ -113,7 +132,7 @@ Item {
       for (var i = 0; i < values.length; i++) {
         var entry = values[i]
         if (!entry) continue
-        if (JumpList.normalizeDesktopId(entry.id) === want) return entry
+        if (JumpList.sameDesktopId(entry.id, want)) return entry
       }
     }
     return null
