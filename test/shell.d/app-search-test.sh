@@ -283,6 +283,15 @@ assert(
   iconSourceMatch[1].indexOf('root.iconIndex[value]') < iconSourceMatch[1].indexOf('Quickshell.iconPath(value, true)'),
   'app library prefers indexed app icons over ambiguous themed icons'
 )
+assert(
+  iconSourceMatch[1].includes('JumpList.iconNameFor(value)') &&
+    iconSourceMatch[1].includes('value.indexOf(".") < 0'),
+  'app library does not themed-fallback reverse-DNS compositor ids'
+)
+assert(
+  appLibraryQml.includes('JumpList.sameDesktopId(entry.id, want)'),
+  'app library matches desktop ids case-insensitively'
+)
 
 const beginLaunchMatch = appLibraryQml.match(/function beginLaunchFeedback\(name\) \{([\s\S]*?)\n  \}/)
 assert(beginLaunchMatch, 'app library beginLaunchFeedback function exists')
