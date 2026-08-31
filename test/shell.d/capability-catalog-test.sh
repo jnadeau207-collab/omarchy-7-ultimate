@@ -239,6 +239,46 @@ for capability_id, (surface, path) in writer_routes.items():
 locale = by_id["locale.configure"]["humanRoute"]
 if locale.get("status") != "planned" or locale.get("path"):
     raise SystemExit(f"locale.configure invents a Settings page: {locale}")
+
+allowed_settings_pages = {
+    "Personalization", "Network", "Sound", "Display", "Power", "Apps",
+    "Update", "Recovery", "Input", "Bluetooth", "Accessibility", "System",
+}
+invented_start_prefixes = (
+    "Start > Backup and Restore",
+    "Start > Services",
+    "Start > Task Scheduler",
+    "Start > Software Center",
+    "Start > Compatibility Center",
+    "Start > System Restore",
+    "Start > Troubleshooting",
+)
+
+def invented_settings_or_start(path):
+    if not path:
+        return False
+    if any(path.startswith(prefix) or f"; {prefix}" in path for prefix in invented_start_prefixes):
+        return True
+    for part in (segment.strip() for segment in path.split(";")):
+        if part.startswith("Start > Settings > "):
+            leaf = part[len("Start > Settings > "):].strip()
+        elif part.startswith("Settings > "):
+            leaf = part[len("Settings > "):].strip()
+        else:
+            continue
+        if leaf and leaf not in allowed_settings_pages:
+            return True
+    return False
+
+jobs = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
+for row in writers["capabilities"] + jobs["jobs"]:
+    route = row.get("humanRoute") or {}
+    if invented_settings_or_start(route.get("path") or ""):
+        raise SystemExit(f"{row.get('id')} invents a Settings or Start path: {route}")
+
+agent_center = next(job for job in jobs["jobs"] if job["id"] == "parity.agent-center")
+if agent_center.get("claim") == "present" or agent_center.get("agentAvailability") == "present":
+    raise SystemExit(f"parity.agent-center was flipped to present: {agent_center}")
 PY
 pass "leftover catalog routes stay honest after Settings inspect hosting"
 

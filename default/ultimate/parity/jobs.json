@@ -212,7 +212,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Devices and Printers"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Printer changes require cancellable setup and compensating removal.",
@@ -238,7 +238,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Device Manager"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Inspection is read-only; future device mutations require preflight and recovery.",
@@ -318,7 +318,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Accounts"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Account changes require authentication, invariant checks, and compensating recovery.",
@@ -344,7 +344,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Credential Manager"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Secrets must stay in Secret Service; destructive changes require explicit manual recovery guidance.",
@@ -451,7 +451,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Network > Firewall"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Rules require exact preflight and compensating restore of the prior ruleset.",
@@ -504,7 +504,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Backup and Restore",
-        "path": "Start > Backup and Restore"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Backups validate artifacts before success and preserve the prior schedule on failure.",
@@ -557,7 +557,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Storage > Disks"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Destructive partition changes require immutable preflight, authentication, and manual recovery media guidance.",
@@ -636,7 +636,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Services",
-        "path": "Start > Services"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Capture prior enablement and running state and offer compensating restore.",
@@ -662,7 +662,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Task Scheduler",
-        "path": "Start > Task Scheduler"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Scheduled-task creation and deletion require durable identity and compensating recovery.",
@@ -714,7 +714,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Remote Desktop"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Network exposure changes require exact preflight and automatic rule rollback.",
@@ -740,7 +740,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Drive Encryption"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Key escrow and recovery media are mandatory before encryption mutation.",
@@ -767,7 +767,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Files and Settings",
-        "path": "Files > Connect to Server; Settings > Sharing"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Connection changes compensate by disconnecting; shared exposure restores prior firewall state.",
@@ -794,7 +794,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Time and Language"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior locale and layout and offer undo.",
@@ -847,7 +847,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Default apps"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior MIME handlers and offer guarded undo.",
@@ -929,7 +929,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Software Center",
-        "path": "Start > Software Center"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Transactions require trust preflight, progress, rollback checkpoints, and adoption-safe removal.",
@@ -956,7 +956,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Compatibility Center",
-        "path": "Start > Compatibility Center"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Recipes require isolation, export, and restore-point-backed removal.",
@@ -983,7 +983,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "System Restore",
-        "path": "Start > System Restore"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Snapshot identity and boot reconciliation are authoritative; never report success before validation.",
@@ -1037,7 +1037,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Gaming"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Install and prefix changes require checkpoints and restore-point recovery.",
@@ -1063,7 +1063,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Privacy"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior permissions and offer guarded undo without logging private content.",
@@ -1300,7 +1300,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Software Center",
-        "path": "Start > Software Center"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Rollback the package transaction or restore point.",
@@ -1327,7 +1327,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Software Center",
-        "path": "Start > Software Center"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Rollback the package transaction and adopted runtime state.",
@@ -1613,7 +1613,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Default apps"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous default handler.",
@@ -1877,7 +1877,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Update > History"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Read-only history requires no recovery.",
@@ -1903,7 +1903,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "System Restore",
-        "path": "Start > System Restore > Create"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Validate the created snapshot and retain its durable identity.",
@@ -1929,7 +1929,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "System Restore",
-        "path": "Start > System Restore > Restore"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Reconcile the actual booted state and expose manual recovery if rollback fails.",
@@ -1955,7 +1955,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Devices and Printers"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Cancel setup safely or remove the newly added printer.",
@@ -1981,7 +1981,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > Keyboard"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the prior layout.",
@@ -2059,7 +2059,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Compatibility Center",
-        "path": "Start > Compatibility Center"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Checkpoint the isolated prefix and provide export or restore-point recovery.",
@@ -2138,7 +2138,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Troubleshooting",
-        "path": "Start > Troubleshooting > Audio"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record each repair and restore the previous route or configuration.",
