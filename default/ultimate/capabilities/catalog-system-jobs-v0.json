@@ -2602,7 +2602,7 @@
         "status": "planned",
         "surface": "Task Manager",
         "label": "View running applications and processes",
-        "path": "Superbar > Task Manager"
+        "path": ""
       },
       "agentCenterLabel": "View running applications and processes",
       "proofIds": {

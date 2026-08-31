@@ -584,7 +584,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Task Manager",
-        "path": "Superbar > Task Manager"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Inspection is read-only; startup changes retain guarded undo.",
@@ -1799,7 +1799,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Task Manager",
-        "path": "Superbar > Task Manager"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Read-only inspection requires no recovery.",
