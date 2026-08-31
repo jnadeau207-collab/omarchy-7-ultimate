@@ -160,6 +160,10 @@ grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-agent
   || fail "Agent Center chrome verbs consume Semantics.text"
 grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml" \
   || fail "Settings chrome verbs consume the host SemanticProfile"
+grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/agents/Panel.qml" \
+  || fail "agents panel chrome text uses the shared Superbar SemanticProfile"
+grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/plugins/agents/Panel.qml" \
+  || fail "agents panel Open Agent Center consumes Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places consume Semantics.text through the product profile"
 grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
