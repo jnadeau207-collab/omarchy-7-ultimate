@@ -333,8 +333,8 @@ if grep -Fq 'Color.notifications' "$ROOT/shell/plugins/notifications/components/
 fi
 pass "lock shows clock and user"
 
-grep -Fq 'text: "Calendar"' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
-  || fail "clock panel names itself Calendar"
+grep -Fq 'root.chromeText("Calendar")' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
+  || fail "clock panel names itself Calendar through Semantics.text"
 pass "calendar surface is the clock panel"
 
 grep -Fq 'OMARCHY_PATH' "$ROOT/shell/services/desktop-actions.py" \
@@ -695,6 +695,14 @@ grep -Fq 'Semantics.text(root.productProfile, "Quick Settings")' "$ROOT/shell/pl
   || fail "Quick Settings heading consumes Semantics.text"
 grep -Fq 'Semantics.text(root.productProfile, "Notification Center")' "$ROOT/shell/plugins/notifications/Center.qml" \
   || fail "Notification Center heading consumes Semantics.text"
+grep -Fq 'function chromeText(value)' "$ROOT/shell/plugins/panels/clock/Panel.qml" \
+  || fail "Calendar chrome text uses the shared Superbar SemanticProfile"
+grep -Fq 'pseudoLocale: !!(shell && shell.summonedPseudoLocale)' "$ROOT/shell/plugins/lock/LockView.qml" \
+  || fail "lock chrome reads the shared Start pseudo-locale summon flag"
+grep -Fq 'Semantics.text(chromeProfile, root.placeholderText)' "$ROOT/shell/plugins/lock/LockView.qml" \
+  || fail "lock password chrome consumes Semantics.text"
+grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-agent-center/AgentCenterApplication.qml" \
+  || fail "Agent Center chrome buttons consume Semantics.text"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places run through the existing SemanticProfile text transform"
 grep -Fq 'payload.rtl === true' "$ROOT/shell/plugins/ultimate-start/Start.qml" \

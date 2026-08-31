@@ -28,6 +28,12 @@ ShellRoot {
   property string placementState: "automatic"
   property var fabricPrincipal: null
 
+  SemanticProfile {
+    id: chromeProfile
+    profileId: "product"
+  }
+  readonly property var productProfile: chromeProfile
+
   readonly property bool fabricReady: fabric.ready
   readonly property string fabricConnectionState: fabric.connectionState
   readonly property var fabricLastError: fabric.lastError

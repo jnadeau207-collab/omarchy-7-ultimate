@@ -17,6 +17,14 @@ Item {
   property bool loadBackground: true
   property string passwordText: ""
   property bool syncingPasswordText: false
+  property var shell: null
+
+  SemanticProfile {
+    id: chromeProfile
+    profileId: "product"
+    rtl: !!(shell && shell.summonedRtl)
+    pseudoLocale: !!(shell && shell.summonedPseudoLocale)
+  }
 
   readonly property string userName: String(Quickshell.env("USER") || Quickshell.env("LOGNAME") || "")
   readonly property string placeholderText: "Enter Password"
@@ -221,7 +229,7 @@ Item {
       Text {
         textFormat: Text.PlainText
         anchors.fill: passwordInput
-        text: root.authenticatingPassword ? "Checking…" : (root.failureMessage.length > 0 ? root.failureMessage : root.placeholderText)
+        text: root.authenticatingPassword ? Semantics.text(chromeProfile, "Checking…") : (root.failureMessage.length > 0 ? root.failureMessage : Semantics.text(chromeProfile, root.placeholderText))
         visible: passwordInput.text.length === 0
         color: root.authenticatingPassword ? Tokens.text.primary : (root.failureMessage.length > 0 ? Tokens.state.danger : Tokens.text.secondary)
         font.family: Style.font.family

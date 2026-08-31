@@ -14,6 +14,7 @@ Item {
   property var host: null
   property var controller: null
   property var queryState: AgentCenterModel.baseState("agent.overview", {}, "offline")
+  readonly property var productProfile: host && host.productProfile ? host.productProfile : null
 
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
   readonly property var visibleRoutes: filteredRoutes(navigation.query)
@@ -146,6 +147,7 @@ Item {
     Shared.ApplicationNavigation {
       id: navigation
       title: "Agent Center"
+      semanticProfile: root.productProfile
       routes: root.visibleRoutes
       currentRoute: root.host ? root.host.currentRoute : ""
       Layout.preferredWidth: root.width < 920 ? 220 : 280
@@ -165,6 +167,7 @@ Item {
 
         Shared.FabricStatusBanner {
           host: root.host
+          semanticProfile: root.productProfile
           Layout.fillWidth: true
         }
 
@@ -178,7 +181,7 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              text: root.currentRoute ? root.currentRoute.title : "Agent Center"
+              text: Semantics.text(root.productProfile, root.currentRoute ? root.currentRoute.title : "Agent Center")
               color: Tokens.text.primary
               font.family: Style.font.family
               font.pixelSize: Style.font.heading
@@ -257,6 +260,7 @@ Item {
                     visible: root.canRefresh
                     text: "Refresh"
                     tooltipText: "Read the current bounded page again"
+                    semanticProfile: root.productProfile
                     focusable: true
                     bordered: true
                     onClicked: root.retryQuery()
@@ -266,6 +270,7 @@ Item {
                     visible: root.canMutate && (root.queryState.view === "agent.overview" || root.queryState.view === "agent.tasks")
                     text: "Create inspect task"
                     tooltipText: "Create a durable system.info.read inspect task"
+                    semanticProfile: root.productProfile
                     focusable: true
                     bordered: true
                     onClicked: root.createInspectTask()
@@ -324,7 +329,7 @@ Item {
 
                   Text {
                     textFormat: Text.PlainText
-                    text: "RECOVERY PATHS"
+                    text: Semantics.text(root.productProfile, "RECOVERY PATHS")
                     color: Tokens.state.warning
                     font.family: Style.font.family
                     font.pixelSize: Style.font.caption
@@ -362,6 +367,7 @@ Item {
                   required property var modelData
                   text: "Capture " + String(modelData)
                   tooltipText: "Capture the " + String(modelData) + " desktop context source"
+                  semanticProfile: root.productProfile
                   focusable: true
                   bordered: true
                   onClicked: root.captureContext(modelData)
@@ -410,7 +416,7 @@ Item {
 
                     Text {
                       textFormat: Text.PlainText
-                      text: modelData.label
+                      text: Semantics.text(root.productProfile, modelData.label)
                       color: Tokens.text.secondary
                       font.family: Style.font.family
                       font.pixelSize: Style.font.bodySmall
@@ -457,12 +463,14 @@ Item {
                 selectedEntityType: root.entityType
                 selectedEntityId: root.entityId
                 actionsEnabled: root.canMutate
+                semanticProfile: root.productProfile
                 onWorkRequested: function(action) { root.runTaskAction(action, modelData) }
               }
             }
 
-            Ui.EmptyState {
+              Ui.EmptyState {
               visible: root.queryState.phase === "empty"
+              semanticProfile: root.productProfile
               Layout.fillWidth: true
               Layout.topMargin: Style.space(20)
               title: root.entityId === "" ? "No records in this view" : "Requested record is absent"
@@ -480,6 +488,7 @@ Item {
                 visible: root.canLoadMore
                 text: "Load more"
                 tooltipText: "Read the next bounded managed-work page"
+                semanticProfile: root.productProfile
                 focusable: true
                 bordered: true
                 onClicked: root.controller.loadMore()
@@ -500,7 +509,7 @@ Item {
 
             Text {
               visible: root.queryState.phase === "ready" || root.queryState.phase === "empty" || root.queryState.phase === "partial"
-              text: "Managed-work v0 \u00b7 inspect tasks can be created, run, cancelled, and recovered. Consent and provider operations stay outside Agent Center."
+              text: Semantics.text(root.productProfile, "Managed-work v0 \u00b7 inspect tasks can be created, run, cancelled, and recovered. Consent and provider operations stay outside Agent Center.")
               color: Tokens.text.disabled
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
