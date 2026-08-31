@@ -615,7 +615,7 @@
         "status": "visible",
         "surface": "Files",
         "label": "View files",
-        "path": "Files > Home"
+        "path": "Start > Files; Superbar > Files > Home"
       },
       "agentCenterLabel": "Inspect files inventory",
       "proofIds": {
