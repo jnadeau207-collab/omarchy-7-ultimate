@@ -195,6 +195,8 @@ ShellRoot {
         { id: "omarchy.quick-settings" },
         { id: "omarchy.notifications" },
         { id: "omarchy.agents" },
+        { id: "omarchy.system-update" },
+        { id: "omarchy.keyboard-layout" },
         { id: "omarchy.tray" },
         { id: "omarchy.clock", format: "HH:mm\nddd M/d" }
       ]
