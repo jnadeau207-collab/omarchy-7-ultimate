@@ -17,6 +17,10 @@ Panel {
   readonly property color surface: Tokens.chrome.menu
   readonly property color track: Style.selectedFillFor(foreground, Tokens.accent.primary)
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property var productProfile: bar && bar.productProfile ? bar.productProfile : null
+  function chromeText(value) {
+    return Semantics.text(productProfile, value)
+  }
 
   readonly property var providers: usage.enabledProviders
   // The selection follows the provider, not the slot it happens to sit in: a
@@ -455,7 +459,7 @@ Panel {
             visible: root.providers.length === 0
             width: parent.width
             topPadding: Style.space(24)
-            text: "No AI coding subscriptions found.\nAgents show up here once you've used them."
+            text: root.chromeText("No AI coding subscriptions found.\nAgents show up here once you've used them.")
             color: root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
@@ -466,6 +470,7 @@ Panel {
           Button {
             width: parent.width
             text: "Open Agent Center"
+            semanticProfile: root.productProfile
             bordered: true
             foreground: root.foreground
             fontFamily: root.fontFamily
@@ -553,7 +558,7 @@ Panel {
 
             PanelSectionHeader {
               width: parent.width
-              text: "BALANCE"
+              text: root.chromeText("BALANCE")
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
@@ -564,7 +569,7 @@ Panel {
 
               Text {
                 id: balanceLabel
-                text: "Prepaid credits"
+                text: root.chromeText("Prepaid credits")
                 color: root.foreground
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.body
@@ -609,7 +614,7 @@ Panel {
             spacing: Style.space(10)
 
             PanelSectionHeader {
-              text: "LIMITS"
+              text: root.chromeText("LIMITS")
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
@@ -642,7 +647,7 @@ Panel {
 
             PanelSectionHeader {
               width: parent.width
-              text: "TOKENS BY DAY"
+              text: root.chromeText("TOKENS BY DAY")
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
@@ -678,7 +683,7 @@ Panel {
 
             PanelSectionHeader {
               width: parent.width
-              text: "TOKENS BY MODEL"
+              text: root.chromeText("TOKENS BY MODEL")
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
