@@ -44,7 +44,7 @@ Item {
         id: widgetLoader
         required property var modelData
         height: row.height
-        width: item ? Math.max(item.implicitWidth, 32) : 32
+        width: item && item.visible ? Math.max(item.implicitWidth, 32) : 0
         readonly property var registryEntry: {
           var w = root.bar && root.bar.barWidgetRegistry ? root.bar.barWidgetRegistry.widgets : {}
           return w[modelData.id] || null

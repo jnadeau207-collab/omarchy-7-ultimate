@@ -68,7 +68,7 @@ omarchy mode set power-user
 
 Desktop Mode does not rewrite `~/.config/omarchy/shell.json`. `shell.qml` computes an effective config: when `features.taskbar` is on and `features.topBar` is off, `bar.id` becomes `omarchy.ultimate-taskbar` and `bar.position` becomes `bottom`. Plugin enable/disable and Settings still persist the on-disk file, so switching back to Power User Mode restores the heritage bar without a migration.
 
-That overlay currently **sets a Desktop Mode notification-area layout** of Quick Settings, Notification Center, `omarchy.agents`, tray, and clock, without writing it to disk. Superbar `TrayCluster.qml` loads those ids from `barConfig` through `BarWidgetRegistry`. The five control panels stay summonable from Quick Settings tiles (hosted, chrome-hidden instances) rather than as their own Superbar icons. `omarchy.agents` remains the usage launch shim beside the pinned Agent Center toplevel.
+That overlay currently **sets a Desktop Mode notification-area layout** of Quick Settings, Notification Center, `omarchy.agents`, `omarchy.system-update`, `omarchy.keyboard-layout`, tray, and clock, without writing it to disk. Superbar `TrayCluster.qml` loads those ids from `barConfig` through `BarWidgetRegistry` and collapses widgets that hide when idle. The five control panels stay summonable from Quick Settings tiles (hosted, chrome-hidden instances) rather than as their own Superbar icons. `omarchy.agents` remains the usage launch shim beside the pinned Agent Center toplevel.
 
 ## Hyprland
 

@@ -22,7 +22,7 @@ jq -e '.features.quickSettings == true and .features.notificationCenter == true'
   || fail "desktop profile claims Quick Settings and Notification Center"
 pass "desktop profile flags match the shipped surfaces"
 
-python3 - "$ROOT" <<'PY' || fail "Desktop Mode overlay is Quick Settings, Notification Center, agents, tray, clock"
+python3 - "$ROOT" <<'PY' || fail "Desktop Mode overlay is Quick Settings, Notification Center, agents, update, keyboard, tray, clock"
 from pathlib import Path
 import re
 import sys
@@ -36,6 +36,8 @@ for needle in (
     'id: "omarchy.quick-settings"',
     'id: "omarchy.notifications"',
     'id: "omarchy.agents"',
+    'id: "omarchy.system-update"',
+    'id: "omarchy.keyboard-layout"',
     'id: "omarchy.tray"',
     'id: "omarchy.clock"',
     'format: "HH:mm\\nddd M/d"',
@@ -52,7 +54,9 @@ for leftover in (
     if leftover in body:
         raise SystemExit(f"overlay still pins {leftover} as a Superbar icon")
 PY
-pass "Desktop Mode overlay composes Quick Settings instead of five panel icons"
+pass "Desktop Mode overlay hosts existing Superbar plugins instead of five panel icons"
+grep -Fq 'item && item.visible' "$ROOT/shell/plugins/ultimate-taskbar/TrayCluster.qml" \
+  || fail "Superbar cluster must collapse idle keyboard-layout and system-update widgets"
 
 grep -Fq 'import "." as Files' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files application registers FilesRecordCard from its directory"
