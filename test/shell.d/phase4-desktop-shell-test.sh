@@ -583,6 +583,7 @@ assert "Recent" in names, names
 assert "Trash" in names, names
 assert "Search" in names, names
 settings = idx.get("org.omarchy.Settings") or []
+assert any(row.get("name") == "Settings home" for row in settings), settings
 assert any(row.get("name") == "Display" for row in settings), settings
 assert any(row.get("name") == "Personalization" for row in settings), settings
 assert any(row.get("name") == "Apps" for row in settings), settings
@@ -616,6 +617,7 @@ OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042800.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042900.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043000.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043100.sh"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788043200.sh"
 chmod +x "$ROOT/bin/omarchy-launch-files"
 [[ -x $ROOT/bin/omarchy-launch-files ]] \
   || fail "Files launcher stays executable after the Superbar pin repair"
@@ -624,14 +626,17 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
 grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Search;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
   || fail "published Files launcher keeps This PC, Desktop, Documents, Downloads, Pictures, Recent, Trash, and Search"
-grep -Fq 'Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;' \
+grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
-  || fail "published Settings launcher keeps inspect pages plus the honest missing Accessibility and System actions"
+  || fail "published Settings launcher keeps Settings home plus inspect pages and the honest missing Accessibility and System actions"
 grep -Fq 'Actions=Overview;Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
   "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
   || fail "published Agent Center launcher keeps Overview on the jump list"
 if grep -Fq 'id: "omarchy.start.agent-overview"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent a second Agent Center Overview destination"
+fi
+if grep -Fq 'id: "omarchy.start.settings-home"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent a second Settings home destination"
 fi
 pass "Files and Settings launchers are published for Start jump lists"
 
@@ -731,6 +736,9 @@ if grep -Fq 'id: "omarchy.start.files-search"' "$ROOT/shell/services/AppSearch.j
 fi
 if grep -Fq 'id: "omarchy.start.agent-overview"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent a second Agent Center Overview destination"
+fi
+if grep -Fq 'id: "omarchy.start.settings-home"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent a second Settings home destination"
 fi
 grep -Fq 'productProfile.text("Recent")' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a Recent section for launched programs"
