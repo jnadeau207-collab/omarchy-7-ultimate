@@ -125,6 +125,20 @@ Item {
     if (fingerprintPam.active) fingerprintPam.abort()
   }
 
+  function dismissDesktopChrome() {
+    if (root.shell && root.shell.transientCoordinator && typeof root.shell.transientCoordinator.dismiss === "function")
+      root.shell.transientCoordinator.dismiss()
+    if (root.shell && typeof root.shell.hide === "function")
+      root.shell.hide("omarchy.ultimate-task-switcher")
+  }
+
+  onPreviewVisibleChanged: if (previewVisible) dismissDesktopChrome()
+  onLockedChanged: {
+    if (!locked) return
+    previewVisible = false
+    dismissDesktopChrome()
+  }
+
   function beginLock() {
     if (!passwordPamConfigured) {
       logEvent("lock-denied: missing-pam")

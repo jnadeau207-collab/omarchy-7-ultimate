@@ -14,6 +14,8 @@ Item {
   property var windowService: bar && bar.shell ? bar.shell.windowService : null
   property var appLibrary: bar && bar.shell ? bar.shell.appLibrary : null
   property var notificationService: bar && bar.shell ? bar.shell.firstPartyServiceFor("omarchy.notifications") : null
+  property var lockService: bar && bar.shell ? bar.shell.firstPartyServiceFor("omarchy.lock") : null
+  readonly property bool lockCovering: !!(lockService && (lockService.previewVisible || lockService.locked))
 
   readonly property var windows: group && group.windows ? group.windows : []
   readonly property var previewRows: WindowPreview.previewRows(windows, windowService ? windowService.activeDesktopId : null, windowService ? windowService.windows : [])
@@ -198,7 +200,20 @@ Item {
     }
   }
 
+  function hidePeekAndMenu() {
+    peekTimer.stop()
+    peekLeaveTimer.stop()
+    peek.visible = false
+    menu.visible = false
+  }
+
+  onLockCoveringChanged: if (root.lockCovering) hidePeekAndMenu()
+
   function syncPeekPointer() {
+    if (root.lockCovering) {
+      hidePeekAndMenu()
+      return
+    }
     if (root.peekPointerOver && root.running && !menu.visible) {
       peekLeaveTimer.stop()
       if (!peek.visible) peekTimer.restart()
@@ -214,7 +229,7 @@ Item {
     interval: 400
     repeat: false
     onTriggered: {
-      if (root.peekPointerOver && root.running && !menu.visible)
+      if (!root.lockCovering && root.peekPointerOver && root.running && !menu.visible)
         peek.visible = true
     }
   }
@@ -224,7 +239,7 @@ Item {
     interval: 200
     repeat: false
     onTriggered: {
-      if (!root.peekPointerOver) peek.visible = false
+      if (root.lockCovering || !root.peekPointerOver) peek.visible = false
     }
   }
 
