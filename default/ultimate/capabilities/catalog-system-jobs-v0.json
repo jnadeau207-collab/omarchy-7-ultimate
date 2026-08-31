@@ -5866,7 +5866,7 @@
         "status": "missing",
         "surface": "Settings",
         "label": "System information",
-        "path": ""
+        "path": "Settings jump list > System information"
       },
       "agentCenterLabel": "System information",
       "proofIds": {

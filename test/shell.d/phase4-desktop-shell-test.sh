@@ -591,6 +591,8 @@ assert any(row.get("name") == "Power & battery" for row in settings), settings
 assert any(row.get("name") == "Update" for row in settings), settings
 assert any(row.get("name") == "Recovery" for row in settings), settings
 assert any(row.get("name") == "Input" for row in settings), settings
+assert any(row.get("name") == "Accessibility" for row in settings), settings
+assert any(row.get("name") == "System information" for row in settings), settings
 agents = idx.get("org.omarchy.AgentCenter") or []
 assert any(row.get("name") == "Tasks & Runs" for row in agents), agents
 assert any(row.get("name") == "Pending Approvals" for row in agents), agents
@@ -609,6 +611,7 @@ pass "product desktop Actions are indexed from OMARCHY_PATH"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042600.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042700.sh"
 OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042800.sh"
+OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788042900.sh"
 chmod +x "$ROOT/bin/omarchy-launch-files"
 [[ -x $ROOT/bin/omarchy-launch-files ]] \
   || fail "Files launcher stays executable after the Superbar pin repair"
@@ -617,9 +620,9 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
 grep -Fq 'Actions=ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
   || fail "published Files launcher keeps This PC, Desktop, Documents, Downloads, Pictures, Recent, and Trash"
-grep -Fq 'Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;' \
+grep -Fq 'Actions=Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
-  || fail "published Settings launcher keeps inspect pages plus the honest missing Accessibility action"
+  || fail "published Settings launcher keeps inspect pages plus the honest missing Accessibility and System actions"
 pass "Files and Settings launchers are published for Start jump lists"
 
 grep -Fq 'Tokens.typography.family' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
@@ -705,6 +708,9 @@ print('ok - Start open does not touch searchField before the card Loader is acti
 "
 if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent an Accessibility destination"
+fi
+if grep -Fq 'id: "omarchy.start.system"' "$ROOT/shell/services/AppSearch.js"; then
+  fail "Start search does not invent a System information destination"
 fi
 grep -Fq 'productProfile.text("Recent")' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start has a Recent section for launched programs"
