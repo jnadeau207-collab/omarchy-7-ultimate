@@ -277,8 +277,8 @@ Item {
             Ui.EmptyState {
               visible: root.showRecords && root.queryState.records.length === 0
               Layout.fillWidth: true
-              title: root.queryState.selectedMissing ? "Deep-linked item not found" : "No records in this route"
-              message: root.queryState.selectedMissing ? "This exact identity is absent from the displayed provider revision." : "The provider returned a valid empty result."
+              title: FilesModel.isIdleSearch(root.queryState) ? "Type a search query" : root.queryState.selectedMissing ? "Deep-linked item not found" : "No records in this route"
+              message: FilesModel.isIdleSearch(root.queryState) ? "Enter a query to search trusted file names and relative paths. File contents are never read." : root.queryState.selectedMissing ? "This exact identity is absent from the displayed provider revision." : "The provider returned a valid empty result."
             }
 
             Rectangle {

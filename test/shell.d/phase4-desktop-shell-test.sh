@@ -685,6 +685,10 @@ grep -Fq 'function placeEntries' "$ROOT/shell/apps/ultimate-files/FilesModel.js"
   || fail "Files Home and This PC surface place records from the inspect inventory"
 grep -Fq 'function pageAvailability' "$ROOT/shell/apps/ultimate-files/FilesModel.js" \
   || fail "This PC reports the virtual this-pc location instead of workspace degradation"
+grep -Fq 'function isIdleSearch' "$ROOT/shell/apps/ultimate-files/FilesModel.js" \
+  || fail "Idle Files search is a local empty state, not a provider.read"
+grep -Fq 'Files search requires a non-empty query' "$ROOT/shell/apps/ultimate-files/FilesModel.js" \
+  || fail "Files search refuses the empty-query typed-contract payload"
 grep -Fq 'function searchDestinations' "$ROOT/shell/services/AppSearch.js" \
   || fail "Start search injects Settings and place destinations"
 grep -Fq 'id: "omarchy.start.apps"' "$ROOT/shell/services/AppSearch.js" \
