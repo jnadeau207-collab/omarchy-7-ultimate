@@ -158,6 +158,8 @@ grep -Fq 'text: "Refresh"' "$ROOT/shell/apps/ultimate-agent-center/AgentCenterAp
   || fail "Agent Center Refresh stays a chrome verb"
 grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-agent-center/AgentCenterApplication.qml" \
   || fail "Agent Center chrome verbs consume Semantics.text"
+grep -Fq 'semanticProfile: root.productProfile' "$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml" \
+  || fail "Settings chrome verbs consume the host SemanticProfile"
 grep -Fq 'productProfile.text(modelData.name)' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
   || fail "Start places consume Semantics.text through the product profile"
 grep -Fq 'semanticPlaceholderText: "Search programs"' "$ROOT/shell/plugins/ultimate-start/Start.qml" \
