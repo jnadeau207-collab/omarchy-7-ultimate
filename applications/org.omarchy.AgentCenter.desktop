@@ -9,11 +9,11 @@ Exec=omarchy-launch-agent-center --source desktop %u
 Icon=org.omarchy.AgentCenter
 Terminal=false
 Categories=System;
-Keywords=agent;task;automation;approval;activity;usage;provider;history;context;
+Keywords=agent;task;automation;approval;activity;usage;provider;history;context;permission;artifact;troubleshooting;
 MimeType=x-scheme-handler/omarchy-agent;
 StartupNotify=true
 StartupWMClass=org.omarchy.AgentCenter
-Actions=Tasks;Approvals;Automations;Activity;History;Context;Usage;
+Actions=Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;
 
 [Desktop Action Tasks]
 Name=Tasks & Runs
@@ -42,3 +42,19 @@ Exec=omarchy-launch-agent-center --source desktop agent.context
 [Desktop Action Usage]
 Name=Usage
 Exec=omarchy-launch-agent-center --source desktop agent.usage
+
+[Desktop Action Permissions]
+Name=Permissions & trust
+Exec=omarchy-launch-agent-center --source desktop agent.permissions
+
+[Desktop Action Providers]
+Name=Providers & accounts
+Exec=omarchy-launch-agent-center --source desktop agent.providers
+
+[Desktop Action Artifacts]
+Name=Artifacts
+Exec=omarchy-launch-agent-center --source desktop agent.artifacts
+
+[Desktop Action Troubleshooting]
+Name=Troubleshooting
+Exec=omarchy-launch-agent-center --source desktop agent.troubleshooting

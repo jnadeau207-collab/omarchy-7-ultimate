@@ -337,6 +337,46 @@ var START_DESTINATIONS = [
     icon: "org.omarchy.AgentCenter",
     desktopId: "org.omarchy.AgentCenter",
     actionId: "Usage"
+  },
+  {
+    id: "omarchy.start.agent-permissions",
+    name: "Permissions & trust",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Permissions",
+    keywords: ["permissions", "trust", "grants"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Permissions"
+  },
+  {
+    id: "omarchy.start.agent-providers",
+    name: "Providers & accounts",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Providers",
+    keywords: ["providers", "accounts", "registration"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Providers"
+  },
+  {
+    id: "omarchy.start.agent-artifacts",
+    name: "Artifacts",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Artifacts",
+    keywords: ["artifacts", "outputs"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Artifacts"
+  },
+  {
+    id: "omarchy.start.agent-troubleshooting",
+    name: "Troubleshooting",
+    genericName: "Agent Center",
+    comment: "Open Agent Center Troubleshooting",
+    keywords: ["troubleshooting", "diagnostics"],
+    icon: "org.omarchy.AgentCenter",
+    desktopId: "org.omarchy.AgentCenter",
+    actionId: "Troubleshooting"
   }
 ]
 
