@@ -17,6 +17,17 @@ Item {
   readonly property var appLibrary: shell ? shell.appLibrary : null
   readonly property var matches: appLibrary ? appLibrary.sortedEntries(root.command) : []
 
+  SemanticProfile {
+    id: chromeProfile
+    profileId: "product"
+    rtl: !!(shell && shell.summonedRtl)
+    pseudoLocale: !!(shell && shell.summonedPseudoLocale)
+  }
+
+  function chromeText(value) {
+    return Semantics.text(chromeProfile, value)
+  }
+
   function open(payloadJson) {
     root.command = ""
     if (root.shell && root.shell.transientCoordinator)
@@ -68,7 +79,7 @@ Item {
         spacing: 8
 
         Text {
-          text: "Run"
+          text: root.chromeText("Run")
           color: Tokens.text.secondary
           font.family: Style.font.family
           font.pixelSize: Style.font.bodySmall
