@@ -610,7 +610,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Resource Monitor",
-        "path": "Task Manager > Performance > Resource Monitor"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Read-only inspection has no recovery requirement.",
@@ -1825,7 +1825,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Task Manager",
-        "path": "Task Manager > Startup"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous startup state.",

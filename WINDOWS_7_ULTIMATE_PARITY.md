@@ -39,7 +39,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | System Restore | plumbing | Settings → Recovery reads Fabric `recovery.inspect` (restore-point inventory). Same snapshot/rollback path. Typed restore writers remain Phase 5. Forty-task rows 30–31 pending. |
 | Disk Management | missing | |
 | Task Manager | missing as product | `btop` is the Activity TUI (`manual/21-tuis.md`). Not Task Manager. The leftover catalog keeps `processes.inspect` and `process.inspect` planned with empty paths; it does not invent Superbar or Administration Task Manager. |
-| Resource Monitor | missing | |
+| Resource Monitor | missing | The leftover catalog keeps `resources.inspect` missing with an empty path; it does not invent Task Manager > Performance > Resource Monitor. |
 | Services | missing | |
 | Task Scheduler | missing | |
 | Event / history | prototype (toasts + window ledger) | Notification history directory + `showHistory` replay as toasts. Window capability calls append `capability-ledger.json`. Not Event Viewer. |
