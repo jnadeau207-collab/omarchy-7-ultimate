@@ -2112,7 +2112,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Start > Settings > System"
+        "path": "Settings jump list > System information"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Read-only inspection requires no recovery.",

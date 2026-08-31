@@ -240,6 +240,17 @@ locale = by_id["locale.configure"]["humanRoute"]
 if locale.get("status") != "planned" or locale.get("path"):
     raise SystemExit(f"locale.configure invents a Settings page: {locale}")
 
+system_info = by_id["system.info.read"]["humanRoute"]
+if (
+    system_info.get("status") != "missing"
+    or system_info.get("path") != "Settings jump list > System information"
+):
+    raise SystemExit(f"system.info.read route is {system_info}")
+jobs_lock = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
+native38 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.38")
+if native38["humanRoute"].get("path") != "Settings jump list > System information":
+    raise SystemExit(f"windows-native.38 invents a Start System page: {native38['humanRoute']}")
+
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
     "Update", "Recovery", "Input", "Bluetooth", "Accessibility", "System",
@@ -252,6 +263,7 @@ invented_start_prefixes = (
     "Start > Compatibility Center",
     "Start > System Restore",
     "Start > Troubleshooting",
+    "Start > Settings > System",
 )
 
 def invented_settings_or_start(path):
