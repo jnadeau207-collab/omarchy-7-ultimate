@@ -9,6 +9,17 @@ function normalizeDesktopId(id) {
   return value
 }
 
+function sameDesktopId(a, b) {
+  return normalizeDesktopId(a).toLowerCase() === normalizeDesktopId(b).toLowerCase()
+}
+
+function iconNameFor(id) {
+  var value = normalizeDesktopId(id).toLowerCase()
+  if (value === "org.omarchy.terminal" || value === "tui.float" || value === "tui.tile")
+    return "foot"
+  return ""
+}
+
 function copyLengthList(value) {
   if (!isLengthList(value)) return []
   var out = []
@@ -86,9 +97,20 @@ function desktopIdAliases(id) {
 function indexedActions(actionIndex, desktopId) {
   if (!actionIndex) return []
   var aliases = desktopIdAliases(desktopId)
-  for (var i = 0; i < aliases.length; i++) {
-    var rows = actionIndex[aliases[i]]
+  var i
+  var key
+  var rows
+  for (i = 0; i < aliases.length; i++) {
+    rows = actionIndex[aliases[i]]
     if (isLengthList(rows) && rows.length > 0) return copyLengthList(rows)
+  }
+  for (i = 0; i < aliases.length; i++) {
+    for (key in actionIndex) {
+      if (!Object.prototype.hasOwnProperty.call(actionIndex, key)) continue
+      if (!sameDesktopId(key, aliases[i])) continue
+      rows = actionIndex[key]
+      if (isLengthList(rows) && rows.length > 0) return copyLengthList(rows)
+    }
   }
   return []
 }
@@ -110,6 +132,8 @@ function jumpListFor(entry, desktopId, actionIndex) {
 if (typeof module !== "undefined") {
   module.exports = {
     normalizeDesktopId: normalizeDesktopId,
+    sameDesktopId: sameDesktopId,
+    iconNameFor: iconNameFor,
     actionList: actionList,
     actionCommand: actionCommand,
     desktopActions: desktopActions,
