@@ -259,6 +259,33 @@ assertDeepEqual(
   'notifications ignore a left bar for popup placement'
 )
 
+assertEqual(
+  notifications.badgeCountForApp([{ app: 'Agent Center' }, { app: 'Agent' }], 'org.omarchy.Agent', 'Agent'),
+  1,
+  'Agent badges do not steal Agent Center notifications'
+)
+assertEqual(
+  notifications.badgeCountForApp([{ app: 'Agent Center' }, { app: 'Agent' }], 'org.omarchy.AgentCenter', 'Agent Center'),
+  1,
+  'Agent Center badges stay on Agent Center notifications'
+)
+assertEqual(
+  notifications.badgeCountForApp([{ app: 'Fcitx', appIcon: 'fcitx' }, { app: 'Fcitx', appIcon: 'fcitx' }], 'org.omarchy.Settings', 'Settings'),
+  0,
+  'Settings badges do not match unrelated Fcitx toasts'
+)
+assertEqual(
+  notifications.badgeCountForApp([{ app: 'Google Chrome' }, { app: 'Chromium' }, { app: 'Files' }], 'google-chrome', 'Chrome'),
+  2,
+  'Chrome badges keep Chromium-family aliases without substring leaks'
+)
+assertEqual(
+  notifications.badgeCountForApp([{ app: 'Files' }], 'org.omarchy.Files', 'Files'),
+  1,
+  'Files badges still match Files notifications'
+)
+assert(!notifications.rowMatchesApp({ app: 'Agent Center' }, 'org.omarchy.Agent', 'Agent'), 'Agent is not a substring of Agent Center')
+
 const notification = {
   id: 12,
   appName: 'Mail',

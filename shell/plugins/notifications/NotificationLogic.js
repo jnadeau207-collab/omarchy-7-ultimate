@@ -422,20 +422,82 @@ function popupPlacement(barPosition, barClearance, gapsOut) {
 // They belong in it — they're the newest notifications there are — but the
 // directory read races their archival, so they're carried across by hand and
 // keyed by file name (timestamp + id) to drop the copy the read already saw.
+function normalizeAppNeedle(value) {
+  var s = String(value || "").toLowerCase()
+  if (s.slice(-8) === ".desktop") s = s.slice(0, -8)
+  return s
+}
+
+function lastPathSegment(value) {
+  var s = normalizeAppNeedle(value)
+  var slash = Math.max(s.lastIndexOf("/"), s.lastIndexOf("\\"))
+  if (slash >= 0) s = s.slice(slash + 1)
+  var dot = s.lastIndexOf(".")
+  if (dot > 0) {
+    var ext = s.slice(dot + 1)
+    if (ext === "png" || ext === "svg" || ext === "jpg" || ext === "jpeg" || ext === "xpm" || ext === "desktop")
+      s = s.slice(0, dot)
+  }
+  return s
+}
+
+function lastIdSegment(value) {
+  var s = lastPathSegment(value)
+  var dot = s.lastIndexOf(".")
+  return dot >= 0 ? s.slice(dot + 1) : s
+}
+
+function lastNameToken(value) {
+  var parts = String(value || "").toLowerCase().split(/[\s._-]+/)
+  for (var i = parts.length - 1; i >= 0; i--) {
+    if (parts[i]) return parts[i]
+  }
+  return ""
+}
+
+function pushUnique(list, value) {
+  var n = normalizeAppNeedle(value)
+  if (n && list.indexOf(n) < 0) list.push(n)
+}
+
+function badgeNeedles(desktopId, name) {
+  var out = []
+  pushUnique(out, desktopId)
+  pushUnique(out, lastIdSegment(desktopId))
+  pushUnique(out, name)
+  pushUnique(out, lastNameToken(name))
+  var desktop = normalizeAppNeedle(desktopId)
+  if (desktop === "google-chrome" || desktop === "google-chrome-stable" || desktop === "chromium") {
+    pushUnique(out, "google-chrome")
+    pushUnique(out, "google-chrome-stable")
+    pushUnique(out, "chromium")
+    pushUnique(out, "chrome")
+  }
+  return out
+}
+
 function rowMatchesApp(row, desktopId, name) {
   if (!row) return false
+  if (!String(desktopId || "") && !String(name || "")) return false
   var app = String(row.app || "").toLowerCase()
   var icon = String(row.appIcon || "").toLowerCase()
-  var needles = [desktopId, name]
-  for (var i = 0; i < needles.length; i++) {
-    var needle = String(needles[i] || "").toLowerCase()
-    if (!needle) continue
-    if (needle.slice(-8) === ".desktop") needle = needle.slice(0, -8)
-    var shortId = needle
-    var dot = needle.lastIndexOf(".")
-    if (dot >= 0) shortId = needle.slice(dot + 1)
-    if (app === needle || icon === needle || app === shortId) return true
-    if (shortId && (app.indexOf(shortId) >= 0 || icon.indexOf(shortId) >= 0)) return true
+  if (!app && !icon) return false
+  var needles = badgeNeedles(desktopId, name)
+  var values = [app, icon, lastPathSegment(icon), lastIdSegment(app), lastIdSegment(icon)]
+  var i
+  var j
+  for (i = 0; i < values.length; i++) {
+    if (!values[i]) continue
+    for (j = 0; j < needles.length; j++) {
+      if (values[i] === needles[j]) return true
+    }
+  }
+  var lastApp = lastNameToken(app)
+  var lastIcon = lastNameToken(lastPathSegment(icon))
+  for (j = 0; j < needles.length; j++) {
+    if (needles[j].indexOf(" ") >= 0) continue
+    if (lastApp && lastApp === needles[j]) return true
+    if (lastIcon && lastIcon === needles[j]) return true
   }
   return false
 }
