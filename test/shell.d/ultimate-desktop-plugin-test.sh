@@ -144,6 +144,14 @@ grep -Fq 'id: peekLeaveTimer' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.q
   || fail "TaskButton peek uses a leave delay so the pointer can enter the card"
 grep -Fq 'id: peekHover' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "TaskButton peek stays hovered while the pointer is on the card"
+grep -Fq 'readonly property bool lockCovering' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "TaskButton hides peeks while the lock overlay covers the desktop"
+grep -Fq 'function hidePeekAndMenu' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "TaskButton can force-hide peek and jump menu under lock covering"
+grep -Fq 'function dismissDesktopChrome' "$ROOT/shell/plugins/lock/Service.qml" \
+  || fail "lock preview dismisses Start and Task View before covering the desktop"
+grep -Fq 'omarchy.ultimate-task-switcher' "$ROOT/shell/plugins/lock/Service.qml" \
+  || fail "lock covering hides Task View so that overlay does not stack above preview"
 if grep -Fq 'QsWindow' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml"; then
   fail "TaskButton must not bind PopupAnchor to QsWindow.window during PanelWindow complete"
 fi

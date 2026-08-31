@@ -86,4 +86,19 @@ assert(
   /strandedLock = false\s*\n\s*logEvent\("lock-stranded: recovering"\)\s*\n\s*beginLock\(\)/.test(serviceQml),
   'recovery takes the lock once and records it in the journal'
 )
+
+assert(
+  /function dismissDesktopChrome\(\) \{[\s\S]*transientCoordinator\.dismiss/.test(serviceQml),
+  'lock covering dismisses Desktop Mode flyouts so they do not stack above the overlay'
+)
+
+assert(
+  /onPreviewVisibleChanged: if \(previewVisible\) dismissDesktopChrome\(\)/.test(serviceQml),
+  'lock preview hides Superbar chrome before the overlay maps'
+)
+
+assert(
+  /onLockedChanged: \{[\s\S]*previewVisible = false[\s\S]*dismissDesktopChrome\(\)/.test(serviceQml),
+  'a real session lock also drops preview and dismisses chrome'
+)
 JS
