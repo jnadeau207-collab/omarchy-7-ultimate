@@ -251,6 +251,36 @@ var START_DESTINATIONS = [
     actionId: "ThisPC"
   },
   {
+    id: "omarchy.start.desktop",
+    name: "Desktop",
+    genericName: "Files",
+    comment: "Open Desktop",
+    keywords: ["desktop"],
+    icon: "folder-desktop",
+    desktopId: "org.omarchy.Files",
+    actionId: "Desktop"
+  },
+  {
+    id: "omarchy.start.documents",
+    name: "Documents",
+    genericName: "Files",
+    comment: "Open Documents",
+    keywords: ["documents", "docs"],
+    icon: "folder-documents",
+    desktopId: "org.omarchy.Files",
+    actionId: "Documents"
+  },
+  {
+    id: "omarchy.start.downloads",
+    name: "Downloads",
+    genericName: "Files",
+    comment: "Open Downloads",
+    keywords: ["downloads", "download"],
+    icon: "folder-downloads",
+    desktopId: "org.omarchy.Files",
+    actionId: "Downloads"
+  },
+  {
     id: "omarchy.start.settings",
     name: "Settings",
     genericName: "System Settings",
