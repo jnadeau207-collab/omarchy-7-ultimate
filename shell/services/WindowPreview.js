@@ -42,21 +42,41 @@ function geometry(win) {
   return { x: x, y: y, width: width, height: height }
 }
 
-function previewRow(win) {
+function workspaceIdOf(win) {
+  if (!win) return ""
+  if (win.workspaceId !== undefined && win.workspaceId !== null && String(win.workspaceId) !== "")
+    return win.workspaceId
+  if (win.workspace && typeof win.workspace === "object")
+    return win.workspace.id
+  if (win.workspace === undefined || win.workspace === null) return ""
+  return win.workspace
+}
+
+function onActiveDesktop(win, activeDesktopId) {
+  if (activeDesktopId === undefined || activeDesktopId === null || String(activeDesktopId) === "") return true
+  var id = Number(activeDesktopId)
+  if (!isFinite(id) || id <= 0) return true
+  var winId = workspaceIdOf(win)
+  if (winId === undefined || winId === null || String(winId) === "") return true
+  return Number(winId) === id
+}
+
+function previewRow(win, activeDesktopId) {
   if (!win) return null
   var box = geometry(win)
+  var minimized = win.minimized === true || win.hidden === true
   return {
     address: String(win.address || ""),
     title: windowTitle(win),
     appId: String(win.appId || ""),
     workspace: workspaceLabel(win),
-    minimized: win.minimized === true || win.hidden === true,
+    minimized: minimized,
     mapped: win.mapped !== false,
     x: box ? box.x : 0,
     y: box ? box.y : 0,
     width: box ? box.width : 0,
     height: box ? box.height : 0,
-    capturable: !!(box && win.hidden !== true && win.minimized !== true)
+    capturable: !!(box && !minimized && onActiveDesktop(win, activeDesktopId))
   }
 }
 
@@ -64,11 +84,11 @@ function isLengthList(value) {
   return !!value && typeof value !== "function" && typeof value.length === "number"
 }
 
-function previewRows(windows) {
+function previewRows(windows, activeDesktopId) {
   var list = isLengthList(windows) ? windows : []
   var out = []
   for (var i = 0; i < list.length; i++) {
-    var row = previewRow(list[i])
+    var row = previewRow(list[i], activeDesktopId)
     if (row && row.address) out.push(row)
   }
   return out
@@ -80,6 +100,8 @@ if (typeof module !== "undefined") {
     workspaceLabel: workspaceLabel,
     previewRow: previewRow,
     previewRows: previewRows,
-    geometry: geometry
+    geometry: geometry,
+    onActiveDesktop: onActiveDesktop,
+    workspaceIdOf: workspaceIdOf
   }
 }
