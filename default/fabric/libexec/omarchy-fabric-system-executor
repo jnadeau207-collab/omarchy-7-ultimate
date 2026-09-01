@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if (( $# != 1 )); then
+  printf '{"ok":false,"code":"action.argv","explanation":"The system executor takes exactly one code-owned action."}\n'
+  exit 1
+fi
+
+case "$1" in
+  packages.install) target=/usr/libexec/omarchy-fabric/packages-install ;;
+  packages.remove) target=/usr/libexec/omarchy-fabric/packages-remove ;;
+  *)
+    printf '{"ok":false,"code":"action.unknown","explanation":"The requested system action is not code owned."}\n'
+    exit 1
+    ;;
+esac
+
+exec /usr/bin/pkexec "$target"
