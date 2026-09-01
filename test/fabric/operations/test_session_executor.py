@@ -7,6 +7,7 @@ from typing import Any, Mapping
 from helper import Harness, fake_intents
 
 from omarchy_fabric.models import FabricError, FixedArgvCommand
+from omarchy_fabric.security.normalize import binding_digest
 from omarchy_fabric.operations.session_executor import (
     SessionCommandExecutor,
     SessionCommandResult,
@@ -29,10 +30,22 @@ class RecordingRunner:
         return SessionCommandResult(self.returncode, "applied", self.stderr)
 
 def reader_for(values: Mapping[str, Any]):
-    def read(resource_id: str) -> Mapping[str, Any]:
+    async def read(resource_id: str) -> Mapping[str, Any]:
         return {"resourceId": resource_id, "value": values.get(resource_id)}
 
     return read
+
+class SynchronousStateView:
+    def __init__(self, values: Mapping[str, Any]) -> None:
+        self.values = values
+
+    @staticmethod
+    def _revision(value: Any) -> str:
+        return "state." + binding_digest(value)
+
+    def state(self, resource_id: str) -> dict[str, Any]:
+        value = self.values.get(resource_id)
+        return {"resourceId": resource_id, "revision": self._revision(value), "value": value}
 
 class SessionExecutorTests(unittest.TestCase):
     def _harness(self, *, returncode: int = 0, stderr: str = "") -> tuple[Harness, RecordingRunner, dict[str, Any]]:
@@ -41,7 +54,7 @@ class SessionExecutorTests(unittest.TestCase):
         runner = RecordingRunner(values, returncode=returncode, stderr=stderr)
         executor = SessionCommandExecutor(fake_intents(), reader_for(values), runner=runner)
         harness.executor = executor
-        harness.gateway.executor = executor
+        harness.gateway.executor = SynchronousStateView(values)
         harness.coordinator = harness.make_coordinator(executor=executor)
         return harness, runner, values
 
@@ -74,15 +87,18 @@ class SessionExecutorTests(unittest.TestCase):
         runner = RecordingRunner(values)
         executor = SessionCommandExecutor(fake_intents(), reader_for(values), runner=runner)
         self.assertTrue(executor.available)
-        state = executor.state("setting.primary")
+        state = asyncio.run(executor.state("setting.primary"))
         self.assertEqual(state["resourceId"], "setting.primary")
         self.assertEqual(state["value"], False)
         self.assertTrue(state["revision"].startswith("state."))
 
     def test_absent_reader_state_is_a_typed_executor_error(self) -> None:
-        executor = SessionCommandExecutor(fake_intents(), lambda resource_id: None)
+        async def read(resource_id: str):
+            return None
+
+        executor = SessionCommandExecutor(fake_intents(), read)
         with self.assertRaises(FabricError) as caught:
-            executor.state("setting.primary")
+            asyncio.run(executor.state("setting.primary"))
         self.assertEqual(caught.exception.code, "executor.resource-unavailable")
 
     def test_invalid_deadline_is_rejected(self) -> None:
