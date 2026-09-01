@@ -32,8 +32,8 @@ fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
 [[ $valid_output == *"45 plugins; 27 surface routes"* ]] || fail "product-contract checker reports every first-party plugin and invocable surface" "$valid_output"
-[[ $valid_output == *"31 IPC endpoints/"* ]] || fail "product-contract checker reports every live shell and standalone-app IPC target" "$valid_output"
-[[ $valid_output == *"27 applications (25 first-party launchers, 4 shipped pins, 0 planned absent)"* ]] || fail "product-contract checker reports launcher, pin, and standalone-app identities" "$valid_output"
+[[ $valid_output == *"32 IPC endpoints/"* ]] || fail "product-contract checker reports every live shell and standalone-app IPC target" "$valid_output"
+[[ $valid_output == *"28 applications (26 first-party launchers, 4 shipped pins, 0 planned absent)"* ]] || fail "product-contract checker reports launcher, pin, and standalone-app identities" "$valid_output"
 [[ $valid_output == *"8 search providers (3 legacy, 5 absent)"* ]] || fail "product-contract checker reports current and absent normalized-search sources" "$valid_output"
 [[ $valid_output == *"38 process invocation components; 10 debt groups"* ]] || fail "product-contract checker reports the exhaustive process inventory and debt" "$valid_output"
 pass "product contracts validate against the live plugin, IPC, application, search, and process sources"

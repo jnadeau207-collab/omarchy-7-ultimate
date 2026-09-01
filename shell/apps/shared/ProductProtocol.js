@@ -32,6 +32,7 @@ function expectedScheme(application) {
   if (application === "software") return "omarchy-software"
   if (application === "compatibility") return "omarchy-compatibility"
   if (application === "administration") return "omarchy-administration"
+  if (application === "oobe") return "omarchy-setup"
   return ""
 }
 

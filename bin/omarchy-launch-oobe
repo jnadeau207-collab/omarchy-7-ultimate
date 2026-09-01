@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# omarchy:summary=Open the first-boot setup flow
+# omarchy:args=[route|omarchy-setup://link] [options]
+# omarchy:examples=omarchy launch oobe | omarchy launch oobe oobe.network
+
+set -euo pipefail
+
+source "$OMARCHY_PATH/shell/apps/shared/launch-product-app.bash"
+launch_product_app oobe "$@"
