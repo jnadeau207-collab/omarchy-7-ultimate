@@ -14,9 +14,10 @@ from ._probe import probe_error
 ResourceLoader = Callable[[], Awaitable[list[Mapping[str, Any]]]]
 
 class ReadOnlyProbeBackend:
-    def __init__(self, domain: str, loader: ResourceLoader) -> None:
+    def __init__(self, domain: str, loader: ResourceLoader, *, session_operable: bool = False) -> None:
         self.domain = domain
         self.loader = loader
+        self.session_operable = bool(session_operable)
 
     async def snapshot(self) -> BackendSnapshot:
         try:
@@ -28,6 +29,8 @@ class ReadOnlyProbeBackend:
         except Exception as error:
             reason = error if isinstance(error, FabricError) else probe_error(self.domain, error)
             return BackendSnapshot(False, False, (), reason)
+        if self.session_operable:
+            return BackendSnapshot(True, True, tuple(freeze(resource) for resource in resources), None)
         reason = FabricError(
             f"{self.domain}.operation-read-only",
             f"{self.domain.title()} changes are not available yet",

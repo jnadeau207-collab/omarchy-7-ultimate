@@ -49,7 +49,7 @@ class RegistryOperationGateway:
     def assert_current(self, binding: ProviderBinding) -> None:
         matches = []
         try:
-            catalog = normalize_json(self.registry.catalog())
+            catalog = self.registry.catalog()
         except FabricError:
             raise
         except Exception as error:
