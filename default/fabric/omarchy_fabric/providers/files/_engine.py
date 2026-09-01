@@ -215,6 +215,7 @@ class OperationSpec:
     propose: Propose
     summarize: Summarize
     guards: Guard
+    scope: Any = None
 
 class FakeStateBackend:
     """Atomic, restartable state backend used only by hermetic lifecycle tests."""
@@ -570,8 +571,22 @@ class StateDomainProvider:
         assert snapshot.state is not None
         current = thaw(snapshot.state)
         proposed = self._proposed(spec, current, normalized)
-        current_state = self._state(current)
-        proposed_state = self._state(proposed)
+        if spec.scope is None:
+            resource_binding = {"kind": self.resource_kind, "id": self.resource_id}
+            current_state = self._state(current)
+            proposed_state = self._state(proposed)
+        else:
+            scoped_current = spec.scope(current, normalized)
+            scoped_proposed = spec.scope(proposed, normalized)
+            if scoped_current["id"] != scoped_proposed["id"]:
+                raise FabricError(
+                    f"{self.domain}.scope-unstable",
+                    f"{self.domain.title()} operation scope is unstable",
+                    "The scoped resource identity changed across the proposal.",
+                )
+            resource_binding = {"kind": scoped_current["kind"], "id": scoped_current["id"]}
+            current_state = self._scoped_state(scoped_current["id"], scoped_current["value"])
+            proposed_state = self._scoped_state(scoped_proposed["id"], scoped_proposed["value"])
         recovery_state = {
             **deepcopy(current_state),
             "recoveryFromRevision": proposed_state["revision"],
@@ -583,7 +598,7 @@ class StateDomainProvider:
             "providerVersion": "v0",
             "action": action,
             "capability": definition["capability"],
-            "resource": {"kind": self.resource_kind, "id": self.resource_id},
+            "resource": resource_binding,
             "normalizedArguments": normalized,
             "stateRevision": current_state["revision"],
             "currentState": current_state,
@@ -915,6 +930,14 @@ class StateDomainProvider:
                 recovery_actions=(f"{self.domain}.reconcile",),
             ) from error
         return StateSnapshot("available", True, freeze(thaw(snapshot.state)))
+
+    def _scoped_state(self, resource_id: str, value: Mapping[str, Any]) -> dict[str, Any]:
+        normalized = thaw(value)
+        return {
+            "resourceId": resource_id,
+            "revision": state_revision(normalized),
+            "value": normalized,
+        }
 
     def _state(self, value: Mapping[str, Any]) -> dict[str, Any]:
         normalized = thaw(value)

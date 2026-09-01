@@ -202,11 +202,21 @@ def create_directory(payload: Mapping[str, Any], home: pathlib.Path) -> pathlib.
         raise ApplyError("apply.failed", "Creating the directory reported a failure status.") from error
     return final
 
+def stable_directory_id(location_id: str, parent: str) -> str:
+    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
+    return f"files.directory.{digest}"
+
 def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
-    if resource_id != FILES_WORKSPACE_ID:
-        raise ApplyError("payload.invalid", "The apply payload names no files workspace.")
+    if not isinstance(resource_id, str):
+        raise ApplyError("payload.invalid", "The apply payload names no files directory.")
+    location_id = payload.get("locationId")
+    parent = payload.get("parentRelativePath")
+    if not isinstance(location_id, str) or not isinstance(parent, str):
+        raise ApplyError("payload.invalid", "The apply payload names no scoped directory.")
+    if resource_id != stable_directory_id(location_id, parent):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
     created = create_directory(payload, pathlib.Path.home())
     json.dump({"ok": True, "resourceId": resource_id, "created": created.name}, stdout)
     stdout.write("\n")
