@@ -668,6 +668,7 @@ class StateDomainProvider:
             definition,
             expected_state,
             "expectedState",
+            scoped=spec.scope is not None,
         )
         snapshot = await self._available_snapshot(operation=False)
         assert snapshot.state is not None
@@ -755,19 +756,21 @@ class StateDomainProvider:
         label: str,
         *,
         recovery_action: str | None = None,
+        scoped: bool = False,
     ) -> tuple[dict[str, Any], str | None]:
         self._validate(definition["state"], supplied, label)
-        if supplied["resourceId"] != self.resource_id:
+        if not scoped and supplied["resourceId"] != self.resource_id:
             raise FabricError(
                 f"{self.domain}.resource-mismatch",
                 f"{self.domain.title()} resource identity changed",
                 f"{label} belongs to a different stable resource.",
             )
         value = deepcopy(dict(thaw(supplied["value"])))
-        try:
-            self.validate_state_value(value)
-        except (FabricError, KeyError, TypeError, ValueError) as error:
-            raise self._state_corrupt(label, type(error).__name__) from error
+        if not scoped:
+            try:
+                self.validate_state_value(value)
+            except (FabricError, KeyError, TypeError, ValueError) as error:
+                raise self._state_corrupt(label, type(error).__name__) from error
         if supplied["revision"] != state_revision(value):
             raise self._state_corrupt(label, "revision")
         recovery_revision = supplied.get("recoveryFromRevision")
