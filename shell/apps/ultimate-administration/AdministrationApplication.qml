@@ -25,6 +25,69 @@ Item {
   ].indexOf(queryState.phase) >= 0
   readonly property bool domainVisible: queryState.query && queryState.query.providerId !== ""
   readonly property int recordColumns: contentScroll.availableWidth >= 980 ? 2 : 1
+
+  property string operationStage: ""
+  property string operationRequestId: ""
+  property string operationId: ""
+  property string operationMessage: ""
+  property string operationTargetId: ""
+  readonly property bool operationBusy: operationStage !== ""
+  readonly property bool terminationAvailable: queryState.query
+    && String(queryState.query.providerId || "") === "process.provider"
+    && queryState.operationAvailable === true
+
+  function endTask(record) {
+    if (!host || operationBusy || !record) return
+    var digest = ""
+    for (var i = 0; i < (record.details || []).length; i++) {
+      if (String(record.details[i].label || "").toLowerCase().indexOf("start digest") >= 0) {
+        digest = String(record.details[i].value)
+        break
+      }
+    }
+    if (digest === "") return
+    root.operationTargetId = String(record.id)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "process.provider",
+      action: "termination.plan",
+      arguments: { resourceId: root.operationTargetId, expectedStartDigest: digest, signal: "term" },
+      idempotencyKey: "administration.endtask." + root.operationTargetId + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Administration could not reach the operation service.")
+  }
+
+  function resetOperation(message) {
+    root.operationStage = ""
+    root.operationRequestId = ""
+    root.operationId = ""
+    root.operationTargetId = ""
+    root.operationMessage = message || ""
+  }
+
+  function advanceOperation(result) {
+    if (root.operationStage === "preflight") {
+      root.operationId = String(result.operationId || "")
+      root.operationStage = "approve"
+      root.operationRequestId = host.requestFabric("operation.approve", { operationId: root.operationId })
+      return
+    }
+    if (root.operationStage === "approve") {
+      root.operationStage = "start"
+      root.operationRequestId = host.requestFabric("operation.start", {
+        operationId: root.operationId,
+        approvalId: String(result.approvalId || "")
+      })
+      return
+    }
+    if (root.operationStage === "start") {
+      root.resetOperation(String(result.status || "") === "succeeded"
+        ? "The task was ended."
+        : "Ending the task finished as " + String(result.status || "unknown") + ".")
+      if (root.controller) root.controller.refresh()
+    }
+  }
   readonly property int overviewColumns: contentScroll.availableWidth >= 1120 ? 3
     : contentScroll.availableWidth >= 700 ? 2 : 1
 
@@ -124,10 +187,18 @@ Item {
     }
 
     function onFabricResult(requestId, result) {
+      if (root.operationRequestId !== "" && requestId === root.operationRequestId) {
+        root.advanceOperation(result || {})
+        return
+      }
       if (root.controller) root.controller.receiveResult(requestId, result)
     }
 
     function onFabricFailure(requestId, error) {
+      if (root.operationRequestId !== "" && requestId === root.operationRequestId) {
+        root.resetOperation(error && error.explanation ? String(error.explanation) : "The task could not be ended.")
+        return
+      }
       if (root.controller) root.controller.receiveFailure(requestId, error)
     }
   }
@@ -486,8 +557,8 @@ Item {
                   }
 
                   Ui.Badge {
-                    text: "CHANGES UNAVAILABLE"
-                    tone: "warning"
+                    text: root.terminationAvailable ? "LIVE CONTROL" : "CHANGES UNAVAILABLE"
+                    tone: root.terminationAvailable ? "info" : "warning"
                     Layout.alignment: Qt.AlignTop
                   }
                 }
@@ -509,7 +580,9 @@ Item {
                   visible: root.queryState.operationActions.length > 0
                   text: Semantics.text(root.productProfile, "Declared provider operations") + ": " +
                     root.queryState.operationActions.join(", ") + ". " +
-                    Semantics.text(root.productProfile, "Administration exposes no preflight, approval, or execution control until the durable coordinator is integrated.")
+                    (root.terminationAvailable
+                      ? Semantics.text(root.productProfile, "Ending a task runs through preflight, approval, and the durable coordinator as this user.")
+                      : Semantics.text(root.productProfile, "Administration exposes no preflight, approval, or execution control for this domain yet."))
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
@@ -537,6 +610,9 @@ Item {
                   record: modelData
                   selected: root.queryState.selectedResourceId !== "" &&
                     root.queryState.selectedResourceId === modelData.id
+                  endTaskEnabled: root.terminationAvailable && String(modelData.kind || "") === "process"
+                  endTaskBusy: root.operationBusy && root.operationTargetId === modelData.id
+                  onEndTaskRequested: function(record) { root.endTask(record) }
                 }
               }
             }

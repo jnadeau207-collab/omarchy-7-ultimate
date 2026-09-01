@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "process.inspect",
     supportsResource: true,
-    coverage: "Running processes are readable from process.inspect (pid, user, command, control group). Ending a task is planned through process.termination.plan and is not wired to Administration."
+    coverage: "Running processes are readable from process.inspect (pid, user, command, control group). Ending a task applies through the durable operation service as this user. Only the bounded inventory is reachable."
   },
   {
     routeId: "administration.services.overview",
@@ -344,6 +344,7 @@ function baseState(routeId, argumentsValue, phase) {
     providerEntry: null,
     records: [],
     totalRecords: 0,
+    operationAvailable: false,
     clipped: false,
     selectedMissing: false,
     overviewCards: [],
@@ -523,6 +524,11 @@ function normalizeApplication(application, index) {
   }
 }
 
+function payloadOperationAvailable(value) {
+  var availability = isObject(value && value.availability) ? value.availability : null
+  return availability !== null && availability.operation === true
+}
+
 function payloadAvailability(value) {
   var availability = isObject(value && value.availability) ? value.availability : null
   if (!availability) return { state: "unknown", detail: "The provider result has no availability declaration." }
@@ -626,6 +632,7 @@ function acceptedReadState(previous, result) {
   next.clipped = normalized.clipped
   next.selectedMissing = normalized.selectedMissing
   next.payloadAvailability = availability.state
+  next.operationAvailable = payloadOperationAvailable(result.value)
   next.observedAt = result.observedAt
   next.requestId = ""
   next.error = null
