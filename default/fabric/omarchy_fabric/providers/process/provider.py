@@ -110,7 +110,7 @@ def _process_rows(text: str) -> list[tuple[int, int, float, float, int, str, str
     return rows
 
 def _selected_rows(rows: list[tuple[int, int, float, float, int, str, str]]) -> list[tuple[int, int, float, float, int, str, str]]:
-    users = sorted((row for row in rows if row[1] >= 1000), key=lambda row: (row[1], row[0]))
+    users = sorted((row for row in rows if row[1] >= 1000), key=lambda row: (-row[4], -row[2], row[0]))
     system = sorted((row for row in rows if row[1] < 1000), key=lambda row: row[0])
     selected = users[:48] + system[:16]
     selected_ids = {row[0] for row in selected}
