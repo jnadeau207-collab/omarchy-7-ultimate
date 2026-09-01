@@ -29,13 +29,13 @@ class IdentityAndInjectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotEqual(resources[0]["id"], recycled[0]["id"])
         groups = process.group_processes(resources)
         self.assertEqual(sum(group["count"] for group in groups), len(resources))
-        process.assert_pid_identity(resources[0], resources[0]["state"]["startToken"])
+        process.assert_pid_identity(resources[0], resources[0]["state"]["startDigest"])
         with self.assertRaises(ValueError):
             process.assert_pid_identity(resources[0], "0" * 16)
         case = next(candidate for candidate in resource_cases() if candidate.module is process)
         provider = process.build_fake_provider([copy.deepcopy(case.resource)])
         with self.assertRaises(FabricError) as reused:
-            await provider.preflight(process.OPERATION_ACTION, {**case.arguments, "expectedStartToken": "0" * 16}, principal())
+            await provider.preflight(process.OPERATION_ACTION, {**case.arguments, "expectedStartDigest": "0" * 16}, principal())
         self.assertEqual(reused.exception.code, "process.precondition-failed")
         self.assertEqual(provider.backend.write_count, 0)
 
