@@ -12,7 +12,7 @@ Column {
   property int stepSize: 1
   property color foreground: Tokens.text.primary
   property color accent: Tokens.accent.primary
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property real fontSize: Style.font.body
   property real fieldWidth: Style.spacing.numberFieldWidth
   property bool hasCursor: false

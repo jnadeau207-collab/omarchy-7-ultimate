@@ -30,7 +30,7 @@ Item {
   property color popupBorder: Tokens.border.subtle
   property color accent: Tokens.accent.primary
   readonly property var popupBorderSpec: Border.localOrSurfaceSpec("popups", "border", popupBorder, Tokens.border.subtle, Style.normalBorderWidth)
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property int rowHeight: Style.spacing.controlHeight
   property int popupRowHeight: Style.spacing.popupRowHeight
   property int popupMinHeight: Style.spacing.searchablePopupMinHeight

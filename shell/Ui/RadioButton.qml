@@ -76,7 +76,7 @@ Item {
       text: Semantics.text(root.semanticProfile, root.label)
       width: root.labelMaximumWidth > 0 ? root.labelMaximumWidth : implicitWidth
       color: root.foreground
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
       wrapMode: Text.WordWrap
     }

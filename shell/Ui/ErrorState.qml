@@ -31,7 +31,7 @@ Column {
     anchors.horizontalCenter: parent.horizontalCenter
     text: "\u26a0"
     color: Semantics.toneColor("danger", root.semanticProfile)
-    font.family: Style.font.family
+    font.family: Tokens.typography.family
     font.pixelSize: Semantics.font(root.semanticProfile, Style.font.display)
   }
 
@@ -41,7 +41,7 @@ Column {
     visible: root.title !== ""
     text: Semantics.text(root.semanticProfile, root.title)
     color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
-    font.family: Style.font.family
+    font.family: Tokens.typography.family
     font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
     font.bold: true
   }
@@ -52,7 +52,7 @@ Column {
     visible: root.explanation !== ""
     text: Semantics.text(root.semanticProfile, root.explanation)
     color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary
-    font.family: Style.font.family
+    font.family: Tokens.typography.family
     font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
     horizontalAlignment: Text.AlignHCenter
     width: Math.min(root.width || 0, 420)
@@ -97,7 +97,7 @@ Column {
       anchors.margins: Style.space(6)
       text: Semantics.text(root.semanticProfile, root.detail)
       color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
       wrapMode: Text.WrapAnywhere
     }
