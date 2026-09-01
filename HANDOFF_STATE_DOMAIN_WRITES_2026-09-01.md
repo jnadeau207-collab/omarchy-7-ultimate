@@ -150,7 +150,17 @@ Do not weaken `operation_available ⇒ available` to make a proof pass. Do not a
 
 That single rule explains exactly which write paths work. `audio.output-volume.set` and `files.directory.create` are declared `low`, so the shell may hold their grants; both are proven end to end. `process.termination.plan` is declared `consequential`, so `operation.approve` fails with `grant.shell-consequential` and Administration can never end a task, however completely it is wired.
 
-So the reachable write plane from Settings and Administration is, by design, the low-risk one. Anything consequential needs an authorization path that is not a standing shell grant — a distinct elevated principal, or a per-operation authorization the coordinator accepts without minting a capability the shell then holds.
+So the reachable write plane from Settings and Administration is, by design, the low-risk one.
+
+It is broader than the shell, too. `daemon.py:1883` admits exactly one endpoint:
+
+```
+EndpointAdmission(endpoint_id="fabric.owner-rpc", kind=PrincipalKind.SHELL)
+```
+
+`PrincipalKind` has `SHELL`, `PROVIDER`, and `TASK`, and the security model already carries `TASK`-specific rules — `grants.py:99` and `policy.py:46` bind a task grant to its `task_id`. No endpoint is admitted for either non-shell kind. So every RPC caller is `SHELL`, and **no consequential or high-risk operation is reachable over RPC by anyone today**, not merely from the product surfaces.
+
+The answer is designed and unwired rather than missing: admit a `TASK` endpoint and route consequential operations through a task-bound principal. That is a security-architecture decision — it creates a privileged RPC role — and it is the same answer packages and compatibility will need on top of root.
 
 End Task is wired and correct up to that line: scoped `process.termination.<sha256>` resource with `{present}` state, a helper that re-derives identity from `/proc` so a stale plan cannot signal a reused PID, and the Administration control plus its state machine. `terminationAuthorized` is `false` so the product does not offer a button that cannot succeed, and the page says why.
 
