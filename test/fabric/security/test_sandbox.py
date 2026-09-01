@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "default" / "fabric"))
 
 from sandbox.builder import (
     FIXED_AGENT_RUNNER,
+    GrantTokenBind,
     NetworkScope,
     SandboxSpec,
     SandboxUnavailable,
@@ -195,6 +196,34 @@ class SandboxTests(unittest.TestCase):
             finally:
                 for listener in listeners:
                     listener.close()
+
+    def test_grant_token_is_bound_not_exported_in_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            grant_root = root / "grant"
+            grant_root.mkdir()
+            grant = grant_root / "task-grant"
+            grant.write_text("task-grant-token-sandbox-value", encoding="utf-8")
+            os.chmod(grant, 0o600)
+            home = root / "home"
+            home.mkdir()
+            spec = SandboxSpec(
+                "task.one",
+                self.runner(),
+                grant_token=GrantTokenBind(grant, grant_root),
+            )
+            command = build_bwrap_command(spec, protected_home=home)
+            self.assertIn("/run/omarchy/task-grant", command)
+            token_index = command.index("/run/omarchy/task-grant")
+            self.assertEqual("--ro-bind", command[token_index - 2])
+            self.assertNotIn("task-grant-token-sandbox-value", command)
+            with self.assertRaises(SandboxViolation):
+                SandboxSpec(
+                    "task.one",
+                    self.runner(),
+                    environment={"GRANT_TOKEN": "task-grant-token-sandbox-value"},
+                    grant_token=GrantTokenBind(grant, grant_root),
+                )
 
     def test_task_proxy_cannot_cross_task_boundaries(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

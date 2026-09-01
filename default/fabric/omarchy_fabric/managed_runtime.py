@@ -2,18 +2,75 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import secrets
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
-from sandbox.builder import FIXED_AGENT_RUNNER, SandboxSpec, SandboxUnavailable, SandboxViolation, ScopedBind
+from sandbox.builder import (
+    FIXED_AGENT_RUNNER,
+    GrantTokenBind,
+    SandboxSpec,
+    SandboxUnavailable,
+    SandboxViolation,
+    ScopedBind,
+)
 from sandbox.runner import IsolatedRun, packaged_runner_source, run_isolated
 
 from .desktop_context import capture_desktop_context
 from .managed_work import Actor, ManagedWorkError, ManagedWorkPlane
 from .managed_work.plane import SANDBOX_CAPABILITIES
 from .models import FabricError
+from .security.errors import SecurityValidationError
+from .security.task_admission import PeerIdentity, TaskEndpointBinding, read_peer_identity
+
+IsolatedRunner = Callable[..., IsolatedRun]
+IdentityReader = Callable[[int], PeerIdentity]
+
+
+class TaskSandboxHost(Protocol):
+    """Daemon-owned task endpoint and admission surface used by the runtime."""
+
+    def require_task_socket_path(self, socket_path: Path) -> Path: ...
+
+    def open_task_endpoint(self, socket_path: Path) -> tuple[int, int]: ...
+
+    def close_task_endpoint(self, socket_path: Path) -> None: ...
+
+    def register_task_sandbox(self, binding: TaskEndpointBinding, grant_token: str) -> None: ...
+
+    def revoke_task_sandbox(self, task_id: str) -> None: ...
+
+    def read_sandbox_identity(self, pid: int) -> PeerIdentity: ...
+
+
+class DaemonTaskSandboxHost:
+    """Synchronous facade over the daemon's task admission API."""
+
+    def __init__(self, daemon: Any) -> None:
+        self._daemon = daemon
+
+    def require_task_socket_path(self, socket_path: Path) -> Path:
+        return self._daemon.require_task_socket_path(socket_path)
+
+    def open_task_endpoint(self, socket_path: Path) -> tuple[int, int]:
+        return self._daemon.bind_task_endpoint(socket_path)
+
+    def close_task_endpoint(self, socket_path: Path) -> None:
+        self._daemon.release_task_endpoint(socket_path)
+
+    def register_task_sandbox(self, binding: TaskEndpointBinding, grant_token: str) -> None:
+        self._daemon.register_task_sandbox(binding, grant_token)
+
+    def revoke_task_sandbox(self, task_id: str) -> None:
+        self._daemon.revoke_task_sandbox(task_id)
+
+    def read_sandbox_identity(self, pid: int) -> PeerIdentity:
+        reader = getattr(self._daemon, "read_sandbox_identity", read_peer_identity)
+        return reader(pid)
+
 
 def _as_fabric_error(error: ManagedWorkError) -> FabricError:
     return FabricError(
@@ -26,8 +83,10 @@ def _as_fabric_error(error: ManagedWorkError) -> FabricError:
         recovery_actions=error.recovery_actions,
     )
 
+
 def _canonical_manifest(value: Mapping[str, Any]) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+
 
 def _workspace_listing(workspace: Path) -> list[str]:
     names: list[str] = []
@@ -35,6 +94,7 @@ def _workspace_listing(workspace: Path) -> list[str]:
         if path.is_file():
             names.append(path.relative_to(workspace).as_posix())
     return names
+
 
 def _task_capability(task: Mapping[str, Any]) -> str:
     intent = task.get("intent")
@@ -46,6 +106,7 @@ def _task_capability(task: Mapping[str, Any]) -> str:
             detail="missing" if capability is None else str(capability),
         )
     return str(capability)
+
 
 def _run_manifest(task: Mapping[str, Any], capability: str) -> dict[str, Any]:
     return {
@@ -60,6 +121,7 @@ def _run_manifest(task: Mapping[str, Any], capability: str) -> dict[str, Any]:
         "sandboxRequired": True,
         "steps": [{"label": "Sandboxed inspect", "capability": capability}],
     }
+
 
 def _artifact_matches(
     result: Mapping[str, Any],
@@ -83,9 +145,40 @@ def _artifact_matches(
         and isolation.get("fabricSocketVisible") is False
     )
 
+
+def _write_sealed_grant(path: Path, token: str) -> None:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        os.write(descriptor, token.encode("utf-8"))
+        if hasattr(os, "fchmod"):
+            os.fchmod(descriptor, 0o600)
+    finally:
+        os.close(descriptor)
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+
+
 class ManagedRuntime:
-    def __init__(self, plane: ManagedWorkPlane) -> None:
+    def __init__(
+        self,
+        plane: ManagedWorkPlane,
+        *,
+        task_host: TaskSandboxHost | None = None,
+        identity_reader: IdentityReader | None = None,
+        isolated_runner: IsolatedRunner | None = None,
+    ) -> None:
         self.plane = plane
+        self.task_host = task_host
+        self.identity_reader = identity_reader
+        self.isolated_runner = isolated_runner or run_isolated
+
+    def bind_task_host(self, task_host: TaskSandboxHost) -> None:
+        self.task_host = task_host
 
     def create_task(self, actor: Actor, params: Mapping[str, Any]) -> dict[str, Any]:
         try:
@@ -285,11 +378,26 @@ class ManagedRuntime:
             workspace = root / "workspace"
             artifacts = root / "artifacts"
             home = root / "home"
+            grant_root = root / "grant"
             workspace.mkdir()
             artifacts.mkdir()
             home.mkdir()
+            grant_root.mkdir()
             (workspace / "manifest.json").write_text(_canonical_manifest(manifest), encoding="utf-8")
             listing = _workspace_listing(workspace)
+            token = None
+            grant_bind = None
+            socket_path = None
+            socket_identity = None
+            registered = False
+            host = self.task_host
+            if host is not None:
+                token = secrets.token_urlsafe(32)
+                grant_path = grant_root / "task-grant"
+                _write_sealed_grant(grant_path, token)
+                grant_bind = GrantTokenBind(grant_path, grant_root)
+                socket_path = host.require_task_socket_path(root / "task.sock")
+                socket_identity = host.open_task_endpoint(socket_path)
             spec = SandboxSpec(
                 task_id,
                 (FIXED_AGENT_RUNNER, "--task-id", task_id, "--manifest-fd", "3"),
@@ -297,6 +405,38 @@ class ManagedRuntime:
                     ScopedBind(workspace, workspace, f"/workspace/{task_id}", writable=False),
                     ScopedBind(artifacts, artifacts, f"/artifacts/{task_id}", writable=True),
                 ),
+                grant_token=grant_bind,
                 runner_source=runner,
             )
-            return run_isolated(spec, protected_home=home), listing
+
+            def on_spawn(pid: int) -> None:
+                nonlocal registered
+                if host is None or socket_identity is None or token is None:
+                    return
+                reader = self.identity_reader or host.read_sandbox_identity
+                peer = reader(pid)
+                host.register_task_sandbox(
+                    TaskEndpointBinding(
+                        task_id=task_id,
+                        uid=peer.uid,
+                        pid=peer.pid,
+                        unit=peer.unit,
+                        cgroup=peer.cgroup,
+                        socket_dev=socket_identity[0],
+                        socket_ino=socket_identity[1],
+                    ),
+                    token,
+                )
+                registered = True
+
+            try:
+                return self.isolated_runner(spec, protected_home=home, on_spawn=on_spawn), listing
+            finally:
+                if host is not None:
+                    if registered:
+                        try:
+                            host.revoke_task_sandbox(task_id)
+                        except SecurityValidationError:
+                            pass
+                    if socket_path is not None:
+                        host.close_task_endpoint(socket_path)

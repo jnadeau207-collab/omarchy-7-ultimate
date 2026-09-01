@@ -5,6 +5,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from collections.abc import Callable
 from typing import Mapping
 
 from .builder import (
@@ -73,6 +74,7 @@ def run_isolated(
     bwrap_path: str = "/usr/bin/bwrap",
     protected_home: Path | None = None,
     extra_env: Mapping[str, str] | None = None,
+    on_spawn: Callable[[int], None] | None = None,
 ) -> IsolatedRun:
     validate_runner_argv(spec.runner_argv, task_id=spec.task_id)
     argv = prepare_bwrap_command(spec, bwrap_path=bwrap_path, protected_home=protected_home)
@@ -80,20 +82,25 @@ def run_isolated(
     if extra_env:
         env.update(extra_env)
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             argv,
-            check=False,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout,
             env=env,
         )
     except FileNotFoundError as error:
         raise SandboxUnavailable("bubblewrap is unavailable; managed execution fails closed.") from error
+    if on_spawn is not None:
+        on_spawn(process.pid)
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
     except subprocess.TimeoutExpired as error:
+        process.kill()
+        process.communicate()
         raise SandboxUnavailable("sandboxed run exceeded its timeout and failed closed.") from error
-    stdout = completed.stdout or ""
-    stderr = completed.stderr or ""
+    stdout = stdout or ""
+    stderr = stderr or ""
     parsed: Mapping[str, object] | None = None
     if stdout.strip():
         try:
@@ -103,7 +110,7 @@ def run_isolated(
         if isinstance(payload, dict):
             parsed = payload
     return IsolatedRun(
-        returncode=completed.returncode,
+        returncode=int(process.returncode or 0),
         stdout=stdout,
         stderr=stderr,
         argv=argv,

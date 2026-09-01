@@ -53,7 +53,7 @@ from .protocol import (
     success_response,
     validate_request,
 )
-from .managed_runtime import ManagedRuntime
+from .managed_runtime import DaemonTaskSandboxHost, ManagedRuntime
 from .managed_work import (
     Actor,
     DaemonProjectionBridge,
@@ -70,8 +70,20 @@ from .operations.package_plane import (
     package_definitions,
     package_intents,
 )
+from .operations.compatibility_plane import (
+    COMPATIBILITY_INTENTS,
+    HermeticCompatibilityExecutor,
+    compatibility_definitions,
+    compatibility_intents,
+)
+from .operations.device_plane import (
+    PRIVILEGED_DEVICE_INTENTS,
+    device_definitions,
+    device_intents,
+)
 from .operations.routing_executor import PrivilegeRoutingExecutor
 from .operations.session_executor import SessionCommandExecutor
+from .operations.system_command_executor import SystemCommandExecutor
 from .operations.store import OperationStore
 from .security.approval import ApprovalAuthority
 from .security.grants import CapabilityGrant, GrantPersistence
@@ -625,10 +637,12 @@ class FabricDaemon:
         self.operation_grants: dict[str, CapabilityGrant] = {}
         self.operations: OperationCoordinator | None = None
         self.task_admissions = TaskAdmissionAuthority()
+        self.managed_runtime.bind_task_host(DaemonTaskSandboxHost(self))
         self._build_operations()
         self.server: asyncio.AbstractServer | None = None
         self._task_servers: dict[str, asyncio.AbstractServer] = {}
         self._task_socket_identities: dict[str, tuple[int, int]] = {}
+        self._pending_task_sockets: dict[str, socket.socket] = {}
         self.connections: set[ClientConnection] = set()
         self.run_id = ""
         self.started_monotonic = 0.0
@@ -692,6 +706,8 @@ class FabricDaemon:
             return await self._files_state(resource_id)
         if resource_id.startswith("power.profile."):
             return await self._leaf_state("power.provider", resource_id)
+        if resource_id.startswith("device."):
+            return await self._leaf_state("device.provider", resource_id)
         return await self._audio_state(resource_id)
 
     async def _leaf_state(self, provider_id: str, resource_id: str) -> Mapping[str, Any]:
@@ -832,6 +848,8 @@ class FabricDaemon:
                         },
                     ),
                     *package_intents(),
+                    *compatibility_intents(),
+                    *device_intents(),
                 )
             )
             definitions = (
@@ -874,9 +892,24 @@ class FabricDaemon:
                     },
                 ),
                 *package_definitions(),
+                *compatibility_definitions(),
+                *device_definitions(),
             )
             store = OperationStore(self.config.database_path.with_name("operations.db"))
             self.operation_store = store
+            compat_engine = None
+            for provider in self.config.typed_providers:
+                manifest = getattr(provider, "manifest", None)
+                if isinstance(manifest, Mapping) and manifest.get("provider") == "compatibility.provider":
+                    compat_engine = getattr(provider, "engine", None)
+                    break
+            system = SystemCommandExecutor(intents, self._operation_state)
+            compatibility = (
+                HermeticCompatibilityExecutor(compat_engine, intents)
+                if compat_engine is not None
+                else UnavailableProductionExecutor()
+            )
+            privileged = PrivilegeRoutingExecutor(system, compatibility, COMPATIBILITY_INTENTS)
             self.operations = OperationCoordinator(
                 store=store,
                 gateway=CoordinatedRegistryGateway(self.typed_providers),
@@ -884,8 +917,8 @@ class FabricDaemon:
                 intents=intents,
                 executor=PrivilegeRoutingExecutor(
                     SessionCommandExecutor(intents, self._operation_state),
-                    UnavailableProductionExecutor(),
-                    PRIVILEGED_PACKAGE_INTENTS,
+                    privileged,
+                    PRIVILEGED_PACKAGE_INTENTS | COMPATIBILITY_INTENTS | PRIVILEGED_DEVICE_INTENTS,
                 ),
                 session_resolver=self.session_bindings.require_active,
                 policy_revision=lambda: OPERATION_POLICY_REVISION,
@@ -1149,6 +1182,73 @@ class FabricDaemon:
 
     def register_task_sandbox(self, binding: TaskEndpointBinding, grant_token: str) -> None:
         self.task_admissions.register(binding, grant_token)
+
+    def revoke_task_sandbox(self, task_id: str) -> None:
+        try:
+            self.task_admissions.revoke(task_id)
+        except SecurityValidationError:
+            return
+
+    def read_sandbox_identity(self, pid: int) -> PeerIdentity:
+        return read_peer_identity(pid)
+
+    def bind_task_endpoint(self, socket_path: Path) -> tuple[int, int]:
+        """Bind a task socket and record its identity without requiring an event loop."""
+
+        if not hasattr(socket, "AF_UNIX"):
+            raise SecurityValidationError(
+                "task-admission.unavailable",
+                "Task endpoints require a Unix domain socket.",
+            )
+        path = self.require_task_socket_path(socket_path)
+        key = str(path)
+        if key in self._task_servers or key in self._task_socket_identities:
+            raise SecurityValidationError(
+                "task-admission.duplicate",
+                "A task endpoint is already listening on this path.",
+            )
+        self._secure_directory(path.parent)
+        if path.exists():
+            raise SecurityValidationError(
+                "task-admission.socket",
+                "Task socket path already exists.",
+            )
+        old_umask = os.umask(0o077)
+        bound: socket.socket | None = None
+        try:
+            bound = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            bound.bind(str(path))
+            metadata = path.lstat()
+            identity = (int(metadata.st_dev), int(metadata.st_ino))
+            bound.listen(socket.SOMAXCONN)
+            os.chmod(path, 0o600)
+            self._pending_task_sockets[key] = bound
+            bound = None
+        finally:
+            os.umask(old_umask)
+            if bound is not None:
+                bound.close()
+        self._task_socket_identities[key] = identity
+        return identity
+
+    def release_task_endpoint(self, socket_path: Path) -> None:
+        path = self.require_task_socket_path(socket_path)
+        key = str(path)
+        pending = self._pending_task_sockets.pop(key, None)
+        if pending is not None:
+            pending.close()
+        identity = self._task_socket_identities.pop(key, None)
+        server = self._task_servers.pop(key, None)
+        if server is not None:
+            server.close()
+        if identity is None:
+            return
+        try:
+            metadata = path.lstat()
+        except FileNotFoundError:
+            return
+        if (int(metadata.st_dev), int(metadata.st_ino)) == identity:
+            path.unlink()
 
     async def _accept_task(
         self,

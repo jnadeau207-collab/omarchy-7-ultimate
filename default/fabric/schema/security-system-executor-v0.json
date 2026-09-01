@@ -29,7 +29,8 @@
         "firewall.apply",
         "firmware.update",
         "recovery.restore",
-        "system.factory-reset"
+        "system.factory-reset",
+        "device.authorize"
       ]
     },
     "arguments": { "type": "object" },
@@ -74,6 +75,10 @@
     {
       "if": { "properties": { "action": { "const": "system.factory-reset" } }, "required": ["action"] },
       "then": { "properties": { "arguments": { "$ref": "#/$defs/factoryReset" } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "device.authorize" } }, "required": ["action"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/deviceAuthorize" } } }
     }
   ],
   "$defs": {
@@ -149,6 +154,15 @@
         "baseline_id": { "$ref": "#/$defs/stableToken" },
         "scope": { "enum": ["system", "system-and-user-data"] },
         "confirmation": { "$ref": "#/$defs/confirmation" }
+      },
+      "additionalProperties": false
+    },
+    "deviceAuthorize": {
+      "type": "object",
+      "required": ["device_id", "authorized"],
+      "properties": {
+        "device_id": { "$ref": "#/$defs/stableToken" },
+        "authorized": { "type": "boolean" }
       },
       "additionalProperties": false
     }

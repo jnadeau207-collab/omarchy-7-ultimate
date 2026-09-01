@@ -1,14 +1,21 @@
-"""Unprivileged session executor for user-scope operations."""
+"""Privileged system executor for root-journaled Fabric intents.
+
+Request data never selects argv. The catalog resolves the code-owned
+``/usr/libexec/omarchy-fabric-system-executor`` command. The validated
+system-executor document is delivered on stdin. Pacman stays off the
+session helper.
+"""
 
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+import uuid
 from typing import Any, Awaitable, Callable, Mapping
 
 from ..models import FixedArgvCommand
 from ..security.normalize import binding_digest, canonical_json, normalize_json
 from ..security.redaction import redact
+from ..security.system_executor import validate_system_executor_request
 from .contracts import ExecutorIntent, OperationPlan, operation_error
 from .executor import (
     CancellationProbe,
@@ -17,18 +24,12 @@ from .executor import (
     IntentCatalog,
     _REVISION,
 )
+from .session_executor import SessionCommandResult, SessionStateReader
 
-SessionStateReader = Callable[[str], Awaitable[Mapping[str, Any]]]
+SystemCommandRunner = Callable[[FixedArgvCommand, str], Awaitable[SessionCommandResult]]
 
-@dataclass(frozen=True)
-class SessionCommandResult:
-    returncode: int
-    stdout: str
-    stderr: str
 
-SessionCommandRunner = Callable[[FixedArgvCommand, str], Awaitable[SessionCommandResult]]
-
-async def run_session_command(command: FixedArgvCommand, payload: str) -> SessionCommandResult:
+async def run_system_command(command: FixedArgvCommand, payload: str) -> SessionCommandResult:
     process = await asyncio.create_subprocess_exec(
         command.executable,
         *command.arguments,
@@ -43,13 +44,37 @@ async def run_session_command(command: FixedArgvCommand, payload: str) -> Sessio
         stderr.decode("utf-8", errors="replace")[:4096],
     )
 
-class SessionCommandExecutor:
-    """Runs code-owned fixed argv in the user session, never as root.
 
-    Only user-scope operations belong here. Privileged package and device
-    intents belong on SystemCommandExecutor.
-    Request data never selects argv: the catalog resolves the command and the
-    validated payload is delivered on stdin.
+def _json_argument(value: Any) -> Any:
+    if isinstance(value, tuple):
+        return [_json_argument(item) for item in value]
+    return value
+
+
+def build_system_executor_document(plan: OperationPlan, intent: ExecutorIntent) -> dict[str, Any]:
+    arguments = {
+        key: _json_argument(value)
+        for key, value in intent.payload.items()
+        if key != "resourceId"
+    }
+    return {
+        "schemaVersion": "v0",
+        "requestId": str(uuid.uuid4()),
+        "operationId": plan.operation_id,
+        "action": intent.intent_id,
+        "arguments": arguments,
+        "providerVersion": plan.provider.version,
+        "stateRevision": plan.resource.revision,
+        "approvalBinding": plan.binding_digest,
+        "consentNonce": str(uuid.uuid4()),
+    }
+
+
+class SystemCommandExecutor:
+    """Runs the code-owned system executor for privileged intents only.
+
+    Session-scoped work stays on SessionCommandExecutor. Missing helper
+    binaries fail closed; they are not treated as success.
     """
 
     available = True
@@ -59,20 +84,21 @@ class SessionCommandExecutor:
         catalog: IntentCatalog,
         reader: SessionStateReader,
         *,
-        runner: SessionCommandRunner | None = None,
-        timeout_seconds: float = 10.0,
+        runner: SystemCommandRunner | None = None,
+        timeout_seconds: float = 30.0,
     ) -> None:
         if not 0.05 <= timeout_seconds <= 600:
-            raise operation_error("executor.invalid-definition", "Session executor deadline is invalid.")
+            raise operation_error("executor.invalid-definition", "System executor deadline is invalid.")
         self.catalog = catalog
         self.reader = reader
-        self.runner = runner or run_session_command
+        self.runner = runner or run_system_command
         self.timeout_seconds = timeout_seconds
+        self.system_requests: list[dict[str, Any]] = []
 
     async def state(self, resource_id: str) -> dict[str, Any]:
         observed = await self.reader(resource_id)
         if not isinstance(observed, Mapping):
-            raise operation_error("executor.resource-unavailable", "Session state reader returned no typed state.")
+            raise operation_error("executor.resource-unavailable", "System state reader returned no typed state.")
         value = normalize_json(observed.get("value"))
         revision = observed.get("revision")
         if not isinstance(revision, str) or not _REVISION.fullmatch(revision):
@@ -87,6 +113,12 @@ class SessionCommandExecutor:
             raise operation_error("executor.resource-drift", "Executor payload targets another resource.")
         return definition
 
+    def _document(self, plan: OperationPlan, intent: ExecutorIntent) -> dict[str, Any]:
+        document = build_system_executor_document(plan, intent)
+        validate_system_executor_request(document)
+        self.system_requests.append(document)
+        return document
+
     @staticmethod
     def _require_live(cancelled: CancellationProbe, change_state: str) -> None:
         if cancelled():
@@ -96,8 +128,8 @@ class SessionCommandExecutor:
                 change_state=change_state,
             )
 
-    async def _run(self, definition: Any, payload: Mapping[str, Any], change_state: str) -> SessionCommandResult:
-        text = canonical_json(normalize_json(payload))
+    async def _run(self, definition: Any, document: Mapping[str, Any], change_state: str) -> SessionCommandResult:
+        text = canonical_json(normalize_json(document))
         try:
             result = await asyncio.wait_for(
                 self.runner(definition.command, text),
@@ -105,23 +137,23 @@ class SessionCommandExecutor:
             )
         except asyncio.TimeoutError as error:
             raise operation_error(
-                "executor.session-timeout",
-                "The session command did not finish within its deadline.",
+                "executor.system-timeout",
+                "The system command did not finish within its deadline.",
                 change_state="unknown",
                 retryable=True,
                 recovery_actions=("operation.reconcile",),
             ) from error
         except FileNotFoundError as error:
             raise operation_error(
-                "executor.session-unavailable",
-                "The code-owned session command is not installed.",
+                "executor.system-unavailable",
+                "The code-owned system executor is not installed.",
                 change_state="none",
                 recovery_actions=("system.executor.install",),
             ) from error
         if result.returncode != 0:
             raise operation_error(
-                "executor.session-failed",
-                "The session command reported a failure status.",
+                "executor.system-failed",
+                "The system command reported a failure status.",
                 detail=redact(result.stderr)[:480],
                 change_state=change_state,
                 retryable=True,
@@ -153,8 +185,9 @@ class SessionCommandExecutor:
                 change_state="none",
                 recovery_actions=("operation.preflight",),
             )
+        document = self._document(plan, intent)
         self._require_live(cancelled, "none")
-        result = await self._run(definition, intent.payload, "unknown")
+        result = await self._run(definition, document, "unknown")
         observed = await self.state(plan.resource.resource_id)
         return ExecutorApplyResult(observed["revision"], observed, self._evidence(result, "apply"))
 
@@ -181,8 +214,10 @@ class SessionCommandExecutor:
     ) -> ExecutorApplyResult:
         definition = self._resolve(plan, intent)
         self._require_live(cancelled, "unknown")
-        restore = dict(intent.payload)
-        restore["desired"] = normalize_json(dict(prior_state).get("value"))
+        document = self._document(plan, intent)
+        restore = dict(document)
+        restore["arguments"] = dict(document["arguments"])
+        restore["arguments"]["desired"] = normalize_json(dict(prior_state).get("value"))
         result = await self._run(definition, restore, "unknown")
         observed = await self.state(plan.resource.resource_id)
         return ExecutorApplyResult(observed["revision"], observed, self._evidence(result, "rollback"))
