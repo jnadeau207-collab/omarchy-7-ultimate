@@ -665,7 +665,9 @@ Item {
                   visible: root.queryState.operationActions.length > 0
                   text: Semantics.text(root.productProfile, "Declared provider operations") + ": " +
                     root.queryState.operationActions.join(", ") + ". " +
-                    Semantics.text(root.productProfile, "Settings exposes no preflight, approval, or execution control until the durable coordinator is integrated.")
+                    Semantics.text(root.productProfile, root.currentRoute && root.currentRoute.id === "settings.audio.overview"
+                      ? "Settings runs this operation through preflight, approval, and the durable coordinator."
+                      : "Settings exposes no preflight, approval, or execution control for this domain yet.")
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
