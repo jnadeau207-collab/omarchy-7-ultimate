@@ -26,13 +26,22 @@ Every files location carries a `rootToken`, which is a `state_revision` digest o
 
 Fixed by renaming the field to `rootDigest` across the provider, the schema, `FilesModel.js`, and two tests. The field is a digest, so the name is more accurate, and the heuristic keeps its full strength.
 
-### 2. The mutation precondition is unreachable on a populated machine
+### 2. The mutation precondition is unreachable on a populated machine — FIXED
 
 `StateDomainProvider` enforces `operation_available ⇒ availability == "available"`, and `available` may carry no degradation reasons. The files inventory is bounded by `MAX_REAL_STATE_BYTES = 36 * 1024` and appends a `files.inventory-truncated` reason whenever it trims to fit.
 
 On the metal box — 79 entries in Pictures, 40 in home — the cap always bites, so there is always a reason, so `available` never holds, so mutations are refused. The gate is correct; it is simply unsatisfiable against a real home directory.
 
-Proving execution required a workspace sparse enough to fit under the cap. Raising the cap only moves the threshold and does not address finding 3.
+**Resolved.** `files.directory.create` now succeeds against the real home on metal, with `files.inventory-truncated` still present. Proven end to end: `operation available: True`, `status: succeeded`, and the created folder visible in the Files app's Documents view.
+
+Two changes, in this order, because the second is only defensible after the first:
+
+1. **The scope reads the target directory from disk.** `RealFilesBackend.directory_listing(location_id, parent)` does a bounded `scandir` of the one directory, and a new `directory.inspect` read action exposes it through the typed seam so the daemon's validation reader uses the same source. The scoped state no longer derives from the bounded inventory at all, so truncation cannot make it wrong. The fake backend keeps the state-derived path.
+2. **The gate distinguishes read-completeness from mutation-safety.** `StateDomainProvider` takes `read_completeness_codes`; files declares `files.inventory-truncated` and `files.mount-inventory-truncated`. A degraded snapshot whose reasons are all in that set may still be operable. Any other reason still refuses, and `available`-with-reasons is still forbidden.
+
+This is a narrowing, not a weakening: before the first change, truncation genuinely could have corrupted the scoped listing, and the blanket refusal was correct. After it, truncation has no bearing on the operation, and refusing on it was over-broad — it blocked a create in an untruncated Documents because Pictures had been trimmed.
+
+The original analysis below stands for why the blanket gate was right until the scope stopped depending on the inventory.
 
 ### 3. Whole-state equality cannot validate a real filesystem mutation — FIXED
 
