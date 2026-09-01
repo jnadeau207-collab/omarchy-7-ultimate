@@ -262,10 +262,10 @@ function detail(label, value) {
 }
 
 function validLocation(location) {
-  return exactKeys(location, ["id", "kind", "label", "state", "writable", "rootToken", "reason"]) && stableId(location.id) &&
+  return exactKeys(location, ["id", "kind", "label", "state", "writable", "rootDigest", "reason"]) && stableId(location.id) &&
     ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "trash", "mount", "network"].indexOf(location.kind) >= 0 &&
     typeof location.label === "string" && location.label.length >= 1 && location.label.length <= 160 &&
-    ["available", "degraded", "unavailable"].indexOf(location.state) >= 0 && typeof location.writable === "boolean" && revision(location.rootToken) &&
+    ["available", "degraded", "unavailable"].indexOf(location.state) >= 0 && typeof location.writable === "boolean" && revision(location.rootDigest) &&
     (location.reason === null || validReason(location.reason))
 }
 
@@ -342,7 +342,7 @@ function placeEntries(entries) {
 
 function locationRecord(location, index) {
   if (!isObject(location) || !validLocation(location)) return null
-  var details = [detail("Kind", location.kind), detail("Writable", location.writable === true ? "Yes" : "No"), detail("Root revision", location.rootToken)]
+  var details = [detail("Kind", location.kind), detail("Writable", location.writable === true ? "Yes" : "No"), detail("Root revision", location.rootDigest)]
   if (isObject(location.reason)) details.push(detail("Reason", location.reason.explanation || location.reason.title))
   return { id: location.id, kind: "location", title: clippedText(location.label, 240), subtitle: clippedText(location.kind, 160), status: location.state, tone: location.state === "available" ? "success" : location.state === "degraded" ? "warning" : "danger", details: details, order: index }
 }

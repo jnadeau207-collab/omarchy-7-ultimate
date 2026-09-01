@@ -397,7 +397,7 @@ class RealFilesBackend:
                     "label": definition["label"],
                     "state": "available",
                     "writable": False,
-                    "rootToken": state_revision({"virtual": definition["key"], "version": "v0"}),
+                    "rootDigest": state_revision({"virtual": definition["key"], "version": "v0"}),
                     "reason": None,
                 })
                 continue
@@ -501,9 +501,11 @@ class RealFilesBackend:
                 "The real provider intentionally exposes inventory only.",
                 recovery=("operation.integration-required",),
             ))
+        if self.session_operable and not reasons:
+            return StateSnapshot("available", True, freeze(state), ())
         return StateSnapshot(
-            "degraded" if reasons else "ready",
-            self.session_operable,
+            "degraded",
+            False,
             freeze(state),
             tuple(reasons),
         )
@@ -607,7 +609,7 @@ class RealFilesBackend:
             "label": definition["label"],
             "state": "available",
             "writable": directory_writable_no_follow(root),
-            "rootToken": root_identity,
+            "rootDigest": root_identity,
             "reason": None,
         }
         entries: list[dict[str, Any]] = []
@@ -782,7 +784,7 @@ class RealFilesBackend:
                     "label": _safe_mount_label(mount_point, kind),
                     "state": "degraded",
                     "writable": "rw" in options,
-                    "rootToken": state_revision({"mountId": mount_id, "mountPoint": mount_point}),
+                    "rootDigest": state_revision({"mountId": mount_id, "mountPoint": mount_point}),
                     "reason": browse_reason.to_dict(),
                 })
                 browse_deferred = True
@@ -859,7 +861,7 @@ def _location_unavailable(
         "label": definition["label"],
         "state": "unavailable",
         "writable": False,
-        "rootToken": state_revision({"unavailable": location_id, "version": "v0"}),
+        "rootDigest": state_revision({"unavailable": location_id, "version": "v0"}),
         "reason": reason.to_dict(),
     }
 
@@ -1074,7 +1076,7 @@ def _create_directory(current: Mapping[str, Any], arguments: Mapping[str, Any]) 
     state = deepcopy(dict(current))
     location = _location(state, arguments["locationId"], writable=True)
     parent_id = None
-    parent_identity = location["rootToken"]
+    parent_identity = location["rootDigest"]
     if arguments["parentRelativePath"]:
         parents = [entry for entry in state["entries"] if entry["locationId"] == location["id"] and entry["relativePath"] == arguments["parentRelativePath"]]
         if len(parents) != 1 or parents[0]["kind"] != "directory":
@@ -1238,10 +1240,10 @@ def _anchors(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         entry = _entry(current, arguments["entryId"])
         anchors.append({"resourceId": entry["id"], "identity": entry["identity"]})
         location = _location(current, entry["locationId"])
-        anchors.append({"resourceId": location["id"], "identity": location["rootToken"]})
+        anchors.append({"resourceId": location["id"], "identity": location["rootDigest"]})
     elif "locationId" in arguments:
         location = _location(current, arguments["locationId"])
-        anchors.append({"resourceId": location["id"], "identity": location["rootToken"]})
+        anchors.append({"resourceId": location["id"], "identity": location["rootDigest"]})
         parent_path = arguments.get("parentRelativePath", "")
         if parent_path:
             parent = next(entry for entry in current["entries"] if entry["locationId"] == location["id"] and entry["relativePath"] == parent_path)
