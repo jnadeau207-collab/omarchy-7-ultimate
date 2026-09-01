@@ -149,6 +149,12 @@ SYSTEM_ACTIONS: Mapping[str, ActionContract] = MappingProxyType(
                 "confirmation": _confirmation,
             },
         ),
+        "device.authorize": ActionContract(
+            "org.omarchy.fabric.device.authorize",
+            frozenset({"device_id", "authorized"}),
+            frozenset(),
+            {"device_id": _stable, "authorized": _boolean},
+        ),
     }
 )
 
