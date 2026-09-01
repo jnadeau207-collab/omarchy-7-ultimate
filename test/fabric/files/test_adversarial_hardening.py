@@ -241,8 +241,9 @@ class FilesAdversarialHardeningTests(unittest.IsolatedAsyncioTestCase):
         ]
         provider = files.build_fake_provider(state)
         plan = await provider.preflight("entry.trash", {"entryId": "files.entry.project"}, principal())
-        changed = await provider.execute("entry.trash", plan["normalizedArguments"], plan["stateRevision"])
-        self.assertEqual(changed["state"]["value"]["recent"], [{"entryId": "files.entry.notes", "rank": 0}])
+        await provider.execute("entry.trash", plan["normalizedArguments"], plan["stateRevision"])
+        workspace = await provider.read("inspect", {})
+        self.assertEqual(workspace["state"]["recent"], [{"entryId": "files.entry.notes", "rank": 0}])
 
     def test_trash_recovery_metadata_cannot_reintroduce_traversal(self) -> None:
         state = clone_workspace()

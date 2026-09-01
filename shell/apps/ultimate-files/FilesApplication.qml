@@ -26,6 +26,7 @@ Item {
   property string operationId: ""
   property string operationMessage: ""
   property string operationName: ""
+  property string operationKind: ""
   readonly property bool operationBusy: operationStage !== ""
   readonly property string createLocationId: FilesModel.createLocationForRoute(host ? host.currentRoute : "")
   readonly property bool createVisible: createLocationId !== ""
@@ -73,6 +74,22 @@ Item {
     host.navigate("files.search", searchInput.text === "" ? {} : { query: searchInput.text })
   }
 
+  function trashEntry(record) {
+    if (!host || operationBusy || createLocationId === "") return
+    if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return
+    root.operationName = String(record.title || "this entry")
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationKind = "trash"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "files.provider",
+      action: "entry.trash",
+      arguments: { entryId: String(record.id) },
+      idempotencyKey: "files.entry.trash." + String(record.id)
+    })
+    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
+  }
+
   function createFolder(name) {
     if (!host || operationBusy || !createVisible) return
     var refusal = FilesModel.createNameRefusal(name)
@@ -81,6 +98,7 @@ Item {
       return
     }
     root.operationName = String(name)
+    root.operationKind = "create"
     root.operationMessage = ""
     root.operationStage = "preflight"
     root.operationRequestId = host.requestFabric("operation.preflight", {
@@ -116,10 +134,13 @@ Item {
     }
     if (root.operationStage === "start") {
       var succeeded = String(result.status || "") === "succeeded"
+      var verb = root.operationKind === "trash" ? "Moved " : "Created "
+      var gerund = root.operationKind === "trash" ? "Moving " : "Creating "
+      var tail = root.operationKind === "trash" ? " to Trash." : "."
       root.resetOperation(succeeded
-        ? "Created " + root.operationName + "."
-        : "Creating " + root.operationName + " ended as " + String(result.status || "unknown") + ".")
-      if (succeeded) createInput.text = ""
+        ? verb + root.operationName + tail
+        : gerund + root.operationName + " ended as " + String(result.status || "unknown") + ".")
+      if (succeeded && root.operationKind === "create") createInput.text = ""
       if (root.controller) root.controller.refresh()
     }
   }
@@ -379,6 +400,9 @@ Item {
                   required property var modelData
                   record: modelData
                   selected: root.queryState.entityId !== "" && modelData.id === root.queryState.entityId
+                  trashable: root.createLocationId !== "" && String(modelData.kind || "") === "entry" && String(modelData.status || "") !== "symlink"
+                  trashBusy: root.operationBusy
+                  onTrashRequested: root.trashEntry(modelData)
                   Layout.fillWidth: true
                   Layout.columnSpan: 1
                 }
