@@ -19,9 +19,16 @@ Item {
       route = ""
     }
     if (root.shell && root.shell.appLibrary) {
-      if (route !== "") {
-        var command = root.shell.appLibrary.launchCommand("omarchy-launch-settings --source desktop " + route)
-        if (command) Util.execDetached("uwsm-app -- " + command)
+      // A route is a catalog id, never a command fragment. The launcher runs as
+      // an argv vector so a summon payload never reaches a shell, and a route
+      // that is not shaped like a catalog id falls back to the Settings home
+      // instead of being handed on. The window host still fails closed on an id
+      // that is not in apps/ultimate-settings/routes-v1.json.
+      if (route !== "" && /^[a-z][a-z0-9]*(\.[a-z0-9-]+)+$/.test(route)) {
+        var launcher = root.omarchyPath
+          ? root.omarchyPath + "/bin/omarchy-launch-settings"
+          : "omarchy-launch-settings"
+        Util.execArgv(["uwsm-app", "--", launcher, "--source", "desktop", route])
       } else {
         root.shell.appLibrary.launch("org.omarchy.Settings", "Settings")
       }
