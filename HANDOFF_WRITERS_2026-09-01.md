@@ -1,9 +1,26 @@
 # Writers and the root executor — 2026-09-01
 
-SHA `be7385ea` on `work`, rebased onto `upstream/quattro` at `b71dcad9`. Shell gates: 109 of 264 files fail on a Windows checkout, the identical list that fails at `db8d9c60` before this work, plus four new files that pass. No regression.
+SHA `6e01615d` on `work`, rebased onto `upstream/quattro` at `b71dcad9`.
 
-Nothing here has run on metal. The Python fabric suite calls `os.getuid` and cannot execute off Linux, so every claim below is reviewed code and passing unit tests, not a demonstrated change to a machine.
+## Verified on metal
 
+Run on the Arch box at `192.168.1.171` from a throwaway clone in `/tmp`, so nothing in `/home/jesse/omarchy7ultimate` was touched.
+
+| Suite | Baseline `9857263b` | This work |
+|-------|--------------------|-----------|
+| `test/all` | 13 of 247 files fail | **12 of 264 fail** |
+| `test/fabric/files` | — | OK |
+| `test/fabric/providers` | — | OK |
+| `test/fabric/operations` | — | OK |
+
+The twelve are a strict subset of the baseline thirteen. This work introduced no failure and closed two:
+
+- `fabric-operation-coordinator-test.sh` was red on the box before this work, because `session_apply.py` sat in `operations/` where that test forbids a subprocess. Moving it fixed a gate that had been failing since the write plane shipped.
+- `legacy-power-udev-rules-migration-test.sh` arrived with upstream and was red on any machine. Two of its invocations omitted `OMARCHY_PATH`, so the migration aborted under `set -u` before reaching the behaviour under test. With that supplied, two previously unreachable assertions run and pass, so the migration itself was correct all along.
+
+The Python fabric suites cannot run on a Windows checkout at all (`os.getuid`), and the shell suite reports 109 of 264 there against 12 on Linux. Windows numbers are not evidence of anything; use the box.
+
+Still unproven on metal: every writer's **effect**. The suites above prove contracts, refusals and helper logic against real filesystems and real inodes. Nothing has driven `pactl`, `hyprctl`, `nmcli`, `pacman` or `pkexec` through a running daemon on a live session.
 ## The rebase
 
 `work` was replayed with `git rebase --onto`, not merged, so `upstream/quattro` is a true ancestor. 367 commits replayed, one dropped as empty because upstream independently reworked the same theme-guard test and its version supersedes ours. Recovery ref `pre-rebase-20260901` holds the old tip.
