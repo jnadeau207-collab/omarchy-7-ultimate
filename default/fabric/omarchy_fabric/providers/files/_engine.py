@@ -454,6 +454,7 @@ class StateDomainProvider:
         state_validator: Callable[[Mapping[str, Any]], None],
         read_handlers: Mapping[str, ReadHandler],
         operations: Mapping[str, OperationSpec],
+        read_completeness_codes: frozenset[str] = frozenset(),
     ) -> None:
         self.domain = domain
         self.provider_id = provider_id
@@ -465,6 +466,7 @@ class StateDomainProvider:
         self.state_contract_id = state_contract_id
         self.state_validator = state_validator
         self.read_handlers = dict(read_handlers)
+        self.read_completeness_codes = frozenset(read_completeness_codes)
         self.operations = dict(operations)
         self._validators: dict[str, Draft202012Validator] = {}
         resources = Registry().with_resources(
@@ -582,17 +584,10 @@ class StateDomainProvider:
             current_state = self._state(current)
             proposed_state = self._state(proposed)
         else:
-            scoped_current = spec.scope(current, normalized)
-            scoped_proposed = spec.scope(proposed, normalized)
-            if scoped_current["id"] != scoped_proposed["id"]:
-                raise FabricError(
-                    f"{self.domain}.scope-unstable",
-                    f"{self.domain.title()} operation scope is unstable",
-                    "The scoped resource identity changed across the proposal.",
-                )
-            resource_binding = {"kind": scoped_current["kind"], "id": scoped_current["id"]}
-            current_state = self._scoped_state(scoped_current["id"], scoped_current["value"])
-            proposed_state = self._scoped_state(scoped_proposed["id"], scoped_proposed["value"])
+            scoped = spec.scope(current, proposed, normalized, self.backend)
+            resource_binding = {"kind": scoped["kind"], "id": scoped["id"]}
+            current_state = self._scoped_state(scoped["id"], scoped["current"])
+            proposed_state = self._scoped_state(scoped["id"], scoped["proposed"])
         guards = dict(spec.guards(current, normalized))
         if spec.scope is not None:
             guards["snapshotRevision"] = current_state["revision"]
@@ -891,7 +886,12 @@ class StateDomainProvider:
                     f"The backend state violates the closed semantic contract ({type(error).__name__})."
                 ) from error
         if snapshot.operation_available and snapshot.availability != "available":
-            raise self._backend_invalid("Mutations require a fully available snapshot.")
+            blocking = [
+                reason for reason in snapshot.reasons
+                if reason.code not in self.read_completeness_codes
+            ]
+            if snapshot.availability != "degraded" or blocking:
+                raise self._backend_invalid("Mutations require a fully available snapshot.")
         return StateSnapshot(
             snapshot.availability,
             snapshot.operation_available,
@@ -971,8 +971,8 @@ class StateDomainProvider:
     def _plan_state(self, spec: Any, state: Mapping[str, Any], normalized: Mapping[str, Any]) -> dict[str, Any]:
         if spec.scope is None:
             return self._state(state)
-        scoped = spec.scope(state, normalized)
-        return self._scoped_state(scoped["id"], scoped["value"])
+        scoped = spec.scope(state, state, normalized, self.backend)
+        return self._scoped_state(scoped["id"], scoped["current"])
 
     def _scoped_state(self, resource_id: str, value: Mapping[str, Any]) -> dict[str, Any]:
         normalized = thaw(value)
