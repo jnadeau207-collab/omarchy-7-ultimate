@@ -124,6 +124,10 @@ default/**                     ──►  omarchy-settings    /usr/share/omarchy
   ├─ applications/mimeapps.list                         /usr/share/applications/mimeapps.list
   ├─ systemd/user/*.service                             /usr/lib/systemd/user/
   │   └─ omarchy-fabric.service                        per-user Fabric, enabled at first run and by migration
+  ├─ fabric/libexec/omarchy-fabric-system-executor      /usr/libexec/
+  ├─ fabric/libexec/omarchy-fabric/*                    /usr/libexec/omarchy-fabric/
+  │                                                       (one program per privileged Fabric action; see below)
+  ├─ polkit-1/actions/org.omarchy.fabric.policy         /usr/share/polkit-1/actions/
   ├─ systemd/user/app.slice.d/10-oomd.conf              /usr/lib/systemd/user/app.slice.d/
   ├─ systemd/system-sleep/{force-igpu,
   │    keyboard-backlight,unmount-fuse}                 /usr/lib/systemd/system-sleep/
@@ -139,6 +143,25 @@ logo.{txt,svg}, icon.{txt,png}  ──► omarchy-settings    /usr/share/omarchy
                                                         /usr/share/icons/hicolor/256x256/apps/omarchy.png
                                                         /etc/skel/.config/omarchy/branding/{about,screensaver}.txt
 ```
+
+### Why the Fabric system executor is one program per action
+
+Polkit picks an action from the program `pkexec` is asked to run, matching the
+`org.freedesktop.policykit.exec.path` annotation in the policy file. One path
+can therefore carry exactly one action id. The privileged Fabric verbs each
+need their own authorization prompt and their own admin rule, so each gets its
+own program under `/usr/libexec/omarchy-fabric/`, and
+`/usr/libexec/omarchy-fabric-system-executor` is the single entry point the
+user-session daemon spawns. It maps the requested verb to a literal path
+through a fixed `case` and execs `pkexec` on it; request data never reaches the
+argv. Every program re-validates the typed request from scratch as root and
+resolves opaque package IDs through the signed catalog, so a compromised
+session cannot name a package the catalog does not admit.
+
+Packaging must install these root-owned and not group- or world-writable
+(`0755 root:root`). `pkexec` refuses to run a program that fails that check,
+and the refusal surfaces as an unavailable operation rather than a silent
+downgrade.
 
 ### Why `etc-overrides/` exists
 
