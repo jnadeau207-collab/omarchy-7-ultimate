@@ -16,6 +16,7 @@ CATALOGS = {
     "files": "ultimate-files/routes-v1.json",
     "software": "ultimate-software/routes-v1.json",
     "compatibility": "ultimate-compatibility/routes-v1.json",
+    "administration": "ultimate-administration/routes-v1.json",
 }
 APP_IDS = {
     "settings": "org.omarchy.Settings",
@@ -23,6 +24,7 @@ APP_IDS = {
     "files": "org.omarchy.Files",
     "software": "org.omarchy.Software",
     "compatibility": "org.omarchy.Compatibility",
+    "administration": "org.omarchy.Administration",
 }
 SCHEMES = {
     "settings": "omarchy-settings",
@@ -30,6 +32,7 @@ SCHEMES = {
     "files": "omarchy-files",
     "software": "omarchy-software",
     "compatibility": "omarchy-compatibility",
+    "administration": "omarchy-administration",
 }
 SOURCES = frozenset({"cli", "desktop", "shell", "notification", "automation"})
 STABLE_ID = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
