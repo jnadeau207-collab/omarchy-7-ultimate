@@ -512,8 +512,21 @@ fi
 if grep -E '^[^/]*Tokens.surface.glass' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml"; then
   fail "taskbar menus must not fill with theme glass (Tokyo Night blue)"
 fi
-grep -Fq 'Qt.rgba(0.11, 0.11, 0.12, 0.62)' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
-  || fail "Superbar glass is graphite with alpha, not opaque charcoal"
+grep -Fq 'readonly property color chromeBar: Tokens.chrome.glass' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar fills from the resolved chrome glass token"
+python3 - "$ROOT" <<'GLASS' || fail "Superbar glass is graphite with alpha, not opaque charcoal"
+import json, sys
+from pathlib import Path
+tokens = json.loads(Path(sys.argv[1], "default/ultimate/chrome-tokens.json").read_text(encoding="utf-8"))
+red, green, blue = (int(tokens[k]) for k in ("glassRed", "glassGreen", "glassBlue"))
+alpha = int(tokens["glassAlphaPct"])
+if not 0 < alpha < 100:
+    raise SystemExit(f"glass alpha {alpha} is opaque")
+if max(red, green, blue) > 64:
+    raise SystemExit(f"glass rgb ({red},{green},{blue}) is not graphite")
+if max(red, green, blue) - min(red, green, blue) > 8:
+    raise SystemExit(f"glass rgb ({red},{green},{blue}) is tinted, not neutral")
+GLASS
 [[ -f $ROOT/default/ultimate/chrome-tokens.json ]] || fail "chrome tokens exist as the Superbar/hyprbars palette"
 [[ -f $ROOT/default/ultimate/chrome-tokens-light.json ]] || fail "light chrome tokens exist so light theme can move caption chrome"
 [[ -f $ROOT/themes/ultimate-light/chrome-tokens.json ]] || fail "ultimate-light ships chrome-tokens.json for theme-set"
