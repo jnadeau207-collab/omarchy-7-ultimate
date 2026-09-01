@@ -65,7 +65,7 @@ class ContractAndReadTests(unittest.IsolatedAsyncioTestCase):
         for schema_id, schema in self.provider.schemas.items():
             with self.subTest(schema=schema_id):
                 self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
-                self.assertEqual(schema["x-omarchy-version"], "v0")
+                self.assertEqual(schema["x-omarchy-version"], schema_id.rsplit(":", 1)[1])
                 for node in walk(schema):
                     if isinstance(node, Mapping) and node.get("type") == "object":
                         self.assertIs(node.get("additionalProperties"), False)

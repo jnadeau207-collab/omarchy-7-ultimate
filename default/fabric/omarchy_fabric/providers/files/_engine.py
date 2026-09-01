@@ -587,6 +587,9 @@ class StateDomainProvider:
             resource_binding = {"kind": scoped_current["kind"], "id": scoped_current["id"]}
             current_state = self._scoped_state(scoped_current["id"], scoped_current["value"])
             proposed_state = self._scoped_state(scoped_proposed["id"], scoped_proposed["value"])
+        guards = dict(spec.guards(current, normalized))
+        if spec.scope is not None:
+            guards["snapshotRevision"] = current_state["revision"]
         recovery_state = {
             **deepcopy(current_state),
             "recoveryFromRevision": proposed_state["revision"],
@@ -607,7 +610,7 @@ class StateDomainProvider:
             "summary": spec.summarize(current, proposed, normalized),
             "risk": definition["risk"],
             "effects": list(definition["effects"]),
-            "guards": spec.guards(current, normalized),
+            "guards": guards,
             "recovery": {"mode": "undo", "priorState": recovery_state},
         }
         self._validate(definition["preflight"], result, "preflight")
