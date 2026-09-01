@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import json
 import os
@@ -9,6 +10,7 @@ import pathlib
 import signal
 import subprocess
 import sys
+import urllib.parse
 from typing import Any, Mapping
 
 PACTL = "/usr/bin/pactl"
@@ -59,6 +61,14 @@ def require_resource_id(payload: Mapping[str, Any]) -> str:
         raise ApplyError("payload.invalid", "The apply payload names no audio sink resource.")
     if len(resource_id) != len("audio.sink.") + 64:
         raise ApplyError("payload.invalid", "The audio sink identity is malformed.")
+    return resource_id
+
+def require_digest_resource_id(payload: Mapping[str, Any], prefix: str) -> str:
+    resource_id = payload.get("resourceId")
+    if not isinstance(resource_id, str) or not resource_id.startswith(prefix):
+        raise ApplyError("payload.invalid", "The apply payload names no resource of the expected kind.")
+    if len(resource_id) != len(prefix) + 64:
+        raise ApplyError("payload.invalid", "The resource identity is malformed.")
     return resource_id
 
 def require_percent(payload: Mapping[str, Any]) -> int:
@@ -319,6 +329,175 @@ def create_directory(payload: Mapping[str, Any], home: pathlib.Path) -> pathlib.
         raise ApplyError("apply.failed", "Creating the directory reported a failure status.") from error
     return final
 
+def require_files_resource_id(payload: Mapping[str, Any]) -> str:
+    resource_id = payload.get("resourceId")
+    if not isinstance(resource_id, str) or not resource_id.startswith("files."):
+        raise ApplyError("payload.invalid", "The apply payload names no files resource.")
+    return resource_id
+
+def stable_entry_id(location_id: str, device: int, inode: int, relative: str) -> str:
+    material = f"files\0{location_id}\0{device}\0{inode}\0{relative}"
+    digest = hashlib.sha256(material.encode("utf-8")).hexdigest()
+    return f"files.entry.{digest}"
+
+
+def require_entry_relative(payload: Mapping[str, Any]) -> list[str]:
+    relative = payload.get("entryRelativePath")
+    if not isinstance(relative, str) or not relative:
+        raise ApplyError("payload.invalid", "The apply payload names no entry.")
+    if relative.startswith("/") or "\\" in relative:
+        raise ApplyError("payload.invalid", "The entry path is not relative.")
+    segments = relative.split("/")
+    if len(segments) > MAX_RELATIVE_DEPTH:
+        raise ApplyError("payload.out-of-range", "The entry path is too deep.")
+    for segment in segments:
+        if segment in {"", ".", ".."} or "\x00" in segment:
+            raise ApplyError("payload.invalid", "The entry path holds an unsafe segment.")
+    return segments
+
+
+def require_entry_id(payload: Mapping[str, Any]) -> str:
+    entry_id = payload.get("entryId")
+    if not isinstance(entry_id, str) or not entry_id.startswith("files.entry."):
+        raise ApplyError("payload.invalid", "The apply payload names no entry identity.")
+    return entry_id
+
+
+def resolve_entry_path(payload: Mapping[str, Any], home: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, str]:
+    key = files_location_key(payload.get("locationId"))
+    segments = require_entry_relative(payload)
+    entry_id = require_entry_id(payload)
+    base = resolve_location_path(key, home)
+    try:
+        root = base.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The files location is not present.") from error
+    target = root.joinpath(*segments)
+    try:
+        resolved_parent = target.parent.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry parent is not present.") from error
+    if resolved_parent != root and root not in resolved_parent.parents:
+        raise ApplyError("payload.invalid", "The entry escapes its files location.")
+    final = resolved_parent / target.name
+    try:
+        info = final.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    relative = "/".join(segments)
+    observed = stable_entry_id(payload["locationId"], info.st_dev, info.st_ino, relative)
+    if observed != entry_id:
+        raise ApplyError("resource.drifted", "The entry on disk is not the entry the plan approved.")
+    return root, final, relative
+
+
+def trash_root(home: pathlib.Path) -> pathlib.Path:
+    data_home = os.environ.get("XDG_DATA_HOME", "")
+    base = pathlib.Path(data_home) if data_home.startswith("/") else home / ".local" / "share"
+    return base / "Trash"
+
+
+def trash_names(directory: pathlib.Path, name: str) -> str:
+    candidate = name
+    suffix = 1
+    while (directory / "files" / candidate).exists() or (directory / "info" / f"{candidate}.trashinfo").exists():
+        if suffix > 4096:
+            raise ApplyError("apply.exists", "No collision-free Trash name is available.")
+        stem, dot, extension = name.partition(".")
+        candidate = f"{stem}.{suffix}{dot}{extension}" if dot else f"{name}.{suffix}"
+        suffix += 1
+    return candidate
+
+
+def trash_info_document(original: pathlib.Path, deleted_at: str) -> str:
+    quoted = urllib.parse.quote(str(original), safe="/")
+    return f"[Trash Info]\nPath={quoted}\nDeletionDate={deleted_at}\n"
+
+
+def parse_trash_info(text: str) -> str:
+    path = ""
+    for line in text.splitlines():
+        if line.startswith("Path="):
+            path = urllib.parse.unquote(line[len("Path="):])
+    if not os.path.isabs(path) or "\x00" in path:
+        raise ApplyError("apply.failed", "The Trash record does not name an absolute original path.")
+    return path
+
+
+def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_files_resource_id(payload)
+    home = pathlib.Path.home()
+    _, final, relative = resolve_entry_path(payload, home)
+    root = trash_root(home)
+    try:
+        (root / "files").mkdir(parents=True, exist_ok=True)
+        (root / "info").mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise ApplyError("apply.failed", "The Trash directory is unavailable.") from error
+    name = trash_names(root, final.name)
+    deleted_at = datetime.datetime.now().replace(microsecond=0).isoformat()
+    info_path = root / "info" / f"{name}.trashinfo"
+    try:
+        with open(info_path, "x", encoding="utf-8", newline="\n") as stream:
+            stream.write(trash_info_document(final, deleted_at))
+    except OSError as error:
+        raise ApplyError("apply.failed", "The Trash record could not be written.") from error
+    try:
+        os.rename(final, root / "files" / name)
+    except OSError as error:
+        try:
+            info_path.unlink()
+        except OSError:
+            pass
+        raise ApplyError("apply.failed", "Moving the entry to Trash reported a failure status.") from error
+    json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "trashName": name}, stdout)
+    stdout.write("\n")
+    return 0
+
+
+def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_files_resource_id(payload)
+    home = pathlib.Path.home()
+    _, final, relative = resolve_entry_path(payload, home)
+    root = trash_root(home)
+    try:
+        root_resolved = root.resolve(strict=True)
+        files_dir = (root / "files").resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The Trash directory is not present.") from error
+    if files_dir != final.parent:
+        raise ApplyError("payload.invalid", "The entry is not held in Trash.")
+    info_path = root_resolved / "info" / f"{final.name}.trashinfo"
+    try:
+        record = info_path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The Trash record for this entry is missing.") from error
+    original = pathlib.Path(parse_trash_info(record))
+    try:
+        parent = original.parent.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The original location is no longer present.") from error
+    home_resolved = home.resolve()
+    if parent != home_resolved and home_resolved not in parent.parents:
+        raise ApplyError("payload.invalid", "The Trash record points outside this account's home.")
+    destination = parent / original.name
+    if destination.exists():
+        raise ApplyError("apply.exists", "Something already occupies the original location.")
+    try:
+        os.rename(final, destination)
+    except OSError as error:
+        raise ApplyError("apply.failed", "Restoring the entry reported a failure status.") from error
+    try:
+        info_path.unlink()
+    except OSError:
+        pass
+    json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "restoredTo": str(destination)}, stdout)
+    stdout.write("\n")
+    return 0
+
+
 def stable_directory_id(location_id: str, parent: str) -> str:
     digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
     return f"files.directory.{digest}"
@@ -341,7 +520,7 @@ def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
 
 def apply_network_wifi_enabled(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_resource_id(payload)
+    resource_id = payload.get("resourceId")
     if resource_id != NETWORK_WIFI_ID:
         raise ApplyError("resource.unresolved", "The apply payload names no code-owned radio.")
     enabled = require_enabled(payload)
@@ -352,7 +531,7 @@ def apply_network_wifi_enabled(stdin: Any, stdout: Any) -> int:
 
 def apply_input_keyboard_layout(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_resource_id(payload)
+    resource_id = require_digest_resource_id(payload, "input.keyboard.")
     index = require_layout_index(payload)
     device_name = resolve_keyboard_name(resource_id, list_keyboards())
     apply_keyboard_layout(device_name, index)
@@ -362,7 +541,7 @@ def apply_input_keyboard_layout(stdin: Any, stdout: Any) -> int:
 
 def apply_display_brightness(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_resource_id(payload)
+    resource_id = require_digest_resource_id(payload, "display.output.")
     percent = require_percent(payload)
     monitor_name = resolve_monitor_name(resource_id, list_monitors())
     apply_brightness(monitor_name, percent)
@@ -480,6 +659,8 @@ ACTIONS = {
     "process-terminate": apply_process_terminate,
     "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,
+    "files-entry-trash": apply_files_entry_trash,
+    "files-trash-restore": apply_files_trash_restore,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
@@ -497,6 +678,10 @@ def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
         return 1
     except subprocess.TimeoutExpired:
         json.dump({"ok": False, "code": "probe.timeout", "explanation": "The apply command did not finish."}, stdout)
+        stdout.write("\n")
+        return 1
+    except OSError:
+        json.dump({"ok": False, "code": "probe.unavailable", "explanation": "A code-owned command for this action is not installed."}, stdout)
         stdout.write("\n")
         return 1
 
