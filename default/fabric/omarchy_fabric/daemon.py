@@ -828,6 +828,11 @@ class FabricDaemon:
                         required={"resourceId": stable_token, "percent": self._operation_percent},
                     ),
                     IntentDefinition(
+                        "display.brightness.set",
+                        FixedArgvCommand(str(helper), ("display-brightness-set",)),
+                        required={"resourceId": stable_token, "percent": self._operation_percent},
+                    ),
+                    IntentDefinition(
                         "process.termination",
                         FixedArgvCommand(str(helper), ("process-terminate",)),
                         required={"resourceId": stable_token, "pid": self._operation_pid},
@@ -857,6 +862,15 @@ class FabricDaemon:
                     "audio.provider",
                     "output-volume.set",
                     "audio.output-volume.set",
+                    lambda preflight: {
+                        "resourceId": preflight["resource"]["id"],
+                        "percent": preflight["normalizedArguments"]["percent"],
+                    },
+                ),
+                OperationDefinition(
+                    "display.provider",
+                    "brightness.set",
+                    "display.brightness.set",
                     lambda preflight: {
                         "resourceId": preflight["resource"]["id"],
                         "percent": preflight["normalizedArguments"]["percent"],

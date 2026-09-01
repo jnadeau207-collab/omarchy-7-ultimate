@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "display.inspect",
     supportsResource: true,
-    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position). Resolution, scale, arrangement, and brightness changes remain unavailable from Settings."
+    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position), and brightness applies through display.provider brightness.set on outputs that expose a controllable backlight. Resolution, scale, and arrangement changes remain unavailable from Settings."
   },
   {
     routeId: "settings.audio.overview",
@@ -512,6 +512,15 @@ function closedActiveProfile(state) {
   return POWER_PROFILES.indexOf(active) >= 0 ? active : ""
 }
 
+function brightnessAvailable(state) {
+  return !!(state && state.available === true && typeof state.percent === "number" &&
+    isFinite(state.percent) && state.percent >= 0 && state.percent <= 100)
+}
+
+function brightnessPercent(state) {
+  return brightnessAvailable(state) ? Math.round(state.percent) : -1
+}
+
 function normalizeLeafResource(resource, index) {
   if (!isObject(resource)) return null
   var id = typeof resource.id === "string" && resource.id.length <= 160 ? resource.id : ""
@@ -528,6 +537,8 @@ function normalizeLeafResource(resource, index) {
     subtitle: clippedText(resourceSubtitle(resource), 240),
     details: details,
     profiles: closedProfiles(state),
+    brightnessAvailable: brightnessAvailable(state),
+    brightnessPercent: brightnessPercent(state),
     activeProfile: closedActiveProfile(state),
     order: index
   }
