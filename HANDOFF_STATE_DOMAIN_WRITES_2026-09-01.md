@@ -54,6 +54,12 @@ Settings Sound renders the live control correctly. After an external operation m
 
 Rendering is right. The page reads once at load and never re-reads, so any change made outside it — by another client, or by hardware keys — leaves Settings stale.
 
+## Deploying a schema rename
+
+The `rootToken` rename is a wire-contract change, and the shell validates provider state against a closed contract. Deploying the provider without restarting both sides puts Files into `files.invalid-response` — "Fabric returned data outside the closed Files read contract" — with a red FAILED card and no inventory. That happened on metal during this work.
+
+Restart `omarchy-fabric-checkout.service` and the shell together for any field rename. Restarting only one leaves the two sides disagreeing, and the failure looks like a provider fault rather than a version skew.
+
 ## Do not reopen
 
 Do not weaken `operation_available ⇒ available` to make a proof pass. Do not add a name to the sensitive-key allowlist; rename the field instead. Do not widen `session_operable` to a domain with no code-owned helper action.
