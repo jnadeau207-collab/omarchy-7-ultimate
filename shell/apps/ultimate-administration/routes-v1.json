@@ -1,0 +1,263 @@
+{
+  "schemaVersion": "omarchy.product-routes/v1",
+  "application": "administration",
+  "appId": "org.omarchy.Administration",
+  "scheme": "omarchy-administration",
+  "defaultRoute": "administration.overview",
+  "entityDeepLinks": [],
+  "routes": [
+    {
+      "id": "administration.overview",
+      "section": "Home",
+      "title": "Administration home",
+      "description": "Find an administration tool and see which typed providers are available.",
+      "keywords": [
+        "administration",
+        "home",
+        "tools",
+        "overview"
+      ],
+      "providerId": null,
+      "deepLink": {
+        "host": "overview",
+        "path": ""
+      },
+      "argumentSchema": {}
+    },
+    {
+      "id": "administration.processes.overview",
+      "section": "Performance",
+      "title": "Processes",
+      "description": "Running processes with user, command, and control group. End Task is planned, not wired.",
+      "keywords": [
+        "task manager",
+        "processes",
+        "cpu",
+        "memory",
+        "end task",
+        "ctrl shift esc"
+      ],
+      "providerId": "process.provider",
+      "deepLink": {
+        "host": "processes",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.services.overview",
+      "section": "Performance",
+      "title": "Services",
+      "description": "System and user services with their current run state.",
+      "keywords": [
+        "services",
+        "systemd",
+        "daemon",
+        "units"
+      ],
+      "providerId": "service.provider",
+      "deepLink": {
+        "host": "services",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.devices.overview",
+      "section": "Devices",
+      "title": "Device Manager",
+      "description": "Installed hardware with driver and status, the way Device Manager presents it.",
+      "keywords": [
+        "device manager",
+        "hardware",
+        "driver",
+        "gpu",
+        "usb",
+        "audio"
+      ],
+      "providerId": "device.provider",
+      "deepLink": {
+        "host": "devices",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.storage.overview",
+      "section": "Devices",
+      "title": "Storage",
+      "description": "Disks, partitions, mounts, and capacity.",
+      "keywords": [
+        "disks",
+        "drives",
+        "partitions",
+        "capacity",
+        "mount"
+      ],
+      "providerId": "storage.provider",
+      "deepLink": {
+        "host": "storage",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.printers.overview",
+      "section": "Devices",
+      "title": "Printers and scanners",
+      "description": "Printers, queues, and discovered scanning devices.",
+      "keywords": [
+        "printer",
+        "scanner",
+        "queue",
+        "cups"
+      ],
+      "providerId": "printer.provider",
+      "deepLink": {
+        "host": "printers",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.backup.overview",
+      "section": "Recovery",
+      "title": "Backup",
+      "description": "Backup targets and history, separate from system restore points.",
+      "keywords": [
+        "backup",
+        "file history",
+        "restore files"
+      ],
+      "providerId": "backup.provider",
+      "deepLink": {
+        "host": "backup",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.schedule.overview",
+      "section": "Recovery",
+      "title": "Scheduled tasks",
+      "description": "Timers and scheduled jobs with their next run.",
+      "keywords": [
+        "task scheduler",
+        "timers",
+        "cron",
+        "jobs"
+      ],
+      "providerId": "schedule.provider",
+      "deepLink": {
+        "host": "schedule",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.troubleshoot.overview",
+      "section": "Recovery",
+      "title": "Troubleshooting",
+      "description": "Diagnostic probes for common problems, with the evidence each one gathered.",
+      "keywords": [
+        "troubleshoot",
+        "diagnose",
+        "repair",
+        "no sound",
+        "no internet"
+      ],
+      "providerId": "diagnostics.provider",
+      "deepLink": {
+        "host": "troubleshoot",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.firewall.overview",
+      "section": "Security",
+      "title": "Firewall",
+      "description": "Firewall state and the rules currently in force.",
+      "keywords": [
+        "firewall",
+        "ports",
+        "security",
+        "rules"
+      ],
+      "providerId": "firewall.provider",
+      "deepLink": {
+        "host": "firewall",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "administration.accounts.overview",
+      "section": "Security",
+      "title": "User accounts",
+      "description": "Local accounts and the groups that grant them permission.",
+      "keywords": [
+        "users",
+        "accounts",
+        "groups",
+        "permissions"
+      ],
+      "providerId": "account.provider",
+      "deepLink": {
+        "host": "accounts",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    }
+  ]
+}

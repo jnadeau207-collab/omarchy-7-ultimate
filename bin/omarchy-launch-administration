@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# omarchy:summary=Open the standalone Administration application
+# omarchy:args=[route|omarchy-administration://link] [options]
+# omarchy:examples=omarchy launch administration | omarchy launch administration administration.processes.overview
+
+set -euo pipefail
+
+source "$OMARCHY_PATH/shell/apps/shared/launch-product-app.bash"
+launch_product_app administration "$@"
