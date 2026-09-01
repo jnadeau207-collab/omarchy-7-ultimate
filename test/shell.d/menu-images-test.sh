@@ -117,8 +117,6 @@ rm -rf "$cache_home"
 mkdir -p "$cache_home"
 : >"$tmp/calls"
 
-# The delay keeps both runs inside the generation window so the locks are
-# actually contended rather than the second run arriving after the first.
 pids=()
 for run in 1 2; do
   PATH="$stub_bin:$PATH" XDG_CACHE_HOME="$cache_home" \

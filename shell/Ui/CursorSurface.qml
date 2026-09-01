@@ -1,16 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Shared visual chrome for keyboard-and-mouse-navigable items inside a panel.
-// Contract: items must NOT read `containsMouse` for color/border. Mouse
-// hover updates the panel's cursor state at the root; visuals derive from
-// `hasCursor` / `current`. That's what guarantees a single highlight on
-// screen at any time across both keyboard and mouse interaction.
-//
-// Cursor paint is always the shared hover-cursor fill plus optional
-// hover-cursor border. `outline` remains as a compatibility flag for
-// callers that used to request border-only rows, but slider rows still
-// receive the same hover-cursor background as every other row.
 BorderSurface {
   id: root
 

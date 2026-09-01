@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 
-
 def stable_resource_id(domain: str, kind: str, backend_key: str) -> str:
     """Hide backend selectors while retaining a stable, domain-scoped identity."""
 

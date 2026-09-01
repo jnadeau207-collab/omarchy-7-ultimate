@@ -23,7 +23,6 @@ from omarchy_fabric.protocol import (
     validate_server_message,
 )
 
-
 class ProtocolUnitTests(unittest.TestCase):
     def test_round_trip_preserves_finite_json(self) -> None:
         message = {
@@ -138,7 +137,6 @@ class ProtocolUnitTests(unittest.TestCase):
                         {"protocol": "omarchy.fabric.rpc/v0", "event": changed}
                     )
 
-
 class FabricClientTests(unittest.IsolatedAsyncioTestCase):
     async def test_event_queue_is_bounded_and_overflow_closes_the_connection(self) -> None:
         client = FabricClient(FABRIC_ROOT / "unused.sock", event_backlog=1)
@@ -171,13 +169,12 @@ class FabricClientTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(ValueError):
                     FabricClient(FABRIC_ROOT / "unused.sock", event_backlog=invalid)
 
-
 class FixedArgvTests(unittest.TestCase):
     def test_fixed_argv_requires_absolute_immutable_vector(self) -> None:
         with self.assertRaises(ValueError):
             FixedArgvCommand("echo")
         with self.assertRaises(TypeError):
-            FixedArgvCommand("/usr/bin/printf", ["%s"])  # type: ignore[arg-type]
+            FixedArgvCommand("/usr/bin/printf", ["%s"])
         command = FixedArgvCommand("/usr/bin/printf", ("%s", "fixed"))
         self.assertEqual(command.argv, ("/usr/bin/printf", "%s", "fixed"))
 
@@ -190,7 +187,6 @@ class FixedArgvTests(unittest.TestCase):
         self.assertEqual(positional[0], ["/usr/bin/provider-helper", "--typed-stdin"])
         self.assertFalse(keywords["shell"])
         self.assertIn("$(touch /tmp/nope)", keywords["input"])
-
 
 if __name__ == "__main__":
     unittest.main()

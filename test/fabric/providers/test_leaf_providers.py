@@ -28,14 +28,11 @@ from omarchy_fabric.providers.network import provider as network
 from omarchy_fabric.providers.power import provider as power
 from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
-
 FIXTURES = Path(__file__).with_name("fixtures")
 MODULES = (display, audio, network, bluetooth, input_provider, power)
 
-
 def load_fixture(domain: str) -> dict[str, Any]:
     return json.loads((FIXTURES / f"{domain}-v0.json").read_text(encoding="utf-8"))
-
 
 class FixtureRunner:
     def __init__(self, outputs: Mapping[tuple[str, ...], str | Exception], *, fallback: str | Exception | None = None) -> None:
@@ -52,7 +49,6 @@ class FixtureRunner:
             raise value
         return ProbeOutput(stdout=value, stderr="")
 
-
 class DivergentBackend:
     def __init__(self, inner: Any, drift_state: Mapping[str, Any]) -> None:
         self.inner = inner
@@ -65,7 +61,6 @@ class DivergentBackend:
         await self.inner.replace(resource_id, resource, expected_revision)
         await self.inner.force_state(resource_id, self.drift_state)
         return await self.inner.snapshot()
-
 
 def fixture_runner(module: Any, *, reordered: bool = False) -> FixtureRunner:
     fixture = load_fixture(module.DOMAIN)
@@ -121,7 +116,6 @@ def fixture_runner(module: Any, *, reordered: bool = False) -> FixtureRunner:
         )
     raise AssertionError(module)
 
-
 def principal() -> EndpointPrincipal:
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     return EndpointPrincipal(
@@ -134,7 +128,6 @@ def principal() -> EndpointPrincipal:
         expires_at=now + timedelta(hours=1),
     )
 
-
 @dataclass(frozen=True)
 class FakeCase:
     module: Any
@@ -146,7 +139,6 @@ class FakeCase:
     @property
     def resource_id(self) -> str:
         return self.arguments["resourceId"]
-
 
 def fake_cases() -> tuple[FakeCase, ...]:
     display_id = stable_resource_id("display", "output", "eDP-1")
@@ -256,7 +248,6 @@ def fake_cases() -> tuple[FakeCase, ...]:
         ),
     )
 
-
 def walk(value: Any):
     yield value
     if isinstance(value, Mapping):
@@ -265,7 +256,6 @@ def walk(value: Any):
     elif isinstance(value, (list, tuple)):
         for child in value:
             yield from walk(child)
-
 
 class ProviderContractTests(unittest.TestCase):
     def test_all_manifests_and_standalone_schemas_are_admitted_and_deeply_immutable(self) -> None:
@@ -320,7 +310,6 @@ class ProviderContractTests(unittest.TestCase):
                 self.assertFalse(operation["supportsCancellation"])
                 self.assertIn(read["capability"], provider.manifest["capabilities"])
                 self.assertIn(operation["capability"], provider.manifest["capabilities"])
-
 
 class RealInventoryTests(unittest.IsolatedAsyncioTestCase):
     async def test_audio_normalizes_every_real_pactl_port_availability_and_rejects_unknown_vocabulary(self) -> None:
@@ -470,7 +459,6 @@ class RealInventoryTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(provider_result["value"], direct[module.PROVIDER_ID])
                 self.assertEqual(provider_result["capability"], f"{module.DOMAIN}.inspect")
                 self.assertEqual(provider_result["observedAt"], 42.0)
-
 
 class FakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
     async def test_every_fake_preflight_crosses_the_central_typed_preflight_seam(self) -> None:
@@ -622,7 +610,6 @@ class FakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(precondition.exception.code, "display.precondition-failed")
 
-
 class ProbeBoundaryTests(unittest.TestCase):
     def test_probe_json_rejects_duplicate_keys_and_non_finite_numbers(self) -> None:
         for payload in ('{"value":1,"value":2}', '{"value":NaN}', '{"value":Infinity}'):
@@ -661,7 +648,6 @@ class ProbeBoundaryTests(unittest.TestCase):
             with self.assertRaises(TimeoutError):
                 _probe.run_probe(sleeping)
             self.assertLess(time.monotonic() - started, 1.0)
-
 
 if __name__ == "__main__":
     unittest.main()

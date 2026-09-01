@@ -50,8 +50,6 @@ Panel {
     for (var i = 0; i < nodes.length; i++) {
       var n = nodes[i]
       if (!n || !n.isStream || !isPlaybackStream(n)) continue
-      // A tuning's output is a playback stream too, but it is the processing
-      // itself rather than an application, so it does not belong in the list.
       if (String(n.name || "").indexOf("omarchy_speaker_tuning") === 0) continue
       list.push(n)
     }
@@ -61,13 +59,6 @@ Panel {
   property var sinkAvailability: ({})
   property bool sinkAvailabilityLoaded: false
 
-  // Identify true playback streams without reading node.properties here:
-  // PwNode.properties is invalid until the node is bound, and reading it while
-  // capture streams are appearing (for example, when Voxtype starts recording)
-  // can destabilize Quickshell's Pipewire service. Quickshell versions differ
-  // in how `type` is exposed (media.class, enum name, or numeric enum), but
-  // playback streams consistently accept audio input from clients and publish
-  // `isSink: true`; capture streams publish as stream sources.
   function isPlaybackStream(node) {
     return Model.isPlaybackStream(node)
   }
@@ -103,28 +94,12 @@ Panel {
     return list
   }
 
-  // Feed Repeaters with panel-local snapshots instead of the live PipeWire
-  // model. PipeWire can remove nodes while Quickshell is dispatching the
-  // removal signal; rebuilding a Repeater from that signal path has crashed
-  // in Quickshell's PipeWire service. The snapshot timer lets that mutation
-  // settle first, and closed panels keep their repeaters detached entirely.
   property var displayAudioSinks: []
   property var displayAudioSources: []
   property var displayAudioStreams: []
 
-  // A DSP sink -- a speaker tuning, or EasyEffects -- can be the selected output
-  // without being where loudness lives: changing its volume alters the level going
-  // *into* the processing, so the slider would move while the speakers did not,
-  // and on a chain with a limiter it would change the tone as well.
-  //
-  // omarchy-audio-output-sink resolves the *current* default output through any
-  // such sink to the physical one, which is the same definition the volume keys
-  // and the output switcher use. Resolving the default (rather than "whatever a
-  // tuning fronts") is what keeps this correct when headphones or HDMI are
-  // selected while a tuning still exists.
   property string volumeSinkName: ""
 
-  // Carry sub-notch touchpad deltas between wheel events.
   property real wheelAccumulator: 0
 
   readonly property var volumeSink: {
@@ -138,8 +113,6 @@ Panel {
     return sink
   }
 
-  // Re-resolve whenever the selected output changes; the timer below is only a
-  // safety net for the tuning being applied or removed underneath us.
   onSinkChanged: resolveVolumeSink()
 
   function resolveVolumeSink() {
@@ -154,26 +127,11 @@ Panel {
   onRawAudioSinksChanged: if (rawAudioSinks.length > 0) cachedAudioSinks = rawAudioSinks
   onRawAudioSourcesChanged: if (rawAudioSources.length > 0) cachedAudioSources = rawAudioSources
 
-  // Single cursor model shared by keyboard and mouse. Sections:
-  //   "output"  — output slider + sink device list
-  //   "input"   — input slider + source device list
-  //   "streams" — per-app playback streams
-  // selectedIndex semantics within a section:
-  //   -1            → on the slider row (h/l adjusts volume, m/Enter mute)
-  //   0..N-1        → on the Nth device/stream row
-  // Visuals derive from hasCursor/current via CursorSurface, never
-  // from containsMouse — that's what keeps the highlight unique across
-  // keyboard + mouse like wifi does.
   property string focusSection: "output"
   property int selectedIndex: -1
   property bool cursorActive: false
 
-  // "header" is a virtual section for the hero output mute toggle; it sits
-  // above the output section so the speaker can be muted from the keyboard.
   readonly property bool headerHasCursor: cursorActive && focusSection === "header"
-  // Only channels that actually exist get a vote. A box with no default source
-  // would otherwise report "input unmuted" forever, leaving the hero switch
-  // able to mute but never to unmute.
   readonly property bool hasOutput: !!(volumeSink && volumeSink.audio)
   readonly property bool hasInput: !!(source && source.audio)
   readonly property bool anyAudible: (hasOutput && !outputMuted) || (hasInput && !inputMuted)
@@ -203,11 +161,9 @@ Panel {
   function sectionHasSlider(section) {
     if (section === "output") return true
     if (section === "input") return !!source
-    return false  // stream rows carry their own sliders inline; not a section-level slider
+    return false
   }
 
-  // Order of visible sections, recomputed reactively so dropping a section
-  // (e.g. no input devices) doesn't leave the cursor pointing at it.
   readonly property var visibleSections: {
     var list = []
     if (sectionVisible("output")) list.push("output")
@@ -227,20 +183,18 @@ Panel {
     if (sIdx < 0) { focusSection = sections[0]; selectedIndex = sectionHasSlider(focusSection) ? -1 : 0; return }
 
     var idx = selectedIndex
-    var max = sectionCount(focusSection) - 1  // last device index
+    var max = sectionCount(focusSection) - 1
     var hasSlider = sectionHasSlider(focusSection)
-    var floor = hasSlider ? -1 : 0  // -1 = slider row
+    var floor = hasSlider ? -1 : 0
 
     if (delta > 0) {
       if (idx < max) { selectedIndex = idx + 1; return }
-      // Fall through to next section.
       if (sIdx < sections.length - 1) {
         focusSection = sections[sIdx + 1]
         selectedIndex = sectionHasSlider(focusSection) ? -1 : 0
       }
     } else {
       if (idx > floor) { selectedIndex = idx - 1; return }
-      // Escape upward.
       if (sIdx > 0) {
         focusSection = sections[sIdx - 1]
         var prevMax = sectionCount(focusSection) - 1
@@ -268,12 +222,6 @@ Panel {
     cursorActive = true
   }
 
-  // Adjust the slider associated with the focused section. Output and
-  // input sliders are real volume controls; on stream rows h/l adjusts
-  // that stream's volume (so keyboard parity with the inline slider).
-  // For device rows (selectedIndex >= 0 in output/input) h/l is a no-op
-  // — the cursor is on a discrete row, not on the slider, and silently
-  // moving the global slider would surprise the user.
   function adjustVolume(delta) {
     if (focusSection === "output" && selectedIndex === -1) {
       setOutputVolume(outputVolume + delta)
@@ -289,7 +237,6 @@ Panel {
     }
   }
 
-  // Enter/Space: activate whatever the cursor is on.
   function activateCursor() {
     if (focusSection === "header") { toggleAllMuted(); return }
     if (focusSection === "output") {
@@ -314,7 +261,7 @@ Panel {
     if (opened) {
       refreshDisplayAudioModels()
       focusSection = "output"
-      selectedIndex = -1  // first keyboard cursor reveal starts on the output slider
+      selectedIndex = -1
       cursorActive = false
       Qt.callLater(resetScroll)
     } else {
@@ -322,7 +269,6 @@ Panel {
     }
   }
 
-  // Clamp / repair the cursor whenever any list refreshes underneath us.
   onAudioSinksChanged: scheduleDisplayAudioModelRefresh()
   onAudioSourcesChanged: scheduleDisplayAudioModelRefresh()
   onAudioStreamsChanged: scheduleDisplayAudioModelRefresh()
@@ -351,11 +297,6 @@ Panel {
     displayAudioStreams = []
   }
 
-  // Keep the keyboard-focused row inside the visible viewport of the
-  // ScrollView. Each cursor target (slider rows, SinkRow, SourceRow,
-  // StreamRow) calls this when it gains hasCursor. Without it, j/k can
-  // walk the selection off-screen — wifi uses ListView.positionViewAtIndex
-  // for this; we don't have that affordance with a multi-section Column.
   function resetScroll() {
     if (!scrollArea) return
     var flick = scrollArea.contentItem
@@ -385,9 +326,6 @@ Panel {
   function clampCursor() {
     var sections = visibleSections
     if (!sections || !sections.length) return
-    // "header" is virtual and never appears in visibleSections, so it has to
-    // be let through: muting republishes the PipeWire snapshot, and clamping
-    // would knock the cursor off the hero switch on every toggle.
     if (focusSection === "header") return
     if (sections.indexOf(focusSection) < 0) {
       focusSection = visibleSections[0]
@@ -417,9 +355,6 @@ Panel {
     return inputMuted ? "\u2715" : "\u25CF"
   }
 
-  // Playful mood-name for a given output volume. Mirrors the brightness
-  // panel's brightnessName ladder; bands are wide enough that small
-  // tweaks don't rename the room you're in.
   function outputVolumeName(volume, muted) {
     return Model.outputVolumeName(volume, muted)
   }
@@ -452,9 +387,6 @@ Panel {
     if (source && source.audio) source.audio.muted = !source.audio.muted
   }
 
-  // The hero switch is the whole panel's on/off, so it carries both channels
-  // at once. It reads as on while anything is still audible, which keeps
-  // muting a single channel from the row below flipping the master switch.
   function toggleAllMuted() {
     var mute = anyAudible
     if (hasOutput) volumeSink.audio.muted = mute
@@ -557,9 +489,6 @@ Panel {
   }
 
   function unmatchedMprisStreamLabel(label) {
-    // Spotify exposes its PipeWire stream as "audio-src". For generic stream
-    // names, use the one MPRIS player not already represented by another audio
-    // stream (e.g. Chromium, or ALSA apps like cliamp).
     return Model.unmatchedMprisStreamLabel(label, mprisPlayers, displayAudioStreams)
   }
 
@@ -632,9 +561,6 @@ Panel {
     onTriggered: if (!sinkAvailabilityProc.running) sinkAvailabilityProc.running = true
   }
 
-  // Runs whether or not the panel is open: the bar shows and scrolls the output
-  // volume too, so an unresolved sink there would read and change the virtual
-  // tuning sink instead of the speakers.
   Timer {
     interval: 15000
     running: true
@@ -688,8 +614,6 @@ Panel {
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
       onTextKey: function(t) {
-        // 'm' mutes whatever the cursor is on: focused section's slider
-        // for output/input, the focused stream for streams.
         if (t === "m" || t === "M") {
           if (!root.cursorActive) return
           if (root.focusSection === "streams" && root.selectedIndex >= 0
@@ -721,13 +645,11 @@ Panel {
           width: scrollArea.availableWidth
           spacing: Style.space(14)
 
-          // ---------- Hero: speaker icon · title/status ----------
           Item {
             id: heroItem
             width: parent.width
             implicitHeight: Math.max(heroIcon.implicitHeight, heroLabels.implicitHeight, powerSwitch.implicitHeight)
 
-            // Status only — the switch owns muting, mouse and keyboard alike.
             Text {
               id: heroIcon
               textFormat: Text.PlainText
@@ -740,9 +662,6 @@ Panel {
               anchors.verticalCenter: parent.verticalCenter
             }
 
-            // Compact on/off switch on the trailing edge of the hero, and the
-            // header's only cursor target. Checked means something is still
-            // audible, so muting everything reads as switching audio off.
             ToggleSwitch {
               id: powerSwitch
               checked: root.anyAudible
@@ -797,7 +716,6 @@ Panel {
             }
           }
 
-          // ---- Output devices ----
           PanelSeparator {
             foreground: root.bar.foreground
           }
@@ -882,7 +800,6 @@ Panel {
             }
           }
 
-          // ---- Input ----
           PanelSeparator {
             visible: root.displayAudioSources.length > 0 || !!root.source
             foreground: root.bar.foreground
@@ -990,7 +907,6 @@ Panel {
             }
           }
 
-          // ---- Per-app streams ----
           PanelSeparator {
             visible: root.displayAudioStreams.length > 0
             foreground: root.bar.foreground
@@ -1040,11 +956,6 @@ Panel {
     onLoaded: root.adoptOverlayPage()
   }
 
-  // ---- Reusable inline components ----
-
-  // Output device row — cursor target inside the "output" section. Mouse
-  // hover updates the panel cursor at the root; visuals come entirely
-  // from hasCursor/current via CursorSurface, never from containsMouse.
   component SinkRow: CursorSurface {
     id: sinkRow
     required property var node
@@ -1105,7 +1016,6 @@ Panel {
     }
   }
 
-  // Input device row — sibling of SinkRow for the "input" section.
   component SourceRow: CursorSurface {
     id: sourceRow
     required property var node
@@ -1166,10 +1076,6 @@ Panel {
     }
   }
 
-  // Per-app stream row — cursor target inside the "streams" section.
-  // The stream has its own slider inline, so h/l from the keyboard
-  // adjusts THIS stream's volume (not the global output) when the cursor
-  // sits on this row. Enter/Space mutes the stream.
   component StreamRow: CursorSurface {
     id: streamRow
     required property var node

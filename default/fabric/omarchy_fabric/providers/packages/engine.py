@@ -33,10 +33,8 @@ TERMINAL = {"succeeded", "failed", "cancelled", "rolled-back"}
 MAX_OPERATIONS = 4096
 _PLAN_VALIDATOR = Draft202012Validator(CONTRACTS["urn:omarchy:fabric:provider:packages:operation-preflight:v0"])
 
-
 def _reject_json_constant(value: str) -> None:
     raise ValueError(f"invalid JSON constant: {value}")
-
 
 def _safe_inventory_path(value: object) -> bool:
     return (
@@ -49,7 +47,6 @@ def _safe_inventory_path(value: object) -> bool:
         and posixpath.normpath(value) == value
     )
 
-
 def _fsync_directory(path: Path) -> None:
     if os.name != "posix":
         return
@@ -58,7 +55,6 @@ def _fsync_directory(path: Path) -> None:
         os.fsync(descriptor)
     finally:
         os.close(descriptor)
-
 
 def _acquire_state_lock(path: Path) -> int | None:
     if os.name != "posix":
@@ -74,7 +70,6 @@ def _acquire_state_lock(path: Path) -> int | None:
         raise FabricError("packages.state-busy", "Software operation state is busy", "Another process currently owns the durable journal write lock.", retryable=True, change_state="unknown") from error
     return descriptor
 
-
 def _release_state_lock(descriptor: int | None) -> None:
     if descriptor is None:
         return
@@ -83,10 +78,8 @@ def _release_state_lock(descriptor: int | None) -> None:
     fcntl.flock(descriptor, fcntl.LOCK_UN)
     os.close(descriptor)
 
-
 def inventory_revision(inventory: list[Mapping[str, Any]]) -> str:
     return revision(sorted((deepcopy(dict(item)) for item in inventory), key=lambda item: item["id"]))
-
 
 class FakeExecutionAdapter:
     """Controllable adapter that records typed input and never executes a process."""
@@ -111,7 +104,6 @@ class FakeExecutionAdapter:
             await self.release.wait()
         if self.fail_at == name:
             raise FabricError("packages.adapter-failed", "Software adapter failed", "The hermetic adapter produced its requested deterministic failure.", detail=name, retryable=True, change_state="unknown" if name in {"apply", "validate", "commit"} else "none", recovery_actions=("packages.reconcile",))
-
 
 class PackageOperationEngine:
     def __init__(

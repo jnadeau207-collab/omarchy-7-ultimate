@@ -1,12 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Search field: kit TextField with a magnifier glyph, a clear button once text
-// is present, and `Esc clears` behavior. Start menu, Settings search, and
-// every filterable list use this one component.
-//
-// Do not `import QtQuick.Controls` here: that shadows qs.Ui.TextField with the
-// stock QQC field, which paints a solid near-white bar on dark glass.
 TextField {
   id: root
 
@@ -18,7 +12,6 @@ TextField {
   leftPadding: Style.space(28)
   rightPadding: showClearButton && text.length > 0 ? Style.space(28) : horizontalPadding
 
-  // Magnifier glyph.
   Text {
     visible: root.text.length === 0
     text: "\u2315"
@@ -30,8 +23,6 @@ TextField {
     anchors.verticalCenter: parent.verticalCenter
   }
 
-  // Clear affordance. Mouse-only operation rule: never make the user select
-  // all and delete to reset a search.
   IconButton {
     visible: root.showClearButton && root.text.length > 0
     iconText: "\u00d7"

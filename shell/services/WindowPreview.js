@@ -1,7 +1,3 @@
-// Structured Superbar peek model. Each running window is one row with the
-// fields the peek can show: icon, title, workspace, minimized, geometry
-// for a live grim capture, and the address used to activate or close.
-// Missing geometry means no thumbnail; the peek does not invent one.
 
 function windowTitle(win) {
   if (!win) return "Window"

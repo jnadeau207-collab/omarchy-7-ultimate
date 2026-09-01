@@ -47,8 +47,6 @@ EOF
 result=$(HOME="$TEST_HOME" CODEX_HOME="$TEST_HOME/.codex" CODEX_ARGS_FILE="$TEST_HOME/codex-args" XDG_DATA_HOME="$TEST_HOME/.local/share" PATH="$TEST_HOME/bin:$PATH" \
   "$ROOT/bin/omarchy-agent-usage-codex")
 
-# NUL-separated, so the assertion sees argument boundaries: a single "-a on-request"
-# would flatten to the same text as two arguments but is not a policy codex accepts.
 expected_args=(-s read-only -a on-request app-server)
 mapfile -d '' -t codex_args <"$TEST_HOME/codex-args"
 
@@ -68,8 +66,6 @@ pass "Codex collector does not double-count cache or reasoning tokens"
   fail "Codex collector identifies itself with an empty limits list" "$result"
 pass "Codex collector identifies itself with an empty limits list"
 
-# Pi and omp can both spend a Codex subscription without creating native
-# Codex sessions. Their compatible JSONL transcripts must be included.
 PI_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$PI_HOME"' EXIT
 mkdir -p "$PI_HOME/bin" "$PI_HOME/.pi/agent/sessions/project" "$PI_HOME/.omp/agent/sessions/project"
@@ -91,8 +87,6 @@ result=$(HOME="$PI_HOME" CODEX_HOME="$PI_HOME/.codex" XDG_DATA_HOME="$PI_HOME/.l
   fail "Codex collector filters pi and omp sessions to Codex providers" "$result"
 pass "Codex collector counts pi and omp subscription usage"
 
-# A subscription burned entirely through opencode has no native session files;
-# usage must come from opencode's message database, filtered to OpenAI.
 OPENCODE_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$PI_HOME" "$OPENCODE_HOME"' EXIT
 mkdir -p "$OPENCODE_HOME/bin"
@@ -142,8 +136,6 @@ pass "Codex collector counts OpenAI usage, reasoning included, from opencode ses
   fail "Codex collector ignores prefix-colliding providers, user messages, and malformed rows" "$result"
 pass "Codex collector ignores prefix-colliding providers, user messages, and malformed rows"
 
-# A warm cache makes --limits-only cheap: local stats come from the last scan
-# instead of another walk over the opencode database, and --force bypasses it.
 CACHE_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$PI_HOME" "$OPENCODE_HOME" "$CACHE_HOME" "$FRESH_HOME"' EXIT
 mkdir -p "$CACHE_HOME/bin"
@@ -192,8 +184,6 @@ cache_file=$(ls "$CACHE_HOME/.cache/omarchy/agent-usage/"/codex-scan-*.json 2>/d
   fail "Codex collector writes a versioned cache envelope" "$result"
 pass "Codex collector writes a local-stats cache on first scan"
 
-# A corrupt-but-parseable cache (wrong shape) is a cache miss: rescan and
-# rewrite instead of emitting a garbage record.
 printf '[]' >"$cache_file"
 result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CACHE_HOME/.cache" XDG_DATA_HOME="$CACHE_HOME/.local/share" \
   PATH="$CACHE_HOME/bin:$PATH" "$ROOT/bin/omarchy-agent-usage-codex")
@@ -204,8 +194,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector rewrites the cache after a corrupt read" "$result"
 pass "Codex collector recovers from a corrupt cache file"
 
-# A new opencode message changes what a scan would find; a --limits-only run
-# must reuse the cached stats instead of rescanning.
 python3 - "$CACHE_HOME/.local/share/opencode/opencode.db" <<'PY'
 import json
 import sqlite3
@@ -238,7 +226,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector --limits-only emits a complete record from cache" "$result"
 pass "Codex collector --limits-only reuses cached local stats"
 
-# --force must ignore the cache and pick up the new message.
 result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CACHE_HOME/.cache" XDG_DATA_HOME="$CACHE_HOME/.local/share" \
   PATH="$CACHE_HOME/bin:$PATH" "$ROOT/bin/omarchy-agent-usage-codex" --force)
 
@@ -246,7 +233,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector --force rescans past the cache" "$result"
 pass "Codex collector --force rescans past the cache"
 
-# The forced scan refreshed the cache, so a following --limits-only sees it.
 result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CACHE_HOME/.cache" XDG_DATA_HOME="$CACHE_HOME/.local/share" \
   PATH="$CACHE_HOME/bin:$PATH" "$ROOT/bin/omarchy-agent-usage-codex" --limits-only)
 
@@ -254,8 +240,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector --limits-only sees a refreshed cache after --force" "$result"
 pass "Codex collector --limits-only sees a refreshed cache after --force"
 
-# An expired cache makes --limits-only rescan too: stale today* stats must
-# never be served under a fresh updatedAt.
 python3 - "$CACHE_HOME/.local/share/opencode/opencode.db" <<'PY'
 import json
 import sqlite3
@@ -286,10 +270,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector --limits-only rescans when the cache is stale" "$result"
 pass "Codex collector --limits-only rescans when the cache is stale"
 
-# The 15-minute reuse window belongs to --limits-only alone. A no-flag run
-# (the widget's periodic refresh) reuses a scan only while it is young enough
-# to be a concurrent collector run; past that it rescans, so stats stay as
-# fresh as refreshIntervalSec, however low the user sets it.
 python3 - "$CACHE_HOME/.local/share/opencode/opencode.db" <<'PY'
 import json
 import sqlite3
@@ -319,8 +299,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
 [[ $(jq -r '.todayTotalTokens' <<<"$result") == "25" ]] ||
   fail "Codex collector no-flag reuses a seconds-old cache" "$result"
 
-# 30 seconds is the lowest refreshIntervalSec the widget supports, so a
-# cache that old must already be past the no-flag reuse window.
 touch -d "30 seconds ago" "$cache_file"
 result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CACHE_HOME/.cache" XDG_DATA_HOME="$CACHE_HOME/.local/share" \
   PATH="$CACHE_HOME/bin:$PATH" "$ROOT/bin/omarchy-agent-usage-codex")
@@ -329,8 +307,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector no-flag rescans past the concurrent-run window" "$result"
 pass "Codex collector no-flag mode rescans instead of serving a stale cache"
 
-# The same age from the other side: a cache far past the no-flag window but
-# well inside 15 minutes is still good enough for --limits-only.
 python3 - "$CACHE_HOME/.local/share/opencode/opencode.db" <<'PY'
 import json
 import sqlite3
@@ -361,9 +337,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector --limits-only reuses a scan the no-flag mode would refresh" "$result"
 pass "Codex collector --limits-only reuses a scan the no-flag mode would refresh"
 
-# A cache written on another local date holds another day's today* stats even
-# under a fresh mtime (midnight passed, or the clock moved backwards): the
-# envelope's scanDate must turn it into a miss.
 jq -c '.scanDate = "1999-01-01"' "$cache_file" >"$cache_file.tmp" && mv "$cache_file.tmp" "$cache_file"
 result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CACHE_HOME/.cache" XDG_DATA_HOME="$CACHE_HOME/.local/share" \
   PATH="$CACHE_HOME/bin:$PATH" "$ROOT/bin/omarchy-agent-usage-codex" --limits-only)
@@ -374,9 +347,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector stamps the rewritten cache with the scan date" "$result"
 pass "Codex collector treats a cache from another day as a miss"
 
-# A cache stamped in the future (the clock was set backwards after the write)
-# has no trustworthy age: it must be a miss, not fresh until the clock
-# catches up.
 python3 - "$CACHE_HOME/.local/share/opencode/opencode.db" <<'PY'
 import json
 import sqlite3
@@ -407,7 +377,6 @@ result=$(HOME="$CACHE_HOME" CODEX_HOME="$CACHE_HOME/.codex" XDG_CACHE_HOME="$CAC
   fail "Codex collector treats a future-dated cache as a miss" "$result"
 pass "Codex collector treats a future-dated cache as a miss"
 
-# First --limits-only on a machine with no cache falls back to a full scan.
 FRESH_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$PI_HOME" "$OPENCODE_HOME" "$CACHE_HOME" "$FRESH_HOME"' EXIT
 mkdir -p "$FRESH_HOME/bin"
@@ -445,9 +414,6 @@ result=$(HOME="$FRESH_HOME" CODEX_HOME="$FRESH_HOME/.codex" XDG_CACHE_HOME="$FRE
   fail "Codex collector --limits-only falls back to a full scan without a cache" "$result"
 pass "Codex collector --limits-only falls back to a full scan without a cache"
 
-# A malformed opencode row must not abort the scan: json_valid() guards the
-# parse, so the good rows are still counted. Real opencode data also stores
-# compact JSON, so one row is serialized compactly here on purpose.
 MALFORMED_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$PI_HOME" "$OPENCODE_HOME" "$CACHE_HOME" "$FRESH_HOME" "$MALFORMED_HOME"' EXIT
 mkdir -p "$MALFORMED_HOME/bin"
@@ -501,7 +467,6 @@ result=$(HOME="$MALFORMED_HOME" CODEX_HOME="$MALFORMED_HOME/.codex" XDG_CACHE_HO
   fail "Codex collector counts good opencode rows past malformed ones" "$result"
 pass "Codex collector counts good opencode rows past malformed ones"
 
-# An unwritable cache must not kill the collector: the record is the contract.
 UNWRITABLE_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$PI_HOME" "$OPENCODE_HOME" "$CACHE_HOME" "$FRESH_HOME" "$MALFORMED_HOME" "$UNWRITABLE_HOME"' EXIT
 mkdir -p "$UNWRITABLE_HOME/bin"
@@ -532,7 +497,6 @@ conn.commit()
 conn.close()
 PY
 
-# XDG_CACHE_HOME points at a regular file, so mkdir inside cache_root fails.
 touch "$UNWRITABLE_HOME/not-a-dir"
 result=$(HOME="$UNWRITABLE_HOME" CODEX_HOME="$UNWRITABLE_HOME/.codex" XDG_CACHE_HOME="$UNWRITABLE_HOME/not-a-dir" XDG_DATA_HOME="$UNWRITABLE_HOME/.local/share" \
   PATH="$UNWRITABLE_HOME/bin:$PATH" "$ROOT/bin/omarchy-agent-usage-codex")
@@ -541,15 +505,11 @@ result=$(HOME="$UNWRITABLE_HOME" CODEX_HOME="$UNWRITABLE_HOME/.codex" XDG_CACHE_
   fail "Codex collector still prints a complete record when the cache is unwritable" "$result"
 pass "Codex collector still prints a complete record when the cache is unwritable"
 
-# A scan cut short by a database error (schema migration, transient lock,
-# corruption) must not be cached as the whole story, or the missing usage
-# would be suppressed for every reader until the cache expires.
 INTERRUPTED_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$PI_HOME" "$OPENCODE_HOME" "$CACHE_HOME" "$FRESH_HOME" "$MALFORMED_HOME" "$UNWRITABLE_HOME" "$INTERRUPTED_HOME"' EXIT
 mkdir -p "$INTERRUPTED_HOME/bin"
 cp "$TEST_HOME/bin/codex" "$INTERRUPTED_HOME/bin/codex"
 
-# A database without the message table makes the scan fail mid-flight.
 python3 - "$INTERRUPTED_HOME/.local/share/opencode/opencode.db" <<'PY'
 import sqlite3
 import sys
@@ -571,8 +531,6 @@ result=$(HOME="$INTERRUPTED_HOME" CODEX_HOME="$INTERRUPTED_HOME/.codex" XDG_CACH
 [[ -z $(ls "$INTERRUPTED_HOME/.cache/omarchy/agent-usage/"codex-scan-*.json 2>/dev/null) ]] ||
   fail "Codex collector must not cache an interrupted scan" "$result"
 
-# Once the database is whole again, the very next --limits-only run scans it
-# instead of reusing a zero snapshot.
 python3 - "$INTERRUPTED_HOME/.local/share/opencode/opencode.db" <<'PY'
 import json
 import sqlite3

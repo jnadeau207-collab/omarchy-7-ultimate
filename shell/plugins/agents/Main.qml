@@ -2,10 +2,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The display side of agent usage. All extraction lives behind
-// omarchy-agent-usage-update, which writes one JSON record per agent into
-// the usage directory; this file only discovers those records, watches them
-// for changes, and optionally merges snapshots synced from other machines.
 Item {
   id: root
   visible: false
@@ -14,8 +10,6 @@ Item {
 
   readonly property string home: Quickshell.env("HOME") || ""
   readonly property string usageDir: (Quickshell.env("XDG_STATE_HOME") || home + "/.local/state") + "/omarchy/agents/usage"
-
-  // ------------------------------------------------------------- discovery
 
   property var agentIds: []
   property var agents: []
@@ -44,8 +38,6 @@ Item {
       if (name.slice(-5) === ".json") ids.push(name.slice(0, -5))
     }
     ids.sort()
-    // Same list, same objects: reassigning the model would tear down every
-    // FileView just to build identical ones.
     if (JSON.stringify(ids) !== JSON.stringify(agentIds)) agentIds = ids
   }
 
@@ -80,12 +72,6 @@ Item {
     scheduleSync()
   }
 
-  // A collector that could not reach its limits endpoint at all — typically
-  // the seconds after login before the network is up — writes retryAdvised
-  // into its record. Honor it with one sooner try instead of waiting out the
-  // full refresh interval; a run that reaches the endpoint clears the flag.
-  // Only the advising agents rerun, so an outage at one provider does not
-  // put every other collector on a 30-second treadmill.
   property var retryAgentIds: []
 
   Timer {
@@ -111,8 +97,6 @@ Item {
     rescanAgents()
     if (syncConfigured()) scheduleSync()
   }
-
-  // -------------------------------------------------------------- refresh
 
   property int refreshIntervalSec: Math.max(30, Number(setting("refreshIntervalSec", 900)))
   property string pendingUpdateKind: ""
@@ -159,8 +143,6 @@ Item {
 
   function runUpdate(kind, agentIds) {
     if (updateProcess.running) {
-      // Collapse queued requests to one full rerun; a forced refresh outranks
-      // the cheaper kinds it might have been queued behind.
       if (kind === "force" || root.pendingUpdateKind === "") root.pendingUpdateKind = kind
       return
     }
@@ -171,17 +153,8 @@ Item {
   function refresh() { refreshAll(true) }
   function refreshAll(force) { runUpdate(force === true ? "force" : "normal") }
 
-  // Opening the panel wants the numbers that go stale on the wire, not
-  // another walk over every transcript on disk — the collectors reuse their
-  // recent scans in this mode.
   function refreshLimits() { runUpdate("limits") }
 
-  // ------------------------------------------------------------- providers
-
-  // An agent earns a place in the bar and the panel by being switched on in
-  // settings and having actually produced numbers — locally or on a synced
-  // device. With nothing to show, the whole module collapses out of the bar
-  // rather than sitting there dimmed.
   property var enabledProviders: {
     var rev = dataRevision
     var syncRev = syncRevision
@@ -196,9 +169,6 @@ Item {
       var display = displayProvider(record)
       if (providerHasData(display)) result.push(display)
     }
-    // An agent that only ever ran on another machine has no local record, but
-    // its synced numbers still deserve a tab. Rate limits stay blank — they
-    // are per-account and never travel.
     var syncedProviders = syncConfigured() && aggregateData && aggregateData.providers ? aggregateData.providers : {}
     for (var syncedId in syncedProviders) {
       if (localIds[syncedId] || !providerEnabled(syncedId)) continue
@@ -214,8 +184,6 @@ Item {
     return settings.providers[id].enabled !== false
   }
 
-  // All-time keeps a quiet day from hiding an agent; today's counts admit a
-  // machine whose only source is history.jsonl, which knows nothing older.
   function providerHasData(p) {
     return numberValue(p.totalPrompts) > 0 || numberValue(p.totalSessions) > 0
       || numberValue(p.activeDays) > 0 || numberValue(p.todayPrompts) > 0
@@ -223,8 +191,6 @@ Item {
       || !!p.balance
   }
 
-  // A prepaid agent's credit ledger. Like rate limits, the balance is
-  // per-account and never merged across devices.
   function balanceValue(raw) {
     if (!raw || typeof raw !== "object") return null
     var remaining = Number(raw.remaining)
@@ -251,8 +217,6 @@ Item {
       usageStatusText: String(record.usageStatusText || ""),
       authHelpText: String(record.authHelpText || ""),
 
-      // Rate limits and balances stay per-account and are never merged
-      // across devices.
       limits: Array.isArray(record.limits) ? record.limits : [],
       tierLabel: String(record.tierLabel || ""),
       balance: balanceValue(record.balance),
@@ -279,8 +243,6 @@ Item {
     var value = settings ? settings[name] : undefined
     return value === undefined || value === null ? fallback : value
   }
-
-  // ------------------------------------------------------------------ sync
 
   property var syncModeSetting: setting("syncMode", setting("syncEnabled", false))
   property bool syncEnabled: parseSyncEnabled(syncModeSetting)
@@ -534,10 +496,6 @@ Item {
     return { inputTokens: 0, outputTokens: 0, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 }
   }
 
-  // Device-scoped stats add up across machines; account-scoped stats
-  // (Fireworks' billing API) are replicas of the same upstream truth on
-  // every synced device, so the widest value wins — summing them would
-  // double every token per machine.
   function combineNumber(additive, current, value) {
     return additive ? numberValue(current) + numberValue(value) : Math.max(numberValue(current), numberValue(value))
   }
@@ -589,8 +547,6 @@ Item {
         if (stats.providerName && acc.providerName === "") acc.providerName = String(stats.providerName)
         acc.ready = acc.ready || stats.ready === true
         acc.hasLocalStats = acc.hasLocalStats || stats.hasLocalStats !== false
-        // Snapshots from before the field existed only came from agents that
-        // count prompts, so a missing value reads as true.
         acc.hasPromptStats = acc.hasPromptStats || stats.hasPromptStats !== false
         var additive = String(stats.scope || "device") !== "account"
         acc.todayPrompts = combineNumber(additive, acc.todayPrompts, stats.todayPrompts)
@@ -598,9 +554,6 @@ Item {
         acc.todayTotalTokens = combineNumber(additive, acc.todayTotalTokens, stats.todayTotalTokens)
         acc.totalPrompts = combineNumber(additive, acc.totalPrompts, stats.totalPrompts)
         acc.totalSessions = combineNumber(additive, acc.totalSessions, stats.totalSessions)
-        // Active days overlap between machines, so union the dates rather than
-        // summing counts. Snapshots written before activeDates existed only
-        // carry a count; the widest one stands in for them.
         var activeDates = Array.isArray(stats.activeDates) ? stats.activeDates : []
         for (var ad = 0; ad < activeDates.length; ad++) acc.activeDates[String(activeDates[ad])] = true
         acc.activeDays = Math.max(acc.activeDays, numberValue(stats.activeDays))
@@ -659,8 +612,6 @@ Item {
     }
   }
 
-  // Snapshots keep the field names older Omarchy versions wrote, so a fleet
-  // of machines on mixed versions still merges cleanly in both directions.
   function providerSnapshot(record) {
     return {
       providerId: String(record.id),
@@ -704,8 +655,6 @@ Item {
     return aggregateData.providers[providerId] || null
   }
 
-  // ---------------------------------------------------------------- format
-
   function formatTokenCount(n) {
     if (n === undefined || n === null) return "0"
     if (n >= 1e9) return (n / 1e9).toFixed(1) + "B"
@@ -720,9 +669,6 @@ Item {
     return word.charAt(0).toUpperCase() + word.slice(1)
   }
 
-  // Model ids arrive hyphenated with the version split across segments
-  // (`claude-opus-4-8`, `gpt-5.6-sol`). Rejoin the numeric run into one
-  // version and title-case the words around it.
   function friendlyModelName(id) {
     if (!id) return "Unknown"
     var name = String(id).replace(/^claude-/, "").replace(/-\d{8}$/, "")

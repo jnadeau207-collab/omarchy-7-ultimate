@@ -11,7 +11,6 @@ from omarchy_fabric.provider_registry import ProviderRegistry
 from omarchy_fabric.providers.files import provider as files
 from omarchy_fabric.providers.files._engine import StateSnapshot
 
-
 class SnapshotBackend:
     def __init__(self, snapshot):
         self.value = snapshot
@@ -21,7 +20,6 @@ class SnapshotBackend:
 
     async def compare_and_swap(self, expected_revision, proposed_state):
         raise AssertionError("read test must not mutate")
-
 
 class ContractAndReadTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -114,7 +112,6 @@ class ContractAndReadTests(unittest.IsolatedAsyncioTestCase):
         document = json.loads((ROOT / "default" / "ultimate" / "files" / "locations-v0.json").read_text())
         self.assertEqual(set(document), {"schemaVersion", "locations", "limits"})
         self.assertEqual([item["kind"] for item in document["locations"]], ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "trash"])
-
 
 if __name__ == "__main__":
     unittest.main()

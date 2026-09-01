@@ -594,8 +594,6 @@ assert any(row.get("name") == "Power & battery" for row in settings), settings
 assert any(row.get("name") == "Update" for row in settings), settings
 assert any(row.get("name") == "Recovery" for row in settings), settings
 assert any(row.get("name") == "Input" for row in settings), settings
-# Accessibility and System information have no registered provider, so the jump
-# list must not offer a shortcut to a page that can only report its own absence.
 assert not any(row.get("name") == "Accessibility" for row in settings), settings
 assert not any(row.get("name") == "System information" for row in settings), settings
 agents = idx.get("org.omarchy.AgentCenter") or []

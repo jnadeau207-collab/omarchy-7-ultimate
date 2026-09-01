@@ -18,7 +18,6 @@ pkill slurp && exit 0
 
 SCREENSHOT_EDITOR="${OMARCHY_SCREENSHOT_EDITOR:-tensaku-edit}"
 
-# Parse --editor flag from any position
 ARGS=()
 for arg in "$@"; do
   if [[ $arg == --editor=* ]]; then
@@ -32,13 +31,6 @@ set -- "${ARGS[@]}"
 MODE="${1:-smart}"
 PROCESSING="${2:-slurp}"
 
-# The picker leaves the screen freeze running (PID on its first output line)
-# so grim captures the frozen overlay rather than live content shifting
-# during teardown.
-#
-# Software-composited cursors (Hyprland's fallback on GPUs without working
-# hardware cursors) are baked into the frames grim captures, so force
-# hardware cursors until after grim runs and restore the setting on exit.
 NO_HW_CURSORS=$(hyprctl getoption cursor:no_hardware_cursors -j | jq '.int')
 
 set_no_hw_cursors() {
@@ -66,8 +58,6 @@ case "$PROCESSING" in
     echo "$FILEPATH"
     wl-copy --type image/png <"$FILEPATH"
 
-    # Best-effort: the screenshot is already saved and on the clipboard, so a
-    # notification outage must not report the capture itself as failed.
     omarchy-notification-send "Screenshot saved to clipboard and file" "Edit with Super + Alt + , (or click this)" \
       --image "$FILEPATH" \
       --exec "$SCREENSHOT_EDITOR" "$FILEPATH" || true

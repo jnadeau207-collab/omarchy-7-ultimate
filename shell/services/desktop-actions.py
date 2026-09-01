@@ -3,7 +3,6 @@ import json
 import os
 import pathlib
 
-
 def desktop_dirs() -> list[pathlib.Path]:
     dirs = []
     omarchy = os.environ.get("OMARCHY_PATH")
@@ -27,11 +26,9 @@ def desktop_dirs() -> list[pathlib.Path]:
         unique.append(path)
     return unique
 
-
 def normalize_id(name: str) -> str:
     value = name[:-8] if name.endswith(".desktop") else name
     return value
-
 
 CHROME_FAMILY = {
     "chromium",
@@ -40,7 +37,6 @@ CHROME_FAMILY = {
     "google-chrome-stable",
     "google-chrome-unstable",
 }
-
 
 def parse_desktop(text: str) -> tuple[list[dict[str, str]], str]:
     wanted: list[str] = []
@@ -73,10 +69,8 @@ def parse_desktop(text: str) -> tuple[list[dict[str, str]], str]:
     exec_line = (sections.get("Desktop Entry") or {}).get("Exec", "").strip()
     return out, exec_line
 
-
 def parse_actions(text: str) -> list[dict[str, str]]:
     return parse_desktop(text)[0]
-
 
 def strip_exec_codes(command: str) -> str:
     parts = []
@@ -86,11 +80,9 @@ def strip_exec_codes(command: str) -> str:
         parts.append(part)
     return " ".join(parts)
 
-
 def is_chrome_family(desktop_id: str) -> bool:
     value = desktop_id.lower()
     return value in CHROME_FAMILY or value.startswith("google-chrome")
-
 
 def synthesize_chrome_actions(exec_line: str) -> list[dict[str, str]]:
     base = strip_exec_codes(exec_line)
@@ -102,7 +94,6 @@ def synthesize_chrome_actions(exec_line: str) -> list[dict[str, str]]:
         {"id": "new-window", "name": "New Window", "command": base, "kind": "desktop-action"},
         {"id": "new-private-window", "name": "New Incognito Window", "command": private, "kind": "desktop-action"},
     ]
-
 
 def main() -> None:
     index = {}
@@ -127,7 +118,6 @@ def main() -> None:
                 index["google-chrome"] = index[alias]
                 break
     print(json.dumps(index, separators=(",", ":")))
-
 
 if __name__ == "__main__":
     main()

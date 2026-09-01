@@ -3,10 +3,6 @@
 # omarchy:summary=Export the current theme's gum styling into the environment
 # omarchy:hidden=true
 
-# Meant to be sourced. gum_env.lua is fed into the compositor environment via
-# hl.env at login, but that environment is captured once and is not refreshed on
-# a theme switch, so anything launched from the session would otherwise inherit
-# the login-time theme's gum colors. Export the current values instead.
 _omarchy_gum_env="$HOME/.local/state/omarchy/current/theme/gum_env.lua"
 
 if [[ -f $_omarchy_gum_env ]]; then

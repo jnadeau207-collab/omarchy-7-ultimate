@@ -8,7 +8,6 @@ BarWidget {
   id: root
   moduleName: "omarchy.active-window"
 
-
   readonly property var toplevel: ToplevelManager.activeToplevel
   readonly property string title: toplevel ? (toplevel.title || toplevel.appId || "") : ""
   readonly property int maxLabelWidth: Number(setting("maxWidth", 280))

@@ -1,17 +1,5 @@
 #!/bin/bash
 
-# A file Omarchy writes into /usr belongs to nobody, and the
-# day a package starts shipping that same path, pacman refuses the upgrade for
-# everyone who has the file. omarchy-update-system-pkgs-when-conflicted recovers from
-# that, but the cheaper answer is to ship the file in the package instead.
-#
-# This flags a script writing such a path unless a PKGBUILD installs it, or it
-# is recorded below with the reason it cannot be packaged.
-#
-# It is a net, not a proof: it reads the destination off the command, so a path
-# assembled from variables passes through. The two known cases are recorded
-# below, and a new one is caught only if it names the path where it writes it.
-
 set -euo pipefail
 
 source "$(dirname "$0")/base-test.sh"

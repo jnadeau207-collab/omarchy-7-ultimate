@@ -8,7 +8,6 @@ from helper import Harness
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.operations.contracts import OperationCheckpoint, OperationStatus
 
-
 class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.harness = Harness()
@@ -242,7 +241,6 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await running)["status"], "failed")
         self.assertEqual(self.harness.store.get(second).status, OperationStatus.INTERRUPTED)
 
-
 class CancellationCheckpointTests(unittest.IsolatedAsyncioTestCase):
     async def _run_checkpoint(self, checkpoint: str) -> tuple[Harness, str, dict]:
         harness = Harness()
@@ -284,7 +282,6 @@ class CancellationCheckpointTests(unittest.IsolatedAsyncioTestCase):
                         self.assertIn("rollback-validated", str(harness.store.ledger(operation_id)))
                 finally:
                     harness.close()
-
 
 if __name__ == "__main__":
     unittest.main()

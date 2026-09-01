@@ -23,10 +23,6 @@ BarWidget {
     if (panelLoader.item && panelLoader.item.toggle) panelLoader.item.toggle()
   }
 
-  // Shape contract for shell.summon/hide/toggle routing (Bar.findPanelWidget
-  // requires open/close/opened on the bar-widget root). Open maps to the
-  // panel's hotkey path so summoning suppresses the center hover reveal,
-  // matching what the old per-plugin IpcHandler did.
   readonly property bool opened: panelLoader.item ? panelLoader.item.opened === true : false
 
   function open() {
@@ -37,9 +33,6 @@ BarWidget {
     if (panelLoader.item && panelLoader.item.close) panelLoader.item.close()
   }
 
-  // Forwarded so this widget can stand in for the panel as the bar's popout
-  // identity: Bar.requestPopout prefers closeForPopoutSwitch over close, and
-  // KeyboardPanel reads popoutSwitchClosing back off its owner.
   readonly property bool popoutSwitchClosing: panelLoader.item ? panelLoader.item.popoutSwitchClosing === true : false
 
   function closeForPopoutSwitch() {
@@ -70,7 +63,6 @@ BarWidget {
     bar: root.bar
     text: panelLoader.item ? panelLoader.item.label : ""
     slotSize: Style.bar.statusSlot
-    // Tooltip suppressed because the panel is the detail view.
     tooltipText: ""
 
     onPressed: function(b) {

@@ -182,7 +182,6 @@ if grep -Fq $'SUPER + CTRL + X	Toggle dictation' <<<"$missing_voxtype_output"; t
 fi
 pass "missing Voxtype skips dictation bindings"
 
-# Desktop Mode is the Ultimate default: Windows keybindings, no Omarchy menu.
 desktop_home="$tmpdir/desktop-home"
 mkdir -p "$desktop_home"
 desktop_err="$tmpdir/desktop-err"
@@ -237,8 +236,6 @@ theme_req=$(grep -n 'omarchy.current.theme.hyprland' "$ROOT/default/hypr/omarchy
 (( desktop_req > theme_req )) || fail "desktop-windows must load after the theme so Omarchy/theme borders do not win"
 pass "desktop mode compositor chrome is hyprbars, not overlay captions"
 
-# The Grave shortcuts are aliases, so the original SUPER + S pair has to keep
-# working alongside them.
 scratchpad_home="$tmpdir/scratchpad-home"
 mkdir -p "$scratchpad_home"
 write_mode "$scratchpad_home" "power-user"
@@ -263,9 +260,6 @@ if grep -Fq $'SUPER + Super_L	Start' <<<"$power_output"; then
 fi
 pass "power-user mode keeps Omarchy Super-key bindings"
 
-# The panel hotkeys claim a row of keys that workspace switching already uses
-# under other modifiers, so the count matters as much as the bindings: a tenth
-# claim on SUPER + CTRL + a number is a collision with one of these.
 panels_home="$tmpdir/panels-home"
 mkdir -p "$panels_home"
 write_mode "$panels_home" "power-user"

@@ -24,7 +24,6 @@ MAX_EVENT_REPLAY = 128
 DEFAULT_EVENT_RETENTION = 512
 MAX_SUBSCRIBER_BACKLOG = 256
 
-
 @dataclass(frozen=True)
 class FabricError(Exception):
     """Structured error returned over the Fabric protocol."""
@@ -53,13 +52,11 @@ class FabricError(Exception):
             error["recoveryActions"] = list(self.recovery_actions)
         return error
 
-
 @dataclass(frozen=True)
 class RpcRequest:
     request_id: str
     method: str
     params: Mapping[str, Any]
-
 
 @dataclass(frozen=True)
 class FixedArgvCommand:
@@ -91,7 +88,6 @@ class FixedArgvCommand:
     @property
     def argv(self) -> tuple[str, ...]:
         return (self.executable, *self.arguments)
-
 
 def run_fixed_argv(
     command: FixedArgvCommand,
@@ -131,7 +127,6 @@ def run_fixed_argv(
         shell=False,
     )
 
-
 def default_runtime_directory() -> Path:
     runtime = os.environ.get("XDG_RUNTIME_DIR")
     if not runtime:
@@ -143,10 +138,8 @@ def default_runtime_directory() -> Path:
         )
     return Path(runtime) / "omarchy"
 
-
 def default_socket_path() -> Path:
     return default_runtime_directory() / "fabric.sock"
-
 
 def default_state_directory() -> Path:
     state_home = os.environ.get("XDG_STATE_HOME")

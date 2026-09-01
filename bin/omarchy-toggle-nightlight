@@ -34,12 +34,10 @@ if [[ ${1:-} == "--status" ]]; then
   exit 0
 fi
 
-# Ensure hyprsunset is running
 if ! pgrep -x hyprsunset >/dev/null; then
   setsid uwsm-app -- hyprsunset &
 fi
 
-# Query the current temperature
 CURRENT_TEMP=$(current_temp)
 
 if [[ -z $CURRENT_TEMP || $CURRENT_TEMP == $OFF_TEMP ]]; then
@@ -48,8 +46,6 @@ else
   TARGET_TEMP=$OFF_TEMP
 fi
 
-# A freshly-started hyprsunset applies its default temperature at the end of
-# its boot, overriding anything set before then — so resend until it sticks
 for _ in {1..10}; do
   hyprctl hyprsunset temperature $TARGET_TEMP >/dev/null 2>&1
   sleep 0.2

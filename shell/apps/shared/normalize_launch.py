@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, unquote, urlsplit
 
-
 CATALOGS = {
     "settings": "ultimate-settings/routes-v1.json",
     "agent-center": "ultimate-agent-center/routes-v1.json",
@@ -49,16 +48,13 @@ OPTION_NAMES = frozenset(
 MAX_ENVELOPE_BYTES = 4096
 MAX_LINK_BYTES = 2048
 
-
 class LaunchError(ValueError):
     pass
-
 
 def require_object(value: Any, label: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise LaunchError(f"{label} must be a JSON object")
     return value
-
 
 def require_exact_keys(value: dict[str, Any], expected: set[str], label: str) -> None:
     actual = set(value)
@@ -67,7 +63,6 @@ def require_exact_keys(value: dict[str, Any], expected: set[str], label: str) ->
         extra = ", ".join(sorted(actual - expected))
         detail = "; ".join(part for part in (f"missing: {missing}" if missing else "", f"extra: {extra}" if extra else "") if part)
         raise LaunchError(f"{label} has unexpected fields ({detail})")
-
 
 def require_closed_keys(
     value: dict[str, Any], required: frozenset[str], optional: frozenset[str], label: str
@@ -86,18 +81,15 @@ def require_closed_keys(
         )
         raise LaunchError(f"{label} has unexpected fields ({detail})")
 
-
 def require_stable_id(value: Any, label: str) -> str:
     if not isinstance(value, str) or len(value) > 128 or STABLE_ID.fullmatch(value) is None:
         raise LaunchError(f"{label} must be a stable dotted identifier")
     return value
 
-
 def require_opaque_id(value: Any, label: str) -> str:
     if not isinstance(value, str) or OPAQUE_ID.fullmatch(value) is None:
         raise LaunchError(f"{label} must be a bounded non-secret identifier")
     return value
-
 
 def validate_argument(value: Any, contract: dict[str, Any], label: str) -> Any:
     kind = contract.get("type")
@@ -126,7 +118,6 @@ def validate_argument(value: Any, contract: dict[str, Any], label: str) -> Any:
             raise LaunchError(f"{label} is outside its bounded text contract")
         return value
     raise LaunchError(f"{label} uses an unsupported argument type")
-
 
 def validate_catalog(candidate: Any, application: str) -> dict[str, Any]:
     expected_app_id = APP_IDS.get(application)
@@ -248,7 +239,6 @@ def validate_catalog(candidate: Any, application: str) -> dict[str, Any]:
     validated_catalog["_entityIndex"] = entity_index
     return validated_catalog
 
-
 def load_catalog(application: str) -> dict[str, Any]:
     relative = CATALOGS.get(application)
     if relative is None:
@@ -259,7 +249,6 @@ def load_catalog(application: str) -> dict[str, Any]:
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise LaunchError(f"route catalog could not be loaded: {error}") from error
     return validate_catalog(candidate, application)
-
 
 def parse_options(arguments: list[str]) -> dict[str, Any]:
     parsed: dict[str, Any] = {
@@ -316,7 +305,6 @@ def parse_options(arguments: list[str]) -> dict[str, Any]:
         raise LaunchError("use either --route or a positional route/deep link, not both")
     return parsed
 
-
 def parse_anchor(raw: str | None) -> dict[str, int] | None:
     if raw is None:
         return None
@@ -331,7 +319,6 @@ def parse_anchor(raw: str | None) -> dict[str, int] | None:
         raise LaunchError("--anchor is outside the bounded positive-size contract")
     return {"x": x, "y": y, "width": width, "height": height}
 
-
 def arguments_for_route(route: dict[str, Any], raw_arguments: Any) -> dict[str, Any]:
     arguments = require_object(raw_arguments, "route arguments")
     schema = route["argumentSchema"]
@@ -343,7 +330,6 @@ def arguments_for_route(route: dict[str, Any], raw_arguments: Any) -> dict[str, 
         if contract.get("optional") is not True and name not in arguments:
             raise LaunchError(f"{route['id']} requires argument {name}")
     return arguments
-
 
 def route_from_link(catalog: dict[str, Any], raw_link: str) -> tuple[dict[str, Any], dict[str, Any]]:
     if len(raw_link.encode("utf-8")) > MAX_LINK_BYTES:
@@ -386,7 +372,6 @@ def route_from_link(catalog: dict[str, Any], raw_link: str) -> tuple[dict[str, A
         {"entityType": entity["entityType"], "entityId": require_opaque_id(path, "entity ID")},
     )
 
-
 def normalize(application: str, raw_arguments: list[str]) -> dict[str, Any]:
     catalog = load_catalog(application)
     options = parse_options(raw_arguments)
@@ -428,7 +413,6 @@ def normalize(application: str, raw_arguments: list[str]) -> dict[str, Any]:
         "context": context,
     }
 
-
 def main() -> int:
     if len(sys.argv) < 2:
         print("normalize_launch.py requires an application identity", file=sys.stderr)
@@ -443,7 +427,6 @@ def main() -> int:
         return 2
     print(encoded)
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

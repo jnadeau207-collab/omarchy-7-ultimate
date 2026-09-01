@@ -22,8 +22,6 @@ esac
 
 plugins=$(omarchy-plugin-list --json)
 
-# The id rides along as row subtext: it tells same-named plugins apart on
-# screen and comes back with the selection as the key to act on.
 rows=$(jq -r --arg icon "$PLUGIN_ICON" \
   ". as \$plugins
    | .[] | select($filter)

@@ -145,9 +145,6 @@ generate_thumbnail() {
   local lock_fd
   local tmp="$thumbnail.$$.jpg"
 
-  # Older releases used directories as locks, which could survive a killed
-  # generator and block this thumbnail forever. Only reap aged ones, so a
-  # legacy generator still running through an upgrade keeps its lock.
   if [[ -d $lock ]] && (( $(date +%s) - $(stat -c '%Y' "$lock" 2>/dev/null || date +%s) > 120 )); then
     rmdir "$lock" 2>/dev/null
   fi
@@ -155,15 +152,10 @@ generate_thumbnail() {
   exec {lock_fd}>"$lock" || return
   flock -w 30 "$lock_fd" || return
 
-  # A generator killed mid-write leaves its partial $thumbnail.<pid>.jpg
-  # behind. Only the lock holder writes these, so any found now are stale.
   rm -f "$thumbnail".*.jpg
 
   [[ -f $thumbnail ]] && return
 
-  # Callers fan out one generator per image, so keep each vips single-threaded.
-  # Close the lock fd for vips: an orphaned or hung vips must not keep holding
-  # the lock after this shell is killed.
   if VIPS_CONCURRENCY=1 vipsthumbnail "$image" --size 1536x864 --smartcrop=centre --path "$tmp[Q=82,strip]" {lock_fd}>&-; then
     mv -f "$tmp" "$thumbnail"
   else
@@ -203,7 +195,6 @@ thumbnail_for() {
   printf '%s' "$thumbnail"
 }
 
-# Generate every queued thumbnail at once; each vips run is single-threaded.
 drain_pending_thumbnails() {
   [[ -s $pending_file ]] || return 0
 
@@ -249,11 +240,6 @@ elif [[ $rows_cache_hit != true ]]; then
     rows="$pruned"
   fi
 
-  # Publish the cache under a lock and via renames: a picker killed mid-write,
-  # or two pickers interleaving, must never leave truncated or mismatched rows
-  # behind signatures that still validate. Rows go first so a kill between
-  # renames leaves signatures that are either older (a harmless miss) or
-  # describe the same directory state.
   if exec {rows_lock_fd}>"$rows_cache_file.lock" && flock -w 30 "$rows_lock_fd"; then
     if [[ $rows_cacheable == true ]]; then
       rm -f "$cache_dir/$cache_key".*.tmp
@@ -271,9 +257,6 @@ if [[ $cache_only == true || $prepare_only == true ]]; then
   exit 0
 fi
 
-# Image rows can contain newlines and tabs, which don't survive positional
-# shell IPC arguments. Base64-encode for transit; the ImagePicker plugin
-# Qt.atob()s on the other side.
 rows_b64=$(printf '%s' "$rows" | base64 -w 0)
 
 if [[ $preload == true ]]; then

@@ -9,7 +9,6 @@ update_in_progress() {
 
   [[ -n ${XDG_RUNTIME_DIR:-} && -f $lock ]] || return 1
 
-  # flock -n only fails here when the lock is held, since the file is ours.
   ! flock -n "$lock" true 2>/dev/null
 }
 
@@ -26,25 +25,15 @@ else
   message="Click to run $pending_count pending migrations."
 fi
 
-# This runs from omarchy-migrate-notify.service after graphical-session.target,
-# but the target can be reached before the shell has claimed
-# org.freedesktop.Notifications. Without the wait the toast is sent into the
-# void and the user never learns about their pending migrations.
 omarchy-notification-wait || true
 
-# That wait is long enough for an update to start underneath us, and the count
-# above is already stale by then, so re-check before spending the toast.
 if update_in_progress; then
   exit 0
 fi
 
-# The shell keeps the click command with the toast, so this oneshot can hand the
-# invitation over and exit instead of staying activated until it is answered.
 omarchy-notification-send -u critical -g  "Pending Omarchy Migrations" "$message" \
   --exec omarchy-launch-floating-terminal-with-presentation omarchy-migrate && exit 0
 
-# Reached when the notification could not be handed off, so fall back to telling
-# the user in the terminal.
 print_pending_migrations() {
   echo "Omarchy has pending migrations. Run omarchy-migrate in a terminal to apply them:"
   while IFS= read -r migration; do

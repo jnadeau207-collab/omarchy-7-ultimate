@@ -7,17 +7,6 @@
 
 set -uo pipefail
 
-# A DSP sink -- a speaker tuning filter-chain, or EasyEffects -- can be the
-# selected output without being where loudness lives. Changing its volume alters
-# the level going *into* the processing: the display moves while the speakers do
-# not, and on a chain with a compressor or limiter the tone changes too. Resolve
-# through it to the physical sink it feeds.
-#
-# With no argument this resolves the current default output, so when headphones or
-# HDMI are selected it returns those, not the speakers a tuning happens to front.
-# Callers that need to describe some *other* output -- an output switcher naming
-# the next one in the rotation -- pass that sink explicitly.
-
 sink="${1:-$(pactl get-default-sink 2>/dev/null)}"
 
 if [[ -z $sink || $sink == alsa_output.* ]]; then
@@ -25,11 +14,9 @@ if [[ -z $sink || $sink == alsa_output.* ]]; then
   exit 0
 fi
 
-# A DSP sink feeds its physical output through a stream of its own; follow that
-# stream down to the sink underneath.
 downstream="$(pactl list sink-inputs 2>/dev/null |
   awk -v virt="$sink" '
-    /^Sink Input #/ {target = ""}
+    /^Sink Input
     /^[[:space:]]*Sink:/ {target = $2}
     /node\.name = / {
       name = $0
@@ -50,6 +37,4 @@ if [[ -n $downstream ]]; then
   fi
 fi
 
-# Nothing resolvable downstream -- the DSP sink may simply be idle and unlinked.
-# Fall back to the sink itself so callers still have something to act on.
 printf '%s\n' "$sink"

@@ -2,19 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import qs.Commons
 
-// Single-line text input with the kit's focus + selection styling. Inherits
-// from Qt Quick Controls TextField so the underlying type's API (text,
-// placeholderText, accepted, editingFinished, validator, ...) is available
-// to callers without re-exposing each property.
-//
-// Defaults bind to qs.Commons.Color so a caller with no theme overrides
-// just works; foreground / accent / selectionTint can be overridden per
-// instance. activeFocus and mouse hover / panel cursor use the same
-// hover-cursor defaults, so text inputs match Button, Toggle, and Dropdown.
-//
-// Sizing is driven by font.pixelSize + verticalPadding. The default 30px
-// implicitHeight fits dialog forms; inline callers (wifi's row-embedded
-// passphrase prompt) drop verticalPadding to match a 22-26px row.
 TextField {
   id: root
 
@@ -29,11 +16,6 @@ TextField {
   property real horizontalPadding: Semantics.metric(semanticProfile, Style.spacing.controlPaddingX)
   property real verticalPadding: Semantics.metric(semanticProfile, Style.spacing.inputPaddingY)
 
-  // Panel-cursor flag. When true (and the field isn't already focused),
-  // the background paints the shared hover/cursor state.
-  // For mouse-enter/leave the consumer reads QQC TextField's inherited
-  // `hovered` property (via onHoveredChanged) — we don't add a sibling
-  // signal because the inherited property would shadow it.
   property bool hasCursor: false
 
   readonly property bool _focused: activeFocus

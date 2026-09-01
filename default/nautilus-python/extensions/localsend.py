@@ -7,7 +7,6 @@ require_version("Nautilus", "4.1")
 
 from gi.repository import GObject, Gio, Nautilus
 
-
 class SendViaLocalSendAction(GObject.GObject, Nautilus.MenuProvider):
     def _launch_localsend(self, paths):
         command = self._resolve_command()

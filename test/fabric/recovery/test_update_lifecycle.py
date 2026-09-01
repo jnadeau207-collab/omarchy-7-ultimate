@@ -13,9 +13,7 @@ from omarchy_fabric.models import FabricError
 from omarchy_fabric.providers._engine import state_revision
 from omarchy_fabric.providers.update.lifecycle import MAX_JOURNAL_BYTES, UpdateJournal
 
-
 CATALOG = "sha256." + "a" * 64
-
 
 class UpdateJournalTests(unittest.TestCase):
     def test_restart_preserves_revision_and_safe_cancel(self) -> None:
@@ -221,7 +219,6 @@ class UpdateJournalTests(unittest.TestCase):
             with self.assertRaises(FabricError) as oversized:
                 journal.load()
             self.assertEqual(oversized.exception.code, "update.journal-too-large")
-
 
 if __name__ == "__main__":
     unittest.main()

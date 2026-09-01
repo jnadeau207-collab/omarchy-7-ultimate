@@ -11,7 +11,6 @@ from omarchy_fabric.providers.backup import provider as backup
 from omarchy_fabric.providers.diagnostics import provider as diagnostics
 from omarchy_fabric.providers.recovery import provider as recovery
 
-
 class RecoveryScopeTests(unittest.IsolatedAsyncioTestCase):
     async def test_recovery_inventory_and_preflight_are_system_only(self) -> None:
         resource = recovery_resource()
@@ -80,7 +79,6 @@ class RecoveryScopeTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 backup.parse_snapshots(json.dumps(mutation), home_root="/home/jesse")
 
-
 class DiagnosticRedactionTests(unittest.IsolatedAsyncioTestCase):
     def test_support_redaction_removes_credentials_identity_paths_and_network_addresses(self) -> None:
         secret = 'Bearer abcdefghijklmnop token=top-secret {"api_key":"json-secret"} https://user:pass@example.test /home/jesse jesse@example.test 192.0.2.1'
@@ -140,7 +138,6 @@ class DiagnosticRedactionTests(unittest.IsolatedAsyncioTestCase):
             diagnostics._filesystem_check("garbage")
         with self.assertRaises(ValueError):
             diagnostics._filesystem_check("Filesystem Use% Mounted on\n")
-
 
 if __name__ == "__main__":
     unittest.main()

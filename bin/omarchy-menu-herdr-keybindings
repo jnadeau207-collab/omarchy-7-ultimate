@@ -23,18 +23,11 @@ while (($#)); do
   shift
 done
 
-# With no config file, Herdr runs on its own built-in defaults. Substituting the
-# Omarchy seed config here would describe bindings Herdr never loaded.
 [[ -f $config_file ]] || config_file="/dev/null"
 
-# Herdr has no CLI that dumps resolved keybindings, so the action list and its
-# defaults come from `herdr --default-config`, where every action appears as a
-# commented `# action = "binding"` line, and the user config overrides those.
 output_keybindings() (
   set -o pipefail
   herdr --default-config | awk -v config_file="$config_file" '
-# TOML literal strings are as valid as basic ones, so both quote characters
-# open and close a value here.
 function strip_comment(value,   i, ch, quote, out) {
   quote = ""
   out = ""
@@ -52,8 +45,6 @@ function strip_comment(value,   i, ch, quote, out) {
   return out
 }
 
-# Removes every quoted run, leaving only what surrounds the strings. An
-# unterminated quote returns a sentinel no valid value can produce.
 function without_quoted(value,   i, ch, quote, out) {
   quote = ""
   out = ""
@@ -72,9 +63,6 @@ function without_quoted(value,   i, ch, quote, out) {
   return quote == "" ? out : "\001"
 }
 
-# Prose in the default config can read like an assignment, as in
-# `# type = "popup" opens a session-modal terminal`, so a value counts only when
-# it is a bare string or an array of them.
 function is_binding_value(value,   rest) {
   value = strip_comment(value)
   sub(/^[[:space:]]+/, "", value)
@@ -83,8 +71,6 @@ function is_binding_value(value,   rest) {
 
   rest = without_quoted(value)
 
-  # A bare string leaves nothing behind; an array leaves only its brackets,
-  # commas, and whitespace.
   return rest == "" || rest ~ /^\[[[:space:],]*\]$/
 }
 
@@ -99,7 +85,6 @@ function key_text(key,   count, parts, i, text) {
   return text
 }
 
-# Renders every alternate binding for one action as "A / B".
 function combo_text(value,   i, ch, quote, part, text) {
   value = strip_comment(value)
   quote = ""
@@ -149,8 +134,6 @@ function bind(action, value,   combo) {
   combos[action] = combo
 }
 
-# Pass 1: default config on stdin, for the action order and default bindings.
-# Every line there is commented out, so section markers are too.
 FNR == NR {
   line = $0
   sub(/^[[:space:]]*#[[:space:]]*/, "", line)
@@ -166,14 +149,11 @@ FNR == NR {
   sub(/^[^=]*=[[:space:]]*/, "", value)
   if (!is_binding_value(value)) next
 
-  # Actions Herdr leaves unbound still hold their place in the listing order,
-  # for when the user config binds them.
   remember(action)
   bind(action, value)
   next
 }
 
-# Pass 2: the user config, which overrides the defaults it sets.
 {
   if ($0 ~ /^\[\[keys\.command\]\]/) { in_user_keys = 0; next }
   if ($0 ~ /^\[/) { in_user_keys = ($0 ~ /^\[keys\]/); next }
@@ -189,7 +169,6 @@ FNR == NR {
   sub(/^[^=]*=[[:space:]]*/, "", value)
   if (!is_binding_value(value)) next
 
-  # An action bound to nothing in the user config is unbound, not defaulted.
   if (combo_text(value) == "") {
     delete combos[action]
     next

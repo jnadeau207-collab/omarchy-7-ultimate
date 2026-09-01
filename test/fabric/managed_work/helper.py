@@ -13,11 +13,9 @@ from omarchy_fabric.managed_work.plane import SANDBOX_CAPABILITIES
 
 INSPECT_CAPABILITY = next(iter(SANDBOX_CAPABILITIES))
 
-
 ACTOR = Actor("principal.test", "session.one")
 OTHER_ACTOR = Actor("principal.other", "session.other")
 OTHER_SESSION = Actor("principal.test", "session.two")
-
 
 def inspect_intent(**extra: object) -> dict[str, object]:
     intent: dict[str, object] = {
@@ -28,7 +26,6 @@ def inspect_intent(**extra: object) -> dict[str, object]:
     intent.update(extra)
     return intent
 
-
 def budget(*, network: bool = False) -> dict[str, object]:
     return {
         "timeSeconds": 600,
@@ -36,7 +33,6 @@ def budget(*, network: bool = False) -> dict[str, object]:
         "costMicrounits": 50_000,
         "network": network,
     }
-
 
 def policy(
     *,
@@ -55,7 +51,6 @@ def policy(
         "signedOut": "pause",
     }
 
-
 def template(context_ids: list[str] | None = None) -> dict[str, object]:
     return {
         "title": "Scheduled inventory",
@@ -63,7 +58,6 @@ def template(context_ids: list[str] | None = None) -> dict[str, object]:
         "contextIds": list(context_ids or []),
         "budget": budget(),
     }
-
 
 def create_context(
     plane: ManagedWorkPlane,
@@ -84,7 +78,6 @@ def create_context(
         now=now,
     )
 
-
 def create_task(
     plane: ManagedWorkPlane,
     *,
@@ -102,7 +95,6 @@ def create_task(
         idempotency_key=key,
         now=now,
     )
-
 
 def manifest(context_ids: list[str] | None = None) -> dict[str, object]:
     return {

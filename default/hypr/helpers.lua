@@ -1,4 +1,3 @@
--- Shared helpers for Hyprland Lua configuration.
 
 o = o or {}
 
@@ -18,11 +17,7 @@ local function file_exists(path)
   return false
 end
 
--- Hyprland reaps its own children, so os.execute() can't retrieve an exit status
--- from inside the compositor. Read a marker off stdout instead.
 function o.shell_succeeds(command)
-  -- Subshell, so the redirection covers every command rather than binding to
-  -- the last one and letting an earlier one write its own OK into the pipe.
   local pipe = io.popen("( " .. command .. " ) >/dev/null 2>&1 && echo OK")
   if not pipe then
     return false

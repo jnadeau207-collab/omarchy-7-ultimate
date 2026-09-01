@@ -2,10 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 
-// Reusable operation-result surface. The state identifier is the contract;
-// label, symbol, tone, default explanation and primary action all come from
-// the shared semantic vocabulary. Callers may override copy without losing
-// the color-independent state label or accessibility description.
 Card {
   id: root
 

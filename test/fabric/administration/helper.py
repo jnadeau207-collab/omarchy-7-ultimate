@@ -15,26 +15,24 @@ FABRIC = ROOT / "default" / "fabric"
 if str(FABRIC) not in sys.path:
     sys.path.insert(0, str(FABRIC))
 
-from omarchy_fabric.providers.account import provider as account  # noqa: E402
-from omarchy_fabric.providers.device import provider as device  # noqa: E402
-from omarchy_fabric.providers.firewall import provider as firewall  # noqa: E402
-from omarchy_fabric.providers.printer import provider as printer  # noqa: E402
-from omarchy_fabric.providers.process import provider as process  # noqa: E402
-from omarchy_fabric.providers.schedule import provider as schedule  # noqa: E402
-from omarchy_fabric.providers.service import provider as service  # noqa: E402
-from omarchy_fabric.providers.storage import provider as storage  # noqa: E402
-from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind  # noqa: E402
+from omarchy_fabric.providers.account import provider as account
+from omarchy_fabric.providers.device import provider as device
+from omarchy_fabric.providers.firewall import provider as firewall
+from omarchy_fabric.providers.printer import provider as printer
+from omarchy_fabric.providers.process import provider as process
+from omarchy_fabric.providers.schedule import provider as schedule
+from omarchy_fabric.providers.service import provider as service
+from omarchy_fabric.providers.storage import provider as storage
+from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
 BOOT_ID = "11111111-2222-3333-4444-555555555555"
 START_TICKS = {1: 100, 2: 200}
-
 
 @dataclass(frozen=True)
 class Case:
     module: Any
     resource: Mapping[str, Any]
     arguments: Mapping[str, Any]
-
 
 def principal() -> EndpointPrincipal:
     now = datetime(2026, 8, 27, tzinfo=timezone.utc)
@@ -48,7 +46,6 @@ def principal() -> EndpointPrincipal:
         expires_at=now + timedelta(hours=1),
     )
 
-
 def runner_outputs() -> dict[str, str]:
     return {
         str(process.PROCESS_COMMAND.argv): "1 0 init /init.scope\n2 1000 worker /user.slice/app.scope\n",
@@ -60,7 +57,6 @@ def runner_outputs() -> dict[str, str]:
         str(service.SERVICE_COMMAND.argv): "sshd.service loaded active running OpenSSH daemon\ncron.service loaded inactive dead Scheduler\n",
         str(schedule.SCHEDULE_COMMAND.argv): json.dumps([{"unit": "backup.timer", "activates": "backup.service", "next": 1787841991967848, "last": 1787741178650348}]),
     }
-
 
 def resource_cases() -> list[Case]:
     process_resource = process.parse_processes(runner_outputs()[str(process.PROCESS_COMMAND.argv)], boot_id=BOOT_ID, start_ticks_by_pid=START_TICKS)[1]
@@ -81,7 +77,6 @@ def resource_cases() -> list[Case]:
         Case(service, service_resource, {"resourceId": service_resource["id"], "action": "stop"}),
         Case(schedule, schedule_resource, {"resourceId": schedule_resource["id"], "action": "run"}),
     ]
-
 
 def copied_case(case: Case) -> Case:
     return Case(case.module, copy.deepcopy(case.resource), copy.deepcopy(case.arguments))

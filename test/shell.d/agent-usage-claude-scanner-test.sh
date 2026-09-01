@@ -33,8 +33,6 @@ pass "Claude collector keeps mutually exclusive token categories"
   fail "Claude collector identifies itself and reports missing auth" "$result"
 pass "Claude collector identifies itself and reports missing auth"
 
-# A machine with no transcripts and no stats-cache still gets today's counts
-# from history.jsonl alone.
 HISTORY_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$HISTORY_HOME"' EXIT
 mkdir -p "$HISTORY_HOME/.claude"
@@ -53,8 +51,6 @@ result=$(HOME="$HISTORY_HOME" XDG_CACHE_HOME="$HISTORY_HOME/.cache" XDG_DATA_HOM
   fail "Claude collector falls back to history.jsonl without a stats-cache" "$result"
 pass "Claude collector falls back to history.jsonl without a stats-cache"
 
-# A subscription burned entirely through opencode has no ~/.claude transcripts;
-# usage must come from opencode's message database, filtered to Anthropic.
 OPENCODE_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$HISTORY_HOME" "$OPENCODE_HOME"' EXIT
 
@@ -103,8 +99,6 @@ pass "Claude collector counts Anthropic usage, reasoning included, from opencode
   fail "Claude collector ignores prefix-colliding providers, user messages, and malformed rows" "$result"
 pass "Claude collector ignores prefix-colliding providers, user messages, and malformed rows"
 
-# Pi and omp can both spend a Claude subscription without writing native
-# Claude Code transcripts. Their compatible JSONL sessions must be included.
 PI_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME" "$HISTORY_HOME" "$OPENCODE_HOME" "$PI_HOME"' EXIT
 mkdir -p "$PI_HOME/.pi/agent/sessions/project" "$PI_HOME/.omp/agent/sessions/project"
@@ -127,9 +121,6 @@ result=$(HOME="$PI_HOME" XDG_CACHE_HOME="$PI_HOME/.cache" XDG_DATA_HOME="$PI_HOM
   fail "Claude collector filters pi and omp sessions to Anthropic providers" "$result"
 pass "Claude collector counts pi and omp subscription usage"
 
-# Collectors overlap in practice: the update command backgrounds one per agent
-# while the panel refreshes on its own. Two writers aiming at one cache file
-# must both land, not trip over a shared temp path.
 race_output=$(python3 - "$ROOT/bin/omarchy-agent-usage-claude" "$TEST_HOME/race.json" <<'PY'
 import importlib.util
 import json

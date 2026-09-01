@@ -67,8 +67,6 @@ export OMARCHY_SETUP_CONTEXT="${OMARCHY_SETUP_CONTEXT:-runtime}"
 export PATH="$OMARCHY_PATH/bin:$PATH"
 
 if (( first_install )) && [[ $OMARCHY_SETUP_CONTEXT == "runtime" ]]; then
-  # The ISO chroot doesn't set a context; omarchy-provision-owner runs first-install
-  # finalization too but with OMARCHY_SETUP_CONTEXT=provision-owner already set.
   export OMARCHY_SETUP_CONTEXT=iso-chroot
 fi
 
@@ -81,9 +79,6 @@ else
   }
 fi
 
-# Dev-aware skill symlinks. Cannot live in /etc/skel because OMARCHY_PATH may
-# point at a dev checkout (omarchy dev link) where the target differs.
-# Loops every skill directory, so shipping a new one needs no edit here.
 mkdir -p ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.pi/agent/skills ~/.gemini/config/skills ~/.hermes/skills
 for skill in "$OMARCHY_PATH"/default/agents/skills/*/; do
   skill=${skill%/}

@@ -1,14 +1,5 @@
 echo "Rename the model usage widget to agents and prime its data files"
 
-# The widget formerly known as omarchy.model-usage is now omarchy.agents, and
-# it no longer scans providers itself: it displays the records that
-# omarchy-agent-usage-update writes under ~/.local/state/omarchy/agents/usage/.
-# Rename the widget wherever a user's config mentions it — bar layout entries
-# keep their settings, a disabled widget stays disabled — then generate the
-# records once so the bar doesn't sit empty until the widget's first refresh
-# timer, and drop the old scanner's cache directory, which nothing reads
-# anymore.
-
 config_file="$HOME/.config/omarchy/shell.json"
 
 if [[ -s $config_file ]]; then

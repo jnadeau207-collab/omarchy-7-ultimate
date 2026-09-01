@@ -2,7 +2,6 @@
 
 # omarchy:summary=Ensure default application launchers and mise wrappers are installed.
 
-# Copy .desktop declarations
 mkdir -p ~/.local/share/applications
 cp "$OMARCHY_PATH"/applications/*.desktop ~/.local/share/applications/
 

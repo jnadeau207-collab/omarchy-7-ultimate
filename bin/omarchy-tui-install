@@ -69,7 +69,6 @@ if [[ $ICON_REF =~ ^https?:// ]]; then
 elif [[ -f $ICON_REF ]]; then
   ICON_VALUE=$(install_user_icon "$ICON_REF" "$(safe_icon_name "$APP_NAME")")
 else
-  # Bundled Omarchy icons are package-owned under /usr/share/icons/hicolor.
   ICON_VALUE=$(icon_name_from_ref "$ICON_REF")
 fi
 

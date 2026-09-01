@@ -15,19 +15,17 @@ FABRIC = ROOT / "default" / "fabric"
 if str(FABRIC) not in sys.path:
     sys.path.insert(0, str(FABRIC))
 
-from omarchy_fabric.providers.backup import provider as backup  # noqa: E402
-from omarchy_fabric.providers.diagnostics import provider as diagnostics  # noqa: E402
-from omarchy_fabric.providers.recovery import provider as recovery  # noqa: E402
-from omarchy_fabric.providers.update import provider as update  # noqa: E402
-from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind  # noqa: E402
-
+from omarchy_fabric.providers.backup import provider as backup
+from omarchy_fabric.providers.diagnostics import provider as diagnostics
+from omarchy_fabric.providers.recovery import provider as recovery
+from omarchy_fabric.providers.update import provider as update
+from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
 @dataclass(frozen=True)
 class Case:
     module: Any
     resource: Mapping[str, Any]
     arguments: Mapping[str, Any]
-
 
 def principal() -> EndpointPrincipal:
     now = datetime(2026, 8, 27, tzinfo=timezone.utc)
@@ -41,20 +39,16 @@ def principal() -> EndpointPrincipal:
         expires_at=now + timedelta(hours=1),
     )
 
-
 def update_resource() -> dict[str, Any]:
     return update.parse_updates("linux 6.1 -> 6.2\nquickshell 1.0 -> 1.1\n")[0]
-
 
 def recovery_resource() -> dict[str, Any]:
     resource = recovery.parse_restore_points(json.dumps({"data": [{"number": 7, "date": "2026-08-27T00:00:00Z", "description": "Before update"}]}))[0]
     resource["state"].update(eligible=True, readOnly=True, health="healthy")
     return resource
 
-
 def backup_resource() -> dict[str, Any]:
     return backup.parse_snapshots(json.dumps([{"id": "abcdef1234567890", "time": "2026-08-27T00:00:00Z", "paths": ["/home/jesse"]}]), home_root="/home/jesse")[0]
-
 
 def diagnostics_resource() -> dict[str, Any]:
     source_text = {
@@ -78,7 +72,6 @@ def diagnostics_resource() -> dict[str, Any]:
         },
     }
 
-
 def resource_cases() -> list[Case]:
     update_item = update_resource()
     recovery_item = recovery_resource()
@@ -90,7 +83,6 @@ def resource_cases() -> list[Case]:
         Case(backup, backup_item, {"resourceId": backup.RESOURCE_ID, "action": "restore", "scope": "home", "snapshotId": "abcdef1234567890", "relativePath": "Documents/report.txt", "retention": dict(backup.DEFAULT_RETENTION)}),
         Case(diagnostics, diagnostics_item, {"resourceId": diagnostics.RESOURCE_ID, "sources": ["service-failures", "filesystem-usage"], "maximumBytes": 8192}),
     ]
-
 
 def copied_case(case: Case) -> Case:
     return Case(case.module, copy.deepcopy(case.resource), copy.deepcopy(case.arguments))

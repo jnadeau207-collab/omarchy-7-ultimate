@@ -73,8 +73,6 @@ function loginPlan(needsLogin, authUrl) {
   return { authUrl: "", command: ["tailscale", "up"] }
 }
 
-// Taildrop is a tailnet feature the admin can turn off, so the button for it
-// only makes sense when this profile actually carries the capability.
 function hasFileSharing(self) {
   var capability = "https://tailscale.com/cap/file-sharing"
   var capMap = (self && self.CapMap) || null
@@ -86,9 +84,6 @@ function hasFileSharing(self) {
   return false
 }
 
-// Tailscale grades every peer itself — offline, wrong owner, an OS without
-// Taildrop, no peer API — so take its word when the status carries one, and
-// fall back to same-owner for daemons too old to say.
 function isTaildropTarget(peer, selfUserId) {
   var target = peer && peer.TaildropTarget
   if (typeof target === "number" && target !== 0) return target === 1

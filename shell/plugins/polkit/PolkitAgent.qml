@@ -11,7 +11,6 @@ Item {
   id: root
 
   property string fontFamily: Style.font.menuFamily
-  // Bound to the central [polkit] section in shell.toml via Color.qml.
   property color accent: Color.polkit.accent
   property color background: Color.polkit.background
   property color foreground: Color.polkit.text
@@ -32,22 +31,13 @@ Item {
   property bool responseVisible: false
   property bool failed: false
   property bool errorFlash: false
-  // pam_fprintd appears in the polkit PAM stack (a sensor is enrolled).
   property bool fingerprintConfigured: false
-  // Lid shut right now — the reader is physically unreachable, so we fall back
-  // to the password even when a sensor is enrolled. Refreshed per request.
   property bool laptopClosed: false
   property int shakeOffset: 0
 
   readonly property bool dialogVisible: polkitAgent.isActive || closing
-  // We show one method at a time. Fingerprint owns the dialog while PAM is
-  // waiting on the reader (lid open, sensor enrolled); the moment PAM asks for
-  // a password — including immediately when the lid is shut and the clamshell
-  // gate skips pam_fprintd — we switch to the password field instead.
   readonly property bool fingerprintMode: fingerprintConfigured && !laptopClosed && dialogVisible && !responseRequired && !submitted && !errorFlash
   readonly property int cardHeight: panel.height > 0 ? Math.min(fieldHeight + contentMargin * 2, panel.height - Style.gapsOut * 2) : fieldHeight + contentMargin * 2
-  // Password mode is a wide field; fingerprint mode collapses to a square that
-  // just frames the centered sensor icon.
   readonly property int cardWidth: fingerprintMode ? cardHeight : Math.min(Style.space(312), Math.max(Style.space(260), panel.width - Style.gapsOut * 2))
 
   function authorizationLabel(message) {
@@ -100,8 +90,6 @@ Item {
 
   function refocus() {
     if (!dialogVisible) return
-    // In fingerprint mode there is no field to type into — park focus on the
-    // key catcher so Escape still cancels; otherwise focus the password field.
     if (fingerprintMode) keyCatcher.forceActiveFocus()
     else passwordInput.forceActiveFocus()
   }
@@ -268,8 +256,6 @@ Item {
         }
       }
 
-      // Fingerprint mode shows just the sensor icon, centered and alone \u2014 no
-      // padlock, no field, no prompt text.
       OpticalGlyph {
         anchors.centerIn: parent
         width: Math.round(root.fieldHeight * 0.7)

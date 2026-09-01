@@ -3,7 +3,6 @@ import json
 import os
 import pathlib
 
-
 def desktop_dir() -> pathlib.Path:
     home = pathlib.Path.home()
     fallback = home / "Desktop"
@@ -30,7 +29,6 @@ def desktop_dir() -> pathlib.Path:
         return resolved
     return fallback
 
-
 def desktop_fields(path: pathlib.Path) -> dict[str, str]:
     fields: dict[str, str] = {}
     if path.suffix != ".desktop":
@@ -46,7 +44,6 @@ def desktop_fields(path: pathlib.Path) -> dict[str, str]:
         return {}
     return fields
 
-
 def desktop_command(exec_line: str) -> str:
     command = []
     for part in exec_line.split():
@@ -54,7 +51,6 @@ def desktop_command(exec_line: str) -> str:
             continue
         command.append(part)
     return " ".join(command)
-
 
 def desktop_icon(path: pathlib.Path) -> str:
     icon = desktop_fields(path).get("Icon", "")
@@ -66,13 +62,11 @@ def desktop_icon(path: pathlib.Path) -> str:
         return "folder"
     return "text-x-generic"
 
-
 def desktop_name(path: pathlib.Path) -> str:
     name = desktop_fields(path).get("Name", "")
     if name:
         return name
     return path.name
-
 
 def main() -> None:
     root = desktop_dir()
@@ -93,7 +87,6 @@ def main() -> None:
                 "command": command,
             })
     print(json.dumps({"directory": str(root), "items": items}, separators=(",", ":")))
-
 
 if __name__ == "__main__":
     main()

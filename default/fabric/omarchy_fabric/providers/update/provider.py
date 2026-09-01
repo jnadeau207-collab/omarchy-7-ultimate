@@ -75,7 +75,6 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def parse_updates(text: str) -> list[dict[str, Any]]:
     packages: list[tuple[str, str, str]] = []
     for line in text.splitlines():
@@ -106,7 +105,6 @@ def parse_updates(text: str) -> list[dict[str, Any]]:
         }
     ]
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     try:
         output = (await invoke_probe(UPDATE_COMMAND, runner)).stdout
@@ -116,10 +114,8 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         output = ""
     return parse_updates(output)
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": RESOURCE_ID, "mode": arguments["mode"], "createCheckpoint": arguments["createCheckpoint"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     mode = arguments["mode"]
@@ -146,7 +142,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         raise ValueError("a different update plan is already pending")
     return {**dict(current), "checkpoint": "required" if mode == "apply" else current["checkpoint"], "pendingPlan": pending_plan}
 
-
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "system-update", OPERATION_ACTION, "update.system.plan", "consequential", ("mutating", "privileged", "download", "network", "restart", "reboot"), max_resources=1),
     resource_schema=RESOURCE_SCHEMA,
@@ -158,10 +153,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan update mode {arguments['mode']} with explicit checkpoint and reboot expectations; no package or reboot command is executed.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

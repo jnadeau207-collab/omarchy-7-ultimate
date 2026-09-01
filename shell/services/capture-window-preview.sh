@@ -1,6 +1,4 @@
 #!/bin/bash
-# Capture one mapped window rectangle for a Superbar peek thumbnail.
-# Usage: capture-window-preview.sh <x> <y> <w> <h> <dest.png>
 
 set -euo pipefail
 

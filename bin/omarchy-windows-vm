@@ -4,63 +4,25 @@
 # omarchy:args=<install|remove|launch|stop|status> [options]
 # omarchy:requires-sudo=true
 
-# The Windows VM runs a privileged container (KVM, /dev/net/tun, NET_ADMIN), so
-# it needs the root-owned Docker daemon. By default the user is NOT in the docker
-# group (that group is root-equivalent), so Docker access is gated behind a
-# single polkit prompt. If the user opted into sudoless Docker
-# (omarchy-setup-security-sudoless-docker), the socket is reachable directly and
-# no prompt appears.
-#
-# The compose file lives in a root-owned directory and is only ever written by
-# the elevated, input-validated write_compose action below. That is the whole
-# point: a root-invoked `docker compose up` must never consume a file that a
-# process running as the user could have rewritten to bind-mount / into the
-# container. Earlier versions kept it under ~/.config/windows, which a rogue
-# process could edit and then trigger a privileged bring-up of — a file-swap
-# path to root. Do not move it back under $HOME.
-
 RUNTIME_DIR="${OMARCHY_WINDOWS_DIR:-/var/lib/omarchy/windows}"
 COMPOSE_FILE="$RUNTIME_DIR/docker-compose.yml"
 LEGACY_COMPOSE_FILE="$HOME/.config/windows/docker-compose.yml"
-# The guest password lives in the root-owned compose (readable by root and the
-# docker group), but RDP needs it as the user. Keep a private copy here, 0600 in
-# the user's own config, so the plaintext password is never world-readable.
 CREDENTIALS_FILE="$HOME/.config/windows/credentials"
 IMAGE="dockurr/windows"
 CONTAINER="omarchy-windows"
 VM_LOCK_DIR=/run/lock/omarchy-windows-vm
-# Removal is the only path that recursively proves there are no bind aliases.
-# Bound every metadata walk so a large or hostile caller tree fails closed
-# instead of hanging a privileged action indefinitely.
 TREE_SCAN_TIMEOUT_SECONDS=5
 TREE_SCAN_KILL_AFTER_SECONDS=1
 TREE_SCAN_TIMEOUT=/usr/bin/timeout
 TREE_SCAN_FIND=/usr/bin/find
 
-# The privileged process must not resolve mount, stat, Docker, or any other
-# helper from a caller-controlled PATH, and validation must not change with an
-# inherited locale. pkexec normally sanitizes both; pin them here as defense in
-# depth for every direct __priv entry as well.
 if ((EUID == 0)); then
   export PATH=/usr/bin:/usr/sbin:/bin:/sbin
   export LC_ALL=C.UTF-8
 fi
 
-# --- privilege helpers -------------------------------------------------------
-
-# True when this session can reach the Docker socket directly (sudoless Docker
-# on and in effect). Asking about the socket rather than the configured groups
-# keeps the prompt in place through the window where sudoless Docker is enabled
-# but the reboot that grants the group has not happened yet.
 docker_needs_sudo() { omarchy-sudo-docker; }
 
-# The command to hand pkexec for the privileged re-exec. pkexec runs whatever
-# executable it is given (after authorization) and only shows the path in the
-# prompt — it does NOT require the target to be root-owned. So resolve to the
-# packaged command and refuse to elevate anything a non-root user could have
-# written: a PATH-injected shim, or a user-owned dev checkout. Without this, a
-# prompt the user grants for the trusted helper could run an attacker's binary
-# as root. Fails closed (empty output) when no trustworthy target is found.
 priv_target() {
   local candidate=/usr/bin/omarchy-windows-vm canonical probe owner mode
   [[ -f $candidate && ! -L $candidate && -x $candidate ]] || return 1
@@ -77,19 +39,10 @@ priv_target() {
   printf '%s\n' "$candidate"
 }
 
-# Run a privileged VM action. write_compose always elevates (the compose is
-# root-owned); the daemon operations run directly when sudoless Docker is on and
-# otherwise behind a polkit prompt. The stock org.freedesktop.policykit.exec
-# policy is auth_admin (not auth_admin_keep), so each elevated action prompts:
-# a launch asks once to start and, unless authorization is still cached by the
-# agent, again to stop.
 priv() {
   local action="$1"
   shift
   if [[ $action != write_compose && $action != remove ]] && ! docker_needs_sudo; then
-    # Bring-up normally runs directly for a docker-group user, but recreating
-    # the protected bind anchors after reboot (or migrating an old compose)
-    # still needs one privileged invocation.
     if [[ -d $VM_LOCK_DIR && ! -L $VM_LOCK_DIR && -r $VM_LOCK_DIR && -x $VM_LOCK_DIR ]] && {
       [[ $action != up && $action != up_wait ]] || {
         ! compose_needs_security_migration && mounts_ready >/dev/null 2>&1
@@ -120,9 +73,6 @@ with_vm_lock() {
     fi
   fi
   assert_boundary_dir "$VM_LOCK_DIR" 0 || return 1
-  # Flock the directory inode itself. Concurrent first callers may both run
-  # install -d, but mkdir is atomic and they necessarily open the same stable
-  # inode below the root-owned /run/lock parent.
   exec {fd}<"$VM_LOCK_DIR/." || return 1
   flock -x "$fd" || { exec {fd}<&-; return 1; }
   "$@" || rc=$?
@@ -131,8 +81,6 @@ with_vm_lock() {
   return "$rc"
 }
 
-# --- validation (shared by the user-side prompts and the root-side writer) ----
-
 valid_ram() { [[ $1 =~ ^[0-9]{1,3}G$ ]]; }
 valid_cores() { [[ $1 =~ ^[0-9]{1,2}$ ]] && ((10#$1 >= 1)); }
 valid_disk() { [[ $1 =~ ^[0-9]{1,4}G$ ]]; }
@@ -140,10 +88,6 @@ valid_username() { [[ $1 =~ ^[A-Za-z0-9_-]{1,20}$ ]]; }
 valid_tz() { [[ $1 =~ ^[A-Za-z0-9_/.+-]{1,64}$ ]]; }
 valid_password() { [[ $1 =~ ^[[:print:]]{1,64}$ ]]; }
 
-# The only privileged sub-actions __priv may dispatch. A bash command name
-# containing a slash is executed as a path, so validating the action here — not
-# just interpolating it into "__priv_${action}" — is what stops an action like
-# ../tmp/evil from running an arbitrary file as root.
 valid_priv_action() {
   case "$1" in
   write_compose | up | up_wait | down | status | remove) return 0 ;;
@@ -151,11 +95,6 @@ valid_priv_action() {
   esac
 }
 
-# --- privileged actions (run as root via pkexec, or directly when sudoless) ---
-
-# Resolve the account that authorized pkexec. Never trust HOME or a caller-
-# supplied mount path in the privileged process: pkexec can reset HOME, and the
-# old path arguments were the source of an arbitrary host bind-mount primitive.
 resolve_caller() {
   local entry canonical parent owner mode
 
@@ -179,9 +118,6 @@ resolve_caller() {
     return 1
   }
 
-  # A direct, non-root development invocation with a non-standard runtime has
-  # no privilege boundary and may use its current HOME (which also keeps these
-  # functions testable). Production always uses the account database value.
   if ((EUID != 0)) && [[ $RUNTIME_DIR != /var/lib/omarchy/windows ]]; then
     CALLER_HOME=${HOME:-$CALLER_HOME}
   fi
@@ -197,8 +133,6 @@ resolve_caller() {
       echo "omarchy-windows-vm: caller does not own $CALLER_HOME" >&2
       return 1
     }
-    # The user must not be able to rename or replace their home while root is
-    # opening and pinning the familiar data entries below it.
     parent=$(dirname -- "$CALLER_HOME")
     while :; do
       owner=$(stat -Lc '%u' "$parent") || return 1
@@ -212,10 +146,6 @@ resolve_caller() {
     done
   fi
 
-  # Docker only ever sees fixed paths below the root-owned runtime tree. The
-  # user's real data stays wherever ~/.windows and ~/Windows resolve (including
-  # separately mounted homes and legitimate symlinks); those sources are pinned
-  # into these anchors with bind mounts before Docker is allowed to start.
   MOUNT_ROOT="$RUNTIME_DIR/mounts"
   USERS_DIR="$MOUNT_ROOT/users"
   CALLER_DATA_ROOT="$USERS_DIR/$CALLER_UID"
@@ -223,18 +153,12 @@ resolve_caller() {
   EXPECTED_SHARED="$CALLER_DATA_ROOT/shared"
   LEGACY_STORAGE="$CALLER_HOME/.windows"
   LEGACY_SHARED="$CALLER_HOME/Windows"
-  # The first protected-anchor implementation used a root-owned sibling of
-  # home. Recognize that exact derived pair during upgrade, but never accept a
-  # path read from user input.
   OLD_MOUNT_ROOT="$(dirname -- "$CALLER_HOME")/.omarchy-windows"
   OLD_EXPECTED_STORAGE="$OLD_MOUNT_ROOT/users/$CALLER_UID/storage"
   OLD_EXPECTED_SHARED="$OLD_MOUNT_ROOT/users/$CALLER_UID/shared"
 }
 
 boundary_owner() {
-  # Production boundaries remain root-owned even when a docker-group user runs
-  # the read-only bring-up checks directly. A non-standard runtime is supported
-  # only for unprivileged tests/development and is owned by that caller.
   if ((EUID == 0)) || [[ $RUNTIME_DIR == /var/lib/omarchy/windows ]]; then
     printf '0'
   else
@@ -277,8 +201,6 @@ prepare_runtime_tree() {
       echo "omarchy-windows-vm: refusing a non-standard privileged runtime path" >&2
       return 1
     }
-    # Check the nearest existing ancestor before mkdir can follow anything.
-    # Every new component is then created by root and checked again below.
     probe=$RUNTIME_DIR
     while [[ ! -e $probe && ! -L $probe ]]; do probe=$(dirname -- "$probe"); done
     while :; do
@@ -306,18 +228,12 @@ prepare_runtime_tree() {
   }
 }
 
-# Open the source directory itself and keep the descriptor alive until after the
-# bind. /proc/$BASHPID/fd refers to this exact shell process (including when a
-# function runs in a pipeline subshell), not the short-lived mount subprocess,
-# so a rename or symlink swap after open cannot change which inode is mounted.
 open_mount_source() {
   local path="$1" label="$2" fd record uid identity
   [[ -d $path ]] || {
     echo "omarchy-windows-vm: $label source is not a directory: $path" >&2
     return 1
   }
-  # Appending /. makes a directory-to-FIFO swap fail with ENOTDIR instead of
-  # leaving the privileged helper blocked while opening an attacker-held pipe.
   exec {fd}<"$path/." || {
     echo "omarchy-windows-vm: cannot open $label source: $path" >&2
     return 1
@@ -340,10 +256,6 @@ open_mount_source() {
   OPENED_MOUNT_ID=$identity
 }
 
-# Return 0 when ancestor_id contains the already-open descendant directory, 1
-# when the walk reaches the namespace root without finding it, and 2 on any
-# error or an implausibly deep walk. Every hop is opened relative to a pinned
-# directory FD; no caller-mutable pathname is re-resolved.
 pinned_dir_contains() {
   local ancestor_id="$1" descendant_fd="$2" walk_fd parent_fd current_id parent_id depth
   exec {walk_fd}<"/proc/$BASHPID/fd/$descendant_fd/." || return 2
@@ -377,16 +289,8 @@ pinned_dir_contains() {
   return 2
 }
 
-# A bind alias can give the same directory inode a second parent chain, so an
-# upward walk alone is insufficient for destructive removal. Search from a
-# pinned tree root for the other pinned inode without following symlinks or
-# crossing the removal traversal's filesystem boundary. Return 0 when found, 1
-# when absent, and 2 on timeout, traversal error, or unexpected output.
 pinned_tree_contains() {
   local root_fd="$1" needle_fd="$2" found rc
-  # -xdev still evaluates a nested mountpoint itself before pruning its
-  # children, so a direct different-filesystem alias of the needle is found too.
-  # This matches removal's traversal boundary without skipping mount aliases.
   if found=$("$TREE_SCAN_TIMEOUT" --signal=TERM --kill-after="${TREE_SCAN_KILL_AFTER_SECONDS}s" \
     "${TREE_SCAN_TIMEOUT_SECONDS}s" "$TREE_SCAN_FIND" -P "/proc/$BASHPID/fd/$root_fd/." \
     -xdev -type d -samefile "/proc/$BASHPID/fd/$needle_fd/." \
@@ -462,9 +366,6 @@ removal_trees_disjoint() {
     return 1
   fi
 
-  # Scan the protected anchor views first. Also scan the pinned caller views:
-  # a submount attached after the original non-recursive bind is intentionally
-  # absent from the anchor view, but removal must still refuse that alias.
   rc=0
   for scan in \
     "$anchor_storage_fd:$anchor_shared_fd:shared below protected storage" \
@@ -529,8 +430,6 @@ bind_mount_leaf() {
     return 0
   fi
 
-  # util-linux normally canonicalizes a /proc/<pid>/fd link back to a pathname,
-  # which would throw away the FD pin. Pass the procfd to mount(2) unchanged.
   mount --no-canonicalize --bind "/proc/$BASHPID/fd/$fd" "$stable" || return 1
   MOUNT_LEAF_NEW=1
   actual=$(stat -Lc '%d:%i' "$stable" 2>/dev/null) || actual=""
@@ -561,7 +460,6 @@ prepare_caller_mounts() {
   resolve_caller && prepare_runtime_tree || return 1
   prepare_mount_anchor "$EXPECTED_STORAGE" && prepare_mount_anchor "$EXPECTED_SHARED" || return 1
 
-  # Pre-open and validate both sources before changing either mount anchor.
   open_mount_source "$LEGACY_STORAGE" storage || return 1
   storage_fd=$OPENED_MOUNT_FD
   storage_id=$OPENED_MOUNT_ID
@@ -577,9 +475,6 @@ prepare_caller_mounts() {
     return 1
   fi
 
-  # Privacy is an explicit preflight step for both already-pinned sources, not
-  # a side effect halfway through the two-mount transaction. Old umask-022
-  # installs are hardened together before either Docker-facing anchor changes.
   chmod 0700 -- "/proc/$BASHPID/fd/$storage_fd" "/proc/$BASHPID/fd/$shared_fd" || {
     exec {storage_fd}<&-
     exec {shared_fd}<&-
@@ -679,22 +574,12 @@ write_compose_atomically() (
   }
   trap cleanup_writer EXIT
 
-  # Neutralize anything in the password that could be misread when the compose
-  # is parsed. Two layers apply, in this order at parse time: docker compose
-  # variable interpolation over the raw text ($VAR / $$), then YAML parsing of
-  # the double-quoted scalar. Encode for the inner layer first (backslash, then
-  # double-quote) and the interpolation layer last ($ -> $$), so a password
-  # containing " \ or $ reaches the guest verbatim. unescape() reverses this in
-  # the opposite order for the RDP credentials.
   esc_password=${password//\\/\\\\}
   esc_password=${esc_password//\"/\\\"}
   esc_password=${esc_password//\$/\$\$}
 
   tmp=$(mktemp "$RUNTIME_DIR/.compose.XXXXXX") || exit 1
   # omarchy:heredoc-expands paths=EXPECTED_STORAGE,EXPECTED_SHARED -- both are
-  # root-protected anchors derived from the authenticated caller uid and bound
-  # to source inodes that were opened and validated before this compose is
-  # written. The remaining expansions are revalidated scalar settings.
   cat >"$tmp" <<EOF || exit 1
 services:
   windows:
@@ -734,11 +619,6 @@ EOF
   trap - EXIT
 )
 
-# Reads KEY=VALUE lines on stdin, re-validates every field, and writes the
-# compose atomically as root. Re-validation here is the security boundary: the
-# writer refuses rather than emit a compose an attacker could have influenced.
-# Only these fixed keys are honored; image, container name, devices, caps, and
-# port bindings are hard-coded and never taken from input.
 __priv_write_compose() {
   local ram cores disk username password tz key value
 
@@ -760,19 +640,13 @@ __priv_write_compose() {
   valid_password "$password" || { echo "invalid password" >&2; exit 2; }
   valid_tz "$tz" || tz="UTC"
   prepare_caller_mounts || exit 2
-  # Readable by root and the docker group only. Any failure after mounting rolls
-  # back just the binds this writer created and leaves an old compose untouched.
   write_compose_atomically "$ram" "$cores" "$disk" "$username" "$password" "$tz" || exit 2
 }
 
-# Read the host source of a bind mount out of the compose (e.g. /storage).
 get_mount_source() {
   sed -n "s|^[[:space:]]*-[[:space:]]*\(/[^:]*\):$1\$|\1|p" "$COMPOSE_FILE" | head -n1
 }
 
-# True only when a trusted compose has an exact security upgrade path. The
-# result forces a one-time elevated migration for sudoless-Docker users. An
-# arbitrary or mixed bind pair is never classified as migratable.
 compose_needs_security_migration() {
   local storage shared
   [[ -f $COMPOSE_FILE ]] || return 1
@@ -881,9 +755,6 @@ assert_mounts_safe() {
     return 1
   fi
 
-  # Mounts disappear at reboot. Root recreates them from the already-opened,
-  # caller-owned sources; a docker-group invocation may proceed directly only
-  # while the exact pinned pair is still present.
   if ((EUID == 0)); then
     prepare_caller_mounts || return 1
   fi
@@ -897,8 +768,6 @@ __priv_up() { assert_mounts_safe && dc up -d; }
 
 __priv_down() { dc down; }
 
-# Bring the VM up and wait until the guest reports it is ready, all under a
-# single elevation so the readiness poll does not prompt on every iteration.
 __priv_up_wait() {
   assert_mounts_safe || return 1
   local status
@@ -907,8 +776,6 @@ __priv_up_wait() {
     dc up -d || return 1
   fi
 
-  # docker logs persists across restarts, so anchor the scan to the current
-  # start time; an empty --since would match a stale "started successfully".
   local started_at count=0
   while true; do
     started_at=$(docker inspect --format='{{.State.StartedAt}}' "$CONTAINER" 2>/dev/null)
@@ -923,15 +790,9 @@ __priv_up_wait() {
   done
 }
 
-# Print the status (empty if the container does not exist) and always succeed,
-# so a non-zero exit from priv status means the elevation itself failed
-# (authorization declined) rather than "no such container".
 __priv_status() { docker inspect --format='{{.State.Status}}' "$CONTAINER" 2>/dev/null || true; }
 
 __priv_remove() {
-  # Rebuild/verify both pinned binds before deleting through the storage anchor.
-  # In particular, a legitimate ~/.windows symlink means deleting only the link
-  # from the user side would strand the virtual disk in its external target.
   assert_mounts_safe || return 1
   [[ $EXPECTED_STORAGE == "$USERS_DIR/$CALLER_UID/storage" ]] || return 1
   [[ $EXPECTED_SHARED == "$USERS_DIR/$CALLER_UID/shared" ]] || return 1
@@ -961,13 +822,9 @@ __priv_remove() {
   }
   removal_trees_disjoint || return 1
 
-  # find -xdev deliberately empties the verified disk source without crossing
-  # into another mounted filesystem. Shared files are never traversed.
   find "$EXPECTED_STORAGE" -xdev -mindepth 1 -delete || return 1
   [[ -z $(find "$EXPECTED_STORAGE" -mindepth 1 -print -quit) ]] || return 1
 
-  # Release only the single known top mounts checked above. Unmount shared first
-  # so a storage-unmount failure cannot expose shared data to deletion.
   umount -- "$EXPECTED_SHARED" || return 1
   umount -- "$EXPECTED_STORAGE" || return 1
   docker rmi "$IMAGE" 2>/dev/null || true
@@ -975,11 +832,6 @@ __priv_remove() {
   rmdir -- "$EXPECTED_STORAGE" "$EXPECTED_SHARED" "$CALLER_DATA_ROOT" 2>/dev/null || true
 }
 
-# --- config helpers ----------------------------------------------------------
-
-# Validate both familiar home entries before creating or changing either. A
-# legitimate symlink is kept exactly as-is; only its caller-owned directory
-# target is used. The privileged half repeats the ownership check on pinned FDs.
 preflight_user_mount_source() {
   local path="$1" label="$2" uid owner
   uid=$(id -u)
@@ -1032,7 +884,6 @@ available_storage_gb() {
   df -P -- "$path" | awk 'NR==2 {print int($4/1024/1024)}'
 }
 
-# Feed the collected settings to the elevated writer.
 write_compose() {
   local ram="$1" cores="$2" disk="$3" username="$4" password="$5" tz="$6"
   printf 'RAM=%s\nCORES=%s\nDISK=%s\nUSERNAME=%s\nPASSWORD=%s\nTZ=%s\n' \
@@ -1040,9 +891,6 @@ write_compose() {
     priv write_compose
 }
 
-# Reverse, in the opposite order, the escaping __priv_write_compose applied to
-# the password: undo the interpolation layer ($$ -> $) first, then the YAML
-# layer (\" -> ", then \\ -> \).
 unescape() {
   local v=$1
   v=${v//\$\$/\$}
@@ -1051,9 +899,6 @@ unescape() {
   printf '%s' "$v"
 }
 
-# Store the RDP credentials privately for the user (0600) so the plaintext
-# password is not world-readable. The password is one validated printable line
-# (no newline), so plain KEY=VALUE is safe.
 write_credentials() {
   local username="$1" password="$2" old_umask dir tmp
   dir=$(dirname -- "$CREDENTIALS_FILE")
@@ -1071,8 +916,6 @@ write_credentials() {
   umask "$old_umask"
 }
 
-# Read one field from the private credentials file; IFS on the first = keeps a
-# password that itself contains =.
 read_credential() {
   local want="$1" key value
   [[ -f $CREDENTIALS_FILE ]] || return 1
@@ -1090,9 +933,6 @@ read_compose_value() {
   sed -n "s/.*${key}: \"\(.*\)\"/\1/p" "$file" | head -n1
 }
 
-# Older installs kept the compose under ~/.config/windows. Carry those settings
-# into the root-owned location (preserving the VM's data via the same volume
-# paths) so an upgrade does not strand or re-download an existing VM.
 migrate_legacy_compose() {
   [[ -f $COMPOSE_FILE ]] && return 0
   [[ -f $LEGACY_COMPOSE_FILE ]] || return 1
@@ -1111,8 +951,6 @@ migrate_legacy_compose() {
     return 1
   }
   write_credentials "$username" "$password" || return 1
-  # The elevated writer derives both mount anchors from the authenticated uid;
-  # it never consumes volume paths from this user-owned legacy file.
   if ! write_compose "$ram" "$cores" "$disk" "$username" "$password" "$tz"; then
     echo "Could not migrate the existing configuration automatically." >&2
     echo "Re-run: omarchy-windows-vm install" >&2
@@ -1121,13 +959,10 @@ migrate_legacy_compose() {
   rm -f "$LEGACY_COMPOSE_FILE"
 }
 
-# --- prerequisites -----------------------------------------------------------
-
 check_prerequisites() {
   local DISK_SIZE_GB=${1:-64}
-  local REQUIRED_SPACE=$((DISK_SIZE_GB + 10)) # Add 10GB for Windows ISO and overhead
+  local REQUIRED_SPACE=$((DISK_SIZE_GB + 10))
 
-  # Check for KVM support
   if [[ ! -e /dev/kvm ]]; then
     gum style \
       --border normal \
@@ -1141,7 +976,6 @@ check_prerequisites() {
     exit 1
   fi
 
-  # Check disk space
   AVAILABLE_SPACE=$(available_storage_gb) || {
     echo "❌ Could not determine available space for $HOME/.windows" >&2
     exit 1
@@ -1154,10 +988,7 @@ check_prerequisites() {
   fi
 }
 
-# --- commands ----------------------------------------------------------------
-
 install_windows() {
-  # Set up trap to handle Ctrl+C
   trap "echo ''; echo 'Installation cancelled by user'; exit 1" INT
 
   prepare_user_mount_sources || exit 1
@@ -1178,7 +1009,6 @@ Type=Application
 Categories=System;Virtualization;
 EOF
 
-  # Get system resources
   TOTAL_RAM=$(free -h | awk 'NR==2 {print $2}')
   TOTAL_RAM_GB=$(awk 'NR==1 {printf "%d", $2/1024/1024}' /proc/meminfo)
   TOTAL_CORES=$(nproc)
@@ -1198,7 +1028,6 @@ EOF
 
   SELECTED_RAM=$(echo $RAM_OPTIONS | tr ' ' '\n' | gum choose --selected="4G" --header="How much RAM would you like to allocate to Windows VM?")
 
-  # Check if user cancelled
   if [[ -z $SELECTED_RAM ]]; then
     echo "Installation cancelled by user"
     exit 1
@@ -1206,7 +1035,6 @@ EOF
 
   SELECTED_CORES=$(gum input --placeholder="Number of CPU cores (1-$TOTAL_CORES)" --value="2" --header="How many CPU cores would you like to allocate to Windows VM?" --char-limit=2)
 
-  # Check if user cancelled (Ctrl+C in gum input returns empty string)
   if [[ -z $SELECTED_CORES ]]; then
     echo "Installation cancelled by user"
     exit 1
@@ -1221,9 +1049,8 @@ EOF
     echo "❌ Could not determine available space for $HOME/.windows" >&2
     exit 1
   }
-  MAX_DISK_GB=$((AVAILABLE_SPACE - 10)) # Leave 10GB for Windows image
+  MAX_DISK_GB=$((AVAILABLE_SPACE - 10))
 
-  # Check if we have enough space for minimum
   if ((MAX_DISK_GB < 32)); then
     echo "❌ Insufficient disk space for Windows VM!"
     echo "   Available: ${AVAILABLE_SPACE}GB"
@@ -1238,7 +1065,6 @@ EOF
     fi
   done
 
-  # Default to 64G if available, otherwise 32G
   DEFAULT_DISK="64G"
   if ! echo "$DISK_OPTIONS" | grep -q "64G"; then
     DEFAULT_DISK="32G"
@@ -1246,19 +1072,15 @@ EOF
 
   SELECTED_DISK=$(echo $DISK_OPTIONS | tr ' ' '\n' | gum choose --selected="$DEFAULT_DISK" --header="How much disk space would you like to give Windows VM? (64GB+ recommended)")
 
-  # Check if user cancelled
   if [[ -z $SELECTED_DISK ]]; then
     echo "Installation cancelled by user"
     exit 1
   fi
 
-  # Extract just the number for prerequisite check
   DISK_SIZE_NUM=$(echo "$SELECTED_DISK" | sed 's/G//')
 
-  # Re-check prerequisites with selected disk size
   check_prerequisites "$DISK_SIZE_NUM"
 
-  # Prompt for username and password
   USERNAME=$(gum input --placeholder="Username (Press enter to use default: docker)" --header="Enter Windows username:")
   if [[ -z $USERNAME ]]; then
     USERNAME="docker"
@@ -1281,7 +1103,6 @@ EOF
     PASSWORD_DISPLAY="(default)"
   fi
 
-  # Display configuration summary
   gum style \
     --border normal \
     --padding "1 2" \
@@ -1296,7 +1117,6 @@ EOF
     "Username:  $USERNAME" \
     "Password:  $PASSWORD_DISPLAY"
 
-  # Ask for confirmation
   echo ""
   if ! gum confirm "Proceed with this configuration?"; then
     echo "Installation cancelled by user"
@@ -1306,9 +1126,6 @@ EOF
   local tz
   tz=$(timedatectl show -p Timezone --value 2>/dev/null || echo UTC)
 
-  # Write the root-owned compose from the validated settings (one prompt if
-  # sudoless Docker is off). The writer pins the familiar home directories (or
-  # their legitimate symlink targets) into root-protected bind anchors.
   write_compose "$SELECTED_RAM" "$SELECTED_CORES" "$SELECTED_DISK" \
     "$USERNAME" "$PASSWORD" "$tz" || {
     echo "❌ Failed to write the Windows VM configuration."
@@ -1340,7 +1157,6 @@ EOF
   echo ""
   echo "Opening browser to monitor installation..."
 
-  # Open browser to monitor installation
   sleep 3
   xdg-open "http://127.0.0.1:8006"
 
@@ -1396,8 +1212,6 @@ launch_windows() {
     fi
   fi
 
-  # RDP credentials come from the private per-user file. Fall back to the compose
-  # only when it is readable (sudoless mode), reversing the writer's escaping.
   WIN_USER=$(read_credential USERNAME) || WIN_USER=""
   WIN_PASS=$(read_credential PASSWORD) || WIN_PASS=""
   if [[ -z $WIN_USER || -z $WIN_PASS ]] && [[ -r $COMPOSE_FILE ]]; then
@@ -1415,7 +1229,6 @@ launch_windows() {
     exit 1
   fi
 
-  # Build the connection info
   if [[ $KEEP_ALIVE = "true" ]]; then
     LIFECYCLE="VM will keep running after RDP closes
 To stop: omarchy-windows-vm stop"
@@ -1432,12 +1245,6 @@ To stop: omarchy-windows-vm stop"
     "" \
     "$LIFECYCLE"
 
-  # FreeRDP 3 tries Kerberos before NTLM for NLA, and krb5 ships /etc/krb5.conf
-  # as the MIT sample with default_realm = ATHENA.MIT.EDU. Every connect then
-  # goes looking for MIT's KDC: with internet up it fails fast, but off the
-  # network each attempt blocks ~23s and no RDP window is ever drawn. The VM
-  # authenticates against a local Windows account, so point FreeRDP at a
-  # realm-less config and let it fall straight through to NTLM.
   KRB5_CONF="$HOME/.config/windows/krb5.conf"
   mkdir -p "$(dirname "$KRB5_CONF")"
   if [[ ! -f $KRB5_CONF ]]; then
@@ -1445,7 +1252,6 @@ To stop: omarchy-windows-vm stop"
   fi
   export KRB5_CONFIG="$KRB5_CONF"
 
-  # Detect display scale from Hyprland
   HYPR_SCALE=$(hyprctl monitors -j | jq -r '.[] | select (.focused == true) | .scale')
   SCALE_PERCENT=$(echo "$HYPR_SCALE" | awk '{print int($1 * 100)}')
 
@@ -1455,12 +1261,9 @@ To stop: omarchy-windows-vm stop"
   elif ((SCALE_PERCENT >= 130)); then
     RDP_SCALE="/scale:140"
   fi
-  # If scale is less than 130%, don't set any scale (use default 100)
 
-  # Connect with RDP in fullscreen (auto-detects resolution)
   xfreerdp3 /u:"$WIN_USER" /p:"$WIN_PASS" /v:127.0.0.1:3389 -grab-keyboard /sound /microphone /clipboard /cert:ignore /title:"Windows VM - Omarchy" /dynamic-resolution /gfx:AVC444 /floatbar:sticky:off,default:visible,show:fullscreen $RDP_SCALE
 
-  # After RDP closes, stop the container unless --keep-alive was specified
   if [[ $KEEP_ALIVE = "false" ]]; then
     echo ""
     echo "RDP session closed. Stopping Windows VM..."
@@ -1549,7 +1352,6 @@ show_usage() {
   echo "  omarchy-windows-vm stop              # Shut down the VM"
 }
 
-# Main command dispatcher
 case "$1" in
 __priv)
   ((EUID == 0)) || {

@@ -21,14 +21,12 @@ from omarchy_fabric.security.principal import (
 )
 from omarchy_fabric.security.types import DecisionKind, OperationRequest, ResourceRef, RiskLevel
 
-
 class Clock:
     def __init__(self) -> None:
         self.now = datetime(2026, 8, 26, 12, 0, tzinfo=timezone.utc)
 
     def __call__(self) -> datetime:
         return self.now
-
 
 class BrokenTimezone(tzinfo):
     def utcoffset(self, value):
@@ -39,7 +37,6 @@ class BrokenTimezone(tzinfo):
 
     def tzname(self, value):
         return "broken"
-
 
 class TrustPolicyTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -353,7 +350,6 @@ class TrustPolicyTests(unittest.TestCase):
                 now=self.clock.now,
             ).allowed
         )
-
 
 if __name__ == "__main__":
     unittest.main()

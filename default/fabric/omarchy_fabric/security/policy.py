@@ -11,10 +11,8 @@ from .grants import CapabilityGrant
 from .principal import EndpointPrincipal, PrincipalKind
 from .types import DecisionKind, OperationRequest, PolicyDecision, RiskLevel
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 class PolicyEngine:
     def decide(
@@ -64,8 +62,6 @@ class PolicyEngine:
             if grant.principal_id == principal.principal_id:
                 last_grant_failure = code
 
-        # The shell intentionally cannot hold a standing consequential grant. A
-        # one-operation approval is its entire authority for such a request.
         approval_can_replace_grant = (
             principal.kind is PrincipalKind.SHELL
             and request.risk.rank >= RiskLevel.CONSEQUENTIAL.rank

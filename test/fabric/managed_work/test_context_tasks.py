@@ -17,7 +17,6 @@ from helper import (
 )
 from omarchy_fabric.managed_work import ManagedWorkError
 
-
 class ContextTaskTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -471,7 +470,6 @@ class ContextTaskTests(unittest.TestCase):
                 now=1_003,
             ),
         )
-
 
 if __name__ == "__main__":
     unittest.main()

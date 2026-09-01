@@ -3,10 +3,6 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// The shared gauge-cluster overlay dressed for the disk speed test: read and
-// write dials in MB/s, titled with the model of the disk under test. One
-// omarchy-disk-speedtest run streams both phases and cleans up after itself,
-// so dismissal only has to stop the process.
 Item {
   id: root
 
@@ -17,7 +13,7 @@ Item {
   property bool running: false
   property bool expectedStop: false
   property bool pendingRun: false
-  property string phase: ""             // "read" | "write" | ""
+  property string phase: ""
   property string diskName: ""
   property string writeMBps: ""
   property string readMBps: ""
@@ -29,14 +25,9 @@ Item {
     runTest()
   }
 
-  // Host-initiated close (`shell hide`). The user-initiated paths (Esc, the
-  // scrim) route through shell.hide so the host's open-panel state stays
-  // consistent, and land back here.
   function close() {
     opened = false
     pendingRun = false
-    // Clear the phase before killing the process, so onExited reads the stop
-    // as a dismissal rather than a failed run.
     phase = ""
     running = false
     if (proc.running) {
@@ -53,8 +44,6 @@ Item {
 
   function runTest() {
     if (proc.running) {
-      // A dismissal's SIGTERM is still in flight; Process.running stays true
-      // until the child exits, so queue the fresh run for onExited.
       if (expectedStop) pendingRun = true
       return
     }
@@ -73,9 +62,6 @@ Item {
     return isFinite(value) && value > 0 ? value : 0
   }
 
-  // Lines are "disk <model>", then "read <MB/s>" once a second, then
-  // "write <MB/s>". The phase follows whichever figure is streaming, and each
-  // phase's final line is its steady-state average, which the dial settles on.
   function updateLine(line) {
     var parts = String(line).trim().split(/\s+/)
     if (parts.length < 2) return
@@ -98,9 +84,6 @@ Item {
     id: proc
     command: ["omarchy-disk-speedtest"]
     stdout: SplitParser { onRead: function(line) { root.updateLine(line) } }
-    // Exit and stream-finished have no guaranteed order: when a failed exit
-    // beat the collector and published the generic message, replace it with
-    // the specific one once it lands.
     stderr: StdioCollector {
       waitForEnd: true
       onStreamFinished: {

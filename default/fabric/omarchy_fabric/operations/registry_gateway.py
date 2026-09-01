@@ -10,7 +10,6 @@ from ..security.normalize import normalize_json
 from ..security.principal import EndpointPrincipal
 from .contracts import ProviderBinding, operation_error
 
-
 class OperationPreflightGateway(Protocol):
     async def preflight(
         self,
@@ -23,7 +22,6 @@ class OperationPreflightGateway(Protocol):
 
     def assert_current(self, binding: ProviderBinding) -> None:
         ...
-
 
 @dataclass(frozen=True)
 class RegistryOperationGateway:

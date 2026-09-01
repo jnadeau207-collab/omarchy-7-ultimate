@@ -15,7 +15,6 @@ _CAPABILITY_RE = re.compile(r"^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$")
 _STABLE_RE = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 _UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
-
 class RiskLevel(str, Enum):
     LOW = "low"
     CONSEQUENTIAL = "consequential"
@@ -25,12 +24,10 @@ class RiskLevel(str, Enum):
     def rank(self) -> int:
         return {self.LOW: 0, self.CONSEQUENTIAL: 1, self.HIGH: 2}[self]
 
-
 class DecisionKind(str, Enum):
     ALLOW = "allow"
     DENY = "deny"
     CONSENT_REQUIRED = "consent-required"
-
 
 @dataclass(frozen=True)
 class ResourceRef:
@@ -52,7 +49,6 @@ class ResourceRef:
 
     def as_dict(self) -> dict[str, str]:
         return {"kind": self.kind, "id": self.resource_id}
-
 
 @dataclass(frozen=True)
 class OperationRequest:
@@ -117,7 +113,6 @@ class OperationRequest:
             "arguments": dict(self.arguments),
             "taskId": self.task_id,
         }
-
 
 @dataclass(frozen=True)
 class PolicyDecision:

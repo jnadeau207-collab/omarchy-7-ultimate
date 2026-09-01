@@ -16,10 +16,8 @@ from .types import OperationRequest
 _UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 _DEFAULT_MAX_RECORDS = 1024
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 def _is_aware(value: object) -> bool:
     if not isinstance(value, datetime) or value.tzinfo is None:
@@ -28,7 +26,6 @@ def _is_aware(value: object) -> bool:
         return value.utcoffset() is not None
     except (TypeError, ValueError, OverflowError):
         return False
-
 
 @dataclass(frozen=True)
 class ApprovalRecord:
@@ -50,14 +47,12 @@ class ApprovalRecord:
     expires_at: datetime
     consumed_at: datetime | None = None
 
-
 @dataclass(frozen=True)
 class ApprovalCheck:
     valid: bool
     code: str
     explanation: str
     approval_id: str | None = None
-
 
 class ApprovalAuthority:
     """Keeps approval records in the authority, never as caller-owned claims."""

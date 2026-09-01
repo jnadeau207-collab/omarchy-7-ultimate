@@ -27,7 +27,6 @@ from sandbox.builder import (
 from sandbox.runner import INSPECT_CAPABILITY, packaged_runner_source, run_representative_inspect
 from sandbox.profiles import DEFAULT_EXPOSURE, ProfileValidationError, default_profile, validate_profile_document
 
-
 class SandboxTests(unittest.TestCase):
     def runner(self, task_id: str = "task.one") -> tuple[str, ...]:
         return (FIXED_AGENT_RUNNER, "--task-id", task_id, "--manifest-fd", "3")
@@ -310,7 +309,6 @@ class SandboxTests(unittest.TestCase):
                         ),
                         protected_home=home,
                     )
-
 
 if __name__ == "__main__":
     unittest.main()

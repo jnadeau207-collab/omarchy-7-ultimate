@@ -20,11 +20,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# The same seam the setup and migration suites use: the removal deletes an
-# absolute path no unprivileged suite can own, and an environment override in
-# the shipped command would hand a privileged rm -rf an operand the caller
-# chooses. Retarget a copy instead, and fail if the path is not named exactly
-# once so this seam cannot quietly stop standing for the command it copies.
 occurrences=$(grep -Fxc 'authdir=/etc/fido2' "$remove") || occurrences=0
 (( occurrences == 1 )) ||
   fail "the removal names its FIDO2 directory exactly once" "found $occurrences occurrences"
@@ -84,7 +79,6 @@ invoke_remove() {
     bash "$remove_copy" </dev/null >/dev/null
 }
 
-# The ordinary case: a real directory holding a registration.
 rm -rf "$authdir"
 mkdir -p "$authdir"
 printf 'tester:credential-handle,public-key,es256,+presence\n' >"$authdir/fido2"
@@ -94,8 +88,6 @@ grep -Fxq $'sudo\trm\t-rf\t'"$authdir" "$calls" ||
 [[ ! -e $authdir ]] || fail "the FIDO2 directory is gone"
 pass "removal deletes a real FIDO2 directory"
 
-# -d is false for a dangling link, so the guard it replaced left one sitting
-# there for the next setup to install an authfile through.
 rm -rf "$authdir"
 ln -s "$test_tmp/missing" "$authdir"
 invoke_remove
@@ -105,7 +97,6 @@ grep -Fxq $'sudo\trm\t-rf\t'"$authdir" "$calls" ||
   fail "the dangling symlink is gone"
 pass "removal deletes a dangling symlink where -d would have skipped it"
 
-# rm -rf on a symlink unlinks the link. Whatever it pointed at is not ours.
 rm -rf "$authdir"
 rm -rf "$elsewhere"
 mkdir -p "$elsewhere"
@@ -118,7 +109,6 @@ invoke_remove
   fail "removal takes the symlink, never the directory it points at"
 pass "removal takes a symlink itself and leaves its target intact"
 
-# Nothing there at all: no escalation, so removing FIDO2 twice costs no prompt.
 rm -rf "$authdir"
 invoke_remove
 ! grep -Fq $'sudo\trm\t' "$calls" ||

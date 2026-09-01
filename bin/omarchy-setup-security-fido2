@@ -6,7 +6,6 @@
 set -e
 set -o pipefail
 
-
 check_fido2_hardware() {
   tokens=$(fido2-token -L 2>/dev/null)
   if [[ -z $tokens ]]; then
@@ -17,13 +16,11 @@ check_fido2_hardware() {
 }
 
 setup_pam_config() {
-  # Configure sudo
   if ! grep -q pam_u2f.so /etc/pam.d/sudo; then
     echo "Configuring sudo for FIDO2 authentication..."
     sudo sed -i '1i auth    sufficient pam_u2f.so cue authfile=/etc/fido2/fido2' /etc/pam.d/sudo
   fi
 
-  # Configure polkit
   if [[ -f /etc/pam.d/polkit-1 ]] && ! grep -q 'pam_u2f.so' /etc/pam.d/polkit-1; then
     echo "Configuring polkit for FIDO2 authentication..."
     sudo sed -i '1i auth      sufficient pam_u2f.so cue authfile=/etc/fido2/fido2' /etc/pam.d/polkit-1
@@ -42,7 +39,6 @@ EOF
 
 echo -e "\e[32mSetting up FIDO2 device for authentication.\n\e[0m"
 
-# Install required packages
 echo "Installing required packages..."
 omarchy-pkg-add libfido2 pam-u2f
 
@@ -50,24 +46,15 @@ if ! check_fido2_hardware; then
   exit 1
 fi
 
-# Create the pamu2fcfg file
 authdir=/etc/fido2
 authfile=/etc/fido2/fido2
 
-# install -d follows a symlink here and applies the mode and ownership to
-# whatever it points at, so the credential would be staged and published inside
-# the link target and that directory reopened to root:root 755. This is the
-# threat omarchy-remove-security-fido2 already names on its side.
 if [[ -L $authdir || ( -e $authdir && ! -d $authdir ) ]]; then
   echo -e "\e[31m\n$authdir is not a FIDO2 configuration directory.\e[0m"
   echo "Run omarchy-remove-security-fido2 first, then set FIDO2 up again."
   exit 1
 fi
 
-# -f follows symlinks, so the already-registered check below reads a symlinked
-# authfile as a registration and leaves it in place, and is false for a
-# directory, so it tries to register over one. Only a regular file is a valid
-# pam_u2f authfile.
 if [[ -L $authfile || ( -e $authfile && ! -f $authfile ) ]]; then
   echo -e "\e[31m\n$authfile is not a FIDO2 registration file.\e[0m"
   echo "Run omarchy-remove-security-fido2 first, then set FIDO2 up again."
@@ -79,18 +66,8 @@ if [[ ! -f $authfile ]]; then
   echo -e "\e[32m\nLet's setup your device by confirming on the device now.\e[0m"
   echo -e "Touch your FIDO2 key when it lights up...\n"
 
-  # A unique sibling created by root cannot be replaced by another process
-  # running as this user. Stream pamu2fcfg into it instead of asking root to
-  # reopen a caller-owned path: an observed temporary name could otherwise be
-  # replaced with a symlink before the privileged copy. The final rename is
-  # atomic, and -T refuses a directory at the destination. Mode 644 keeps the
-  # root-owned global authfile readable when pam_u2f uses openasuser; only root
-  # can still rewrite it.
   stage=""
 
-  # mktemp's output is an operand for four privileged commands below, one of
-  # them an rm. Take only the name this script asked for rather than whatever
-  # came back on stdout.
   safe_stage_path() {
     local candidate=$1
     local prefix="$authfile.new."
@@ -133,10 +110,8 @@ else
   echo "FIDO2 device already registered."
 fi
 
-# Configure PAM
 setup_pam_config
 
-# Test with sudo
 echo -e "\nTesting FIDO2 authentication with sudo..."
 echo -e "Touch your FIDO2 key when prompted.\n"
 

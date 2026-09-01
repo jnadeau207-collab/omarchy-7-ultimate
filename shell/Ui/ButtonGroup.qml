@@ -1,25 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Mutually-exclusive row of Buttons — the form-style "pick one of N"
-// pattern (bar position top/right/bottom/left, theme preset chips, etc.).
-// Emits `changed(value)` when the user activates a different option.
-//
-// `options` is either a plain string[] (label == value) or an array of
-// { value, label, icon?, tooltip? } objects. Mixing is fine.
-//
-// Keyboard navigation. The group itself is a single Tab stop, not one
-// stop per chip — so in a form that walks `activeFocusOnTab` items with
-// Tab / j / k, the cursor enters the group as a unit. Once focused,
-// h / l / Left / Right walks between chips and Enter / Space activates
-// the current one. The selected chip is the default landing point so
-// users see their existing choice on arrival.
-//
-// Panel-cursor consumers (the bar widget panels) drive `cursorIndex`
-// directly and listen on `hovered` to sync the mouse — Tab focus and
-// `cursorIndex` are independent; either one paints the chip's hot
-// state, and the bar widget panels never give Tab focus to a
-// ButtonGroup so they only see the cursorIndex path.
 Row {
   id: root
 
@@ -32,14 +13,8 @@ Row {
   property real fontSize: Style.font.body
   property bool focusable: true
 
-  // -1 disables the external cursor highlight (the panel-cursor case).
-  // Driven by a containing panel; the group's own Tab-focus h/l
-  // tracking is internal and lives in _focusedIndex.
   property int cursorIndex: -1
 
-  // Internal: which chip h / l / Left / Right is currently sitting on
-  // when the group itself has Tab focus. Reset to the selected option
-  // each time focus arrives so the user sees their existing choice.
   property int _focusedIndex: -1
 
   signal changed(string value)
@@ -112,13 +87,8 @@ Row {
       iconText: root.optionIcon(modelData)
       tooltipText: root.optionTooltip(modelData)
       selected: root.optionValue(modelData) === root.value
-      // Chip lights up when either the external panel cursor lands here
-      // or the group has Tab focus and h/l has walked to this index.
       hasCursor: root.cursorIndex === index
         || (root.activeFocus && root._focusedIndex === index)
-      // Every chip carries the standard bordered-button chrome so the
-      // group reads as a row of distinct options. selected / hover-cursor /
-      // focus are all painted by Button from Style's shared state tokens.
       bordered: true
       foreground: root.foreground
       background: root.background

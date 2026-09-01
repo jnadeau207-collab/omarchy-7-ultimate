@@ -18,10 +18,8 @@ from .engine import CompatibilityEngine, FakeCompatibilityAdapter
 from .recipes import RecipeCatalog
 from .router import ROUTE_ORDER
 
-
 MAX_POLICY_BYTES = 128 * 1024
 PLAN_ONLY_DETAIL = "The code-owned Compatibility Center recipes are contract seeds; reads and preflights are available, but live compatibility deployment is not admitted."
-
 
 class CompatibilityProvider:
     def __init__(
@@ -121,14 +119,11 @@ class CompatibilityProvider:
                 recovery_actions=("compatibility.release-recipes.install",),
             )
 
-
 def _default_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
-
 def _reject_json_constant(value: str) -> None:
     raise ValueError(f"non-finite JSON constant: {value}")
-
 
 def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     document: dict[str, Any] = {}
@@ -137,7 +132,6 @@ def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
             raise ValueError("duplicate JSON object key")
         document[key] = value
     return document
-
 
 def _load_routing_policy(path: Path, schema_path: Path) -> Mapping[str, Any]:
     try:
@@ -189,7 +183,6 @@ def _load_routing_policy(path: Path, schema_path: Path) -> Mapping[str, Any]:
         )
     return deepcopy(document)
 
-
 def build_provider() -> CompatibilityProvider:
     """Build the code-owned, contract-seed production provider without a live adapter."""
 
@@ -215,7 +208,6 @@ def build_provider() -> CompatibilityProvider:
         plan_only=True,
         availability=ProviderAvailability("degraded", PLAN_ONLY_DETAIL),
     )
-
 
 def build_fake_provider(recipe_document: Mapping[str, Any], *, deployments: list[Mapping[str, Any]] | None = None, state_path: Path | None = None, adapter: FakeCompatibilityAdapter | None = None) -> CompatibilityProvider:
     recipes = RecipeCatalog(recipe_document)

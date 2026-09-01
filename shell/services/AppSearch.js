@@ -118,8 +118,6 @@ function recentEntries(ids, values, limit, excludeIds) {
   return out
 }
 
-// Closed Start search destinations: existing Settings pages and Start places.
-// Not file-content search. Accessibility is not invented here.
 var START_DESTINATIONS = [
   {
     id: "omarchy.start.display",

@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-
 @dataclass
 class ManagedWorkError(Exception):
     """An error safe to project into a future typed Fabric response."""

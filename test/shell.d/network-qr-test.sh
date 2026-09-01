@@ -49,9 +49,6 @@ run_success_case() {
     meta=$(head -n1 <<<"$output")
     matrix=$(tail -n +2 <<<"$output")
 
-    # The meta line leads with the shared interface, security, and SSID. With
-    # no interface argument the helper detects one from the live host, so that
-    # field is only pinned when the case pinned it.
     expected_security=${expected_payload#WIFI:T:}
     expected_security=${expected_security%%;*}
     expected_ssid=$(head -n1 <<<"$fields")
@@ -73,15 +70,12 @@ run_success_case \
   'WIFI:T:WPA;S:Cafe\;Guest\\5G;P:p\,a\:ss\;word\\42;;' \
   --meta wlan0
 
-# Without --meta the output stays a bare matrix, which pre-plugin clones of
-# the network widget still parse.
 run_success_case \
   "network QR helper keeps the bare matrix without --meta" \
   $'Cafe;Guest\\5G\nwpa-psk\np,a:ss;word\\42\nno\n' \
   'WIFI:T:WPA;S:Cafe\;Guest\\5G;P:p\,a\:ss\;word\\42;;' \
   wlan0
 
-# With no interface argument the helper finds the connected Wi-Fi device.
 run_success_case \
   "network QR helper detects the Wi-Fi interface" \
   $'Cafe Detected\nwpa-psk\nsecret\nno\n' \
@@ -100,8 +94,6 @@ run_success_case \
   'WIFI:T:WPA;S:Hidden Network;P:secret;H:true;;' \
   --meta wlan0
 
-# NetworkManager models WEP as key-mgmt "none" plus a wep-key, which must not
-# be mistaken for an open network.
 run_success_case \
   "network QR helper encodes WEP networks" \
   $'Old Router\nnone\n\nno\nwep-secret\n' \

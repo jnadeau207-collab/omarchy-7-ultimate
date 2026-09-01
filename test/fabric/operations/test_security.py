@@ -20,7 +20,6 @@ from omarchy_fabric.operations.executor import (
 from omarchy_fabric.operations.registry_gateway import RegistryOperationGateway
 from omarchy_fabric.security.principal import EndpointPrincipal
 
-
 class OperationSecurityTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.harness = Harness()
@@ -361,7 +360,6 @@ class OperationSecurityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(caught.exception.code, "executor.production-unavailable")
         self.assertIsNone(self.harness.approvals.get(approval.approval_id).consumed_at)
         self.assertEqual(self.harness.store.get(operation_id).status.value, "awaiting-approval")
-
 
 if __name__ == "__main__":
     unittest.main()

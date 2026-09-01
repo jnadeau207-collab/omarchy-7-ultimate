@@ -64,7 +64,6 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def _trusted_text(value: object, maximum: int) -> str:
     if not isinstance(value, str):
         raise ValueError("udev text field is invalid")
@@ -72,7 +71,6 @@ def _trusted_text(value: object, maximum: int) -> str:
     if not cleaned or len(cleaned) > maximum:
         raise ValueError("udev text field is empty or exceeds its bound")
     return cleaned
-
 
 def parse_devices(text: str) -> list[dict[str, Any]]:
     resources: list[dict[str, Any]] = []
@@ -147,20 +145,16 @@ def parse_devices(text: str) -> list[dict[str, Any]]:
         resource["inventoryTruncated"] = observed_count > len(resources)
     return resources
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     return parse_devices((await invoke_probe(DEVICE_COMMAND, runner)).stdout)
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "authorized": arguments["authorized"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if not current["online"]:
         raise ValueError("device is offline")
     return {**dict(current), "pendingAuthorization": arguments["authorized"]}
-
 
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "device", OPERATION_ACTION, "device.authorization.plan", "consequential", ("mutating", "privileged")),
@@ -173,10 +167,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan device authorization={str(arguments['authorized']).lower()}; this provider does not change hardware state.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

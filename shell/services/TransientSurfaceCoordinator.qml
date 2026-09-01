@@ -1,8 +1,5 @@
 import QtQuick
 
-// One active Desktop Mode flyout. Start, Settings, Run, and later Superbar
-// popouts share this so opening one closes another. Dismiss does not own
-// pointer input — that would swallow the click Windows delivers underneath.
 QtObject {
   id: coordinator
 

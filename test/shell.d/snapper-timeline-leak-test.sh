@@ -54,8 +54,6 @@ last_batch=$(grep '^snapper -c root delete ' "$test_tmp/calls.log" | tail -n 1)
 ! grep -E '^snapper -c root delete .*\b(100|101)\b' "$test_tmp/calls.log" || fail "leak migration only deletes timeline snapshots"
 pass "leak migration removes leaked timeline snapshots in batches and keeps the rest"
 
-# omarchy-migrate runs under set -e, so a batch that dies on a DBus timeout
-# would otherwise abort the run and skip every migration queued behind it.
 : >"$test_tmp/calls.log"
 printf '%s\n' 'TIMELINE_CREATE="no"' 'NUMBER_CLEANUP="yes"' >"$snapper_config"
 
@@ -82,8 +80,6 @@ output=$(TEST_LOG="$test_tmp/calls.log" \
 deletes=$(grep -c '^snapper -c root delete ' "$test_tmp/calls.log" || true)
 [[ $deletes -eq 3 ]] || fail "leak migration keeps draining after a failed batch" "expected 3 delete calls, got $deletes"
 
-# omarchy-migrate writes the completion marker even when the drain gave up, so
-# what is left has to be said out loud rather than left for a rerun.
 grep -qF '45 snapshots could not be deleted' <<<"$output" || fail "leak migration reports the snapshots it could not delete" "$output"
 pass "leak migration tolerates a batch that fails partway"
 
@@ -108,8 +104,6 @@ OMARCHY_SNAPPER_CONFIG_PATH="$test_tmp/missing" \
 [[ ! -s $test_tmp/calls.log ]] || fail "leak migration skips systems without a Snapper root config"
 pass "leak migration is a no-op without Snapper configured"
 
-# Snapper's create-config writes a root-only config, and a config this user
-# cannot read says nothing about whether timeline snapshots are wanted.
 : >"$test_tmp/calls.log"
 printf '%s\n' 'TIMELINE_CREATE="no"' >"$snapper_config"
 chmod 000 "$snapper_config"

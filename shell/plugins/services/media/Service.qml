@@ -430,10 +430,6 @@ Item {
     return handled
   }
 
-  // Recompute play-order reactively instead of polling every 500ms.
-  // syncPlayingOrder only depends on the set of players and each player's
-  // isPlaying state: onPlayersChanged covers players appearing/disappearing,
-  // and the Instantiator wires isPlayingChanged for each live player.
   Component.onCompleted: root.syncPlayingOrder()
   onPlayersChanged: root.syncPlayingOrder()
 

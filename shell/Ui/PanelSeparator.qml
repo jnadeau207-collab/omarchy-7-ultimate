@@ -1,9 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// 1px horizontal divider for panel sections. The alpha-on-foreground tint
-// keeps the rule legible against the panel background without competing
-// with text or borders.
 Rectangle {
   id: root
 

@@ -4,8 +4,6 @@ import Quickshell
 import Quickshell.Io
 import qs.Commons
 
-// Hosts the existing image picker twice: theme packs and wallpapers.
-// This is Settings chrome over omarchy.image-picker, not a second Settings app.
 Item {
   id: root
 

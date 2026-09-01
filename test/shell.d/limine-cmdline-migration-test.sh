@@ -48,11 +48,8 @@ rebuild_marker="$test_tmp/rebuild-complete"
 
 cp "$packaged_defaults" "$defaults_conf"
 
-# A boot image baked before quattro's defaults landed: the pre-quattro command
-# line plus the machine's own root parameters, and none of the new ones.
 stale_cmdline='quiet splash cryptdevice=PARTUUID=fake:root root=/dev/mapper/root rw'
 
-# Everything the packaged defaults ask for, as a rebuilt image would carry it.
 configured=$(sed -n 's/^KERNEL_CMDLINE\[default\]+="\(.*\)"[[:space:]]*$/\1/p' "$defaults_conf" | tr '\n' ' ')
 current_cmdline="cryptdevice=PARTUUID=fake:root root=/dev/mapper/root rw $configured"
 

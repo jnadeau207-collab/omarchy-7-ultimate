@@ -11,7 +11,6 @@ from omarchy_fabric.providers.compatibility.engine import CompatibilityEngine, F
 
 from helper import arguments, host, principal, provider, recipes, request, reviewed_request
 
-
 class CompatibilityLifecycleTests(unittest.IsolatedAsyncioTestCase):
     def workload(self):
         return reviewed_request()
@@ -143,7 +142,6 @@ class CompatibilityLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(plan["adapter"]["adapterId"], "compatibility.recipe")
         removed = await value.apply("remove", remove_args, plan["deploymentRevision"])
         self.assertEqual(removed["status"], "succeeded")
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -28,7 +28,6 @@ grep -Fq 'QUntypedPropertyBindingC1EP23QPropertyBindingPrivate@@Qt_6' "$qt_align
 grep -Fq '[[ $(nm -D /usr/lib/libQt6Core.so.6) ==' "$qt_align" \
   || fail "companion must not use nm|grep -q under migrate pipefail"
 
-# Later stamp so it cannot run before the swap it is repairing.
 qs_stamp=${qs_swap##*/}
 qs_stamp=${qs_stamp%.sh}
 qt_stamp=${qt_align##*/}

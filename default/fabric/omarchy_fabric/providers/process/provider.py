@@ -66,17 +66,14 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def _token(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
-
 
 def _safe_text(value: str, *, maximum: int) -> str:
     cleaned = "".join(character for character in value if character.isprintable() and character not in "\r\n\x00").strip()
     if not cleaned:
         raise ValueError("process text is empty")
     return cleaned[:maximum]
-
 
 def _process_rows(text: str) -> list[tuple[int, int, str, str]]:
     rows: list[tuple[int, int, str, str]] = []
@@ -95,7 +92,6 @@ def _process_rows(text: str) -> list[tuple[int, int, str, str]]:
         rows.append((pid, uid, _safe_text(command, maximum=128), _safe_text(cgroup, maximum=512)))
     return rows
 
-
 def _selected_rows(rows: list[tuple[int, int, str, str]]) -> list[tuple[int, int, str, str]]:
     users = sorted((row for row in rows if row[1] >= 1000), key=lambda row: (row[1], row[0]))
     system = sorted((row for row in rows if row[1] < 1000), key=lambda row: row[0])
@@ -103,7 +99,6 @@ def _selected_rows(rows: list[tuple[int, int, str, str]]) -> list[tuple[int, int
     selected_ids = {row[0] for row in selected}
     remaining = sorted((row for row in rows if row[0] not in selected_ids), key=lambda row: (row[1] < 1000, row[1], row[0]))
     return (selected + remaining)[:64]
-
 
 def parse_processes(text: str, *, boot_id: str, start_ticks_by_pid: Mapping[int, int]) -> list[dict[str, Any]]:
     if re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", boot_id) is None:
@@ -140,7 +135,6 @@ def parse_processes(text: str, *, boot_id: str, start_ticks_by_pid: Mapping[int,
         )
     return resources
 
-
 def group_processes(resources: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
     grouped: dict[str, list[str]] = {}
     for resource in resources:
@@ -150,18 +144,15 @@ def group_processes(resources: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
         for group_id, members in sorted(grouped.items())
     ]
 
-
 def assert_pid_identity(resource: Mapping[str, Any], expected_start_token: str) -> None:
     if resource.get("state", {}).get("startToken") != expected_start_token:
         raise ValueError("process PID has been reused")
-
 
 def _read_proc_text(path: Path, maximum_bytes: int) -> str:
     raw = path.read_bytes()
     if len(raw) > maximum_bytes:
         raise ValueError("proc identity record exceeds its bound")
     return raw.decode("utf-8", errors="strict").strip()
-
 
 def _start_ticks(stat: str) -> int:
     close = stat.rfind(") ")
@@ -172,7 +163,6 @@ def _start_ticks(stat: str) -> int:
         raise ValueError("proc start ticks are invalid")
     return int(fields[19])
 
-
 def _stat_identity(value: str) -> tuple[str, int]:
     opening = value.find("(")
     closing = value.rfind(") ")
@@ -180,7 +170,6 @@ def _stat_identity(value: str) -> tuple[str, int]:
         raise ValueError("proc stat identity is invalid")
     command = _safe_text(value[opening + 1 : closing], maximum=128)
     return command, _start_ticks(value)
-
 
 def _status_identity(value: str) -> tuple[str, int]:
     fields: dict[str, str] = {}
@@ -198,7 +187,6 @@ def _status_identity(value: str) -> tuple[str, int]:
     if len(set(uid_fields)) != 1:
         raise ValueError("proc status reports changing credentials")
     return _safe_text(fields["Name"], maximum=128), int(uid_fields[0])
-
 
 async def _probe_resources(runner: ProbeRunner, proc_reader: ProcReader) -> list[Mapping[str, Any]]:
     output = (await invoke_probe(PROCESS_COMMAND, runner)).stdout
@@ -236,14 +224,12 @@ async def _probe_resources(runner: ProbeRunner, proc_reader: ProcReader) -> list
         resource["inventoryTruncated"] = len(observed_rows) > len(resources)
     return resources
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "resourceId": arguments["resourceId"],
         "expectedStartToken": arguments["expectedStartToken"],
         "signal": arguments["signal"],
     }
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if current["startToken"] != arguments["expectedStartToken"]:
@@ -257,12 +243,10 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         "plannedSignal": arguments["signal"],
     }
 
-
 def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any]) -> str:
     if current == proposed:
         return "The exact process identity already has this termination plan."
     return f"Plan {arguments['signal']} for the exact PID and start identity; no signal is sent by this provider."
-
 
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "process", OPERATION_ACTION, "process.termination.plan", "consequential", ("mutating",)),
@@ -275,10 +259,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=_describe,
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe, proc_reader: ProcReader = _read_proc_text) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner, proc_reader)))
-
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

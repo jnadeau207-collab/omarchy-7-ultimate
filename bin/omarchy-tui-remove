@@ -10,7 +10,6 @@ OLD_ICON_DIR="$HOME/.local/share/applications/icons"
 DESKTOP_DIR="$HOME/.local/share/applications/"
 
 if (( $# == 0 )); then
-  # Find all TUIs
   while IFS= read -r -d '' file; do
     if grep -qE '^Exec=.*(\$TERMINAL|xdg-terminal-exec).*-e' "$file"; then
       TUIS+=("$(basename "${file%.desktop}")")

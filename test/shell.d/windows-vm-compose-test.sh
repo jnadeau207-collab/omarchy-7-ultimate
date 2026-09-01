@@ -1,11 +1,8 @@
 #!/bin/bash
-# Security regression coverage for the Windows VM compose/mount boundary.
 
 set -euo pipefail
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-# Bind mounts need CAP_SYS_ADMIN in a private mount namespace. Keep the
-# caller's uid so the non-root development path is exercised.
 if [[ ${OMARCHY_WINDOWS_TEST_NAMESPACE:-0} != 1 ]]; then
   if unshare --user --map-current-user --keep-caps --mount true 2>/dev/null; then
     exec env OMARCHY_WINDOWS_TEST_NAMESPACE=1 \
@@ -39,7 +36,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-write() { # RAM CORES DISK USER PASS TZ
+write() {
   printf 'RAM=%s\nCORES=%s\nDISK=%s\nUSERNAME=%s\nPASSWORD=%s\nTZ=%s\n' \
     "$@" | __priv_write_compose
 }
@@ -52,7 +49,6 @@ reset_case() {
   mkdir -p "$HOME"
 }
 
-# Fixed protected anchors consume the pinned source inodes.
 prepare_user_mount_sources
 write 4G 2 64G alice s3cret Europe/Copenhagen
 resolve_caller
@@ -69,7 +65,6 @@ grep -q 'PROTECT: "Y"' "$COMPOSE" || fail "web console is not password protected
 grep -q -- '- /:/' "$COMPOSE" && fail "compose contains host-root bind"
 pass "writer emits fixed anchors bound to exact private source inodes"
 
-# Input cannot widen a mount or compose field.
 rm -f "$COMPOSE"
 write 4G 2 64G 'x -v /:/h' p UTC 2>/dev/null && fail "malicious username accepted"
 [[ ! -f $COMPOSE ]] || fail "bad input wrote compose"
@@ -93,8 +88,6 @@ for action in '/../evil/x' bogus 'up;rm' '' '__priv_up'; do
 done
 pass "privileged action dispatch is allowlisted"
 
-# A PATH symlink to bash must never become the pkexec target. Hide the packaged
-# file from priv_target's stat checks to exercise the historical fallback.
 attack_bin="$TMPDIR/attack-bin"
 mkdir -p "$attack_bin"
 ln -s /bin/bash "$attack_bin/omarchy-windows-vm"
@@ -108,7 +101,6 @@ unset -f stat
 [[ ! -e $TMPDIR/exploited ]] || fail "attacker __priv script executed"
 pass "pkexec target is only the canonical packaged regular file, never a PATH symlink"
 
-# Legacy migration keeps directories and legitimate symlinks in place.
 reset_case
 external_shared="$TMPDIR/external-shared"
 mkdir -m 0755 -p "$HOME/.windows" "$external_shared" "$HOME/.config/windows"
@@ -143,7 +135,6 @@ grep -q -- '- /etc:/shared' "$COMPOSE" && fail "migration copied malicious share
 [[ ! -f $LEGACY_COMPOSE_FILE ]] || fail "migration left legacy compose"
 pass "migration preserves data and symlinks while hardening permissions"
 
-# Bring-up re-proves compose trust, cardinality, and mounted identities.
 assert_mounts_safe || fail "verified sources rejected"
 sed -i "s|$EXPECTED_SHARED:/shared|/etc:/shared|" "$COMPOSE"
 assert_mounts_safe 2>/dev/null && fail "tampered host path accepted"
@@ -162,7 +153,6 @@ assert_mounts_safe 2>/dev/null && fail "writable compose accepted"
 chmod 0640 "$COMPOSE"
 pass "bring-up rejects tampered, duplicate, unprotected, and writable compose inputs"
 
-# Both sources are pinned before a bind; bad symlinks stay untouched.
 reset_case
 mkdir -p "$HOME/.windows"
 ln -s / "$HOME/Windows"
@@ -176,7 +166,6 @@ resolve_caller
 find "$CALLER_DATA_ROOT" -name 'rejected-*' -print -quit | grep -q . && fail "source was quarantined"
 pass "invalid second source leaves paths and anchors untouched and leaks no FD"
 
-# Distinct caller-owned symlink targets are supported and remain links.
 reset_case
 external_storage="$TMPDIR/external-storage"
 external_shared2="$TMPDIR/external-shared-2"
@@ -190,10 +179,6 @@ resolve_caller
 [[ $(stat -Lc '%d:%i' "$EXPECTED_STORAGE") == $(stat -Lc '%d:%i' "$external_storage") ]] || fail "symlink target not pinned"
 pass "legitimate caller-owned symlinks remain in place"
 
-# Reproduce the original post-validation race at the last possible moment:
-# replace the familiar shared path with / only after the final guard returns,
-# inside the mocked Docker Compose invocation. Compose must still consume the
-# protected anchor bound to the inode that was validated earlier.
 raced_shared="$HOME/Windows.before-race"
 shared_id_before_race=$(stat -Lc '%d:%i' "$external_shared2")
 race_ran=0
@@ -213,10 +198,6 @@ mv -T -- "$raced_shared" "$HOME/Windows"
 unset -f dc
 pass "a post-validation path swap cannot redirect Docker away from the pinned shared inode"
 
-# Run the same attack as a genuinely concurrent process. A successful bring-up
-# deliberately waits inside the Docker boundary until the attacker has replaced
-# the familiar path with /, then verifies that the real bind anchor still names
-# the caller-owned directory that was pinned before the race.
 reset_case
 prepare_user_mount_sources
 touch "$HOME/Windows/safe-marker"
@@ -272,7 +253,6 @@ if [[ ! -e $HOME/Windows && -d $race_source ]]; then mv -T -- "$race_source" "$H
 [[ $(stat -Lc '%d:%i' "$EXPECTED_SHARED") == "$concurrent_shared_id" ]] || fail "concurrent race changed the protected shared inode"
 pass "a concurrent home-path swap cannot redirect Docker away from the pinned shared inode"
 
-# Same-inode sources fail before mounting and close both descriptors.
 reset_case
 same="$TMPDIR/same-source"
 mkdir -p "$same"
@@ -286,8 +266,6 @@ resolve_caller
 [[ $(fd_count) == "$before_fds" ]] || fail "same source leaked FDs"
 pass "storage and shared must differ and failure closes FDs"
 
-# Ancestor/descendant aliases are just as destructive as same-inode aliases:
-# removal must never recurse from storage into shared (or accept the inverse).
 reset_case
 shared_inside="$TMPDIR/shared-inside-storage"
 mkdir -p "$shared_inside/storage/shared"
@@ -313,8 +291,6 @@ resolve_caller
 [[ $(fd_count) == "$before_fds" ]] || fail "storage-inside-shared failure leaked FDs"
 pass "pinned-FD ancestry checks reject overlap in both directions before mounting"
 
-# Exact bind-alias bypass regression: the shared FD's visible parent is the
-# alias directory, but its inode is still reachable below storage.
 reset_case
 alias_under="$TMPDIR/bind-alias-under"
 alias_shared="$TMPDIR/bind-alias-shared"
@@ -347,7 +323,6 @@ unmount_all
 umount -- "$alias_shared"
 pass "cheap startup permits a bind alias, but bounded removal discovery refuses it"
 
-# A late writer failure rolls back both newly-created binds.
 reset_case
 prepare_user_mount_sources
 mv() { return 1; }
@@ -358,8 +333,6 @@ resolve_caller
 [[ ! -f $COMPOSE ]] || fail "writer failure replaced compose"
 pass "atomic writer failure rolls back both new bind mounts"
 
-# Revalidate ancestry during removal: move the already-bound shared inode below
-# storage, keep its familiar path as a symlink, and prove nothing is deleted.
 reset_case
 prepare_user_mount_sources
 write 4G 2 64G moved pw UTC
@@ -372,8 +345,6 @@ __priv_remove 2>/dev/null && fail "removal accepted a shared inode moved below s
 [[ -f $HOME/.windows/disk.img && -f $HOME/.windows/moved-shared/keep.txt && -f $COMPOSE ]] || fail "overlap rejection changed disk, shared data, or compose"
 pass "removal revalidates pinned ancestry and leaves moved shared data untouched"
 
-# Even when both familiar paths remain disjoint, a same-filesystem bind of the
-# pinned shared inode introduced below storage must stop removal before change.
 reset_case
 prepare_user_mount_sources
 write 4G 2 64G removal-alias pw UTC
@@ -385,9 +356,6 @@ __priv_remove 2>/dev/null && fail "removal missed a shared bind alias introduced
 umount -- "$HOME/.windows/shared-bind-alias"
 pass "removal tree discovery catches a shared alias not used by either home path"
 
-# A direct alias on another filesystem is still visited by find -xdev at its
-# mountpoint and must be rejected, while unrelated separate filesystems remain
-# supported by the root suite.
 reset_case
 prepare_user_mount_sources
 mount -t tmpfs -o uid="$(id -u)",gid="$(id -g)",mode=0700,size=8m crossdev-shared "$HOME/Windows"
@@ -403,9 +371,6 @@ unmount_all
 umount -- "$HOME/Windows"
 pass "removal catches a direct different-filesystem shared alias at the xdev boundary"
 
-# Recursive alias discovery is destructive-removal-only and bounded. A hung or
-# failing scanner must fail closed before the disk, share, compose, or mounts
-# are changed.
 reset_case
 prepare_user_mount_sources
 write 4G 2 64G scan-failure pw UTC
@@ -432,7 +397,6 @@ TREE_SCAN_TIMEOUT_SECONDS=$saved_tree_scan_timeout
 TREE_SCAN_KILL_AFTER_SECONDS=$saved_tree_scan_kill_after
 pass "removal scan timeout and errors fail closed without changing VM state"
 
-# Removal rejects stacks, then deletes disk only through verified binds.
 reset_case
 prepare_user_mount_sources
 write 4G 2 64G remove pw UTC
@@ -456,8 +420,6 @@ resolve_caller
 [[ $(mount_layer_count "$EXPECTED_STORAGE") == 0 && $(mount_layer_count "$EXPECTED_SHARED") == 0 ]] || fail "removal left binds"
 pass "removal rejects stacks, deletes disk, and preserves shared files"
 
-# Credentials replace a planted link rather than following it, and a failed
-# atomic rename preserves the last complete private file.
 credentials_dir="$TMPDIR/credentials"
 CREDENTIALS_FILE="$credentials_dir/credentials"
 credentials_victim="$TMPDIR/credentials-victim"
@@ -477,7 +439,6 @@ unset -f mv
 ! find "$credentials_dir" -name '.credentials.*' -print -quit | grep -q . || fail "failed credentials write left a temporary file"
 pass "credentials are atomically replaced as a private regular file"
 
-# Free-space accounting follows the real storage target.
 reset_case
 mkdir -p "$external_storage" "$HOME/Windows"
 ln -s "$external_storage" "$HOME/.windows"

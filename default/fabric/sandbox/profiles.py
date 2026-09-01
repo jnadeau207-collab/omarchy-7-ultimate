@@ -23,10 +23,8 @@ DEFAULT_EXPOSURE = MappingProxyType(
     }
 )
 
-
 class ProfileValidationError(ValueError):
     pass
-
 
 def default_profile(task_id: str) -> dict[str, Any]:
     """Create the only ambient-authority profile: every exposure is off."""
@@ -40,7 +38,6 @@ def default_profile(task_id: str) -> dict[str, Any]:
         "network": {"mode": "none", "scopes": []},
     }
     return validate_profile_document(document)
-
 
 def validate_profile_document(document: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(document, Mapping):

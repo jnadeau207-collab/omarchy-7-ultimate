@@ -8,7 +8,6 @@ HOST_NAME="com.omarchy.ytdlp"
 HOST_PATH="$OMARCHY_PATH/bin/omarchy-chromium-ytdlp-host"
 TEMPLATE="$OMARCHY_PATH/default/chromium/native-messaging-hosts/$HOST_NAME.json"
 
-# Chromium-based browser profile roots that use the NativeMessagingHosts layout.
 browser_dirs=(
   "$HOME/.config/chromium"
   "$HOME/.config/google-chrome"

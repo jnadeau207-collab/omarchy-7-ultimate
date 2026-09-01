@@ -1,9 +1,6 @@
 import QtQuick
 import "SemanticMetrics.js" as Metrics
 
-// Presentation profile. Controls apply Tokens density and motion when this
-// is null; gallery and product surfaces pass one to override density, scale,
-// large text, motion, and RTL.
 QtObject {
   id: root
 
@@ -18,9 +15,6 @@ QtObject {
   property bool pseudoLocale: false
   property string locale: "en-US"
 
-  // Palette roles default to the resolved process-wide theme. Gallery fixture
-  // instances may override them to show dark/light and high-contrast cases in
-  // one process without replacing the active theme.
   property color surfaceCanvas: Tokens.surface.canvas
   property color surfaceBase: Tokens.surface.base
   property color surfaceRaised: Tokens.surface.raised

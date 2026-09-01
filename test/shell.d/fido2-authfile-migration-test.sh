@@ -14,9 +14,6 @@ calls="$test_tmp/calls.log"
 mkdir -p "$stub_bin"
 : >"$calls"
 
-# The suite runs unprivileged, so the ownership change itself cannot be applied.
-# Log every escalated command and run the rest for real, which is what leaves the
-# new inode, mode, and content for the assertions to inspect.
 cat >"$stub_bin/sudo" <<'SH'
 #!/bin/bash
 
@@ -62,8 +59,6 @@ run_migration() {
     bash -euo pipefail "$migration" >/dev/null
 }
 
-# A machine that never registered a key has nothing to repair, and must not
-# prompt for a password to establish that.
 rm -f "$authfile"
 : >"$calls"
 run_migration
@@ -71,12 +66,9 @@ run_migration
 [[ ! -s $calls ]] || fail "an install without a mapping is left alone" "$(cat "$calls")"
 pass "migration skips a machine with no FIDO2 mapping"
 
-# The mapping the old `sudo mv` left behind: owned by the user PAM authenticates.
 write_mapping() {
   printf 'user:credential:publickey\n' >"$authfile"
   chmod "$1" "$authfile"
-  # The migration's tell is "owner is not root". A suite running as root
-  # (CI sandboxes) would otherwise make every fixture look already repaired.
   if [[ $(stat -c '%u' "$authfile") == 0 ]]; then
     chown 65534 "$authfile" 2>/dev/null || true
   fi
@@ -99,19 +91,14 @@ pass "migration repairs a user-owned mapping"
   fail "the repaired mapping keeps its credential" "$(cat "$authfile")"
 pass "migration preserves the credential and normalizes the mode"
 
-# The point of staging a copy over chown: PAM's path must land on a new inode so
-# a descriptor opened on the old one can no longer append to what PAM reads.
 [[ $(stat -c '%i' "$authfile") != "$before_inode" ]] ||
   fail "the repair replaces the inode rather than chowning it in place"
 pass "migration replaces the inode, orphaning any open handle"
 
-# Nothing staged may survive the repair; a leftover copy in /etc/fido2 would sit
-# beside the authfile as a second mapping.
 (( $(find "$test_tmp" -maxdepth 1 -name '*fido2*' | wc -l) == 1 )) ||
   fail "the staged copy does not outlive the repair" "$(find "$test_tmp" -maxdepth 1 -name '*fido2*')"
 pass "migration leaves no staged copy behind"
 
-# A mode that hides the credential from other users is still the wrong owner.
 write_mapping 600
 : >"$calls"
 run_migration
@@ -120,10 +107,6 @@ grep -q $'^sudo\tinstall\t-o\troot\t-g\troot' "$calls" ||
   fail "a mode-600 user-owned mapping is still repaired" "$(cat "$calls")"
 pass "migration repairs a user-owned mapping whatever its mode"
 
-# The state a completed repair leaves behind, which is also the state every
-# machine that registered after the fix starts in: root-owned, no write bit
-# outside the owner. Running against it must do nothing at all, so a second user
-# on the machine -- and a second run for the same user -- is a silent no-op.
 settled=""
 for candidate in /etc/fstab /etc/hostname /etc/locale.gen; do
   [[ -f $candidate ]] || continue
@@ -145,11 +128,6 @@ else
 fi
 
 setup="$ROOT/bin/omarchy-setup-security-fido2"
-# The mapping must never be published by moving a caller-owned file: mv
-# preserves ownership, which would leave PAM trusting a user-writable path.
-# The stage is created by root (mktemp), filled by piping pamu2fcfg into it
-# (tee), made root-owned and PAM-readable (chmod 644), and published
-# atomically with -T so it can never replace a directory.
 grep -Fq 'pamu2fcfg | sudo tee' "$setup" ||
   fail "FIDO2 setup streams the mapping straight into the privileged stage"
 grep -Fq 'sudo chmod 644' "$setup" ||

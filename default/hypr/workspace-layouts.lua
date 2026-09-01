@@ -1,4 +1,3 @@
--- Restore workspace layouts saved by omarchy-hyprland-workspace-layout-toggle.
 
 local paths = require("default.hypr.paths")
 local require_all = require("default.hypr.require_all")

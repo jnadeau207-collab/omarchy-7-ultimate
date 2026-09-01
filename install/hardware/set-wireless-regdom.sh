@@ -1,5 +1,3 @@
-# Persist wireless regulatory domain based on the target timezone. Install is
-# followed by reboot, so don't mutate live Wi-Fi state with `iw reg set`.
 regdom_file=/etc/conf.d/wireless-regdom
 [[ -f $regdom_file ]] || exit 0
 

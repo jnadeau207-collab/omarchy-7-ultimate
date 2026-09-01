@@ -1,4 +1,3 @@
--- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 
 local active_border_color = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 }
 local inactive_border_color = "rgba(595959aa)"
@@ -64,7 +63,6 @@ hl.config({
   },
 })
 
--- Default animations, see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Animations/
 hl.curve("easeOutQuint", { type = "bezier", points = { { 0.23, 1 }, { 0.32, 1 } } })
 hl.curve("easeInOutCubic", { type = "bezier", points = { { 0.65, 0.05 }, { 0.36, 1 } } })
 hl.curve("linear", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
@@ -109,8 +107,6 @@ hl.config({
     anr_missed_pings = 3,
     on_focus_under_fullscreen = 1,
     initial_workspace_tracking = 0,
-    -- Let a fresh shell re-acquire the session lock after the lock client
-    -- died, so omarchy-restart-shell can recover the LOCK failsafe.
     allow_session_lock_restore = true,
   },
 

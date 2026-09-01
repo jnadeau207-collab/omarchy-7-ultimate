@@ -16,11 +16,9 @@ from omarchy_fabric.providers.packages.provider import PackageProvider
 
 from helper import arguments, catalog, installed, principal, provider
 
-
 class UnexpectedAdapter:
     async def checkpoint(self, name, plan):
         raise RuntimeError("untrusted adapter text must not escape")
-
 
 class PackageAdversarialTests(unittest.IsolatedAsyncioTestCase):
     async def test_installed_but_tampered_item_is_recovered_instead_of_treated_as_satisfied(self):
@@ -214,7 +212,6 @@ class PackageAdversarialTests(unittest.IsolatedAsyncioTestCase):
         oversized["installedVersion"] = "x" * 101
         with self.assertRaises(FabricError):
             PackageOperationEngine(catalog(), [oversized])
-
 
 if __name__ == "__main__":
     unittest.main()

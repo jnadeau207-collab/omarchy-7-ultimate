@@ -85,7 +85,6 @@ set -e
 [[ ! -e $mirror_flag ]] || fail "an unsafe external monitor name is not written as Lua"
 pass "mirror on refuses an unsafe headless output name"
 
-# The clamshell sync writes the internal-monitor name into generated Lua too.
 clamshell_flag="$flag_dir/internal-monitor-clamshell.lua"
 printf '[{"name":"eDP-1"}]\n' >"$monitors_json"
 rm -f "$clamshell_flag"
@@ -104,7 +103,6 @@ set -e
 [[ ! -e $clamshell_flag ]] || fail "an unsafe internal monitor name is not written as clamshell Lua"
 pass "clamshell refuses an unsafe internal monitor name"
 
-# The scaling command eval's the focused-monitor name into a Lua string.
 printf '[{"name":"eDP-1","focused":true,"scale":1.0,"width":1920,"height":1080,"refreshRate":60.0}]\n' \
   >"$monitors_json"
 run_monitor omarchy-hyprland-monitor-scaling 1.6

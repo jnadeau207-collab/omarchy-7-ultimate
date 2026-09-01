@@ -25,26 +25,18 @@ plymouth_default_assets=("${plymouth_theme_assets[@]}" logos/oma.png)
 sddm_theme_assets=(Main.qml bullet.png entry-failed.png entry.png lock-failed.png lock.png logo.png)
 sddm_default_assets=("${sddm_theme_assets[@]}" metadata.desktop theme.conf)
 
-# Keep the refresh allowlist synchronized with every packaged Plymouth asset.
-# An added default file must make this test fail until its publication contract
-# is explicitly reviewed and included above.
 packaged_plymouth_assets=$(find "$ROOT/default/plymouth" -type f -printf '%P\n' | LC_ALL=C sort)
 allowlisted_plymouth_assets=$(printf '%s\n' "${plymouth_default_assets[@]}" | LC_ALL=C sort)
 [[ $packaged_plymouth_assets == "$allowlisted_plymouth_assets" ]] ||
   fail "Plymouth refresh allowlist differs from the packaged asset set" "$packaged_plymouth_assets"
 pass "Plymouth refresh allowlist covers every packaged asset"
 
-# SDDM reset is also a fixed-file publication contract. New packaged files
-# must fail this test until their trust and reset behavior are reviewed.
 packaged_sddm_assets=$(find "$ROOT/default/sddm/omarchy" -type f -printf '%P\n' | LC_ALL=C sort)
 allowlisted_sddm_assets=$(printf '%s\n' "${sddm_default_assets[@]}" | LC_ALL=C sort)
 [[ $packaged_sddm_assets == "$allowlisted_sddm_assets" ]] ||
   fail "SDDM refresh allowlist differs from the packaged asset set" "$packaged_sddm_assets"
 pass "SDDM refresh allowlist covers every packaged asset"
 
-# omarchy-plymouth-set-by-theme hands over a theme's unlock.png from
-# ~/.config/omarchy/themes. Both installed copies are world-readable, so a
-# symlink there must not republish whatever it points at.
 printf 'not yours\n' >"$secret"
 ln -s "$secret" "$test_tmp/logo-link.png"
 
@@ -56,11 +48,6 @@ status=$?
 
 pass "a themed logo cannot republish a file it merely points at"
 
-# The descriptor must be opened before elevation. Invoking the whole command
-# as root would make the pre-open race privileged again, so refuse that shape
-# before sudo or any publication can begin. User namespaces let this run
-# without real privilege; retain a structural assertion on hosts that disable
-# them so the invariant never becomes an untested skip.
 if unshare --user --map-root-user true 2>/dev/null; then
   output=$(unshare --user --map-root-user env OMARCHY_PATH="$ROOT" /bin/bash "$ROOT/bin/omarchy-plymouth-set" '#1d2021' '#ebdbb2' "$secret" 2>&1)
   status=$?
@@ -73,12 +60,6 @@ else
 fi
 pass "the logo descriptor can only be opened by an unprivileged caller"
 
-# Style > Unlock picks a theme by name and hands the answer to
-# omarchy-launch-floating-terminal-with-presentation, which joins its arguments
-# into a script and runs that with `bash -c`. So the name is shell source
-# unless the action quotes it -- and the name is a directory name under
-# ~/.config/omarchy/themes, which a theme installed from a git repo gets from
-# the repo URL. `a';id;'b` is a legal directory name.
 require_command node
 
 unlock_action=$(node -e '
@@ -98,8 +79,6 @@ canary="$test_tmp/canary"
 set_args="$test_tmp/set-args"
 reset_marker="$test_tmp/reset-ran"
 
-# What a name that got reparsed would reach. It is a command rather than a
-# `touch` so that no quoting of the test's own paths is involved.
 cat >"$stub_dir/omarchy-test-canary" <<STUB
 #!/bin/bash
 printf 'ran\n' >"$canary"
@@ -110,9 +89,6 @@ cat >"$stub_dir/omarchy-plymouth-switcher" <<'STUB'
 printf '%s\n' "$OMARCHY_TEST_UNLOCK_NAME"
 STUB
 
-# Run the real presentation wrapper while replacing only its terminal launcher.
-# The launcher stub executes the final `bash -c` locally instead of opening a
-# terminal window.
 ln -s "$ROOT/bin/omarchy-launch-floating-terminal-with-presentation" "$stub_dir/omarchy-launch-floating-terminal-with-presentation"
 
 cat >"$stub_dir/omarchy-restart-gum" <<'STUB'
@@ -131,8 +107,6 @@ done
 exit 97
 STUB
 
-# Records what actually arrived, so a name that survived as data is told apart
-# from one that arrived split or partly eaten.
 cat >"$stub_dir/omarchy-plymouth-set-by-theme" <<'STUB'
 #!/bin/bash
 printf '%s\n' "$#" "$@" >"$OMARCHY_TEST_SET_ARGS"
@@ -159,8 +133,6 @@ run_unlock_action() {
     bash -c "$unlock_action" >/dev/null 2>&1
 }
 
-# A directory name cannot hold a slash or a NUL, and everything else is fair
-# game -- these are the shapes that would run on the way to the picker.
 for name in "a';omarchy-test-canary;'b" 'a$(omarchy-test-canary)b' 'a`omarchy-test-canary`b' 'a b' '-a'; do
   run_unlock_action "$name"
 
@@ -171,8 +143,6 @@ done
 
 pass "a theme name cannot carry a command into the unlock screen"
 
-# The two ordinary paths still work: a named theme is applied, and `default`
-# resets rather than being looked up as a theme.
 run_unlock_action "tokyo-night"
 [[ $(cat "$set_args" 2>/dev/null) == $'1\ntokyo-night' ]] ||
   fail "an ordinary theme name still reaches omarchy-plymouth-set-by-theme" "$(cat "$set_args" 2>/dev/null)"
@@ -206,16 +176,11 @@ case "$1" in
   shift 4
   printf 'root transaction\n' >>"$TEST_SUDO_LOG"
 
-  # The production helper intentionally resets PATH. For this unprivileged
-  # simulation only, substitute trusted tools and map fixed system destinations
-  # under the disposable fake root.
   code=${code/PATH=\/usr\/bin:\/bin/PATH=$TEST_ROOT_TOOLS:\/usr\/bin:\/bin}
   code=${code/omarchy_conf=\/etc\/omarchy.conf/omarchy_conf=$TEST_OMARCHY_CONF}
   code=${code/theme_dir=\/usr\/share\/plymouth\/themes\/omarchy/theme_dir=$TEST_FAKE_ROOT\/usr\/share\/plymouth\/themes\/omarchy}
   code=${code/sddm_dir=\/usr\/share\/sddm\/themes\/omarchy/sddm_dir=$TEST_FAKE_ROOT\/usr\/share\/sddm\/themes\/omarchy}
 
-  # Each rewrite above silently no-ops if the production text drifts, which
-  # would point this simulation at the real /usr/share. Refuse instead.
   [[ $code == *"PATH=$TEST_ROOT_TOOLS:/usr/bin:/bin"* ]] || exit 94
   [[ $code == *"omarchy_conf=$TEST_OMARCHY_CONF"* ]] || exit 94
   [[ $code == *"theme_dir=$TEST_FAKE_ROOT/usr/share/plymouth/themes/omarchy"* ]] || exit 94
@@ -468,9 +433,6 @@ done
 
 pass "a fresh installation receives complete mode-0644 Plymouth and SDDM theme files across restrictive umasks"
 
-# An upgraded machine may already contain restrictive modes, destination
-# symlinks, and the legacy SDDM logo. Setting a theme must replace only the
-# destination entries and must never write through those symlinks.
 setup_run
 output=$(run_set 022 env 2>&1)
 status=$?
@@ -486,9 +448,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "theme set repairs migrated destinations without following existing symlinks"
 
-# White uses #ffffff behind #000000 text. A direct two-expression sed first
-# writes the white background and then consumes it as if it were the template's
-# text placeholder, producing a black-on-black greeter.
 setup_run
 output=$(run_set_colors 022 '#ffffff' '#000000' env 2>&1)
 status=$?
@@ -499,9 +458,6 @@ if grep -Fq '__OMARCHY_SDDM_' "$sddm/Main.qml"; then
 fi
 pass "White theme keeps a white SDDM background instead of becoming black-on-black"
 
-# Swap the selected logo to an unreadable file in the DEBUG hook immediately
-# before Bash opens its descriptor. The caller-side open must fail, so sudo
-# never starts and nothing is published.
 setup_run
 preopen_hook="$run_dir/preopen-hook"
 preopen_marker="$run_dir/preopen-marker"
@@ -538,10 +494,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "an unreadable source swap before open fails without publication"
 
-# Opening a directory read-only succeeds on Linux, but the resulting descriptor
-# is not a regular file. Swap one in immediately before exec: this gets past the
-# open itself and makes the /proc descriptor check the only caller-side control
-# that can stop sudo from starting.
 setup_run
 nonregular_hook="$run_dir/nonregular-hook"
 nonregular_marker="$run_dir/nonregular-marker"
@@ -575,10 +527,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "the caller refuses an opened descriptor that is not a regular file"
 
-# Plant both a malicious script and a root-file symlink where the old
-# caller-owned stage lived. The privileged transaction must ignore that tree:
-# executable/config assets come only from its root-trusted source and are built
-# in its own root-owned stage.
 setup_run
 attacker_stage="$stages/tmp.attacker"
 mkdir -p "$attacker_stage/plymouth"
@@ -598,8 +546,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "caller-owned content cannot enter the root-owned boot-image stage"
 
-# A user-owned source checkout would put the same pre-hash race on the input
-# side of the root stage. Refuse it before any fixed destination is replaced.
 setup_run
 output=$(run_set 022 env TEST_UNTRUSTED_SOURCE="$ROOT/default/plymouth" 2>&1)
 status=$?
@@ -612,10 +558,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "root rejects packaged assets that a desktop process could rewrite"
 
-# A packaged filename may not redirect root to some other readable file. Use
-# the explicitly authorized development-source path so its ordinary file-mode
-# checks are intentionally skipped and only the leaf symlink/canonical-file
-# checks can decide this case.
 setup_run
 symlink_source_root=$(mktemp -d "$test_tmp/symlink-source.XXXXXXXX")
 symlink_source_root=$(realpath -e -- "$symlink_source_root")
@@ -635,9 +577,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "root never follows a packaged asset symlink"
 
-# A random user-owned OMARCHY_PATH remains untrusted. Only the exact canonical
-# checkout recorded by root in /etc/omarchy.conf is the supported dev-link
-# exception; an unrelated or stale authorization must not weaken the check.
 setup_run
 output=$(run_set 022 env TEST_UNTRUSTED_SOURCE="$ROOT" 2>&1)
 status=$?
@@ -656,11 +595,6 @@ status=$?
 
 (( status != 0 )) || fail "a stale dev-link authorization is rejected"
 [[ $(cat "$theme/bullet.png") == 'old plymouth bullet.png' ]] || fail "a stale dev-link authorization leaves the live theme unchanged"
-# The refusal has to name the authorization. Validating /etc/omarchy.conf walks
-# its parents and leaves that walk's subject in failure_context, so without
-# restoring ours this refuses with "directory / must be root-owned and not
-# group- or world-writable" -- accusing a directory that passed and pointing the
-# reader at a filesystem problem that does not exist.
 [[ $output == *"$omarchy_conf"* ]] || fail "a stale dev-link refusal names the authorization it rejected" "$output"
 [[ $output != *"directory / "* ]] || fail "a stale dev-link refusal does not blame the root directory" "$output"
 assert_no_temporary_files "$fake_root"
@@ -708,8 +642,6 @@ cmp -s "$ROOT/default/plymouth/bullet.png" "$theme/bullet.png" || fail "the auth
 
 pass "only a regular root-owned authorization may name the exact development checkout"
 
-# Root rejects both a symlinked parent and a group/world-writable parent before
-# it creates a temporary file or touches the live destination.
 setup_run
 mv "$theme" "$theme.real"
 ln -s "$theme.real" "$theme"
@@ -731,10 +663,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "publication rejects symlinked and non-root-writable destination parents"
 
-# Walking the whole chain, not just the immediate parent, is what closes the
-# rename race: a writable ancestor lets an attacker swap an entire validated
-# directory out from under the leaf. Leave the destination itself pristine so
-# only the ancestor can be at fault.
 setup_run
 chmod 0777 "$fake_root/usr/share/plymouth"
 output=$(run_set 022 env 2>&1)
@@ -749,9 +677,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "publication walks the whole parent chain, not only the immediate parent"
 
-# Mode is not the only thing that decides a destination directory. One that is
-# merely user-owned still lets its owner put the file back after we publish, so
-# ownership has to refuse it even when 0755 looks harmless.
 setup_run
 output=$(run_set 022 env TEST_UNTRUSTED_SOURCE="$theme" 2>&1)
 status=$?
@@ -763,9 +688,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "publication refuses a destination directory root does not own"
 
-# The packaged tree is validated file by file, not only directory by directory.
-# A single user-owned asset inside an otherwise root-owned directory is still
-# content a desktop process can rewrite, and the directory check cannot see it.
 setup_run
 output=$(run_set 022 env TEST_UNTRUSTED_SOURCE="$ROOT/default/plymouth/bullet.png" 2>&1)
 status=$?
@@ -777,9 +699,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "root checks every packaged asset, not only its directory"
 
-# Keep every file root-owned and mode 0644 while making only its containing
-# directory writable. Per-file checks cannot close the rename race in that
-# state; the packaged source parent-chain walk must reject it.
 setup_run
 writable_directory_root=$(mktemp -d "$test_tmp/writable-directory-source.XXXXXXXX")
 writable_directory_root=$(realpath -e -- "$writable_directory_root")
@@ -796,9 +715,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "root validates the packaged source parent chain before copying"
 
-# Ownership is not the only way a packaged asset stays rewritable: a group- or
-# world-writable mode does it too. Stage a tree the shim reports as root-owned
-# so only the real mode can decide, then loosen one asset.
 setup_run
 writable_root=$(mktemp -d "$test_tmp/writable-source.XXXXXXXX")
 writable_root=$(realpath -e -- "$writable_root")
@@ -815,9 +731,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "root refuses a packaged asset its own mode leaves rewritable"
 
-# The caller streams the logo to root over a descriptor, so root is the only
-# place its length can be judged. An empty selection must not become an empty
-# published logo.
 setup_run
 cp -- "$test_tmp/logo.png" "$test_tmp/logo.png.keep"
 : >"$test_tmp/logo.png"
@@ -831,9 +744,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "an empty logo cannot be published"
 
-# Bound the descriptor read as well as the final destination. A sparse file
-# makes the real 64 MiB + 1 byte boundary deterministic without storing a
-# large fixture in the repository.
 setup_run
 cp -- "$test_tmp/logo.png" "$test_tmp/logo.png.keep"
 truncate -s "$((64 * 1024 * 1024 + 1))" "$test_tmp/logo.png"
@@ -847,8 +757,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "a logo larger than the publication bound cannot be published"
 
-# Refresh uses the same publisher but its explicit contract includes the
-# packaged nested logos/oma.png asset. It must not touch the SDDM theme.
 setup_run
 output=$(run_refresh_plymouth 2>&1)
 status=$?
@@ -863,9 +771,6 @@ grep -Fq 'command mkinitcpio -P' "$sudo_log" || fail "Plymouth refresh rebuilds 
 
 pass "refresh safely publishes its complete fixed asset set, including logos/oma.png"
 
-# SDDM refresh has the same fixed-file contract but must leave Plymouth and the
-# boot image alone. It also replaces legacy destination symlinks without
-# changing their victims.
 setup_run
 output=$(run_refresh_sddm 2>&1)
 status=$?
@@ -882,8 +787,6 @@ assert_packaged_assets "SDDM refresh" "$ROOT/default/sddm/omarchy" "$sddm" "${sd
 
 pass "SDDM refresh safely restores its complete packaged asset set without rebuilding Plymouth"
 
-# A fresh package installation already contains the complete default file set.
-# Reset must be safe and idempotent in that ordinary state.
 setup_fresh_run
 output=$(run_reset 2>&1)
 status=$?
@@ -897,9 +800,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "reset is safe and idempotent on a fresh package installation"
 
-# Exercise an existing hostile state: destination symlinks stand in for an
-# upgraded machine that may already contain artifacts planted through the old
-# paths. Each refresh must replace its own entries without following them.
 setup_run
 output=$(run_reset 2>&1)
 status=$?
@@ -917,8 +817,6 @@ grep -Fq 'command mkinitcpio -P' "$sudo_log" || fail "reset rebuilds the initram
 
 pass "reset safely repairs a migrated Plymouth and SDDM installation"
 
-# A damaged installation may retain its package-owned directories while some
-# destination files are missing. Reset must recreate every allowlisted leaf.
 setup_run
 for asset in "${plymouth_default_assets[@]}"; do
   rm -f -- "$theme/$asset"
@@ -935,9 +833,6 @@ assert_packaged_assets "missing-file reset SDDM" "$ROOT/default/sddm/omarchy" "$
 
 pass "reset recreates missing files in package-owned destination trees"
 
-# The two refreshes are independently hardened. If Plymouth succeeds and SDDM
-# then refuses its unsafe destination, the completed Plymouth refresh remains
-# valid while SDDM and its symlink victims remain unchanged.
 setup_run
 chmod 0777 "$sddm"
 output=$(run_reset 2>&1)
@@ -952,8 +847,6 @@ assert_no_temporary_files "$fake_root"
 
 pass "an SDDM refusal cannot make either refresh follow an unsafe destination"
 
-# A packaged source that fails the root trust checks must stop the combined
-# reset; it cannot fall through into a second legacy SDDM copy.
 setup_run
 output=$(run_reset env TEST_UNTRUSTED_SOURCE="$ROOT" 2>&1)
 status=$?

@@ -22,7 +22,6 @@ SOURCE_TYPES = (
     "web-app",
 )
 
-
 @dataclass(frozen=True)
 class AdapterPlan:
     adapter_id: str
@@ -36,7 +35,6 @@ class AdapterPlan:
             "argv": list(self.command.arguments),
             "inputDigestOnly": True,
         }
-
 
 _COMMANDS: dict[tuple[str, str], tuple[str, FixedArgvCommand]] = {
     ("curated", "install"): ("packages.pacman.install", FixedArgvCommand("/usr/bin/omarchy-pkg-add", ("--fabric-json",))),
@@ -54,7 +52,6 @@ _COMMANDS: dict[tuple[str, str], tuple[str, FixedArgvCommand]] = {
 }
 _ADOPTION_COMMAND = ("packages.adoption", FixedArgvCommand("/usr/bin/omarchy-software-adopt", ("--fabric-json",)))
 
-
 def plan_adapter(source_type: str, intent: str, payload: Mapping[str, Any]) -> AdapterPlan:
     if not isinstance(payload, Mapping):
         raise ValueError("adapter payload must be an object")
@@ -64,7 +61,6 @@ def plan_adapter(source_type: str, intent: str, payload: Mapping[str, Any]) -> A
     adapter_id, command = definition
     require_stable_id(adapter_id, "adapter ID")
     return AdapterPlan(adapter_id, command, dict(payload))
-
 
 def command_matrix() -> tuple[FixedArgvCommand, ...]:
     return (*tuple(definition[1] for _, definition in sorted(_COMMANDS.items())), _ADOPTION_COMMAND[1])

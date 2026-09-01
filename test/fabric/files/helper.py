@@ -13,7 +13,6 @@ if str(FABRIC_ROOT) not in sys.path:
 from omarchy_fabric.providers._engine import state_revision
 from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
-
 def principal() -> EndpointPrincipal:
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     return EndpointPrincipal(
@@ -26,7 +25,6 @@ def principal() -> EndpointPrincipal:
         now + timedelta(hours=1),
     )
 
-
 def reason(code: str, title: str) -> dict[str, object]:
     return {
         "code": code,
@@ -37,7 +35,6 @@ def reason(code: str, title: str) -> dict[str, object]:
         "changeState": "none",
         "recoveryActions": ["provider.retry"],
     }
-
 
 def location(
     identifier: str,
@@ -57,7 +54,6 @@ def location(
         "rootToken": state_revision({"location": identifier}),
         "reason": unavailable,
     }
-
 
 def entry(
     identifier: str,
@@ -85,7 +81,6 @@ def entry(
         "symlinkTargetState": "outside-root" if kind == "symlink" else None,
         "trash": None,
     }
-
 
 def workspace() -> dict[str, object]:
     desktop = "files.location.desktop"
@@ -134,7 +129,6 @@ def workspace() -> dict[str, object]:
         ],
         "recent": [{"entryId": document, "rank": 0}],
     }
-
 
 def clone_workspace() -> dict[str, object]:
     return deepcopy(workspace())

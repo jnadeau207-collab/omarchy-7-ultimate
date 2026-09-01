@@ -1,9 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Modal operation primitive with deterministic keyboard behavior. Cancel is
-// always the initial selection, especially for destructive actions; Enter
-// activates only the visibly selected action and Escape always cancels.
 Item {
   id: root
 

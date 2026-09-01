@@ -10,8 +10,6 @@ as_root() {
 
 as_root nmcli general reload conf >/dev/null 2>&1 || true
 
-# NetworkManager only applies wifi.powersave when a connection activates, so
-# also switch it off directly for the running session.
 shopt -s nullglob
 for wireless in /sys/class/net/*/wireless; do
   iface=$(basename "$(dirname "$wireless")")

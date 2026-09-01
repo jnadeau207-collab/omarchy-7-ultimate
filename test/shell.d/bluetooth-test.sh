@@ -142,9 +142,6 @@ assert(
 )
 JS
 
-# Turning Bluetooth off is an rfkill soft block, not a bluetoothctl power off,
-# because only the block survives a reboot. These mocks stand in for that pair:
-# rfkill moves the block, and bluetoothd powers the adapter up once it is gone.
 device_tmp=$(mktemp -d)
 trap 'rm -rf "$device_tmp"' EXIT
 
@@ -182,7 +179,6 @@ SH
 
 chmod +x "$mock_bin/bluetoothctl" "$mock_bin/rfkill"
 
-# $ROOT/bin so omarchy-bluetooth-device resolves the real omarchy-bluetooth-power.
 bluetooth_run() {
   local powered="$1"
   shift
@@ -199,8 +195,6 @@ bluetooth_power() {
   bluetooth_run "$1" "$ROOT/bin/omarchy-bluetooth-power" "$2"
 }
 
-# Off has to be the block. A bluetoothctl power off would read the same until the
-# next boot, then quietly come back on.
 off_log=$(bluetooth_power yes off)
 grep -qx "rfkill block bluetooth" "$off_log" ||
   fail "bluetooth turns off with an rfkill block" "$(cat "$off_log")"
@@ -210,7 +204,6 @@ grep -q "power off" "$off_log" &&
   fail "bluetooth does not also power the adapter down" "$(cat "$off_log")"
 pass "bluetooth does not also power the adapter down"
 
-# Unblocking is enough on its own, so there is nothing left to ask bluetoothctl.
 on_log=$(bluetooth_power no on)
 grep -qx "rfkill unblock bluetooth" "$on_log" ||
   fail "bluetooth turns on by lifting the block" "$(cat "$on_log")"
@@ -220,13 +213,11 @@ grep -q "power on" "$on_log" &&
   fail "bluetooth leaves the power-on to bluetoothd when the block is lifted" "$(cat "$on_log")"
 pass "bluetooth leaves the power-on to bluetoothd when the block is lifted"
 
-# An adapter powered down without a block is one bluetoothd will not pick up.
 inert_log=$(RFKILL_INERT=1 bluetooth_power no on)
 grep -qx "power on" "$inert_log" ||
   fail "bluetooth powers the adapter on when unblocking does not" "$(cat "$inert_log")"
 pass "bluetooth powers the adapter on when unblocking does not"
 
-# The panel switch reads Powered, so that is what toggle has to invert.
 toggle_on_log=$(bluetooth_power yes toggle)
 grep -qx "rfkill block bluetooth" "$toggle_on_log" ||
   fail "bluetooth toggles a powered adapter off" "$(cat "$toggle_on_log")"
@@ -237,8 +228,6 @@ grep -qx "rfkill unblock bluetooth" "$toggle_off_log" ||
   fail "bluetooth toggles an unpowered adapter on" "$(cat "$toggle_off_log")"
 pass "bluetooth toggles an unpowered adapter on"
 
-# The power-on shortcut is the whole point of skipping the stabilization sleep:
-# pair/connect from the panel run against an adapter that is already powered.
 bluetooth_device_log() {
   bluetooth_run "$1" "$ROOT/bin/omarchy-bluetooth-device" connect AA:BB:CC:DD:EE:FF
 }
@@ -252,8 +241,6 @@ grep -qx "connect AA:BB:CC:DD:EE:FF" "$powered_log" ||
   fail "bluetooth still connects when the adapter is already powered"
 pass "bluetooth still connects when the adapter is already powered"
 
-# Connecting to a device while Bluetooth is off has to lift the block first —
-# BlueZ refuses to power an adapter up while one is set.
 unpowered_log=$(bluetooth_device_log no)
 grep -qx "rfkill unblock bluetooth" "$unpowered_log" ||
   fail "bluetooth lifts the block before connecting" "$(cat "$unpowered_log")"
@@ -263,8 +250,6 @@ grep -qx "connect AA:BB:CC:DD:EE:FF" "$unpowered_log" ||
   fail "bluetooth connects once the adapter is up" "$(cat "$unpowered_log")"
 pass "bluetooth connects once the adapter is up"
 
-# Blocking hits every radio at once, so the read has to span them too. A bare
-# bluetoothctl show reports the default controller and misses a powered dongle.
 echo yes >"$POWERED_FILE.11:22:33:44:55:66"
 export MOCK_CONTROLLERS="AA:BB:CC:DD:EE:FF 11:22:33:44:55:66"
 multi_log=$(bluetooth_power no toggle)
@@ -275,8 +260,6 @@ grep -qx "rfkill block bluetooth" "$multi_log" ||
   fail "bluetooth counts a secondary controller as on" "$(cat "$multi_log")"
 pass "bluetooth counts a secondary controller as on"
 
-# AutoEnable=false was the old attempt at persistence and never worked. Left set,
-# it would also keep bluetoothd from powering the adapter up after an unblock.
 grep -q 'AutoEnable=false' "$ROOT/install/hardware/bluetooth.sh" &&
   fail "bluetooth install leaves AutoEnable at its default"
 pass "bluetooth install leaves AutoEnable at its default"

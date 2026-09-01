@@ -11,24 +11,11 @@ import "BarModel.js" as BarModel
 Item {
   id: root
 
-  // The omarchy-shell host injects omarchyPath from OMARCHY_PATH.
   required property string omarchyPath
-  // Injected by the host shell so bar slots can resolve enabled widgets.
   required property var barWidgetRegistry
-  // Injected by the host shell every time shell.json is reloaded. Holds the
-  // `bar:` subtree: position, centerAnchor, layout. The host owns file IO;
-  // the bar just renders whatever it's handed. The bar font follows the
-  // OS-level fontconfig monospace binding — it is not stored in shell.json.
   required property var barConfig
-  // Injected by the host shell. Used for shell-wide actions such as opening
-  // settings and persisting inline widget state.
   property var shell: null
-  // Manifest for the active bar option. Present for custom bars and useful for
-  // diagnostics; the built-in bar does not otherwise need it.
   property var manifest: null
-  // Mirrors the on-disk `bar-off` flag so the user can hide the bar without
-  // killing the entire shell. Hidden panels stay mapped but park off-screen
-  // without an exclusion zone; updated by the FileView watcher further down.
   property bool barHidden: false
   property string home: Quickshell.env("HOME")
   property string stateHome: home + "/.local/state"
@@ -45,23 +32,13 @@ Item {
   property bool useTransparentForeground: false
   property bool transparent: false
   property bool centerSectionHovered: false
-  // One bar surface exists per monitor and each reports into this count, so a
-  // pointer crossing from one monitor's bar to another's stays counted however
-  // the enter and leave interleave. A single shared bool would be left false by
-  // whichever event landed last.
   property int barHoverCount: 0
-  // True while the pointer is over any bar, widgets included.
   readonly property bool barHovered: barHoverCount > 0
   property bool centerSectionRevealHeld: false
   property bool centerHoverRevealSuppressed: false
   property int barConfigSerial: 0
   property string position: "top"
-  // Resolves through fontconfig at paint time (Style.font.family defaults
-  // to "monospace"), so changing the system font (via `omarchy-font-set`)
-  // updates the bar without a reload.
   property string fontFamily: Style.font.family
-  // Bound to the central Color singleton so the bar tracks shell.toml's
-  // [bar] section. Property names kept for the rest of this file's bindings.
   property color themeForeground: Color.bar.text
   property color themeContrastForeground: Color.background
   property color transparentForeground: Color.bar.text
@@ -243,9 +220,6 @@ Item {
     }
   }
 
-  // Split the screen along its diagonals (in normalized space, so widescreens
-  // don't bias toward left/right): whichever triangle holds the cursor names
-  // the candidate edge.
   function nearestScreenEdge(point, screen) {
     var nx = screen.width > 0 ? Util.clamp(point.x / screen.width, 0, 1) : 0.5
     var ny = screen.height > 0 ? Util.clamp(point.y / screen.height, 0, 1) : 0.5
@@ -333,8 +307,6 @@ Item {
     return BarModel.normalizePosition(value)
   }
 
-  // Apply tray-pinning on top of the shared layout normalization so the
-  // bar host and scriptable config helpers can't drift on entry shape.
   function normalizeLayout(layout) {
     var normalized = Util.normalizeLayout(Util.isPlainObject(layout) ? layout : fallbackBarConfig.layout)
     return {
@@ -344,10 +316,6 @@ Item {
     }
   }
 
-  // The tray drawer reveals inward (away from the bar edge). Place it at the
-  // section's inner edge: start of the right section, end of the left/center
-  // sections. The drawer's reserved space then sits next to the bar center,
-  // not stranded mid-section.
   function pinTrayToInner(entries, section) {
     return BarModel.pinTrayToInner(entries, section)
   }
@@ -359,10 +327,6 @@ Item {
     setRequestedTransparency(config.transparent === true)
     centerAnchor = Util.canonicalWidgetId(config.centerAnchor || "")
 
-    // layoutEntries feeds plain JS arrays to the module Repeaters, and QML
-    // cannot diff those: reassigning layoutConfig rebuilds every widget on
-    // every monitor. When a shell.json write only changed inline widget
-    // settings, patch the live layout and running widgets in place instead.
     var next = normalizeLayout(config.layout)
     var delta = BarModel.inlineSettingsDelta(layoutConfig, next)
     if (delta) {
@@ -395,9 +359,6 @@ Item {
     return Array.isArray(entries) ? entries : []
   }
 
-  // Tab order for the panels in one bar region. Scoped to a single bar surface
-  // so tabbing walks the bar the open panel belongs to instead of hopping the
-  // panel to another monitor's copy of the same widget.
   function panelNavigationSlots(region, window) {
     var entries = layoutEntries(region)
     var slots = []
@@ -417,15 +378,6 @@ Item {
     return slots
   }
 
-  // The Nth panel in a bar region, counted the way the bar reads: layout order,
-  // and only the panels actually on screen. A widget with no panel (the tray)
-  // and one that is hiding itself are passed over, so the number lands on the
-  // Nth panel icon the user can see rather than the Nth layout entry.
-  // One-based, because it exists for hotkeys; anything else lands on no slot.
-  //
-  // Counting any bar surface is enough: every monitor lays its bar out from the
-  // one layout, and summoning the id routes through pickPanelSlot, which opens
-  // the focused monitor's copy whichever surface was counted.
   function panelWidgetIdAt(region, index) {
     var slots = panelNavigationSlots(String(region || ""), null)
     var slot = slots[Math.round(Number(index)) - 1]
@@ -465,8 +417,6 @@ Item {
     return true
   }
 
-  // Every live instance of a widget id. A bar surface is built per monitor, so
-  // a widget that appears once in the layout is still live once per screen.
   function moduleWidgets(pluginId) {
     var id = String(pluginId || "")
     var items = []
@@ -484,19 +434,11 @@ Item {
     return window && window.screen ? String(window.screen.name || "") : ""
   }
 
-  // The output Hyprland has focused, which is where a keyboard-summoned panel
-  // belongs. Empty until Hyprland reports one, which leaves panel routing on
-  // its per-monitor fallback rather than guessing at an output.
   function focusedScreenName() {
     var monitor = Hyprland.focusedMonitor
     return monitor ? String(monitor.name || "") : ""
   }
 
-  // Resolve the live bar-widget instance for a plugin id (e.g. "omarchy.bluetooth").
-  // Only widgets that expose popup open/close methods count; plain indicators
-  // (clock, workspaces, tray) return null. Used by shell.summon/toggle so
-  // panel hotkeys route through the bar instead of a per-target IPC handler
-  // that only reaches whichever per-monitor instance claimed the target.
   function findPanelWidget(pluginId) {
     var id = String(pluginId || "")
     if (!id) return null
@@ -509,8 +451,6 @@ Item {
       if (typeof item.open !== "function" || typeof item.close !== "function" || item.opened === undefined) continue
       candidates.push({ slot: slot, screenName: slotScreenName(slot), opened: item.opened === true })
     }
-    // One copy per monitor, plus a zero-size placeholder for anchored center
-    // modules. See BarModel.pickPanelSlot for which one a hotkey acts on.
     var chosen = BarModel.pickPanelSlot(candidates, focusedScreenName())
     return chosen ? chosen.activeItem : null
   }
@@ -581,9 +521,6 @@ Item {
 
   Component.onCompleted: applyBarConfig()
 
-  // Revealing the indicators widens their section, which can slide a neighbour
-  // under a stationary pointer. Collapsing on that un-hover would move it back
-  // out and re-open the peek, so hold until the pointer leaves the bar.
   function setCenterSectionHovered(hovered) {
     centerSectionHovered = hovered
     if (hovered) {
@@ -602,9 +539,6 @@ Item {
   Timer {
     id: centerSectionRevealTimer
     interval: 120
-    // Collapse only. Opening the peek is the center section's own gesture, done
-    // in setCenterSectionHovered, so a timer left pending by a pointer that dipped
-    // off the bar and came back cannot reveal indicators it never pointed at.
     onTriggered: if (!root.centerSectionHovered && !root.barHovered) root.centerSectionRevealHeld = false
   }
 
@@ -932,9 +866,6 @@ Item {
     onTriggered: if (!root.targetTooltipHovered(root.tooltipTarget)) root.hideTooltip(root.tooltipTarget)
   }
 
-  // Presence of the `bar-off` flag = bar hidden. Watching the parent toggles
-  // directory because FileView can't observe a file that doesn't exist yet,
-  // and the flag is created/removed by `omarchy-toggle-bar`.
   Process {
     id: barHiddenProbe
     running: true
@@ -1004,11 +935,6 @@ Item {
   component BarPanel: PanelWindow {
     id: barWindow
 
-    // Hiding parks the bar just past its screen edge instead of unmapping it.
-    // Unmapping frees the layer surface and the whole scene graph, so every
-    // reveal has to rebuild them — new surface, re-shaped glyphs, re-uploaded
-    // textures — which measures ~150ms against ~20ms to tear down. Parking
-    // keeps the surface alive, so showing is only a margin change.
     visible: !remapGuard.remapping
     exclusionMode: root.barHidden ? ExclusionMode.Ignore : ExclusionMode.Auto
 
@@ -1042,13 +968,8 @@ Item {
       anchors.fill: parent
       sourceComponent: root.vertical ? verticalBar : horizontalBar
 
-      // A child of the loader, not a sibling of the sections: an ancestor stays
-      // hovered while the pointer is over a widget, where a sibling would lose
-      // hover to the section the pointer entered.
       HoverHandler {
         onHoveredChanged: root.setBarHovered(hovered)
-        // Unplugging a monitor destroys its bar without a leave event, which
-        // would strand this surface's tally and hold the peek open for good.
         Component.onDestruction: if (hovered) root.setBarHovered(false)
       }
     }
@@ -1190,8 +1111,6 @@ Item {
       right: true
     }
 
-    // Visual-only drag feedback. Keep the input region empty so the ghost can
-    // sit under the cursor without stealing the MouseArea's active pointer grab.
     mask: Region {}
 
     Item {
@@ -1252,13 +1171,8 @@ Item {
       right: true
     }
 
-    // Visual-only preview of the candidate edge. Keep the input region empty
-    // so the overlay never steals the gesture area's active pointer grab.
     mask: Region {}
 
-    // One fixed-geometry slab per edge, crossfaded on candidate changes.
-    // Resizing a single slab between edges repaints mid-transition and
-    // flickers; fading between static ones does not.
     Repeater {
       model: ["top", "bottom", "left", "right"]
 
@@ -1433,8 +1347,6 @@ Item {
     }
 
     onPressAndHold: function(mouse) {
-      // A widget above us propagates its composed press-and-hold down here without
-      // ever handing over the grab, so we'd get no release or cancel to end the move.
       if (!gestureArea.pressed) return
       startDrag(mouse.x, mouse.y)
     }
@@ -1493,11 +1405,6 @@ Item {
     property string region: ""
 
     visible: entries.length > 0
-    // A hidden list must not build its modules. The center section declares
-    // both an anchored and an unanchored arrangement and shows whichever
-    // fits, so leaving the other one loaded mounts every center module
-    // twice — two IPC handlers registered for the same target, two clocks
-    // ticking, two of every timer and fetch behind them.
     active: visible && entries.length > 0
     sourceComponent: root.vertical ? verticalModuleList : horizontalModuleList
     width: item ? item.implicitWidth : 0
@@ -1548,9 +1455,6 @@ Item {
     readonly property string moduleName: root.entryId(entry)
     readonly property var moduleSettings: root.entrySettings(entry)
     readonly property string customType: root.customModuleType(entry)
-    // Re-evaluate when the registry mutates (Component reference changes,
-    // plugin enabled/disabled, etc.). Reading the `widgets` property creates
-    // the binding dependency — the wrapped function call alone wouldn't.
     readonly property var registryComponent: {
       var w = root.barWidgetRegistry.widgets
       if (customType) return null
@@ -1568,10 +1472,6 @@ Item {
     readonly property bool hovered: moduleHover.hovered
     readonly property bool dragSource: root.barDragSource === slot
     readonly property bool panelOpen: root.activePopout === slot.activeItem
-    // Modules bigger than the mark they want (a text label in a padded slot,
-    // a multi-line stack on a vertical bar) can say how long the open-panel
-    // dot should be along the bar, so it tracks what the module paints
-    // instead of a fraction of whatever slot it happens to fill.
     readonly property real panelIndicatorExtent: {
       var key = root.vertical ? "openPanelIndicatorHeight" : "openPanelIndicatorWidth"
       var hint = activeItem && key in activeItem ? activeItem[key] : undefined
@@ -1649,10 +1549,6 @@ Item {
       radius: Math.min(width, height) / 2
       width: root.vertical ? Style.space(2) : slot.panelIndicatorExtent
       height: root.vertical ? slot.panelIndicatorExtent : Style.space(2)
-      // The mark sits on the module's inner edge — the one facing the
-      // desktop — so it underlines a top bar, overlines a bottom one, and
-      // points inward from a left or right one. It reads as pointing at the
-      // panel that opens on that side.
       x: root.vertical
         ? (root.position === "left" ? parent.width - width - inset : inset)
         : Math.round((parent.width - width) / 2)
@@ -1681,9 +1577,6 @@ Item {
       enabled: slot.visible && slot.width > 0 && slot.height > 0
       propagateComposedEvents: true
       cursorShape: root.moduleClickTargetAt(slot, mouseX, mouseY) ? Qt.PointingHandCursor : Qt.ArrowCursor
-      // Do not assign drag.target here: ModuleSlot is owned by Row/Column
-      // positioners, and mutating slot.x/slot.y can leave stale offsets that
-      // make neighboring modules overlap after a small aborted drag.
 
       onPressed: function(mouse) {
         dragging = false

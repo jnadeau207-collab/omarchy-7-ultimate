@@ -13,19 +13,15 @@ from omarchy_fabric.security import EndpointPrincipal, PrincipalKind
 
 ROOT = Path(__file__).resolve().parents[3]
 
-
 def catalog_document():
     return json.loads((ROOT / "default/ultimate/software/catalog-v0.json").read_text(encoding="utf-8"))
-
 
 def catalog():
     return PackageCatalog(catalog_document())
 
-
 def principal():
     now = datetime(2026, 8, 27, tzinfo=timezone.utc)
     return EndpointPrincipal("principal.software-tests", "session.software-tests", 1000, "shell.software-tests", PrincipalKind.SHELL, now, now + timedelta(hours=1))
-
 
 def installed(app_id="software.curated.neovim", *, adopted=True, digest=None, state="installed"):
     entry = catalog().by_id[app_id]
@@ -42,12 +38,10 @@ def installed(app_id="software.curated.neovim", *, adopted=True, digest=None, st
         "dataPaths": ["/home/test/.local/share/neovim"],
     }
 
-
 def provider(inventory=None, **engine_kwargs):
     value = catalog()
     engine = PackageOperationEngine(value, deepcopy(inventory or []), **engine_kwargs)
     return PackageProvider(value, engine)
-
 
 def arguments(engine, app_id, request_id="request.software.test", preserve=True):
     return {

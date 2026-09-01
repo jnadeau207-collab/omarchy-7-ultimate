@@ -15,22 +15,12 @@ Panel {
   property bool chromeVisible: true
   property Item hostAnchor: null
   property bool embedMode: false
-  // manageIpc: false so this panel can own the single IpcHandler the target
-  // permits — needed for the toggleBluetooth method below.
   manageIpc: false
 
-  // Address -> "connecting" | "disconnecting" | "forgetting".
-  // The actual Bluetooth sequencing lives in bin/omarchy-bluetooth-device;
-  // this map only keeps the panel responsive while BlueZ catches up.
   property var pendingActions: ({})
 
   readonly property var adapter: Bluetooth.defaultAdapter
 
-  // True while this instance owes BlueZ a StopDiscovery: set when it starts
-  // discovery (or opens onto a session already running) and cleared once
-  // discovery is confirmed down after close. Ownership, not state — BlueZ's
-  // Discovering property also reflects sessions other clients hold, which are
-  // never this panel's to stop.
   property bool owesDiscoveryStop: false
   readonly property var devices: Bluetooth.devices ? Bluetooth.devices.values : []
   readonly property var pipewireNodes: Pipewire.nodes ? Pipewire.nodes.values : []
@@ -83,26 +73,13 @@ Panel {
     return activePhrases[phraseIndex % activePhrases.length]
   }
 
-  // Single cursor model shared by keyboard and mouse. Sections:
-  //   "connected"  — currently connected devices; Enter disconnects.
-  //   "known"      — remembered devices; Enter connects.
-  //   "discovered" — unremembered devices visible while scanning; Enter connects.
-  // Visuals always come from CursorSurface (hasCursor / current),
-  // never from containsMouse. Mouse hover updates root cursor state too,
-  // guaranteeing one highlight on screen.
   property string focusSection: "connected"
   property int selectedIndex: 0
   property bool actionFocused: false
   property bool cursorActive: false
 
-  // Stable identity for the focused device. Devices move between sections as
-  // they connect, disconnect, pair, or get forgotten, so follow the BlueZ
-  // address across section changes instead of preserving a stale row index.
   property string focusedDeviceAddress: ""
 
-  // "header" is a virtual section for the hero Bluetooth on/off toggle; it
-  // sits above the device sections so the adapter can be toggled by keyboard
-  // even when it is off and no device rows exist.
   readonly property bool headerHasCursor: cursorActive && focusSection === "header"
   readonly property string toggleHint: root.adapter && root.adapter.enabled ? "Turn Bluetooth off" : "Turn Bluetooth on"
 
@@ -135,10 +112,6 @@ Panel {
     return Model.sectionDevices(deviceGroups, section)
   }
 
-  // The scrollable half of the panel — remembered devices, then whatever the
-  // scan turned up — flattened into one model so a ListView can own the
-  // viewport. Each entry carries the section it came from, which is what lets
-  // the delegate and the cursor keep working in section-relative terms.
   readonly property var scrollRows: {
     var rows = []
     for (var k = 0; k < knownDevices.length; k++)
@@ -149,8 +122,6 @@ Panel {
     return rows
   }
 
-  // Connected devices render above the scroll area; same primitives-only
-  // projection so those delegates never hold Device QObject wrappers either.
   readonly property var connectedRows: {
     var rows = []
     for (var i = 0; i < connectedDevices.length; i++)
@@ -158,10 +129,6 @@ Panel {
     return rows
   }
 
-  // Live BlueZ device behind a row. Rows carry primitives only, so actions
-  // resolve the backend object here rather than holding a wrapper that can
-  // dangle mid-incubation. `devices` is already the raw device array (see the
-  // property declaration), so it is iterated directly.
   function deviceFor(row) {
     if (!row || !row.dev) return null
     var addr = row.dev.address || ""
@@ -172,8 +139,6 @@ Panel {
     return null
   }
 
-  // Flat position of the keyboard cursor, or -1 while it sits on the hero or
-  // in the connected list (both of which live outside the scroll area).
   readonly property int scrollRowIndex: {
     if (focusSection !== "known" && focusSection !== "discovered") return -1
     for (var i = 0; i < scrollRows.length; i++)
@@ -181,7 +146,6 @@ Panel {
     return -1
   }
 
-  // A row opens a section when it is the first of its kind in the flat list.
   function scrollSectionTitle(index) {
     var rows = scrollRows
     if (index < 0 || index >= rows.length) return ""
@@ -324,8 +288,6 @@ Panel {
     if (changed) pendingActions = next
   }
 
-  // j/k navigates the hero toggle ("header") and the device sections
-  // row-by-row.
   function moveCursor(delta) {
     var sections = visibleSections
     if (focusSection === "header") {
@@ -399,8 +361,6 @@ Panel {
     }
   }
 
-  // 'x' forgets remembered devices. For connected devices this first
-  // disconnects, then removes the BlueZ pairing record via omarchy-bluetooth-device.
   function deleteSelected() {
     if (focusSection !== "known" && focusSection !== "connected") return
     var dev = deviceAt(focusSection, selectedIndex)
@@ -410,9 +370,6 @@ Panel {
 
   onOpenedChanged: {
     if (opened) {
-      // Adopt a discovery session that is already running — a popout handoff
-      // from another monitor, or one leaked by an instance that could not
-      // finish its own stop — so this close settles it either way.
       if (adapter !== null && adapter.discovering) owesDiscoveryStop = true
       if (connectedDevices.length > 0) { focusSection = "connected"; selectedIndex = 0 }
       else if (knownDevices.length > 0) { focusSection = "known"; selectedIndex = 0 }
@@ -423,10 +380,6 @@ Panel {
     }
   }
 
-  // Another per-monitor instance of this widget whose panel is open, if any.
-  // All instances share the default adapter, and switching the popout to a
-  // different monitor closes one instance as it opens the next, so the
-  // closing side has to leave the scan alone for the side still on screen.
   function openSibling() {
     if (!bar || typeof bar.moduleWidgets !== "function") return null
     var items = bar.moduleWidgets(moduleName)
@@ -474,10 +427,6 @@ Panel {
 
   function clampCursor() {
     var sections = visibleSections
-    // "header" is virtual and never appears in visibleSections, so it has to
-    // be let through: toggling the adapter empties and refills the device
-    // lists, and clamping would knock the cursor off the hero switch every
-    // time it is used.
     if (focusSection === "header") return
     if (!sections || !sections.length) {
       selectedIndex = 0
@@ -490,7 +439,6 @@ Panel {
     }
     var count = sectionCount(focusSection)
     if (count === 0) {
-      // Section emptied out — bounce to the previous visible one.
       var sIdx = sections.indexOf(focusSection)
       focusSection = sIdx > 0 ? sections[sIdx - 1] : sections[0]
       selectedIndex = Math.max(0, sectionCount(focusSection) - 1)
@@ -526,9 +474,6 @@ Panel {
 
   Component.onCompleted: overlayArm.start()
 
-  // BlueZ rejects StartDiscovery while the adapter is still powering up, and
-  // discovery can also time out on its own. While the panel is open, keep
-  // nudging it back on so an enabled adapter is always scanning.
   Timer {
     id: discoveryRetry
     interval: 1000
@@ -541,20 +486,6 @@ Panel {
     }
   }
 
-  // The way back down. The BlueZ discovery session behind adapter.discovering
-  // is held by quickshell's D-Bus connection, so nothing ends it at close:
-  // without this timer, one visit to the panel left the radio in inquiry
-  // until the next shell restart, starving A2DP audio on the same controller
-  // into stutters.
-  //
-  // A timer bound to the confirmed state rather than a write at close time:
-  // quickshell only forwards a discovering write that differs from the last
-  // state BlueZ reported, so a stop issued while a just-fired StartDiscovery
-  // is still awaiting confirmation would be swallowed and leak the session.
-  // Binding to adapter.discovering means a confirmation landing at any point
-  // after close re-arms the stop, and a reopen inside the first interval
-  // keeps the scan running uninterrupted. Attempts are bounded so a session
-  // some other BlueZ client keeps up cannot draw StopDiscovery fire forever.
   Timer {
     id: discoveryStop
     interval: 1000
@@ -563,9 +494,6 @@ Panel {
     running: !root.opened && root.owesDiscoveryStop && root.adapter !== null && root.adapter.discovering === true
     onRunningChanged: if (running) attempts = 0
     onTriggered: {
-      // The scan now serves the open panel, so the debt moves with it — B may
-      // have opened before BlueZ confirmed A's start, in which case B's own
-      // open-time adoption saw nothing to adopt.
       var sibling = root.openSibling()
       if (sibling) {
         sibling.owesDiscoveryStop = true
@@ -578,10 +506,6 @@ Panel {
     }
   }
 
-  // The debt is settled the moment BlueZ reports discovery down — whether
-  // because the stop above landed or the session ended some other way — so a
-  // stale claim never touches a scan another client starts later. While the
-  // panel is open, discoveryRetry re-incurs it as it restarts the scan.
   Connections {
     target: root.adapter
     function onDiscoveringChanged() {
@@ -589,10 +513,6 @@ Panel {
     }
   }
 
-  // A destroyed instance cannot wait for BlueZ confirmations, so it hands any
-  // debt to a surviving sibling — whose declarative stop catches even a start
-  // confirmed after this object is gone — and only writes the stop directly
-  // when it is the last one standing.
   Component.onDestruction: {
     if (!owesDiscoveryStop) return
     var items = bar && typeof bar.moduleWidgets === "function" ? bar.moduleWidgets(moduleName) : []
@@ -649,14 +569,6 @@ Panel {
     }
   }
 
-  // Not adapter.enabled: that writes BlueZ's Powered, which nothing persists, so
-  // the adapter came back on at the next boot. omarchy-bluetooth-power moves the
-  // rfkill soft block instead, which systemd-rfkill restores across reboots.
-  // Powered still follows the block, so the switch and icon read it as before.
-  //
-  // Asking for a direction rather than a toggle: the helper runs detached and the
-  // switch only moves once BlueZ catches up, so a second click inside that window
-  // would re-read the old state and undo the first.
   function toggleBluetooth() {
     if (!adapter) return
     Quickshell.execDetached(["omarchy-bluetooth-power", adapter.enabled ? "off" : "on"])
@@ -712,12 +624,10 @@ Panel {
         anchors.fill: parent
         spacing: Style.space(14)
 
-        // ---------- Hero: Bluetooth icon · status ----------
         Item {
           width: parent.width
           implicitHeight: Math.max(heroIcon.implicitHeight, heroLabels.implicitHeight, powerSwitch.implicitHeight)
 
-          // Status only — the switch owns toggling, mouse and keyboard alike.
           Text {
             id: heroIcon
             textFormat: Text.PlainText
@@ -730,8 +640,6 @@ Panel {
             opacity: root.adapter && root.adapter.enabled ? 1.0 : 0.5
           }
 
-          // Compact on/off switch on the trailing edge of the hero, and the
-          // header's only cursor target.
           ToggleSwitch {
             id: powerSwitch
             visible: !!root.adapter
@@ -784,8 +692,6 @@ Panel {
           }
         }
 
-        // Scrollable device list — capped so a noisy neighborhood doesn't
-        // grow the popup past the screen.
         PanelSeparator {
           foreground: root.bar.foreground
         }
@@ -821,10 +727,6 @@ Panel {
           foreground: root.bar.foreground
         }
 
-        // ListView, not a Flickable: it owns the scroll position, so it keeps
-        // the current row visible on j/k, re-clamps itself when discovery
-        // shortens the list, and — because Contain only moves when a row is
-        // actually clipped — never lurches under a hovering mouse.
         ListView {
           id: deviceListView
           width: parent.width
@@ -838,11 +740,6 @@ Panel {
 
           model: root.scrollRows
           currentIndex: root.scrollRowIndex
-          // Deferred by a turn. Called straight out of the signal the position
-          // does not take — verified with the cursor six rows down and
-          // contentY still 0 — because scrollRows is rebuilt every time
-          // discovery reports, and swapping the model resets the view out from
-          // under the call. Network's list is stable enough not to need this.
           onCurrentIndexChanged: if (currentIndex >= 0) Qt.callLater(keepCurrentVisible)
           function keepCurrentVisible() {
             if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
@@ -918,8 +815,6 @@ Panel {
     onLoaded: root.adoptOverlayPage()
   }
 
-  // Two-line device row showing name + live status. Pending state is owned
-  // by the panel so it survives rows moving between sections.
   component DeviceRow: CursorSurface {
     id: row
     required property var dev

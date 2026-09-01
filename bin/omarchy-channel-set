@@ -84,7 +84,6 @@ if [[ -n $dev_checkout ]]; then
 fi
 
 omarchy-refresh-pacman "$pacman_channel"
-# --ask 4 accepts omarchy <-> omarchy-dev replacement prompts without file overwrites.
 sudo env OMARCHY_UPDATE_PACMAN=1 pacman -S --needed --noconfirm --ask 4 "${packages[@]}"
 
 if [[ -z $dev_checkout ]]; then

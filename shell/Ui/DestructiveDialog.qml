@@ -1,8 +1,5 @@
 import QtQuick
 
-// Consequential confirmation specialization. It states the consequence and
-// recovery policy in both visible copy and the accessibility description;
-// cancel remains the default action inherited from OperationDialog.
 OperationDialog {
   id: root
 

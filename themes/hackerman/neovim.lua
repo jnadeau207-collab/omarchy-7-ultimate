@@ -1,7 +1,7 @@
 return {
 	{
 		"bjarneo/hackerman.nvim",
-		dependencies = { "bjarneo/aether.nvim" }, -- Ensure aether is loaded first
+		dependencies = { "bjarneo/aether.nvim" },
 		priority = 1000,
 	},
 	{

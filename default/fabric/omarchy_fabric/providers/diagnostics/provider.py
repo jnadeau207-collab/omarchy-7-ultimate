@@ -117,7 +117,6 @@ _REDACTIONS = (
     (re.compile(r"(?i)\b(?:[0-9a-f]{2}:){5}[0-9a-f]{2}\b"), "[REDACTED_MAC]"),
 )
 
-
 def redact_support_text(value: str) -> tuple[str, int]:
     if not isinstance(value, str):
         raise TypeError("support text must be a string")
@@ -127,7 +126,6 @@ def redact_support_text(value: str) -> tuple[str, int]:
         redacted, substitutions = pattern.subn(replacement, redacted)
         count += substitutions
     return redacted, count
-
 
 def preview_support_bundle(sources: Mapping[str, str], maximum_bytes: int) -> list[dict[str, Any]]:
     if set(sources) - set(SOURCE_IDS) or isinstance(maximum_bytes, bool) or not 1024 <= maximum_bytes <= MAXIMUM_BUNDLE_BYTES:
@@ -163,7 +161,6 @@ def preview_support_bundle(sources: Mapping[str, str], maximum_bytes: int) -> li
         )
     return previews
 
-
 def _service_check(text: str) -> tuple[str, str]:
     units = []
     for line in text.splitlines():
@@ -177,13 +174,11 @@ def _service_check(text: str) -> tuple[str, str]:
         return "fail", f"{len(units)} failed service unit(s) were reported."
     return "pass", "No failed service units were reported."
 
-
 def _journal_check(text: str) -> tuple[str, str]:
     value = text.strip()
     if len(value) > 512 or re.fullmatch(r"Archived and active journals take up [0-9]+(?:\.[0-9]+)?[KMGTPE]? in the file system\.", value) is None:
         raise ValueError("journal usage output is invalid")
     return "info", value
-
 
 def _filesystem_check(text: str) -> tuple[str, str]:
     rows = [line for line in text.splitlines() if line.strip()]
@@ -205,13 +200,11 @@ def _filesystem_check(text: str) -> tuple[str, str]:
         evidence += f" {offender_count} filesystem target(s) are at or above 90%."
     return status, evidence
 
-
 PARSERS = {
     "service-failures": ("Failed services", _service_check),
     "journal-usage": ("Journal disk use", _journal_check),
     "filesystem-usage": ("Filesystem capacity", _filesystem_check),
 }
-
 
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     checks: list[dict[str, Any]] = []
@@ -242,10 +235,8 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         }
     ]
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": RESOURCE_ID, "sources": sorted(arguments["sources"]), "maximumBytes": arguments["maximumBytes"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     selected = [item for item in current["supportPreview"] if item["source"] in arguments["sources"]]
@@ -259,7 +250,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         raise ValueError("a different diagnostics plan is already pending")
     return {**dict(current), "pendingPlan": pending_plan}
 
-
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "diagnostics", OPERATION_ACTION, "diagnostics.bundle.plan", "low", ("mutating",), max_resources=1),
     resource_schema=RESOURCE_SCHEMA,
@@ -271,10 +261,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan a redacted support preview from {len(arguments['sources'])} allowlisted source(s); no archive or upload is created.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

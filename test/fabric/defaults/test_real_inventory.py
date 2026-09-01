@@ -11,7 +11,6 @@ from omarchy_fabric.models import FabricError
 from omarchy_fabric.providers._probe import ProbeOutput
 from omarchy_fabric.providers.defaults import provider as defaults
 
-
 class FixtureRunner:
     def __init__(self, values=None, error: Exception | None = None) -> None:
         self.values = values or {}
@@ -23,7 +22,6 @@ class FixtureRunner:
         if self.error is not None:
             raise self.error
         return ProbeOutput(self.values.get(command.argv, ""), "")
-
 
 @unittest.skipUnless(os.name == "posix", "desktop-file no-follow coverage requires Linux")
 class RealDefaultsInventoryTests(unittest.IsolatedAsyncioTestCase):
@@ -105,7 +103,6 @@ class RealDefaultsInventoryTests(unittest.IsolatedAsyncioTestCase):
             link.symlink_to(config)
             with self.assertRaisesRegex(ValueError, "real file"):
                 defaults.build_provider(home=home, config_path=link, runner=FixtureRunner())
-
 
 if __name__ == "__main__":
     unittest.main()

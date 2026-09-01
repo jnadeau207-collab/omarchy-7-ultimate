@@ -13,7 +13,6 @@ from omarchy_fabric.providers.packages.engine import FakeExecutionAdapter, Packa
 
 from helper import arguments, catalog, installed, principal, provider
 
-
 class PackageOperationTests(unittest.IsolatedAsyncioTestCase):
     async def test_install_checkpoints_persists_validates_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -151,7 +150,6 @@ class PackageOperationTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(FabricError) as wrong_catalog:
                 PackageOperationEngine(catalog(), [], state_path=state)
             self.assertEqual(wrong_catalog.exception.code, "packages.state-corrupt")
-
 
 if __name__ == "__main__":
     unittest.main()

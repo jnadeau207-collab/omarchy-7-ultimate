@@ -21,8 +21,6 @@ open_and_close() {
   wait_until "$name closes" 15 layer_absent "$namespace"
 }
 
-# Search and select an emoji. The host harness separately proves the shortcut
-# with a QMP hardware key chord, while this test focuses on UI behavior.
 omarchy-shell shell summon omarchy.emojis >/dev/null
 wait_until "emoji picker opens" 15 layer_present "omarchy-emojis"
 wtype "rocket"
@@ -31,7 +29,6 @@ screenshot "success-emoji-picker-search"
 wtype -k Return
 wait_until "emoji picker selection closes" 15 layer_absent "omarchy-emojis"
 
-# Seed two clipboard entries, search for the older one, and copy it back out.
 clipboard_token="Omarchy acceptance clipboard $(date +%s)"
 printf '%s' "$clipboard_token" | wl-copy
 wait_until "clipboard history captures test text" 15 grep -Fq "$clipboard_token" "$HOME/.local/state/omarchy/clipboard-history.json"
@@ -47,7 +44,6 @@ wtype -M shift -k Return -m shift
 wait_until "clipboard selection closes" 15 layer_absent "omarchy-clipboard"
 wait_until "clipboard selection restores test text" 15 bash -c '[[ $(wl-paste --no-newline) == "$1" ]]' _ "$clipboard_token"
 
-# Exercise the system branch without invoking any destructive action.
 omarchy-shell shell summon omarchy.menu '{"menu":"system"}' >/dev/null
 wait_until "system menu opens" 15 layer_present "omarchy-menu"
 wait_until "system menu content is visible" 15 screen_contains "Shutdown"
@@ -55,8 +51,6 @@ screenshot "success-system-menu"
 wtype -k Escape
 wait_until "system menu closes" 15 layer_absent "omarchy-menu"
 
-# Preview both visual selectors and cancel without changing user state. These
-# cover thumbnail generation, the image-grid overlay, and current selection.
 launch_app "omarchy-theme-bg-switcher"
 wait_until "background selector opens" 30 layer_present "omarchy-image-selector"
 sleep 1
@@ -71,8 +65,6 @@ screenshot "success-theme-selector"
 wtype -k Escape
 wait_until "theme selector closes" 15 layer_absent "omarchy-image-selector"
 
-# Walk the reminder flow through each input screen, but dismiss before it
-# schedules a real timer in the test user's session.
 omarchy-shell shell summon omarchy.reminders >/dev/null
 wait_until "reminder flow opens" 15 layer_present "omarchy-reminders"
 screenshot "success-reminder-01-minutes-prompt"
@@ -85,7 +77,6 @@ screenshot "success-reminder-03-message-prompt"
 wtype -k Escape
 wait_until "reminder flow closes" 15 layer_absent "omarchy-reminders"
 
-# Render a real shell notification and clear it through the notification IPC.
 omarchy-shell notifications dismissAll >/dev/null
 omarchy-notification-send "Acceptance notification" "Shell notification rendering" --expire-time=15000
 wait_until "notification popup opens" 15 layer_present "omarchy-notifications"
@@ -94,8 +85,6 @@ screenshot "success-notification-popup"
 omarchy-shell notifications dismissAll >/dev/null
 wait_until "notification popup closes" 15 layer_absent "omarchy-notifications"
 
-# The menu's Apps submenu does the full launcher loop: open, search by
-# typing, launch the top hit.
 if window_present "(?i)omawrite" >/dev/null 2>&1; then
   fail "app launch test starts with no Omawrite window" "an Omawrite window is already open"
 fi

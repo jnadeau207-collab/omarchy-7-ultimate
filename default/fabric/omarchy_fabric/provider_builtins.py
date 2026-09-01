@@ -16,24 +16,20 @@ from typing import Any
 
 try:
     import pwd as _pwd
-except ImportError:  # pragma: no cover - production is Linux; keeps static tooling portable.
+except ImportError:
     _pwd = None
 
 from .provider_registry import ProviderAvailability, ProviderRegistry, TypedProvider
 
-
 ProviderFactory = Callable[[], TypedProvider]
-
 
 @dataclass(frozen=True)
 class BuiltinProviderSpec:
     provider_id: str
     factory: ProviderFactory
 
-
 def _default_root() -> Path:
     return Path(__file__).resolve().parents[2]
-
 
 def _trusted_account_home() -> Path:
     """Resolve the daemon account home from the authenticated OS UID database."""
@@ -65,42 +61,35 @@ def _trusted_account_home() -> Path:
         raise RuntimeError("OS account home is invalid")
     return Path(raw_home)
 
-
 def _build_audio_provider() -> TypedProvider:
     from .providers.audio import build_provider
 
     return build_provider()
-
 
 def _build_bluetooth_provider() -> TypedProvider:
     from .providers.bluetooth import build_provider
 
     return build_provider()
 
-
 def _build_display_provider() -> TypedProvider:
     from .providers.display import build_provider
 
     return build_provider()
-
 
 def _build_input_provider() -> TypedProvider:
     from .providers.input import build_provider
 
     return build_provider()
 
-
 def _build_network_provider() -> TypedProvider:
     from .providers.network import build_provider
 
     return build_provider()
 
-
 def _build_power_provider() -> TypedProvider:
     from .providers.power import build_provider
 
     return build_provider()
-
 
 def _build_files_provider() -> TypedProvider:
     from .providers.files import build_provider
@@ -110,7 +99,6 @@ def _build_files_provider() -> TypedProvider:
         config_path=_default_root() / "ultimate" / "files" / "locations-v0.json",
     )
 
-
 def _build_defaults_provider() -> TypedProvider:
     from .providers.defaults import build_provider
 
@@ -119,90 +107,75 @@ def _build_defaults_provider() -> TypedProvider:
         config_path=_default_root() / "ultimate" / "files" / "default-associations-v0.json",
     )
 
-
 def _build_packages_provider() -> TypedProvider:
     from .providers.packages import build_provider
 
     return build_provider()
-
 
 def _build_compatibility_provider() -> TypedProvider:
     from .providers.compatibility import build_provider
 
     return build_provider()
 
-
 def _build_account_provider() -> TypedProvider:
     from .providers.account import build_provider
 
     return build_provider()
-
 
 def _build_backup_provider() -> TypedProvider:
     from .providers.backup import build_provider
 
     return build_provider(home_root=_trusted_account_home().as_posix())
 
-
 def _build_device_provider() -> TypedProvider:
     from .providers.device import build_provider
 
     return build_provider()
-
 
 def _build_diagnostics_provider() -> TypedProvider:
     from .providers.diagnostics import build_provider
 
     return build_provider()
 
-
 def _build_firewall_provider() -> TypedProvider:
     from .providers.firewall import build_provider
 
     return build_provider()
-
 
 def _build_printer_provider() -> TypedProvider:
     from .providers.printer import build_provider
 
     return build_provider()
 
-
 def _build_process_provider() -> TypedProvider:
     from .providers.process import build_provider
 
     return build_provider()
-
 
 def _build_recovery_provider() -> TypedProvider:
     from .providers.recovery import build_provider
 
     return build_provider()
 
-
 def _build_schedule_provider() -> TypedProvider:
     from .providers.schedule import build_provider
 
     return build_provider()
-
 
 def _build_service_provider() -> TypedProvider:
     from .providers.service import build_provider
 
     return build_provider()
 
-
 def _build_storage_provider() -> TypedProvider:
     from .providers.storage import build_provider
 
     return build_provider()
 
-
 def _build_update_provider() -> TypedProvider:
     from .providers.update import build_provider
 
     return build_provider()
-
 
 BUILTIN_PROVIDER_SPECS: tuple[BuiltinProviderSpec, ...] = (
     BuiltinProviderSpec("audio.provider", _build_audio_provider),
@@ -230,7 +203,6 @@ BUILTIN_PROVIDER_SPECS: tuple[BuiltinProviderSpec, ...] = (
 )
 BUILTIN_PROVIDER_IDS = tuple(spec.provider_id for spec in BUILTIN_PROVIDER_SPECS)
 BUILTIN_PROVIDER_FACTORIES = tuple(spec.factory for spec in BUILTIN_PROVIDER_SPECS)
-
 
 class _UnavailableProvider:
     def __init__(self, provider_id: str, detail: str) -> None:
@@ -298,13 +270,11 @@ class _UnavailableProvider:
             raise AssertionError("unavailable provider was invoked outside its closed contract")
         return dict(self._result)
 
-
 def _unavailable(provider_id: str, phase: str, registry: ProviderRegistry) -> TypedProvider:
     detail = f"{provider_id} is unavailable because its code-owned {phase} contract failed."
     provider = _UnavailableProvider(provider_id, detail)
     registry.register(provider)
     return provider
-
 
 def build_builtin_providers() -> tuple[TypedProvider, ...]:
     """Construct all builtins in deterministic order without probing hardware."""

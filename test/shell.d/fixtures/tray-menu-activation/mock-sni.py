@@ -10,14 +10,11 @@ import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 
-
 ITEM_PATH = "/StatusNotifierItem"
 MENU_PATH = "/StatusNotifierItem/Menu"
 
-
 def variant(value):
   return dbus.Variant(value)
-
 
 class StatusNotifierItem(dbus.service.Object):
   def __init__(self, bus):
@@ -69,7 +66,6 @@ class StatusNotifierItem(dbus.service.Object):
   @dbus.service.method("org.kde.StatusNotifierItem", in_signature="is")
   def Scroll(self, delta, orientation):
     return
-
 
 class DBusMenu(dbus.service.Object):
   def __init__(self, bus, event_path):
@@ -139,7 +135,6 @@ class DBusMenu(dbus.service.Object):
       self.Event(item_id, event_id, data, timestamp)
     return []
 
-
 def register_with_watcher(bus):
   watcher = dbus.Interface(
     bus.get_object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher"),
@@ -147,14 +142,12 @@ def register_with_watcher(bus):
   )
   watcher.RegisterStatusNotifierItem(ITEM_PATH)
 
-
 def main():
   try:
     return run()
   except Exception:
     traceback.print_exc()
     return 1
-
 
 def run():
   event_path = os.environ["OMARCHY_TRAY_MENU_EVENT_RESULT"]
@@ -181,7 +174,6 @@ def run():
 
   GLib.MainLoop().run()
   return 0
-
 
 if __name__ == "__main__":
   raise SystemExit(main())

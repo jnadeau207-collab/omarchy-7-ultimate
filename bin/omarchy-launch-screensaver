@@ -2,10 +2,8 @@
 
 # omarchy:summary=Launch the Omarchy screensaver in the default terminal on the system with the correct font configuration.
 
-# Exit early if screensaver is already running
 pgrep -f '[o]rg.omarchy.screensaver' && exit 0
 
-# Allow screensaver to be turned off but also force started
 if omarchy-toggle-enabled screensaver-off && [[ $1 != "force" ]]; then
   exit 1
 fi
@@ -34,14 +32,8 @@ hypr_exec() {
 
 SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
 
-# Open Hyprland's event stream before spawning anything, so a terminal that maps
-# quickly can't emit its openwindow event before we are listening for it.
 exec {events}< <(socat -U - "UNIX-CONNECT:$SOCKET")
 
-# hypr_exec is async and a new window maps on whatever monitor is focused at that
-# moment. Block until this monitor's screensaver actually opens before moving
-# focus on -- otherwise slow-starting terminals all pile onto the last monitor.
-# The deadline is a safety net in case the window never appears.
 wait_for_screensaver_window() {
   local line deadline=$((SECONDS + 5))
   while ((SECONDS < deadline)) && IFS= read -r -t $((deadline - SECONDS)) -u "$events" line; do

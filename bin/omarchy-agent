@@ -7,8 +7,6 @@
 inline=false
 pick=false
 
-# Flags only. A bare prompt would shadow the subcommands under this group, so
-# prompts go through omarchy-agent-prompt, which passes one here as --prompt.
 while (($#)); do
   case "$1" in
     --inline)
@@ -31,15 +29,10 @@ while (($#)); do
   esac
 done
 
-# Agents refuse to remember trust for $HOME, so launches from the keybinding or
-# menu start in the work directory instead of re-asking on every session.
 [[ $PWD == "$HOME" && -d $HOME/Work ]] && cd "$HOME/Work"
 
 agent=$(omarchy-default-agent)
 
-# Omarchy ships without a default, so there is nothing to launch until one is
-# picked. --pick offers the choice instead of the error, which is what the
-# keybinding wants: a keypress that opens nothing explains nothing.
 if [[ -z $agent ]]; then
   [[ $pick == "true" ]] && exec omarchy-menu summon setup.default.agent
   echo "Choose default agent with: omarchy default agent <name>" >&2
@@ -51,8 +44,6 @@ if omarchy-cmd-missing "$agent"; then
   exit 1
 fi
 
-# Agents launched from the keybinding or menu run unattended, so each one starts
-# with its own spelling of "don't stop to ask". Pi and Ori have none to skip.
 case "$agent" in
 opencode)
   command=(opencode --auto)
@@ -67,7 +58,6 @@ copilot)
   [[ -n ${prompt:-} ]] && command+=(--interactive "$prompt")
   ;;
 crush)
-  # --yolo belongs to the interactive command only; `crush run` never prompts.
   if [[ -n ${prompt:-} ]]; then
     command=(crush run "$prompt")
   else
@@ -98,9 +88,6 @@ omp)
   [[ -n ${prompt:-} ]] && command+=(-- "$prompt")
   ;;
 ori)
-  # Ori is a harness launcher, and `ori code` is the agent it runs itself.
-  # A prompt alone means one headless turn there, printed after the turn ends,
-  # so --interactive is what seeds the session with it and keeps the window.
   command=(ori code)
   [[ -n ${prompt:-} ]] && command+=(--interactive --prompt "$prompt")
   ;;
@@ -117,7 +104,5 @@ esac
 if [[ $inline == "true" ]]; then
   exec "${command[@]}"
 else
-  # A fixed app-id rather than the default org.omarchy.<binary>, so every agent
-  # window shares one class for window rules and themes to single out.
   exec omarchy-launch-tui --app-id=org.omarchy.agent "${command[@]}"
 fi

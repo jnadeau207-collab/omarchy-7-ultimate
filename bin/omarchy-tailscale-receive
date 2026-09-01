@@ -14,18 +14,9 @@ fi
 
 dir="${1:-${XDG_DOWNLOAD_DIR:-$HOME/Downloads}}"
 
-# Taildrop lands in a staging directory next door rather than straight in the
-# downloads directory: waiting for a delivery can take hours, and everything
-# else that shows up meanwhile is somebody else's file. Same filesystem, so
-# handing the finished file over is a rename.
 staging="$dir/.omarchy-taildrop"
 mkdir -p "$staging"
 
-# Take the name by linking to it rather than by looking and then renaming.
-# link(2) refuses an existing name, so nothing can land on the chosen one in
-# the gap between the two. Staging shares the filesystem with the downloads
-# directory, so the link always resolves and unlinking the staged name
-# finishes the move. Prints the name it took.
 claim_path() {
   local staged="$1" name="${staged##*/}" base ext candidate index=0
 
@@ -46,8 +37,6 @@ claim_path() {
       return 0
     fi
 
-    # Only a taken name is worth another spin. Anything else failed the link
-    # itself, and the file keeps its place in staging for the next run.
     [[ -e $candidate ]] || return 1
 
     ((index++))
@@ -70,8 +59,6 @@ announce() {
     ;;
   esac
 
-  # Announcing is best-effort: the file is already delivered, and under `set -e`
-  # a notification outage would otherwise kill the long-running receiver.
   omarchy-notification-send "${args[@]}" --exec xdg-open "$path" || true
 }
 
@@ -84,7 +71,6 @@ deliver() {
   done < <(find "$staging" -mindepth 1 -maxdepth 1)
 }
 
-# Anything left staged by an interrupted run still deserves delivering.
 deliver
 
 while true; do

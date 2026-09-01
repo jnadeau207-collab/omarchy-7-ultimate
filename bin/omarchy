@@ -123,9 +123,6 @@ append_pipe_value() {
   fi
 }
 
-# A route can resolve to a binary before all args are consumed (`update aur` only matches the `update` binary, leaving `aur` and `--help` as leftovers)
-# --help must never be lost among those leftovers and get forwarded into the real command, so this checks the whole remainder rather than just the first token.
-# A `--` marks everything after it as belonging to the command itself, so scanning stops there.
 remaining_has_help_flag() {
   local token=""
 

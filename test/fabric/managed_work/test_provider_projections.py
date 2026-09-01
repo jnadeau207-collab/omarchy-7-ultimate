@@ -10,7 +10,6 @@ from jsonschema import Draft202012Validator
 from helper import ACTOR, OTHER_ACTOR
 from omarchy_fabric.managed_work import CapacityLimits, ManagedWorkError, ManagedWorkPlane
 
-
 def catalog_item(
     provider_id: str,
     *,
@@ -30,7 +29,6 @@ def catalog_item(
         "registeredAt": 1_000,
         "changedAt": changed_at,
     }
-
 
 class ProviderProjectionTests(unittest.TestCase):
     @classmethod
@@ -194,7 +192,6 @@ class ProviderProjectionTests(unittest.TestCase):
             "validation.unknown-field",
             lambda: self.plane.project_provider_inventory(ACTOR, [opened], now=1_001),
         )
-
 
 if __name__ == "__main__":
     unittest.main()

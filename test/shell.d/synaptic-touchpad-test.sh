@@ -17,9 +17,6 @@ trap 'rm -rf "$test_tmp"' EXIT
 mkdir -p "$test_tmp/bin"
 modprobe_log="$test_tmp/modprobe.log"
 
-# Only a real load is logged, so a case that expects nothing to happen can say
-# so with an empty log even though the leaf always asks modprobe first whether
-# psmouse resolves against the running kernel.
 cat >"$test_tmp/bin/modprobe" <<'SH'
 #!/bin/bash
 
@@ -42,8 +39,6 @@ chmod +x "$test_tmp/bin"/*
 
 printf '%s\n' 'N: Name="SynPS/2 Synaptics TouchPad"' >"$test_tmp/devices"
 
-# Sourced under errexit the way run_logged runs it, so a failing modprobe would
-# fail the run rather than be swallowed here.
 run_fix() {
   : >"$modprobe_log"
 
@@ -61,8 +56,6 @@ grep -q 'psmouse synaptics_intertouch=1' "$modprobe_log" ||
   fail "the synaptic touchpad quirk enables InterTouch on a booted machine"
 pass "the synaptic touchpad quirk enables InterTouch on a booted machine"
 
-# The install-breaking case: under arch-chroot the live kernel's modules are not
-# the ones on disk, so psmouse does not resolve and there is nothing to load.
 run_fix "" 0 1
 if [[ -s $modprobe_log ]]; then
   fail "the synaptic touchpad quirk skips a kernel that cannot resolve psmouse"
@@ -75,8 +68,6 @@ if [[ -s $modprobe_log ]]; then
 fi
 pass "the synaptic touchpad quirk leaves an already-loaded psmouse alone"
 
-# An optional touchpad improvement never gets to halt an install, whatever the
-# reason the module declines to load.
 run_fix "" 1 2>/dev/null ||
   fail "the synaptic touchpad quirk survives a failing modprobe"
 pass "the synaptic touchpad quirk survives a failing modprobe"

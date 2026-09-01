@@ -95,7 +95,6 @@ ARGUMENTS_SCHEMA = {
 DEFAULT_RETENTION = {"daily": 7, "weekly": 4, "monthly": 6}
 THREATS = ["accidental-deletion", "disk-failure", "malware", "repository-loss"]
 
-
 def validate_home_relative_path(value: str) -> str:
     if not isinstance(value, str) or not value or "\x00" in value or "\\" in value:
         raise ValueError("backup restore path is invalid")
@@ -114,7 +113,6 @@ def validate_home_relative_path(value: str) -> str:
         raise ValueError("backup restore path escapes home scope")
     return str(path)
 
-
 def _validated_home_root(value: str | PurePosixPath) -> PurePosixPath:
     if not isinstance(value, (str, PurePosixPath)):
         raise ValueError("backup home root is invalid")
@@ -130,7 +128,6 @@ def _validated_home_root(value: str | PurePosixPath) -> PurePosixPath:
         raise ValueError("backup home root must identify one canonical /home user")
     return root
 
-
 def _snapshot_path(value: object, home_root: PurePosixPath) -> None:
     if not isinstance(value, str) or not value or len(value) > 1024 or "\x00" in value or "\\" in value:
         raise ValueError("restic snapshot path is invalid")
@@ -139,7 +136,6 @@ def _snapshot_path(value: object, home_root: PurePosixPath) -> None:
     path = PurePosixPath(value)
     if not path.is_absolute() or str(path) != value or (path != home_root and home_root not in path.parents):
         raise ValueError("restic snapshot escapes the configured home scope")
-
 
 def _snapshot_time(value: object) -> tuple[datetime, str]:
     if not isinstance(value, str) or not 1 <= len(value) <= 64:
@@ -151,7 +147,6 @@ def _snapshot_time(value: object) -> tuple[datetime, str]:
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise ValueError("restic snapshot timestamp lacks timezone truth")
     return parsed, value
-
 
 def parse_snapshots(text: str, *, home_root: str | PurePosixPath) -> list[dict[str, Any]]:
     document = parse_probe_json(text)
@@ -204,17 +199,14 @@ def parse_snapshots(text: str, *, home_root: str | PurePosixPath) -> list[dict[s
         }
     ]
 
-
 async def _probe_resources(runner: ProbeRunner, home_root: str | PurePosixPath) -> list[Mapping[str, Any]]:
     return parse_snapshots((await invoke_probe(BACKUP_COMMAND, runner)).stdout, home_root=home_root)
-
 
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     normalized = {key: arguments[key] for key in ("resourceId", "action", "scope", "snapshotId", "relativePath", "retention")}
     if normalized["relativePath"] is not None:
         normalized["relativePath"] = validate_home_relative_path(normalized["relativePath"])
     return normalized
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if current["repository"] != "available":
@@ -241,7 +233,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         raise ValueError("a different backup plan is already pending")
     return {**dict(current), "retention": dict(arguments["retention"]), "pendingPlan": pending_plan}
 
-
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "backup-policy", OPERATION_ACTION, "backup.home.plan", "consequential", ("mutating", "network"), max_resources=1),
     resource_schema=RESOURCE_SCHEMA,
@@ -253,11 +244,9 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan restic-style home {arguments['action']} within the closed home scope; no repository operation is executed.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe, home_root: str | PurePosixPath | None = None) -> LeafProvider:
     trusted_home = _validated_home_root(Path.home().as_posix() if home_root is None else home_root)
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner, trusted_home)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

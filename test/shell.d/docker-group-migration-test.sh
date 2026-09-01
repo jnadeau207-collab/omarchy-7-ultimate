@@ -1,13 +1,4 @@
 #!/bin/bash
-#
-# The docker-group opt-in migration must remove an existing install's user from
-# the root-equivalent docker group (only when they are in it), flag a reboot so
-# the group change actually takes effect (group membership is fixed at login),
-# refresh the stale Docker launcher entry, and stay idempotent on reruns.
-#
-# The real omarchy-remove-security-sudoless-docker and omarchy-state run here
-# (from the repo bin); only the privileged/system calls are stubbed, so the whole
-# chain — including the reboot flag — is exercised.
 
 set -euo pipefail
 
@@ -25,8 +16,6 @@ mkdir -p "$home/.local/share/applications" "$omarchy_path/applications" "$stub_b
 printf 'NEW-LAUNCHER\n' >"$omarchy_path/applications/Docker.desktop"
 printf 'OLD-LAUNCHER\n' >"$home/.local/share/applications/Docker.desktop"
 
-# id reports a controllable group set; sudo just drops the prefix; gpasswd
-# records its call instead of touching the real system.
 cat >"$stub_bin/id" <<'STUB'
 #!/bin/bash
 printf '%s\n' "${STUB_GROUPS:-wheel input}"
@@ -39,9 +28,6 @@ cat >"$stub_bin/gpasswd" <<'STUB'
 #!/bin/bash
 echo "$@" >>"${GPASSWD_CALLS:?}"
 STUB
-# gum confirm always says yes, and reboot records that it fired: the migration
-# must still NOT reboot (it defers to omarchy-update-restart), so neither should
-# be reached.
 cat >"$stub_bin/gum" <<'STUB'
 #!/bin/bash
 [[ $1 == confirm ]] && exit 0
@@ -66,7 +52,6 @@ run_migration() {
     bash -euo pipefail "$migration" >/dev/null 2>&1
 }
 
-# In the docker group: user removed, reboot flagged, launcher refreshed.
 run_migration "wheel input docker" || fail "migration runs when the user is in the docker group"
 grep -q -- "-d tester docker" "$gpasswd_calls" || fail "migration removes the user from the docker group"
 [[ -f $reboot_flag ]] || fail "migration flags a reboot so the group change takes effect"
@@ -74,7 +59,6 @@ grep -q -- "-d tester docker" "$gpasswd_calls" || fail "migration removes the us
 [[ $(cat "$launcher") == "NEW-LAUNCHER" ]] || fail "migration refreshes the stale Docker launcher entry"
 pass "migration removes the group, flags a reboot, and refreshes the launcher"
 
-# Not in the docker group (fresh install, or already migrated): nothing changes.
 printf 'OLD-LAUNCHER\n' >"$launcher"
 run_migration "wheel input" || fail "migration runs when the user is not in the docker group"
 [[ ! -f $gpasswd_calls ]] || fail "migration must not touch the group when the user is not in it"
@@ -82,7 +66,6 @@ run_migration "wheel input" || fail "migration runs when the user is not in the 
 [[ $(cat "$launcher") == "NEW-LAUNCHER" ]] || fail "migration still refreshes the launcher when the group is already absent"
 pass "migration is a no-op on the group and reboot when already out"
 
-# No launcher entry present: the refresh is skipped without error.
 rm -f "$launcher"
 run_migration "wheel input" || fail "migration tolerates a missing launcher entry"
 [[ ! -e $launcher ]] || fail "migration does not create a launcher entry that was not there"

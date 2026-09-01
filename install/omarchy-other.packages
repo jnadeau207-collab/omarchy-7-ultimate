@@ -1,5 +1,3 @@
-# Packages installed outside of install/packages.sh or optional packages
-# Utilized by ISO builder to ensure package availability in the ISO
 
 autoconf-archive
 asusctl
@@ -47,31 +45,24 @@ tuxedo-drivers-nocompatcheck-dkms
 yt6801-dkms
 zram-generator
 
-# Intel encoding processing
 libvpl
 vpl-gpu-rt
 
-# Vulkan drivers (auto-detected by hardware)
 vulkan-intel
 vulkan-radeon
 vulkan-asahi
 
-# Surface laptop support packages
 linux-firmware-marvell
 
-# Dell laptop support packages
 dell-xps-touchpad-haptics
 dell-xps13-sidecar-amps
 
-# Speaker tunings (LV2 limiter every tuning ends in)
 lsp-plugins-lv2
 
-# T2 MacBook support packages
 apple-bcm-firmware
 apple-t2-audio-config
 linux-t2
 linux-t2-headers
 t2fanrd
 
-# Framework 16
 qmk-hid

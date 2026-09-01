@@ -11,13 +11,10 @@ from jsonschema import Draft202012Validator, ValidationError
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.operations.contracts import ExecutorIntent, OperationPlan
 
-
 SCHEMA_ROOT = ROOT / "default" / "fabric" / "schema"
-
 
 def schema(name: str):
     return json.loads((SCHEMA_ROOT / name).read_text(encoding="utf-8"))
-
 
 def assert_closed_objects(test: unittest.TestCase, value, path="$", seen=None):
     seen = seen or set()
@@ -32,7 +29,6 @@ def assert_closed_objects(test: unittest.TestCase, value, path="$", seen=None):
     elif isinstance(value, list):
         for index, child in enumerate(value):
             assert_closed_objects(test, child, f"{path}[{index}]", seen)
-
 
 class OperationContractTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -106,7 +102,6 @@ class OperationContractTests(unittest.IsolatedAsyncioTestCase):
             encoded = json.dumps(document)
             self.assertNotIn("http://", encoded)
             self.assertNotIn("https://", encoded.replace(document["$schema"], ""))
-
 
 if __name__ == "__main__":
     unittest.main()

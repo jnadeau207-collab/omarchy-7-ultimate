@@ -186,7 +186,6 @@ pass "Antigravity migration only removes the Gemini wrapper Omarchy wrote"
    fail "Antigravity migration provisions the diagnose-crash skill"
 pass "Antigravity migration provisions Antigravity skills"
 
-
 : >"$stub_log"
 mkdir -p "$test_home/.local/state/omarchy"
 touch "$test_home/.local/state/omarchy/preinstalls-removed"
@@ -219,8 +218,6 @@ source "$ROOT/migrations/1787342993.sh" >/dev/null
 [[ ! -s $stub_log ]] || fail "agent migrations respect the preinstall opt-out"
 [[ ! -e $test_home/.local/bin/omp ]] || fail "agent migration removes the obsolete Oh My Pi wrapper after opt-out"
 
-# The matcher has to catch a bare oh-my-pi wrapper from either generation of the
-# installer, and leave a wrapper built on the fully qualified package alone.
 for obsolete_form in 'mise use -g "oh-my-pi"' 'mise use -g --quiet "oh-my-pi"'; do
   printf '#!/bin/bash\n%s || exit 1\n' "$obsolete_form" >"$test_home/.local/bin/omp"
   chmod +x "$test_home/.local/bin/omp"
@@ -259,8 +256,6 @@ grep -Fq "Choose default agent with" "$test_tmp/no-agent-output" ||
 [[ ! -s $launch_log ]] || fail "agent launcher starts nothing without a default"
 pass "agent launcher refuses to launch without a default"
 
-# The keybinding uses --pick, where an error on stderr nobody sees would make
-# the keypress look broken. It offers the choice instead.
 : >"$launch_log"
 : >"$menu_log"
 omarchy-agent --pick
@@ -421,8 +416,6 @@ assert_launched() {
   local agent=$1
   local description=$2
   shift 2
-  # Every agent window launches under the same app-id, whichever agent is
-  # default, so window rules and themes see one class for all of them.
   local expected=(--app-id=org.omarchy.agent "$@")
 
   mapfile -d '' -t actual <"$launch_log"
@@ -502,15 +495,12 @@ mapfile -d '' -t inline_args <"$inline_log"
   fail "inline agent launcher runs in the current terminal"
 pass "inline agent launcher runs in the current terminal"
 
-# The prompt route exists so the router can tell a prompt from a subcommand, so
-# cover the public routes and not only the binaries behind them.
 : >"$launch_log"
 omarchy agent
 mapfile -d '' -t launch_args <"$launch_log"
 [[ ${launch_args[*]} == "--app-id=org.omarchy.agent opencode --auto" ]] ||
   fail "omarchy agent routes to the launcher"
 
-# With an agent chosen there is nothing to pick, so the keybinding launches.
 : >"$launch_log"
 : >"$menu_log"
 omarchy-agent --pick

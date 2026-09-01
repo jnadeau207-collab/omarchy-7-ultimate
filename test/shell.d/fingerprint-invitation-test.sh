@@ -2,7 +2,6 @@
 
 source "$(dirname "$0")/base-test.sh"
 
-# The hook guards on the real /etc/pam.d path, which can't be mocked via PATH.
 if [[ -f /etc/pam.d/omarchy-lock-fingerprint ]]; then
   pass "fingerprint invitation test skipped: host already has fingerprint auth configured"
   exit 0
@@ -40,8 +39,6 @@ done
 EOF
 chmod +x "$test_bin/omarchy-notification-send"
 
-# The shell runs the click command, so the invitation must not need a unit of its
-# own to keep a blocked sender alive until the toast is answered.
 cat >"$test_bin/systemd-run" <<'EOF'
 #!/bin/bash
 echo "systemd-run:$*" >>"$TEST_LOG"

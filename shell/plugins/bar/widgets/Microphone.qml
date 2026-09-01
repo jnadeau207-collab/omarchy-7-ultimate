@@ -7,7 +7,6 @@ BarWidget {
   id: root
   moduleName: "omarchy.microphone"
 
-
   readonly property var source: Pipewire.defaultAudioSource
   readonly property bool muted: source && source.audio ? source.audio.muted : true
   readonly property real volume: source && source.audio ? source.audio.volume : 0

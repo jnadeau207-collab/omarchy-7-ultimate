@@ -6,7 +6,6 @@ set -e
 
 PREFIX="$HOME/Games/battlenet"
 
-# Stop any running Battle.net / wine processes tied to this prefix.
 pkill -f "$PREFIX" 2>/dev/null || true
 sleep 1
 

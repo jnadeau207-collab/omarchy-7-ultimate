@@ -1,5 +1,3 @@
--- Ultimate mode detection for Hyprland. Default is Desktop Mode; a one-line
--- state file at ~/.local/state/omarchy/ultimate/mode selects Power User Mode.
 local paths = require("default.hypr.paths")
 
 local function read_mode()

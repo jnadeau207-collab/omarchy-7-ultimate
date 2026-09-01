@@ -14,11 +14,9 @@ from omarchy_fabric.providers.packages.identity import revision, stable_id
 
 from helper import arguments, host, principal, provider, recipes, request, reviewed_request
 
-
 class UnexpectedAdapter:
     async def checkpoint(self, name, plan):
         raise RuntimeError("untrusted adapter text must not escape")
-
 
 class CompatibilityAdversarialTests(unittest.IsolatedAsyncioTestCase):
     async def deploy(self, value, request_id="request.adversarial.deploy"):
@@ -258,7 +256,6 @@ class CompatibilityAdversarialTests(unittest.IsolatedAsyncioTestCase):
         lie = copy.deepcopy(base); lie.update({"id": stable_id("deployment.compatibility", "workload.duplicate", "known-good-recipe"), "route": "known-good-recipe", "recipeId": "recipe.adobe-reader.v1"})
         with self.assertRaises(FabricError):
             CompatibilityEngine(recipes(), deployments=[lie])
-
 
 if __name__ == "__main__":
     unittest.main()

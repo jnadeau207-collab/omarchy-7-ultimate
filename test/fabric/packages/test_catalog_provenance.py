@@ -14,7 +14,6 @@ from omarchy_fabric.providers.packages.identity import stable_id
 
 from helper import arguments, catalog, catalog_document, installed, principal, provider
 
-
 class CatalogProvenanceTests(unittest.TestCase):
     def test_catalog_covers_every_supported_channel_and_is_deterministic(self):
         first = catalog()
@@ -102,7 +101,6 @@ class CatalogProvenanceTests(unittest.TestCase):
             self.assertTrue(command.executable.startswith("/"))
             self.assertNotIn("-c", command.arguments)
 
-
 class PackageRegistryTests(unittest.IsolatedAsyncioTestCase):
     async def test_provider_is_admitted_and_read_results_are_closed(self):
         value = provider([installed(adopted=False)])
@@ -133,7 +131,6 @@ class PackageRegistryTests(unittest.IsolatedAsyncioTestCase):
         planned = await registry.preflight("packages.provider", "install", args, principal())
         self.assertEqual(planned["preflight"]["adapter"]["adapterId"], "packages.pacman.install")
         self.assertFalse(hasattr(registry, "apply"))
-
 
 if __name__ == "__main__":
     unittest.main()

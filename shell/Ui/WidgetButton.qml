@@ -70,8 +70,6 @@ Item {
   }
 
   readonly property bool tooltipHovered: visible && interactive && !concealed && (mouseArea.containsMouse || hover.hovered)
-  // Width of the painted label, for bar chrome that wants to line up with the
-  // text rather than with the slot it sits in. Zero on icon-only buttons.
   readonly property real labelWidth: label.visible ? label.implicitWidth : 0
 
   readonly property bool highContrast: Tokens.accessibility.highContrast

@@ -23,9 +23,6 @@ Panel {
   }
 
   readonly property var providers: usage.enabledProviders
-  // The selection follows the provider, not the slot it happens to sit in: a
-  // provider whose first scan lands while the panel is open would otherwise
-  // shift the list underneath you and swap out what you were reading.
   property string selectedProviderId: ""
   readonly property int providerIndex: {
     for (var i = 0; i < providers.length; i++)
@@ -36,16 +33,12 @@ Panel {
 
   property bool cursorActive: false
 
-  // Countdowns and "updated" read this instead of Date.now() so the
-  // panel keeps telling the truth while it sits open.
   property double nowMs: Date.now()
 
   readonly property var limits: limitWindows(provider)
   readonly property var models: modelRows(provider)
   readonly property var headline: bindingWindow(provider)
   readonly property var balance: provider ? (provider.balance || null) : null
-  // A prepaid account runs low the way a subscription window fills up: the
-  // last 10% of the funded credits lights the same alarm.
   readonly property bool balanceAlarming: !!balance && balance.funded > 0
     && balance.remaining / balance.funded <= 0.1
   readonly property bool alarming: (!!headline && headline.percent >= 0.9) || balanceAlarming
@@ -73,14 +66,6 @@ Panel {
     root.close()
   }
 
-  // ---------------------------------------------------------------- limits
-  //
-  // Both providers report the same two shapes: a short rolling session window
-  // and a long weekly one. Everything below normalizes them into one record so
-  // the meters and the hero speak a single language.
-
-  // Claude spells its windows out ("Session (5-hour)"), Codex abbreviates
-  // them ("5h window", "30m window"). Both have to land on the same record.
   function windowIsLong(text) {
     return text.indexOf("week") >= 0 || text.indexOf("7-day") >= 0 || text.indexOf("seven") >= 0
       || text.indexOf("month") >= 0 || text.indexOf("30-day") >= 0
@@ -106,10 +91,6 @@ Panel {
     return plain === "" ? "Limit" : plain
   }
 
-  // A collector that already knows which window a limit belongs to says so,
-  // and that beats reading it back out of the label: a model-scoped limit is
-  // titled after its model, and a name like "Opus 5 (1M context)" would parse
-  // as a one-minute window.
   function limitWindow(label, percent, resetAt, title) {
     return {
       title: String(title || "") !== "" ? String(title) : windowTitle(label),
@@ -130,8 +111,6 @@ Panel {
     return out
   }
 
-  // The window that decides how much room is left — the fullest one, since
-  // that is what stops the next prompt.
   function bindingWindow(p) {
     var windows = limitWindows(p)
     var best = null
@@ -157,11 +136,6 @@ Panel {
     return Math.max(1, minutes) + "m"
   }
 
-  // ---------------------------------------------------------------- balance
-  //
-  // Prepaid agents report a credit ledger instead of rate-limit windows: the
-  // record's balance object carries remaining, funded, and spent amounts.
-
   function currencyPrefix(currency) {
     var code = String(currency || "USD").toUpperCase()
     if (code === "USD") return "$"
@@ -183,10 +157,6 @@ Panel {
     return text
   }
 
-  // ---------------------------------------------------------------- content
-
-  // The plan you pay for, under the name of the tool it pays for. Limits live
-  // in their own section; the hero just says what this is.
   function heroMeta(p) {
     if (!p) return ""
     if (String(p.usageStatusText || "") !== "") return p.usageStatusText
@@ -195,8 +165,6 @@ Panel {
     return tier.charAt(0).toUpperCase() + tier.slice(1)
   }
 
-  // Local calendar date, recomputed from nowMs so a panel left open across
-  // midnight moves the "Today" row with the clock.
   function todayDate() {
     var now = new Date(root.nowMs)
     return now.getFullYear()
@@ -222,9 +190,6 @@ Panel {
       ? String(day.date)
       : dayName(day.date) + " " + (parsed.getMonth() + 1) + "/" + parsed.getDate()
     var text = label + " · " + usage.formatTokenCount(Number(day.messageCount || 0)) + " tokens"
-    // Prompt and session counts only exist for today, so they ride along here
-    // instead of taking a section of their own. Billing-API agents never
-    // count prompts, and "0 prompts" would read as a quiet day, not a gap.
     if (today && provider && provider.hasPromptStats !== false)
       text += " · " + Number(provider.todayPrompts || 0) + " prompts · "
         + Number(provider.todaySessions || 0) + " sessions"
@@ -268,7 +233,6 @@ Panel {
       + " · cache write " + usage.formatTokenCount(row.cacheWrite)
   }
 
-  // Only speaks up when the numbers cover more than this machine.
   function footerText() {
     if (usage.syncStatusText !== "") return usage.syncStatusText
     if (provider && provider.syncEnabled && provider.syncDeviceCount > 0)
@@ -276,9 +240,6 @@ Panel {
     return ""
   }
 
-  // Agents that ship a white mark carry an `assets/<id>-light.svg` twin for
-  // light surfaces; marks that work on both (Claude's brand-orange) ship one
-  // file. The luminance check decides which candidate to try first.
   function colorChannelLuminance(value) {
     var channel = Number(value)
     if (!isFinite(channel)) return 0
@@ -291,9 +252,6 @@ Panel {
       + 0.0722 * colorChannelLuminance(color.b)
   }
 
-  // Marks resolve by convention, so a new agent's data file needs nothing
-  // from this panel: assets/<id>.svg if it ships one, the module's bar glyph
-  // if it doesn't.
   function iconCandidatesForProvider(p, surfaceColor) {
     if (!p) return []
     var candidates = []
@@ -303,9 +261,6 @@ Panel {
     return candidates
   }
 
-  // Desktop Mode keeps the usage glyph visible as a launch shim to Agent Center.
-  // The empty panel copy is the honest state on a machine that has never run a
-  // coding agent, not a missing Superbar slot.
   visible: true
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
@@ -324,8 +279,6 @@ Panel {
     settings: root.settings
   }
 
-  // Cheap enough to keep running: it only re-evaluates text bindings, and a
-  // stale "resets in 2h" on a panel that is open is worse than a timer.
   Timer {
     interval: 30000
     running: root.opened
@@ -365,8 +318,6 @@ Panel {
     open: root.opened
     focusTarget: keyCatcher
     contentWidth: panel.fittedContentWidth(Style.space(380))
-    // Taller than the control panels on purpose: this one is a dashboard, and
-    // the whole point is reading limits and history without scrolling.
     contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(640))
 
     PanelKeyCatcher {
@@ -403,7 +354,6 @@ Panel {
           width: panelFlick.width
           spacing: Style.space(12)
 
-          // ---------- Hero: provider mark · name · plan ----------
           PanelHero {
             id: hero
             visible: !!root.provider
@@ -417,11 +367,6 @@ Panel {
               Item {
                 id: heroMark
                 property var candidates: root.iconCandidatesForProvider(root.provider, root.surface)
-                // Provider objects are rebuilt on every refresh, which churns the
-                // array's identity without changing its content. Restart the fallback
-                // walk only when the URLs change: re-pointing source at a URL whose
-                // load already failed emits no statusChanged, so an identity-only
-                // reset would strand the walker on a missing -light twin.
                 property string candidatesKey: candidates.join("\n")
                 property int candidateIndex: 0
                 onCandidatesKeyChanged: candidateIndex = 0
@@ -436,8 +381,6 @@ Panel {
                   sourceSize.width: Style.font.display * 2
                   sourceSize.height: Style.font.display * 2
                   fillMode: Image.PreserveAspectFit
-                  // Advancing source from inside its own status change trips the
-                  // binding-loop detector; defer the step one tick.
                   onStatusChanged: if (status === Image.Error && heroMark.candidateIndex < heroMark.candidates.length)
                     Qt.callLater(function() { heroMark.candidateIndex++ })
                 }
@@ -477,7 +420,6 @@ Panel {
             onClicked: root.launchAgentCenter()
           }
 
-          // ---------- Provider switch ----------
           Row {
             id: providerSwitch
             visible: root.providers.length > 1
@@ -513,7 +455,6 @@ Panel {
             }
           }
 
-          // ---------- Status ----------
           BorderSurface {
             visible: !!root.provider && String(root.provider.usageStatusText || "") !== ""
             width: parent.width
@@ -538,7 +479,6 @@ Panel {
             }
           }
 
-          // ---------- Balance / limits ----------
           PanelSeparator {
             visible: balanceSection.visible || limitsSection.visible
             foreground: root.foreground
@@ -550,8 +490,6 @@ Panel {
             width: parent.width
             spacing: Style.space(10)
 
-            // The meter shows what is left, not what is used: a prepaid
-            // account drains toward empty rather than filling toward a cap.
             readonly property real ratio: root.balance && root.balance.funded > 0
               ? root.clamp(root.balance.remaining / root.balance.funded, 0, 1)
               : -1
@@ -630,7 +568,6 @@ Panel {
             }
           }
 
-          // ---------- Usage ----------
           PanelSeparator {
             visible: usageSection.visible
             foreground: root.foreground
@@ -662,14 +599,11 @@ Panel {
                 width: usageSection.width
                 day: modelData
                 ratio: Number(modelData.messageCount || 0) / usageSection.peak
-                // By date, not by position: the Claude stats-cache fallback can
-                // hand us a window that stops short of today.
                 today: String(modelData.date || "") === root.todayDate()
               }
             }
           }
 
-          // ---------- Models ----------
           PanelSeparator {
             visible: modelSection.visible
             foreground: root.foreground
@@ -695,8 +629,6 @@ Panel {
                 required property var modelData
                 width: modelSection.width
                 row: modelData
-                // Scaled to the heaviest model, so the top row is always full —
-                // the same scale-to-peak the weekly chart uses for its busiest day.
                 share: modelData.total / Math.max(1, root.models[0].total)
               }
             }
@@ -719,7 +651,6 @@ Panel {
     }
   }
 
-  // A limit window: label and percentage, meter, and reset countdown.
   component LimitRow: Column {
     id: limitRow
     property var window: null
@@ -735,8 +666,6 @@ Panel {
       Text {
         id: limitLabel
         textFormat: Text.PlainText
-        // A model-scoped window is titled after its model, and those names run
-        // long enough to reach the percentage, so the title gives way first.
         text: limitRow.window ? limitRow.window.title : ""
         color: root.foreground
         font.family: root.fontFamily
@@ -782,7 +711,6 @@ Panel {
     }
   }
 
-  // Rounded track showing the percentage of the allowance used.
   component Meter: Item {
     id: meter
     property real value: -1
@@ -813,8 +741,6 @@ Panel {
 
   }
 
-  // One row per day: label, bar, tokens. Today is picked out in full
-  // foreground so the week reads as a run-up to right now.
   component DayRow: Item {
     id: dayRow
     property var day: null
@@ -889,8 +815,6 @@ Panel {
     }
   }
 
-  // Model rows read as a table: the share bar fills the row behind the label
-  // instead of stacking under it, which keeps the whole dashboard on one screen.
   component ModelRow: Item {
     id: modelRow
     property var row: null

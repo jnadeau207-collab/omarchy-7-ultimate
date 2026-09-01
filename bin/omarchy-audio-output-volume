@@ -11,17 +11,12 @@ if [[ -z $action ]]; then
   exit 1
 fi
 
-# Resolve through any DSP sink to the physical one, so the keys always move real
-# loudness and the processing always sees full-scale input. Shared with the audio
-# panel and the output switcher.
 sink="$(omarchy-audio-output-sink)"
 if [[ -z $sink ]]; then
   echo "Could not resolve an audio sink to control." >&2
   exit 1
 fi
 
-# pactl reports the same percentage scale wpctl does (both are the raw volume
-# over PA_VOLUME_NORM), so the OSD reads identically either way.
 volume_percent() {
   pactl get-sink-volume "$sink" 2>/dev/null |
     awk 'NR == 1 {

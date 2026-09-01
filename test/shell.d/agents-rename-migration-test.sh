@@ -72,7 +72,6 @@ run_migration
 [[ $before == $(sha256sum "$config") ]] || fail "migration is idempotent" "$(cat "$config")"
 pass "migration is idempotent"
 
-# A config the migration cannot parse is left alone rather than truncated.
 printf '{ not json' >"$config"
 run_migration
 

@@ -17,10 +17,6 @@ cat >"$stub_bin/sudo" <<'STUB'
 exec "$@"
 STUB
 
-# Fails the first -Syu with the report under test, then succeeds. Every call
-# records its arguments and which of its streams reached a terminal: pacman puts
-# its questions on stderr once it is not running --noconfirm, so a retry meant
-# for a person has to keep that stream.
 cat >"$stub_bin/pacman" <<'STUB'
 #!/bin/bash
 attempt=$(($(cat "$PACMAN_ATTEMPTS") + 1))
@@ -41,10 +37,6 @@ STUB
 
 chmod +x "$stub_bin/sudo" "$stub_bin/pacman"
 
-# Everything a blocked qemu-common upgrade leaves on stderr, and no more. The
-# ":: ... Remove qemu-block-gluster? [y/N]" pacman asked is deliberately absent:
-# under --noconfirm it goes to stdout, so nothing downstream of the report can
-# be built on having read it.
 write_conflict_report() {
   echo 0 >"$test_tmp/attempts"
   : >"$test_tmp/calls"
@@ -66,17 +58,12 @@ update_env() {
     "PATH=$stub_bin:$ROOT/bin:$PATH"
 }
 
-# No terminal on any stream, the way a cron or ssh caller arrives.
 run_headless() {
   mapfile -t environment < <(update_env)
   env "${environment[@]}" bash "$ROOT/bin/omarchy-update-system-pkgs" \
     </dev/null >"$test_tmp/out" 2>"$test_tmp/err"
 }
 
-# script gives the update the pty that omarchy-update always runs it on, so the
-# terminal checks see what a person at the keyboard would give them. Its
-# transcript is stdout and stderr together, which is also what that person sees.
-# $1 optionally takes one stream back off the pty.
 run_on_terminal() {
   mapfile -t environment < <(update_env)
   env "${environment[@]}" \
@@ -104,9 +91,6 @@ pass "a package conflict is put back to the person running the update"
   fail "the interactive retry cannot be answered: pacman has no terminal left"
 pass "the interactive retry keeps the streams pacman asks and listens on"
 
-# Which streams have to be a terminal follows from where pacman asks: stderr
-# carries the question once --noconfirm is gone, stdin carries the answer, and
-# stdout carries progress bars nobody has to see to answer.
 write_conflict_report
 run_on_terminal '>/dev/null' ||
   fail "a redirected progress stream is mistaken for an unattended update"
@@ -144,8 +128,6 @@ fi
   fail "an unattended update prompts anyway"
 pass "-y is kept: an unattended update never waits on an answer"
 
-# The interactive upgrade skips the error capture the handler depends on, so
-# reaching it any other way would lose the report that drives every recovery.
 write_conflict_report
 if OMARCHY_UPDATE_INTERACTIVE=1 run_headless; then
   fail "a caller reaches the interactive upgrade on its own"
