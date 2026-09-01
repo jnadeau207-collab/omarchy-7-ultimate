@@ -73,10 +73,13 @@ def build_contracts(
     resource_schema: Mapping[str, Any],
     arguments_schema: Mapping[str, Any],
     state_schema: Mapping[str, Any],
+    operation_state_schema: Mapping[str, Any] | None = None,
+    operation_resource_kind: str | None = None,
 ) -> dict[str, dict[str, Any]]:
     if isinstance(max_resources, bool) or not isinstance(max_resources, int) or not 1 <= max_resources <= 64:
         raise ValueError("leaf inventory bound must be an integer from 1 through 64")
     state_body = _state_body(state_schema)
+    operation_state_body = state_body if operation_state_schema is None else _state_body(operation_state_schema)
     resource_ref = {
         "type": "object",
         "required": ["kind", "id"],
@@ -138,10 +141,19 @@ def build_contracts(
         f"{domain.title()} operation arguments",
         arguments_schema,
     )
+    operation_resource_ref = resource_ref if operation_resource_kind is None else {
+        "type": "object",
+        "required": ["kind", "id"],
+        "properties": {
+            "kind": {"const": operation_resource_kind},
+            "id": {"type": "string", "pattern": RESOURCE_ID_PATTERN, "maxLength": 128},
+        },
+        "additionalProperties": False,
+    }
     operation_state = _document(
         contract_id(domain, "operation-state"),
         f"{domain.title()} operation state",
-        state_body,
+        operation_state_body,
     )
     operation_preflight = _document(
         contract_id(domain, "operation-preflight"),
@@ -169,11 +181,11 @@ def build_contracts(
                 **metadata,
                 "action": {"const": operation_action},
                 "capability": {"const": operation_capability},
-                "resource": resource_ref,
+                "resource": operation_resource_ref,
                 "normalizedArguments": deepcopy(dict(arguments_schema)),
                 "stateRevision": {"type": "string", "pattern": REVISION_PATTERN},
-                "currentState": deepcopy(state_body),
-                "proposedState": deepcopy(state_body),
+                "currentState": deepcopy(operation_state_body),
+                "proposedState": deepcopy(operation_state_body),
                 "changed": {"type": "boolean"},
                 "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
                 "risk": {"const": risk},
@@ -183,7 +195,7 @@ def build_contracts(
                     "required": ["mode", "priorState"],
                     "properties": {
                         "mode": {"const": "rollback"},
-                        "priorState": deepcopy(state_body),
+                        "priorState": deepcopy(operation_state_body),
                     },
                     "additionalProperties": False,
                 },
@@ -213,11 +225,11 @@ def build_contracts(
                 **metadata,
                 "action": {"const": operation_action},
                 "capability": {"const": operation_capability},
-                "resource": resource_ref,
+                "resource": operation_resource_ref,
                 "changed": {"type": "boolean"},
                 "changeState": {"type": "string", "enum": ["none", "complete"]},
                 "stateRevision": {"type": "string", "pattern": REVISION_PATTERN},
-                "state": deepcopy(state_body),
+                "state": deepcopy(operation_state_body),
                 "error": {"type": "null"},
             },
             "additionalProperties": False,

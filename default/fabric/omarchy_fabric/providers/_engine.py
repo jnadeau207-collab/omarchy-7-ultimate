@@ -61,6 +61,7 @@ class DomainSpec:
     target_id: TargetId
     propose_state: ProposeState
     describe_change: DescribeChange
+    scope: Any = None
 
 class FakeBackend:
     """Hermetic resource backend with optional atomic persistence for restart tests."""
@@ -270,13 +271,27 @@ class LeafProvider:
         current_state = self._state(resource)
         proposed_value = self._proposed(current_state["value"], normalized)
         proposed_state = self._state(resource, proposed_value)
+        resource_binding = {"kind": self.spec.resource_kind, "id": resource["id"]}
+        if self.spec.scope is not None:
+            scoped = self.spec.scope(resource, proposed_value, normalized)
+            resource_binding = {"kind": scoped["kind"], "id": scoped["id"]}
+            current_state = {
+                "resourceId": scoped["id"],
+                "revision": state_revision(scoped["current"]),
+                "value": scoped["current"],
+            }
+            proposed_state = {
+                "resourceId": scoped["id"],
+                "revision": state_revision(scoped["proposed"]),
+                "value": scoped["proposed"],
+            }
         result = {
             "schemaVersion": self.spec.version,
             "provider": self.spec.provider_id,
             "providerVersion": self.spec.version,
             "action": action,
             "capability": definition["capability"],
-            "resource": {"kind": self.spec.resource_kind, "id": resource["id"]},
+            "resource": resource_binding,
             "normalizedArguments": normalized,
             "stateRevision": current_state["revision"],
             "currentState": current_state,
