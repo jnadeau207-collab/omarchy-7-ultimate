@@ -412,7 +412,7 @@ class OperationCoordinator:
     @staticmethod
     def _preflight_fields(value: Mapping[str, Any], outer: Mapping[str, Any]) -> tuple[ResourceBinding, Mapping[str, Any]]:
         required = {
-            "provider", "providerVersion", "action", "capability", "resource",
+            "schemaVersion", "provider", "providerVersion", "action", "capability", "resource",
             "normalizedArguments", "stateRevision", "currentState", "proposedState", "risk", "effects",
         }
         optional = {"changed", "summary", "recovery"}
