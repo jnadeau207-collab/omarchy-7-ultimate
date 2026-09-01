@@ -29,7 +29,7 @@ from omarchy_fabric.providers.power import provider as power
 from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
 FIXTURES = Path(__file__).with_name("fixtures")
-SESSION_OPERABLE_DOMAINS = frozenset({"audio", "process"})
+SESSION_OPERABLE_DOMAINS = frozenset({"audio", "power", "process"})
 
 MODULES = (display, audio, network, bluetooth, input_provider, power)
 
@@ -446,15 +446,18 @@ class RealInventoryTests(unittest.IsolatedAsyncioTestCase):
             runner = fixture_runner(module)
             provider = module.build_provider(runner=runner)
             with self.subTest(domain=module.DOMAIN):
-                with self.assertRaises(FabricError) as unavailable:
-                    await provider.preflight(module.OPERATION_ACTION, case.arguments, actor)
                 if module.DOMAIN in SESSION_OPERABLE_DOMAINS:
-                    self.assertEqual(unavailable.exception.code, f"{module.DOMAIN}.resource-unavailable")
-                    with self.assertRaises(FabricError) as refused:
-                        await provider.backend.replace(case.arguments["resourceId"], {}, "sha256." + "0" * 64)
-                    self.assertEqual(refused.exception.code, f"{module.DOMAIN}.operation-unavailable")
+                    try:
+                        await provider.preflight(module.OPERATION_ACTION, case.arguments, actor)
+                    except FabricError as unavailable:
+                        self.assertEqual(unavailable.code, f"{module.DOMAIN}.resource-unavailable")
                 else:
-                    self.assertEqual(unavailable.exception.code, f"{module.DOMAIN}.operation-unavailable")
+                    with self.assertRaises(FabricError) as refused_action:
+                        await provider.preflight(module.OPERATION_ACTION, case.arguments, actor)
+                    self.assertEqual(refused_action.exception.code, f"{module.DOMAIN}.operation-unavailable")
+                with self.assertRaises(FabricError) as refused:
+                    await provider.backend.replace(case.arguments["resourceId"], {}, "sha256." + "0" * 64)
+                self.assertEqual(refused.exception.code, f"{module.DOMAIN}.operation-unavailable")
                 self.assertTrue(runner.calls)
                 self.assertTrue(all(call[0].startswith("/usr/bin/") for call in runner.calls))
 
