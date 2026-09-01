@@ -20,7 +20,7 @@ PROVIDER_ID = "process.provider"
 OPERATION_ACTION = "termination.plan"
 PROCESS_COMMAND = FixedArgvCommand(
     "/usr/bin/ps",
-    ("-ww", "-eo", "pid=,uid=,comm=,cgroup="),
+    ("-ww", "-eo", "pid=,uid=,pcpu=,pmem=,rss=,comm=,cgroup="),
 )
 BOOT_ID_PATH = Path("/proc/sys/kernel/random/boot_id")
 PROC_ROOT = Path("/proc")
@@ -40,7 +40,7 @@ STATE_SCHEMA = {
 }
 RESOURCE_SCHEMA = {
     "type": "object",
-    "required": ["id", "label", "kind", "pid", "uid", "command", "groupId", "observedCount", "inventoryTruncated", "state"],
+    "required": ["id", "label", "kind", "pid", "uid", "command", "cpuPercent", "memoryPercent", "residentKb", "groupId", "observedCount", "inventoryTruncated", "state"],
     "properties": {
         "id": {"type": "string", "pattern": "^process\\.[0-9]+\\.[0-9a-f]{16}$"},
         "label": {"type": "string", "minLength": 1, "maxLength": 128},
@@ -48,6 +48,9 @@ RESOURCE_SCHEMA = {
         "pid": {"type": "integer", "minimum": 1, "maximum": 4194304},
         "uid": {"type": "integer", "minimum": 0, "maximum": 4294967295},
         "command": {"type": "string", "minLength": 1, "maxLength": 128},
+        "cpuPercent": {"type": "number", "minimum": 0, "maximum": 100},
+        "memoryPercent": {"type": "number", "minimum": 0, "maximum": 100},
+        "residentKb": {"type": "integer", "minimum": 0, "maximum": 4294967295},
         "groupId": {"type": "string", "pattern": "^process-group\\.[0-9a-f]{16}$"},
         "observedCount": {"type": "integer", "minimum": 1, "maximum": 4194304},
         "inventoryTruncated": {"type": "boolean"},
@@ -75,24 +78,36 @@ def _safe_text(value: str, *, maximum: int) -> str:
         raise ValueError("process text is empty")
     return cleaned[:maximum]
 
-def _process_rows(text: str) -> list[tuple[int, int, str, str]]:
-    rows: list[tuple[int, int, str, str]] = []
+def _ratio(value: str, label: str) -> float:
+    try:
+        ratio = float(value)
+    except ValueError:
+        raise ValueError(f"process {label} is invalid") from None
+    if ratio != ratio or ratio in (float("inf"), float("-inf")) or not 0.0 <= ratio <= 100.0:
+        raise ValueError(f"process {label} is out of range")
+    return round(ratio, 1)
+
+def _process_rows(text: str) -> list[tuple[int, int, float, float, int, str, str]]:
+    rows: list[tuple[int, int, float, float, int, str, str]] = []
     seen: set[int] = set()
     for raw_line in text.splitlines():
-        fields = raw_line.strip().split(maxsplit=3)
-        if len(fields) != 4:
+        fields = raw_line.strip().split(maxsplit=6)
+        if len(fields) != 7:
             raise ValueError("process row is invalid")
-        pid_text, uid_text, command, cgroup = fields
-        if not pid_text.isdecimal() or not uid_text.isdecimal():
+        pid_text, uid_text, cpu_text, memory_text, resident_text, command, cgroup = fields
+        if not pid_text.isdecimal() or not uid_text.isdecimal() or not resident_text.isdecimal():
             raise ValueError("process identity is invalid")
-        pid, uid = int(pid_text), int(uid_text)
+        pid, uid, resident = int(pid_text), int(uid_text), int(resident_text)
         if not 1 <= pid <= 4194304 or not 0 <= uid <= 4294967295 or pid in seen:
             raise ValueError("process identity is out of range or duplicated")
+        if not 0 <= resident <= 4294967295:
+            raise ValueError("process resident memory is out of range")
         seen.add(pid)
-        rows.append((pid, uid, _safe_text(command, maximum=128), _safe_text(cgroup, maximum=512)))
+        rows.append((pid, uid, _ratio(cpu_text, "cpu share"), _ratio(memory_text, "memory share"), resident,
+                     _safe_text(command, maximum=128), _safe_text(cgroup, maximum=512)))
     return rows
 
-def _selected_rows(rows: list[tuple[int, int, str, str]]) -> list[tuple[int, int, str, str]]:
+def _selected_rows(rows: list[tuple[int, int, float, float, int, str, str]]) -> list[tuple[int, int, float, float, int, str, str]]:
     users = sorted((row for row in rows if row[1] >= 1000), key=lambda row: (row[1], row[0]))
     system = sorted((row for row in rows if row[1] < 1000), key=lambda row: row[0])
     selected = users[:48] + system[:16]
@@ -106,9 +121,9 @@ def parse_processes(text: str, *, boot_id: str, start_ticks_by_pid: Mapping[int,
     resources: list[dict[str, Any]] = []
     observed_rows = _process_rows(text)
     rows = _selected_rows(observed_rows)
-    if not {pid for pid, _uid, _command, _cgroup in rows} <= set(start_ticks_by_pid):
+    if not {pid for pid, _uid, _cpu, _memory, _resident, _command, _cgroup in rows} <= set(start_ticks_by_pid):
         raise ValueError("kernel process identities do not match the process inventory")
-    for pid, uid, command, cgroup in rows:
+    for pid, uid, cpu_percent, memory_percent, resident, command, cgroup in rows:
         start_ticks = start_ticks_by_pid[pid]
         if isinstance(start_ticks, bool) or not isinstance(start_ticks, int) or start_ticks < 0:
             raise ValueError("kernel process start ticks are invalid")
@@ -122,6 +137,9 @@ def parse_processes(text: str, *, boot_id: str, start_ticks_by_pid: Mapping[int,
                 "pid": pid,
                 "uid": uid,
                 "command": command,
+                "cpuPercent": cpu_percent,
+                "memoryPercent": memory_percent,
+                "residentKb": resident,
                 "groupId": group_id,
                 "observedCount": len(observed_rows),
                 "inventoryTruncated": len(observed_rows) > len(rows),
@@ -195,7 +213,7 @@ async def _probe_resources(runner: ProbeRunner, proc_reader: ProcReader) -> list
     boot_id = await asyncio.to_thread(proc_reader, BOOT_ID_PATH, 128)
     start_ticks_by_pid: dict[int, int] = {}
     stable_rows: list[tuple[int, int, str, str]] = []
-    for pid, uid, command, cgroup in rows:
+    for pid, uid, cpu_percent, memory_percent, resident, command, cgroup in rows:
         process_root = PROC_ROOT / str(pid)
         try:
             stat_before = await asyncio.to_thread(proc_reader, process_root / "stat", 8192)
@@ -215,7 +233,10 @@ async def _probe_resources(runner: ProbeRunner, proc_reader: ProcReader) -> list
         raise ValueError("kernel boot identity changed during process inventory")
     if observed_rows and not stable_rows:
         raise ValueError("no process identity remained stable across the kernel probe")
-    stable_text = "\n".join(f"{pid} {uid} {command} {cgroup}" for pid, uid, command, cgroup in stable_rows)
+    stable_text = "\n".join(
+        f"{pid} {uid} {cpu_percent} {memory_percent} {resident} {command} {cgroup}"
+        for pid, uid, cpu_percent, memory_percent, resident, command, cgroup in stable_rows
+    )
     if stable_text:
         stable_text += "\n"
     resources = parse_processes(stable_text, boot_id=boot_id, start_ticks_by_pid=start_ticks_by_pid)
