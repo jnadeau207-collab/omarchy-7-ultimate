@@ -37,9 +37,45 @@ Item {
   property string operationId: ""
   property string operationMessage: ""
   property int operationTarget: 0
+  property string operationKind: ""
+  property string operationProfile: ""
   readonly property bool operationBusy: operationStage !== ""
   readonly property var audioResource: firstAudioResource()
   readonly property int audioPercent: currentAudioPercent()
+  readonly property var powerResource: firstPowerResource()
+  readonly property var powerProfiles: powerResource && powerResource.profiles ? powerResource.profiles : []
+  readonly property string activePowerProfile: powerResource ? String(powerResource.activeProfile || "") : ""
+
+  function firstPowerResource() {
+    if (!currentRoute || currentRoute.id !== "settings.power.overview") return null
+    if (!queryState.records || queryState.records.length === 0) return null
+    return queryState.records[0]
+  }
+
+  function profileLabel(profile) {
+    if (profile === "power-saver") return "Power saver"
+    if (profile === "balanced") return "Balanced"
+    if (profile === "performance") return "Performance"
+    return profile
+  }
+
+  function applyPowerProfile(profile) {
+    if (!host || operationBusy) return
+    var record = firstPowerResource()
+    if (!record || SettingsModel.POWER_PROFILES.indexOf(profile) < 0) return
+    if (record.profiles.indexOf(profile) < 0) return
+    root.operationKind = "power"
+    root.operationProfile = String(profile)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "power.provider",
+      action: "profile.set",
+      arguments: { resourceId: record.id, profile: root.operationProfile },
+      idempotencyKey: "settings.power-profile." + root.operationProfile + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
+  }
 
   function firstAudioResource() {
     if (!queryState.records || queryState.records.length === 0) return null
@@ -63,6 +99,7 @@ Item {
     if (!host || operationBusy) return
     var record = firstAudioResource()
     if (!record) return
+    root.operationKind = "audio"
     root.operationTarget = Math.max(0, Math.min(100, Math.round(percent)))
     root.operationMessage = ""
     root.operationStage = "preflight"
@@ -98,9 +135,14 @@ Item {
       return
     }
     if (root.operationStage === "start") {
-      root.resetOperation(String(result.status || "") === "succeeded"
-        ? "Output volume set to " + root.operationTarget + " percent."
-        : "The volume change ended as " + String(result.status || "unknown") + ".")
+      var succeeded = String(result.status || "") === "succeeded"
+      var applied = root.operationKind === "power"
+        ? "Power profile set to " + root.profileLabel(root.operationProfile) + "."
+        : "Output volume set to " + root.operationTarget + " percent."
+      var refused = root.operationKind === "power"
+        ? "The power profile change ended as " + String(result.status || "unknown") + "."
+        : "The volume change ended as " + String(result.status || "unknown") + "."
+      root.resetOperation(succeeded ? applied : refused)
       if (root.controller) root.controller.refresh()
     }
   }
@@ -208,7 +250,9 @@ Item {
 
     function onFabricFailure(requestId, error) {
       if (root.operationBusy && requestId === root.operationRequestId) {
-        root.resetOperation(error && error.explanation ? String(error.explanation) : "The volume change failed.")
+        root.resetOperation(error && error.explanation
+          ? String(error.explanation)
+          : (root.operationKind === "power" ? "The power profile change failed." : "The volume change failed."))
         return
       }
       if (root.controller) root.controller.receiveFailure(requestId, error)
@@ -601,6 +645,78 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
+
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.power.overview" && root.powerProfiles.length > 0
+              Layout.fillWidth: true
+              implicitHeight: profileColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: "Power profile"
+
+              ColumnLayout {
+                id: profileColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    text: Semantics.text(root.productProfile, "Power profile")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: root.operationBusy && root.operationKind === "power" ? "APPLYING" : "LIVE CONTROL"
+                    tone: root.operationBusy && root.operationKind === "power" ? "info" : "success"
+                  }
+                }
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Repeater {
+                    model: root.powerProfiles
+                    delegate: Ui.Button {
+                      required property string modelData
+                      text: root.profileLabel(modelData)
+                      focusable: true
+                      bordered: true
+                      enabled: !root.operationBusy && modelData !== root.activePowerProfile
+                      accessibleDescription: "Set the active power profile through power.provider profile.set"
+                      onClicked: root.applyPowerProfile(modelData)
+                    }
+                  }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: root.operationMessage !== "" && root.operationKind === "power"
+                    ? root.operationMessage
+                    : Semantics.text(root.productProfile,
+                        "The active profile is " + root.profileLabel(root.activePowerProfile) +
+                        ". Changes run through the durable operation service as this user, never with elevated privilege.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
