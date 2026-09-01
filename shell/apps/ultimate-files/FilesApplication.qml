@@ -294,7 +294,7 @@ Item {
                 id: boundaryText
                 anchors.fill: parent
                 anchors.margins: Style.space(10)
-                text: "Read-only Files v0 \u00b7 create, rename, trash, restore, mount, and disconnect controls remain unavailable until the durable coordinator and reviewed executor are connected. File contents are never read by this surface."
+                text: "Files v0 \u00b7 directory creation runs through the durable operation service as this user. Rename, trash, restore, mount, and disconnect remain unavailable. File contents are never read by this surface."
                 color: Tokens.text.secondary
                 font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
