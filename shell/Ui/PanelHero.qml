@@ -9,7 +9,7 @@ Item {
   property string meta: ""
   property string detail: ""
   property color foreground: Tokens.text.primary
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property real iconSize: Style.font.display
   property real iconOpacity: 1.0
   property alias metaOpacity: metaText.opacity

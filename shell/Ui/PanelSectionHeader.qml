@@ -5,7 +5,7 @@ Text {
   id: root
 
   property color foreground: Tokens.text.primary
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property real fontSize: Style.font.caption
 
   textFormat: Text.PlainText
