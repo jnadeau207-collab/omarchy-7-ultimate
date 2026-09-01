@@ -277,7 +277,8 @@ def canonicalize_workspace(state: Mapping[str, Any]) -> dict[str, Any]:
 class RealFilesBackend:
     """Bounded no-follow host inventory; this adapter never mutates the host."""
 
-    def __init__(self, home: Path, config_path: Path) -> None:
+    def __init__(self, home: Path, config_path: Path, *, session_operable: bool = False) -> None:
+        self.session_operable = session_operable
         self.home = Path(home)
         self.config_path = Path(config_path)
         if not self.home.is_absolute() or not self.config_path.is_absolute():
@@ -493,15 +494,16 @@ class RealFilesBackend:
                 ),),
             )
         validate_workspace(state)
-        reasons.append(_reason(
-            "files.operation-read-only",
-            "Files mutations require durable integration",
-            "The real provider intentionally exposes inventory only.",
-            recovery=("operation.integration-required",),
-        ))
+        if not self.session_operable:
+            reasons.append(_reason(
+                "files.operation-read-only",
+                "Files mutations require durable integration",
+                "The real provider intentionally exposes inventory only.",
+                recovery=("operation.integration-required",),
+            ))
         return StateSnapshot(
-            "degraded",
-            False,
+            "degraded" if reasons else "ready",
+            self.session_operable,
             freeze(state),
             tuple(reasons),
         )
@@ -1293,7 +1295,7 @@ def _provider(backend: Any) -> StateDomainProvider:
         operations=OPERATIONS,
     )
 
-def build_provider(*, home: Path | None = None, config_path: Path | None = None) -> StateDomainProvider:
+def build_provider(*, home: Path | None = None, config_path: Path | None = None, session_operable: bool = False) -> StateDomainProvider:
     if home is None:
         home = Path.home()
     if config_path is None:
@@ -1306,7 +1308,7 @@ def build_provider(*, home: Path | None = None, config_path: Path | None = None)
                 recovery_actions=("session.restart",),
             )
         config_path = Path(omarchy_path) / "default" / "ultimate" / "files" / "locations-v0.json"
-    return _provider(RealFilesBackend(home, config_path))
+    return _provider(RealFilesBackend(home, config_path, session_operable=session_operable))
 
 def build_fake_provider(
     state: Mapping[str, Any],
