@@ -434,11 +434,14 @@ application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
 model="$ROOT/shell/apps/ultimate-settings/SettingsModel.js"
 card="$ROOT/shell/apps/ultimate-settings/SettingsRecordCard.qml"
 
-grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read"]' "$entrypoint" \
-  || fail "Settings allowlist is exactly provider.catalog and provider.read"
-if grep -En 'provider\.invoke|reference\.operation|operation\.(preflight|approve|start|cancel)|managed-work\.query' \
+grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read", "operation.preflight", "operation.approve", "operation.start", "operation.get"]' "$entrypoint" \
+  || fail "Settings allowlist is exactly the two reads and the four operation steps"
+if grep -Eq 'fabricAllowedMethods:.*(provider[.]invoke|operation[.]cancel|operation[.]ledger|events[.])' "$entrypoint"; then
+  fail "Settings must not hold a method beyond its reads and its own operation steps"
+fi
+if grep -En 'provider\.invoke|reference\.operation|operation\.(cancel|ledger)|managed-work\.query' \
   "$entrypoint" "$application" "$model" "$card"; then
-  fail "Settings contains no mutation, legacy-operation, or managed-work method"
+  fail "Settings contains no unmediated mutation, legacy-operation, or managed-work method"
 fi
 pass "Settings method surface is exactly catalog plus typed read"
 
