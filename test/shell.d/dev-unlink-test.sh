@@ -61,7 +61,6 @@ grep -Fx $'sudo\ttee\t/etc/omarchy.conf' "$log_file" >/dev/null ||
 [[ $(<"$conf_file") == 'export OMARCHY_PATH="/usr/share/omarchy"' ]] ||
   fail "dev unlink writes the package path guard" "$(<"$conf_file")"
 
-# Left behind, it keeps sudo running a checkout nothing else points at.
 grep -Fx $'sudo\trm\t-f\t/etc/sudoers.d/omarchy-dev-path' "$log_file" >/dev/null ||
   fail "dev unlink drops the sudo secure_path drop-in" "$(cat "$log_file")"
 pass "dev unlink drops the sudo secure_path drop-in"

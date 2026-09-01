@@ -13,9 +13,7 @@ from omarchy_fabric.protocol import FabricClient
 from omarchy_fabric.provider_registry import ProviderAvailability, ProviderRegistry
 from omarchy_fabric.security import EndpointAdmission, PrincipalKind, SessionBindingStore
 
-
 SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
-
 
 def object_schema(
     schema_id: str,
@@ -32,16 +30,13 @@ def object_schema(
         "additionalProperties": False,
     }
 
-
 ARGUMENTS_ID = "urn:omarchy:fabric:provider:test-display:inspect-arguments"
 RESULT_ID = "urn:omarchy:fabric:provider:test-display:inspect-result"
 PREFLIGHT_ID = "urn:omarchy:fabric:provider:test-display:set-preflight"
 STATE_ID = "urn:omarchy:fabric:provider:test-display:set-state"
 
-
 def schema_reference(schema_id: str) -> dict[str, str]:
     return {"id": schema_id, "version": "v0"}
-
 
 def read_manifest(
     *,
@@ -72,7 +67,6 @@ def read_manifest(
         },
     }
 
-
 def read_schemas() -> dict[str, dict[str, object]]:
     return {
         ARGUMENTS_ID: object_schema(
@@ -90,7 +84,6 @@ def read_schemas() -> dict[str, dict[str, object]]:
         ),
     }
 
-
 class ReadProvider:
     def __init__(
         self,
@@ -107,7 +100,6 @@ class ReadProvider:
         self.read_calls.append((action, copy.deepcopy(arguments)))
         return copy.deepcopy(self.result)
 
-
 class BlockingProvider(ReadProvider):
     def __init__(self) -> None:
         super().__init__()
@@ -118,7 +110,6 @@ class BlockingProvider(ReadProvider):
         self.entered.set()
         await self.release.wait()
         return await super().read(action, arguments)
-
 
 class OperationProvider(ReadProvider):
     def __init__(self) -> None:
@@ -161,7 +152,6 @@ class OperationProvider(ReadProvider):
 
     async def rollback(self, *args: object) -> object:
         return {"revision": "revision.1"}
-
 
 class ProviderRegistryTests(unittest.IsolatedAsyncioTestCase):
     def test_registration_catalog_and_identical_registration_are_stable(self) -> None:
@@ -470,7 +460,6 @@ class ProviderRegistryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(replacement.generation, 2)
         self.assertEqual(registry.catalog()[0]["manifest"]["providerVersion"], "v0.2")
 
-
 class TypedProviderRpcTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -566,7 +555,6 @@ class TypedProviderRpcTests(unittest.IsolatedAsyncioTestCase):
                 },
             )
         self.assertEqual(mutation.exception.code, "operation.durable-route-required")
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -77,7 +77,6 @@ SH
 chmod +x "$stub_bin"/*
 
 export PATH="$stub_bin:$ROOT/bin:$PATH"
-# The resize helper anchors to a region file here, so keep it out of the real one
 export XDG_RUNTIME_DIR="$tmp_dir"
 export OMARCHY_TEST_MENU_ARGS="$tmp_dir/menu-args"
 export OMARCHY_TEST_RECORDER_ARGS="$tmp_dir/recorder-args"
@@ -259,8 +258,6 @@ for region in "not-a-region" ""; do
 done
 pass "webcam falls back to the monitor for an unusable region"
 
-# A region too narrow for presets scaled from its height shrinks the whole
-# ladder, so the three sizes stay distinct and each one fits inside the margins
 : >"$OMARCHY_TEST_HYPRCTL_ARGS"
 echo "200x1200+0+0" >"$region_file"
 for size in small medium large; do

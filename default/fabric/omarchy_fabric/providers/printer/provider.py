@@ -55,7 +55,6 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def _safe_endpoint(uri: str) -> tuple[str, str]:
     parsed = urlsplit(uri)
     if parsed.username is not None or parsed.password is not None:
@@ -68,7 +67,6 @@ def _safe_endpoint(uri: str) -> tuple[str, str]:
     if scheme in {"usb", "serial", "parallel", "file"}:
         return "local", scheme
     return "unknown", scheme[:32] or "unknown"
-
 
 def parse_printers(text: str) -> list[dict[str, Any]]:
     resources: list[dict[str, Any]] = []
@@ -102,7 +100,6 @@ def parse_printers(text: str) -> list[dict[str, Any]]:
         )
     return resources
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     try:
         output = (await invoke_probe(PRINTER_COMMAND, runner)).stdout
@@ -113,10 +110,8 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         output = ""
     return parse_printers(output)
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "action": arguments["action"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     action = arguments["action"]
@@ -125,7 +120,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
     if action == "resume" and current["accepting"] is True:
         raise ValueError("printer is already accepting jobs")
     return {**dict(current), "pendingAction": action}
-
 
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "printer", OPERATION_ACTION, "printer.queue.plan", "consequential", ("mutating", "privileged")),
@@ -138,10 +132,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan printer action {arguments['action']}; no CUPS mutation is executed.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

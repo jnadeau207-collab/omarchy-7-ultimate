@@ -9,14 +9,9 @@ require_command python3
 
 fns="$ROOT/default/bash/fns/ssh-reconnect"
 
-# The behavior tests retain the production threshold for fast failures and
-# lower it only for fake established sessions. Make sure the marker the test
-# drivers patch still exists.
 grep -q 'SECONDS - started < 30' "$fns" ||
   fail "drop threshold marker exists for test patching"
 pass "drop threshold marker exists for test patching"
-
-# --- _ssh_interactive parsing ---
 
 run_interactive() {
   bash -c "source '$fns'; _ssh_interactive \"\$@\"" _ "$@"
@@ -59,8 +54,6 @@ if run_interactive -p 2222; then
 fi
 pass "missing destination is not interactive"
 
-# --- reconnect behavior, run on a pty with a fake ssh ---
-
 fake_dir=$(mktemp -d)
 trap 'rm -rf "$fake_dir"' EXIT
 
@@ -72,10 +65,8 @@ import signal
 import sys
 import time
 
-
 def exit_on_signal(signum, _frame):
     raise SystemExit(128 + signum)
-
 
 signal.signal(signal.SIGINT, exit_on_signal)
 signal.signal(signal.SIGTERM, exit_on_signal)
@@ -119,7 +110,6 @@ ssh "\$@"
 echo "rc=\$?"
 EOF
 
-# Each plan line is "<duration> <exit code>" for one fake ssh attempt.
 run_case() {
   local plan="$1" threshold="$2"
   shift 2
@@ -178,13 +168,6 @@ out=$(script -qec "bash '$fake_dir/driver' host </dev/null" /dev/null | tr -d '\
   fail "redirected stdin does not reconnect" "$out"
 pass "redirected stdin does not reconnect"
 
-# Ctrl-C must stop the loop, not just the in-flight attempt. Only a real
-# interactive shell reproduces the job-control process groups this depends on,
-# so type the command, the ^C, and the status check into one over a pty. Wait
-# for the retry counter instead of guessing when the retry starts: a fixed
-# delay can fire during the original attempt on a loaded runner. The fallback
-# success makes a missed signal finish with the wrong status instead of
-# running past the finite plan.
 cat >"$fake_dir/rcfile" <<EOF
 PATH="$fake_dir:\$PATH"
 source <(sed 's/< 30/< 1/' "$fns")

@@ -22,7 +22,6 @@ import tempfile
 import tomllib
 from typing import Any
 
-
 SCHEMA_VERSION = "omarchy.design-tokens.v0"
 DEFAULTS_VERSION = "omarchy.design-defaults.v0"
 COLOR_RE = re.compile(r"^#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$")
@@ -32,16 +31,13 @@ NUMBER_RE = re.compile(r"^-?(?:\d+(?:\.\d+)?|\.\d+)$")
 BARE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]*$")
 WIDTHS_RE = re.compile(r"^-?\d+(?:\.\d+)?(?:\s+-?\d+(?:\.\d+)?){1,3}$")
 
-
 class TokenError(ValueError):
     """A user-actionable token resolution error."""
-
 
 def canonical_color(value: Any, label: str) -> str:
     if not isinstance(value, str) or not COLOR_RE.fullmatch(value.strip()):
         raise TokenError(f"{label} must be #rrggbb or Qt #aarrggbb")
     return value.strip().lower()
-
 
 def color_channels(value: str) -> tuple[int, int, int, int]:
     value = canonical_color(value, "color")
@@ -50,11 +46,9 @@ def color_channels(value: str) -> tuple[int, int, int, int]:
         return 255, int(raw[0:2], 16), int(raw[2:4], 16), int(raw[4:6], 16)
     return int(raw[0:2], 16), int(raw[2:4], 16), int(raw[4:6], 16), int(raw[6:8], 16)
 
-
 def opaque_color(value: str) -> str:
     _, red, green, blue = color_channels(value)
     return f"#{red:02x}{green:02x}{blue:02x}"
-
 
 def with_alpha(value: str, alpha: float) -> str:
     if not math.isfinite(alpha) or alpha < 0 or alpha > 1:
@@ -65,11 +59,9 @@ def with_alpha(value: str, alpha: float) -> str:
         return f"#{red:02x}{green:02x}{blue:02x}"
     return f"#{byte:02x}{red:02x}{green:02x}{blue:02x}"
 
-
 def q_round(value: float) -> int:
     """Match Math.round/QColor's positive-channel rounding."""
     return math.floor(value + 0.5)
-
 
 def q_lighter(value: str, factor: float) -> str:
     """Match QColor::lighter for the opaque theme colors used by Tokens.qml."""
@@ -82,7 +74,6 @@ def q_lighter(value: str, factor: float) -> str:
     out = colorsys.hsv_to_rgb(hue, saturation, brightness)
     return "#" + "".join(f"{max(0, min(255, q_round(channel * 255))):02x}" for channel in out)
 
-
 def q_darker(value: str, factor: float) -> str:
     if factor <= 0:
         raise TokenError("darkening factor must be positive")
@@ -90,7 +81,6 @@ def q_darker(value: str, factor: float) -> str:
     hue, saturation, brightness = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
     out = colorsys.hsv_to_rgb(hue, saturation, max(0.0, brightness / factor))
     return "#" + "".join(f"{max(0, min(255, q_round(channel * 255))):02x}" for channel in out)
-
 
 def composite(foreground: str, background: str) -> tuple[float, float, float]:
     alpha, red, green, blue = color_channels(foreground)
@@ -102,11 +92,9 @@ def composite(foreground: str, background: str) -> tuple[float, float, float]:
         (blue * a + back_blue * (1 - a)) / 255,
     )
 
-
 def compositor_hex(foreground: str, background: str) -> str:
     red, green, blue = composite(foreground, background)
     return f"#{q_round(red * 255):02x}{q_round(green * 255):02x}{q_round(blue * 255):02x}"
-
 
 def relative_luminance(channels: tuple[float, float, float]) -> float:
     def linear(channel: float) -> float:
@@ -114,7 +102,6 @@ def relative_luminance(channels: tuple[float, float, float]) -> float:
 
     red, green, blue = (linear(channel) for channel in channels)
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue
-
 
 def mix_opaque(start: str, target: str, amount: float) -> str:
     _, start_red, start_green, start_blue = color_channels(opaque_color(start))
@@ -126,11 +113,9 @@ def mix_opaque(start: str, target: str, amount: float) -> str:
         q_round(start_blue + (target_blue - start_blue) * amount),
     )
 
-
 def contrasting_ink(background: str) -> str:
     back = composite(opaque_color(background), "#ffffff")
     return "#000000" if relative_luminance(back) > 0.5 else "#ffffff"
-
 
 def lift_contrast(foreground: str, background: str, target: str, minimum: float) -> str:
     if contrast_ratio(foreground, background) + 1e-9 >= minimum:
@@ -150,33 +135,24 @@ def lift_contrast(foreground: str, background: str, target: str, minimum: float)
         return target
     return best
 
-
 def contrast_ratio(foreground: str, background: str) -> float:
-    # Token contrast is measured against the token's RGB stop. Translucent
-    # glass is composited by the compositor over arbitrary wallpaper; treating
-    # its alpha as white here would report dark glass as pale gray and make the
-    # same locked caption pair pass/fail according to an invented backdrop.
     back = composite(opaque_color(background), "#ffffff")
     fore = composite(foreground, opaque_from_channels(back))
     first = relative_luminance(fore)
     second = relative_luminance(back)
     return (max(first, second) + 0.05) / (min(first, second) + 0.05)
 
-
 def opaque_from_channels(channels: tuple[float, float, float]) -> str:
     return "#" + "".join(f"{max(0, min(255, q_round(channel * 255))):02x}" for channel in channels)
 
-
 def digest(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
-
 
 def read_required(path: Path, label: str) -> bytes:
     try:
         return path.read_bytes()
     except OSError as error:
         raise TokenError(f"cannot read {label} {path}: {error.strerror or error}") from error
-
 
 def load_defaults(path: Path) -> tuple[dict[str, Any], bytes]:
     raw = read_required(path, "design defaults")
@@ -202,7 +178,6 @@ def load_defaults(path: Path) -> tuple[dict[str, Any], bytes]:
     require_float(accessibility.get("textScale"), "accessibility.textScale", 1, 2)
     return value, raw
 
-
 def load_colors(path: Path) -> tuple[dict[str, Any], bytes]:
     raw = read_required(path, "colors file")
     try:
@@ -212,7 +187,6 @@ def load_colors(path: Path) -> tuple[dict[str, Any], bytes]:
     if not isinstance(value, dict):
         raise TokenError(f"colors file {path} must contain a TOML table")
     return value, raw
-
 
 def strip_inline_comment(line: str) -> str:
     quote = ""
@@ -241,7 +215,6 @@ def strip_inline_comment(line: str) -> str:
         raise TokenError("unterminated quoted shell value")
     return "".join(out).strip()
 
-
 def parse_shell_value(raw: str, label: str) -> Any:
     if not raw:
         raise TokenError(f"{label} has no value")
@@ -264,7 +237,6 @@ def parse_shell_value(raw: str, label: str) -> Any:
         return raw
     raise TokenError(f"{label} has unsupported shell.toml syntax: {raw!r}")
 
-
 def load_shell(path: Path) -> tuple[dict[str, Any], bytes]:
     raw = read_required(path, "shell file")
     try:
@@ -285,9 +257,6 @@ def load_shell(path: Path) -> tuple[dict[str, Any], bytes]:
             if not SECTION_RE.fullmatch(candidate):
                 raise TokenError(f"invalid shell section in {path}:{number}: {candidate!r}")
             section = candidate.lower()
-            # Hyphenated token sections remain valid input to the existing
-            # QML shell parser (which intentionally accepts no dotted table
-            # names) while resolving to the nested semantic namespace here.
             if section.startswith("tokens-"):
                 section = "tokens." + section[len("tokens-"):]
             continue
@@ -305,7 +274,6 @@ def load_shell(path: Path) -> tuple[dict[str, Any], bytes]:
             raise TokenError(f"invalid shell file {path}:{number}: {error}") from error
     return values, raw
 
-
 def require_float(value: Any, label: str, minimum: float, maximum: float) -> float:
     if isinstance(value, bool):
         raise TokenError(f"{label} must be a number between {minimum} and {maximum}")
@@ -317,25 +285,21 @@ def require_float(value: Any, label: str, minimum: float, maximum: float) -> flo
         raise TokenError(f"{label} must be between {minimum} and {maximum}, got {value!r}")
     return number
 
-
 def require_int(value: Any, label: str, minimum: int, maximum: int) -> int:
     number = require_float(value, label, minimum, maximum)
     if number != math.floor(number):
         raise TokenError(f"{label} must be a whole number, got {value!r}")
     return int(number)
 
-
 def parse_px(value: Any, label: str, minimum: int = 0, maximum: int = 4096) -> int:
     if isinstance(value, str) and value.lower().endswith("px"):
         value = value[:-2].strip()
     return require_int(value, label, minimum, maximum)
 
-
 def parse_duration(value: Any, label: str) -> int:
     if isinstance(value, str) and value.lower().endswith("ms"):
         value = value[:-2].strip()
     return require_int(value, label, 0, 60000)
-
 
 def parse_bool(value: Any, label: str) -> bool:
     if isinstance(value, bool):
@@ -350,7 +314,6 @@ def parse_bool(value: Any, label: str) -> bool:
             return False
     raise TokenError(f"{label} must be true or false")
 
-
 def palette_value(colors: dict[str, Any], label: str, keys: tuple[str, ...], fallback: str | None = None) -> str:
     for key in keys:
         if key in colors:
@@ -358,7 +321,6 @@ def palette_value(colors: dict[str, Any], label: str, keys: tuple[str, ...], fal
     if fallback is not None:
         return canonical_color(fallback, label)
     raise TokenError(f"colors.toml is missing {label} ({', '.join(keys)})")
-
 
 def palette_from(colors: dict[str, Any]) -> tuple[str, dict[str, str]]:
     mode_raw = colors.get("mode", "dark")
@@ -386,25 +348,21 @@ def palette_from(colors: dict[str, Any]) -> tuple[str, dict[str, str]]:
         "brightForeground": bright,
     }
 
-
 def merged_shell(layers: list[dict[str, Any]]) -> dict[str, Any]:
     merged: dict[str, Any] = {}
     for layer in layers:
         merged.update(layer)
     return merged
 
-
 def shell_number(shell: dict[str, Any], key: str, fallback: float, minimum: float, maximum: float) -> float:
     if key not in shell:
         return fallback
     return require_float(shell[key], key, minimum, maximum)
 
-
 def shell_bool(shell: dict[str, Any], key: str, fallback: bool) -> bool:
     if key not in shell:
         return fallback
     return parse_bool(shell[key], key)
-
 
 def scaled_spacing(shell: dict[str, Any], key: str, fallback: int, scale: float) -> int:
     full_key = f"spacing.{key}"
@@ -414,13 +372,11 @@ def scaled_spacing(shell: dict[str, Any], key: str, fallback: int, scale: float)
         return 0
     return max(1, q_round(fallback * scale))
 
-
 def state_color(shell: dict[str, Any], palette: dict[str, str], key: str, fallback_role: str) -> str:
     value = shell.get(f"controls.{key}", shell.get(f"style.{key}", fallback_role))
     if not isinstance(value, str):
         raise TokenError(f"controls.{key} must be a palette role or color")
     return resolve_color(value, palette, f"controls.{key}")
-
 
 def resolve_color(value: Any, palette: dict[str, str], label: str) -> str:
     if not isinstance(value, str):
@@ -447,7 +403,6 @@ def resolve_color(value: Any, palette: dict[str, str], label: str) -> str:
         return palette[role_map[lowered]]
     return canonical_color(role, label)
 
-
 def set_path(payload: dict[str, Any], dotted: str, value: Any) -> None:
     parts = dotted.split(".")
     cursor: dict[str, Any] = payload
@@ -459,7 +414,6 @@ def set_path(payload: dict[str, Any], dotted: str, value: Any) -> None:
     if parts[-1] not in cursor:
         raise TokenError(f"unknown semantic token override: tokens.{dotted}")
     cursor[parts[-1]] = value
-
 
 COLOR_OVERRIDES = {
     "surface.canvas": "surface.canvas",
@@ -525,7 +479,6 @@ BOOL_OVERRIDES = {
     "accessibility.high-contrast": "accessibility.highContrast",
     "accessibility.large-text": "accessibility.largeText",
 }
-
 
 def apply_explicit_overrides(payload: dict[str, Any], shell: dict[str, Any], palette: dict[str, str]) -> None:
     known: set[str] = set()
@@ -624,7 +577,6 @@ def apply_explicit_overrides(payload: dict[str, Any], shell: dict[str, Any], pal
             contrasting_ink(payload["selection"]["background"]),
             4.5,
         )
-
 
 def build_payload(
     colors: dict[str, Any],
@@ -844,7 +796,6 @@ def build_payload(
     validate_payload(payload)
     return payload
 
-
 def annotate_contrast(payload: dict[str, Any]) -> None:
     caption = payload["caption"]
     payload["accessibility"]["contrast"] = {
@@ -856,7 +807,6 @@ def annotate_contrast(payload: dict[str, Any]) -> None:
         "captionMaximize": round(contrast_ratio(caption["maximize"]["foreground"], caption["maximize"]["background"]), 3),
         "captionMinimize": round(contrast_ratio(caption["minimize"]["foreground"], caption["minimize"]["background"]), 3),
     }
-
 
 def validate_payload(payload: dict[str, Any]) -> None:
     if payload.get("schemaVersion") != SCHEMA_VERSION:
@@ -911,7 +861,6 @@ def validate_payload(payload: dict[str, Any]) -> None:
         if ratio + 1e-9 < minimum:
             raise TokenError(f"{label} contrast is {ratio:.2f}:1; minimum is {minimum:.1f}:1")
 
-
 def legacy_chrome_adapter(payload: dict[str, Any]) -> dict[str, str]:
     validate_payload(payload)
     alpha, red, green, blue = color_channels(payload["chrome"]["glass"])
@@ -938,10 +887,8 @@ def legacy_chrome_adapter(payload: dict[str, Any]) -> dict[str, str]:
         "borderInactiveHex": compositor_hex(payload["border"]["subtle"], payload["surface"]["canvas"]),
     }
 
-
 def serialized(value: Any) -> bytes:
     return (json.dumps(value, indent=2, ensure_ascii=False, sort_keys=False) + "\n").encode("utf-8")
-
 
 def stage_atomic(path: Path, content: bytes) -> tuple[Path | None, bool]:
     try:
@@ -961,7 +908,6 @@ def stage_atomic(path: Path, content: bytes) -> tuple[Path | None, bool]:
         return Path(temporary), True
     except OSError as error:
         raise TokenError(f"cannot stage output {path}: {error.strerror or error}") from error
-
 
 def write_outputs(outputs: list[tuple[Path, bytes]]) -> bool:
     paths = [path.resolve(strict=False) for path, _ in outputs]
@@ -995,7 +941,6 @@ def write_outputs(outputs: list[tuple[Path, bytes]]) -> bool:
                 pass
     return changed
 
-
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description="Resolve Omarchy semantic design tokens")
     source = value.add_mutually_exclusive_group(required=True)
@@ -1008,7 +953,6 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--stdout", action="store_true", help="write the resolved payload to stdout")
     return value
 
-
 def active_paths() -> tuple[Path, list[Path], Path, Path]:
     home = os.environ.get("HOME", "")
     if not home:
@@ -1017,7 +961,6 @@ def active_paths() -> tuple[Path, list[Path], Path, Path]:
     theme = current / "theme"
     shells = [path for path in (theme / "shell.toml", Path(home) / ".config/omarchy/shell.toml") if path.is_file()]
     return theme / "colors.toml", shells, current / "design-tokens-v0.json", current / "chrome-tokens-v0.json"
-
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
@@ -1068,7 +1011,6 @@ def main(argv: list[str] | None = None) -> int:
     except TokenError as error:
         print(f"omarchy-theme-resolve-tokens: {error}", file=sys.stderr)
         return 2
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

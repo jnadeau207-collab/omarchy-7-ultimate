@@ -1,7 +1,3 @@
-// Parses omarchy-network-qr output: a "meta\t<iface>\t<security>\t<ssid>"
-// header, then a square 0/1 module matrix. The SSID sits last so it may
-// contain tabs. A malformed matrix returns empty rather than rendering a
-// code that cannot scan.
 function parseQrOutput(raw) {
   var lines = String(raw || "").trim().split(/\r?\n/).filter(function(line) { return line !== "" })
   var meta = { iface: "", security: "", ssid: "" }

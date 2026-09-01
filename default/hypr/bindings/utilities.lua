@@ -20,7 +20,6 @@ o.bind("SUPER + BACKSPACE", "Toggle window transparency", "omarchy-hyprland-wind
 o.bind("SUPER + SHIFT + BACKSPACE", "Toggle window gaps", "omarchy-hyprland-window-gaps-toggle")
 o.bind("SUPER + CTRL + BACKSPACE", "Toggle single-window square aspect", "omarchy-hyprland-window-single-square-aspect-toggle")
 
--- xkbcommon names the comma keysym "comma"; the upper-case "COMMA" does not match.
 o.bind("SUPER + comma", "Dismiss last notification", "omarchy-shell notifications dismissOne")
 o.bind("SUPER + SHIFT + comma", "Dismiss all notifications", "omarchy-shell notifications dismissAll")
 o.bind_toggle("SUPER + CTRL + comma", "Toggle silencing notifications", "notification-silencing")
@@ -41,11 +40,6 @@ o.bind("SUPER + ALT + code:35", "Make webcam overlay larger", "omarchy-capture-w
 o.bind("SUPER + PRINT", "Color picker", "pkill hyprpicker || hyprpicker -a")
 o.bind("SUPER + CTRL + PRINT", "Extract text (OCR) from screenshot", "omarchy-capture-text")
 
--- Keyboard control for the slurp region picker (see omarchy-capture-region).
--- The binds live exactly as long as a selection layer is on screen (slurp
--- opens one per monitor), so they cannot leak or get stuck.
--- Unbinding by key would take a same-key binding out of the user's own config
--- with it, so each handle is kept and removed individually.
 local selection_layers = 0
 local selection_binds = {}
 
@@ -102,10 +96,6 @@ o.bind("SUPER + CTRL + W", "Network", "omarchy-shell shell toggle omarchy.networ
 o.bind("SUPER + CTRL + P", "Power", "omarchy-shell shell toggle omarchy.power")
 o.bind("SUPER + CTRL + T", "Activity", { tui = "btop" })
 
--- The letters above name a panel; the numbers count them. 1 is the leftmost
--- panel in the bar's right section, and a widget with no panel of its own (the
--- tray) is not counted, so the number matches the icon a user would point at.
--- A bar with fewer panels than this leaves the tail of the range doing nothing.
 for panel = 1, 9 do
   o.bind(
     "SUPER + CTRL + code:" .. tostring(panel + 9),

@@ -20,11 +20,6 @@ case "$KIND" in
     ;;
 esac
 
-# The persisted disable is the device name stored as plain data; on every
-# reload default/hypr/disabled-input-device.lua reads it back and disables the
-# device. Names come from USB descriptors and must not be interpolated into
-# shell or Lua. The path is hardcoded to ~/.local/state like the sibling
-# toggle tools, so it keeps working when XDG_STATE_HOME diverges.
 NAME_FILE="$HOME/.local/state/omarchy/toggles/hypr/$KIND-disabled-name"
 
 device="$("omarchy-hw-$KIND")"
@@ -49,8 +44,6 @@ apply_device() {
 }
 
 enable() {
-  # Clear the persisted state before requiring a usable device, so a device
-  # that stops reporting a valid name can never wedge the disable in place.
   rm -f "$NAME_FILE"
   require_device
   apply_device true

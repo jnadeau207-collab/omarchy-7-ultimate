@@ -74,7 +74,6 @@ _EXPECTED_TRIGGERS = {
 }
 _APPROVAL_ID = re.compile(r"^approval\.[0-9a-f]{32}$")
 
-
 class _TransactionContext:
     def __init__(self, store: "OperationStore", label: str) -> None:
         self.store = store
@@ -159,16 +158,13 @@ class _TransactionContext:
             raise
         return False
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 def _iso_time(value: datetime) -> str:
     if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
         raise operation_error("operation.clock-invalid", "Operation storage clock must be timezone-aware.")
     return value.astimezone(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
-
 
 def _canonical_time(value: Any, label: str) -> datetime:
     if not isinstance(value, str) or len(value) != 27 or not value.endswith("Z"):
@@ -181,7 +177,6 @@ def _canonical_time(value: Any, label: str) -> datetime:
         raise operation_error("operation.ledger-corrupt", f"{label} is not canonical UTC time.")
     return parsed
 
-
 def _bounded_json(value: Any, maximum: int, label: str) -> tuple[Any, str]:
     try:
         normalized = normalize_json(value)
@@ -193,7 +188,6 @@ def _bounded_json(value: Any, maximum: int, label: str) -> tuple[Any, str]:
     if len(encoded.encode("utf-8")) > maximum:
         raise operation_error("operation.evidence-too-large", f"{label} exceeds its durable size bound.")
     return normalized, encoded
-
 
 class OperationStore:
     """Append-only plans, approval consumption, and hash-chained evidence.
@@ -451,8 +445,6 @@ class OperationStore:
                 directory_descriptor = -1
                 try:
                     if existing_database:
-                        # Exact schema, integrity, and semantic closure precede
-                        # every persistent PRAGMA or application write.
                         self.verify_all()
                     active = self._connection()
                     mode = str(active.execute("PRAGMA journal_mode").fetchone()[0]).lower()
@@ -752,8 +744,6 @@ class OperationStore:
                 try:
                     descriptor = os.open(sidecar, flags)
                 except FileNotFoundError:
-                    # DELETE mode is allowed to unlink a rollback journal
-                    # between the name check and descriptor acquisition.
                     continue
                 held = os.fstat(descriptor)
                 identity = (held.st_dev, held.st_ino)

@@ -1,27 +1,14 @@
 import QtQuick
 import qs.Commons
 
-// Card: the standard content container for Ultimate surfaces. Settings
-// pages, Start tiles, notification stacks, and dashboard panels all sit in
-// cards so elevation reads consistently across the shell.
-//
-// Elevation maps to the semantic surface doctrine (docs/design-tokens.md):
-//   base   — windows, settings pages, standard cards (default)
-//   raised — cards floating above other content (hover-elevated rows, popovers)
-//   glass  — transient shell chrome; prefer PopupCard for that today
-//
-// Cards are passive by default: they paint surface + border only. Interactive
-// cards set `clickable` to get the kit's hover/press/focus states and clicked().
 BorderSurface {
   id: root
 
-  // Elevation: "base" | "raised"
   property string elevation: "base"
   property var semanticProfile: null
   property string accessibleName: ""
   property string accessibleDescription: ""
 
-  // Interactive affordances. Off by default — most cards are containers.
   property bool clickable: false
   property bool hasCursor: false
 

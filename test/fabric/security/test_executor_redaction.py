@@ -13,7 +13,6 @@ from omarchy_fabric.security.normalize import binding_digest, normalize_json
 from omarchy_fabric.security.redaction import REDACTED, redact, redact_text, scan_for_secrets
 from omarchy_fabric.security.system_executor import validate_system_executor_request
 
-
 class ExecutorAndRedactionTests(unittest.TestCase):
     def request(self):
         return {
@@ -149,7 +148,6 @@ class ExecutorAndRedactionTests(unittest.TestCase):
         self.assertNotIn("abcdef1234567890", cleaned)
         explicit = redact({"context": {"selection": "private.txt"}}, explicit_paths={"/context/selection"})
         self.assertEqual(explicit["context"]["selection"], REDACTED)
-
 
 if __name__ == "__main__":
     unittest.main()

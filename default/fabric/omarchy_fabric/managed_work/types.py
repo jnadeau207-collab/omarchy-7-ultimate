@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from .validation import stable_id
 
-
 @dataclass(frozen=True)
 class Actor:
     principal_id: str
@@ -18,7 +17,6 @@ class Actor:
 
     def as_dict(self) -> dict[str, str]:
         return {"principalId": self.principal_id, "sessionId": self.session_id}
-
 
 @dataclass(frozen=True)
 class CapacityLimits:

@@ -20,7 +20,6 @@ from omarchy_fabric.provider_builtins import (
 from omarchy_fabric.provider_registry import ProviderRegistry
 from omarchy_fabric.providers._immutable import thaw
 
-
 EXPECTED_PROVIDER_IDS = (
     "audio.provider",
     "bluetooth.provider",
@@ -45,7 +44,6 @@ EXPECTED_PROVIDER_IDS = (
     "storage.provider",
     "update.provider",
 )
-
 
 class BuiltinProviderTests(unittest.TestCase):
     @staticmethod
@@ -301,7 +299,6 @@ class BuiltinProviderTests(unittest.TestCase):
             ".rglob(",
         ):
             self.assertNotIn(forbidden, source)
-
 
 if __name__ == "__main__":
     unittest.main()

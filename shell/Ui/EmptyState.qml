@@ -1,9 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// EmptyState: the "nothing here yet" surface for lists, search results, and
-// panels. A labeled empty state is a visible affordance (Rule 4) — it tells
-// the user the surface exists and what belongs in it.
 Column {
   id: root
 

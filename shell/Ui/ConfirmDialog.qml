@@ -49,8 +49,6 @@ Item {
     BorderSurface {
       id: card
       width: Math.min(parent.width - Style.space(32), Style.space(370))
-      // Grows with the wrapped message so narrow hosts (like the menu card)
-      // don't squeeze the text into the buttons.
       height: card.contentTopInset + card.contentBottomInset + messageText.implicitHeight + Style.space(20) + Style.space(34)
       anchors.centerIn: parent
       color: root.background

@@ -1,6 +1,3 @@
-// Quick Settings tile catalog. Tiles either toggle a first-party service
-// or summon an existing panel plugin. The panel plugins stay the owners of
-// Wi-Fi, Bluetooth, audio, display, and power — this file only names them.
 
 var HOSTED_PANEL_IDS = [
   "omarchy.network",

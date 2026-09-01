@@ -2,8 +2,6 @@ import QtQuick
 import Quickshell
 import qs.Commons
 
-// Hosts an existing Superbar/heritage panel page inside Settings chrome.
-// The panel file stays the owner of its controls; this item only embeds it.
 Item {
   id: root
 

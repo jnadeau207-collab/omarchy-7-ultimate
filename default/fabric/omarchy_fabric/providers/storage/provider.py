@@ -87,7 +87,6 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def _device_path(value: object) -> str:
     if not isinstance(value, str) or not 6 <= len(value) <= 205 or "\x00" in value or "\\" in value:
         raise ValueError("storage device path is invalid")
@@ -102,14 +101,12 @@ def _device_path(value: object) -> str:
         raise ValueError("storage device path escapes /dev")
     return value
 
-
 def _identity(item: Mapping[str, Any], *, path: str, size: int, device_type: str) -> str:
     uuid_value = item.get("uuid")
     if uuid_value is not None and (not isinstance(uuid_value, str) or not 1 <= len(uuid_value) <= 256 or any(not character.isprintable() for character in uuid_value)):
         raise ValueError("storage UUID identity is invalid")
     value = f"{uuid_value or 'no-uuid'}:{path}:{size}:{device_type}"
     return f"storage.{hashlib.sha256(value.encode('utf-8')).hexdigest()[:24]}"
-
 
 def _flatten(items: list[Any]) -> list[Mapping[str, Any]]:
     output: list[Mapping[str, Any]] = []
@@ -128,7 +125,6 @@ def _flatten(items: list[Any]) -> list[Mapping[str, Any]]:
         if len(output) > 64:
             raise ValueError("storage inventory exceeds 64 resources")
     return output
-
 
 def parse_storage(text: str) -> list[dict[str, Any]]:
     document = parse_probe_json(text)
@@ -199,18 +195,14 @@ def parse_storage(text: str) -> list[dict[str, Any]]:
         )
     return resources
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     return parse_storage((await invoke_probe(STORAGE_COMMAND, runner)).stdout)
-
 
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {key: arguments[key] for key in ("resourceId", "action", "filesystem", "confirmation")}
 
-
 def destructive_confirmation(resource_id: str) -> str:
     return f"ERASE:{resource_id}"
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     action = arguments["action"]
@@ -247,7 +239,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         },
     }
 
-
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "volume", OPERATION_ACTION, "storage.change.plan", "destructive", ("mutating", "privileged", "destructive")),
     resource_schema=RESOURCE_SCHEMA,
@@ -259,10 +250,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Build a fail-closed {arguments['action']} plan; the real provider never executes storage mutations.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

@@ -24,22 +24,18 @@ from ..security.errors import SecurityValidationError
 
 MAX_ACTIVE_ENDPOINT_SESSIONS = 1024
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 def _require_aware_time(value: datetime, label: str) -> datetime:
     if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
         raise SecurityValidationError("principal.time", f"{label} must be timezone-aware.")
     return value
 
-
 def _require_uid(value: int, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0 or value > 2**32 - 1:
         raise SecurityValidationError("principal.uid", f"{label} must be a non-negative Unix UID.")
     return value
-
 
 @dataclass(frozen=True)
 class AccountOwner:
@@ -48,13 +44,11 @@ class AccountOwner:
     owner_id: str
     uid: int
 
-
 @dataclass
 class _Binding:
     principal: EndpointPrincipal
     token_digest: bytes
     revoked: bool = False
-
 
 class StableOwnerSessionStore:
     """Bind stable account ownership to separately expiring endpoint sessions."""

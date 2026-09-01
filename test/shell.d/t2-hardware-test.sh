@@ -186,9 +186,6 @@ grep -q 'pcie_ports=compat' "$limine_conf" || fail "non-T2 Limine configuration 
 [[ ! -s $calls ]] || fail "non-T2 systems skip the repair" "$(cat "$calls")"
 pass "T2 migration skips unrelated hardware"
 
-# The previous block left the fixtures looking like an install the SIGPIPE bug
-# skipped: stale Limine parameters, one fan section, and no repair marker. The
-# rerun migration must complete the repair the original was marked as done for.
 rerun_migration="$ROOT/migrations/1786137597.sh"
 rm -f "$repair_marker"
 : >"$calls"

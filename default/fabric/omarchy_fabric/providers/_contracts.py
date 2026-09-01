@@ -11,14 +11,11 @@ REVISION_PATTERN = r"^sha256\.[0-9a-f]{64}$"
 RESOURCE_ID_PATTERN = "^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,127}$"
 STABLE_ID_PATTERN = "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
 
-
 def contract_id(domain: str, name: str) -> str:
     return f"urn:omarchy:fabric:provider:{domain}:{name}:v0"
 
-
 def contract_ref(domain: str, name: str) -> dict[str, str]:
     return {"id": contract_id(domain, name), "version": VERSION}
-
 
 def _document(schema_id: str, title: str, body: Mapping[str, Any]) -> dict[str, Any]:
     return {
@@ -28,7 +25,6 @@ def _document(schema_id: str, title: str, body: Mapping[str, Any]) -> dict[str, 
         "title": title,
         **deepcopy(dict(body)),
     }
-
 
 def _error_schema() -> dict[str, Any]:
     return {
@@ -51,7 +47,6 @@ def _error_schema() -> dict[str, Any]:
         "additionalProperties": False,
     }
 
-
 def _state_body(state_schema: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "type": "object",
@@ -63,7 +58,6 @@ def _state_body(state_schema: Mapping[str, Any]) -> dict[str, Any]:
         },
         "additionalProperties": False,
     }
-
 
 def build_contracts(
     *,

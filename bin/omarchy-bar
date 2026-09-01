@@ -48,8 +48,6 @@ Examples:
 USAGE
 }
 
-# ------------------------------------------------------------------ validation
-
 bar_option_exists() {
   omarchy-plugin-catalog | jq -e --arg id "$1" '
     any(.[]; (.kinds | index("bar")) and .barPath != null and .id == $id)
@@ -63,8 +61,6 @@ validate_section() {
 validate_index() {
   [[ $1 =~ ^[0-9]+$ ]] || fail "index must be a non-negative integer"
 }
-
-# --------------------------------------------------------------------- placement
 
 PLACEMENT_SECTION=""
 PLACEMENT_INDEX=""
@@ -137,8 +133,6 @@ placement_json() {
     '
 }
 
-# -------------------------------------------------------------------- commands
-
 cmd_use() {
   local plugin="${1:-}"
   [[ -n $plugin ]] || fail "bar option id is required"
@@ -171,8 +165,6 @@ cmd_defaults() {
     fi
   done
 
-  # This remains one file mutation so it also works during the headless
-  # Quattro upgrade and cannot race the shell's in-memory config.
   commit "$NORMALIZE
     | .bar = \$defaults[0].bar
     | def entry_id: if type == \"object\" then (.id // \"\" | tostring) else tostring end;
@@ -230,9 +222,6 @@ bar_widget_default_section() {
   ' <<<"$catalog"
 }
 
-# Asks the shell to place a widget, waiting out one still coming up. Answers 0
-# with the reply in PUT_RESULT, 1 when there was no shell to ask. Only an
-# absent shell is carried on from: omarchy-migrate marks a 0 return as done.
 PUT_RESULT=""
 SHELL_ANSWERED=0
 ask_to_put() {
@@ -244,12 +233,9 @@ ask_to_put() {
     elif [[ $PUT_RESULT == *"not ready"* ]]; then
       SHELL_ANSWERED=1
     elif [[ $PUT_RESULT == *"is not running"* ]]; then
-      # Answered once and now gone: it stopped mid-request.
       if (( SHELL_ANSWERED )); then
         fail "omarchy-shell did not become ready; $id was not put on the bar"
       fi
-      # A shell being spawned has no socket yet, and nothing says a launch is
-      # under way, so give one a few seconds to turn up.
       if (( ++absent >= ${OMARCHY_SHELL_ABSENT_ATTEMPTS:-30} )); then
         echo "omarchy-shell is not running; $id was not put on the bar" >&2
         return 1
@@ -262,8 +248,6 @@ ask_to_put() {
   fail "omarchy-shell did not become ready; $id was not put on the bar"
 }
 
-# Placement lives in the shell, which owns the config it has in memory. Putting
-# a widget therefore asks the shell rather than editing the file behind it.
 cmd_put() {
   local id="${1:-}"
   [[ -n $id ]] || fail "put requires a widget id"
@@ -287,8 +271,6 @@ cmd_put() {
   placement=$(placement_json)
   ask_to_put "$id" "$placement" || return 0
 
-  # An update runs migrations before it restarts the shell, so this one can
-  # predate the fallback. Ask it again without the neighbour it cannot find.
   if [[ $PUT_RESULT == "could not find target widget"* ]]; then
     PLACEMENT_BEFORE=""
     PLACEMENT_AFTER=""
@@ -297,8 +279,6 @@ cmd_put() {
 
   [[ $PUT_RESULT != "unknown" ]] || fail "$id is not a known widget; run 'omarchy plugin list'"
   [[ $PUT_RESULT == "ok" ]] || fail "$PUT_RESULT"
-  # Says nothing about whether it had to be placed: a widget already on the bar
-  # is left where it is, and both outcomes are the same answer to the caller.
   echo "$id is on the bar"
 }
 
@@ -362,8 +342,6 @@ cmd_set() {
   [[ $result == "ok" ]] || fail "$result"
   echo "Set $key on $id"
 }
-
-# --------------------------------------------------------------------- dispatch
 
 command="${1:-}"
 (( $# > 0 )) && shift || true

@@ -5,10 +5,8 @@
 
 set -e
 
-# The service is what holds the models open, so it goes before the package.
 sudo systemctl disable --now ollama.service 2>/dev/null || true
 
-# Whichever acceleration variant is installed provides the same command.
 omarchy-pkg-drop ollama ollama-cuda ollama-rocm ollama-vulkan
 
 sudo rm -rf /var/lib/ollama

@@ -10,8 +10,6 @@ trap 'rm -rf "$test_tmp"' EXIT
 stub_bin="$test_tmp/bin"
 mkdir -p "$stub_bin"
 
-# Every step omarchy-update runs, recorded in order with the unattended flag it
-# was handed. One of them can be told to fail.
 steps=(
   omarchy-update-lock
   omarchy-update-requires-free-space
@@ -42,8 +40,6 @@ STUB
   chmod +x "$stub_bin/$step"
 done
 
-# OMARCHY_UPDATE_LOGGED stands in for the script(1) wrapper the update re-execs
-# itself under; the stubbed lock reports itself already held.
 run_update() {
   : >"$test_tmp/steps"
   STEP_LOG="$test_tmp/steps" \
@@ -57,8 +53,6 @@ steps_run() {
   cut -d' ' -f1 "$test_tmp/steps"
 }
 
-# Every step of a whole update, in order. $1 asks for the one a person confirms.
-# Stay Awake bookends the work, so it is here twice.
 expected_steps() {
   printf '%s\n' \
     omarchy-update-lock \
@@ -96,9 +90,6 @@ grep -q '^omarchy-update-system-pkgs unattended=$' "$test_tmp/steps" ||
   fail "an update a person confirmed is treated as unattended"
 pass "-y is what marks an update unattended, not the update itself"
 
-# Migrations ship with the packages the upgrade installs and are written against
-# them. Running them against what is still on disk is the failure this ordering
-# exists to prevent, so the update stops where the packages did.
 if FAILING_STEP=omarchy-update-system-pkgs run_update -y; then
   fail "an update whose packages did not upgrade passes for a whole one"
 fi

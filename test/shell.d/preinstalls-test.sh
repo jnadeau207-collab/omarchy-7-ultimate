@@ -43,9 +43,6 @@ export PATH="$mock_bin:$ROOT/bin:$PATH"
 export HOME="$test_home"
 export OMARCHY_TEST_PKG_LOG="$pkg_log"
 
-# Both scripts restore and remove the same set, and every package in it has to be
-# one Omarchy actually ships, or Remove Preinstalls takes out an app the user
-# chose from the menu and Install Preinstalls puts back one we retired.
 mapfile -t shipped < <(sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' "$ROOT/install/omarchy-base.packages")
 
 "$ROOT/bin/omarchy-install-preinstalls" >/dev/null
@@ -72,8 +69,6 @@ for package in omacut omacalc omawrite; do
 done
 pass "preinstalls cover the Omacom apps"
 
-# The bindings key off the marker, so clearing it before the packages land would
-# point them at apps that never came back.
 touch "$marker"
 OMARCHY_TEST_PKG_ADD_STATUS=1 "$ROOT/bin/omarchy-install-preinstalls" >/dev/null && status=0 || status=$?
 (( status == 1 )) || fail "restore reports a failed package transaction" "exit status was $status"

@@ -14,7 +14,6 @@ fi
 install_php() {
   omarchy-pkg-add php composer php-sqlite xdebug
 
-  # Install Path for Composer
   if [[ :$PATH: != *:$HOME/.config/composer/vendor/bin:* ]]; then
     echo 'export PATH="$HOME/.config/composer/vendor/bin:$PATH"' >>"$HOME/.bashrc"
     source "$HOME/.bashrc"
@@ -23,7 +22,6 @@ install_php() {
     echo "Composer global bin directory already in PATH."
   fi
 
-  # Enable some extensions
   local php_ini_path="/etc/php/php.ini"
   local extensions_to_enable=(
     "bcmath"
@@ -34,7 +32,6 @@ install_php() {
     "pdo_mysql"
   )
 
-  # Enable Xdebug
   sudo sed -i \
     -e 's/^;zend_extension=xdebug.so/zend_extension=xdebug.so/' \
     -e 's/^;xdebug.mode=debug/xdebug.mode=debug/' \
@@ -107,13 +104,10 @@ elixir)
   ;;
 phoenix)
   echo -e "Installing Phoenix Framework...\n"
-  # Ensure Erlang/Elixir first
   mise use --global erlang@latest
   mise use --global elixir@latest
-  # Hex & Rebar
   mise x elixir -- mix local.hex --force
   mise x elixir -- mix local.rebar --force
-  # Phoenix project (phx_new)
   mise x elixir -- mix archive.install hex phx_new --force
   echo -e "\nYou can now run: mix phx.new my_app"
   ;;

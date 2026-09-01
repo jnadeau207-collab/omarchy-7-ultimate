@@ -12,7 +12,6 @@ from .errors import SecurityValidationError
 
 _MAX_SAFE_INTEGER = 2**53 - 1
 
-
 def normalize_json(value: Any, *, _depth: int = 0) -> Any:
     """Return a deterministic JSON value or reject ambiguous input.
 
@@ -64,7 +63,6 @@ def normalize_json(value: Any, *, _depth: int = 0) -> Any:
         f"Unsupported approval-bound value type: {type(value).__name__}.",
     )
 
-
 def canonical_json(value: Any) -> str:
     return json.dumps(
         normalize_json(value),
@@ -72,7 +70,6 @@ def canonical_json(value: Any) -> str:
         separators=(",", ":"),
         sort_keys=True,
     )
-
 
 def binding_digest(value: Any) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()

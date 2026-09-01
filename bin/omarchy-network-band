@@ -7,9 +7,6 @@
 
 set -euo pipefail
 
-# NetworkManager 1.44+ accepts a third band value, so 5GHz and 6GHz can be
-# pinned apart. Pinning the band rather than a BSSID keeps working when the AP
-# rotates BSSIDs, and leaves roaming between APs intact.
 nm_band_for() {
   case "$1" in
     2.4) echo "bg" ;;
@@ -28,9 +25,6 @@ band_from_nm() {
   esac
 }
 
-# Accepts either nmcli's "2412 MHz" or iw's "5745.0": keep the leading digits
-# and ignore whatever unit or fraction follows. The boundaries mirror Model.js
-# formatHeaderFreq so the panel's label and this command cannot disagree.
 band_for_freq() {
   local mhz=${1%%[!0-9]*}
   [[ -n $mhz ]] || return 1
@@ -46,10 +40,6 @@ band_for_freq() {
   fi
 }
 
-# Every value read back from nmcli goes through here. LC_ALL=C because nmcli
-# translates state words such as "connected", which would silently stop matching
-# under a non-English session; `-e no` because `-g` otherwise escapes ':' and
-# '\' in values, and an escaped SSID would never match iw's raw one.
 nm_get() {
   LC_ALL=C nmcli -e no -g "$@" 2>/dev/null
 }
@@ -67,8 +57,6 @@ selected_band() {
   band_from_nm "$(nm_get 802-11-wireless.band connection show "$1")"
 }
 
-# Sets $ssid and $freq from one `iw dev <device> link`. iw prints the SSID as
-# the rest of its line, so an SSID containing ':' needs no special handling.
 read_link() {
   local link
   link=$(iw dev "$1" link 2>/dev/null)
@@ -76,24 +64,12 @@ read_link() {
   freq=$(awk '/freq:/ { print $2; exit }' <<<"$link")
 }
 
-# Every band the SSID is reachable on, low to high, always including the one
-# already in use -- a weak radio gets missed by plenty of scans, and the band we
-# are sitting on must never be absent from its own list of options. A band the
-# AP does not answer on is never offered: pinning to it would drop the
-# connection with nothing to reassociate to.
-#
-# --rescan no reads NetworkManager's cache, which the panel's own scanner keeps
-# warm; forcing a scan here would stall every poll. The kernel's own cache (iw
-# scan dump) is pruned far harder and would make bands flicker.
 available_bands() {
   local device=$1 ssid=$2 current=$3
 
   {
     if [[ -n $current ]]; then echo "$current"; fi
 
-    # SSID is queried last so one containing ':' can be reassembled verbatim.
-    # It reaches awk through the environment, not -v, which would expand
-    # backslash escapes in an SSID that contains one.
     nm_get FREQ,SSID dev wifi list ifname "$device" --rescan no |
       want="$ssid" awk -F: '
         BEGIN { want = ENVIRON["want"] }
@@ -156,9 +132,6 @@ set_band() {
 
   nmcli connection modify "$profile" 802-11-wireless.band "$desired" >/dev/null
 
-  # A band change only takes effect on reassociation. If the radio cannot come
-  # back up on the requested band, put the previous setting back and reconnect
-  # rather than leaving the machine stranded offline.
   if ! nmcli connection up "$profile" >/dev/null 2>&1; then
     nmcli connection modify "$profile" 802-11-wireless.band "$previous" >/dev/null
     nmcli connection up "$profile" >/dev/null 2>&1 || true

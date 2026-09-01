@@ -8,7 +8,6 @@ from typing import Any, Callable, Mapping
 from .._contracts import build_contracts, contract_ref
 from .._engine import DomainSpec
 
-
 @dataclass(frozen=True)
 class LeafDefinition:
     domain: str
@@ -20,7 +19,6 @@ class LeafDefinition:
     effects: tuple[str, ...]
     max_resources: int = 64
     inventory_action: str = "inspect"
-
 
 def provider_bundle(
     definition: LeafDefinition,

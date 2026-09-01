@@ -1,12 +1,10 @@
 #!/bin/bash
 
-
 set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
 PREEXISTING_ADDRS=$(hyprctl -j clients | jq -r '.[].address' | sort)
-
 
 MANIFEST="$ROOT/WINDOWS_NATIVE_ACCEPTANCE.md"
 PINS_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/ultimate/taskbar-pins.json"

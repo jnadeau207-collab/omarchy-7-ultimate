@@ -21,19 +21,15 @@ fi
 THEMES_DIR="$HOME/.config/omarchy/themes"
 THEME_PATH="$THEMES_DIR/$THEME_NAME"
 
-# Ensure a theme was set, and that the name cannot climb out of THEMES_DIR
-# on its way into the rm below.
 if [[ -z $THEME_NAME || $THEME_NAME == .* || $THEME_NAME == */* ]]; then
   exit 1
 fi
 
-# Check if theme exists before attempting removal
 if [[ ! -d $THEME_PATH ]]; then
   echo "Error: Theme '$THEME_NAME' not found."
   exit 1
 fi
 
-# Now remove the theme directory for THEME_NAME
 rm -rf "$THEME_PATH"
 omarchy-notification-send "Theme removed" "$THEME_NAME" || true
 echo "Removed $THEME_NAME"

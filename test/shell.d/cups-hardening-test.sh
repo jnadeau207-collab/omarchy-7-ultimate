@@ -197,8 +197,6 @@ PATH="$mock_bin:$PATH" \
 
 pass "the migration safely converts an active existing installation once"
 
-# An interrupted earlier run leaves cups-browsed stopped. A retry still needs
-# to resume an enabled service before recording completion.
 cat >"$mock_bin/systemctl" <<'SH'
 #!/bin/bash
 printf 'systemctl\t%s\n' "$*" >>"$OMARCHY_CUPS_TEST_LOG"
@@ -221,7 +219,6 @@ grep -qxF $'systemctl\trestart cups-browsed.service' "$retry_log" ||
 
 pass "a run following an interrupted one still resumes printer discovery"
 
-# A masked or disabled unit is deliberately left alone.
 cat >"$mock_bin/systemctl" <<'SH'
 #!/bin/bash
 printf 'systemctl\t%s\n' "$*" >>"$OMARCHY_CUPS_TEST_LOG"

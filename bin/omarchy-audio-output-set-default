@@ -15,12 +15,8 @@ fi
 timeout 2 wpctl set-default "$node_id" 2>/dev/null || true
 timeout 2 pactl set-default-sink "$sink_name" 2>/dev/null || true
 
-# Move only real application streams. A DSP filter-chain's own output is also a
-# sink input but carries no application.name, and moving it would rewire the
-# processing itself -- onto headphones, or into its own virtual sink, which is a
-# cycle. EasyEffects' output stream must stay put for the same reason.
 timeout 2 pactl list sink-inputs 2>/dev/null | awk '
-  /^Sink Input #/ {id = substr($3, 2)}
+  /^Sink Input
   /application\.name = / {
     app = $0
     sub(/.*application\.name = "/, "", app)

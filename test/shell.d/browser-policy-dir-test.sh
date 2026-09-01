@@ -12,7 +12,6 @@ export OMARCHY_PROVISIONING_DIR="$test_tmp/provisioning"
 
 source "$ROOT/install/helpers/browser-policy.sh"
 
-# Temp dirs are user-owned; drop -o/-g so install(1) can run unprivileged.
 unprivileged_as_root() {
   if [[ $1 == "install" ]]; then
     shift
@@ -279,9 +278,6 @@ grep -F 'exit "$failed"' "$ROOT/bin/omarchy-theme-set-browser" >/dev/null ||
   fail "omarchy-theme-set-browser exits non-zero when a policy write fails"
 pass "omarchy-theme-set-browser exits non-zero when a policy write fails"
 
-# Bash 5.3 adopts the EXIT trap's last status as the script's exit status, so a
-# handler ending on a false test turns a clean run into a failure and aborts the
-# migration that calls this through omarchy-theme-set-browser.
 policy_cleanup=$(sed -n '/^cleanup() {/,/^}/p' "$ROOT/bin/omarchy-theme-set-browser-policy")
 [[ -n $policy_cleanup ]] || fail "omarchy-theme-set-browser-policy defines an EXIT cleanup handler"
 eval "$policy_cleanup"

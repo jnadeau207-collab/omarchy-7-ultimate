@@ -15,10 +15,6 @@ for command in xdg-user-dirs-update xdg-settings xdg-mime; do
 done
 chmod +x "$mock_bin"/*
 
-# Provisioning prepends $OMARCHY_PATH/bin, which shadows a mock for anything
-# Omarchy ships, so the install suite is stubbed out at its path instead. The
-# real one rethemes the session it runs in: hyprctl reload against the live
-# compositor, gsettings against the live desktop, and a global Node install.
 mkdir -p "$test_tmp/install/user"
 : >"$test_tmp/install/user/all.sh"
 

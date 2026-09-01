@@ -1,7 +1,3 @@
-// Jump lists for Superbar task buttons. The default action is always
-// "Open new window". Extra rows come from the desktop entry's Actions=
-// groups when the entry exposes a launchable command. Entries without a
-// command are omitted rather than shown as dead items.
 
 function normalizeDesktopId(id) {
   var value = String(id || "").trim()

@@ -1,17 +1,12 @@
 import QtQuick
 import qs.Commons
 
-// ErrorState: the failure surface with the doctrine's recovery path baked
-// in — what happened, a human explanation, and [Retry] / [Details]
-// (PRODUCT_DOCTRINE.md: never `Process exited with status 1`).
 Column {
   id: root
 
   property string title: ""
   property string explanation: ""
 
-  // Raw technical detail, revealed only on request (progressive disclosure,
-  // Rule 5). Set to "" to hide the Details affordance entirely.
   property string detail: ""
 
   property bool hasCursor: false

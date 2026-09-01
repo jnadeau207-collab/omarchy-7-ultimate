@@ -20,7 +20,6 @@ pkg_names=$(pacman -Slq | fzf "${fzf_args[@]}")
 if [[ -n $pkg_names ]]; then
   source omarchy-sudo-keepalive
 
-  # Convert newline-separated selections to space-separated for pacman
   echo "$pkg_names" | tr '\n' ' ' | xargs sudo pacman -S --noconfirm
   omarchy-show-done
 fi

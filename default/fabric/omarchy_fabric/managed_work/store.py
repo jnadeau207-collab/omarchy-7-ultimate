@@ -413,10 +413,8 @@ EXPECTED_TABLES = frozenset(
 )
 _EXPECTED_SCHEMA_CACHE: dict[int, dict[tuple[str, str], tuple[str, str]]] = {}
 
-
 def _normalized_schema_sql(value: str | None) -> str:
     return "" if value is None else " ".join(value.split())
-
 
 def _schema_objects(connection: sqlite3.Connection) -> dict[tuple[str, str], tuple[str, str]]:
     return {
@@ -431,7 +429,6 @@ def _schema_objects(connection: sqlite3.Connection) -> dict[tuple[str, str], tup
             """
         )
     }
-
 
 def _expected_schema_objects(version: int) -> dict[tuple[str, str], tuple[str, str]]:
     cached = _EXPECTED_SCHEMA_CACHE.get(version)
@@ -450,7 +447,6 @@ def _expected_schema_objects(version: int) -> dict[tuple[str, str], tuple[str, s
         connection.close()
     _EXPECTED_SCHEMA_CACHE[version] = expected
     return expected
-
 
 class ManagedWorkStore:
     """A narrow SQLite owner with explicit schema and restart semantics."""

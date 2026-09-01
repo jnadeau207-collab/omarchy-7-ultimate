@@ -57,7 +57,6 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def parse_services(text: str) -> list[dict[str, Any]]:
     resources: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -99,14 +98,11 @@ def parse_services(text: str) -> list[dict[str, Any]]:
         resource["inventoryTruncated"] = observed_count > len(resources)
     return resources
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     return parse_services((await invoke_probe(SERVICE_COMMAND, runner)).stdout)
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "action": arguments["action"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if current["load"] in {"not-found", "error"}:
@@ -117,7 +113,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
     if action == "stop" and current["active"] == "inactive":
         raise ValueError("service is already inactive")
     return {**dict(current), "pendingAction": action}
-
 
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "service", OPERATION_ACTION, "service.lifecycle.plan", "consequential", ("mutating", "privileged")),
@@ -130,10 +125,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan service action {arguments['action']}; no systemd unit is changed.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

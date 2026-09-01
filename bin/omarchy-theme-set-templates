@@ -10,13 +10,11 @@ COLORS_FILE="$NEXT_THEME_DIR/colors.toml"
 
 declare -A THEME_COLORS
 
-# Convert hex color to decimal RGB (e.g., "#1e1e2e" -> "30,30,46")
 hex_to_rgb() {
   local hex="${1#\#}"
   printf "%d,%d,%d" "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
 }
 
-# Mix two hex colors. Amount may be a fraction (0.30) or percentage (30%).
 mix_color() {
   local start="${1#\#}"
   local end="${2#\#}"
@@ -367,15 +365,12 @@ apply_shell_section_overrides() {
   done
 }
 
-# Only generate dynamic templates for themes with a colors.toml definition
 if [[ -f $COLORS_FILE ]]; then
   sed_script=$(mktemp)
 
   shopt -s nullglob
   template_files=("$USER_TEMPLATES_DIR"/*.tpl "$TEMPLATES_DIR"/*.tpl)
 
-  # Parsing and alias/fallback resolution (legacy colorN names, derived
-  # shades, mode/theme_type) is shared with every other colors.toml consumer.
   while IFS=$'\t' read -r key value; do
     THEME_COLORS[$key]="$value"
   done < <(omarchy-theme-color --file "$COLORS_FILE" --all)
@@ -387,12 +382,10 @@ if [[ -f $COLORS_FILE ]]; then
   add_mix_values
   add_gradient_function_values
 
-  # Process user templates first, then built-in templates (user overrides built-in)
   for tpl in "${template_files[@]}"; do
     filename=$(basename "$tpl" .tpl)
     output_path="$NEXT_THEME_DIR/$filename"
 
-    # Don't overwrite configs already exists in the output directory (copied from theme specific folder)
     if [[ ! -f $output_path ]]; then
       sed -f "$sed_script" "$tpl" >"$output_path"
     fi

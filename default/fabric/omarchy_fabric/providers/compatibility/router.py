@@ -13,7 +13,6 @@ from .recipes import RecipeCatalog
 ROUTE_ORDER = ("native", "pwa", "known-good-recipe", "game-proton", "isolated-app", "vm")
 PWA_PERMISSIONS = {"network", "audio", "camera", "microphone", "notifications"}
 
-
 def _https_url(value: object) -> bool:
     if not isinstance(value, str) or any(character.isspace() or ord(character) < 32 or ord(character) == 127 for character in value):
         return False
@@ -22,7 +21,6 @@ def _https_url(value: object) -> bool:
     except ValueError:
         return False
     return parsed.scheme == "https" and bool(parsed.hostname) and parsed.username is None and parsed.password is None
-
 
 class CompatibilityRouter:
     def __init__(self, recipes: RecipeCatalog) -> None:

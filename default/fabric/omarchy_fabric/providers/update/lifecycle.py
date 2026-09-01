@@ -63,7 +63,6 @@ _SENSITIVE_DETAIL_PATTERNS = (
     re.compile(r"(?i)\b([a-z][a-z0-9+.-]{0,31}://)[^/@\s]{1,512}@"),
 )
 
-
 def _safe_detail(value: object) -> str:
     if not isinstance(value, str):
         raise FabricError("update.detail-invalid", "Update detail is invalid", "Journal detail must be trusted text.")
@@ -72,7 +71,6 @@ def _safe_detail(value: object) -> str:
         if pattern.search(cleaned):
             return "Sensitive update detail was redacted."
     return cleaned
-
 
 def _decode(raw: bytes) -> dict[str, Any]:
     if len(raw) > MAX_JOURNAL_BYTES:
@@ -93,7 +91,6 @@ def _decode(raw: bytes) -> dict[str, Any]:
     if not isinstance(document, dict):
         raise FabricError("update.journal-corrupt", "Update journal is corrupt", "The journal root must be an object.")
     return document
-
 
 def _validate(document: Mapping[str, Any]) -> None:
     if set(document) != {"schemaVersion", "runId", "mode", "status", "catalogRevision", "checkpoint", "rebootRequired", "detail", "revision"}:
@@ -126,7 +123,6 @@ def _validate(document: Mapping[str, Any]) -> None:
     if declared != state_revision(unsigned):
         raise FabricError("update.journal-revision-invalid", "Update journal revision is invalid", "The journal contents do not match the declared revision.")
 
-
 class _ExclusiveJournalLock:
     def __init__(self, journal: "UpdateJournal") -> None:
         self.journal = journal
@@ -142,7 +138,6 @@ class _ExclusiveJournalLock:
         self.directory_fd = -1
         self.lock_fd = -1
         return False
-
 
 class UpdateJournal:
     def __init__(self, path: Path) -> None:

@@ -35,22 +35,18 @@ _TEXT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("url-credential", re.compile(r"(?i)\bhttps?://[^\s/@:]+:[^\s/@]+@")),
 )
 
-
 @dataclass(frozen=True)
 class SecretFinding:
     path: str
     kind: str
 
-
 def _pointer(parent: str, key: str | int) -> str:
     escaped = str(key).replace("~", "~0").replace("/", "~1")
     return f"{parent}/{escaped}"
 
-
 def _is_sensitive_key(key: Any) -> bool:
     compact = re.sub(r"[^a-z0-9]", "", str(key).lower())
     return any(name in compact for name in _SENSITIVE_KEY_NAMES)
-
 
 def scan_for_secrets(value: Any, *, explicit_paths: Iterable[str] = ()) -> tuple[SecretFinding, ...]:
     """Report secret locations and kinds without ever returning secret values."""
@@ -81,7 +77,6 @@ def scan_for_secrets(value: Any, *, explicit_paths: Iterable[str] = ()) -> tuple
     visit(value, "")
     return tuple(findings)
 
-
 def redact_text(text: str) -> str:
     result = str(text)
     for kind, pattern in _TEXT_PATTERNS:
@@ -92,7 +87,6 @@ def redact_text(text: str) -> str:
         else:
             result = pattern.sub(REDACTED, result)
     return result
-
 
 def redact(value: Any, *, explicit_paths: Iterable[str] = ()) -> Any:
     explicit = frozenset(explicit_paths)

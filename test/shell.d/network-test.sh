@@ -268,7 +268,6 @@ assertEqual(network.shouldRepromptPassphrase(reasons.WifiAuthTimeout, true, reas
 assertEqual(network.shouldRepromptPassphrase(reasons.WifiAuthTimeout, false, reasons), false, 'network does not reprompt an open network on auth timeout')
 assertEqual(network.shouldRepromptPassphrase(reasons.WifiClientFailed, true, reasons), false, 'network does not reprompt on generic connection failures')
 
-
 assertEqual(network.bandLabel('2.4'), '2.4ghz', 'network labels the 2.4GHz band')
 assertEqual(network.bandLabel('6'), '6ghz', 'network labels the 6GHz band')
 assertEqual(network.bandLabel('auto'), 'Auto', 'network labels the automatic band choice')
@@ -288,8 +287,6 @@ assertDeepEqual(
   { band: '', selected: 'auto', available: [] },
   'network parses empty band status without a wifi connection'
 )
-
-
 
 assertEqual(network.headerDetail({ type: 'wifi', freq: '5745' }), '', 'network keeps wifi band state out of the hero')
 assertEqual(network.headerDetail({ type: 'ethernet', speed: '100' }), '100mbit', 'network keeps ethernet speed in the hero')

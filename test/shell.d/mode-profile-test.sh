@@ -88,7 +88,6 @@ if HOME="$tmp" XDG_STATE_HOME="$tmp/.local/state" OMARCHY_ULTIMATE_MODE_SKIP_REL
 fi
 pass "mode set rejects unknown profiles"
 
-# Overlay must not rewrite the on-disk shell.json; the CLI only touches the mode file.
 mkdir -p "$tmp/.config/omarchy"
 printf '%s\n' '{"version":1,"bar":{"id":"omarchy.bar","position":"top"}}' >"$tmp/.config/omarchy/shell.json"
 HOME="$tmp" XDG_STATE_HOME="$tmp/.local/state" OMARCHY_ULTIMATE_MODE_SKIP_RELOAD=1 \

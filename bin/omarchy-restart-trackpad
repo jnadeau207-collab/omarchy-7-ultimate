@@ -13,7 +13,6 @@ for dev in /sys/bus/i2c/drivers/i2c_hid_acpi/i2c-*; do
   echo "Done"
 done
 
-# Also try THC path
 if lsmod | grep -q intel_quicki2c; then
   echo "Reloading intel_quicki2c..."
   sudo modprobe -r intel_quicki2c && sudo modprobe intel_quicki2c

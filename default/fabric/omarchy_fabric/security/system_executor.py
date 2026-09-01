@@ -19,7 +19,6 @@ _LOWER_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _PROHIBITED_FIELD = re.compile(r"(?:^|_)(?:command|cmd|shell|executable|binary|argv|env|path|directory|helper)(?:$|_)")
 
-
 @dataclass(frozen=True)
 class ActionContract:
     polkit_action: str
@@ -27,18 +26,15 @@ class ActionContract:
     optional: frozenset[str]
     validators: Mapping[str, Callable[[Any], Any]]
 
-
 def _stable(value: Any) -> str:
     if not isinstance(value, str) or not _STABLE_TOKEN.fullmatch(value) or "/" in value or "\\" in value:
         raise SecurityValidationError("executor.identifier", "Executor target identifiers must be opaque stable IDs.")
     return value
 
-
 def _boolean(value: Any) -> bool:
     if not isinstance(value, bool):
         raise SecurityValidationError("executor.boolean", "Expected a boolean argument.")
     return value
-
 
 def _integer(minimum: int, maximum: int) -> Callable[[Any], int]:
     def validate(value: Any) -> int:
@@ -47,7 +43,6 @@ def _integer(minimum: int, maximum: int) -> Callable[[Any], int]:
         return value
 
     return validate
-
 
 def _choice(*choices: str) -> Callable[[Any], str]:
     allowed = frozenset(choices)
@@ -59,7 +54,6 @@ def _choice(*choices: str) -> Callable[[Any], str]:
 
     return validate
 
-
 def _package_ids(value: Any) -> tuple[str, ...]:
     if not isinstance(value, list) or not value or len(value) > 256:
         raise SecurityValidationError("executor.package-list", "Package IDs must be a non-empty bounded list.")
@@ -68,18 +62,15 @@ def _package_ids(value: Any) -> tuple[str, ...]:
         raise SecurityValidationError("executor.package-list", "Package IDs must be unique.")
     return normalized
 
-
 def _label(value: Any) -> str:
     if not isinstance(value, str) or len(value) > 64 or "\x00" in value or "\n" in value or "\r" in value:
         raise SecurityValidationError("executor.label", "Label is invalid.")
     return value
 
-
 def _confirmation(value: Any) -> str:
     if not isinstance(value, str) or not 1 <= len(value) <= 160 or "\x00" in value:
         raise SecurityValidationError("executor.confirmation", "Explicit confirmation text is required.")
     return value
-
 
 SYSTEM_ACTIONS: Mapping[str, ActionContract] = MappingProxyType(
     {
@@ -161,7 +152,6 @@ SYSTEM_ACTIONS: Mapping[str, ActionContract] = MappingProxyType(
     }
 )
 
-
 @dataclass(frozen=True)
 class SystemExecutorRequest:
     request_id: str
@@ -173,7 +163,6 @@ class SystemExecutorRequest:
     state_revision: str
     approval_binding: str
     consent_nonce: str
-
 
 def validate_system_executor_request(document: Mapping[str, Any]) -> SystemExecutorRequest:
     """Validate a request without granting authorization.

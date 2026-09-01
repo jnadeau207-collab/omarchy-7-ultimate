@@ -90,7 +90,6 @@ SCHEMAS = build_contracts(
     state_schema=DEVICE_STATE_SCHEMA,
 )
 
-
 def _parse_device_rows(text: str) -> dict[str, str]:
     rows: dict[str, str] = {}
     for line in text.splitlines():
@@ -108,14 +107,12 @@ def _parse_device_rows(text: str) -> dict[str, str]:
         rows[device_id] = label
     return rows
 
-
 def _show_value(text: str, key: str) -> str:
     prefix = f"{key}:"
     matches = [line.strip()[len(prefix) :].strip() for line in text.splitlines() if line.strip().startswith(prefix)]
     if len(matches) != 1:
         raise ValueError(f"bluetoothctl show has no exact {key} field")
     return matches[0]
-
 
 def _controller_address(text: str) -> str:
     matches: list[str] = []
@@ -127,14 +124,12 @@ def _controller_address(text: str) -> str:
         raise ValueError("bluetoothctl show has no exact controller address")
     return matches[0]
 
-
 def _yes_no(value: str) -> bool:
     if value == "yes":
         return True
     if value == "no":
         return False
     raise ValueError("bluetoothctl boolean is not yes or no")
-
 
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     show = (await invoke_probe(SHOW_COMMAND, runner)).stdout
@@ -168,20 +163,16 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         )
     return resources
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"]}
 
-
 def _propose(current: Mapping[str, Any], _arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"paired": True, "connected": True}
-
 
 def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
     if current == proposed:
         return "The Bluetooth audio device is already paired and connected; no change will be made."
     return "Pair and connect the selected Bluetooth audio device."
-
 
 SPEC = DomainSpec(
     domain=DOMAIN,
@@ -196,14 +187,11 @@ SPEC = DomainSpec(
     describe_change=_describe,
 )
 
-
 def _manifest() -> Mapping[str, Any]:
     return load_frozen_json(Path(__file__).with_name("manifest-v0.json"))
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, _manifest(), SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

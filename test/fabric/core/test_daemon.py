@@ -22,7 +22,6 @@ from omarchy_fabric.provider_builtins import BUILTIN_PROVIDER_IDS
 from omarchy_fabric.security import EndpointAdmission, PrincipalKind, SessionBindingStore
 from omarchy_fabric.security.errors import SecurityValidationError
 
-
 class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -555,7 +554,6 @@ class DaemonRpcTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await client.close()
 
-
 class DaemonExitClassificationTests(unittest.TestCase):
     def test_typed_startup_refusal_uses_ex_config(self) -> None:
         async def refuse(_config: DaemonConfig) -> None:
@@ -590,7 +588,6 @@ class DaemonExitClassificationTests(unittest.TestCase):
             with mock.patch.object(daemon_module, "run_daemon", side_effect=crash):
                 with self.assertRaisesRegex(RuntimeError, "unexpected daemon failure"):
                     daemon_module.main(argv)
-
 
 if __name__ == "__main__":
     unittest.main()

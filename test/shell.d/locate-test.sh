@@ -18,8 +18,6 @@ PRUNEPATHS = "/afs /media /mnt /net /sfs /tmp /udev /var/cache /var/lib/pacman/l
 CONF
 }
 
-# updatedb dies on a config that defines a variable twice, so hand every
-# rewritten file to the real parser rather than trusting the greps below.
 empty_tree="$test_tmp/empty-tree"
 mkdir -p "$empty_tree"
 
@@ -50,8 +48,6 @@ pass "locate config leaves an already-configured file alone"
 OMARCHY_UPDATEDB_CONF_PATH="$test_tmp/missing.conf" bash -euo pipefail "$config_script" >/dev/null
 pass "locate config tolerates a missing updatedb.conf"
 
-# A hand-edited updatedb.conf may drop the settings entirely, or write them
-# without the spaces around the "=" or the quotes that the stock Arch file uses.
 conf="$test_tmp/sparse-updatedb.conf"
 printf '%s\n' 'PRUNENAMES = ".git .hg .svn"' >"$conf"
 
@@ -73,8 +69,6 @@ grep -qFx 'PRUNEPATHS = "/.snapshots /tmp /var/tmp"' "$conf" || fail "locate con
 assert_conf_parses "$conf"
 pass "locate config handles updatedb.conf written without spaces around ="
 
-# updatedb allows a comment after a value and indented settings, and defining
-# either setting twice makes it refuse to run at all.
 conf="$test_tmp/commented-updatedb.conf"
 printf '%s\n' '  PRUNE_BIND_MOUNTS = "yes" # subvolumes look like bind mounts' \
   'PRUNEPATHS = "/tmp" # scratch' >"$conf"
@@ -87,8 +81,6 @@ grep -qFx 'PRUNEPATHS = "/.snapshots /tmp"' "$conf" || fail "locate config keeps
 assert_conf_parses "$conf"
 pass "locate config handles indented settings and trailing comments"
 
-# A hand-edited file may have dropped the quotes updatedb requires, which
-# leaves it unparseable until something writes the setting out properly.
 conf="$test_tmp/unquoted-updatedb.conf"
 printf '%s\n' 'PRUNEPATHS = /tmp' >"$conf"
 
@@ -99,7 +91,6 @@ grep -qFx 'PRUNEPATHS = "/.snapshots"' "$conf" || fail "locate config repairs an
 assert_conf_parses "$conf"
 pass "locate config handles updatedb.conf written without quotes"
 
-# A path that merely ends in /.snapshots is not the root snapshot directory.
 conf="$test_tmp/nested-snapshots-updatedb.conf"
 printf '%s\n' 'PRUNEPATHS = "/var/lib/machines/.snapshots"' >"$conf"
 
@@ -152,8 +143,6 @@ OMARCHY_UPDATEDB_CONF_PATH="$conf" \
 [[ ! -s $test_tmp/calls.log ]] || fail "locate migration skips already-configured installs"
 pass "locate migration is a no-op once updatedb.conf is configured"
 
-# A dev checkout carries migrations from a release whose install scripts the
-# checked-out tree may not have yet, and omarchy-migrate runs under set -e.
 : >"$test_tmp/calls.log"
 conf="$test_tmp/no-config-script-updatedb.conf"
 stock_conf "$conf"

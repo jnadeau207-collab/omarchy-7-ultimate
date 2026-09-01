@@ -53,8 +53,6 @@ done
 write_stub omarchy-update-available 'exit 1'
 write_stub pkexec 'exec "$@"'
 
-# omarchy-update should hold the lock before snapshotting, so a second update
-# cannot even enter its pre-update snapshot.
 update_snapshot_marker="$test_tmp/update-snapshot-started"
 write_stub omarchy-snapshot 'echo started >"$TEST_MARKER"; sleep 2; exit 0'
 
@@ -79,10 +77,6 @@ grep -q "already running" "$test_tmp/update-second.out" || fail "second omarchy-
 [[ ! -f $test_tmp/update-second-snapshot-started ]] || fail "second omarchy-update did not snapshot while lock was held"
 pass "omarchy-update prevents overlapping top-level updates"
 
-# The sleep inhibitor deliberately outlives the step that starts it, so it must
-# not inherit the update lock. An update killed before restore_update_inhibitors
-# would otherwise leave the inhibitor holding the flock forever, blocking every
-# later update and silencing omarchy-migrate-notify, which reads the same lock.
 inhibit_pid_file="$test_tmp/inhibit-pid"
 keyring_marker="$test_tmp/keyring-started"
 write_stub omarchy-snapshot 'exit 0'
@@ -130,9 +124,6 @@ fi
 exec "$@"'
   write_stub pkexec 'touch "$PKEXEC_MARKER"; exec "$@"'
 
-  # start leaves the inhibitor running on purpose, but script tears the pty down
-  # the moment its command returns, which SIGHUPs that inhibitor before it can
-  # exec. Keep the session open from the inside until the stub has logged.
   terminal_driver="$test_tmp/terminal-stay-awake"
   cat >"$terminal_driver" <<'SH'
 #!/bin/bash
@@ -154,8 +145,6 @@ SH
   pass "terminal updates use sudo instead of Polkit for sleep inhibition"
 fi
 
-# Update-owned Stay Awake state must be cleared before the restart helper can
-# reboot the machine, rather than relying on an EXIT trap during shutdown.
 write_stub omarchy-snapshot 'exit 0'
 write_stub omarchy-update-keyring 'exit 0'
 write_stub omarchy-toggle-idle '
@@ -187,8 +176,6 @@ OMARCHY_UPDATE_LOGGED=1 EXPECT_STAY_AWAKE=1 run_with_lock_env "$ROOT/bin/omarchy
 [[ -f $test_home/.local/state/omarchy/indicators/stay-awake ]] || fail "update preserves pre-existing Stay Awake state"
 pass "omarchy-update restores only its own Stay Awake state before restart handling"
 
-# Stale cleanup state from a killed update must not override a Stay Awake choice
-# the user made afterward.
 stay_awake_helper_state="$runtime_dir/omarchy-update-stay-awake"
 stay_awake_state="$test_home/.local/state/omarchy/indicators/stay-awake"
 mkdir -p "$stay_awake_helper_state" "$(dirname "$stay_awake_state")"
@@ -200,7 +187,6 @@ run_with_lock_env "$ROOT/bin/omarchy-update-stay-awake" stop
   fail "stale update ownership does not remove a newer Stay Awake choice"
 pass "stale update ownership preserves a newer Stay Awake choice"
 
-# A stale PID is safe even if it has been reused by another process.
 sleep 30 &
 unrelated_pid=$!
 unrelated_start_time=$(awk '{ print $22 }' "/proc/$unrelated_pid/stat")

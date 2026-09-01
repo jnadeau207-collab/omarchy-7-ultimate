@@ -45,7 +45,6 @@ rebuild_marker="$test_tmp/rebuild-complete"
 cp "$packaged_hooks" "$hooks_conf"
 echo 'MODULES+=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' >"$nvidia_conf"
 
-# Each argument is a PCI device as "vendor:class", in sysfs's own format.
 write_pci_devices() {
   rm -rf "$test_tmp/devices"
   mkdir -p "$test_tmp/devices"
@@ -72,8 +71,6 @@ run_migration() {
     bash -euo pipefail "$migration" >/dev/null
 }
 
-# NVIDIA-only machine with the proprietary driver: the packaged conditional
-# drops kms, so the stale initramfs must be rebuilt once.
 write_pci_devices 0x10de:0x030000
 run_migration
 
@@ -96,7 +93,6 @@ grep -Fxq 'limine-mkinitcpio' "$calls" ||
   fail "an interrupted rebuild is retried"
 pass "migration retries an interrupted rebuild"
 
-# Hybrid machine: the conditional keeps kms, so the initramfs already matches.
 write_pci_devices 0x1002:0x030000 0x10de:0x030200
 rm -f "$rebuild_marker"
 : >"$calls"
@@ -106,8 +102,6 @@ run_migration
 [[ ! -e $rebuild_marker ]] || fail "an untouched machine is not marked as repaired"
 pass "migration skips a hybrid machine that keeps kms"
 
-# A user-edited hooks conf predating the conditional (the packaged update sits
-# in a .pacnew) still carries kms unconditionally: nothing to rebuild for.
 write_pci_devices 0x10de:0x030000
 echo 'HOOKS=(base udev autodetect modconf kms block filesystems fsck)' >"$hooks_conf"
 : >"$calls"

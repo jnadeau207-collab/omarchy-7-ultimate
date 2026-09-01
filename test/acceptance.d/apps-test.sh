@@ -7,8 +7,6 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 launch_and_verify() {
   local name="$1" command="$2" class="$3" timeout="${4:-45}"
 
-  # A pre-existing window makes the test ambiguous (and closing it would be
-  # hostile on a dev machine) — acceptance runs expect a fresh session.
   if window_present "$class" >/dev/null 2>&1; then
     fail "$name starts with no pre-existing window" "a window matching $class is already open"
   fi
@@ -31,9 +29,6 @@ launch_and_verify() {
   pass "$name window closes"
 }
 
-# Keep launch coverage to the primary daily-use paths. The system acceptance
-# test separately verifies the complete core package manifest.
-# name|command|window class regex|launch timeout
 apps='terminal|foot|^foot$
 browser|chromium --new-window|(?i)chromium
 neovim|xdg-terminal-exec --app-id=org.omarchy.nvim nvim|org.omarchy.nvim

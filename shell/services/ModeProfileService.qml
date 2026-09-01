@@ -3,10 +3,6 @@ import Quickshell
 import Quickshell.Io
 import qs.Commons
 
-// Resolves Desktop Mode vs Power User Mode. UI checks feature flags, not
-// mode strings (docs/mode-profiles.md). User choice lives in
-// ~/.local/state/omarchy/ultimate/mode; shipped defaults live in
-// $OMARCHY_PATH/default/ultimate/profiles/.
 QtObject {
   id: root
 
@@ -16,8 +12,6 @@ QtObject {
 
   property string mode: "desktop"
   property string description: "Consumer default profile: floating windows, Superbar, Start, visible-before-memorable affordances. Windows muscle memory is the API. Flags are capabilities that exist, not intentions."
-  // Match desktop.json so the first frame is Desktop Mode before FileView lands.
-  // desktopIcons is true because omarchy.desktop-icons exists.
   property var features: ({
     desktopIcons: true,
     taskbar: true,

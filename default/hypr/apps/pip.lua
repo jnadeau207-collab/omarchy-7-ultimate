@@ -1,4 +1,3 @@
--- Picture-in-picture overlays.
 o.window({ title = "(Picture.?in.?[Pp]icture)" }, { tag = "+pip" })
 o.window({ tag = "pip" }, {
   tag = "-default-opacity",
@@ -11,7 +10,6 @@ o.window({ tag = "pip" }, {
   move = { "(monitor_w-window_w-40)", "(monitor_h*0.04)" },
 })
 
--- Google Meet PiP uses the meeting title instead of "Picture-in-Picture".
 o.window({ tag = "chromium-based-browser", title = "^Meet - .+" }, {
   tag = "-default-opacity",
   float = true,

@@ -24,13 +24,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# The setup installs to an absolute path no unprivileged suite can write, and an
-# environment override in the shipped command would hand its privileged install
-# and mv an operand the caller chooses. Retarget a scratch copy instead, and
-# fail if either path is not named exactly once, so this seam cannot quietly
-# stop standing for the command it copies. Keying the suite on the host's own
-# /etc/fido2 instead is what let the staging checks below pass without asserting
-# anything on the machines that actually use FIDO2.
 occurrences=$(grep -Fxc 'authdir=/etc/fido2' "$setup") || occurrences=0
 (( occurrences == 1 )) ||
   fail "the setup names its FIDO2 directory exactly once" "found $occurrences occurrences"
@@ -42,9 +35,6 @@ pass "setup names its FIDO2 paths once each, and the test drives a retargeted co
 sed -e "s|^authdir=/etc/fido2$|authdir=$authdir|" \
   -e "s|^authfile=/etc/fido2/fido2$|authfile=$authfile|" "$setup" >"$setup_copy"
 
-# The setup must not create a caller-owned named file for pamu2fcfg. A bare
-# mktemp is therefore a test failure; only the sudo stub below may invoke the
-# real command, and it does so with an absolute scratch template.
 cat >"$stub_bin/mktemp" <<'SH'
 #!/bin/bash
 
@@ -54,11 +44,6 @@ printf '\n' >>"$TEST_BARE_MKTEMP"
 exit 98
 SH
 
-# Execute only the setup's expected bare-sudo protocol. The production mktemp
-# template is logged exactly, but its root-created sibling is represented by a
-# unique regular file inside the scratch directory. The whitelisted operations
-# map every write into that directory; arbitrary direct commands are outside
-# this harness.
 cat >"$stub_bin/sudo" <<'SH'
 #!/bin/bash
 
@@ -213,9 +198,6 @@ cat >"$stub_bin/omarchy-pkg-add" <<'SH'
 #!/bin/bash
 SH
 
-# Record what pamu2fcfg's stdout actually targets. The fixed implementation
-# gives it a pipe to privileged tee; refusing a regular-file descriptor keeps a
-# regression from writing credential bytes into a caller-owned named file.
 cat >"$stub_bin/pamu2fcfg" <<'SH'
 #!/bin/bash
 
@@ -314,9 +296,6 @@ assert_failed_stage_cleanup() {
   [[ ! -e $authfile ]] || fail "failed setup never publishes a credential"
 }
 
-# Each branch below is a fixture rather than whatever the host happens to have
-# at /etc/fido2, so all of them run on every machine and the staging assertions
-# that follow are reached even on one that already uses FIDO2.
 reset_run
 mkdir -p "$authdir"
 printf '%s\n' "$credential" >"$authfile"
@@ -345,9 +324,6 @@ invoke_setup >/dev/null 2>&1 &&
   fail "FIDO2 setup stages nothing against a directory authfile"
 pass "FIDO2 setup refuses a non-regular authfile"
 
-# install -d follows a symlink at the directory and applies its mode and
-# ownership to whatever it points at, so the credential would be staged and
-# published inside the target and that directory reopened to root:root 755.
 reset_run
 mkdir -p "$test_tmp/elsewhere"
 chmod 700 "$test_tmp/elsewhere"
@@ -392,8 +368,6 @@ grep -Fxq $'sudo\tmv\t-Tf\t'"$stage_path"$'\t'"$authfile" "$calls" ||
   fail "the published authfile is mode 644" "got: $(stat -c %a "$authfile")"
 pass "FIDO2 setup pipes the credential into a unique root-created stage and publishes it atomically"
 
-# A chmod failure happens after a complete credential has been written but
-# before publication. It must abort the setup and leave the EXIT trap armed.
 reset_run
 if invoke_setup success 1 >/dev/null 2>&1; then
   fail "a failed chmod propagates out of FIDO2 setup"
@@ -407,8 +381,6 @@ grep -Fxq $'sudo\tchmod\t644\t'"$failed_stage" "$calls" ||
 assert_failed_stage_cleanup
 pass "FIDO2 setup propagates chmod failure and cleans its privileged stage"
 
-# A failed atomic rename has the same cleanup obligation. The completed stage
-# must not survive beside the live authfile when publication fails.
 reset_run
 if invoke_setup success 0 1 >/dev/null 2>&1; then
   fail "a failed mv propagates out of FIDO2 setup"
@@ -422,8 +394,6 @@ grep -Fxq $'sudo\tmv\t-Tf\t'"$failed_stage"$'\t'"$authfile" "$calls" ||
 assert_failed_stage_cleanup
 pass "FIDO2 setup propagates mv failure and cleans its privileged stage"
 
-# Emit a valid credential and then fail. Without pipefail, tee's success masks
-# pamu2fcfg's status and the nonempty file would be published.
 reset_run
 if invoke_setup fail >/dev/null 2>&1; then
   fail "a failing pamu2fcfg pipeline fails setup"
@@ -436,8 +406,6 @@ assert_failed_stage_cleanup
   fail "a failed pamu2fcfg result is never published" "$(cat "$calls")"
 pass "FIDO2 setup propagates pamu2fcfg failure and cleans its privileged stage"
 
-# A successful pipeline can still produce no credential. Reject that before
-# chmod or rename, and clean the exact stage just as on command failure.
 reset_run
 if invoke_setup empty >/dev/null 2>&1; then
   fail "an empty pamu2fcfg result fails setup"
@@ -450,9 +418,6 @@ assert_failed_stage_cleanup
   fail "an empty pamu2fcfg result is never published" "$(cat "$calls")"
 pass "FIDO2 setup rejects an empty credential and cleans its privileged stage"
 
-# mktemp's output is an operand for a privileged tee, chmod, mv and rm. Take
-# only the name this script asked for: a stage path outside that shape must stop
-# the setup before any of them runs, exactly as the migration does.
 reset_run
 invoke_setup success 0 0 malformed >/dev/null 2>&1 &&
   fail "a malformed mktemp result fails setup"

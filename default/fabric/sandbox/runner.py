@@ -21,7 +21,6 @@ from .builder import (
 
 INSPECT_CAPABILITY = "system.info.read"
 
-
 @dataclass(frozen=True)
 class IsolatedRun:
     returncode: int
@@ -29,7 +28,6 @@ class IsolatedRun:
     stderr: str
     argv: tuple[str, ...]
     result: Mapping[str, object] | None
-
 
 def packaged_runner_source() -> Path:
     candidates = []
@@ -46,10 +44,8 @@ def packaged_runner_source() -> Path:
             continue
     raise SandboxUnavailable("packaged agent runner is unavailable; managed execution fails closed.")
 
-
 def canonical_manifest(value: Mapping[str, object]) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-
 
 def inspect_manifest() -> dict[str, object]:
     return {
@@ -69,7 +65,6 @@ def inspect_manifest() -> dict[str, object]:
         "sandboxRequired": True,
         "steps": [{"label": "Sandboxed inspect", "capability": INSPECT_CAPABILITY}],
     }
-
 
 def run_isolated(
     spec: SandboxSpec,
@@ -114,7 +109,6 @@ def run_isolated(
         argv=argv,
         result=parsed,
     )
-
 
 def run_representative_inspect(
     *,

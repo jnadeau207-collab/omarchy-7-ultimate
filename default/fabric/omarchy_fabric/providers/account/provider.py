@@ -55,7 +55,6 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def parse_accounts(text: str) -> list[dict[str, Any]]:
     resources: list[dict[str, Any]] = []
     seen_uid: set[int] = set()
@@ -92,14 +91,11 @@ def parse_accounts(text: str) -> list[dict[str, Any]]:
             raise ValueError("account inventory exceeds 64 resources")
     return resources
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     return parse_accounts((await invoke_probe(ACCOUNT_COMMAND, runner)).stdout)
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "action": arguments["action"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if not current["mutable"]:
@@ -110,7 +106,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
     if action in {"promote", "demote"} and current["role"] == ("administrator" if action == "promote" else "standard"):
         raise ValueError("account already has requested role")
     return {**dict(current), "pendingAction": action}
-
 
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "account", OPERATION_ACTION, "account.change.plan", "consequential", ("mutating", "privileged")),
@@ -123,10 +118,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan allowlisted account action {arguments['action']}; no account database is changed.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

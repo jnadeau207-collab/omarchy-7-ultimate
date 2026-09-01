@@ -35,7 +35,6 @@ from .validation import (
     timestamp,
 )
 
-
 @dataclass(frozen=True, slots=True)
 class NormalizedQuery:
     view: str
@@ -107,10 +106,8 @@ _MEDIA_TYPE_RE = re.compile(
 )
 _PROVIDER_VERSION_RE = re.compile(r"^v[0-9]+(?:\.[0-9]+){0,2}$")
 
-
 def _new_id(prefix: str) -> str:
     return f"{prefix}.{uuid.uuid4()}"
-
 
 class ManagedWorkPlane:
     """A hermetic storage/query authority with no execution authority."""

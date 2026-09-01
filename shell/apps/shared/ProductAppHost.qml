@@ -28,9 +28,6 @@ ShellRoot {
   property string placementState: "automatic"
   property var fabricPrincipal: null
 
-  // Shell chrome takes RTL and pseudo-locale from a Start summon payload. A
-  // product window is its own process, so it reads the same two flags from the
-  // state file the shell publishes them to.
   property bool presentationRtl: false
   property bool presentationPseudoLocale: false
 

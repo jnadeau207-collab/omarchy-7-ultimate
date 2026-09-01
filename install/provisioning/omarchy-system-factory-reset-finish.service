@@ -1,8 +1,3 @@
-# Finishes an omarchy-system-factory-reset reset on the first boot after it: drops
-# the previous root, recreates @home/@log, and scrubs state. Ordered before
-# home.mount/var-log.mount so those subvolumes can be deleted and recreated
-# while unmounted. Armed by /var/lib/omarchy/provisioning/wipe-pending; installed to
-# /etc/systemd/system by omarchy-system-factory-reset.
 
 [Unit]
 Description=Omarchy factory reset wipe

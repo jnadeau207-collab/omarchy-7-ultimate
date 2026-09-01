@@ -12,7 +12,6 @@ from .validation import closed_object, enum_value, integer, stable_id, timestamp
 
 MAX_CALENDAR_SCAN_DAYS = 50_000
 
-
 def normalize_trigger(value: Any) -> dict[str, Any]:
     base = closed_object(
         value,
@@ -63,7 +62,6 @@ def normalize_trigger(value: Any) -> dict[str, Any]:
         ),
     }
 
-
 def normalize_policy(value: Any) -> dict[str, Any]:
     data = closed_object(
         value,
@@ -99,7 +97,6 @@ def normalize_policy(value: Any) -> dict[str, Any]:
         "signedOut": signed_out,
     }
 
-
 def first_due(trigger: dict[str, Any], *, created_at: float) -> float | None:
     if trigger["kind"] == "event":
         return None
@@ -110,7 +107,6 @@ def first_due(trigger: dict[str, Any], *, created_at: float) -> float | None:
         seconds = int(trigger["seconds"])
         return anchor + math.ceil((created_at - anchor) / seconds) * seconds
     return next_calendar(trigger, after=created_at, inclusive=True)
-
 
 def next_calendar(trigger: dict[str, Any], *, after: float, inclusive: bool = False) -> float:
     zone = ZoneInfo(trigger["timeZone"])
@@ -134,14 +130,12 @@ def next_calendar(trigger: dict[str, Any], *, after: float, inclusive: bool = Fa
         "No calendar occurrence was found within the bounded schedule horizon.",
     )
 
-
 def next_due(trigger: dict[str, Any], *, after: float) -> float | None:
     if trigger["kind"] == "event":
         return None
     if trigger["kind"] == "interval":
         return after + int(trigger["seconds"])
     return next_calendar(trigger, after=after, inclusive=False)
-
 
 def reconcile_due(
     trigger: dict[str, Any],

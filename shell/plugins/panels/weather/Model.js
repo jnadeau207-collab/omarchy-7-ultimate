@@ -1,6 +1,3 @@
-// weather.json holds {"name": ..., "latitude": ..., "longitude": ...} (see
-// omarchy-weather-location, which owns the format). Missing, blank, or
-// unparseable means the location is auto-detected from the IP address.
 function parseLocationFile(raw) {
   var unset = { name: "", latitude: null, longitude: null }
   try {
@@ -20,9 +17,6 @@ function parseLocationFile(raw) {
   }
 }
 
-// wttr.in path segment for a configured location: exact coordinates when
-// both are present, the URL-encoded name as a fallback (hand-edited
-// weather.loc files may only carry a name), empty for IP auto-detect.
 function wttrLocationQuery(location, latitude, longitude) {
   var lat = parseFloat(String(latitude))
   var lon = parseFloat(String(longitude))
@@ -32,7 +26,6 @@ function wttrLocationQuery(location, latitude, longitude) {
   return name === "" ? "" : encodeURIComponent(name)
 }
 
-// Open-Meteo geocoding response → suggestion rows for the location picker.
 function parseGeocodingResults(raw) {
   try {
     var data = JSON.parse(String(raw || "{}"))
@@ -153,10 +146,6 @@ function openMeteoForecastDays(dailyForecastReport, todayString) {
   return result
 }
 
-// Open-Meteo bundles current conditions with the daily forecast request and
-// answers far faster than wttr.in. Normalize them to wttr's
-// current_condition shape so the panel can use either source
-// interchangeably. Open-Meteo reports metric (°C, km/h).
 function openMeteoCurrentCondition(dailyForecastReport) {
   var current = dailyForecastReport && dailyForecastReport.current ? dailyForecastReport.current : null
   if (!current || current.temperature_2m === undefined || current.temperature_2m === null) return null
@@ -182,8 +171,6 @@ function currentIcon(current, fallback) {
   return fallback || ""
 }
 
-// wttr.in has no day/night flag. Use its icon only to fill an empty initial
-// state, never to replace a day/night-aware icon resolved by Open-Meteo.
 function provisionalCurrentIcon(current, resolvedIcon) {
   return resolvedIcon || currentIcon(current, "")
 }

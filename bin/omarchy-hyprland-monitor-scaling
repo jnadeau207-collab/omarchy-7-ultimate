@@ -52,9 +52,6 @@ audit_scale_change() {
     "$grandparent_cmd" >>"$SCALE_LOG"
 }
 
-# Hyprland only accepts scales where the mode divides into whole logical
-# pixels (in 1/120 steps), so clean scales are divisors of gcd(w*120, h*120).
-# Round the requested scale up to the nearest clean value.
 clean_scale() {
   awk -v scale="$1" -v width="$2" -v height="$3" '
     function gcd(a, b, t) { while (b) { t = a % b; a = b; b = t } return a }
@@ -81,24 +78,18 @@ set_scale() {
   local height="$(echo "$monitor_info" | jq -r '.height')"
   local refresh_rate="$(echo "$monitor_info" | jq -r '.refreshRate')"
 
-  # active_monitor is written into the Lua string eval'd below, so only a plain
-  # connector name may pass; a hostile output name could execute otherwise.
   if [[ ! $active_monitor =~ ^[A-Za-z0-9._-]+$ ]]; then
     echo "Refusing unsafe monitor name" >&2
     exit 1
   fi
 
   local new_scale="$(clean_scale "$requested_scale" "$width" "$height")"
-  # GTK only honors integer GDK_SCALE values, so persist the nearest whole
-  # factor even when the monitor scale itself is fractional.
   local new_gdk_scale="$(awk -v scale="$new_scale" 'BEGIN { printf "%d", int(scale + 0.5) }')"
   local monitor_lua="$HOME/.config/hypr/monitors.lua"
 
   hyprctl eval "hl.monitor({ output = \"$active_monitor\", mode = \"${width}x${height}@${refresh_rate}\", position = \"auto\", scale = $new_scale })" >/dev/null
   audit_scale_change "$requested" "$active_monitor" "$current_scale" "$new_scale"
 
-  # Persist to monitors.lua if the user still has Omarchy's generic catch-all
-  # defaults, so the scale survives reboots.
   if [[ -f $monitor_lua ]] && grep -q '^local omarchy_monitor_scale = ' "$monitor_lua"; then
     sed -i -E \
       -e "s|^local omarchy_monitor_scale = .*|local omarchy_monitor_scale = ${new_scale}|" \
@@ -137,8 +128,6 @@ scale_from_current() {
         distance = presets[i] - effective
         if (distance < 0) distance = -distance
 
-        # Multiple presets can collapse to the same clean scale. Keep only the
-        # closest label so stepping always moves to a distinct effective value.
         if (!(key in effective_index)) {
           effective_index[key] = ++n
           effective_scales[n] = effective
@@ -153,8 +142,6 @@ scale_from_current() {
         }
       }
 
-      # Snap to the nearest effective scale first. Hyprland reports floating
-      # point values, so exact comparisons can otherwise get stuck.
       best = 1; best_diff = 1e9
       for (i = 1; i <= n; i++) {
         diff = scale - effective_scales[i]; if (diff < 0) diff = -diff

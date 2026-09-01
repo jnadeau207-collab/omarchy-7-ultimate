@@ -12,9 +12,6 @@ downloads="$WORKDIR/downloads"
 mkdir -p "$WORKDIR/bin" "$downloads" "$WORKDIR/outbox"
 printf 'mine' >"$downloads/unrelated.txt"
 
-# Stands in for the daemon handing over whatever is waiting in the inbox. A
-# decoy is whatever else drops into the downloads directory while Taildrop is
-# still blocking on the next delivery.
 cat >"$WORKDIR/bin/tailscale" <<SH
 #!/bin/bash
 target="\${*: -1}"
@@ -65,10 +62,6 @@ grep -q "^Received notes with space.pdf .* -g " <<<"$notifications" ||
   fail "taildrop receive announces other files with a glyph" "$notifications"
 pass "taildrop receive announces other files with a glyph"
 
-# The shell keeps the click command with the toast, so receiving does not have
-# to sit blocked on an answer -- and the toast still opens the file after a shell
-# restart. The path rides as its own discrete --exec argument, so the shell runs
-# it as literal data with no quoting for a name with spaces to get wrong.
 grep -qF -- "--exec xdg-open $downloads/photo.png" <<<"$notifications" ||
   fail "taildrop receive attaches the open command to the notification" "$notifications"
 grep -qF -- "--exec xdg-open $downloads/notes with space.pdf" <<<"$notifications" ||
@@ -79,8 +72,6 @@ grep -q "unrelated.txt" <<<"$notifications" &&
   fail "taildrop receive leaves the rest of the downloads directory alone" "$notifications"
 pass "taildrop receive leaves the rest of the downloads directory alone"
 
-# A second delivery of the same name, alongside a download that arrives while
-# Taildrop is waiting.
 printf 'png' >"$WORKDIR/outbox/photo.png"
 receive 1 env DECOY=browser-download.iso
 

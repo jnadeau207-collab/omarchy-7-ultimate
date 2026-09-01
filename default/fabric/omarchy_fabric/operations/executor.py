@@ -20,7 +20,6 @@ _STABLE_TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,159}$")
 MAX_EXECUTOR_OBJECT_BYTES = 12 * 1024
 MAX_EXECUTOR_EVIDENCE_BYTES = 8 * 1024
 
-
 def _executor_object(
     value: Any,
     label: str,
@@ -58,7 +57,6 @@ def _executor_object(
         )
     return _freeze_json(normalized)
 
-
 def normalize_executor_evidence(value: Any, *, change_state: str = "unknown") -> Mapping[str, Any]:
     return _executor_object(
         value,
@@ -66,7 +64,6 @@ def normalize_executor_evidence(value: Any, *, change_state: str = "unknown") ->
         maximum=MAX_EXECUTOR_EVIDENCE_BYTES,
         change_state=change_state,
     )
-
 
 def _result_revision(value: Any) -> str:
     if not isinstance(value, str) or not _REVISION.fullmatch(value):
@@ -76,7 +73,6 @@ def _result_revision(value: Any) -> str:
             change_state="unknown",
         )
     return value
-
 
 @dataclass(frozen=True)
 class IntentDefinition:
@@ -150,7 +146,6 @@ class IntentDefinition:
             raise operation_error("executor.secret-rejected", "Secrets cannot enter executor payloads.")
         return _freeze_json(value)
 
-
 class IntentCatalog:
     """Immutable catalog; request data cannot register or select argv."""
 
@@ -182,11 +177,9 @@ class IntentCatalog:
             raise operation_error("executor.intent-corrupt", "The durable executor payload is invalid.")
         return definition
 
-
 class CancellationProbe(Protocol):
     def __call__(self) -> bool:
         """Return whether durable cancellation has been requested."""
-
 
 @dataclass(frozen=True)
 class ExecutorApplyResult:
@@ -211,7 +204,6 @@ class ExecutorApplyResult:
             )
         object.__setattr__(self, "expected_state", expected)
         object.__setattr__(self, "evidence", evidence)
-
 
 @dataclass(frozen=True)
 class ExecutorReconcileResult:
@@ -238,7 +230,6 @@ class ExecutorReconcileResult:
             )
         object.__setattr__(self, "observed_state", observed)
         object.__setattr__(self, "evidence", evidence)
-
 
 class OperationExecutor(Protocol):
     available: bool
@@ -278,7 +269,6 @@ class OperationExecutor(Protocol):
     ) -> ExecutorReconcileResult:
         ...
 
-
 class UnavailableProductionExecutor:
     """Explicit production boundary: typed intents exist, execution does not."""
 
@@ -304,18 +294,15 @@ class UnavailableProductionExecutor:
     async def reconcile(self, *args: Any, **kwargs: Any) -> ExecutorReconcileResult:
         raise self._unavailable()
 
-
 def stable_token(value: Any) -> str:
     if not isinstance(value, str) or not _STABLE_TOKEN.fullmatch(value):
         raise ValueError("expected an opaque stable token")
     return value
 
-
 def boolean(value: Any) -> bool:
     if not isinstance(value, bool):
         raise ValueError("expected a boolean")
     return value
-
 
 class FakeResourceExecutor:
     """Hermetic unprivileged executor used to prove the coordinator protocol.
@@ -453,7 +440,6 @@ class FakeResourceExecutor:
         cancelled: CancellationProbe,
     ) -> ExecutorApplyResult:
         self._resolve(plan, intent)
-        # Cancellation requests rollback; they must not cancel rollback itself.
         await self._stage("rollback", plan, lambda: False)
         current = self.state(plan.resource.resource_id)
         if current["revision"] != expected_revision:

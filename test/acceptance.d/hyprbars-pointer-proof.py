@@ -33,7 +33,6 @@ SYN_REPORT = 0
 ABS_MAX = 32767
 INPUT_PROP_DIRECT = 1
 
-
 def session_user() -> str:
   for key in ("SUDO_USER", "USER", "LOGNAME"):
     val = os.environ.get(key) or ""
@@ -41,16 +40,13 @@ def session_user() -> str:
       return val
   return pwd.getpwuid(os.getuid()).pw_name
 
-
 USER_NAME = session_user()
 USER_UID = pwd.getpwnam(USER_NAME).pw_uid
 USER_HOME = pwd.getpwnam(USER_NAME).pw_dir
 OMARCHY_PATH = os.environ.get("OMARCHY_PATH") or os.path.join(USER_HOME, "omarchy7ultimate")
 
-
 class ProofError(RuntimeError):
   pass
-
 
 def hypr_env() -> dict[str, str]:
   env = os.environ.copy()
@@ -67,10 +63,8 @@ def hypr_env() -> dict[str, str]:
   })
   return env
 
-
 def hypr(*args: str) -> str:
   return subprocess.check_output(["hyprctl", *args], env=hypr_env(), text=True).strip()
-
 
 def as_user(args: list[str], wait: bool = True, timeout: float | None = 20) -> subprocess.CompletedProcess[str]:
   env = hypr_env()
@@ -86,22 +80,17 @@ def as_user(args: list[str], wait: bool = True, timeout: float | None = 20) -> s
   subprocess.Popen(cmd, env=env, start_new_session=True)
   return subprocess.CompletedProcess(cmd, 0, "", "")
 
-
 def clients() -> list[dict]:
   return json.loads(hypr("-j", "clients") or "[]")
-
 
 def feet() -> list[dict]:
   return [c for c in clients() if c.get("class") == "foot"]
 
-
 def client_by_addr(addr: str) -> dict | None:
   return next((c for c in clients() if c.get("address") == addr), None)
 
-
 def cursor_windows() -> list[dict]:
   return [c for c in clients() if str(c.get("class") or "").lower() == "cursor"]
-
 
 def save_cursor_windows() -> list[dict]:
   out = []
@@ -113,13 +102,11 @@ def save_cursor_windows() -> list[dict]:
     })
   return out
 
-
 def tuck_cursor_windows() -> list[dict]:
   saved = save_cursor_windows()
   for c in saved:
     as_user(["omarchy-shell", "window", "minimize", c["address"]], wait=True, timeout=5)
   return saved
-
 
 def restore_cursor_windows(saved: list[dict] | None) -> None:
   for c in saved or []:
@@ -131,7 +118,6 @@ def restore_cursor_windows(saved: list[dict] | None) -> None:
     as_user(["omarchy-shell", "window", "restore", addr], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "moveTo", addr, str(x), str(y)], wait=True, timeout=5)
     as_user(["omarchy-shell", "window", "resizeTo", addr, str(w), str(h)], wait=True, timeout=5)
-
 
 def hyprbars_button(win: dict, which: str) -> tuple[int, int]:
   x, y = win["at"]
@@ -145,7 +131,6 @@ def hyprbars_button(win: dict, which: str) -> tuple[int, int]:
     return x + w - 83, bar_y
   raise ProofError(f"unknown hyprbars button {which}")
 
-
 def wait_until(desc: str, seconds: float, fn) -> None:
   deadline = time.time() + seconds
   last = None
@@ -157,7 +142,6 @@ def wait_until(desc: str, seconds: float, fn) -> None:
       last = e
     time.sleep(0.15)
   raise ProofError(f"timed out waiting for {desc}: {last}")
-
 
 class AbsPointer:
   def __init__(self) -> None:
@@ -253,7 +237,6 @@ class AbsPointer:
     except OSError:
       pass
 
-
 def card_center(index: int, count: int, gw: int, gh: int) -> tuple[int, int]:
   """Center of an Alt+Tab card. Switcher panel is 120px cards, 8px gap, 40px pad, height 160, centered."""
   n = max(1, count)
@@ -263,7 +246,6 @@ def card_center(index: int, count: int, gw: int, gh: int) -> tuple[int, int]:
   y = int(gh / 2)
   return x, y
 
-
 def cursor_near(x: int, y: int, slop: int = 16) -> bool:
   raw = hypr("cursorpos").replace(" ", "")
   try:
@@ -271,7 +253,6 @@ def cursor_near(x: int, y: int, slop: int = 16) -> bool:
   except ValueError:
     return False
   return abs(cx - x) <= slop and abs(cy - y) <= slop
-
 
 def window_near(addr: str, x: int, y: int, w: int, h: int, slop: int = 32) -> bool:
   win = client_by_addr(addr)
@@ -284,17 +265,14 @@ def window_near(addr: str, x: int, y: int, w: int, h: int, slop: int = 32) -> bo
     and abs(win["size"][1] - h) <= slop
   )
 
-
 def active_is(addr: str) -> bool:
   active = json.loads(hypr("-j", "activewindow") or "{}")
   return active.get("address") == addr
-
 
 def monitor_size() -> tuple[int, int]:
   mons = json.loads(hypr("-j", "monitors") or "[]")
   focused = next((m for m in mons if m.get("focused")), mons[0])
   return int(focused["width"]), int(focused["height"])
-
 
 def work_area() -> dict:
   mons = json.loads(hypr("-j", "monitors") or "[]")
@@ -308,7 +286,6 @@ def work_area() -> dict:
     "h": int(focused["height"]) - top - bottom,
   }
 
-
 def is_hidden_client(win: dict | None) -> bool:
   if not win:
     return False
@@ -316,7 +293,6 @@ def is_hidden_client(win: dict | None) -> bool:
     return True
   workspace = win.get("workspace") or {}
   return str(workspace.get("name") or "") == "special:minimized"
-
 
 def geometry_is_maximized(win: dict | None) -> bool:
   if not win or not win.get("at") or not win.get("size"):
@@ -340,7 +316,6 @@ def geometry_is_maximized(win: dict | None) -> bool:
     return covers(x + 12, y + 12, w - 12, h - 12)
   return False
 
-
 def launch_feet(n: int) -> None:
   as_user(["pkill", "-x", "foot"], wait=True)
   time.sleep(0.4)
@@ -360,20 +335,16 @@ def launch_feet(n: int) -> None:
 
   wait_until("foot windows are overlapping floats", 8, floated)
 
-
 def layer_named(ns: str) -> bool:
   data = json.loads(hypr("-j", "layers") or "{}")
   blob = json.dumps(data)
   return ns in blob
 
-
 def grim(path: str) -> None:
   as_user(["grim", path], wait=True)
 
-
 def pin_session_monitor() -> None:
   return
-
 
 def cycle_snapshot() -> dict:
   proc = as_user(["omarchy-shell", "window", "cycleSnapshot"], wait=True, timeout=5)
@@ -387,7 +358,6 @@ def cycle_snapshot() -> dict:
   if not isinstance(data, dict):
     raise ProofError(f"cycleSnapshot was not an object: {raw!r}")
   return data
-
 
 def main() -> int:
   report: dict = {"ok": False}
@@ -722,7 +692,6 @@ def main() -> int:
       hypr("eval", 'hl.device({ name = "ydotoold-virtual-device-1", enabled = true })')
     except Exception:
       pass
-
 
 if __name__ == "__main__":
   sys.exit(main())

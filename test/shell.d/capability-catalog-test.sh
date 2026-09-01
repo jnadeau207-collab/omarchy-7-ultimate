@@ -61,15 +61,12 @@ from pathlib import Path
 root = Path(sys.argv[1])
 mutation = sys.argv[2]
 
-
 def load(relative):
     path = root / relative
     return path, json.loads(path.read_text(encoding="utf-8"))
 
-
 def save(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
-
 
 system_path, system = load("default/ultimate/capabilities/catalog-system-jobs-v0.json")
 readers_path, readers = load("default/ultimate/capabilities/catalog-provider-readers-v0.json")

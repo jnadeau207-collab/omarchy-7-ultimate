@@ -1,5 +1,3 @@
-# Fix NVMe suspend issues on MacBook models
-# This prevents NVMe drives from failing to wake from sleep properly
 MACBOOK_MODEL=$(cat /sys/class/dmi/id/product_name 2>/dev/null || true)
 
 if [[ $MACBOOK_MODEL =~ MacBook(8,1|9,1|10,1)|MacBookPro13,[123]|MacBookPro14,[123] ]]; then

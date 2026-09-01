@@ -7,14 +7,6 @@ import qs.Commons
 import qs.Ui
 import "Model.js" as Model
 
-// Centered Wi-Fi share overlay: no card, just the QR code floating on a
-// heavy scrim. Esc or the scrim dismiss it.
-//
-// Standalone panel plugin: each summon regenerates the code via
-// omarchy-network-qr, which emits the interface, security, and SSID it
-// shared ahead of the module matrix — so a bare summon self-detects the
-// connection. The payload may pin the interface and pre-title the card:
-// {"iface": "wlan0", "ssid": "MyWifi"}.
 Item {
   id: root
 
@@ -41,8 +33,6 @@ Item {
 
   readonly property bool showingQr: qrSize > 0 && !loading && error === ""
 
-  // The scrim below is a fixed near-black regardless of theme, so text on
-  // it needs a fixed light palette, not the themed foreground.
   readonly property color onScrim: "white"
   readonly property color onScrimDim: Qt.rgba(1, 1, 1, 0.55)
   readonly property color onScrimUrgent: "#ff6b6b"
@@ -51,16 +41,9 @@ Item {
   function open(payloadJson) {
     var payload = {}
     try { payload = JSON.parse(payloadJson || "{}") || {} } catch (e) {}
-    // The payload SSID titles the card during generation; the meta line the
-    // generator emits is authoritative and overwrites it. A payload without
-    // one clears the title: a re-summon may be sharing a different
-    // connection, so the previous card's name must not label this one.
     root.ssid = payload.ssid !== undefined ? String(payload.ssid) : ""
     generate(String(payload.iface || ""))
     root.opened = true
-    // The window is instantiated hidden, so the content's `focus: true` is
-    // evaluated before the surface is mapped and Escape would land nowhere.
-    // Re-acquire after mapping.
     Qt.callLater(function() {
       if (root.opened) keyCatcher.forceActiveFocus()
     })
@@ -81,7 +64,6 @@ Item {
     root.iface = ""
     root.ssid = ""
     root.secured = false
-    // The Wi-Fi password only enters shell memory while the card is up.
     root.password = ""
     root.passwordVisible = false
     root.passwordError = ""
@@ -95,9 +77,6 @@ Item {
 
   function generate(requestedIface) {
     if (qrProc.running) {
-      // Whether the run in flight is a dismissal's SIGTERM still landing or
-      // a live generation for an earlier summon, the latest request wins:
-      // queue it for onExited and stop the old process.
       pendingShow = true
       pendingIface = requestedIface
       if (!expectedStop) {
@@ -111,10 +90,6 @@ Item {
     error = ""
     loading = true
     expectedStop = false
-    // A re-summon while the card is still loaded reaches here without a
-    // close() in between, and may be sharing a different connection now:
-    // neither the previous reveal's password nor a reveal still in flight
-    // may survive onto the new card.
     iface = ""
     secured = false
     password = ""
@@ -137,8 +112,6 @@ Item {
     if (parsed.meta.ssid !== "") ssid = parsed.meta.ssid
     if (parsed.meta.iface !== "") iface = parsed.meta.iface
     secured = parsed.meta.security !== "" && parsed.meta.security !== "nopass"
-    // Good output settles the run: a canceled predecessor's stderr may have
-    // landed after this generation started, and must not shadow its result.
     if (qrSize > 0) error = ""
   }
 
@@ -147,8 +120,6 @@ Item {
     if (password !== "") { passwordVisible = true; return }
     if (pwProc.running || !iface) return
     passwordError = ""
-    // Only a deliberate new lookup lowers the canceled-fetch guard, right as
-    // it launches -- see the pwProc comment.
     pwExpectedStop = false
     pwProc.command = ["omarchy-network-password", iface]
     pwProc.running = true
@@ -156,11 +127,6 @@ Item {
 
   Process {
     id: qrProc
-    // Both collectors check expectedStop: a dismissal mid-generation kills
-    // the process, but buffered output still arrives afterwards and would
-    // repopulate qrSize -- reopening the card the user just closed. The flag
-    // stays set through onExited (generate resets it) because the exit and
-    // stream-finished signals have no guaranteed order.
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: if (!root.expectedStop) root.updateQr(text)
@@ -173,9 +139,6 @@ Item {
       root.loading = false
       if (root.pendingShow) {
         root.pendingShow = false
-        // expectedStop stays set until generate() launches the replacement:
-        // the canceled run's collectors may fire between here and then, and
-        // must keep being dropped.
         Qt.callLater(function() { root.generate(root.pendingIface) })
         return
       }
@@ -188,14 +151,6 @@ Item {
     }
   }
 
-  // The Wi-Fi password only enters shell memory when the user clicks to
-  // reveal it, and close() drops it again. Both handlers bail when the card
-  // is gone so a fetch that was in flight during dismissal can't stash the
-  // secret into a closed panel's state, and check pwExpectedStop so a fetch
-  // that a regeneration killed can't reveal the previous network's password
-  // under the new card. The exit and stream-finished signals have no
-  // guaranteed order, so the flag survives onExited; only togglePassword
-  // lowers it, as it launches the next deliberate lookup.
   Process {
     id: pwProc
     stdout: StdioCollector {
@@ -219,8 +174,6 @@ Item {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    // Deep scrim: the floating code needs the backdrop to carry the contrast
-    // on any wallpaper.
     Rectangle {
       anchors.fill: parent
       color: Qt.rgba(0, 0, 0, 0.78)
@@ -242,13 +195,10 @@ Item {
         anchors.centerIn: parent
         width: content.implicitWidth
         height: content.implicitHeight
-        // Narrow or heavily scaled outputs: shrink the whole card rather than
-        // clipping it at the screen edge.
         scale: Math.min(1,
           (keyCatcher.width - Style.space(32)) / Math.max(1, width),
           (keyCatcher.height - Style.space(32)) / Math.max(1, height))
 
-        // Swallow clicks so only the scrim outside the content dismisses.
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         ColumnLayout {
@@ -270,11 +220,6 @@ Item {
             horizontalAlignment: Text.AlignHCenter
           }
 
-          // Render every QR module as an integer-sized native rectangle. This
-          // stays crisp and avoids temporary images and file-cache races. Only
-          // the dark modules paint, so the white canvas can keep its rounded
-          // corners; the spec quiet zone baked into the matrix keeps the code
-          // itself clear of them.
           Rectangle {
             id: qrCanvas
             readonly property int moduleSize: root.qrSize > 0

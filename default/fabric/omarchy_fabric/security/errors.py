@@ -1,6 +1,5 @@
 """Typed validation errors used at the Fabric trust boundary."""
 
-
 class SecurityValidationError(ValueError):
     """A fail-closed validation error with a stable machine-readable code."""
 

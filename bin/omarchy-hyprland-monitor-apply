@@ -4,18 +4,6 @@
 # omarchy:hidden=true
 # omarchy:args=[--emit-lua]
 
-# Hyprland `preferred` is the EDID preferred DTD. On an HDMI TV that is often
-# 3840x2160@30, a movie timing. The compositor will modeset it; this Samsung
-# on NVIDIA HDMI does not lock it (picture in grim, no-signal on the glass).
-# Windows does not leave that as the desktop mode. This command does the same
-# ranking a PC display driver does:
-#   - 4K only when the link advertises UHD at >= 50 Hz
-#   - a TV (EDID size >= 800 mm, or kernel-preferred cinema UHD) with a
-#     desktop FHD mode uses 1080p60 — never the movie DTD
-#   - otherwise the highest mode at >= 50 Hz; cinema 4K is last resort
-#   - 8-bit SDR so HDR/10-bit infoframes cannot blank the sink
-# Disconnected DP/HDMI outputs stay disabled so they cannot steal the modeset.
-
 set -euo pipefail
 
 emit_lua=0
@@ -53,7 +41,6 @@ disable_disconnected() {
   done
 }
 
-# One monitor object in, "WxH@Hz" out. Cinema 4K on a TV is not a desktop mode.
 pick_from_monitor_json() {
   jq -r '
     def parse:
@@ -139,9 +126,6 @@ apply_hyprctl() {
   done < <(jq -c '.[]' <<<"$monitors")
 }
 
-# Config-time path: Hyprland is loading monitors.lua and hyprctl may not
-# answer yet. Rank from DRM + EDID the same way so the first modeset is a
-# desktop timing, not EDID "preferred".
 emit_from_drm() {
   python3 - "$@" <<'PY'
 import os, re, sys
@@ -326,9 +310,6 @@ PY
 }
 
 if (( emit_lua )); then
-  # Parse-time popen from monitors.lua. hyprctl here deadlocks Hyprland:
-  # config waits on this script, this script waits on the IPC that is not
-  # serving until config finishes.
   emit_from_drm
   exit $?
 fi

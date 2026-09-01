@@ -15,8 +15,6 @@ Panel {
   property Item hostAnchor: null
   property bool embedMode: false
 
-  // manageIpc: false so this panel can own the single IpcHandler the target
-  // permits — needed for the brightness + state methods below.
   property int brightnessPercent: 0
   property int pendingBrightnessPercent: 0
   property bool brightnessSetQueued: false
@@ -30,20 +28,8 @@ Panel {
   property var displays: []
   property int enabledDisplayCount: 0
 
-  // Carry sub-notch touchpad deltas between wheel events.
   property real wheelAccumulator: 0
 
-  // Cursor model shared by keyboard and mouse. Sections:
-  //   "brightness" - single slider row, selectedIndex = -1 sentinel
-  //                  (mirrors Audio's slider rows). Only present if a
-  //                  controllable backlight was detected.
-  //   "scale"      - 6 Button scale presets; treated as a single
-  //                  horizontal row from j/k's perspective. h/l moves
-  //                  between presets, identical to bluetooth's header.
-  //   "monitors"   - vertical display row list for enabling/disabling displays;
-  //                  j/k walks each row.
-  // Mouse hover on a target updates root state via the components' `hovered`
-  // signal so keyboard cursor and pointer share one highlight.
   readonly property var scalePresets: ["1", "1.25", "1.6", "2", "3", "4"]
   readonly property var scaleValues: {
     for (var i = 0; i < displays.length; i++) {
@@ -57,18 +43,9 @@ Panel {
   property int selectedIndex: 0
   property bool cursorActive: false
 
-  // Text size slider — curated macOS-style notches (px). The panel snaps to
-  // these stops; the CLI (omarchy-display-text-size) accepts any integer in range.
   readonly property var textSizeStops: [9, 10, 11, 12, 14, 16, 20]
-  // While a change is in flight, the chosen stop index overrides the live
-  // base-size so the knob doesn't snap back during the file round-trip. -1 =
-  // no pending change; follow Style.font.baseSize.
   property int textSizePreviewIndex: -1
 
-  // A text-size change reflows the whole panel (both font and spacing scale),
-  // which slides rows under a stationary pointer and fires synthetic hover.
-  // While true, hover is not allowed to hijack the keyboard focus section —
-  // otherwise h/l on the text-size slider can jump focus to another row.
   property bool reflowingText: false
   function markReflowing() {
     root.reflowingText = true
@@ -85,15 +62,14 @@ Panel {
   }
 
   function sectionCount(section) {
-    if (section === "brightness") return 0  // only the slider sentinel at -1
-    if (section === "textsize") return 0    // slider sentinel at -1, like brightness
+    if (section === "brightness") return 0
+    if (section === "textsize") return 0
     if (section === "scale") return scaleValues.length
     if (section === "monitors") return displays.length
     return 0
   }
 
   function sectionIsSingleRow(section) {
-    // brightness and text size are lone sliders; scale presets sit horizontally.
     return section === "brightness" || section === "textsize" || section === "scale"
   }
 
@@ -125,16 +101,11 @@ Panel {
       if (sIdx > 0) {
         var prev = sections[sIdx - 1]
         focusSection = prev
-        // Coming up from below — land on the last navigable row of the prev
-        // section, or its sentinel for single-row sections.
         selectedIndex = sectionIsSingleRow(prev) ? sectionFirstIndex(prev) : sectionCount(prev) - 1
       }
     }
   }
 
-  // h/l: in scale section, walks the preset row; everywhere else, no-op
-  // because adjustBrightness handles horizontal motion on the brightness
-  // slider.
   function moveCursorH(delta) {
     if (focusSection !== "scale") return
     var next = selectedIndex + delta
@@ -158,7 +129,6 @@ Panel {
       var d = displays[selectedIndex]
       if (d) toggleDisplay(d.name, d.enabled)
     }
-    // brightness: no separate action; the slider value is the action.
   }
 
   function clampCursor() {
@@ -171,7 +141,6 @@ Panel {
     }
     var count = sectionCount(focusSection)
     if (sectionIsSingleRow(focusSection)) {
-      // brightness/text size use the -1 sentinel; scale clamps into the presets.
       if (focusSection === "brightness" || focusSection === "textsize") selectedIndex = -1
       else if (selectedIndex < 0 || selectedIndex >= count) selectedIndex = 0
       return
@@ -186,9 +155,6 @@ Panel {
     if (selectedIndex < 0) selectedIndex = 0
   }
 
-  // Keep the keyboard-focused row inside the viewport when the panel grows
-  // taller than its allotted height (lots of displays). Mirrors audio's
-  // ensureCursorVisible helper.
   function ensureCursorVisible(item) {
     if (!item || !scrollArea) return
     var flick = scrollArea.contentItem
@@ -287,9 +253,6 @@ Panel {
     return normalizeScale(scale)
   }
 
-  // Playful mood-name for a given brightness percent. Bands intentionally
-  // span ~10–20 points so casual tweaks change the label, while small
-  // nudges within one band don't.
   function brightnessName(percent) {
     return Model.brightnessName(percent)
   }
@@ -313,7 +276,6 @@ Panel {
     if (!actionProc.running) actionProc.running = true
   }
 
-  // ---- Text size (shell base font + GTK text-scaling, via one CLI) ----
   function nearestTextStop(px) {
     var best = 0
     var bestDist = 1e9
@@ -324,14 +286,10 @@ Panel {
     return best
   }
 
-  // Effective stop index: the pending choice while a change is in flight,
-  // otherwise whatever Style's live base-size rounds to.
   function currentTextIndex() {
     return textSizePreviewIndex >= 0 ? textSizePreviewIndex : nearestTextStop(Style.font.baseSize)
   }
 
-  // px shown in the header: the pending stop if any, else the true base-size
-  // (which may be an off-notch value set from the CLI).
   function displayedTextPx() {
     return textSizePreviewIndex >= 0 ? textSizeStops[textSizePreviewIndex] : Style.font.baseSize
   }
@@ -377,9 +335,6 @@ Panel {
 
   Component.onCompleted: overlayArm.start()
 
-  // KeyboardPanel primes focus at open-time, so SUPER-bound IPC summons land
-  // with j/k ready to navigate. Keep a default landing point, but don't paint
-  // the cursor until hover or the first navigation key.
   onOpenedChanged: {
     if (opened) {
       refresh()
@@ -399,9 +354,6 @@ Panel {
   onScaleValuesChanged: clampCursor()
   onVisibleSectionsChanged: clampCursor()
 
-  // Only poll while the panel is open; the bar glyph tracks monitor count via
-  // Quickshell.screens, and open-time refresh + Component.onCompleted cover the
-  // rest. External brightness changes are reflected whenever the panel is open.
   Timer {
     interval: 5000
     running: root.opened || root.embedMode
@@ -440,13 +392,6 @@ Panel {
   Process {
     id: setBrightnessProc
     stdout: StdioCollector { waitForEnd: true }
-    // Do NOT call refresh() after a brightness set completes. The local
-    // brightnessPercent we just wrote is authoritative; re-reading via
-    // `omarchy-brightness-display` races the hardware/driver and can
-    // return an empty string, which the parser then coerces to 0 —
-    // visible as a "bounce to zero" after h/l keypresses. External
-    // brightness changes are still picked up by the 5s periodic refresh,
-    // the open-time refresh, and Component.onCompleted.
     onRunningChanged: {
       if (running) return
       if (root.brightnessSetQueued) {
@@ -461,16 +406,11 @@ Panel {
     onRunningChanged: if (!running) root.refresh()
   }
 
-  // Applies text size via the CLI, which rewrites the shell override file;
-  // Style picks the new base-size up through its own file watch, so there's
-  // nothing to refresh here.
   Process {
     id: textScaleProc
     stdout: StdioCollector { waitForEnd: true }
   }
 
-  // Clears the hover-suppression flag once the reflow triggered by a text-size
-  // change has settled.
   Timer {
     id: reflowSettle
     interval: 300
@@ -478,9 +418,6 @@ Panel {
     onTriggered: root.reflowingText = false
   }
 
-  // Once Style's base-size catches up to the pending choice, drop the preview
-  // so the slider tracks the live value again. The change itself reflows the
-  // panel, so suppress hover for a beat while it lands.
   Connections {
     target: Style
     function onFontBaseSizeChanged() {
@@ -546,7 +483,6 @@ Panel {
           width: scrollArea.availableWidth
           spacing: Style.space(14)
 
-          // ---------- Hero: display icon · title/status ----------
           Item {
             width: parent.width
             implicitHeight: Math.max(heroIcon.implicitHeight, heroLabels.implicitHeight)
@@ -600,7 +536,6 @@ Panel {
             }
           }
 
-          // ---------- Brightness ----------
           PanelSeparator {
             visible: root.brightnessAvailable
             foreground: root.bar.foreground
@@ -675,7 +610,6 @@ Panel {
             }
           }
 
-          // ---------- Text size ----------
           PanelSeparator {
             foreground: root.bar.foreground
           }
@@ -747,7 +681,6 @@ Panel {
             }
           }
 
-          // ---------- Scale ----------
           PanelSeparator {
             foreground: root.bar.foreground
           }
@@ -769,13 +702,10 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
               }
 
-              // Name the monitor SCALE targets, since it only applies to the
-              // focused one.
               Text {
                 id: scaleMonitor
                 textFormat: Text.PlainText
                 text: root.focusedMonitor
-                // Only worth naming when more than one display is in play.
                 visible: root.focusedMonitor !== "" && root.enabledDisplayCount > 1
                 color: Qt.darker(root.bar.foreground, 1.4)
                 font.family: root.bar.fontFamily
@@ -812,7 +742,6 @@ Panel {
             }
           }
 
-          // ---------- Monitors ----------
           PanelSeparator {
             visible: root.displays.length > 1
             foreground: root.bar.foreground

@@ -45,8 +45,6 @@ if [[ ${OMARCHY_UPGRADE_TO_QUATTRO_LIVE:-0} == "1" ]]; then
   as_root systemctl enable NetworkManager.service >/dev/null 2>&1 || true
 
   if systemctl is-active --quiet NetworkManager.service 2>/dev/null; then
-    # NetworkManager is already carrying the live network; it is safe to stop
-    # networkd now so the rest of the upgrade no longer has competing DHCP.
     for unit in "${networkd_units[@]}"; do
       as_root systemctl disable --now "$unit" >/dev/null 2>&1 || true
     done
@@ -57,8 +55,6 @@ if [[ ${OMARCHY_UPGRADE_TO_QUATTRO_LIVE:-0} == "1" ]]; then
     as_root systemctl reload NetworkManager.service >/dev/null 2>&1 || true
     as_root systemctl restart systemd-resolved.service >/dev/null 2>&1 || true
   else
-    # Older live upgrades may still be relying on networkd/iwd. Disable for the
-    # next boot, but do not stop or reconfigure the running link.
     for unit in "${networkd_units[@]}"; do
       as_root systemctl disable "$unit" >/dev/null 2>&1 || true
     done

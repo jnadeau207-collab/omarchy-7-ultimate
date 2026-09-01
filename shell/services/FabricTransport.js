@@ -1,9 +1,3 @@
-// Bounded state machine for the owner-scoped Fabric RPC socket.
-//
-// This file deliberately has no QML or Quickshell dependencies. FabricClient.qml
-// supplies the Unix-socket adapter, while shell tests supply a deterministic fake
-// socket and clock. Keeping the wire state machine here makes every failure path
-// testable without starting a second shell process.
 
 var PROTOCOL_NAME = "omarchy.fabric.rpc/v0"
 var PROTOCOL_VERSION = 0
@@ -159,9 +153,6 @@ function validateAsciiJsonValue(value, depth) {
   }
 }
 
-// JSON.parse discards duplicate object keys, which would make a strict protocol
-// validator accept an ambiguous envelope. This small bounded parser rejects them
-// before any envelope field is trusted.
 function StrictJsonReader(text) {
   this.text = text
   this.index = 0

@@ -17,7 +17,6 @@ from omarchy_fabric.models import FabricError
 from omarchy_fabric.protocol import _validate_remote_error
 from sandbox.runner import IsolatedRun
 
-
 class RuntimeTaskTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -315,7 +314,6 @@ class RuntimeTaskTests(unittest.TestCase):
         for banned in ("hyprlock", "pinentry", "pinentry-qt", "pinentry-gtk-2"):
             self.assertNotIn(banned, classes)
 
-
 def _daemon_process_class():
     path = Path(__file__).resolve().parents[1] / "core" / "helper.py"
     spec = importlib.util.spec_from_file_location("fabric_core_helper", path)
@@ -323,7 +321,6 @@ def _daemon_process_class():
     assert spec is not None and spec.loader is not None
     spec.loader.exec_module(module)
     return module.DaemonProcess
-
 
 @unittest.skipIf(os.name == "nt", "fabricd requires a Unix socket")
 class FabricdKillInterruptTests(unittest.IsolatedAsyncioTestCase):
@@ -375,7 +372,6 @@ class FabricdKillInterruptTests(unittest.IsolatedAsyncioTestCase):
                 restarted.stop()
         finally:
             temporary.cleanup()
-
 
 class OtherPrincipalTests(unittest.TestCase):
     def test_cancel_is_principal_bound(self) -> None:

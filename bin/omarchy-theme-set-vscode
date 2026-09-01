@@ -56,7 +56,6 @@ register_generated_extension() {
   fi
 }
 
-# Install generated theme as a local extension for a given editor
 install_generated_extension() {
   local ext_dir="$1"
   local theme_type ui_theme
@@ -103,24 +102,17 @@ set_theme() {
   local theme_name=""
 
   if [[ -f "$VS_CODE_THEME_DESCRIPTOR" ]]; then
-    # Theme specifies a preferred 3rd-party extension/theme pair. Both fields
-    # come from the theme, so neither is trusted as a shell or sed argument.
     local extension
     theme_name=$(jq -r '.name // empty' "$VS_CODE_THEME_DESCRIPTOR")
     extension=$(jq -r '.extension // empty' "$VS_CODE_THEME_DESCRIPTOR")
 
-    # A label with quotes, backslashes, or control characters can't land in
-    # settings.json as valid JSON, so drop it rather than write it out.
     [[ $theme_name =~ ^[^[:cntrl:]\"\\]+$ ]] || theme_name=""
 
-    # Only install a well-formed publisher.name id; a malformed one skips the
-    # install without skipping the colorTheme write below.
     if [[ $extension =~ ^[a-zA-Z0-9._-]+$ ]] &&
       ! "$editor_cmd" --list-extensions 2>/dev/null | grep -Fxq "$extension"; then
       "$editor_cmd" --install-extension "$extension" >/dev/null 2>&1
     fi
   elif [[ -f "$GENERATED_THEME" ]]; then
-    # VS Code only discovers local color themes through an extension package.
     install_generated_extension "$ext_base/$GENERATED_EXTENSION_NAME"
     theme_name="Omarchy"
   fi
@@ -129,9 +121,6 @@ set_theme() {
     mkdir -p "$(dirname "$settings_path")"
     [[ -f $settings_path ]] || printf '{\n}\n' >"$settings_path"
 
-    # settings.json is JSONC: comments and trailing commas are legal there and
-    # common in practice, so it's edited in place rather than round-tripped
-    # through a strict JSON parser that would reject it and reformat the rest.
     local escaped=${theme_name//&/\\&}
     escaped=${escaped//|/\\|}
 

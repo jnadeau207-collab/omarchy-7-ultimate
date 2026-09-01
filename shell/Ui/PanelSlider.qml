@@ -18,10 +18,6 @@ Item {
   property real knobSize: Math.max(14, Math.round(Style.spacing.controlHeight * 0.38))
   property real liveValue: value
 
-  // macOS-style notches. When > 1, that many evenly-spaced tick marks are cut
-  // into the track (drawn in the panel background color, so only the part
-  // crossing the track shows). Purely visual — snapping is the caller's job via
-  // `integer`/`step` or an index-based value. Default 0 leaves the track plain.
   property int tickCount: 0
   property color tickColor: bar ? bar.background : Tokens.surface.base
 
@@ -30,8 +26,6 @@ Item {
   signal moved(real value)
   signal released(real value)
 
-  // Right-click is a secondary action on the whole track — audio uses it to
-  // mute the channel the slider belongs to. Dragging stays left-button only.
   signal rightClicked()
 
   implicitWidth: Style.space(200)

@@ -2,8 +2,6 @@
 
 # omarchy:summary=Detect whether the computer has an NVIDIA GPU.
 
-# Read the cached sysfs IDs rather than lspci, which reads PCI config space and
-# resumes runtime-suspended GPUs.
 pci_devices_path="${OMARCHY_PCI_DEVICES_PATH:-/sys/bus/pci/devices}"
 
 shopt -s nullglob

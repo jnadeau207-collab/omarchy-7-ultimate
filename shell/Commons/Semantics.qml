@@ -2,9 +2,6 @@ pragma Singleton
 import QtQuick
 import "SemanticMetrics.js" as Metrics
 
-// Shared semantic vocabulary and profile-aware calculations. Product QML uses
-// this instead of open-coding outcome names, target sizes, motion exceptions,
-// or pseudo-localization behavior.
 QtObject {
   id: root
 

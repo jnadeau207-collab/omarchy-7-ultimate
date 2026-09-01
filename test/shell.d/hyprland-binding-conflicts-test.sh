@@ -4,10 +4,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/base-test.sh"
 
 require_command lua
 
-# Load every default binding and print one normalized line per bind:
-# signature, keys as written, description. The signature sorts modifiers and
-# resolves code:N to the keysym it produces, so "SUPER + code:10" and
-# "SUPER + 1" collide the way they do on a real keyboard.
 list_bindings() {
   local home="$1"
   local epilogue="${2:-}"
@@ -115,8 +111,6 @@ duplicate_signatures() {
   cut -f1 | sort | uniq -d
 }
 
-# Deliberate stacking: Hyprland runs both dispatchers, so cycling to the next
-# window also raises it. Anything else sharing a chord is a collision.
 allowed_duplicates=(
   "ALT+SHIFT+TAB"
   "ALT+TAB"
@@ -142,16 +136,12 @@ write_mode() {
   printf '%s\n' "$mode" >"$home/.local/state/omarchy/ultimate/mode"
 }
 
-# A fresh home keeps the preinstalled app bindings on, and a stub Voxtype adds
-# its conditional ones, so the check covers the largest set a user can get.
 home="$tmpdir/home"
 stub_bin="$tmpdir/bin"
 mkdir -p "$home" "$stub_bin"
 touch "$stub_bin/voxtype"
 chmod +x "$stub_bin/voxtype"
 
-# Desktop Mode is the Ultimate default. It must not collide with itself even
-# though it does not ship the Omarchy application chords.
 desktop_home="$tmpdir/desktop-home"
 mkdir -p "$desktop_home"
 desktop_bindings=$(PATH="$stub_bin:$PATH" list_bindings "$desktop_home")
@@ -192,22 +182,17 @@ for allowed in "${allowed_duplicates[@]}"; do
 done
 pass "allowed duplicate chords are still stacked on purpose"
 
-# The press and release halves of a push-to-talk key are separate binds, not a
-# collision.
 (( $(grep -c $'^F9\t' <<<"$bindings") == 1 )) ||
   fail "press and release bindings on one key do not read as a conflict"
 (( $(grep -c $'^F9 (release)\t' <<<"$bindings") == 1 )) ||
   fail "release bindings keep their own signature"
 pass "press and release bindings on one key do not read as a conflict"
 
-# Guard the guard: a keysym that lands on an already bound keycode has to be
-# caught, or the check above passes by simply not looking.
 probe=$(PATH="$stub_bin:$PATH" list_bindings "$home" \
   'o.bind("SUPER + 1", "Conflict probe", "true")' | duplicate_signatures)
 grep -Fqx "SUPER+1" <<<"$probe" ||
   fail "the conflict check catches a keysym colliding with a bound keycode"
 
-# Modifier order is cosmetic; Hyprland binds the same chord either way.
 probe=$(PATH="$stub_bin:$PATH" list_bindings "$home" \
   'o.bind("SUPER + ALT + SHIFT + RIGHT", "Conflict probe", "true")' | duplicate_signatures)
 grep -Fqx "ALT+SHIFT+SUPER+RIGHT" <<<"$probe" ||

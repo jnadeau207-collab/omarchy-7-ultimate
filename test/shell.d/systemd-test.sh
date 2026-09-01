@@ -105,9 +105,6 @@ grep -Fx 'ManagedOOMMemoryPressure=kill' "$oomd_slice" >/dev/null ||
 grep -Fx 'ManagedOOMSwap=kill' "$oomd_slice" >/dev/null ||
   fail "no swap backstop for the slower shape of the same failure"
 
-# Hyprland lives in session.slice/wayland-wm@hyprland.desktop.service. Marking
-# any ancestor of that as a kill candidate puts the compositor back in the
-# victim pool, which is the crash this whole thing exists to prevent.
 candidates=$(grep -rlE '^ManagedOOM(MemoryPressure|Swap)=kill' "$ROOT/default/systemd" "$ROOT/etc/systemd" 2>/dev/null || true)
 [[ $candidates == "$oomd_slice" ]] ||
   fail "systemd-oomd kill candidacy is set outside app.slice, which can select the compositor: $candidates"

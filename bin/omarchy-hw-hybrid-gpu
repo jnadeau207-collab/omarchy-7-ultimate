@@ -7,10 +7,6 @@ multiple_gpus() {
 }
 
 if omarchy-cmd-present supergfxctl; then
-  # A wedged supergfxd blocks its clients forever, and this gate runs while
-  # the menu renders. Bound the query, and treat a daemon that cannot answer
-  # like a machine without supergfxctl: count GPUs instead of hiding hardware
-  # that is really there.
   modes=$(timeout --kill-after=1s 1s supergfxctl -s 2>/dev/null)
   status=$?
 

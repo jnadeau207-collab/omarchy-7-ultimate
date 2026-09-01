@@ -4,9 +4,6 @@ import Quickshell.Io
 
 import "FabricTransport.js" as FabricTransport
 
-// Reusable, authority-free adapter for the owner-scoped Fabric Unix socket.
-// Callers must explicitly list every public RPC method they are permitted to
-// request. The hello handshake is internal and cannot be replaced by a caller.
 Item {
   id: root
   visible: false
@@ -109,8 +106,6 @@ Item {
     return root._engine ? root._engine.cancel(String(requestId || "")) : false
   }
 
-  // Cancellation here only stops local correlation. A consequential operation
-  // must use its typed operation-cancel RPC and reconcile the resulting state.
   function takeEvent() {
     return root._engine ? root._engine.takeEvent() : null
   }
@@ -142,9 +137,6 @@ Item {
         onState: function(snapshot) { root._applySnapshot(snapshot) },
         onConnectNeeded: function() {
           if (!root.active || root.socketPath === "") return
-          // Quickshell Socket binds an inode for the life of the object.
-          // Toggling path/connected on the same instance never opens a
-          // replaced fabric.sock; destroy and create a new Socket instead.
           root._recycleWire(true)
         },
         onCloseNeeded: function(reason) {
@@ -185,9 +177,6 @@ Item {
       id: instance
       connected: false
 
-      // Empty splitMarker yields arbitrary independently decoded chunks. This is
-      // bounded only because the provisional adapter rejects every non-ASCII raw
-      // or escaped value; one ASCII byte always maps to one QString character.
       parser: SplitParser {
         splitMarker: ""
         onRead: function(data) {

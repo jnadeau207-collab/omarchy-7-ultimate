@@ -69,7 +69,6 @@ _EXCLUDED_CONTEXT_SOURCES = frozenset(
     }
 )
 
-
 def stable_id(value: Any, *, field: str) -> str:
     if not isinstance(value, str) or not value or len(value.encode("utf-8")) > MAX_ID_BYTES:
         raise ManagedWorkError("validation.id", f"{field} must be a bounded stable identifier.")
@@ -84,7 +83,6 @@ def stable_id(value: Any, *, field: str) -> str:
             detail=f"{kind} at {path}",
         )
     return value
-
 
 def opaque_id(value: Any, *, field: str) -> str:
     if not isinstance(value, str) or not value or len(value.encode("utf-8")) > MAX_ID_BYTES:
@@ -101,12 +99,10 @@ def opaque_id(value: Any, *, field: str) -> str:
         )
     return value
 
-
 def sha256_id(value: Any, *, field: str) -> str:
     if not isinstance(value, str) or not _SHA256_RE.fullmatch(value):
         raise ManagedWorkError("validation.sha256", f"{field} must be a lowercase SHA-256 digest.")
     return value
-
 
 def bounded_text(value: Any, *, field: str, maximum: int = 4096, allow_empty: bool = False) -> str:
     if not isinstance(value, str):
@@ -114,7 +110,6 @@ def bounded_text(value: Any, *, field: str, maximum: int = 4096, allow_empty: bo
     if (not allow_empty and not value.strip()) or len(value.encode("utf-8")) > maximum or "\x00" in value:
         raise ManagedWorkError("validation.text", f"{field} is empty, oversized, or contains NUL.")
     return value
-
 
 def finite_number(value: Any, *, field: str, minimum: float = 0, maximum: float = 1e18) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -124,16 +119,13 @@ def finite_number(value: Any, *, field: str, minimum: float = 0, maximum: float 
         raise ManagedWorkError("validation.number", f"{field} is outside its finite bounds.")
     return converted
 
-
 def integer(value: Any, *, field: str, minimum: int = 0, maximum: int = 2**53 - 1) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < minimum or value > maximum:
         raise ManagedWorkError("validation.integer", f"{field} must be an integer within bounds.")
     return value
 
-
 def timestamp(value: Any, *, field: str) -> float:
     return finite_number(value, field=field, minimum=0, maximum=32_503_680_000)
-
 
 def enum_value(value: Any, *, field: str, choices: set[str] | frozenset[str]) -> str:
     if not isinstance(value, str) or value not in choices:
@@ -142,7 +134,6 @@ def enum_value(value: Any, *, field: str, choices: set[str] | frozenset[str]) ->
             f"{field} must be one of: {', '.join(sorted(choices))}.",
         )
     return value
-
 
 def closed_object(
     value: Any,
@@ -163,7 +154,6 @@ def closed_object(
     if extra:
         raise ManagedWorkError("validation.unknown-field", f"{field} contains unknown fields: {', '.join(sorted(extra))}.")
     return dict(value)
-
 
 def normalize_json(value: Any, *, field: str = "value") -> Any:
     nodes = 0
@@ -207,7 +197,6 @@ def normalize_json(value: Any, *, field: str = "value") -> Any:
         raise ManagedWorkError("validation.json-size", f"{field} exceeds {MAX_JSON_BYTES} encoded bytes.")
     return result
 
-
 def canonical_json(value: Any, *, field: str = "value") -> str:
     return json.dumps(
         normalize_json(value, field=field),
@@ -217,17 +206,14 @@ def canonical_json(value: Any, *, field: str = "value") -> str:
         sort_keys=True,
     )
 
-
 def fingerprint(value: Any) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
-
 
 def secret_shaped_key(key: str) -> bool:
     expanded = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "-", key)
     expanded = re.sub(r"(?<=[A-Z])(?=[A-Z][a-z])", "-", expanded)
     compact = re.sub(r"[^a-z0-9]", "", key.casefold())
     return bool(_SECRET_KEY_RE.search(expanded)) or compact in _SECRET_COMPACT_KEYS
-
 
 def reject_secret_fields(value: Any, *, field: str) -> None:
     findings = scan_secret_fields(value)
@@ -239,11 +225,9 @@ def reject_secret_fields(value: Any, *, field: str) -> None:
             detail=f"{kind} at {path}",
         )
 
-
 def _pointer(parent: str, key: str | int) -> str:
     escaped = str(key).replace("~", "~0").replace("/", "~1")
     return f"{parent}/{escaped}"
-
 
 def scan_secret_fields(
     value: Any,
@@ -285,7 +269,6 @@ def scan_secret_fields(
     visit(value, "")
     return tuple(findings)
 
-
 def _redact_text_secrets(value: Any) -> Any:
     if isinstance(value, dict):
         return {key: _redact_text_secrets(item) for key, item in value.items()}
@@ -300,7 +283,6 @@ def _redact_text_secrets(value: Any) -> Any:
         return redacted
     return value
 
-
 def require_context_source(source: Any) -> str:
     value = stable_id(source, field="source")
     if value in _EXCLUDED_CONTEXT_SOURCES:
@@ -310,7 +292,6 @@ def require_context_source(source: Any) -> str:
             detail=value,
         )
     return value
-
 
 def redact_context(content: Any, *, extra_keys: Sequence[str] = ()) -> tuple[Any, list[str]]:
     normalized = normalize_json(content, field="context content")
@@ -354,11 +335,9 @@ def redact_context(content: Any, *, extra_keys: Sequence[str] = ()) -> tuple[Any
     paths.extend(path for path, _kind in findings)
     return _redact_text_secrets(key_redacted), sorted(set(paths))
 
-
 def encode_cursor(*, view: str, principal_id: str, row_id: int) -> str:
     payload = canonical_json({"principalId": principal_id, "rowId": row_id, "version": 0, "view": view})
     return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii").rstrip("=")
-
 
 def decode_cursor(cursor: Any, *, view: str, principal_id: str) -> int:
     if not isinstance(cursor, str) or not cursor or len(cursor) > 1024:
@@ -382,7 +361,6 @@ def decode_cursor(cursor: Any, *, view: str, principal_id: str) -> int:
     except Exception as error:
         raise ManagedWorkError("query.cursor", "The pagination cursor is malformed or belongs to another view.") from error
 
-
 def encode_ordered_cursor(
     *,
     view: str,
@@ -402,7 +380,6 @@ def encode_ordered_cursor(
         }
     )
     return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii").rstrip("=")
-
 
 def decode_ordered_cursor(
     cursor: Any,

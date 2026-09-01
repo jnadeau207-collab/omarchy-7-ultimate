@@ -3,11 +3,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Resolved semantic design tokens for every first-party surface. The canonical
-// payload is ~/.local/state/omarchy/current/design-tokens-v0.json, generated
-// atomically from colors.toml plus the theme and user shell.toml layers by
-// omarchy-theme-resolve-tokens. Invalid input never replaces the last known
-// good payload; invalid hand edits are rejected here without clearing it.
 QtObject {
   id: root
 
@@ -194,9 +189,6 @@ QtObject {
     property color strong: root.colorValue("border.strong", Util.alpha(Color.foreground, 0.3))
   }
 
-  // Superbar glass and caption chrome share this payload. The old
-  // chrome-tokens.json / chrome-tokens-light.json files are generated
-  // compatibility adapters for older revisions, never inputs to this object.
   readonly property QtObject chrome: QtObject {
     property color glass: root.colorValue("chrome.glass", Util.alpha(Color.background, 0.62))
     property color menu: root.colorValue("chrome.menu", Util.alpha(Color.background, 0.88))
@@ -266,7 +258,6 @@ QtObject {
     property real scale: root.numberValue("density.scale", 1.0)
   }
 
-  // Preserve the established singular API while exposing the contract name.
   readonly property QtObject radius: QtObject {
     id: radiusTokens
     property int small: Math.round(root.numberValue("radii.small", Math.max(4, Math.round(Style.cornerRadius * 0.5))))
@@ -418,8 +409,6 @@ QtObject {
     }
   }
 
-  // Color publication reloads Hyprland so the generated adapter reaches
-  // hyprbars. This never unloads the native plugin or touches frame geometry.
   property Process hyprReload: Process {
     id: hyprReload
     command: ["hyprctl", "reload"]

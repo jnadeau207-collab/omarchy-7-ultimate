@@ -4,15 +4,6 @@
 # omarchy:args=[--title <title>] [--multiple] [--directory] [--extensions "<ext ext...>"]
 # omarchy:examples=omarchy file select --title "Send with Tailscale" --multiple | omarchy file select --title "Pick image" --extensions "png svg" | omarchy file select --title "Share folder" --directory
 
-# Python rather than bash, alone among the commands here, because the portal
-# answers a request with a Response signal addressed to the connection that
-# asked, and D-Bus delivers a directed signal only to that connection. Every
-# shell-callable client — gdbus call, busctl call, dbus-send — opens its own
-# connection and exits before the answer arrives, and gdbus monitor registers
-# with AddMatch rather than BecomeMonitor, so it never sees one either. Holding
-# a single connection across both the call and the wait is the whole job, and
-# bash has no way to hold one.
-
 import argparse
 import os
 import sys
@@ -22,15 +13,10 @@ import gi
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib
 
-# A dialog nobody ever answers would otherwise keep this process, and whatever
-# waits on its output, alive forever.
 ANSWER_TIMEOUT_SEC = 600
 
-# Callers act on these: nothing picked is a decision, a chooser that never ran
-# is a fault, and the two want different handling.
 EXIT_NOTHING_PICKED = 1
 EXIT_CHOOSER_FAILED = 2
-
 
 def main():
     parser = argparse.ArgumentParser(add_help=False)
@@ -65,9 +51,6 @@ def main():
             on_response,
         )
 
-    # The request path is derived from our bus name and the token we pass, so it
-    # can be subscribed to up front. Asking first would race a dialog that gets
-    # answered immediately.
     token = "omarchy%d" % os.getpid()
     sender = bus.get_unique_name()[1:].replace(".", "_")
     predicted = "/org/freedesktop/portal/desktop/request/%s/%s" % (sender, token)
@@ -81,9 +64,7 @@ def main():
     if args.directory:
         options["directory"] = GLib.Variant("b", True)
 
-    # Filters name file formats, which a directory chooser has no use for.
     if args.extensions and not args.directory:
-        # Glob matching in the chooser is case-sensitive, so cover both cases.
         exts = [ext.lstrip(".").lower() for ext in args.extensions.split()]
         patterns = [(0, "*." + ext) for ext in exts] + [(0, "*." + ext.upper()) for ext in exts]
         label = " ".join("*." + ext for ext in exts)
@@ -103,7 +84,6 @@ def main():
         None,
     ).unpack()[0]
 
-    # Portals predating the token convention answer on a path of their choosing.
     if handle != predicted:
         subscribe(handle)
 
@@ -114,7 +94,6 @@ def main():
         print(GLib.filename_from_uri(uri)[0])
 
     return 0 if uris else EXIT_NOTHING_PICKED
-
 
 if __name__ == "__main__":
     try:

@@ -10,7 +10,6 @@ from jsonschema import Draft202012Validator
 from helper import ACTOR, OTHER_ACTOR, ManagedWorkPlane, budget, create_context, create_task, manifest, policy, template
 from omarchy_fabric.managed_work import ManagedWorkError
 
-
 class ProjectionQueryTests(unittest.TestCase):
     OPERATION_ID = "11111111-2222-3333-4444-555555555555"
     @classmethod
@@ -495,7 +494,6 @@ class ProjectionQueryTests(unittest.TestCase):
         self.assertTrue(list(self.validator.iter_errors(opened)))
         error = ManagedWorkError("test.failure", "Expected failure.", recovery_actions=("test.recover",)).as_dict()
         self.assert_valid(error)
-
 
 if __name__ == "__main__":
     unittest.main()

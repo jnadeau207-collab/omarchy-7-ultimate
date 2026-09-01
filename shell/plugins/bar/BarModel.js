@@ -65,14 +65,6 @@ function entriesAfter(entries, name) {
   return index === -1 ? [] : entries.slice(index + 1)
 }
 
-// A shell.json write that only changes inline widget settings (the battery
-// percentage toggle, a clock format change) must not rebuild the bar.
-// Compare two normalized layouts: when the structure is unchanged — same
-// entry ids in the same order per region — return the settings-only changes
-// as {region, index, entry}. Return null when the change is structural, or
-// touches an entry a live settings push cannot safely reach: custom modules
-// read their entry directly rather than an injected settings property, and
-// a duplicated id makes the push ambiguous.
 function inlineSettingsDelta(current, next) {
   if (!isPlainObject(current) || !isPlainObject(next)) return null
   var regions = ["left", "center", "right"]
@@ -132,13 +124,6 @@ function customModulePath(entry, home, configDir) {
   return source
 }
 
-// A center module is mounted twice once an anchor is set: the copy that is
-// actually drawn, and a zero-size placeholder holding its place in the flow
-// beside the anchor. Panel routing has to pick the drawn one — it is the only
-// one that can anchor a popup, carry the open-panel mark, or be found again
-// by switchPanelFrom — and fall back to the placeholder only when nothing is
-// on screen. The order the two are registered in is not stable across a live
-// bar reconfiguration, so picking the first match is not good enough.
 function isDrawnSlot(slot) {
   return !!slot && slot.visible === true && slot.width > 0 && slot.height > 0
 }
@@ -154,15 +139,6 @@ function pickDrawnSlot(slots) {
   return placeholder
 }
 
-// A bar surface is built per monitor, so a panel hotkey has several live
-// copies of the same widget to route to, and the panel opens on whichever
-// monitor's copy answers. Candidates are `{ slot, screenName, opened }`.
-//
-// An open copy wins first: hide and toggle have to reach the panel the user
-// can actually see, wherever it was opened from. Otherwise the focused
-// monitor's copy wins, so a summon lands where the user is working instead of
-// on whichever output registered its slot first. Neither narrowing applies on
-// a single monitor, or when the focused output has no bar of its own.
 function pickPanelSlot(candidates, focusedScreen) {
   var rows = Array.isArray(candidates) ? candidates : []
   var pool = rows.filter(function(row) { return row && row.opened === true })
@@ -177,10 +153,6 @@ function pickPanelSlot(candidates, focusedScreen) {
   return pickDrawnSlot(pool.map(function(row) { return row.slot }))
 }
 
-// Resolve a pointer anywhere along the bar to the closest insertion edge.
-// Requiring the pointer to sit inside another widget makes the empty space
-// around a centered group a dead zone, even though it visually reads as the
-// most natural place to drop.
 function nearestDropTarget(candidates, point, vertical) {
   var rows = Array.isArray(candidates) ? candidates : []
   var axis = vertical ? Number(point && point.y) : Number(point && point.x)

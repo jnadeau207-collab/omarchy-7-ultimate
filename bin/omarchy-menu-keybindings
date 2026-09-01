@@ -2,16 +2,10 @@
 
 # omarchy:summary=Display Hyprland keybindings defined in your configuration using an interactive search menu.
 
-# Hyprland's Lua config provider currently reports Lua binds as dispatcher
-# __lua in `hyprctl binds`. Keep a lightweight source-derived cache so the
-# menu can still show and dispatch those bindings.
 declare -A LUA_BIND_KEY_MAP
 declare -A LUA_BIND_DISPATCHER_MAP
 declare -A LUA_BIND_ARG_MAP
 
-# Hyprland reports XKB keycodes for code: bindings. Resolve them to symbols
-# via the compiled keymap, with a small fallback for common keys so the menu
-# remains readable if xkbcli cannot resolve a symbol.
 parse_keycodes() {
   awk '
     BEGIN {
@@ -21,7 +15,6 @@ parse_keycodes() {
         keycode_symbol[substr(fallbacks[i], 1, separator - 1)] = substr(fallbacks[i], separator + 1)
       }
 
-      # </dev/null keeps xkbcli from consuming the binding records on stdin
       keymap_cmd = "xkbcli compile-keymap </dev/null"
       section = ""
       while ((keymap_cmd | getline line) > 0) {
@@ -38,8 +31,6 @@ parse_keycodes() {
         if (code != "" && symbol != "" && symbol != "NoSymbol") keycode_symbol[code] = toupper(symbol)
       }
 
-      # Read off the keysym rather than the keycode, so the key left of 1 reads
-      # as the symbol printed on it whichever key the active layout puts it on.
       for (code in keycode_symbol) {
         if (keycode_symbol[code] == "GRAVE") keycode_symbol[code] = "~"
       }
@@ -66,8 +57,6 @@ parse_keycodes() {
   '
 }
 
-# Supplement `hyprctl binds` for Lua-only binds that Hyprland currently
-# reports as dispatcher __lua and without their original key for code: binds.
 build_lua_bind_cache() {
   local modmask description key dispatcher arg cache_key
 
@@ -262,19 +251,9 @@ modmask_to_text() {
   esac
 }
 
-# Fetch dynamic keybindings from Hyprland.
-#
-# Also do some pre-processing:
-# - Fill missing Lua code:... keys and __lua dispatch metadata from the Lua source cache
-# - Remove standard Omarchy bin path prefix
-# - Map numeric modifier key mask to a textual rendition
-# - Output comma-separated values that the parser can understand
 dynamic_bindings() {
   local modmask key keycode description dispatcher arg modifiers cache_key
 
-  # Parse the plain `hyprctl binds` output rather than `hyprctl -j binds`:
-  # Hyprland 0.56.0 emits invalid JSON for binds (misaligned fields in
-  # bindsRequest), and older versions broke on quotes in bind args.
   hyprctl binds | awk '
     function emit() {
       if (!seen) return
@@ -286,8 +265,6 @@ dynamic_bindings() {
     END { emit() }
   ' |
     while IFS=$'\x1f' read -r modmask key keycode description dispatcher arg; do
-      # Lua binds report their full display key ("SUPER + code:20"); the
-      # modifiers are already carried separately in modmask.
       key="${key##* + }"
 
       if [[ -z $key && $keycode != "0" ]]; then
@@ -306,7 +283,6 @@ dynamic_bindings() {
 
       [[ -z $description && $dispatcher == "__lua" ]] && continue
 
-      # The Copilot key just duplicates an existing binding, so keep it hidden
       [[ $key == "code:201" ]] && continue
 
       case "$key" in
@@ -325,17 +301,11 @@ dynamic_bindings() {
     done
 }
 
-# Hardcoded bindings, like the copy-url extension and such
 static_bindings() {
   echo "SHIFT ALT,L,Copy URL from Web App,sendshortcut,SHIFT ALT,L,"
   echo "SHIFT ALT,D,Download Video from Web App,sendshortcut,SHIFT ALT,D,"
 }
 
-# Actions Omarchy binds to a second chord meant as an alternative, named one at
-# a time. A rule would be wrong here: Alt + Tab and Shift + Alt + Tab both say
-# "Reveal active window on top" while cycling opposite ways, and a media key is
-# nobody's idea of an alternative to a Super chord. Only chords a user reaches
-# for interchangeably belong on one row.
 alternative_chord_actions() {
   cat <<'ACTIONS'
 Close window
@@ -345,20 +315,9 @@ Move window to scratchpad
 ACTIONS
 }
 
-# Parse and format keybindings
-#
-# `awk` does the heavy lifting:
-# - Set the field separator to a comma ','.
-# - Joins the key combination (e.g., "SUPER + Q").
-# - Joins the command that the key executes.
-# - Puts an action's alternative chord on the row with the first one.
-# - Prints display text and dispatch metadata as tab-separated fields.
 parse_binding_records() {
   awk -F, -v alternatives="$(alternative_chord_actions)" '
 BEGIN {
-    # The column every row pads its chords to. Nothing is allowed past it: the
-    # menu renders in monospace, and a row that overruns pushes its arrow out
-    # of a column the eye reads straight down.
     column = 35;
 
     split(alternatives, named, "\n");
@@ -367,41 +326,31 @@ BEGIN {
     }
 }
 {
-    # Combine the modifier and key (first two fields)
     key_combo = $1 " + " $2;
 
-    # Clean up: strip leading "+" if present, trim spaces
     gsub(/^[ \t]*\+?[ \t]*/, "", key_combo);
     gsub(/[ \t]+$/, "", key_combo);
 
-    # Use description, if set
     action = $3;
     dispatcher = $4;
 
-    # Reconstruct the dispatcher arg from the remaining fields
     arg = "";
     for (i = 5; i <= NF; i++) {
         arg = arg $i (i < NF ? "," : "");
     }
 
     if (action == "") {
-        # Reconstruct the command from the remaining fields
         for (i = 4; i <= NF; i++) {
             action = action $i (i < NF ? "," : "");
         }
 
-        # Clean up trailing commas, remove leading "exec, ", and trim
         sub(/,$/, "", action);
         gsub(/(^|,)[[:space:]]*exec[[:space:]]*,?/, "", action);
         gsub(/(^|[[:space:]])uwsm(-app| app)[[:space:]]+--[[:space:]]+/, "", action);
         gsub(/^[ \t]+|[ \t]+$/, "", action);
-        gsub(/[ \t]+/, " ", key_combo);  # Collapse multiple spaces to one
+        gsub(/[ \t]+/, " ", key_combo);
     }
 
-    # An alternative chord joins the row the first one opened: "SUPER + W /
-    # SUPER + Q -> Close window". Both halves have to agree on what they run,
-    # since a label is only what a chord is called; an unresolved dispatcher
-    # says nothing at all, so it never counts as agreement.
     if (action != "") {
         action_key = action SUBSEP dispatcher SUBSEP arg;
         together = "";
@@ -413,8 +362,6 @@ BEGIN {
         if (together != "" && length(together) <= column) {
             chords[leads[action_key]] = together;
         } else {
-            # Also the path a pair too wide for the column takes: two rows in
-            # line beat one that juts out of it.
             entries++;
             chords[entries] = key_combo;
             actions[entries] = action;
@@ -434,10 +381,6 @@ END {
 prioritize_entries() {
   awk -F '\t' '
   {
-    # Alternative chords are display only. Classifying on them would read
-    # "SUPER SHIFT + RETURN / SUPER SHIFT + B" as the alternate browser chord
-    # and drop the browser 20 rows down its own list, so match the chord that
-    # leads the row and ignore the rest.
     line = $1
     sub(/ \/ [^→]*→/, " →", line)
 
@@ -495,15 +438,12 @@ prioritize_entries() {
     if (match(line, /Tmux keybindings/)) prio = 100
     if (match(line, /Herdr keybindings/)) prio = 101
 
-    # print "priority<TAB>record"
     printf "%d\t%s\n", prio, $0
   }' |
   sort -k1,1n -k2,2 |
   cut -f2-
 }
 
-# Drop repeated records while keeping the order Hyprland reported them in, so
-# the chord a user declared first is the one that leads a merged entry.
 dedupe_binding_records() {
   awk '!seen[$0]++'
 }
@@ -523,8 +463,6 @@ output_binding_records_uncached() {
     parse_binding_records |
     prioritize_entries
 
-  # Fail when Hyprland reported no binds so the fallout of a broken hyprctl
-  # is never cached.
   [[ -n $dynamic ]]
 }
 

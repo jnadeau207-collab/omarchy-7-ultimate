@@ -142,8 +142,6 @@ BarWidget {
     indicatorActiveStates = states
 
     var ids = orderedActiveIds(states, activeIndicatorIds)
-    // The active block sits closest to the clock, so newcomers go on the far
-    // side of it. Appending would shove everything already showing sideways.
     if (active && ids.indexOf(id) === -1 && hasIndicatorId(id)) ids.unshift(id)
     activeIndicatorIds = ids
     syncActiveIndicatorModel()

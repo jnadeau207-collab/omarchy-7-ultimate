@@ -11,7 +11,6 @@ fi
 
 direction="${1:-up}"
 
-# Find keyboard backlight device (look for *kbd_backlight* pattern in leds class).
 device=""
 for candidate in /sys/class/leds/*kbd_backlight*; do
   if [[ -e $candidate ]]; then
@@ -33,12 +32,9 @@ elif [[ $direction == "restore" ]]; then
   exit 0
 fi
 
-# Get current and max brightness to determine step size.
 max_brightness="$(brightnessctl -d "$device" max)"
 current_brightness="$(brightnessctl -d "$device" get)"
 
-# Calculate step as 10% of max brightness. Keyboards with many levels (e.g. 512)
-# need larger steps; keyboards with few levels (e.g. 3) fall back to step=1.
 step=$(( max_brightness / 10 ))
 (( step < 1 )) && step=1
 
@@ -53,6 +49,5 @@ else
   (( new_brightness < 0 )) && new_brightness=0
 fi
 
-# Set the new brightness.
 brightnessctl -d "$device" set "$new_brightness" >/dev/null
 (( no_osd )) || omarchy-osd -i keyboard -p "$(( new_brightness * 100 / max_brightness ))"

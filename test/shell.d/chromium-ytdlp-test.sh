@@ -90,8 +90,6 @@ pass "yt-dlp native host rejects a path containing control characters"
 
 newline_target="$download_dir/target"$'\n'
 printf 'x' >"$newline_target"
-# The decoy is the point: dropping the trailing newline lands on a real, different
-# file, so a resolver that strips it resolves to the wrong one instead of failing.
 printf 'x' >"$download_dir/target"
 ln -s "target"$'\n' "$download_dir/newline-link.mp4"
 
@@ -131,10 +129,6 @@ dash_title=$(host_fn title_from_file "$download_dir/--include.mp4")
 [[ $dash_title == "Video" ]] || fail "yt-dlp native host does not pass a leading-dash title to the notifier" "$dash_title"
 pass "yt-dlp native host does not pass a leading-dash title to the notifier"
 
-# The click action passes the path as a discrete --exec argument (asserted
-# end-to-end below against the real download); `--` keeps mpv from parsing a
-# leading-dash filename as an option.
-
 parse_script="$TMPDIR/parse-ytdlp-lines.sh"
 cat >"$parse_script" <<'EOF'
 source "$1"
@@ -150,8 +144,6 @@ done
 printf '%s' "$filepath"
 EOF
 
-# A title that ends in a newline closes its own record, so the forged record is the
-# last one and the real path lands on a line the loop ignores.
 poisoned=$(
   printf '%s\n' \
     $'OMARCHY_FILE\t'"$good_file" \
@@ -164,9 +156,6 @@ poisoned=$(
   fail "yt-dlp native host keeps a real file after a forged OMARCHY_FILE record" "$poisoned"
 pass "yt-dlp native host keeps a real file after a forged OMARCHY_FILE record"
 
-# Everything above tests the helpers in isolation. Drive the real download_url with
-# stubbed tools so the yt-dlp invocation and the toast's click command are covered
-# too: a record template that carried the title again would pass every test above.
 fake_root="$TMPDIR/fake"
 mkdir -p "$fake_root/bin"
 fake_dir="$TMPDIR/fake-videos"
@@ -210,8 +199,6 @@ YTDLP_ARGV_LOG="$ytdlp_argv" NOTIFY_ARGV_LOG="$notify_argv" YTDLP_FAKE_FILE="$fa
   fail "yt-dlp native host disarms configured exec hooks on both yt-dlp runs" "$(cat "$ytdlp_argv")"
 pass "yt-dlp native host disarms configured exec hooks on both yt-dlp runs"
 
-# The stub answers with a title record whatever it is asked for, so assert the request
-# as well as the reply: without this the template could be dropped and nothing notice.
 grep -qF -- $'OMARCHY_TITLE\t%(title)j' "$ytdlp_argv" ||
   fail "yt-dlp native host asks for the title JSON-encoded" "$(cat "$ytdlp_argv")"
 pass "yt-dlp native host asks for the title JSON-encoded"
@@ -236,7 +223,6 @@ grep -qF -- "Download complete My Great Clip" "$notify_argv" ||
   fail "yt-dlp native host toasts the page title, not the sanitised filename" "$(cat "$notify_argv")"
 pass "yt-dlp native host toasts the page title, not the sanitised filename"
 
-# A page that gives no usable title falls back to the filename rather than an empty toast.
 : >"$notify_argv"
 : >"$ytdlp_argv"
 YTDLP_ARGV_LOG="$ytdlp_argv" NOTIFY_ARGV_LOG="$notify_argv" YTDLP_FAKE_FILE="$fake_file" \

@@ -57,15 +57,12 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
-
 root = Path(sys.argv[1]).resolve()
 data_root = Path(sys.argv[2]).resolve()
 errors = []
 
-
 def report(message):
     errors.append(message)
-
 
 def display_path(path):
     for base in (data_root, root):
@@ -74,7 +71,6 @@ def display_path(path):
         except ValueError:
             continue
     return str(path)
-
 
 def load_json(path):
     try:
@@ -85,12 +81,10 @@ def load_json(path):
         report(f"invalid JSON in {display_path(path)}: line {exc.lineno}, column {exc.colno}: {exc.msg}")
     return None
 
-
 def dotted_path(parts):
     if not parts:
         return "$"
     return "$" + "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts)
-
 
 schema_dir = data_root / "default/ultimate/capability-schema"
 capability_dir = data_root / "default/ultimate/capabilities"
@@ -121,12 +115,10 @@ for path in schema_paths:
     except Exception as exc:
         report(f"invalid JSON Schema {display_path(path)}: {exc}")
 
-
 registry = Registry().with_resources(
     (schema_id, Resource.from_contents(document))
     for schema_id, document in schema_docs.items()
 )
-
 
 def validate_document(document, schema_id, label):
     schema = schema_docs.get(schema_id)
@@ -135,7 +127,6 @@ def validate_document(document, schema_id, label):
     validator = Draft202012Validator(schema, registry=registry, format_checker=FormatChecker())
     for issue in sorted(validator.iter_errors(document), key=lambda item: list(item.absolute_path)):
         report(f"{label} {dotted_path(issue.absolute_path)}: {issue.message}")
-
 
 catalog_paths = sorted(capability_dir.glob("catalog-*-v0.json"))
 if not catalog_paths:
@@ -154,7 +145,6 @@ validate_document(surface, "urn:omarchy:ultimate:capability-schema:window-surfac
 validate_document(debt, "urn:omarchy:ultimate:capability-schema:legacy-debt-v0", display_path(debt_path))
 validate_document(jobs, "urn:omarchy:ultimate:capability-schema:parity-jobs-v0", display_path(jobs_path))
 
-
 def walk_refs(node):
     if isinstance(node, dict):
         if isinstance(node.get("$ref"), str):
@@ -164,7 +154,6 @@ def walk_refs(node):
     elif isinstance(node, list):
         for value in node:
             yield from walk_refs(value)
-
 
 def resolve_pointer(document, fragment):
     if fragment in ("", "#"):
@@ -176,7 +165,6 @@ def resolve_pointer(document, fragment):
         key = raw.replace("~1", "/").replace("~0", "~")
         current = current[key]
     return current
-
 
 def check_schema_refs(node, label, local_document=None):
     try:
@@ -200,7 +188,6 @@ def check_schema_refs(node, label, local_document=None):
             resolve_pointer(target, f"#{fragment}" if marker else "")
         except (KeyError, IndexError, TypeError):
             report(f"broken schema reference in {label}: {reference}")
-
 
 for schema_id, schema in schema_docs.items():
     check_schema_refs(schema, schema_id, schema)
@@ -228,7 +215,6 @@ except Exception as exc:
     report(f"could not import BUILTIN_PROVIDER_IDS: {exc}")
     BUILTIN_PROVIDER_IDS = ()
 
-
 def provider_manifest_capabilities(provider_id):
     if not isinstance(provider_id, str) or not provider_id.endswith(".provider"):
         report(f"catalog-provider-readers names an invalid provider id: {provider_id}")
@@ -253,7 +239,6 @@ def provider_manifest_capabilities(provider_id):
         report(f"{provider_id} module MANIFEST has no capabilities")
         return ()
     return tuple(capabilities)
-
 
 reader_doc = next(
     (document for path, document in catalog_docs if path.name == "catalog-provider-readers-v0.json"),
@@ -395,7 +380,6 @@ for job in job_entries:
     if job.get("proofStatus") == "automated" and not any(proof.startswith("windows-native.automated.") for proof in job.get("proofIds", [])):
         report(f"automated job {job_id} has no automated proof id")
 
-
 def markdown_rows(path, sections):
     rows = []
     section = None
@@ -411,7 +395,6 @@ def markdown_rows(path, sections):
             continue
         rows.append((section, columns[0], columns[1]))
     return rows
-
 
 parity_source = markdown_rows(root / "WINDOWS_7_ULTIMATE_PARITY.md", {"Desktop jobs", "2026 layers"})
 parity_inventory = [
@@ -502,7 +485,6 @@ if set(catalogued_inventory) != set(broker_verbs):
     if extra:
         report("inventory falsely marks absent broker verbs as catalogued: " + ", ".join(extra))
 
-
 def debt_covers(debt_id, state, capability_id, surface_ref):
     entry = debt_by_id.get(debt_id)
     if entry is None:
@@ -514,7 +496,6 @@ def debt_covers(debt_id, state, capability_id, surface_ref):
         report(f"legacy debt {debt_id} does not cover capability {capability_id}")
     if surface_ref not in entry.get("surfaceRefs", []):
         report(f"legacy debt {debt_id} does not cover surface {surface_ref}")
-
 
 for item in service_methods:
     if not isinstance(item, dict):
@@ -659,7 +640,6 @@ for entry in debt_entries:
         elif surface_ref not in valid_refs:
             report(f"legacy debt {entry.get('id')} registers irrelevant {state} surface: {surface_ref}")
 
-
 def covered_capabilities(state):
     return {
         capability_id
@@ -667,7 +647,6 @@ def covered_capabilities(state):
         if isinstance(entry, dict) and entry.get("state") == state
         for capability_id in entry.get("capabilityIds", [])
     }
-
 
 provider_missing = {
     capability_id for capability_id, capability in capability_by_id.items()

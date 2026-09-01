@@ -18,7 +18,6 @@ from omarchy_fabric.providers.schedule import provider as schedule
 from omarchy_fabric.providers.service import provider as service
 from omarchy_fabric.providers.storage import provider as storage
 
-
 class IdentityAndInjectionTests(unittest.IsolatedAsyncioTestCase):
     async def test_process_grouping_and_pid_reuse_guard_use_start_identity(self) -> None:
         resources = process.parse_processes(runner_outputs()[str(process.PROCESS_COMMAND.argv)], boot_id=BOOT_ID, start_ticks_by_pid=START_TICKS)
@@ -112,7 +111,6 @@ class IdentityAndInjectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(immutable.exception.code, "account.precondition-failed")
         with self.assertRaises(ValueError):
             printer.parse_printers("device for evil: ipp://user:password@printer.example/ipp\n")
-
 
 class ParserBoundaryTests(unittest.TestCase):
     def test_duplicate_and_malformed_inventories_are_rejected(self) -> None:
@@ -220,7 +218,6 @@ class ParserBoundaryTests(unittest.TestCase):
         changed_storage = storage.parse_storage(json.dumps({"blockdevices": [{**template, "fstype": "xfs"}]}))[0]
         self.assertEqual(original_storage["id"], changed_storage["id"])
         self.assertNotEqual(original_storage["state"]["observedRevision"], changed_storage["state"]["observedRevision"])
-
 
 if __name__ == "__main__":
     unittest.main()

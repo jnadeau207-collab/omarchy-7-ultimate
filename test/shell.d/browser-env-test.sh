@@ -16,8 +16,6 @@ browser=$(BROWSER=firefox bash -c 'source "$1"; printf "%s" "$BROWSER"' bash "$e
 [[ $browser == "firefox" ]] || fail "bash env preserves the inherited browser" "actual: $browser"
 pass "bash env preserves the inherited browser"
 
-# A session-wide BROWSER makes xdg-settings refuse "set default-web-browser",
-# breaking the browsers' own "Set as default" buttons.
 browser=$(env -u BROWSER bash -c 'source "$1"; printf "%s" "${BROWSER:-}"' bash "$uwsm_default")
 [[ -z $browser ]] || fail "uwsm session env leaves BROWSER unset" "actual: $browser"
 pass "uwsm session env leaves BROWSER unset"

@@ -25,9 +25,6 @@ source_file() {
   fi
 }
 
-# jq pipeline that normalizes shell.json into a well-shaped object with
-# version=1, bar.layout.{left,center,right} arrays, and plugins array. Every
-# mutation pipes through this so downstream jq can assume structure.
 NORMALIZE='
   def object_or_empty: if type == "object" then . else {} end;
   def array_or_empty: if type == "array" then . else [] end;
@@ -41,9 +38,6 @@ NORMALIZE='
   | .plugins = (.plugins | array_or_empty)
 '
 
-# Apply a jq program to the source file and atomically write the result to the
-# user config, then refresh the running shell. Extra args after the program are
-# forwarded to jq (e.g. --arg/--argjson).
 _SHELL_CONFIG_TMP=""
 cleanup_shell_config_tmp() {
   if [[ -n $_SHELL_CONFIG_TMP ]]; then rm -f "$_SHELL_CONFIG_TMP"; fi

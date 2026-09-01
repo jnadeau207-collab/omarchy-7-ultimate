@@ -5,27 +5,6 @@
 # omarchy:requires-sudo=true
 # omarchy:examples=sudo omarchy-system-factory-reset
 
-# Returns the machine to provisioning state — fully installed, no user, first-boot
-# setup pending — the state you want before selling or handing the machine on.
-#
-# The running root (@) is swapped for a fresh writable clone of the @factory
-# snapshot, so user-installed packages and /etc drift are gone too. That
-# snapshot is taken by the Omarchy Quattro installer, so only machines
-# installed from that ISO can be reset; a machine upgraded to Quattro from an
-# earlier version has no baseline to return to and is turned away.
-#
-# The heavy lifting happens on the next boot via omarchy-system-factory-reset-finish, staged
-# here. On encrypted installs the LUKS volume is re-keyed to a throwaway
-# passphrase with an auto-unlock keyfile for the provisioning window; first-boot setup
-# re-keys it to the new owner's password and removes the keyfile.
-#
-# Honest limitations:
-#  - On unencrypted disks this is deletion, not forensic erasure. fstrim helps
-#    on SSDs; use blkdiscard + a reinstall if you need certainty.
-#  - LUKS re-keying changes passphrases, not the volume key. Freed extents
-#    remain readable to someone with raw-device access and a valid passphrase.
-#    Use cryptsetup reencrypt or a reinstall if you need certainty.
-
 set -euo pipefail
 
 PROVISIONING_DIR=/var/lib/omarchy/provisioning
@@ -34,9 +13,6 @@ TOP_MNT=/run/omarchy-system-factory-reset/top
 NEXT_NAME=@omarchy-reset-next
 LOG_FILE=/var/log/omarchy-system-factory-reset.log
 
-# Self-elevate so the menu entry (and a bare shell invocation) need no sudo
-# prefix. The caller's gum theme vars are forwarded as `env` arguments rather
-# than via `sudo -E`, so styling survives even under an env_reset sudoers.
 if (( EUID != 0 )); then
   mapfile -t gum_env < <(env | grep '^GUM_' || true)
   exec sudo env "${gum_env[@]}" "$0" "$@"
@@ -62,11 +38,6 @@ root_is_btrfs_at() {
   [[ $(findmnt -no FSTYPE /) == btrfs ]] && findmnt -no OPTIONS / | grep -q "subvol=/@\(,\|$\)"
 }
 
-# Resolve the crypto_LUKS partition backing the root, or return non-zero if
-# the root is not on LUKS. Prefers the cmdline cryptdevice= spec (archinstall
-# writes PARTUUID=, the pre-mounted path UUID=), and falls back to walking the
-# device tree for roots reached via rd.luks/crypttab with a plain /dev/mapper
-# root and no cryptdevice=.
 luks_device() {
   local spec
   spec=$(grep -o 'cryptdevice=[^ :]*' /proc/cmdline | head -1 | cut -d= -f2-)
@@ -90,8 +61,6 @@ encrypted_install() {
   luks_device >/dev/null 2>&1
 }
 
-# No trailing `| head` stage: under pipefail an infinite tr killed by
-# SIGPIPE fails the substitution and errexit aborts the whole reset.
 generate_passphrase() {
   local raw
   raw=$(head -c 4096 /dev/urandom | tr -dc 'a-zA-Z0-9')
@@ -127,8 +96,6 @@ confirm_reset() {
   [[ $typed == "reset" ]] || fail "Reset not confirmed."
 }
 
-# Re-key to a throwaway passphrase whose keyfile auto-unlocks boot during the
-# provisioning window. $1 is the root of the staged factory system.
 stage_luks_rekey() {
   local next="$1" device passphrase
 
@@ -180,13 +147,6 @@ install_provisioning_units() {
     "$next/etc/systemd/system/sysinit.target.wants/omarchy-system-factory-reset-finish.service"
 }
 
-# Start the ESP's limine.conf over from the shipped template and drop the
-# previous Omarchy identity's state. limine-entry-tool keys OS entries by
-# machine-id, so after a reset gives the machine a fresh identity, the
-# previous system's entry (with the now-stale UKI hash) would survive, sort
-# first, and make Limine refuse the rebuilt UKI with a hash-mismatch warning.
-# Only machine-ids the old limine.conf referenced are removed — a shared ESP
-# may hold other installations' machine-id directories.
 reset_limine_config() {
   local root="$1" esp="$2" template found=""
 
@@ -213,9 +173,6 @@ reset_limine_config() {
   done
 }
 
-# Every UKI entry in limine.conf carries a #blake2b hash of the file it
-# points at; a mismatch makes Limine stop at a scary warning. Never hand over
-# a staged reset in that state.
 verify_limine_hashes() {
   local root="$1" esp="$2" line path hash file
   while IFS= read -r line; do
@@ -229,9 +186,6 @@ verify_limine_hashes() {
   done < <(grep -o 'boot():/EFI/Linux/[^#]*#[0-9a-f]*' "$root$esp/limine.conf")
 }
 
-# Rebuild the UKI from inside the next root so the deployed kernel/initramfs
-# match the factory root's modules (the seller may have updated kernels since
-# install) and embed the auto-unlock keyfile on encrypted machines.
 rebuild_next_boot() {
   local next="$1"
 
@@ -254,22 +208,11 @@ rebuild_next_boot() {
     mount --make-rslave "$next/$dir"
   done
 
-  # Btrfs snapshots do not recurse into nested subvolumes, so the factory
-  # root carries only an empty /swap directory where the hibernation swapfile
-  # lived. Recreate it and refresh the resume offset before the UKI build
-  # bakes the cmdline; the empty placeholder directory has to go first so the
-  # subvolume can be recreated.
   if [[ -x $next/usr/bin/omarchy-hibernation-setup ]] && grep -q "/swap/swapfile" "$next/etc/fstab"; then
     log "Recreating the hibernation swapfile in the factory system"
     if [[ -d $next/swap ]] && ! btrfs subvolume show "$next/swap" >/dev/null 2>&1; then
       rmdir "$next/swap" 2>/dev/null || true
     fi
-    # The factory root still carries the resume drop-ins from install, which
-    # make hibernation-setup conclude it has nothing to do; with the swapfile
-    # gone they must go so it reconfigures from scratch. The resume-offset
-    # drop-in especially: hibernation-setup only recomputes the physical
-    # offset when it is absent, so a surviving one bakes the old swapfile's
-    # offset into the rebuilt UKI and breaks resume.
     if [[ ! -f $next/swap/swapfile ]]; then
       rm -f "$next/etc/mkinitcpio.conf.d/omarchy_resume.conf" \
         "$next/etc/limine-entry-tool.d/resume.conf"
@@ -297,10 +240,6 @@ rebuild_next_boot() {
   umount "$next$esp_mount"
 }
 
-# Remove the seller's account material and machine identity from the retained
-# @factory baseline so it can neither be mounted for recovery nor restore the
-# seller's account on a future reset. Idempotent (a scrubbed baseline has no
-# uid>=1000 accounts left to remove).
 sanitize_factory_baseline() {
   local factory="$1" user
   btrfs property set -ts "$factory" ro false
@@ -337,10 +276,6 @@ stage_full_reset() {
   rm -rf "$next"/var/lib/NetworkManager/* "$next/var/lib/tailscale" "$next/var/lib/iwd"
   rm -f "$next/var/lib/sddm/state.conf" "$next/etc/sddm.conf.d/autologin.conf"
 
-  # A factory snapshot from a normal (normal) install contains the original
-  # user account; first-boot setup must start from none. A leftover account
-  # would keep its password hash and group memberships (including wheel), so
-  # failure here has to abort the reset, not be shrugged off.
   local user
   for user in $(awk -F: '$3 >= 1000 && $3 < 60000 { print $1 }' "$next/etc/passwd"); do
     log "Removing user $user from the factory system"
@@ -349,13 +284,8 @@ stage_full_reset() {
   done
   passwd --root "$next" --lock root >>"$LOG_FILE" 2>&1 || true
 
-  # @factory itself survives the wipe as the baseline for future resets. If it
-  # came from a normal install it still holds the seller's account and
-  # /etc/shadow, which the new wheel user could mount and read — and a second
-  # reset would restore that account. Scrub it once, in place.
   sanitize_factory_baseline "$top/@factory"
 
-  # Keep the Node tarball reachable for offline first-boot finalization.
   if ! compgen -G "$next$PROVISIONING_DIR/packages/node-v*.tar.gz" >/dev/null; then
     if compgen -G "$PROVISIONING_DIR/packages/node-v*.tar.gz" >/dev/null; then
       install -d -m 755 "$next$PROVISIONING_DIR/packages"
@@ -382,8 +312,6 @@ stage_full_reset() {
   sync
 }
 
-# A reset is a clone of @factory, so a machine without one has nothing to
-# return to. Only the Quattro installer takes that snapshot.
 require_factory_snapshot() {
   [[ -d $TOP_MNT/@factory ]] && return 0
 
@@ -419,9 +347,6 @@ main() {
 
   confirm_reset
 
-  # The running system's limine-snapper-sync must not rewrite the ESP's
-  # limine.conf behind the staged rebuild (subvolume changes below can
-  # trigger it). The runtime mask evaporates on the reboot that follows.
   systemctl mask --runtime --now limine-snapper-sync.service >/dev/null 2>&1 || true
   systemctl mask --runtime --now limine-snapper-sync.path >/dev/null 2>&1 || true
 

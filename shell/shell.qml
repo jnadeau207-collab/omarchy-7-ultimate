@@ -11,10 +11,6 @@ import "services"
 ShellRoot {
   id: shell
 
-  // Shared service instances. Plugins receive these via property injection
-  // rather than re-importing them as singletons — relative-path imports do
-  // not share singleton state, which silently leaves consumers with their
-  // own empty copies.
   property PluginRegistry pluginRegistry: PluginRegistry { }
   property BarWidgetRegistry barWidgetRegistry: BarWidgetRegistry { }
   property AppLibrary appLibrary: AppLibrary { }
@@ -22,9 +18,6 @@ ShellRoot {
   property CapabilityBroker capabilityBroker: CapabilityBroker { }
   property TransientSurfaceCoordinator transientCoordinator: TransientSurfaceCoordinator { }
   property ModeProfileService modeProfileService: ModeProfileService { }
-  // Establish one shell-owned Fabric transport without making daemon health a
-  // shell-start dependency. A consumer must separately own activation, method
-  // grants, and exposure; this integration is dormant and grants nothing.
   FabricClient {
     id: fabricClient
     active: false
@@ -32,18 +25,9 @@ ShellRoot {
   }
 
   property string home: Quickshell.env("HOME")
-  // Start summon {"rtl":true} / {"pseudoLocale":true} is the product switch.
-  // Superbar, Quick Settings, and Notification Center read the same flags so
-  // chrome shares one SemanticProfile without a locale pack. The next Start
-  // open writes both flags from that payload; Start close does not invent a
-  // session locale by leaving a different switch behind.
   property bool summonedRtl: false
   property bool summonedPseudoLocale: false
 
-  // Settings, Files, Agent Center, Software, and Compatibility are separate
-  // processes, so they cannot read the properties above. Publish both flags to
-  // one state file that ProductAppHost watches; the design system then covers
-  // the product windows, not just shell chrome.
   FileView {
     id: presentationFile
     path: shell.home + "/.local/state/omarchy/ultimate/presentation.json"
@@ -61,11 +45,6 @@ ShellRoot {
   onSummonedRtlChanged: shell.publishPresentation()
   onSummonedPseudoLocaleChanged: shell.publishPresentation()
 
-  // Both flags are session state. Republishing them as the shell starts keeps a
-  // stale file from outliving the session that summoned it, so a product window
-  // never comes back pseudo-localized after a restart. setText on a FileView
-  // that has not loaded yet is dropped, so this runs once off the event loop
-  // rather than from Component.onCompleted.
   Timer {
     interval: 750
     running: true
@@ -73,18 +52,12 @@ ShellRoot {
     onTriggered: shell.publishPresentation()
   }
 
-  // The omarchy-shell host is the long-running entry point. Plugins live in
-  // sibling directories under plugins/. OMARCHY_PATH is provided by the uwsm
-  // session environment and is the single source of truth for this checkout.
   property string omarchyPath: Quickshell.env("OMARCHY_PATH")
   readonly property string shellPath: omarchyPath + "/shell"
   readonly property string firstPartyPluginsDir: shellPath + "/plugins"
   readonly property string defaultsPath: omarchyPath + "/config/omarchy/shell.json"
   readonly property string userConfigPath: home + "/.config/omarchy/shell.json"
 
-  // Bundled fallback so the shell can start even when the default shell.json is
-  // missing or unreadable. The bar config here mirrors the on-disk defaults
-  // closely enough to render a usable bar; not authoritative.
   readonly property var builtinShellConfig: ({
     version: 1,
     idle: {
@@ -122,8 +95,6 @@ ShellRoot {
   }
 
   function applyShellConfig() {
-    // Decide which source is canonical: a valid user shell.json overrides
-    // defaults entirely; otherwise fall back to defaults. We do not deep-merge.
     var defaults = Util.isPlainObject(defaultsConfig) ? defaultsConfig : builtinShellConfig
     var user = null
     var userText = userConfigFile.text() || ""
@@ -203,9 +174,6 @@ ShellRoot {
     pluginRegistry.firstPartyDir = shell.firstPartyPluginsDir
     pluginRegistry.shellConfigProvider = function() { return shell.effectiveShellConfig }
     pluginRegistry.shellConfigMutator = function(mutate) { shell.mutateShellConfig(mutate) }
-    // PluginRegistry.ensureUserDir() runs in its own Component.onCompleted and
-    // chains rescan() once the directory exists. We also kick a scan here in
-    // case the user dir already existed at startup.
     pluginRegistry.rescan()
     shell.windowService.capabilityBroker = shell.capabilityBroker
     shell.capabilityBroker.windowService = shell.windowService
@@ -218,8 +186,6 @@ ShellRoot {
     persistShellConfig(copy)
   }
 
-  // Exposed as a property so child plugins (notifications, future panels)
-  // can read barSize/barHidden/position to anchor relative to the active bar.
   function overlayShellConfig(config) {
     var next = JSON.parse(JSON.stringify(config || builtinShellConfig))
     if (!Util.isPlainObject(next.bar)) next.bar = {}
@@ -344,19 +310,12 @@ ShellRoot {
     onActiveChanged: if (!active) shell.bar = null
     onStatusChanged: {
       if (status === Loader.Error) {
-        // Loader has no errorString property. Qt reports the underlying QML
-        // diagnostic; include the exact source in our fallback message.
         console.warn("bar option " + shell.activeBarId + " failed to load from " + shell.activeBarSourceUrl + "; falling back to " + shell.defaultBarId)
         shell.failedBarId = shell.activeBarId
       }
     }
   }
 
-  // ------------------------------------------------------------- services
-  //
-  // Generic loader for any enabled plugin that declares kind "service".
-  // First-party infrastructure services are implicitly enabled by the registry;
-  // third-party services are enabled by adding the plugin id to shell.json.
   Item {
     id: serviceHost
     visible: false
@@ -431,6 +390,7 @@ ShellRoot {
     }
     // Drop services for plugins that have been disabled or removed, or that
     // no longer declare a service entry point.
+
     for (var existingId in _services) {
       var stillThere = plugins[existingId]
       var stillService = stillThere && Array.isArray(stillThere.kinds)
@@ -473,11 +433,6 @@ ShellRoot {
     function onPluginsChanged() { if (!shell.pluginReloading) shell._syncServices() }
   }
 
-  // Writes inline settings to a bar layout entry or top-level plugin entry in
-  // shell.json. moduleName is the entry id; settings is the merged plugin
-  // state. Returns true if anything actually changed. Compute the proposed
-  // new shellConfig in a local clone, and only persist if anything actually
-  // changed so reactive bindings do not dirty shell.json unnecessarily.
   function updateEntryInline(moduleName, settings) {
     var stripped = Util.canonicalWidgetId(moduleName)
     var copy = JSON.parse(JSON.stringify(shellConfig || builtinShellConfig))
@@ -519,32 +474,15 @@ ShellRoot {
     return true
   }
 
-  // ---------------------------------------------------------- on-demand panels
-
-  // openPanelIds is a plain object treated as a set. A plugin id maps to
-  // `true` while the panel is summoned; deleting the key (well, building a new
-  // object without it) hides it. Reassigning the whole object is required for
-  // QML to notice the change.
   property var openPanelIds: ({})
 
-  // Pending payloads to deliver to a plugin's open() once its loader resolves.
-  // Keyed by plugin id; the value is an array so two summon() calls before
-  // the Loader resolves both reach the plugin in arrival order rather than
-  // the second clobbering the first.
   property var pendingPayloads: ({})
 
-  // Bar-widget panels (audio, bluetooth, network, power, monitor, etc.)
-  // are mounted inside the bar, not via the panel loader below. Route
-  // summon/hide/toggle to the live bar instance so panel hotkeys survive
-  // plugin/bar reloads: the bar re-creates the widget, while a fixed IPC
-  // target only ever routes to one of the per-monitor instances.
   function isBarWidgetPanelPlugin(pluginId) {
     var plugins = shell.pluginRegistry.installedPlugins
     var m = plugins[String(pluginId || "")]
     if (!m || !Array.isArray(m.kinds)) return false
     if (m.kinds.indexOf("bar-widget") === -1) return false
-    // Plugins that are also panel/overlay/menu kinds are owned by the
-    // panel loader (e.g. omarchy.menu); let that path handle them.
     var loaderKinds = ["panel", "overlay", "menu"]
     for (var i = 0; i < loaderKinds.length; i++) {
       if (m.kinds.indexOf(loaderKinds[i]) !== -1) return false
@@ -560,14 +498,10 @@ ShellRoot {
       console.warn("summon: unknown plugin", id)
       return false
     }
-    // A disabled plugin has no Loader, so setting openPanelIds would only
-    // produce an invisible "open" state that toggle() then has to unwind.
-    // Tell the caller plainly instead of silently no-op'ing.
     if (!shell.pluginRegistry.isEnabled(id)) {
       console.warn("summon: plugin not enabled, not summoning:", id)
       return false
     }
-    // Bar widgets take no payload; payloadJson is dropped on this path.
     if (shell.isBarWidgetPanelPlugin(id)) {
       var summoned = shell.bar && typeof shell.bar.summonBarWidget === "function"
         && shell.bar.summonBarWidget(id)
@@ -579,7 +513,6 @@ ShellRoot {
     next[id] = true
     openPanelIds = next
 
-    // Stash payload so the Loader.onLoaded handler can hand it to open().
     var pending = ({})
     for (var p in pendingPayloads) pending[p] = pendingPayloads[p].slice()
     var queue = pending[id] || []
@@ -587,7 +520,6 @@ ShellRoot {
     pending[id] = queue
     pendingPayloads = pending
 
-    // If the plugin is keepLoaded and already mounted, deliver immediately.
     deliverIfLoaded(id)
     return true
   }
@@ -627,7 +559,6 @@ ShellRoot {
     return isPluginOpen(id) ? hide(id) : summon(id, payloadJson)
   }
 
-  // Map of pluginId -> Loader, populated by the Instantiator delegate below.
   property var panelLoaders: ({})
 
   function registerPanelLoader(pluginId, loader) {
@@ -693,9 +624,6 @@ ShellRoot {
     }
   }
 
-  // One Loader per discoverable panel/overlay/menu plugin. Active when the
-  // host marks it open. The Loader holds onto the instance while active so the
-  // plugin's FloatingWindow + state survive between summons within a session.
   property var panelEntries: []
 
   function computePanelEntries() {
@@ -746,17 +674,11 @@ ShellRoot {
           if ("manifest" in item) item.manifest = panelEntry.manifest
           if ("barWidgetRegistry" in item) item.barWidgetRegistry = shell.barWidgetRegistry
           if ("pluginRegistry" in item) item.pluginRegistry = shell.pluginRegistry
-          // Plugins that pair a panel UI with a service entry read shared
-          // state off `service`. Hand them the matching singleton if one was
-          // loaded.
           if ("service" in item) item.service = shell.serviceFor(panelEntry.pluginId)
           shell.registerPanelLoader(panelEntry.pluginId, this)
         }
         onStatusChanged: {
           if (status === Loader.Error) {
-            // Loader has no errorString property. The engine reports the
-            // underlying QML diagnostic; retain the exact plugin and source in
-            // our companion message without throwing a second ReferenceError.
             console.warn("panel plugin " + panelEntry.pluginId + " failed to load from " + panelEntry.sourceUrl)
             shell.hide(panelEntry.pluginId)
           }
@@ -766,12 +688,6 @@ ShellRoot {
     }
   }
 
-  // ---------------------------------------------------------- plugin loader
-
-  // Mirror plugin registry state into BarWidgetRegistry whenever it changes.
-  // Each enabled plugin with kind "bar-widget" gets a Component created from
-  // its manifest entry point and registered under its manifest id. Built-in
-  // widgets use the same first-party manifest contract as third-party widgets.
   Connections {
     target: shell.pluginRegistry
     function onPluginsChanged() { if (!shell.pluginReloading) shell.syncPluginWidgets() }
@@ -791,7 +707,6 @@ ShellRoot {
       var registryKey = String(manifest.id)
       seen[registryKey] = true
 
-      // Already loaded with matching source — leave it alone.
       var existing = pluginWidgetComponents[registryKey]
       var url = shell.pluginRegistry.entryPointUrl(manifest, "barWidget")
       if (!url) {
@@ -812,16 +727,8 @@ ShellRoot {
         source: "plugin"
       }
 
-      // A load already in flight for this URL registers itself when it
-      // finishes. Starting a second one produces a second Component for the
-      // same widget, and swapping a slot's component rebuilds its item —
-      // briefly running two of the widget, each registering its IPC handler.
       if (existing && existing.url === url && !existing.component) continue
 
-      // If the component URL is unchanged, just refresh the metadata in
-      // place. We can't skip this even when the URL matches: manifests can
-      // change schema, defaults, or sourceDir between rescans, and the
-      // settings panel reads metadata from the registry.
       if (existing && existing.url === url && shell.barWidgetRegistry.has(registryKey)) {
         shell.barWidgetRegistry.register(registryKey, existing.component, meta)
         continue
@@ -830,7 +737,6 @@ ShellRoot {
       loadPluginWidget(registryKey, url, meta)
     }
 
-    // Drop registrations for plugins that are no longer present or enabled.
     var allIds = shell.barWidgetRegistry.availableIds()
     for (var i = 0; i < allIds.length; i++) {
       var id = allIds[i]
@@ -899,10 +805,6 @@ ShellRoot {
   }
 
   function loadPluginWidget(registryKey, url, meta) {
-    // Claim the key before the component exists. Qt.createComponent is
-    // asynchronous and syncPluginWidgets runs several times while the shell
-    // starts, so without a marker the later passes cannot tell a load in
-    // flight from one that never happened.
     setPluginWidgetComponent(registryKey, { url: url, component: null })
 
     var comp = Qt.createComponent(url, Component.Asynchronous)
@@ -912,7 +814,6 @@ ShellRoot {
         shell.setPluginWidgetComponent(registryKey, { url: url, component: comp })
       } else if (comp.status === Component.Error) {
         console.warn("Plugin widget " + registryKey + " failed: " + comp.errorString())
-        // Drop the claim so a later rescan can retry.
         shell.setPluginWidgetComponent(registryKey, null)
         shell.pluginRegistry.pluginLoadFailed(registryKey, comp.errorString())
       }
@@ -923,8 +824,6 @@ ShellRoot {
       finalize()
     }
   }
-
-  // --------------------------------------------------- image selector IPC
 
   function imagePickerItem() {
     var loader = panelLoaders["omarchy.image-picker"]
@@ -980,8 +879,6 @@ ShellRoot {
     }
   }
 
-  // ---------------------------------------------------------- shell IPC
-
   IpcHandler {
     target: "shell"
 
@@ -1031,8 +928,6 @@ ShellRoot {
       }
     }
 
-    // Enable, but only where the widget is not on the bar already, so a caller
-    // that cannot know whether it ran before leaves a placed widget alone.
     function putBarWidget(id: string, placementJson: string): string {
       try {
         var error = shell.pluginRegistry.putBarWidget(id, JSON.parse(placementJson || "{}"))
@@ -1076,21 +971,14 @@ ShellRoot {
           id: id,
           name: plugins[id].name,
           kinds: kinds,
-          // What `omarchy plugin enable/disable` toggles: for a widget that is
-          // its place in the bar, not whether its component is loadable.
           enabled: isBarOption ? active
             : (isBarWidget ? shell.pluginRegistry.inBar(id) : shell.pluginRegistry.isEnabled(id)),
           active: active,
-          // A bar has no off, only a successor: you leave one by enabling
-          // another, so there is nothing for disable to do to it. Said here so
-          // that a caller offering the verbs does not have to read kinds and
-          // work it out again.
           canDisable: !isBarOption,
           firstParty: !!plugins[id].__isFirstParty,
           clonedFrom: clonedFrom
         })
       }
-      // Consumers should not each invent their own presentation order.
       out.sort(function(left, right) {
         var leftName = String(left.name || left.id)
         var rightName = String(right.name || right.id)
@@ -1101,9 +989,6 @@ ShellRoot {
       return JSON.stringify(out)
     }
 
-    // Returns the effective shell.json content as JSON. Useful for debugging
-    // and for CLI tools that want to inspect the merged state without
-    // re-implementing the load logic.
     function listShellConfig(): string {
       return JSON.stringify(shell.shellConfig || {})
     }
@@ -1133,10 +1018,6 @@ ShellRoot {
       return "ok"
     }
 
-    // A bar section's panels answer to their position as well as their id, so a
-    // hotkey can mean "the third panel in the right section" and keep meaning
-    // it after the bar is rearranged. Returns the id it acted on, or "unknown"
-    // when the section holds no panel at that position.
     function togglePanelAt(section: string, index: string): string {
       var id = shell.bar && typeof shell.bar.panelWidgetIdAt === "function"
         ? shell.bar.panelWidgetIdAt(section, index)
@@ -1341,8 +1222,6 @@ ShellRoot {
         address = String(svc.cycleList[svc.cycleIndex] || "")
       if (!address && svc)
         address = String(svc._lastCycleAddress || "")
-      // Card pick waits for overlay unmap. Immediate activate is undone when
-      // the layer closes and Hyprland restores the previous client.
       if (address && shell.callIfLoaded("omarchy.ultimate-task-switcher", "pick", address) !== "unknown")
         return shell.windowIpc({ changed: false, error: null })
       shell.hide("omarchy.ultimate-task-switcher")

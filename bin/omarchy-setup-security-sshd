@@ -11,10 +11,6 @@ AUTHORIZED_KEYS="$HOME/.ssh/authorized_keys"
 KEY=""
 GITHUB_USER=""
 
-# Checked while parsing, before anything is installed or opened: an empty or
-# option-shaped username otherwise falls through to the interactive menu having
-# already changed the machine, and `--gh-keys --help` would take --help as the
-# username and set the server up on its way to failing.
 require_github_user() {
   if [[ -z $1 || $1 == -* ]]; then
     echo "omarchy-setup-security-sshd: --gh-keys needs a GitHub username." >&2

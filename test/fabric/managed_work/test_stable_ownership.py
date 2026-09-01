@@ -18,7 +18,6 @@ from omarchy_fabric.security.errors import SecurityValidationError
 if os.name != "nt":
     from omarchy_fabric.daemon import ClientConnection, DaemonConfig, FabricDaemon
 
-
 class StableOwnershipTests(unittest.TestCase):
     def test_owner_survives_reconnect_and_restart_while_sessions_do_not(self) -> None:
         current = [datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc)]
@@ -145,7 +144,6 @@ class StableOwnershipTests(unittest.TestCase):
             peer_socket.getsockopt.return_value = b"short"
             self.assertFalse(connection._peer_is_owner())
             self.assertIsNone(connection.peer_uid)
-
 
 if __name__ == "__main__":
     unittest.main()

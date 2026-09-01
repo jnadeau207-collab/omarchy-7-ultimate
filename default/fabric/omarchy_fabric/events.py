@@ -10,7 +10,6 @@ from typing import Any, Mapping, Sequence
 from .db import FabricDatabase
 from .models import DEFAULT_EVENT_RETENTION, MAX_SUBSCRIBER_BACKLOG
 
-
 @dataclass
 class EventSubscription:
     subscription_id: str
@@ -20,7 +19,6 @@ class EventSubscription:
 
     def matches(self, topic: str) -> bool:
         return "*" in self.topics or topic in self.topics
-
 
 class EventBroker:
     def __init__(

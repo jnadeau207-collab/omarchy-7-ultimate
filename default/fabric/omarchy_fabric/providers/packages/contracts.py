@@ -12,7 +12,6 @@ STABLE = r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
 DIGEST = r"^sha256:[0-9a-f]{64}$"
 SOURCE_TYPES = ["curated", "signed-repo", "flatpak", "reviewed-aur", "appimage", "web-app"]
 
-
 def _doc(name: str, properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
     return {
         "$schema": DIALECT,
@@ -24,10 +23,8 @@ def _doc(name: str, properties: dict[str, Any], required: list[str]) -> dict[str
         "additionalProperties": False,
     }
 
-
 def ref(name: str) -> dict[str, str]:
     return {"id": f"urn:omarchy:fabric:provider:packages:{name}:v0", "version": VERSION}
-
 
 PROVENANCE = {
     "type": "object",
@@ -109,7 +106,6 @@ OP_ARGS = {
     "requestId": {"type": "string", "pattern": STABLE, "maxLength": 160}, "appId": {"type": "string", "pattern": STABLE, "maxLength": 160},
     "catalogRevision": {"type": "string", "pattern": REVISION}, "expectedInventoryRevision": {"type": "string", "pattern": REVISION}, "preserveUserData": {"type": "boolean"},
 }
-
 
 CONTRACTS: dict[str, dict[str, Any]] = {}
 for document in (

@@ -18,15 +18,12 @@ TOTAL=${#BACKGROUNDS[@]}
 if (( TOTAL == 0 )); then
   omarchy-notification-send "No background was found for theme" -t 2000
 else
-  # Get current background from symlink
   if [[ -L $CURRENT_BACKGROUND_LINK ]]; then
     CURRENT_BACKGROUND=$(readlink "$CURRENT_BACKGROUND_LINK")
   else
-    # Default to first background if no symlink exists
     CURRENT_BACKGROUND=""
   fi
 
-  # Find current background index
   INDEX=-1
   for i in "${!BACKGROUNDS[@]}"; do
     if [[ ${BACKGROUNDS[$i]} == "$CURRENT_BACKGROUND" ]]; then
@@ -35,9 +32,7 @@ else
     fi
   done
 
-  # Get next background (wrap around)
   if (( INDEX == -1 )); then
-    # Use the first background when no match was found
     NEW_BACKGROUND="${BACKGROUNDS[0]}"
   else
     NEXT_INDEX=$(((INDEX + 1) % TOTAL))

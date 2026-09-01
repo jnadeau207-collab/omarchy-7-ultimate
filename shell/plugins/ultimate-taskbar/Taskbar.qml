@@ -27,11 +27,6 @@ Item {
   property color barForeground: Tokens.text.primary
   property color urgent: Tokens.state.danger
   property bool foregroundAnimationEnabled: true
-  // Windows 7 Superbar glass remains graphite rather than palette canvas,
-  // but now comes from the same resolved payload as caption chrome. The old
-  // default/ultimate/chrome-tokens.json and chrome-tokens-light.json files are
-  // generated compatibility adapters. Locked pre-contract reference for the
-  // visual regression suite: Qt.rgba(0.11, 0.11, 0.12, 0.62).
   readonly property bool highContrast: Tokens.accessibility.highContrast
   readonly property bool rtl: (shell && shell.summonedRtl) || Qt.application.layoutDirection === Qt.RightToLeft
   SemanticProfile {
@@ -59,9 +54,6 @@ Item {
   readonly property var appLibrary: shell ? shell.appLibrary : null
   readonly property var groups: windowService ? windowService.groups : []
 
-  // Kept as the compatibility validation hook during the one-window adapter
-  // period. It validates the canonical payload; it never mutates bindings or
-  // accepts the legacy flat palette as a second source of truth.
   function applyChromeTokens(payload) {
     return Tokens.validPayload(payload)
   }
@@ -277,9 +269,6 @@ Item {
         required property var modelData
         screen: modelData
         visible: !remapGuard.remapping && !root.barHidden
-        // Exclusive zone needs 1 or 3 anchors. Auto guessed the thickness
-        // onto the wrong edge on Hyprland 0.56; Normal + exclusiveZone pins
-        // the bottom inset the snap math reads as reserved[3].
         exclusionMode: root.barHidden ? ExclusionMode.Ignore : ExclusionMode.Normal
         exclusiveZone: root.barHidden ? 0 : implicitHeight
         color: root.background

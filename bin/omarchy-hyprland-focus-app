@@ -12,9 +12,6 @@ usage() {
 app=${1:-}
 [[ -n $app ]] || usage
 
-# Agent terminals notify as kitty/foot/etc. while their shared window class is
-# org.omarchy.agent, leaving the terminal name only in initialTitle. So match
-# by class first, then fall back to the launch-time title of agent windows.
 address=$(
   hyprctl clients -j 2>/dev/null |
     jq -r --arg pattern "$app" \

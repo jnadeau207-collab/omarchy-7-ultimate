@@ -2,19 +2,6 @@ import QtQuick
 import QtQuick.Controls as QQC
 import qs.Commons
 
-// Searchable single-select dropdown. Same trigger shape as Dropdown, but
-// the popup leads with an embedded TextField that filters the option
-// list in real time. Use for pickers with enough options that scanning
-// is friction.
-//
-// Filtering is case-insensitive substring against each option's label.
-// Options can be string[] or [{ value, label, description? }] — the same
-// shape Dropdown accepts. The filter clears whenever the popup closes.
-//
-// Keyboard: Tab to focus the trigger, Enter/Space opens (search focused
-// immediately). Down arrow from the search jumps to the first match;
-// Up from the first match returns to the search. Enter selects, Esc
-// closes (and clears the filter).
 Item {
   id: root
 
@@ -36,16 +23,8 @@ Item {
   property int popupMinHeight: Style.spacing.searchablePopupMinHeight
   property bool showLabel: true
 
-  // Panel-cursor flag. When true, the trigger renders the shared
-  // hover-cursor state. Active Qt focus defaults to the same visuals.
-  // Emits `hovered(bool)` on pointer enter/leave so the panel can keep
-  // its cursor state in sync with the mouse.
   property bool hasCursor: false
 
-  // popupOpen + open()/close()/toggle() let a parent panel know when the
-  // dropdown owns keys (search field + result list are active) and
-  // suspend its own keyCatcher so typing into the filter doesn't drive
-  // the panel cursor.
   readonly property bool popupOpen: popup.opened
   function open() { popup.open() }
   function close() { popup.close() }

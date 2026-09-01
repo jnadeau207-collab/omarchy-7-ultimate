@@ -17,9 +17,6 @@ write_usb_devices() {
     local vendor=${spec%%:*}
     local remainder=${spec#*:}
     local product_id=${remainder%%:*}
-    # A spec with no third field describes a device with no product
-    # descriptor. Without this guard ${remainder#*:} would return the product
-    # id unchanged and quietly write it out as the product string.
     local product=""
     if [[ $remainder == *:* ]]; then
       product=${remainder#*:}
@@ -63,8 +60,6 @@ assert_rejects "a generic 10a5 USB device is not detected"
 write_usb_devices '10a5:9800:FPC Sensor Controller L:0002 FW:25.26.23.14'
 assert_detects "an FPC reader is detected by its sensor-controller string"
 
-# Pins the match to a prefix. FPC abbreviates unrelated things too, and this
-# branch is trusted with no kernel-driver check, so the token is not enough.
 write_usb_devices '0bda:5842:USB2.0 FPC Camera'
 assert_rejects "an FPC token mid-string is not detected"
 
@@ -77,8 +72,6 @@ assert_detects "a reader is detected by an existing vendor match"
 bind_driver() {
   local dev="$1" driver="$2"
 
-  # sysfs links the interface at a driver directory, and the detector's [[ -e ]]
-  # follows the link, so the target has to exist for this to model anything.
   mkdir -p "$tmp_dir/drivers/$driver" "$tmp_dir/devices/$dev"
   ln -sf "$tmp_dir/drivers/$driver" "$tmp_dir/devices/$dev/driver"
 }
@@ -96,7 +89,6 @@ bind_driver '1-0/1-0:1.0' usbfs
 bind_driver '1-0/1-0:1.1' uvcvideo
 assert_rejects "a real driver alongside a usbfs claim is still rejected"
 
-# The product-name branch is trusted outright, whatever is bound to it.
 write_usb_devices '27c6:1234:Goodix Fingerprint USB Device'
 bind_driver '1-0/1-0:1.0' uvcvideo
 assert_detects "a self-named reader is detected with a driver bound"

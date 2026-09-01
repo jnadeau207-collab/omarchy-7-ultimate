@@ -15,7 +15,6 @@ from .managed_work import Actor, ManagedWorkError, ManagedWorkPlane
 from .managed_work.plane import SANDBOX_CAPABILITIES
 from .models import FabricError
 
-
 def _as_fabric_error(error: ManagedWorkError) -> FabricError:
     return FabricError(
         error.code,
@@ -27,10 +26,8 @@ def _as_fabric_error(error: ManagedWorkError) -> FabricError:
         recovery_actions=error.recovery_actions,
     )
 
-
 def _canonical_manifest(value: Mapping[str, Any]) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-
 
 def _workspace_listing(workspace: Path) -> list[str]:
     names: list[str] = []
@@ -38,7 +35,6 @@ def _workspace_listing(workspace: Path) -> list[str]:
         if path.is_file():
             names.append(path.relative_to(workspace).as_posix())
     return names
-
 
 def _task_capability(task: Mapping[str, Any]) -> str:
     intent = task.get("intent")
@@ -50,7 +46,6 @@ def _task_capability(task: Mapping[str, Any]) -> str:
             detail="missing" if capability is None else str(capability),
         )
     return str(capability)
-
 
 def _run_manifest(task: Mapping[str, Any], capability: str) -> dict[str, Any]:
     return {
@@ -65,7 +60,6 @@ def _run_manifest(task: Mapping[str, Any], capability: str) -> dict[str, Any]:
         "sandboxRequired": True,
         "steps": [{"label": "Sandboxed inspect", "capability": capability}],
     }
-
 
 def _artifact_matches(
     result: Mapping[str, Any],
@@ -88,7 +82,6 @@ def _artifact_matches(
         and isolation.get("runUserVisible") is False
         and isolation.get("fabricSocketVisible") is False
     )
-
 
 class ManagedRuntime:
     def __init__(self, plane: ManagedWorkPlane) -> None:

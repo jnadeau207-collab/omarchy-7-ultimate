@@ -78,14 +78,12 @@ SCHEMAS = build_contracts(
     state_schema=KEYBOARD_STATE_SCHEMA,
 )
 
-
 def _bounded_label(value: Any) -> str:
     if not isinstance(value, str) or not 1 <= len(value) <= 160:
         raise ValueError("keyboard name is not a bounded string")
     if any(ord(character) < 32 or ord(character) == 127 for character in value):
         raise ValueError("keyboard name contains a control character")
     return value
-
 
 def _layouts(value: Any) -> list[str]:
     if value is None or value == "":
@@ -103,7 +101,6 @@ def _layouts(value: Any) -> list[str]:
     ):
         raise ValueError("keyboard layout entry is invalid")
     return layouts
-
 
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     document = parse_probe_json((await invoke_probe(DEVICES_COMMAND, runner)).stdout)
@@ -154,10 +151,8 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
             raise ValueError("typed keyboard inventory exceeds 16 entries")
     return resources
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "layoutIndex": arguments["layoutIndex"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     index = arguments["layoutIndex"]
@@ -171,12 +166,10 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         "switchable": True,
     }
 
-
 def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
     if current == proposed:
         return "The keyboard already uses the requested layout; no change will be made."
     return f"Switch the selected keyboard to layout {proposed['activeKeymap']}."
-
 
 SPEC = DomainSpec(
     domain=DOMAIN,
@@ -191,14 +184,11 @@ SPEC = DomainSpec(
     describe_change=_describe,
 )
 
-
 def _manifest() -> Mapping[str, Any]:
     return load_frozen_json(Path(__file__).with_name("manifest-v0.json"))
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, _manifest(), SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

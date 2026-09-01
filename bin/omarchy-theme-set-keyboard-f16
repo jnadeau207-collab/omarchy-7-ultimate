@@ -11,7 +11,6 @@ if omarchy-cmd-present qmk_hid && [[ -f $FRAMEWORK16_THEME ]]; then
 
   [[ $hex =~ ^[0-9A-Fa-f]{6}$ ]] || exit 0
 
-  # Convert hex to QMK HSV (0-255 scale) using Python's colorsys
   read -r h s <<< $(python3 -c "
 import sys, colorsys
 hex = sys.argv[1]

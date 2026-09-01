@@ -60,10 +60,6 @@ if [[ -z ${text//[[:space:]]/} ]]; then
   exit 1
 fi
 
-# The text arrives as awk's input, one record per line, and the font on a
-# descriptor of its own. Handing the text to awk as a variable instead would
-# read backslash escapes in it as awk's own, and would put a long text through
-# the argument list, which has a size limit that a piped one does not.
 awk '
 function rtrim(s) {
   sub(/ +$/, "", s)
@@ -75,8 +71,6 @@ function ltrim(s) {
   return s
 }
 
-# A single-character replacement that never treats its needle as a pattern,
-# because the hardblank is "$" in this font and would anchor a regex instead.
 function replace(s, from, to,   at, result) {
   while ((at = index(s, from)) > 0) {
     result = result substr(s, 1, at - 1) to
@@ -102,8 +96,6 @@ function load_font(   line, header, position, code, i) {
       continue
     }
 
-    # Glyphs follow the comments in character order from 32, `height` lines
-    # each, every line closed by the endmark the first one introduces.
     position = font_line - comment_lines - 2
     code = 32 + int(position / height)
     if (code > 126) {
@@ -122,9 +114,6 @@ function load_font(   line, header, position, code, i) {
       gsub(block[i], stand_in[i], line)
     }
 
-    # The hardblank becomes a marker here, while the string is one glyph wide,
-    # so printing a finished row is a single pass rather than one rescan per
-    # hardblank in it.
     line = replace(line, hardblank, hardblank_mark)
 
     glyph[code, position % height] = line
@@ -148,8 +137,6 @@ function drawable(source,   chars, total, i, code) {
   return 0
 }
 
-# Lay one glyph beside what is drawn so far, kerned: slid left until the two
-# would touch, which is the smallest run of blanks between them across all rows.
 function draw(source,   chars, total, i, r, ch, code, piece, glyph_width, out, trail, amount, lead, cut, keep, remaining, fragment, body, pad, line, drew) {
   total = split(source, chars, "")
   drew = 0
@@ -190,11 +177,6 @@ function draw(source,   chars, total, i, r, ch, code, piece, glyph_width, out, t
       }
     }
 
-    # Every row gives up the same number of columns, taken from its own trailing
-    # blanks first and from the glyph leading ones once those run out. A row is
-    # held without its trailing blanks, counted in trail[] instead, so placing a
-    # glyph costs its own width rather than the width of the art so far -- which
-    # is what keeps a long line from taking time in the square of its length.
     for (r = 0; r < height; r++) {
       cut = (amount < trail[r]) ? amount : trail[r]
       keep = amount - cut
@@ -212,8 +194,6 @@ function draw(source,   chars, total, i, r, ch, code, piece, glyph_width, out, t
     }
   }
 
-  # A line that drew nothing still occupies its block, the way a blank line
-  # between two words of art does, so the art keeps the shape of the text.
   for (r = 0; r < height; r++) {
     line = out[r]
     for (i = 1; i <= blocks; i++) {
@@ -229,10 +209,6 @@ function draw(source,   chars, total, i, r, ch, code, piece, glyph_width, out, t
 BEGIN {
   FONT = "/dev/fd/3"
 
-  # The font draws with five block characters, and the layout above is column
-  # arithmetic. Each one becomes a single byte for the duration and turns back
-  # at print time, so length() and substr() count columns no matter what the
-  # locale believes a character is.
   blocks = split("█ ▀ ▄ ▌ ▐", block, " ")
   for (i = 1; i <= blocks; i++) {
     stand_in[i] = sprintf("%c", i)
@@ -244,8 +220,6 @@ BEGIN {
     code_of[sprintf("%c", i)] = i
   }
 
-  # Skipped characters are named on stderr, and a control character named there
-  # would reach the terminal as a control character. Name those by code.
   for (i = 1; i < 32; i++) {
     escaped[sprintf("%c", i)] = sprintf("\\x%02x", i)
   }

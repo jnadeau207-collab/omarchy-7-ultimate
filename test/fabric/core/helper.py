@@ -18,7 +18,6 @@ if str(FABRIC_ROOT) not in sys.path:
 from omarchy_fabric.models import MAX_FRAME_BYTES, PROTOCOL_NAME
 from omarchy_fabric.protocol import FabricClient
 
-
 class DaemonProcess:
     def __init__(self, root: Path, *, event_retention: int = 512) -> None:
         self.root = root
@@ -111,7 +110,6 @@ class DaemonProcess:
         await client.connect()
         return client
 
-
 async def raw_request(
     socket_path: Path,
     message: dict[str, object] | bytes,
@@ -129,7 +127,6 @@ async def raw_request(
     await writer.drain()
     line = await asyncio.wait_for(reader.readline(), timeout=3)
     return json.loads(line), reader, writer
-
 
 def hello(request_id: str = "hello-1") -> dict[str, object]:
     return {

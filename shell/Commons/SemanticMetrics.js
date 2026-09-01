@@ -1,9 +1,5 @@
 .pragma library
 
-// Pure semantic UI calculations shared by QML and the hermetic Node contract
-// tests. Keep this file free of Qt object state: profiles can be rendered in
-// the dev gallery without mutating the process-wide theme singleton.
-
 var OPERATION_IDS = [
   "success", "no-op", "progress", "denial", "failure", "cancel", "restart", "recovery"
 ]
@@ -113,8 +109,6 @@ function minimumTarget(profile) {
   var source = profile || {}
   var density = normalizeDensity(source.densityMode)
   var base = TARGET_SIZE[density]
-  // Logical target guarantees are density-owned. Display scale can enlarge a
-  // preview but must never shrink the pointer/touch minimum.
   return Math.max(base, Math.round(base * displayScale(source.scaleFactor)))
 }
 
@@ -178,7 +172,7 @@ function localize(value, profile) {
 
 function parseHexColor(value) {
   var text = String(value || "").replace(/^#/, "")
-  if (text.length === 8) text = text.substring(2) // Qt #aarrggbb; contrast uses the opaque channels.
+  if (text.length === 8) text = text.substring(2)
   if (!text.match(/^[0-9a-fA-F]{6}$/)) return null
   return {
     r: parseInt(text.substring(0, 2), 16),

@@ -2,14 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import qs.Commons
 
-// Icon-only button for toolbars, caption bars, and tray-adjacent chrome.
-// Square hitbox with a generous target area even when the glyph is small —
-// caption buttons and titlebar controls depend on this (Rule 2: everything
-// possible with the mouse).
-//
-// `danger` flips hover/press to the semantic danger color for destructive
-// actions (window close). States follow the shared kit priority: pressed >
-// focus > hover > idle.
 BorderSurface {
   id: root
 
@@ -26,7 +18,6 @@ BorderSurface {
   property bool bordered: false
   property bool selected: false
 
-  // Square by default; consumers can stretch via explicit width/height.
   property int size: Math.max(28, Math.round(Style.spacing.controlHeight * 0.9),
     Semantics.minimumTarget(semanticProfile))
   property real glyphSize: Semantics.font(semanticProfile, Style.font.icon)

@@ -11,9 +11,7 @@ from referencing import Registry, Resource
 
 from helper import ACTOR, ManagedWorkPlane
 
-
 SCHEMA_DIRECTORY = Path(__file__).resolve().parents[3] / "default" / "fabric" / "schema"
-
 
 class ManagedWorkRpcSchemaTests(unittest.TestCase):
     @classmethod
@@ -181,7 +179,6 @@ class ManagedWorkRpcSchemaTests(unittest.TestCase):
             sort_keys=True,
         ).encode("utf-8")
         self.assertLess(len(encoded), 64 * 1024)
-
 
 if __name__ == "__main__":
     unittest.main()

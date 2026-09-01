@@ -104,13 +104,10 @@ load_colors() {
     resolved[$key]="$value"
   done < <(omarchy_tool omarchy-theme-color --file "$colors_file" --all)
 
-  # Preview the palette the theme itself defines, at canonically resolved values.
   while IFS=$'\t' read -r key value; do
     COLORS[$key]="${resolved[$key]:-}"
   done < <(omarchy_tool omarchy-theme-color --file "$colors_file" --raw)
 
-  # Plus the core slots every theme resolves, so sparse and legacy themes
-  # still render a complete preview.
   for key in mode background foreground light_foreground bright_foreground selection_background selection_foreground dark_background darker_background; do
     [[ -n ${resolved[$key]:-} ]] && COLORS[$key]="${resolved[$key]}"
   done

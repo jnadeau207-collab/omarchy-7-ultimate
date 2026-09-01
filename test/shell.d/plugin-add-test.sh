@@ -57,14 +57,6 @@ grep -qF "plugin id 'acme.same' is already used by" <<<"$output" ||
   fail "plugin add leaves a target behind after refusing a duplicate id"
 pass "plugin add refuses an installed manifest id regardless of directory name"
 
-# --- URL transport-helper guard -------------------------------------------
-#
-# The guard refuses git transport helpers (`<name>::…`) and option-shaped URLs
-# before `git clone` runs, matching omarchy-theme-install. A git stub records
-# whether clone was reached, so the guard is exercised with no network: reaching
-# the stub proves a URL passed the guard; not reaching it proves the guard
-# rejected the URL first.
-
 guard_stubs="$TMPDIR/guard-stubs"
 mkdir -p "$guard_stubs"
 cat >"$guard_stubs/omarchy-shell" <<'STUB'
@@ -84,8 +76,6 @@ exit 0
 STUB
 chmod +x "$guard_stubs/git"
 
-# A gum stub that answers `gum input` with a caller-chosen value, so a test can
-# drive any URL through the interactive prompt path.
 cat >"$guard_stubs/gum" <<'STUB'
 #!/bin/bash
 if [[ $1 == "input" ]]; then
@@ -99,7 +89,6 @@ add_url() {
     omarchy-plugin-add "$1" --yes 2>&1
 }
 
-# Transport helpers reach the guard, are named as such, and never reach clone.
 for bad in "ext::sh -c touch /tmp/omarchy-guard-test" "fd::17"; do
   rm -f "$clone_marker"
   output=$(add_url "$bad") &&
@@ -111,9 +100,6 @@ for bad in "ext::sh -c touch /tmp/omarchy-guard-test" "fd::17"; do
 done
 pass "plugin add rejects transport-helper URLs before cloning"
 
-# The `://` spelling of the same thing: git resolves git-remote-<scheme> for any
-# scheme it does not implement itself, so `ext::` and `ext://` reach the same
-# helper and both have to be refused.
 for bad in "ext://sh -c id" "gcrypt://example.com/x"; do
   rm -f "$clone_marker"
   output=$(add_url "$bad") &&
@@ -125,10 +111,6 @@ for bad in "ext://sh -c id" "gcrypt://example.com/x"; do
 done
 pass "plugin add rejects transport-scheme URLs before cloning"
 
-# Option-shaped URLs on argv are refused before clone — by the option parser
-# (`-*` falls to "unknown add option"), not the guard. The guard's own
-# leading-dash arm is only reachable through the interactive gum prompt and is
-# exercised separately below.
 for bad in "-oProxyCommand=x" "--upload-pack=x"; do
   rm -f "$clone_marker"
   output=$(add_url "$bad") &&
@@ -138,11 +120,6 @@ for bad in "-oProxyCommand=x" "--upload-pack=x"; do
 done
 pass "plugin add rejects option-shaped URLs before cloning"
 
-# The guard's leading-dash arm is only reachable through `gum input`: argv
-# dashes die in the option parser first. interactive() requires a TTY on stdin
-# and stdout, so run this one case on a pty via util-linux `script -qec` (the
-# suite's existing pty idiom); gum itself is stubbed, so no rendering happens.
-# Probe script's util-linux syntax first and skip cleanly where it is missing.
 if script -qec true /dev/null >/dev/null 2>&1; then
   rm -f "$clone_marker"
   status=0
@@ -161,7 +138,6 @@ else
   pass "script -qec unavailable; skipping the interactive gum-prompt guard case"
 fi
 
-# Legitimate URL forms pass the guard and reach git clone (stubbed, no network).
 for good in \
   "https://github.com/acme/omarchy-weather.git" \
   "git@github.com:acme/repo.git" \

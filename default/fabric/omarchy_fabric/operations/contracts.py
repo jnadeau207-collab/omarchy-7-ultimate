@@ -26,7 +26,6 @@ MAX_EVENT_PAYLOAD_BYTES = 16 * 1024
 MAX_LEDGER_PAGE = 64
 ZERO_HASH = "0" * 64
 
-
 def operation_error(
     code: str,
     explanation: str,
@@ -46,24 +45,20 @@ def operation_error(
         recovery_actions=recovery_actions,
     )
 
-
 def _stable(value: Any, label: str) -> str:
     if not isinstance(value, str) or len(value) > 256 or not _STABLE.fullmatch(value):
         raise operation_error("operation.invalid-contract", f"{label} must be a stable identifier.")
     return value
-
 
 def _revision(value: Any, label: str) -> str:
     if not isinstance(value, str) or not _REVISION.fullmatch(value):
         raise operation_error("operation.invalid-contract", f"{label} must be a bounded revision token.")
     return value
 
-
 def _digest(value: Any, label: str) -> str:
     if not isinstance(value, str) or not _DIGEST.fullmatch(value):
         raise operation_error("operation.invalid-contract", f"{label} must be a SHA-256 digest.")
     return value
-
 
 def _json_object(value: Any, label: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
@@ -83,7 +78,6 @@ def _json_object(value: Any, label: str) -> Mapping[str, Any]:
         )
     return _freeze_json(normalized)
 
-
 def _projection_object(value: Any, label: str) -> Mapping[str, Any]:
     """Freeze already-redacted durable evidence without rejecting the marker."""
 
@@ -98,7 +92,6 @@ def _projection_object(value: Any, label: str) -> Mapping[str, Any]:
             detail=type(error).__name__,
         ) from error
 
-
 def _freeze_json(value: Any) -> Any:
     """Recursively freeze an already-normalized JSON value."""
 
@@ -108,12 +101,10 @@ def _freeze_json(value: Any) -> Any:
         return tuple(_freeze_json(item) for item in value)
     return value
 
-
 def _plain_json(value: Any) -> Any:
     """Return an independent plain JSON copy of a frozen contract value."""
 
     return normalize_json(value)
-
 
 def owner_id_for(principal: EndpointPrincipal) -> str:
     """Derive the stable account owner from daemon-verified peer identity."""
@@ -121,7 +112,6 @@ def owner_id_for(principal: EndpointPrincipal) -> str:
     if not isinstance(principal, EndpointPrincipal) or isinstance(principal.uid, bool) or principal.uid < 0:
         raise operation_error("operation.principal-invalid", "An active daemon-issued endpoint principal is required.")
     return f"account.uid.{principal.uid}"
-
 
 class OperationStatus(str, Enum):
     AWAITING_APPROVAL = "awaiting-approval"
@@ -144,7 +134,6 @@ class OperationStatus(str, Enum):
             self.SUPERSEDED,
         }
 
-
 class OperationCheckpoint(str, Enum):
     PREFLIGHT = "preflight"
     APPROVAL = "approval"
@@ -155,7 +144,6 @@ class OperationCheckpoint(str, Enum):
     ROLLING_BACK = "rolling-back"
     RECONCILING = "reconciling"
     FINISHED = "finished"
-
 
 @dataclass(frozen=True)
 class ProviderBinding:
@@ -185,7 +173,6 @@ class ProviderBinding:
             raise operation_error("operation.invalid-contract", "Provider binding fields are not exact.")
         return cls(value["id"], value["version"], value["fingerprint"], value["generation"])
 
-
 @dataclass(frozen=True)
 class ResourceBinding:
     kind: str
@@ -208,7 +195,6 @@ class ResourceBinding:
         if not isinstance(value, Mapping) or set(value) != {"kind", "id", "revision"}:
             raise operation_error("operation.invalid-contract", "Resource binding fields are not exact.")
         return cls(value["kind"], value["id"], value["revision"])
-
 
 @dataclass(frozen=True)
 class ExecutorIntent:
@@ -238,7 +224,6 @@ class ExecutorIntent:
             raise operation_error("operation.invalid-contract", "Executor intent fields are not exact.")
         return cls(value["intentId"], value["templateFingerprint"], value["payload"])
 
-
 @dataclass(frozen=True)
 class OperationDefinition:
     """Code-owned provider/action to executor-intent mapping."""
@@ -254,7 +239,6 @@ class OperationDefinition:
         _stable(self.intent_id, "Definition intent")
         if not callable(self.payload_builder):
             raise operation_error("operation.invalid-definition", "Intent payload builder must be code-owned callable.")
-
 
 @dataclass(frozen=True)
 class OperationPlan:
@@ -490,7 +474,6 @@ class OperationPlan:
         if value["bindingDigest"] != plan.binding_digest:
             raise operation_error("operation.plan-corrupt", "The durable operation binding digest does not match its plan.")
         return plan
-
 
 @dataclass(frozen=True)
 class OperationState:

@@ -12,9 +12,6 @@ trap 'rm -rf "$TMPDIR"' EXIT
 STUB_DIR="$TMPDIR/stub"
 mkdir -p "$STUB_DIR"
 
-# The picker reads the plugin list from omarchy-plugin-list and hands what it
-# decided to a verb-specific command, so stubbing both ends shows which plugin
-# a pick actually resolved to -- the thing a source-level check cannot see.
 cat >"$STUB_DIR/omarchy-plugin-list" <<'STUB'
 #!/bin/bash
 cat "$FAKE_PLUGINS"
@@ -27,7 +24,6 @@ printf '%s %s\n' "${0##*/}" "$*" >>"$FAKE_CALLS"
 STUB
 done
 
-# Records the rows it was offered, then answers with the pick under test.
 cat >"$STUB_DIR/omarchy-menu-select" <<'STUB'
 #!/bin/bash
 cat >"$FAKE_ROWS"
@@ -46,8 +42,6 @@ STUB
 
 chmod +x "$STUB_DIR"/*
 
-# Runs the picker against a plugin list, answering its prompt with $2. Leaves
-# the rows it offered in $ROWS and what it called in $CALLS.
 pick() {
   local verb="$1" choice="$2"
 
@@ -65,8 +59,6 @@ pick() {
   CALLS=$(cat "$TMPDIR/calls")
 }
 
-# Two plugins can declare the same display name. The id rides along as row
-# subtext and comes back with the selection, so the pick resolves by id.
 cat >"$TMPDIR/plugins.json" <<'JSON'
 [
   {"id": "omarchy.clock", "name": "Clock", "kinds": ["bar-widget"], "enabled": false, "active": false, "canDisable": true, "firstParty": true},
@@ -98,8 +90,6 @@ pick enable "$(printf 'Weather\tacme.weather')"
   || fail "picker delegates plugin enablement to the plugin command" "$CALLS"
 pass "picker delegates plugin enablement to the plugin command"
 
-# Clone offers only first-party plugins that no installed clone points back at,
-# then hands the pick to the clone command, which opens the result in $EDITOR.
 cat >"$TMPDIR/plugins.json" <<'JSON'
 [
   {"id": "omarchy.clock", "name": "Clock", "kinds": ["bar-widget"], "enabled": true, "active": false, "canDisable": true, "firstParty": true},
@@ -115,8 +105,6 @@ pass "clone picker offers built-in plugins"
   fail "clone picker delegates cloning and editing to the clone command" "$CALLS"
 pass "clone picker clones and opens the personal plugin"
 
-# Once a clone pointing back at the source is discovered, whatever it is named,
-# the source no longer belongs in Clone.
 cat >"$TMPDIR/plugins.json" <<'JSON'
 [
   {"id": "omarchy.clock", "name": "Clock", "kinds": ["bar-widget"], "enabled": true, "active": false, "canDisable": true, "firstParty": true},
@@ -129,8 +117,6 @@ pick clone ""
   fail "clone picker offers an already cloned plugin" "$CALLS"
 pass "clone picker omits plugins already cloned locally"
 
-# The picker treats every plugin alike and leaves kind-specific behavior to the
-# plugin command.
 cat >"$TMPDIR/plugins.json" <<'JSON'
 [
   {"id": "acme.fancy", "name": "Fancy", "kinds": ["bar", "bar-widget"], "enabled": false, "active": false, "canDisable": false, "firstParty": false}
@@ -142,8 +128,6 @@ pick enable "$(printf 'Fancy\tacme.fancy')"
   || fail "picker delegates kind-specific enablement" "$CALLS"
 pass "picker delegates kind-specific enablement"
 
-# A bar has no off, so it is never offered under disable -- including this one,
-# which is a widget too.
 cat >"$TMPDIR/plugins.json" <<'JSON'
 [
   {"id": "acme.fancy", "name": "Fancy", "kinds": ["bar", "bar-widget"], "enabled": true, "active": true, "canDisable": false, "firstParty": false},
@@ -156,7 +140,6 @@ pick disable "$(printf 'Clock\tomarchy.clock')"
   || fail "picker keeps a bar out of disable" "$ROWS"
 pass "picker keeps a bar out of disable"
 
-# The bar in use is the row absent from enable; every other bar is one pick away.
 cat >"$TMPDIR/plugins.json" <<'JSON'
 [
   {"id": "omarchy.bar", "name": "Bar", "kinds": ["bar"], "enabled": false, "active": false, "canDisable": false, "firstParty": true},
@@ -172,7 +155,6 @@ pass "picker offers every bar except the one already running"
   || fail "picker returns to the built-in bar by enabling it" "$CALLS"
 pass "picker returns to the built-in bar by enabling it"
 
-# Nothing the verb can act on is said out loud, not opened as an empty list.
 cat >"$TMPDIR/plugins.json" <<'JSON'
 [
   {"id": "omarchy.bar", "name": "Bar", "kinds": ["bar"], "enabled": true, "active": true, "canDisable": false, "firstParty": true}

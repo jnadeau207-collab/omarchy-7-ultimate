@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Captures the current clipboard as a JSON entry on stdout. In watch mode,
-# wl-paste invokes this with the payload on stdin and the mime as $1. Without
-# arguments, it snapshots the current selection itself.
-
 set -o pipefail
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy"
@@ -55,8 +51,6 @@ emit_text() {
       my $units = length($raw) / 2;
       my $nuls = $raw =~ tr/\0/\0/;
 
-      # Neither byte lane can reach the padding threshold when the entire
-      # payload contains fewer NULs than that, so avoid two full string passes.
       if ($nuls * 4 >= $units * 3) {
         my $even_bytes = $raw;
         $even_bytes =~ s/(.)./$1/sg;
@@ -67,9 +61,6 @@ emit_text() {
         $odd_bytes =~ s/.(.)/$1/sg;
         my $odd_nuls = $odd_bytes =~ tr/\0/\0/;
 
-        # BOM-less UTF-16 is indistinguishable from NUL-separated bytes. Decode
-        # only when at least three quarters of the code units have consistent
-        # padding and fewer than one quarter have NULs in the opposite byte.
         if ($odd_nuls * 4 >= $units * 3 && $even_nuls * 4 < $units) {
           $encoding = "UTF-16LE";
           $heuristic_encoding = 1;

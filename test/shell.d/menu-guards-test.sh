@@ -88,18 +88,9 @@ prelude() {
   ' | command grep -v '^if {'
 }
 
-# The prelude shadows the real commands for the length of the batch, so it has
-# to answer exactly as they do -- including for arguments no shipped guard
-# passes today, which an extension is free to write tomorrow.
 stub_dir=$(mktemp -d)
 trap 'rm -rf "$stub_dir"' EXIT
 
-# `pacman -Q` resolves a name through what installed packages provide, so gvim
-# answers for vim and bash answers for sh. A set built from `pacman -Qq` alone
-# would miss both and offer to install what is already there.
-#
-# `-Qi` wraps a long list onto indented continuation lines whenever COLUMNS is
-# set, so gvim's provides arrive the way a wrapped terminal would emit them.
 cat >"$stub_dir/pacman" <<'STUB'
 #!/bin/bash
 case "$1" in
@@ -132,9 +123,6 @@ chmod +x "$stub_dir/gvim"
 
 guard_prelude=$(prelude)
 
-# Arguments reach both sides as argv. Interpolating them into the shadow's
-# script text would let `bash>=1` parse as a redirection, so the case that
-# exists to prove constraints work would quietly test `bash` instead.
 assert_helper_agrees() {
   local description="$1" helper="$2"
   shift 2
@@ -145,8 +133,6 @@ assert_helper_agrees() {
   ((real == shadowed)) || fail "$description" "$helper $*: real=$real shadowed=$shadowed"
 }
 
-# vim, sh and xxd are provided rather than installed, and xxd only appears on a
-# wrapped continuation line; bash>=1 is a version constraint no set can answer.
 pkg_cases=("bash" "vim" "sh" "xxd" "absent" "bash vim" "bash absent" "bash>=1" "vim>=1" "")
 for helper in omarchy-pkg-present omarchy-pkg-missing; do
   for case in "${pkg_cases[@]}"; do
@@ -156,7 +142,6 @@ for helper in omarchy-pkg-present omarchy-pkg-missing; do
 done
 pass "guard prelude resolves packages through provides, wrapping, and constraints as pacman does"
 
-# cd is a shell builtin `command -v` finds and a PATH search does not.
 cmd_cases=("gvim" "cd" "absent" "gvim absent" "gvim cd" "")
 for helper in omarchy-cmd-present omarchy-cmd-missing; do
   for case in "${cmd_cases[@]}"; do
@@ -166,8 +151,6 @@ for helper in omarchy-cmd-present omarchy-cmd-missing; do
 done
 pass "guard prelude resolves commands as omarchy-cmd-present and omarchy-cmd-missing do"
 
-# A reader is replaced by what it printed, which has to compare identically to
-# the substitution it stood in for -- including the trailing newline $() drops.
 reader_script=$(node -e '
   const path = require("path")
   const menu = require(path.join(process.env.ROOT, "shell/plugins/menu/MenuModel.js"))
@@ -184,8 +167,6 @@ export -f omarchy-dns
   fail "guard prelude compares a captured reader as the substitution did" "got: $reader_result"
 pass "guard prelude compares a captured reader exactly as the substitution it replaced"
 
-# The batch inherits whatever a login shell left set. A reader that exits
-# nonzero must not take the rest of the menu's rows down with it.
 errexit_result=$(bash -e -c '
 omarchy-dns() { printf "Cloudflare\n"; return 3; }
 export -f omarchy-dns
@@ -195,12 +176,6 @@ printf "survived\n"' 2>/dev/null)
   fail "guard batch survives a failing reader under errexit" "got: $errexit_result"
 pass "guard batch survives a reader that exits nonzero under errexit"
 
-# Update > Extra Themes runs omarchy-theme-update, which pulls the themes that
-# came from a git clone and skips everything else, so the guard has to answer
-# for the same set: a row that appears over a symlinked theme or a worktree's
-# `.git` file opens a terminal that prints nothing and closes. Both sides ask
-# omarchy-theme-extras today; the shapes below are what would tell us if one
-# of them stopped.
 themes_guard=$(node -e '
   const fs = require("fs")
   const path = require("path")
@@ -216,11 +191,6 @@ cat >"$stub_dir/git" <<'STUB'
 STUB
 chmod +x "$stub_dir/git"
 
-# The updater names each theme it pulls, so what it printed is what the row
-# would have been for. Run the guard the way the batch does, braces and all,
-# and say which shapes are meant to show it rather than only that the two
-# agree: they read the same command now, and agreement alone would hold even
-# if both went wrong together.
 assert_themes_guard_agrees() {
   local description="$1" home="$2" expected="$3"
   local guarded=0 updated=0
@@ -234,8 +204,6 @@ assert_themes_guard_agrees() {
 themes_home=$(mktemp -d)
 trap 'rm -rf "$stub_dir" "$themes_home"' EXIT
 
-# A theme copied by hand has nothing to pull, a symlinked one is someone's
-# working copy, and a `.git` file is a worktree living elsewhere.
 mkdir -p "$themes_home/missing"
 mkdir -p "$themes_home/empty/.config/omarchy/themes"
 mkdir -p "$themes_home/copied/.config/omarchy/themes/handmade"
@@ -252,10 +220,6 @@ for shape in missing:1 empty:1 copied:1 cloned:0 linked:1 worktree:1; do
 done
 pass "Extra Themes shows exactly when omarchy-theme-update has something to pull"
 
-# Which themes get pulled, not just that something did: a name with a space in
-# it is the one that goes missing the moment a path is split rather than passed
-# whole, and it would still print an Updating: line on its way to the wrong
-# directory.
 many="$themes_home/many/.config/omarchy/themes"
 mkdir -p "$many/tokyo night/.git" "$many/zen/.git" "$many/handmade"
 ln -s "$themes_home/checkout" "$many/in-progress"

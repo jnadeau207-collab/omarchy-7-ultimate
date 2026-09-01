@@ -4,9 +4,6 @@
 # omarchy:args=[toggle|summon|close|refresh|ping] [route]
 # omarchy:examples=omarchy menu | omarchy menu toggle system | omarchy menu summon style.theme | omarchy menu refresh
 
-# Thin wrapper around the standard plugin IPC surface. The menu is the
-# first-party `omarchy.menu` plugin; routes are passed as JSON payload.
-
 set -euo pipefail
 
 verb="${1-toggle}"

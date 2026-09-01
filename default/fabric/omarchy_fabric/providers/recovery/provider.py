@@ -75,12 +75,10 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def _bounded_text(value: object, maximum: int) -> str:
     if not isinstance(value, str):
         return ""
     return "".join(character for character in value if character.isprintable() and character not in "\r\n\x00")[:maximum]
-
 
 def _created_at(value: object) -> str:
     text = _bounded_text(value, 64)
@@ -93,7 +91,6 @@ def _created_at(value: object) -> str:
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise ValueError("restore point creation time lacks timezone truth")
     return text
-
 
 def parse_restore_points(text: str) -> list[dict[str, Any]]:
     document = parse_probe_json(text)
@@ -140,21 +137,17 @@ def parse_restore_points(text: str) -> list[dict[str, Any]]:
         )
     return resources
 
-
 def require_system_only(resources: list[Mapping[str, Any]]) -> None:
     if any(resource.get("scope") != "system" for resource in resources):
         raise ValueError("restore inventory contains a non-system restore point")
-
 
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     resources = parse_restore_points((await invoke_probe(RECOVERY_COMMAND, runner)).stdout)
     require_system_only(resources)
     return resources
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {key: arguments[key] for key in ("resourceId", "scope", "preserveHome", "confirmation")}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     expected = f"RESTORE:{arguments['resourceId']}"
@@ -177,7 +170,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         raise ValueError("a different restore plan is already pending")
     return {**dict(current), "pendingPlan": pending_plan}
 
-
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "restore-point", OPERATION_ACTION, "recovery.restore.plan", "destructive", ("mutating", "privileged", "destructive", "reboot")),
     resource_schema=RESOURCE_SCHEMA,
@@ -189,10 +181,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, _arguments: "Plan a system-only restore that preserves home and requires reboot; this provider never applies the restore.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     require_system_only(resources)

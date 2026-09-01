@@ -28,10 +28,8 @@ MAX_STATE_BYTES = 2 * 1024 * 1024
 MAX_OPERATIONS = 4096
 _PLAN_VALIDATOR = Draft202012Validator(CONTRACTS["urn:omarchy:fabric:provider:compatibility:operation-preflight:v0"])
 
-
 def _reject_json_constant(value: str) -> None:
     raise ValueError(f"invalid JSON constant: {value}")
-
 
 def _fsync_directory(path: Path) -> None:
     if os.name != "posix":
@@ -41,7 +39,6 @@ def _fsync_directory(path: Path) -> None:
         os.fsync(descriptor)
     finally:
         os.close(descriptor)
-
 
 def _acquire_state_lock(path: Path) -> int | None:
     if os.name != "posix":
@@ -57,7 +54,6 @@ def _acquire_state_lock(path: Path) -> int | None:
         raise FabricError("compatibility.state-busy", "Compatibility state is busy", "Another process currently owns the durable journal write lock.", retryable=True, change_state="unknown") from error
     return descriptor
 
-
 def _release_state_lock(descriptor: int | None) -> None:
     if descriptor is None:
         return
@@ -66,10 +62,8 @@ def _release_state_lock(descriptor: int | None) -> None:
     fcntl.flock(descriptor, fcntl.LOCK_UN)
     os.close(descriptor)
 
-
 def deployment_revision(deployments: list[Mapping[str, Any]]) -> str:
     return revision(sorted((deepcopy(dict(item)) for item in deployments), key=lambda item: item["id"]))
-
 
 class FakeCompatibilityAdapter:
     def __init__(self, *, fail_at: str | None = None, pause_at: str | None = None) -> None:
@@ -92,7 +86,6 @@ class FakeCompatibilityAdapter:
             await self.release.wait()
         if self.fail_at == name:
             raise FabricError("compatibility.adapter-failed", "Compatibility adapter failed", "The hermetic adapter produced its requested deterministic failure.", detail=name, retryable=True, change_state="unknown" if name in {"apply", "validate", "commit"} else "none", recovery_actions=("compatibility.reconcile",))
-
 
 class CompatibilityEngine:
     def __init__(self, recipes: RecipeCatalog, *, deployments: list[Mapping[str, Any]] | None = None, state_path: Path | None = None, adapter: FakeCompatibilityAdapter | None = None) -> None:

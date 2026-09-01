@@ -22,9 +22,4 @@ fi
 
 as_root env OMARCHY_UPDATEDB_CONF_PATH="$UPDATEDB_CONF_PATH" bash -euo pipefail "$locate_config_script"
 
-# Rebuild the index with the new exclusions; pruning /.snapshots turns
-# multi-hour runs on snapshot-heavy systems back into one-minute runs. Restart
-# rather than start: the machines this targets are the ones with an updatedb
-# already grinding through every snapshot, and a run that started before the
-# rewrite keeps using the config it read at startup.
 as_root systemctl restart --no-block plocate-updatedb.service >/dev/null 2>&1 || true

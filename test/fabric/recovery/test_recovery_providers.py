@@ -15,7 +15,6 @@ from omarchy_fabric.providers.recovery import provider as recovery
 from omarchy_fabric.providers.update import provider as update
 from omarchy_fabric.providers._probe import ProbeOutput
 
-
 class RecoveryAdmissionTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_recovery_leaves_admit_and_fake_lifecycle_is_exact(self) -> None:
         registry = ProviderRegistry(clock=lambda: 84.0)
@@ -95,7 +94,6 @@ class RecoveryAdmissionTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(failed["availability"]["read"])
         self.assertEqual(failed["availability"]["reason"]["code"], "provider.probe-failed")
 
-
 class RecoveryProviderFailureTests(unittest.IsolatedAsyncioTestCase):
     async def test_stale_state_duplicate_resources_and_closed_arguments_fail(self) -> None:
         actor = principal()
@@ -103,7 +101,6 @@ class RecoveryProviderFailureTests(unittest.IsolatedAsyncioTestCase):
             provider = case.module.build_fake_provider([copy.deepcopy(case.resource)])
             preflight = await provider.preflight(case.module.OPERATION_ACTION, case.arguments, actor)
             await provider.backend.force_state(case.resource["id"], copy.deepcopy(case.resource["state"]))
-            # Force a real revision difference even when the domain state has no generic toggle.
             drift = copy.deepcopy(case.resource["state"])
             if "pendingPlan" in drift:
                 drift["pendingPlan"] = preflight["proposedState"]["value"]["pendingPlan"]
@@ -140,7 +137,6 @@ class RecoveryProviderFailureTests(unittest.IsolatedAsyncioTestCase):
                     await provider.preflight(case.module.OPERATION_ACTION, replacement, actor)
                 self.assertEqual(conflict.exception.code, f"{domain}.precondition-failed")
                 self.assertEqual((await provider.read("inspect", {}))["resources"][0]["state"], applied["state"]["value"])
-
 
 if __name__ == "__main__":
     unittest.main()

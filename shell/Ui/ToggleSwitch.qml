@@ -1,29 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Bare on/off switch: a track with a sliding knob and no label. This is the
-// switch `Toggle` parks at the end of its labeled row, factored out so panel
-// headers and other compact controls render the identical thing.
-//
-// The caller owns the value: bind `checked` to real state and flip it in
-// response to `toggled()`. Services that already track a desired state
-// optimistically (see the Tailscale service's `_desired`) get an instant knob
-// throw for free, because `checked` is already the optimistic value.
-//
-// `busy` marks an operation in flight and swallows further clicks, but leaves
-// hover, cursor, and tooltips alone so the control does not flicker every time
-// a background refresh runs.
-//
-// The cursor is a ring drawn outside the track rather than a state on the
-// track itself: themes give normal chrome a stronger border than hover-cursor
-// (0.4 vs 0.25 by default), which is right for controls that are borderless at
-// rest but would make a bordered track go *fainter* under the cursor. On the
-// panel background the ring reads immediately. `cursorRing` follows
-// `interactive` — a switch whose surrounding row owns the click owns the
-// cursor too.
-//
-// `rounded` auto-detects from Style.cornerRadius so the switch follows the
-// theme: pill shape when Hyprland corners are rounded, square on sharp.
 Item {
   id: root
 
@@ -33,17 +10,11 @@ Item {
   property string accessibleName: "Toggle"
   property string accessibleDescription: ""
 
-  // Off when the surrounding row owns the click, as in `Toggle`.
   property bool interactive: true
   property bool focusable: interactive
-  // A switch embedded in a labeled Toggle row is only its visual indicator.
-  // Keep standalone switches accessible by default, while letting containers
-  // suppress the duplicate node without weakening their own semantics.
   property bool accessibleIgnored: !interactive
   property bool forceFocusVisible: false
 
-  // Panel-cursor flag. Same role as Button.hasCursor: panels with their own
-  // keyboard cursor bind this to drive the highlight separately from hover.
   property bool hasCursor: false
 
   property bool cursorRing: interactive
@@ -64,12 +35,6 @@ Item {
   Keys.onEnterPressed: if (focusable && !busy) root.toggled()
   Keys.onSpacePressed: if (focusable && !busy) root.toggled()
 
-  // `trackHeight` is settable so a compact placement — a switch riding a panel
-  // section header, say — can ask for a genuinely smaller control instead of
-  // scaling a big one down, which lands the track and knob on fractional pixels
-  // and blurs their edges. The derived sizes only carry floors low enough to
-  // stay out of an override's way; at the default track height each one is
-  // already above its floor, so nothing about the normal switch changes.
   property int trackHeight: Math.max(22, Math.round(Semantics.metric(semanticProfile, Style.spacing.controlHeight) * 0.55))
   property int trackWidth: Math.round(trackHeight * 1.9)
   property int knobSize: Math.max(6, Math.round(trackHeight * 0.72))

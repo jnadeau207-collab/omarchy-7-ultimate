@@ -17,7 +17,6 @@ from omarchy_fabric.models import FabricError
 from omarchy_fabric.operations.contracts import OperationCheckpoint, OperationStatus
 from omarchy_fabric.operations.store import OperationStore
 
-
 class OperationRecoveryTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.harness = Harness()
@@ -119,7 +118,6 @@ class OperationRecoveryTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(FabricError) as caught:
             self.harness.coordinator.cancel(self.harness.replacement_session(), operation_id)
         self.assertEqual(caught.exception.code, "operation.recovery-session-required")
-
 
 class OperationStoreAdversarialTests(unittest.IsolatedAsyncioTestCase):
     async def test_arbitrary_durability_probe_failure_rolls_back_and_store_remains_live(self) -> None:
@@ -240,8 +238,6 @@ class OperationStoreAdversarialTests(unittest.IsolatedAsyncioTestCase):
                         try:
                             outcomes.append(future.result())
                         except FabricError as error:
-                            # A direct internal terminal append can lose the race;
-                            # the coordinator converts this exact result to state.
                             self.assertEqual(error.code, "operation.terminal")
                 state = harness.store.get(operation_id)
                 self.assertEqual(state.status, OperationStatus.CANCELLED)
@@ -622,7 +618,6 @@ class OperationStoreAdversarialTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(stat.S_IMODE(harness.store_path.parent.stat().st_mode), 0o700)
         finally:
             harness.close()
-
 
 if __name__ == "__main__":
     unittest.main()

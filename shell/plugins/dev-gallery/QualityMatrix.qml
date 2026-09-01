@@ -2,9 +2,6 @@ import QtQuick
 import qs.Ui
 import qs.Commons
 
-// Executable quality matrix. Operation rows render the production
-// OperationStatus primitive; presentation rows render production controls
-// under real opt-in SemanticProfile instances. No case is a mock rectangle.
 Column {
   id: root
 

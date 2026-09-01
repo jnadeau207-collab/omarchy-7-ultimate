@@ -33,22 +33,10 @@ BarWidget {
   readonly property int trayItemGap: 0
   readonly property int trayJoinGap: 0
   readonly property int drawerExtent: drawerCount > 0 ? drawerCount * trayItemExtent + (drawerCount - 1) * trayItemGap : 0
-  // Match Waybar's group/tray-expander drawer transition-duration.
   readonly property int animationDuration: 600
   property real revealProgress: expanded ? 1 : 0
   readonly property real revealExtent: drawerExtent * revealProgress
 
-  // Submenu drill-down state. QsMenuEntry.display() renders a *platform* menu,
-  // which Quickshell refuses unless the shell root sets `//@ pragma
-  // UseQApplication` - omarchy's shell.qml does not, so every submenu click was
-  // a silent no-op ("Cannot display PlatformMenuEntry as quickshell was not
-  // started in QApplication mode" in the shell log) and apps whose whole UI is
-  // submenus, e.g. radiotray-ng's station list, were unusable. QsMenuEntry
-  // inherits QsMenuHandle, so a child entry can feed a nested QsMenuOpener and
-  // render inside this popup instead of going through the platform. Each level
-  // keeps its own live opener: a child entry is owned by its parent opener's
-  // model, so collapsing the stack to a single opener would destroy the very
-  // entry being displayed (submenu turns up empty).
   property var submenuStack: []
   readonly property int submenuDepth: submenuStack.length
   readonly property string currentTitle: submenuDepth > 0 ? submenuStack[submenuDepth - 1].title : ""
@@ -56,11 +44,6 @@ BarWidget {
     ? submenuStack[submenuDepth - 1].opener.children
     : trayMenuOpener.children
 
-  // Changing level rebuilds the row delegates synchronously, so the next
-  // row lands under a cursor that hasn't moved. Submenu clicks used to be
-  // silent no-ops, which trained users to click them twice, and that second
-  // click would now fire whatever entry took the spot. Ignore row clicks for
-  // a beat after each level change; a deliberate follow-up click is slower.
   property bool menuLevelSettling: false
 
   Component {
@@ -82,15 +65,7 @@ BarWidget {
   function resetTrayMenu() {
     menuLevelSettling = false
     menuLevelSettleTimer.stop()
-    // Flickable keeps its offset across a model swap whenever the new content
-    // is still tall enough to hold it, so a menu dismissed while scrolled
-    // would otherwise reopen part-way down with its first entries off screen.
     trayMenuFlick.contentY = 0
-    // Clear the reactive stack before tearing anything down, so no binding can
-    // read a partially-destroyed opener while this runs. Then destroy deepest
-    // first: an inner opener's menu entry is owned by its parent's children
-    // model, so destroying a parent first would invalidate an entry a still-
-    // live child opener references.
     var openers = submenuStack
     submenuStack = []
     for (var i = openers.length - 1; i >= 0; i--) openers[i].opener.destroy()
@@ -126,10 +101,6 @@ BarWidget {
       return
     }
 
-    // Reset before switching items: trayMenuOpener.menu binds to
-    // activeTrayItem.menu, so assigning a new item invalidates the old root's
-    // children immediately, before any nested opener referencing them would
-    // otherwise get torn down.
     resetTrayMenu()
     activeTrayItem = item
     activeTrayAnchor = anchorItem
@@ -137,17 +108,9 @@ BarWidget {
   }
 
   function trayIconSource(icon) {
-    // Quickshell already resolves the tray icon into a ready-to-use image://
-    // URL, including a "?path=" fallback search dir for apps that ship their
-    // tray icon outside a standard theme (e.g. Steam's flat public/ dir). Hand
-    // it straight to IconImage; guessing a theme sub-directory here only broke
-    // apps whose layout didn't match the guess.
     return String(icon || "")
   }
 
-  // Symbolic icons ship a fixed fill (often near-white) that the host is meant
-  // to recolor to its foreground; detect them by the freedesktop "-symbolic"
-  // name suffix so they can be tinted instead of rendered as-is.
   function iconIsSymbolic(icon) {
     var name = String(icon || "").split("?")[0]
     return name.slice(-9) === "-symbolic"
@@ -254,16 +217,11 @@ BarWidget {
       implicitWidth: pinnedWidth + drawerBlockWidth
       implicitHeight: root.barSize
 
-      // Mask out the empty area the collapsed drawer reserves for its slide-in,
-      // so hovering it doesn't trigger expand and clicks pass through.
       containmentMask: QtObject {
         function contains(point: point): bool {
           if (point.y < 0 || point.y > horizontalTrayRoot.height) return false
-          // Drawer reveals leftward; chevron sits at the right end when collapsed
-          // and slides left as it opens. The visible region starts at the chevron.
           var chevronX = root.drawerExtent - root.revealExtent
           if (point.x >= chevronX && point.x <= horizontalTrayRoot.drawerBlockWidth) return true
-          // Pinned items, placed to the right of the drawer block.
           var pinnedStart = horizontalTrayRoot.drawerBlockWidth
           return point.x >= pinnedStart && point.x <= horizontalTrayRoot.implicitWidth
         }
@@ -543,20 +501,12 @@ BarWidget {
     owner: root
     bar: root.bar
     open: root.trayMenuOpen
-    // The card fades out over 140ms (visible stays true for that whole time --
-    // see PopupCard's own visible: open || card.opacity > 0), so resetting on
-    // "open" would swap a live submenu for the root menu mid-fade: a visible
-    // flash, and a resize/reposition if the two have different geometry. Wait
-    // for the fade to actually finish. Switching to a different tray item
-    // still resets immediately, from openTrayMenu() itself.
     onVisibleChanged: if (!visible) root.resetTrayMenu()
     padding: Style.space(8)
     borderColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.45)
     contentWidth: trayMenuPopup.fittedContentWidth(Style.space(232))
     contentHeight: trayMenuPopup.fittedContentHeight(menuHeaderHeight + trayMenuColumn.implicitHeight, Style.space(420))
 
-    // Column skips invisible children but keeps reporting their height, so
-    // read the header's extent through its own visibility.
     readonly property int menuHeaderHeight: menuHeader.visible ? menuHeader.implicitHeight : 0
 
     Column {
@@ -564,10 +514,6 @@ BarWidget {
       anchors.fill: parent
       spacing: 0
 
-      // Header for a drilled-into submenu: names where we are and walks back
-      // out. Pinned above the Flickable rather than scrolling with the rows,
-      // so the way back stays reachable in a submenu taller than the card.
-      // Only present below the root level, so the root menu is unchanged.
       Column {
         id: menuHeader
         visible: root.submenuDepth > 0
@@ -617,8 +563,6 @@ BarWidget {
             cursorShape: Qt.PointingHandCursor
             onClicked: {
               if (root.menuLevelSettling) return
-              // Reset before the model swap so the parent level shows from
-              // the top (same ordering as the row delegate below).
               trayMenuFlick.contentY = 0
               root.leaveSubmenu()
             }
@@ -670,8 +614,6 @@ BarWidget {
 
               readonly property string rowText: String(modelData.text || "")
               readonly property string activeTitle: root.activeTrayItem ? String(root.activeTrayItem.title || root.activeTrayItem.id || "") : ""
-              // Both only ever describe the root menu; inside a submenu the first
-              // rows are real entries and must not be swallowed.
               readonly property bool atRoot: root.submenuDepth === 0
               readonly property bool rootTitleEntry: atRoot && index === 0 && modelData.hasChildren && rowText.toLowerCase() === activeTitle.toLowerCase()
               readonly property bool leadingSeparator: atRoot && modelData.isSeparator && index <= 1
@@ -723,8 +665,6 @@ BarWidget {
                 width: Style.space(16)
                 height: Style.space(16)
                 fillMode: Image.PreserveAspectFit
-                // Decode at physical pixels: IconImage uses the logical size,
-                // which leaves PNG icons upscaled and blurry on HiDPI displays.
                 sourceSize.width: width * Screen.devicePixelRatio
                 sourceSize.height: height * Screen.devicePixelRatio
                 source: menuRow.modelData.icon
@@ -766,8 +706,6 @@ BarWidget {
                 onClicked: {
                   if (root.menuLevelSettling) return
                   if (menuRow.modelData.hasChildren) {
-                    // Reset scroll BEFORE swapping the model: the swap destroys
-                    // this delegate synchronously and ids stop resolving after.
                     trayMenuFlick.contentY = 0
                     root.enterSubmenu(menuRow.modelData, menuRow.rowText)
                   } else {
@@ -783,9 +721,6 @@ BarWidget {
     }
   }
 
-  // Renders a tray icon, recoloring symbolic icons to the bar foreground so
-  // they stay visible on any theme (a raw symbolic icon keeps its baked-in
-  // fill and disappears against a matching background).
   component TrayIcon: Item {
     id: trayIconRoot
     required property var icon
@@ -795,12 +730,9 @@ BarWidget {
       id: trayIconImage
       anchors.fill: parent
       fillMode: Image.PreserveAspectFit
-      // Decode at physical pixels: IconImage uses the logical size,
-      // which leaves PNG icons upscaled and blurry on HiDPI displays.
       sourceSize.width: Math.round(Math.min(width, height) * Screen.devicePixelRatio)
       sourceSize.height: Math.round(Math.min(width, height) * Screen.devicePixelRatio)
       source: root.trayIconSource(trayIconRoot.icon)
-      // Kept as a hidden layer so the effect can sample it as a texture.
       visible: !trayIconRoot.symbolic
       layer.enabled: trayIconRoot.symbolic
     }

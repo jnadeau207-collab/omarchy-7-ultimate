@@ -9,9 +9,6 @@ setter="$ROOT/bin/omarchy-theme-set-browser"
 sudoers_file="$ROOT/etc/sudoers.d/omarchy-theme-browser"
 rule='%wheel ALL=(root) NOPASSWD: /usr/bin/omarchy-theme-set-browser-policy [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 
-# Exactly one rule, matched whole. Dropping the argument -- which sudoers reads
-# as "any arguments" -- or widening the glob to `*` would let the grant carry
-# something other than a color while leaving this line looking right.
 rules=$(grep -vE '^[[:space:]]*(#|$)' "$sudoers_file")
 [[ $rules == "$rule" ]] ||
   fail "browser policy sudoers file carries exactly the six-hex-digit rule and nothing else" "got: $rules"
@@ -65,8 +62,6 @@ printf 'pkexec %s\n' "$*" >"$ELEVATION_LOG"
 SH
 chmod +x "$stub_bin/pkexec"
 
-# STUB_GRANTED empty stands for an install whose omarchy-settings predates the
-# sudoers file. The default is granted, matching a current Omarchy.
 cat >"$stub_bin/sudo" <<'SH'
 #!/bin/bash
 if [[ $1 == -n && $2 == -l ]]; then

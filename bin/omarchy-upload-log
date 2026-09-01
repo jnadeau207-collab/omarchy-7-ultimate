@@ -8,13 +8,11 @@ LOG_TYPE="${1:-install}"
 TEMP_LOG="/tmp/upload-log.txt"
 SYSTEM_INFO="/tmp/system-info.txt"
 
-# Get system information if fastfetch is available
 if omarchy-cmd-present fastfetch; then
   {
     echo "========================================="
     echo "SYSTEM INFORMATION"
     echo "========================================="
-    # Use fastfetch with no logo to get clean output
     fastfetch --logo none --pipe 2>/dev/null || echo "Failed to get system info"
     echo ""
     echo "========================================="
@@ -23,7 +21,6 @@ if omarchy-cmd-present fastfetch; then
     echo ""
   } >"$SYSTEM_INFO"
 else
-  # Fallback to basic info if fastfetch isn't available
   {
     echo "========================================="
     echo "SYSTEM INFORMATION"
@@ -58,11 +55,6 @@ same_or_prefix_log() {
 
 case "$LOG_TYPE" in
 install)
-  # In the live ISO before reboot, the target system is mounted at /mnt so the
-  # omarchy install log lives at /mnt/var/log/omarchy-install.log. On the
-  # installed system it's at /var/log/omarchy-install.log. Prefer whichever
-  # exists, with /mnt taking precedence (only present in the ISO context, and
-  # there it's the right one).
   ARCHINSTALL_LOG="/var/log/archinstall/install.log"
   LIVE_OMARCHY_LOG="/var/log/omarchy-install.log"
   TARGET_OMARCHY_LOG="/mnt/var/log/omarchy-install.log"
@@ -96,7 +88,6 @@ install)
   ;;
 
 this-boot)
-  # Combine system info with boot logs
   cat "$SYSTEM_INFO" >"$TEMP_LOG"
   journalctl -b 0 >>"$TEMP_LOG" 2>/dev/null
 
@@ -109,7 +100,6 @@ this-boot)
   ;;
 
 last-boot)
-  # Combine system info with previous boot logs
   cat "$SYSTEM_INFO" >"$TEMP_LOG"
   journalctl -b -1 >>"$TEMP_LOG" 2>/dev/null
 
@@ -122,7 +112,6 @@ last-boot)
   ;;
 
 installed|system-info)
-  # System info plus all installed packages
   cat "$SYSTEM_INFO" >"$TEMP_LOG"
   {
     echo ""

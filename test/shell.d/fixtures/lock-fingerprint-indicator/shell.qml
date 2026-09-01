@@ -67,10 +67,6 @@ ShellRoot {
           view.fingerprintConfigured = true
           root.assertTrue(indicator.visible, "fingerprint indicator is shown when a sensor is configured")
 
-          // The field reserves space for the icon so a long password can never
-          // slide underneath it. The reserve must exceed the icon's own width
-          // (leaving a gap), and the shrunk dots must fit the reserved-clear
-          // area even at extreme lengths.
           root.assertTrue(view.fingerprintReserve > indicator.width,
             "reserved space exceeds the icon width, got reserve " + view.fingerprintReserve + " vs icon " + indicator.width)
 

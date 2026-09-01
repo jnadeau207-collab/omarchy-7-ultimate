@@ -1,10 +1,3 @@
--- Send with explicit mods to the focused surface by omitting the window target,
--- so universal clipboard shortcuts reach both normal windows and focused
--- layer-shell surfaces such as Omarchy panels. A virtual keyboard (wtype) won't
--- do: the physically held SUPER merges into the injected chord at the seat.
--- The down/up split works around Hyprland send_shortcut sometimes leaving
--- synthetic key state stuck/repeating.
--- https://github.com/hyprwm/Hyprland/discussions/14099
 local function send_shortcut_once(mods, key)
   return function()
     hl.dispatch(hl.dsp.send_key_state({ mods = mods, key = key, state = "down" }))
@@ -15,8 +8,6 @@ local function send_shortcut_once(mods, key)
   end
 end
 
--- Lean on the terminal tag from default/hypr/apps/terminals.lua so there's one
--- definition of what counts as a terminal. Dynamic tags carry a trailing "*".
 local function active_window_is_terminal()
   local window = hl.get_active_window()
   if not window then

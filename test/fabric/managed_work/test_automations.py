@@ -8,7 +8,6 @@ from pathlib import Path
 from helper import ACTOR, ManagedWorkPlane, policy, template
 from omarchy_fabric.managed_work import CapacityLimits, ManagedWorkError
 
-
 class AutomationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -335,7 +334,6 @@ class AutomationTests(unittest.TestCase):
                 now=1_000,
             ),
         )
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,7 +13,6 @@ from omarchy_fabric.provider_registry import ProviderRegistry
 from omarchy_fabric.providers._engine import state_revision
 from omarchy_fabric.providers.defaults import provider as defaults
 
-
 class DefaultsContractLifecycleTests(unittest.IsolatedAsyncioTestCase):
     def test_manifest_and_schemas_cross_central_admission(self) -> None:
         provider = defaults.build_fake_provider(clone_database())
@@ -159,7 +158,6 @@ class DefaultsContractLifecycleTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(FabricError) as stale:
             await drift.execute("association.clear", drift_plan["normalizedArguments"], drift_plan["stateRevision"])
         self.assertEqual(stale.exception.code, "defaults.state-stale")
-
 
 if __name__ == "__main__":
     unittest.main()

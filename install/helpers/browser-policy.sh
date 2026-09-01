@@ -1,6 +1,3 @@
-# Chromium-family machine policy is mandatory for every profile. Directories
-# stay 0755 root:root; omarchy-theme-set-browser-policy is the privileged
-# write for color.json.
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/as-root.sh"
 
@@ -11,8 +8,6 @@ BROWSER_POLICY_MANAGED_DIRS=(
   /etc/brave/policies/managed
 )
 
-# Ancestors of the managed dirs, shortest first. A writable or attacker-owned
-# parent can rename the leaf aside; install -d follows a planted symlink.
 BROWSER_POLICY_PARENT_DIRS=(
   /etc/chromium
   /etc/chromium/policies
@@ -87,7 +82,6 @@ browser_policy_setup_dir() {
   browser_policy_purge_dir "$dir"
 }
 
-# Themes are user-installed. Accept only three 0-255 components.
 browser_policy_theme_hex() {
   local theme_rgb=$1
 

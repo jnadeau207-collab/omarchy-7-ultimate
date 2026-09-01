@@ -52,9 +52,6 @@ LOCATION_CATALOG = {
     "trash": ("trash", "freedesktop-trash", False),
 }
 
-# Start places must survive the bounded inventory. Home is scanned last so a
-# deep $HOME tree cannot hide Pictures or Desktop. Byte-bound eviction then
-# keeps a floor of records per place instead of deleting every Home leaf.
 SCAN_PRIORITY = {
     "this-pc": 0,
     "pictures": 1,
@@ -90,7 +87,6 @@ SCHEMA_FILES = (
     "files-operation-result-v0.json",
 )
 
-
 def _load_json(path: Path, maximum: int = MAX_CONFIG_BYTES) -> dict[str, Any]:
     raw = read_regular_file_no_follow(Path(path), maximum)
 
@@ -110,20 +106,16 @@ def _load_json(path: Path, maximum: int = MAX_CONFIG_BYTES) -> dict[str, Any]:
         raise ValueError("JSON document must be an object")
     return document
 
-
 def _schema_directory() -> Path:
     return Path(__file__).resolve().parents[3] / "schema"
-
 
 def _load_schemas() -> dict[str, Mapping[str, Any]]:
     documents = [_load_json(_schema_directory() / name, 128 * 1024) for name in SCHEMA_FILES]
     return {document["$id"]: document for document in documents}
 
-
 SCHEMAS = _load_schemas()
 STATE_SCHEMA = SCHEMAS[STATE_CONTRACT_ID]
 STATE_VALIDATOR = Draft202012Validator(STATE_SCHEMA)
-
 
 def _validate_workspace_schema(state: Mapping[str, Any]) -> None:
     wrapper = {"resourceId": RESOURCE_ID, "revision": state_revision(state), "value": thaw(state)}
@@ -131,7 +123,6 @@ def _validate_workspace_schema(state: Mapping[str, Any]) -> None:
     if error is not None:
         path = ".".join(str(part) for part in error.absolute_path)
         raise ValueError(f"workspace schema invalid at {path or '<root>'}")
-
 
 def normalize_relative_path(value: str, *, allow_empty: bool) -> str:
     if not isinstance(value, str):
@@ -159,13 +150,11 @@ def normalize_relative_path(value: str, *, allow_empty: bool) -> str:
         raise ValueError("path contains a forbidden segment")
     return normalized
 
-
 def normalize_name(value: str) -> str:
     normalized = normalize_relative_path(value, allow_empty=False)
     if "/" in normalized:
         raise ValueError("name must contain exactly one path segment")
     return normalized
-
 
 def _reason(
     code: str,
@@ -177,7 +166,6 @@ def _reason(
     recovery: tuple[str, ...] = ("provider.retry",),
 ) -> FabricError:
     return FabricError(code, title, explanation, detail=detail, retryable=retryable, recovery_actions=recovery)
-
 
 def validate_workspace(state: Mapping[str, Any]) -> None:
     _validate_workspace_schema(state)
@@ -277,7 +265,6 @@ def validate_workspace(state: Mapping[str, Any]) -> None:
     if any(item["entryId"] not in entry_by_id for item in recent):
         raise ValueError("recent item references an unknown entry")
 
-
 def canonicalize_workspace(state: Mapping[str, Any]) -> dict[str, Any]:
     normalized = deepcopy(dict(state))
     normalized["locations"] = sorted(normalized["locations"], key=lambda item: item["id"])
@@ -286,7 +273,6 @@ def canonicalize_workspace(state: Mapping[str, Any]) -> dict[str, Any]:
     normalized["recent"] = sorted(normalized["recent"], key=lambda item: (item["rank"], item["entryId"]))
     validate_workspace(normalized)
     return normalized
-
 
 class RealFilesBackend:
     """Bounded no-follow host inventory; this adapter never mutates the host."""
@@ -849,7 +835,6 @@ class RealFilesBackend:
                 recovery=("files.recent.clear",),
             )]
 
-
 def _fabric_error_kwargs(document: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "code": document["code"],
@@ -860,7 +845,6 @@ def _fabric_error_kwargs(document: Mapping[str, Any]) -> dict[str, Any]:
         "change_state": document["changeState"],
         "recovery_actions": tuple(document.get("recoveryActions", ())),
     }
-
 
 def _location_unavailable(
     location_id: str,
@@ -877,10 +861,8 @@ def _location_unavailable(
         "reason": reason.to_dict(),
     }
 
-
 def _unescape_mount_field(value: str) -> str:
     return value.replace("\\040", " ").replace("\\011", "\t").replace("\\012", "\n").replace("\\134", "\\")
-
 
 def _safe_smb_source(source: str) -> tuple[str, str] | None:
     if not source.startswith("//"):
@@ -899,13 +881,11 @@ def _safe_smb_source(source: str) -> tuple[str, str] | None:
         return None
     return authority, share
 
-
 def _safe_mount_label(mount_point: str, kind: str) -> str:
     candidate = Path(mount_point).name
     if candidate and len(candidate) <= 160 and not any(unicodedata.category(character).startswith("C") for character in candidate):
         return candidate
     return "Network mount" if kind == "smb" else "Removable device" if kind == "removable" else "System"
-
 
 def _unescape_xdg_value(value: str) -> str:
     result: list[str] = []
@@ -928,7 +908,6 @@ def _unescape_xdg_value(value: str) -> str:
         raise ValueError("user dirs value contains a control character")
     return normalized
 
-
 def _counts_by_location(entries: list[Mapping[str, Any]]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for entry in entries:
@@ -936,12 +915,10 @@ def _counts_by_location(entries: list[Mapping[str, Any]]) -> dict[str, int]:
         counts[location_id] = counts.get(location_id, 0) + 1
     return counts
 
-
 def _location_surplus(entry: Mapping[str, Any], counts: Mapping[str, int]) -> int:
     location_id = entry["locationId"]
     floor = LOCATION_ENTRY_FLOOR if location_id in PLACE_LOCATION_IDS else 0
     return counts[location_id] - floor
-
 
 def _evictable_leaf_index(entries: list[Mapping[str, Any]], parent_ids: set[str]) -> int:
     leaves = [index for index, entry in enumerate(entries) if entry["id"] not in parent_ids]
@@ -959,7 +936,6 @@ def _evictable_leaf_index(entries: list[Mapping[str, Any]], parent_ids: set[str]
         ),
     )
 
-
 def _metadata(action: str, snapshot: StateSnapshot) -> dict[str, Any]:
     return {
         "schemaVersion": "v0",
@@ -970,10 +946,8 @@ def _metadata(action: str, snapshot: StateSnapshot) -> dict[str, Any]:
         "revision": state_revision(thaw(snapshot.state)) if snapshot.state is not None else None,
     }
 
-
 def _inspect(_arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     return {**_metadata("inspect", snapshot), "state": thaw(snapshot.state) if snapshot.state is not None else None}
-
 
 def _location_query_availability(snapshot: StateSnapshot, location_id: str) -> dict[str, Any]:
     if snapshot.state is None:
@@ -1003,7 +977,6 @@ def _location_query_availability(snapshot: StateSnapshot, location_id: str) -> d
         "reasons": [copied] if copied else [],
     }
 
-
 def _browse(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     relative = normalize_relative_path(arguments["relativePath"], allow_empty=True)
     entries: list[dict[str, Any]] = []
@@ -1017,7 +990,6 @@ def _browse(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, 
     metadata = _metadata("browse", snapshot)
     metadata["availability"] = _location_query_availability(snapshot, arguments["locationId"])
     return {**metadata, "entries": entries[:limit], "truncated": len(entries) > limit}
-
 
 def _search(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     query = unicodedata.normalize("NFC", arguments["query"]).casefold()
@@ -1035,7 +1007,6 @@ def _search(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, 
     limit = arguments["limit"]
     return {**_metadata("search", snapshot), "entries": entries[:limit], "truncated": len(entries) > limit}
 
-
 def _recent(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     entries: list[dict[str, Any]] = []
     total = 0
@@ -1046,7 +1017,6 @@ def _recent(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, 
         entries = [thaw(by_id[item["entryId"]]) for item in ordered[: arguments["limit"]]]
     return {**_metadata("recent", snapshot), "entries": entries, "truncated": total > arguments["limit"]}
 
-
 def _location(state: Mapping[str, Any], location_id: str, *, writable: bool = False) -> Mapping[str, Any]:
     matches = [location for location in state["locations"] if location["id"] == location_id]
     if len(matches) != 1:
@@ -1055,7 +1025,6 @@ def _location(state: Mapping[str, Any], location_id: str, *, writable: bool = Fa
     if location["state"] != "available" or (writable and not location["writable"]):
         raise _precondition("The selected location is not available for this operation.", location_id)
     return location
-
 
 def _entry(state: Mapping[str, Any], entry_id: str, *, safe_path: bool = True) -> Mapping[str, Any]:
     matches = [entry for entry in state["entries"] if entry["id"] == entry_id]
@@ -1073,7 +1042,6 @@ def _entry(state: Mapping[str, Any], entry_id: str, *, safe_path: bool = True) -
                 raise _precondition("A symlink appears in the selected entry ancestry.", cursor["id"])
     return entry
 
-
 def _precondition(explanation: str, detail: str) -> FabricError:
     return FabricError(
         "files.precondition-failed",
@@ -1084,7 +1052,6 @@ def _precondition(explanation: str, detail: str) -> FabricError:
         recovery_actions=("files.inspect",),
     )
 
-
 def _normalize_create(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "locationId": arguments["locationId"],
@@ -1092,18 +1059,14 @@ def _normalize_create(arguments: Mapping[str, Any]) -> dict[str, Any]:
         "name": normalize_name(arguments["name"]),
     }
 
-
 def _normalize_rename(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"entryId": arguments["entryId"], "newName": normalize_name(arguments["newName"])}
-
 
 def _normalize_entry(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"entryId": arguments["entryId"]}
 
-
 def _normalize_mount(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"mountId": arguments["mountId"]}
-
 
 def _create_directory(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
@@ -1140,7 +1103,6 @@ def _create_directory(current: Mapping[str, Any], arguments: Mapping[str, Any]) 
     state["entries"].sort(key=lambda item: item["id"])
     return state
 
-
 def _rename_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     selected = _entry(state, arguments["entryId"])
@@ -1163,7 +1125,6 @@ def _rename_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> d
         elif entry["locationId"] == selected["locationId"] and entry["relativePath"].startswith(prefix):
             entry["relativePath"] = f"{new_path}/{entry['relativePath'][len(prefix):]}"
     return state
-
 
 def _trash_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
@@ -1206,7 +1167,6 @@ def _trash_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> di
         item["rank"] = rank
     return state
 
-
 def _restore_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     selected = _entry(state, arguments["entryId"])
@@ -1236,7 +1196,6 @@ def _restore_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> 
             entry["relativePath"] = f"{target_path}/{entry['relativePath'][len(prefix):]}"
     return state
 
-
 def _mount_state(current: Mapping[str, Any], arguments: Mapping[str, Any], target: str) -> dict[str, Any]:
     state = deepcopy(dict(current))
     matches = [mount for mount in state["mounts"] if mount["id"] == arguments["mountId"]]
@@ -1265,14 +1224,11 @@ def _mount_state(current: Mapping[str, Any], arguments: Mapping[str, Any], targe
     ).to_dict()
     return state
 
-
 def _connect(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     return _mount_state(current, arguments, "mounted")
 
-
 def _disconnect(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     return _mount_state(current, arguments, "unmounted")
-
 
 def _anchors(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     anchors: list[dict[str, Any]] = []
@@ -1300,7 +1256,6 @@ def _anchors(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         "anchors": anchors,
     }
 
-
 def _summary(noun: str):
     def summarize(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
         if current == proposed:
@@ -1308,7 +1263,6 @@ def _summary(noun: str):
         return f"Apply the typed {noun} transition after rechecking the frozen no-follow identities."
 
     return summarize
-
 
 OPERATIONS = {
     "directory.create": OperationSpec("directory.create", _normalize_create, _create_directory, _summary("directory"), _anchors),
@@ -1321,10 +1275,8 @@ OPERATIONS = {
 
 READ_HANDLERS = {"inspect": _inspect, "browse": _browse, "search": _search, "recent": _recent}
 
-
 def _manifest() -> Mapping[str, Any]:
     return _load_json(Path(__file__).with_name("manifest-v0.json"), 128 * 1024)
-
 
 def _provider(backend: Any) -> StateDomainProvider:
     return StateDomainProvider(
@@ -1341,7 +1293,6 @@ def _provider(backend: Any) -> StateDomainProvider:
         operations=OPERATIONS,
     )
 
-
 def build_provider(*, home: Path | None = None, config_path: Path | None = None) -> StateDomainProvider:
     if home is None:
         home = Path.home()
@@ -1356,7 +1307,6 @@ def build_provider(*, home: Path | None = None, config_path: Path | None = None)
             )
         config_path = Path(omarchy_path) / "default" / "ultimate" / "files" / "locations-v0.json"
     return _provider(RealFilesBackend(home, config_path))
-
 
 def build_fake_provider(
     state: Mapping[str, Any],

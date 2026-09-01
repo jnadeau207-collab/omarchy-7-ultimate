@@ -9,10 +9,6 @@ ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
 OLD_ICON_DIR="$HOME/.local/share/applications/icons"
 DESKTOP_DIR="$HOME/.local/share/applications/"
 
-# Always index the launchers, so removal deletes the file that was found rather
-# than a path rebuilt from the displayed name. Installs predating the name
-# validation could nest the launcher inside directories, and those are exactly
-# the ones a reconstructed path cannot reach.
 WEB_APP_PATHS=()
 while IFS= read -r -d '' file; do
   if grep -q '^Exec=.*\(omarchy-launch-webapp\|omarchy-webapp-handler\).*' "$file"; then
@@ -21,8 +17,6 @@ while IFS= read -r -d '' file; do
   fi
 done < <(find "$DESKTOP_DIR" -name '*.desktop' -print0 2>/dev/null)
 
-# The launcher matching a chosen name, or empty when nothing was indexed under
-# it (an app removed between the scan and the pick, say).
 path_for_web_app() {
   local wanted="$1" i
   for i in "${!WEB_APPS[@]}"; do

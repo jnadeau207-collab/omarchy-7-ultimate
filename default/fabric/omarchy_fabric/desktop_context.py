@@ -59,7 +59,6 @@ EMPTY_MARKERS = (
     "no contents",
 )
 
-
 def _hypr_socket() -> str | None:
     runtime = os.environ.get("XDG_RUNTIME_DIR")
     signature = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
@@ -69,7 +68,6 @@ def _hypr_socket() -> str | None:
     if not os.path.exists(path):
         return None
     return path
-
 
 def _hypr_json(command: str) -> Any:
     path = _hypr_socket()
@@ -107,7 +105,6 @@ def _hypr_json(command: str) -> Any:
             "Desktop context cannot be captured because the compositor reply was not JSON.",
         ) from error
 
-
 def _excluded_window(client: Mapping[str, Any]) -> bool:
     klass = str(client.get("class") or "").strip().lower()
     title = str(client.get("title") or "").strip().lower()
@@ -116,7 +113,6 @@ def _excluded_window(client: Mapping[str, Any]) -> bool:
     if any(marker in klass or marker in title for marker in EXCLUDED_TITLE_MARKERS):
         return True
     return False
-
 
 def _window_record(client: Mapping[str, Any], *, focused: bool) -> dict[str, Any]:
     return {
@@ -127,24 +123,19 @@ def _window_record(client: Mapping[str, Any], *, focused: bool) -> dict[str, Any
         "mapped": bool(client.get("mapped", True)),
     }
 
-
 def _selection_excluded() -> dict[str, Any]:
     return {"available": False, "reason": "selection-excluded", "text": ""}
-
 
 def _selection_empty() -> dict[str, Any]:
     return {"available": True, "reason": "empty", "text": ""}
 
-
 def _selection_captured(text: str) -> dict[str, Any]:
     return {"available": True, "reason": "captured", "text": text}
-
 
 def _decode_selection(payload: bytes) -> str:
     if len(payload) > SELECTION_LIMIT:
         payload = payload[:SELECTION_LIMIT]
     return payload.decode("utf-8", errors="replace")
-
 
 def _wl_paste_bin() -> str:
     path = Path(WL_PASTE)
@@ -156,7 +147,6 @@ def _wl_paste_bin() -> str:
         )
     return str(path)
 
-
 def _classify_paste_failure(stderr: str) -> str:
     lowered = stderr.casefold()
     if any(marker in lowered for marker in EMPTY_MARKERS):
@@ -164,7 +154,6 @@ def _classify_paste_failure(stderr: str) -> str:
     if any(marker in lowered for marker in PROTOCOL_MARKERS):
         return "unavailable"
     return "unavailable"
-
 
 def _run_wl_paste(argv: Sequence[str]) -> tuple[int, bytes, str]:
     try:
@@ -189,7 +178,6 @@ def _run_wl_paste(argv: Sequence[str]) -> tuple[int, bytes, str]:
     stderr = (completed.stderr or b"").decode("utf-8", errors="replace")
     return completed.returncode, completed.stdout or b"", stderr
 
-
 def _paste_text(*, primary: bool) -> dict[str, Any]:
     binary = _wl_paste_bin()
     argv = [binary, "--no-newline"]
@@ -212,13 +200,11 @@ def _paste_text(*, primary: bool) -> dict[str, Any]:
         detail=stderr.strip() or WL_PASTE,
     )
 
-
 def _redact_selection(selection: Mapping[str, Any]) -> dict[str, Any]:
     text = str(selection.get("text") or "")
     if any(marker in text.casefold() for marker in EXCLUDED_TITLE_MARKERS):
         return _selection_excluded()
     return dict(selection)
-
 
 def _live_selection(*, excluded_focus: bool) -> dict[str, Any]:
     if excluded_focus:
@@ -229,7 +215,6 @@ def _live_selection(*, excluded_focus: bool) -> dict[str, Any]:
         selection = dict(selection)
         selection["primary"] = primary
     return selection
-
 
 def collect_compositor_snapshot() -> dict[str, Any]:
     clients = _hypr_json("clients")
@@ -255,7 +240,6 @@ def collect_compositor_snapshot() -> dict[str, Any]:
         "mode": "",
         "features": {},
     }
-
 
 def collect_virtual_desktops() -> dict[str, Any]:
     workspaces = _hypr_json("workspaces")
@@ -287,7 +271,6 @@ def collect_virtual_desktops() -> dict[str, Any]:
         "mode": "",
         "features": {},
     }
-
 
 def collect_mode_profile() -> dict[str, Any]:
     home = os.environ.get("HOME") or ""
@@ -337,7 +320,6 @@ def collect_mode_profile() -> dict[str, Any]:
         "mode": mode,
         "features": features,
     }
-
 
 def _normalize_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     windows_in = snapshot.get("windows", [])
@@ -405,7 +387,6 @@ def _normalize_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         "features": features,
     }
 
-
 def _content_for_source(source: str, snapshot: Mapping[str, Any]) -> dict[str, Any]:
     if source == "open-windows":
         return {"windows": list(snapshot.get("windows") or [])}
@@ -417,7 +398,6 @@ def _content_for_source(source: str, snapshot: Mapping[str, Any]) -> dict[str, A
     if source == "mode-profile":
         return {"mode": str(snapshot.get("mode") or "desktop"), "features": dict(snapshot.get("features") or {})}
     return {"selection": snapshot.get("selection") or _selection_empty()}
-
 
 def capture_desktop_context(
     plane: ManagedWorkPlane,

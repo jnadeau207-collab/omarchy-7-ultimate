@@ -1,14 +1,3 @@
-# Fix disable-while-typing on ASUS ROG Flow Z13 detachable keyboard.
-#
-# The Z13's detachable keyboard touchpad is detected as external by udev,
-# which prevents libinput's disable-while-typing (dwt) from pairing it
-# with the keyboard. This causes ghost touchpad taps from keyboard
-# flex/vibration while typing quickly, jumping the cursor to random positions.
-#
-# Upstream libinput (50-system-asus.quirks) marks the keyboard as internal
-# (AttrKeyboardIntegration=internal), but touchpad integration is controlled
-# via udev, not libinput quirks. This udev rule marks the touchpad as internal
-# so dwt can properly pair it with the keyboard.
 
 if omarchy-hw-asus-rog && omarchy-hw-match "GZ302"; then
   sudo mkdir -p /etc/udev/rules.d
