@@ -122,6 +122,7 @@ class BuiltinProviderTests(unittest.TestCase):
             self.assertIs(builtins._build_defaults_provider(), defaults_result)
             self.assertIs(builtins._build_backup_provider(), backup_result)
         files_builder.assert_called_once_with(
+            session_operable=True,
             home=Path("/home/trusted-account"),
             config_path=builtins._default_root() / "ultimate" / "files" / "locations-v0.json",
         )
