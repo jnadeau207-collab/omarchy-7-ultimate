@@ -46,7 +46,19 @@ Proving execution required a workspace sparse enough to fit under the cap. Raisi
 
 So the operation applies correctly and then fails validation with `executor.invalid-result`. The directory exists on disk; the plane reports failure.
 
-This is not a matter of correcting a few fields. The state-domain operation model assumes stored state, and the real files backend is derived state. Closing it needs one of: an overlay the real backend stores and replays, a resource scoped to the target parent rather than the whole workspace, or validation by predicate — the named directory now exists under the named parent — instead of whole-state equality. The last also removes a second defect: today any unrelated file change anywhere in the workspace invalidates a pending plan. This is a contract change shared with `defaults` and should not be rushed.
+This is not a matter of correcting a few fields, and it is not one check to relax. The equality assumption is present at all three layers:
+
+- `coordinator._validate_executor_state` compares observed to target
+- `SessionCommandExecutor.validate` compares observed value to expected
+- `StateDomainProvider.validate` (`providers/files/_engine.py:659`) raises `validation-failed` unless `actual == self._state(expected_value)`
+
+The state-domain operation model assumes stored state throughout. The real files backend is derived state. Three ways out, and they are not equivalent:
+
+1. **Scoped resource.** Bind the operation to the target parent directory rather than the whole workspace. Its state is a listing of that directory — current names plus the new one — which is genuinely predictable, and mtime-derived values stay out of it. Whole-state equality still holds, so **nothing is weakened**. Costs a new resource kind, id derivation, and a read action on the provider. This is the right answer.
+2. **Stored overlay.** The real backend records applied mutations and replays them over the derived scan. Preserves equality, but the overlay can drift from the filesystem and becomes a second source of truth.
+3. **Predicate validation.** Assert only that the fields the operation claimed to change actually changed. Cheapest, and it **weakens the contract**: it stops verifying that nothing else changed. Do not choose this one to make a proof go green.
+
+Whichever is chosen also removes a second defect: today any unrelated file change anywhere in the workspace invalidates a pending plan. This is a contract change shared with `defaults` and with `process.termination.plan`, so it wants a deliberate decision rather than an agent's judgment call.
 
 ## A UI defect found with pixels
 
