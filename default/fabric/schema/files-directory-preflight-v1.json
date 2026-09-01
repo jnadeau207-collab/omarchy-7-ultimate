@@ -185,7 +185,7 @@
           "const": "undo"
         },
         "priorState": {
-          "$ref": "urn:omarchy:fabric:provider:files:directory-state:v1"
+          "$ref": "urn:omarchy:fabric:provider:files:operation-state:v0"
         }
       },
       "additionalProperties": false
