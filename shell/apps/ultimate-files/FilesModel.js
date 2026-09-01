@@ -26,6 +26,10 @@ var ROUTES = [
   { routeId: "files.network", action: "inspect", capability: "files.inspect", kind: "network", arguments: {} }
 ]
 
+var CREATE_LOCATIONS = [
+  "files.location.desktop", "files.location.documents", "files.location.downloads", "files.location.pictures"
+]
+
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)
 }
@@ -76,6 +80,25 @@ function queryForRoute(routeId) {
   var id = String(routeId || "")
   for (var i = 0; i < ROUTES.length; i++) if (ROUTES[i].routeId === id) return ROUTES[i]
   return null
+}
+
+function createLocationForRoute(routeId) {
+  var query = queryForRoute(routeId)
+  if (!query || !query.arguments || !query.arguments.locationId) return ""
+  return CREATE_LOCATIONS.indexOf(query.arguments.locationId) >= 0 ? query.arguments.locationId : ""
+}
+
+function createNameRefusal(name) {
+  var value = String(name === null || name === undefined ? "" : name)
+  if (value.length === 0) return "Enter a folder name."
+  if (value.length > 255) return "Folder names stop at 255 characters."
+  if (value === "." || value === "..") return "That name is reserved by the filesystem."
+  if (value.indexOf("/") >= 0 || value.indexOf("\\") >= 0) return "Folder names cannot contain a path separator."
+  for (var i = 0; i < value.length; i++) {
+    var code = value.charCodeAt(i)
+    if (code < 32 || code === 127) return "Folder names cannot contain control characters."
+  }
+  return ""
 }
 
 function structuredError(code, title, explanation, detail) {
@@ -662,5 +685,7 @@ if (typeof module !== "undefined") module.exports = {
   ROUTES: ROUTES, queryForRoute: queryForRoute, requestParameters: requestParameters,
   normalizedSelection: normalizedSelection, catalogEntry: catalogEntry, normalizeResult: normalizeResult,
   baseState: baseState, createController: createController, isIdleSearch: isIdleSearch,
-  stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone
+  stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone,
+  CREATE_LOCATIONS: CREATE_LOCATIONS, createLocationForRoute: createLocationForRoute,
+  createNameRefusal: createNameRefusal
 }

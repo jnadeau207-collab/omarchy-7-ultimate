@@ -21,6 +21,16 @@ Item {
   readonly property bool showRecords: ["ready", "available", "degraded", "partial", "empty"].indexOf(queryState.phase) >= 0
   readonly property int recordColumns: contentScroll.availableWidth >= 1050 ? 2 : 1
 
+  property string operationStage: ""
+  property string operationRequestId: ""
+  property string operationId: ""
+  property string operationMessage: ""
+  property string operationName: ""
+  readonly property bool operationBusy: operationStage !== ""
+  readonly property string createLocationId: FilesModel.createLocationForRoute(host ? host.currentRoute : "")
+  readonly property bool createVisible: createLocationId !== ""
+  readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady
+
   focus: true
 
   function filteredRoutes(query) {
@@ -63,6 +73,57 @@ Item {
     host.navigate("files.search", searchInput.text === "" ? {} : { query: searchInput.text })
   }
 
+  function createFolder(name) {
+    if (!host || operationBusy || !createVisible) return
+    var refusal = FilesModel.createNameRefusal(name)
+    if (refusal !== "") {
+      root.operationMessage = refusal
+      return
+    }
+    root.operationName = String(name)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "files.provider",
+      action: "directory.create",
+      arguments: { locationId: root.createLocationId, parentRelativePath: "", name: root.operationName },
+      idempotencyKey: "files.directory.create." + root.createLocationId + "." + root.operationName
+    })
+    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
+  }
+
+  function resetOperation(message) {
+    root.operationStage = ""
+    root.operationRequestId = ""
+    root.operationId = ""
+    root.operationMessage = message || ""
+  }
+
+  function advanceOperation(result) {
+    if (root.operationStage === "preflight") {
+      root.operationId = String(result.operationId || "")
+      root.operationStage = "approve"
+      root.operationRequestId = host.requestFabric("operation.approve", { operationId: root.operationId })
+      return
+    }
+    if (root.operationStage === "approve") {
+      root.operationStage = "start"
+      root.operationRequestId = host.requestFabric("operation.start", {
+        operationId: root.operationId,
+        approvalId: String(result.approvalId || "")
+      })
+      return
+    }
+    if (root.operationStage === "start") {
+      var succeeded = String(result.status || "") === "succeeded"
+      root.resetOperation(succeeded
+        ? "Created " + root.operationName + "."
+        : "Creating " + root.operationName + " ended as " + String(result.status || "unknown") + ".")
+      if (succeeded) createInput.text = ""
+      if (root.controller) root.controller.refresh()
+    }
+  }
+
   function statusBorder() {
     if (["failed", "denied", "unavailable"].indexOf(queryState.phase) >= 0) return Tokens.state.danger
     if (["ready", "available", "empty"].indexOf(queryState.phase) >= 0) return Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
@@ -94,8 +155,20 @@ Item {
       root.controller.activate(routeId, routeArguments || {})
       if (routeId === "files.search") searchInput.text = routeArguments && routeArguments.query ? String(routeArguments.query) : ""
     }
-    function onFabricResult(requestId, result) { if (root.controller) root.controller.receiveResult(requestId, result) }
-    function onFabricFailure(requestId, error) { if (root.controller) root.controller.receiveFailure(requestId, error) }
+    function onFabricResult(requestId, result) {
+      if (root.operationBusy && requestId === root.operationRequestId) {
+        root.advanceOperation(result)
+        return
+      }
+      if (root.controller) root.controller.receiveResult(requestId, result)
+    }
+    function onFabricFailure(requestId, error) {
+      if (root.operationBusy && requestId === root.operationRequestId) {
+        root.resetOperation(error && error.explanation ? String(error.explanation) : "The folder was not created.")
+        return
+      }
+      if (root.controller) root.controller.receiveFailure(requestId, error)
+    }
   }
 
   RowLayout {
@@ -177,6 +250,44 @@ Item {
             accessibleDescription: "Run a bounded files.provider metadata search"
             onClicked: root.runSearch()
           }
+        }
+
+        RowLayout {
+          visible: root.createVisible
+          Layout.fillWidth: true
+          spacing: Style.space(8)
+          Ui.TextField {
+            id: createInput
+            Layout.fillWidth: true
+            enabled: root.createEnabled
+            semanticPlaceholderText: "New folder name"
+            accessibleName: "New folder name"
+            accessibleDescription: "Name for a folder created in this location through the Fabric operation plane"
+            onAccepted: root.createFolder(createInput.text)
+          }
+          Ui.Button {
+            text: root.operationBusy ? "Creating…" : "New folder"
+            focusable: true
+            bordered: true
+            enabled: root.createEnabled
+            accessibleDescription: "Create a folder in this location through files.directory.create"
+            onClicked: root.createFolder(createInput.text)
+          }
+        }
+
+        Text {
+          visible: root.operationMessage !== ""
+          Layout.fillWidth: true
+          textFormat: Text.PlainText
+          text: root.operationMessage
+          color: Tokens.text.secondary
+          font.family: Tokens.typography.family
+          font.pixelSize: Style.font.body
+          wrapMode: Text.WordWrap
+          maximumLineCount: 3
+          elide: Text.ElideRight
+          Accessible.role: Accessible.StaticText
+          Accessible.name: root.operationMessage
         }
 
         Controls.ScrollView {
