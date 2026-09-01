@@ -46,6 +46,37 @@ Item {
   readonly property var powerProfiles: powerResource && powerResource.profiles ? powerResource.profiles : []
   readonly property string activePowerProfile: powerResource ? String(powerResource.activeProfile || "") : ""
 
+  readonly property var radioResource: firstRadioResource()
+  readonly property bool radioEnabled: radioResource ? radioResource.radioEnabled === true : false
+  readonly property bool radioBlocked: radioResource ? radioResource.radioBlocked === true : false
+  property bool operationRadioTarget: false
+
+  function firstRadioResource() {
+    if (!currentRoute || currentRoute.id !== "settings.network.overview") return null
+    if (!queryState.records) return null
+    for (var i = 0; i < queryState.records.length; i++) {
+      if (queryState.records[i].radioControllable) return queryState.records[i]
+    }
+    return null
+  }
+
+  function applyWifiEnabled(enabled) {
+    if (!host || operationBusy) return
+    var record = firstRadioResource()
+    if (!record) return
+    if (enabled && record.radioBlocked) return
+    root.operationKind = "network"
+    root.operationRadioTarget = enabled === true
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "network.provider",
+      action: "wifi.set-enabled",
+      arguments: { resourceId: record.id, enabled: root.operationRadioTarget },
+      idempotencyKey: "settings.wifi." + (root.operationRadioTarget ? "on" : "off") + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
+  }
   readonly property var layoutResource: firstLayoutResource()
   readonly property var keyboardLayouts: layoutResource && layoutResource.layouts ? layoutResource.layouts : []
   readonly property int activeLayoutIndex: layoutResource ? layoutResource.activeLayoutIndex : -1
@@ -203,6 +234,8 @@ Item {
           ? "Brightness set to " + root.operationTarget + " percent."
           : root.operationKind === "input"
             ? "Keyboard layout set to " + root.keyboardLayouts[root.operationLayoutIndex] + "."
+            : root.operationKind === "network"
+              ? "Wi-Fi turned " + (root.operationRadioTarget ? "on" : "off") + "."
             : "Output volume set to " + root.operationTarget + " percent."
       var refused = root.operationKind === "power"
         ? "The power profile change ended as " + String(result.status || "unknown") + "."
@@ -210,6 +243,8 @@ Item {
           ? "The brightness change ended as " + String(result.status || "unknown") + "."
           : root.operationKind === "input"
             ? "The keyboard layout change ended as " + String(result.status || "unknown") + "."
+            : root.operationKind === "network"
+              ? "The Wi-Fi change ended as " + String(result.status || "unknown") + "."
             : "The volume change ended as " + String(result.status || "unknown") + "."
       root.resetOperation(succeeded ? applied : refused)
       if (root.controller) root.controller.refresh()
@@ -723,6 +758,70 @@ Item {
               }
             }
 
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.network.overview" && root.radioResource !== null
+              Layout.fillWidth: true
+              implicitHeight: radioColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: "Wi-Fi"
+
+              ColumnLayout {
+                id: radioColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    text: Semantics.text(root.productProfile, "Wi-Fi")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: root.operationBusy && root.operationKind === "network" ? "APPLYING"
+                      : root.radioBlocked ? "BLOCKED BY HARDWARE" : "LIVE CONTROL"
+                    tone: root.operationBusy && root.operationKind === "network" ? "info"
+                      : root.radioBlocked ? "warning" : "success"
+                  }
+                }
+
+                Ui.Toggle {
+                  id: radioToggle
+                  Layout.fillWidth: true
+                  label: root.radioEnabled ? "Wi-Fi is on" : "Wi-Fi is off"
+                  checked: root.operationBusy && root.operationKind === "network" ? root.operationRadioTarget : root.radioEnabled
+                  enabled: !root.operationBusy && !(root.radioBlocked && !root.radioEnabled)
+                  onClicked: root.applyWifiEnabled(!radioToggle.checked)
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: root.operationMessage !== "" && root.operationKind === "network"
+                    ? root.operationMessage
+                    : root.radioBlocked
+                      ? Semantics.text(root.productProfile, "A hardware switch or airplane mode is holding this radio off. Settings cannot turn it back on.")
+                      : Semantics.text(root.productProfile, "Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.input.overview" && root.keyboardLayouts.length > 1
               Layout.fillWidth: true

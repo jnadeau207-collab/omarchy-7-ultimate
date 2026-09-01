@@ -661,6 +661,14 @@ class FabricDaemon:
             )
         return value
 
+    def _operation_enabled(self, value: Any) -> bool:
+        if not isinstance(value, bool):
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The requested radio state is not a boolean.",
+            )
+        return value
     def _operation_layout_index(self, value: Any) -> int:
         if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 7:
             raise FabricError(
@@ -837,6 +845,11 @@ class FabricDaemon:
                         required={"resourceId": stable_token, "percent": self._operation_percent},
                     ),
                     IntentDefinition(
+                        "network.wifi.set-enabled",
+                        FixedArgvCommand(str(helper), ("network-wifi-enabled-set",)),
+                        required={"resourceId": stable_token, "enabled": self._operation_enabled},
+                    ),
+                    IntentDefinition(
                         "input.keyboard-layout.set",
                         FixedArgvCommand(str(helper), ("input-keyboard-layout-set",)),
                         required={"resourceId": stable_token, "layoutIndex": self._operation_layout_index},
@@ -879,6 +892,15 @@ class FabricDaemon:
                     lambda preflight: {
                         "resourceId": preflight["resource"]["id"],
                         "percent": preflight["normalizedArguments"]["percent"],
+                    },
+                ),
+                OperationDefinition(
+                    "network.provider",
+                    "wifi.set-enabled",
+                    "network.wifi.set-enabled",
+                    lambda preflight: {
+                        "resourceId": preflight["resource"]["id"],
+                        "enabled": preflight["normalizedArguments"]["enabled"],
                     },
                 ),
                 OperationDefinition(

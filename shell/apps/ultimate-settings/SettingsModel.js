@@ -33,7 +33,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "network.inspect",
     supportsResource: true,
-    coverage: "Network inventory is readable from network.inspect (Wi-Fi radio, interfaces, connection status). Radio and connection changes remain unavailable from Settings."
+    coverage: "Network inventory is readable from network.inspect (Wi-Fi radio, interfaces, connection status), and the Wi-Fi radio switches through network.provider wifi.set-enabled. Joining a network and per-connection changes remain unavailable from Settings."
   },
   {
     routeId: "settings.power.overview",
@@ -541,6 +541,19 @@ function closedLayoutIndex(state) {
   return active >= 0 && active < layouts.length ? active : -1
 }
 
+function radioControllable(state) {
+  return !!(state && typeof state.enabled === "boolean" &&
+    state.managerRunning === true && typeof state.hardwareEnabled === "boolean")
+}
+
+function radioEnabled(state) {
+  return radioControllable(state) ? state.enabled === true : false
+}
+
+function radioBlocked(state) {
+  return radioControllable(state) && state.hardwareEnabled !== true
+}
+
 function normalizeLeafResource(resource, index) {
   if (!isObject(resource)) return null
   var id = typeof resource.id === "string" && resource.id.length <= 160 ? resource.id : ""
@@ -557,6 +570,9 @@ function normalizeLeafResource(resource, index) {
     subtitle: clippedText(resourceSubtitle(resource), 240),
     details: details,
     profiles: closedProfiles(state),
+    radioControllable: radioControllable(state),
+    radioEnabled: radioEnabled(state),
+    radioBlocked: radioBlocked(state),
     layouts: closedLayouts(state),
     activeLayoutIndex: closedLayoutIndex(state),
     brightnessAvailable: brightnessAvailable(state),
