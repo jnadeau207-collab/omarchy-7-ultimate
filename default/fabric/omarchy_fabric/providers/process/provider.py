@@ -48,7 +48,7 @@ RESOURCE_SCHEMA = {
         "pid": {"type": "integer", "minimum": 1, "maximum": 4194304},
         "uid": {"type": "integer", "minimum": 0, "maximum": 4294967295},
         "command": {"type": "string", "minLength": 1, "maxLength": 128},
-        "cpuPercent": {"type": "number", "minimum": 0, "maximum": 100},
+        "cpuPercent": {"type": "number", "minimum": 0, "maximum": 25600},
         "memoryPercent": {"type": "number", "minimum": 0, "maximum": 100},
         "residentKb": {"type": "integer", "minimum": 0, "maximum": 4294967295},
         "groupId": {"type": "string", "pattern": "^process-group\\.[0-9a-f]{16}$"},
@@ -78,12 +78,14 @@ def _safe_text(value: str, *, maximum: int) -> str:
         raise ValueError("process text is empty")
     return cleaned[:maximum]
 
+MAX_CPU_SHARE = 25600.0
+
 def _ratio(value: str, label: str) -> float:
     try:
         ratio = float(value)
     except ValueError:
         raise ValueError(f"process {label} is invalid") from None
-    if ratio != ratio or ratio in (float("inf"), float("-inf")) or not 0.0 <= ratio <= 100.0:
+    if ratio != ratio or ratio in (float("inf"), float("-inf")) or not 0.0 <= ratio <= MAX_CPU_SHARE:
         raise ValueError(f"process {label} is out of range")
     return round(ratio, 1)
 
@@ -212,7 +214,7 @@ async def _probe_resources(runner: ProbeRunner, proc_reader: ProcReader) -> list
     rows = _selected_rows(observed_rows)
     boot_id = await asyncio.to_thread(proc_reader, BOOT_ID_PATH, 128)
     start_ticks_by_pid: dict[int, int] = {}
-    stable_rows: list[tuple[int, int, str, str]] = []
+    stable_rows: list[tuple[int, int, float, float, int, str, str]] = []
     for pid, uid, cpu_percent, memory_percent, resident, command, cgroup in rows:
         process_root = PROC_ROOT / str(pid)
         try:
@@ -227,7 +229,7 @@ async def _probe_resources(runner: ProbeRunner, proc_reader: ProcReader) -> list
         if command_before != command_after or start_before != start_after or command != command_before or status_command != command_before or uid != status_uid:
             continue
         start_ticks_by_pid[pid] = start_before
-        stable_rows.append((pid, uid, command, cgroup))
+        stable_rows.append((pid, uid, cpu_percent, memory_percent, resident, command, cgroup))
     boot_id_after = await asyncio.to_thread(proc_reader, BOOT_ID_PATH, 128)
     if boot_id_after != boot_id:
         raise ValueError("kernel boot identity changed during process inventory")
