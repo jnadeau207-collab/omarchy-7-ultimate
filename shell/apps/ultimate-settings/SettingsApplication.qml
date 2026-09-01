@@ -189,9 +189,9 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              text: root.hostedPage && root.hostedSpec
+              text: Semantics.text(root.productProfile, root.hostedPage && root.hostedSpec
                 ? root.hostedSpec.honesty
-                : (root.currentRoute ? root.currentRoute.description : "The requested route is unavailable.")
+                : (root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."))
               color: Tokens.text.secondary
               font.family: Tokens.typography.family
               font.pixelSize: Style.font.body
