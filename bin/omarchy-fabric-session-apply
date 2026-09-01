@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omarchy:summary=Apply one code-owned user-scope Fabric operation from typed stdin
+# omarchy:hidden=true
+
+set -euo pipefail
+
+exec python3 -m omarchy_fabric.operations.session_apply
