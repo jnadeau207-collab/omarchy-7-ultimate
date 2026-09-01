@@ -3441,7 +3441,7 @@
         "status": "missing",
         "surface": "Settings",
         "label": "Ease of Access",
-        "path": "Settings jump list > Accessibility"
+        "path": ""
       },
       "agentCenterLabel": "Ease of Access",
       "proofIds": {
@@ -5866,7 +5866,7 @@
         "status": "missing",
         "surface": "Settings",
         "label": "System information",
-        "path": "Settings jump list > System information"
+        "path": ""
       },
       "agentCenterLabel": "System information",
       "proofIds": {
