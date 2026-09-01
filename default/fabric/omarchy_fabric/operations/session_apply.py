@@ -10,6 +10,8 @@ import sys
 from typing import Any, Mapping
 
 PACTL = "/usr/bin/pactl"
+POWERPROFILESCTL = "/usr/bin/powerprofilesctl"
+POWER_RESOURCE_ID = "power.profile.current"
 FILES_WORKSPACE_ID = "files.workspace.primary"
 MAX_PAYLOAD_BYTES = 8192
 
@@ -220,8 +222,46 @@ def apply_audio_output_volume(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+def list_power_profiles(run: Any = subprocess.run) -> list[str]:
+    completed = run([POWERPROFILESCTL, "list"], capture_output=True, text=True, timeout=5)
+    if completed.returncode != 0:
+        raise ApplyError("probe.failed", "The power profile probe reported a failure status.")
+    profiles = []
+    for line in completed.stdout.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("*"):
+            stripped = stripped[1:].strip()
+        if stripped.endswith(":") and " " not in stripped[:-1]:
+            name = stripped[:-1]
+            if name and name not in profiles:
+                profiles.append(name)
+    if not profiles:
+        raise ApplyError("probe.invalid", "The power profile probe returned no profiles.")
+    return profiles
+
+def resolve_profile(payload: Mapping[str, Any], profiles: list[str]) -> str:
+    profile = payload.get("profile")
+    if not isinstance(profile, str) or not profile:
+        raise ApplyError("payload.invalid", "The apply payload names no power profile.")
+    if profile not in profiles:
+        raise ApplyError("resource.unresolved", "The named power profile is not offered by this host.")
+    return profile
+
+def apply_power_profile(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    if payload.get("resourceId") != POWER_RESOURCE_ID:
+        raise ApplyError("payload.invalid", "The apply payload names no power profile resource.")
+    profile = resolve_profile(payload, list_power_profiles())
+    completed = subprocess.run([POWERPROFILESCTL, "set", profile], capture_output=True, text=True, timeout=5)
+    if completed.returncode != 0:
+        raise ApplyError("apply.failed", "Setting the power profile reported a failure status.")
+    json.dump({"ok": True, "resourceId": POWER_RESOURCE_ID, "profile": profile}, stdout)
+    stdout.write("\n")
+    return 0
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
+    "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,
 }
 

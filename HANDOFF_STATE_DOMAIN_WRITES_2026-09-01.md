@@ -54,6 +54,37 @@ Settings Sound renders the live control correctly. After an external operation m
 
 Rendering is right. The page reads once at load and never re-reads, so any change made outside it — by another client, or by hardware keys — leaves Settings stale.
 
+## Why the other domains cannot be closed
+
+Two separate walls, and it is worth knowing which one you are hitting.
+
+### Wall one: the proposed state is synthetic
+
+The audio slice works because volume is a real readable property — `pactl` reports the new value, so the provider's `proposedState` and the re-probed state agree. That is the exception, not the rule.
+
+`process.termination.plan` proposes `lifecycle: "termination-planned"`. The real probe only ever emits `"running"` (`providers/process/provider.py:149`); `"stopped"` and `"termination-planned"` exist solely for the stored-state fake backend. So Administration's End Task hits the identical wall as files: whole-state equality can never hold. This is the same defect as finding 3, not a separate one, and it means End Task cannot be wired without the same contract change.
+
+Of the leaf domains, `power`, `network`, `display`, and `input` all propose real readable properties and are structurally closable. `display` needs the user in the `i2c` group; `input` needs a second configured keyboard layout; `network` has no Wi-Fi device on this host.
+
+### Wall two: polkit cannot see an Omarchy session
+
+`power.profile.set` is fully wired — helper action, intent, operation definition, state reader — and it fails at the last step:
+
+```
+GDBus.Error:org.freedesktop.DBus.Error.AccessDenied: Not Authorized:
+org.freedesktop.UPower.PowerProfiles.switch-profile
+```
+
+The policy is `allow_active=yes`, `allow_inactive=no`, and the login session reports `Active=yes`, `Remote=no`. It still fails, because the fabric daemon's cgroup is:
+
+```
+/user.slice/user-1000.slice/user@1000.service/app.slice/omarchy-fabric-checkout.service
+```
+
+There is no `session-N.scope` in that path. Processes under the systemd user manager are not attached to a login session, so polkit resolves them as inactive and `allow_active` never applies. Every Omarchy component is placed this way — the shell apps sit in the same `app.slice` — so **no part of the product can satisfy a polkit `allow_active` check as currently structured.**
+
+`session_operable` is therefore left `False` for power: turning it on would put a control in Settings that always errors. The helper action, intent, and operation definition are kept and are correct. Closing this needs a decision that is not a code change: either ship a polkit rule under `/etc/polkit-1/rules.d/` granting these actions, or run the daemon inside a session scope. Both touch system security policy and belong to the operator, not to an agent.
+
 ## Deploying a schema rename
 
 The `rootToken` rename is a wire-contract change, and the shell validates provider state against a closed contract. Deploying the provider without restarting both sides puts Files into `files.invalid-response` — "Fabric returned data outside the closed Files read contract" — with a red FAILED card and no inventory. That happened on metal during this work.

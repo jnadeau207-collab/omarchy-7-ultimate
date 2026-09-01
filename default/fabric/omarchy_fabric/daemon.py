@@ -633,10 +633,38 @@ class FabricDaemon:
             )
         return value
 
+    def _operation_profile(self, value: Any) -> str:
+        if not isinstance(value, str) or not 1 <= len(value) <= 64:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The requested power profile is outside its bound.",
+            )
+        return value
+
     async def _operation_state(self, resource_id: str) -> Mapping[str, Any]:
         if resource_id.startswith("files.workspace."):
             return await self._files_state(resource_id)
+        if resource_id.startswith("power.profile."):
+            return await self._leaf_state("power.provider", resource_id)
         return await self._audio_state(resource_id)
+
+    async def _leaf_state(self, provider_id: str, resource_id: str) -> Mapping[str, Any]:
+        result = await self.typed_providers.read(provider_id, "inspect", {})
+        payload = result.get("value") if isinstance(result.get("value"), Mapping) else result
+        for resource in payload.get("resources", ()):
+            if resource.get("id") == resource_id:
+                value = resource.get("state")
+                return {
+                    "resourceId": resource_id,
+                    "revision": state_revision(value),
+                    "value": value,
+                }
+        raise FabricError(
+            "operation.resource-unavailable",
+            "Fabric operation resource is unavailable",
+            "The named resource is not present in the current inventory.",
+        )
 
     async def _files_state(self, resource_id: str) -> Mapping[str, Any]:
         result = await self.typed_providers.read("files.provider", "inspect", {})
@@ -682,6 +710,11 @@ class FabricDaemon:
                         required={"resourceId": stable_token, "percent": self._operation_percent},
                     ),
                     IntentDefinition(
+                        "power.profile.set",
+                        FixedArgvCommand(str(helper), ("power-profile-set",)),
+                        required={"resourceId": stable_token, "profile": self._operation_profile},
+                    ),
+                    IntentDefinition(
                         "files.directory.create",
                         FixedArgvCommand(str(helper), ("files-directory-create",)),
                         required={
@@ -701,6 +734,15 @@ class FabricDaemon:
                     lambda preflight: {
                         "resourceId": preflight["resource"]["id"],
                         "percent": preflight["normalizedArguments"]["percent"],
+                    },
+                ),
+                OperationDefinition(
+                    "power.provider",
+                    "profile.set",
+                    "power.profile.set",
+                    lambda preflight: {
+                        "resourceId": preflight["resource"]["id"],
+                        "profile": preflight["normalizedArguments"]["profile"],
                     },
                 ),
                 OperationDefinition(
