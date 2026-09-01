@@ -15,6 +15,6 @@ Shared.ProductAppHost {
   ipcTarget: "omarchy.settings"
   routeCatalogPath: "apps/ultimate-settings/routes-v1.json"
   fabricIdentity: "omarchy-settings"
-  fabricAllowedMethods: ["provider.catalog", "provider.read"]
+  fabricAllowedMethods: ["provider.catalog", "provider.read", "operation.preflight", "operation.approve", "operation.start", "operation.get"]
   applicationSourcePath: "apps/ultimate-settings/SettingsApplication.qml"
 }
