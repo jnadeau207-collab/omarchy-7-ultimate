@@ -29,10 +29,10 @@ ProcReader = Callable[[Path, int], str]
 TOKEN_PATTERN = "^[0-9a-f]{16}$"
 STATE_SCHEMA = {
     "type": "object",
-    "required": ["lifecycle", "startToken", "identityRevision", "plannedSignal"],
+    "required": ["lifecycle", "startDigest", "identityRevision", "plannedSignal"],
     "properties": {
         "lifecycle": {"type": "string", "enum": ["running", "termination-planned", "stopped"]},
-        "startToken": {"type": "string", "pattern": TOKEN_PATTERN},
+        "startDigest": {"type": "string", "pattern": TOKEN_PATTERN},
         "identityRevision": {"type": "string", "pattern": "^sha256\\.[0-9a-f]{64}$"},
         "plannedSignal": {"oneOf": [{"type": "null"}, {"type": "string", "enum": ["term", "kill"]}]},
     },
@@ -60,10 +60,10 @@ RESOURCE_SCHEMA = {
 }
 ARGUMENTS_SCHEMA = {
     "type": "object",
-    "required": ["resourceId", "expectedStartToken", "signal"],
+    "required": ["resourceId", "expectedStartDigest", "signal"],
     "properties": {
         "resourceId": {"type": "string", "pattern": "^process\\.[0-9]+\\.[0-9a-f]{16}$"},
-        "expectedStartToken": {"type": "string", "pattern": TOKEN_PATTERN},
+        "expectedStartDigest": {"type": "string", "pattern": TOKEN_PATTERN},
         "signal": {"type": "string", "enum": ["term", "kill"]},
     },
     "additionalProperties": False,
@@ -147,7 +147,7 @@ def parse_processes(text: str, *, boot_id: str, start_ticks_by_pid: Mapping[int,
                 "inventoryTruncated": len(observed_rows) > len(rows),
                 "state": {
                     "lifecycle": "running",
-                    "startToken": start_token,
+                    "startDigest": start_token,
                     "identityRevision": "sha256." + hashlib.sha256(f"{uid}\x00{command}\x00{cgroup}".encode("utf-8")).hexdigest(),
                     "plannedSignal": None,
                 },
@@ -165,7 +165,7 @@ def group_processes(resources: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 def assert_pid_identity(resource: Mapping[str, Any], expected_start_token: str) -> None:
-    if resource.get("state", {}).get("startToken") != expected_start_token:
+    if resource.get("state", {}).get("startDigest") != expected_start_token:
         raise ValueError("process PID has been reused")
 
 def _read_proc_text(path: Path, maximum_bytes: int) -> str:
@@ -250,18 +250,18 @@ async def _probe_resources(runner: ProbeRunner, proc_reader: ProcReader) -> list
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "resourceId": arguments["resourceId"],
-        "expectedStartToken": arguments["expectedStartToken"],
+        "expectedStartDigest": arguments["expectedStartDigest"],
         "signal": arguments["signal"],
     }
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
-    if current["startToken"] != arguments["expectedStartToken"]:
+    if current["startDigest"] != arguments["expectedStartDigest"]:
         raise ValueError("process PID has been reused")
     if current["lifecycle"] == "stopped":
         raise ValueError("process is no longer running")
     return {
         "lifecycle": "termination-planned",
-        "startToken": current["startToken"],
+        "startDigest": current["startDigest"],
         "identityRevision": current["identityRevision"],
         "plannedSignal": arguments["signal"],
     }
