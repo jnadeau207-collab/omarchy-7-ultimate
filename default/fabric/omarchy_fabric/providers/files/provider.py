@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import mimetypes
 import os
@@ -85,6 +86,8 @@ SCHEMA_FILES = (
     "files-operation-state-v0.json",
     "files-operation-preflight-v0.json",
     "files-operation-result-v0.json",
+    "files-directory-state-v1.json",
+    "files-directory-preflight-v1.json",
 )
 
 def _load_json(path: Path, maximum: int = MAX_CONFIG_BYTES) -> dict[str, Any]:
@@ -1072,6 +1075,32 @@ def _normalize_entry(arguments: Mapping[str, Any]) -> dict[str, Any]:
 def _normalize_mount(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"mountId": arguments["mountId"]}
 
+def _directory_scope(state: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
+    location_id = arguments["locationId"]
+    parent = arguments["parentRelativePath"]
+    prefix = f"{parent}/" if parent else ""
+    names = []
+    for entry in state["entries"]:
+        if entry["locationId"] != location_id:
+            continue
+        relative = entry["relativePath"]
+        if not relative.startswith(prefix):
+            continue
+        remainder = relative[len(prefix):]
+        if remainder and "/" not in remainder:
+            names.append(remainder)
+    names.sort()
+    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
+    return {
+        "kind": "files.directory",
+        "id": f"files.directory.{digest}",
+        "value": {
+            "locationId": location_id,
+            "parentRelativePath": parent,
+            "names": names,
+        },
+    }
+
 def _create_directory(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     location = _location(state, arguments["locationId"], writable=True)
@@ -1269,7 +1298,7 @@ def _summary(noun: str):
     return summarize
 
 OPERATIONS = {
-    "directory.create": OperationSpec("directory.create", _normalize_create, _create_directory, _summary("directory"), _anchors),
+    "directory.create": OperationSpec("directory.create", _normalize_create, _create_directory, _summary("directory"), _anchors, _directory_scope),
     "entry.rename": OperationSpec("entry.rename", _normalize_rename, _rename_entry, _summary("rename"), _anchors),
     "entry.trash": OperationSpec("entry.trash", _normalize_entry, _trash_entry, _summary("Trash"), _anchors),
     "trash.restore": OperationSpec("trash.restore", _normalize_entry, _restore_entry, _summary("restore"), _anchors),
