@@ -34,7 +34,21 @@ On the metal box — 79 entries in Pictures, 40 in home — the cap always bites
 
 Proving execution required a workspace sparse enough to fit under the cap. Raising the cap only moves the threshold and does not address finding 3.
 
-### 3. Whole-state equality cannot validate a real filesystem mutation
+### 3. Whole-state equality cannot validate a real filesystem mutation — FIXED
+
+**Resolved.** `files.directory.create` now completes the full plane on metal: preflight, approve, start, apply, validate, `status: succeeded`, with a real directory on disk. The fix is option 1 below — the scoped resource — which weakens nothing.
+
+What shipped:
+
+- `files-directory-state-v1.json`, `files-directory-preflight-v1.json`, `files-directory-result-v1.json`, minted as new files. The v0 schemas are untouched, so nothing already speaking v0 changed.
+- `OperationSpec` takes an optional `scope`. When present, preflight binds `resource` to `files.directory.<sha256>` and reports `currentState` / `proposedState` as that one directory's listing — `{locationId, parentRelativePath, names}` — which is genuinely predictable. mtime-derived values stay out of it, so equality holds honestly.
+- `guards.snapshotRevision` anchors to the scoped revision, keeping the plan's own invariant.
+- Recovery deliberately stays on the **workspace**: `recovery.priorState` is the full prior state and `recoveryFromRevision` is the workspace revision after the change, so `undo` still restores everything and its result is reported against the workspace result contract. Validation is scoped; recovery is not.
+- The helper recomputes `files.directory.<sha256(files.directory\0location\0parent)>` from the payload and refuses any mismatch, so a payload cannot target a directory other than the one its resource names.
+
+The remaining gate for the default workspace is finding 2, not this. The scope reads `state["entries"]`, so a truncated inventory could yield an incomplete listing — which is exactly why the availability gate should keep refusing while truncated. Making this reachable on a populated home means having the scope read the target directory directly rather than deriving it from the bounded inventory.
+
+### 3a. The original diagnosis, kept for the record
 
 `coordinator._validate_executor_state` compares observed state to `plan.preflight["proposedState"]["value"]` with strict equality, excluding only `revision`. The provider must therefore predict the entire post-mutation workspace exactly.
 
@@ -54,13 +68,13 @@ This is not a matter of correcting a few fields, and it is not one check to rela
 
 The state-domain operation model assumes stored state throughout. The real files backend is derived state. Three ways out, and they are not equivalent:
 
-1. **Scoped resource.** Bind the operation to the target parent directory rather than the whole workspace. Its state is a listing of that directory — current names plus the new one — which is genuinely predictable, and mtime-derived values stay out of it. Whole-state equality still holds, so **nothing is weakened**. Costs a new resource kind, id derivation, and a read action on the provider. This is the right answer.
+1. **Scoped resource — this is what shipped.** Bind the operation to the target parent directory rather than the whole workspace. Its state is a listing of that directory — current names plus the new one — which is genuinely predictable, and mtime-derived values stay out of it. Whole-state equality still holds, so **nothing is weakened**. Costs a new resource kind, id derivation, and a read action on the provider. This is the right answer.
 2. **Stored overlay.** The real backend records applied mutations and replays them over the derived scan. Preserves equality, but the overlay can drift from the filesystem and becomes a second source of truth.
 3. **Predicate validation.** Assert only that the fields the operation claimed to change actually changed. Cheapest, and it **weakens the contract**: it stops verifying that nothing else changed. Do not choose this one to make a proof go green.
 
 Whichever is chosen also removes a second defect: today any unrelated file change anywhere in the workspace invalidates a pending plan.
 
-### It is a v1, not an edit
+### It was a v1, not an edit
 
 Option 1 cannot be done inside the current schemas. They pin the binding exactly:
 
@@ -70,7 +84,7 @@ files-operation-preflight-v0.json  resource.kind → const "files.workspace"
 files-operation-state-v0.json      value         → $ref #/$defs/workspace
 ```
 
-A scoped resource needs a second resource kind and a directory-listing state value, so both files change shape. Editing them in place silently redefines `v0` for every client already speaking it, and the provider manifest, the durable plans in `operations.db`, and the shell's closed read contract all reference these ids. The honest form of this change is `files-operation-state-v1.json` plus `files-operation-preflight-v1.json`, a manifest version bump, and a migration path for stored plans.
+A scoped resource needs a second resource kind and a directory-listing state value, so both files change shape. Editing them in place silently redefines `v0` for every client already speaking it, and the provider manifest, the durable plans in `operations.db`, and the shell's closed read contract all reference these ids. The form this took was `files-operation-state-v1.json` plus `files-operation-preflight-v1.json`, a manifest version bump, and a migration path for stored plans.
 
 That is a product decision about contract versioning, shared with `defaults` and `process.termination.plan`. It is not a change to slip in to make a proof pass, which is the only reason an agent would be tempted to edit v0 in place.
 
