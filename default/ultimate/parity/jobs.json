@@ -820,7 +820,7 @@
       "humanRoute": {
         "status": "planned",
         "surface": "Settings",
-        "path": "Settings jump list > Accessibility"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Every change must remain keyboard-reachable and offer direct undo.",
