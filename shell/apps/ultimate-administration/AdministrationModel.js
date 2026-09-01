@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "process.inspect",
     supportsResource: true,
-    coverage: "Running processes are readable from process.inspect (pid, user, command, control group). Ending a task applies through the durable operation service as this user. Only the bounded inventory is reachable."
+    coverage: "Running processes are readable from process.inspect (pid, user, command, control group). Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize. Only the bounded inventory is reachable."
   },
   {
     routeId: "administration.services.overview",
