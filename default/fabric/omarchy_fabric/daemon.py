@@ -643,6 +643,8 @@ class FabricDaemon:
         return value
 
     async def _operation_state(self, resource_id: str) -> Mapping[str, Any]:
+        if resource_id.startswith("files.directory."):
+            return await self._files_directory_state(resource_id)
         if resource_id.startswith("files.workspace."):
             return await self._files_state(resource_id)
         if resource_id.startswith("power.profile."):
@@ -664,6 +666,33 @@ class FabricDaemon:
             "operation.resource-unavailable",
             "Fabric operation resource is unavailable",
             "The named resource is not present in the current inventory.",
+        )
+
+    async def _files_directory_state(self, resource_id: str) -> Mapping[str, Any]:
+        from .providers.files.provider import _directory_scope
+
+        workspace = await self._files_state("files.workspace.primary")
+        state = workspace["value"]
+        for location in state.get("locations", ()):
+            location_id = location.get("id")
+            if not isinstance(location_id, str):
+                continue
+            candidates = {""}
+            for entry in state.get("entries", ()):
+                if entry.get("locationId") == location_id and entry.get("kind") == "directory":
+                    candidates.add(entry.get("relativePath", ""))
+            for parent in candidates:
+                scoped = _directory_scope(state, {"locationId": location_id, "parentRelativePath": parent})
+                if scoped["id"] == resource_id:
+                    return {
+                        "resourceId": resource_id,
+                        "revision": state_revision(scoped["value"]),
+                        "value": scoped["value"],
+                    }
+        raise FabricError(
+            "operation.resource-unavailable",
+            "Fabric operation resource is unavailable",
+            "The named files directory is not present in the current inventory.",
         )
 
     async def _files_state(self, resource_id: str) -> Mapping[str, Any]:
