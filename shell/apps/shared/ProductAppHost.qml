@@ -256,7 +256,7 @@ ShellRoot {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.displayName + " cannot start"
             color: Tokens.text.primary
-            font.family: Style.font.family
+            font.family: Tokens.typography.family
             font.pixelSize: Style.font.heading
             font.bold: true
           }
@@ -266,7 +266,7 @@ ShellRoot {
             width: parent.width
             text: root.routeCatalogError
             color: Tokens.text.secondary
-            font.family: Style.font.family
+            font.family: Tokens.typography.family
             font.pixelSize: Style.font.body
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap

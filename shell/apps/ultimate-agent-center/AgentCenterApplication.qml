@@ -183,7 +183,7 @@ Item {
               textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, root.currentRoute ? root.currentRoute.title : "Agent Center")
               color: Tokens.text.primary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.heading
               font.bold: true
               wrapMode: Text.WordWrap
@@ -194,7 +194,7 @@ Item {
               textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."
               color: Tokens.text.secondary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.body
               wrapMode: Text.WordWrap
               Layout.fillWidth: true
@@ -249,7 +249,7 @@ Item {
                     textFormat: Text.PlainText
                     text: AgentCenterModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
-                    font.family: Style.font.family
+                    font.family: Tokens.typography.family
                     font.pixelSize: Style.font.title
                     font.bold: true
                     wrapMode: Text.WordWrap
@@ -281,7 +281,7 @@ Item {
                   textFormat: Text.PlainText
                   text: AgentCenterModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.body
                   wrapMode: Text.WordWrap
                   maximumLineCount: 6
@@ -301,7 +301,7 @@ Item {
                   visible: root.entityId !== ""
                   text: "Selected " + root.entityType + ": " + AgentCenterModel.clippedText(root.entityId, 180)
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.WrapAnywhere
                   Layout.fillWidth: true
@@ -314,7 +314,7 @@ Item {
                     ? "Detail: " + AgentCenterModel.clippedText(root.queryState.error.detail, 480)
                     : ""
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.WrapAnywhere
                   maximumLineCount: 4
@@ -331,7 +331,7 @@ Item {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "RECOVERY PATHS")
                     color: Tokens.state.warning
-                    font.family: Style.font.family
+                    font.family: Tokens.typography.family
                     font.pixelSize: Style.font.caption
                     font.bold: true
                     Layout.fillWidth: true
@@ -346,7 +346,7 @@ Item {
 
                       text: "\u2022 " + AgentCenterModel.clippedText(modelData, 320)
                       color: Tokens.text.secondary
-                      font.family: Style.font.family
+                      font.family: Tokens.typography.family
                       font.pixelSize: Style.font.bodySmall
                       wrapMode: Text.WrapAnywhere
                       Layout.fillWidth: true
@@ -408,7 +408,7 @@ Item {
                       textFormat: Text.PlainText
                       text: String(modelData.value)
                       color: Tokens.text.primary
-                      font.family: Style.font.family
+                      font.family: Tokens.typography.family
                       font.pixelSize: Style.font.display
                       font.bold: true
                       Layout.fillWidth: true
@@ -418,7 +418,7 @@ Item {
                       textFormat: Text.PlainText
                       text: Semantics.text(root.productProfile, modelData.label)
                       color: Tokens.text.secondary
-                      font.family: Style.font.family
+                      font.family: Tokens.typography.family
                       font.pixelSize: Style.font.bodySmall
                       wrapMode: Text.WordWrap
                       Layout.fillWidth: true
@@ -446,7 +446,7 @@ Item {
                 anchors.margins: Style.space(10)
                 text: root.summaryLine()
                 color: Tokens.text.secondary
-                font.family: Style.font.family
+                font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.WordWrap
               }
@@ -500,7 +500,7 @@ Item {
                   ? "Display bound reached at " + AgentCenterModel.MAX_VISIBLE_ITEMS + " records."
                   : root.queryState.items.length + " records loaded; another page is available."
                 color: Tokens.text.disabled
-                font.family: Style.font.family
+                font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
@@ -511,7 +511,7 @@ Item {
               visible: root.queryState.phase === "ready" || root.queryState.phase === "empty" || root.queryState.phase === "partial"
               text: Semantics.text(root.productProfile, "Managed-work v0 \u00b7 inspect tasks can be created, run, cancelled, and recovered. Consent and provider operations stay outside Agent Center.")
               color: Tokens.text.disabled
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.caption
               horizontalAlignment: Text.AlignHCenter
               wrapMode: Text.WordWrap
