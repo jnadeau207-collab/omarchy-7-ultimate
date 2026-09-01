@@ -60,15 +60,12 @@ from pathlib import Path
 root = Path(sys.argv[1])
 mutation = sys.argv[2]
 
-
 def load(name):
     path = root / name
     return path, json.loads(path.read_text(encoding="utf-8"))
 
-
 def save(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
-
 
 surfaces_path, surfaces = load("surfaces-v0.json")
 invocations_path, invocations = load("invocations-v0.json")

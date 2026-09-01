@@ -1,5 +1,3 @@
-# Detect T2 MacBook models using PCI IDs
-# Vendor: 106b (Apple), Device IDs: 1801 or 1802 (T2 Security Chip)
 if lspci -nn | grep "106b:180[12]" >/dev/null; then
   echo "Detected MacBook with T2 chip. Installing support items..."
 
@@ -10,7 +8,6 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     apple-bcm-firmware \
     t2fanrd
 
-  # Enable T2 fan control
   systemctl enable t2fanrd.service
 
   mkdir -p /etc/modules-load.d
@@ -19,9 +16,6 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     echo "hci_bcm4377"
   } > /etc/modules-load.d/t2.conf
 
-  # linux-t2 7.1.4 replaced the apple-bce driver with t2bce; t2bce_vhci is the
-  # virtual USB host controller the internal keyboard hangs off, and mkinitcpio
-  # pulls t2bce_core/t2bce_dma in via module dependencies.
   mkdir -p /etc/mkinitcpio.conf.d
   echo "MODULES+=(t2bce_vhci usbhid hid_apple hid_generic xhci_pci xhci_hcd)" > \
     /etc/mkinitcpio.conf.d/apple-t2.conf
@@ -32,8 +26,6 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
 KERNEL_CMDLINE[default]+=" intel_iommu=on iommu=pt pm_async=off mem_sleep_default=deep"
 EOF
 
-  # t2fanrd only reads sections for detected fans, so Fan2 is harmless on
-  # single-fan models and required on dual-fan MacBooks.
   cat > /etc/t2fand.conf <<'EOF'
 [Fan1]
 low_temp=55

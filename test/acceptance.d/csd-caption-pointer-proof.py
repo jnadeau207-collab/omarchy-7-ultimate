@@ -34,7 +34,6 @@ restore_cursor_windows = mod.restore_cursor_windows
 CHROME_CLASSES = {"chromium", "google-chrome", "google-chrome-stable", "brave-browser", "vivaldi-stable"}
 TITLE = "omarchy-w0-csd"
 
-
 def chrome_windows() -> list[dict]:
   out = []
   for c in clients():
@@ -44,7 +43,6 @@ def chrome_windows() -> list[dict]:
     if klass in CHROME_CLASSES or "chrom" in klass:
       out.append(c)
   return out
-
 
 def proof_chrome() -> dict | None:
   for c in chrome_windows():
@@ -56,25 +54,19 @@ def proof_chrome() -> dict | None:
   titled = [c for c in chrome_windows() if TITLE in str(c.get("title") or "")]
   return titled[0] if titled else None
 
-
 def csd_button(win: dict, which: str) -> tuple[int, int]:
   x, y = win["at"]
   w = win["size"][0]
-  # Measured from grim of this desktop's Google Chrome CSD, compositor box:
-  # glyphs occupy y+13..y+22. Centers from the compositor right edge are
-  # close 12 / max 44 / min 76, float 1212x752 and maximized 1932x1044.
   offsets = {"close": 12, "max": 44, "min": 76}
   if which not in offsets:
     raise ProofError(f"unknown CSD button {which}")
   return x + w - offsets[which], y + 18
-
 
 def close_proof_chromes() -> None:
   for c in chrome_windows():
     title = f"{c.get('title') or ''} {c.get('initialTitle') or ''}"
     if TITLE in title:
       as_user(["omarchy-shell", "window", "close", c["address"]], wait=True, timeout=5)
-
 
 def chrome_bin() -> str:
   home = Path.home()
@@ -92,7 +84,6 @@ def chrome_bin() -> str:
     if probe.returncode == 0 and (probe.stdout or "").strip():
       return (probe.stdout or "").strip()
   raise ProofError("no Chromium-family browser on PATH for CSD caption proof")
-
 
 def click_verified(pointer: AbsPointer, x: int, y: int) -> list[int]:
   gw, gh = monitor_size()
@@ -119,7 +110,6 @@ def click_verified(pointer: AbsPointer, x: int, y: int) -> list[int]:
   except ValueError:
     return [x, y]
 
-
 def launch_chrome() -> None:
   close_proof_chromes()
   time.sleep(0.4)
@@ -136,7 +126,6 @@ def launch_chrome() -> None:
     wait=True,
   )
   wait_until("Chromium CSD proof window", 25, lambda: proof_chrome() is not None)
-
 
 def main() -> int:
   report: dict = {"ok": False}
@@ -295,7 +284,6 @@ def main() -> int:
         as_user(["omarchy-shell", "window", "close", chrome_addr], wait=True, timeout=5)
       except Exception:
         pass
-
 
 if __name__ == "__main__":
   sys.exit(main())

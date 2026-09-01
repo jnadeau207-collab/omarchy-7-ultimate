@@ -12,7 +12,6 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from omarchy_fabric.providers.update.lifecycle import UpdateJournal
 
-
 SCHEMA_NAMES = (
     "admin-inventory-v0.json",
     "update-plan-v0.json",
@@ -20,7 +19,6 @@ SCHEMA_NAMES = (
     "backup-plan-v0.json",
     "diagnostics-bundle-v0.json",
 )
-
 
 def walk(value):
     yield value
@@ -30,7 +28,6 @@ def walk(value):
     elif isinstance(value, list):
         for child in value:
             yield from walk(child)
-
 
 class PublicSchemaTests(unittest.TestCase):
     def test_all_public_schemas_are_valid_closed_draft_2020_12_documents(self) -> None:
@@ -138,7 +135,6 @@ class PublicSchemaTests(unittest.TestCase):
         }
         with self.assertRaises(ValidationError):
             Draft202012Validator(diagnostics_schema).validate(diagnostics_bundle)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,7 +15,6 @@ from omarchy_fabric.providers.packages.identity import revision
 
 from helper import arguments, host, principal, provider, recipe_document, recipes, request, reviewed_request
 
-
 class CompatibilityRoutingTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_six_routes_and_honest_unsupported_state(self):
         value = provider()
@@ -88,7 +87,6 @@ class CompatibilityRoutingTests(unittest.IsolatedAsyncioTestCase):
         recipe = next(item for item in result["considered"] if item["route"] == "known-good-recipe")
         self.assertEqual(recipe["status"], "ineligible")
 
-
 class RecipeTrustTests(unittest.TestCase):
     def test_recipe_inventory_is_deterministic_and_explicitly_seed_assured(self):
         first = recipes(); second = RecipeCatalog(copy.deepcopy(recipe_document()))
@@ -150,7 +148,6 @@ class RecipeTrustTests(unittest.TestCase):
             self.assertNotIn(payload["origin"], planned.command.argv)
             self.assertEqual(planned.typed_input, payload)
         self.assertTrue(all(command.executable.startswith("/") for command in command_matrix()))
-
 
 if __name__ == "__main__":
     unittest.main()

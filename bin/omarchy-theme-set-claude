@@ -62,8 +62,6 @@ EOF
   fi
 }
 
-# Claude Code watches ~/.claude/themes and hot-reloads the file on change,
-# so running sessions retint without a restart.
 mkdir -p "$(dirname "$CLAUDE_THEME_PATH")"
 tmp=$(mktemp "$CLAUDE_THEME_PATH.XXXXXX")
 cp "$CLAUDE_SOURCE_PATH" "$tmp"

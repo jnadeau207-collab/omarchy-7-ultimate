@@ -10,8 +10,6 @@ trap 'rm -rf "$test_dir"' EXIT
 
 mkdir -p "$test_dir/bin"
 
-# Everything the migration reaches for is stubbed: a real tmux here would talk
-# to the developer's own server.
 cat >"$test_dir/bin/tmux" <<'STUB'
 #!/bin/bash
 
@@ -77,10 +75,6 @@ reset_home() {
   mkdir -p "$home/.config/tmux" "$home/.config/omarchy"
 }
 
-# ---------------------------------------------------------------- tmux config
-
-# The shipped config with the alert block put back is exactly what an installed
-# machine has, so cleaning it has to land on the shipped config byte for byte.
 reset_home
 awk '
   /^# Status bar$/ {
@@ -112,12 +106,9 @@ run_migration
 [[ ! -s $TMUX_RESTARTS ]] || fail "idempotent alert removal does not reload tmux"
 pass "alert removal is idempotent"
 
-# The hooks the removed migrations appended sit at the end of the file, and a
-# user's own hooks and blank lines have to survive next to them.
 reset_home
 cat >"$tmux_config" <<'EOF'
 set -g mouse on
-
 
 # Custom
 set-hook -g alert-bell 'display-message "mine"'
@@ -138,13 +129,10 @@ expected=$(printf '%s\n' 'set -g mouse on' '' '' '# Custom' "set-hook -g alert-b
   fail "alert removal drops an appended block and keeps the user's lines" "$(cat -A "$tmux_config")"
 pass "alert removal drops an appended block and keeps the user's lines"
 
-# An older config kept the refresh spelling of these two hooks; an indented one
-# is still the hook Omarchy wrote.
 grep -q 'after-select-window\|client-session-changed' "$tmux_config" &&
   fail "alert removal drops the older and indented hook spellings"
 pass "alert removal drops the older and indented hook spellings"
 
-# A config that never had the feature is not a config to rewrite.
 reset_home
 printf '%s\n' 'set -g mouse on' '' '' 'set -g status-position top' '' >"$tmux_config"
 before=$(sha256sum "$tmux_config")
@@ -153,7 +141,6 @@ run_migration
 [[ ! -s $TMUX_RESTARTS ]] || fail "alert removal does not reload tmux for an unrelated config"
 pass "alert removal leaves an unrelated config alone"
 
-# Dotfile setups symlink the config; the link has to survive the rewrite.
 reset_home
 mkdir -p "$home/dotfiles"
 cat >"$home/dotfiles/tmux.conf" <<'EOF'
@@ -171,8 +158,6 @@ run_migration
 grep -q 'alert-bell' "$home/dotfiles/tmux.conf" && fail "alert removal cleans the symlink target"
 pass "alert removal writes through a symlinked config"
 
-# --------------------------------------------------------------- live server
-
 reset_home
 run_migration
 
@@ -189,8 +174,6 @@ pass "alert removal clears the window options it stamped"
 TMUX_SERVER_MISSING=1 run_migration
 grep -q 'set-hook' "$TMUX_CALLS" && fail "alert removal skips a server that is not running" "$(cat "$TMUX_CALLS")"
 pass "alert removal skips a server that is not running"
-
-# ---------------------------------------------------------------- shell.json
 
 reset_home
 cat >"$shell_config" <<'EOF'
@@ -234,8 +217,6 @@ pass "alert removal handles the older indicators key"
   fail "alert removal leaves an already-empty list alone" "$(jq -c '.bar.layout.right[1]' "$shell_config")"
 pass "alert removal leaves an already-empty list alone"
 
-# The running shell hot-reloads shell.json and the post-update restart is
-# unconditional, so the migration itself never touches the shell.
 [[ ! -s $SHELL_RESTARTS ]] || fail "alert removal leaves shell restarts to the update" "$(cat "$SHELL_RESTARTS")"
 [[ ! -s $STATE_CALLS ]] || fail "alert removal defers no shell restart" "$(cat "$STATE_CALLS")"
 pass "alert removal leaves shell restarts to the update"

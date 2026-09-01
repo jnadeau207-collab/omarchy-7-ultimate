@@ -98,7 +98,6 @@ done
 build_dir=$(mktemp -d -t omarchy-dev-pkg-test.XXXXXX)
 trap 'rm -rf "$build_dir"' EXIT
 
-# pkgver=dev.<sha>[.dirty] so pacman -Q makes the source obvious.
 short_sha=$(git -C "$CHECKOUT" rev-parse --short HEAD 2>/dev/null || echo "local")
 dirty=""
 if [[ -d "$CHECKOUT/.git" ]] && [[ -n "$(git -C "$CHECKOUT" status --porcelain)" ]]; then
@@ -125,9 +124,6 @@ for PKG in "${PKGS[@]}"; do
     OMARCHY_SRC="$CHECKOUT" makepkg -s --skipchecksums --noconfirm "${MAKEPKG_ARGS[@]}"
   )
 
-  # Install separately so we can pass --overwrite='*' (makepkg -i can't).
-  # Dev builds frequently conflict with files left behind by previous
-  # script-installed Omarchy versions; the build is the authoritative state.
   built_pkg=$(ls -t "$package_build_dir"/*.pkg.tar.* 2>/dev/null | grep -v '\.sig$' | head -1)
   if [[ -z $built_pkg ]]; then
     echo "Error: no built package found in $package_build_dir" >&2

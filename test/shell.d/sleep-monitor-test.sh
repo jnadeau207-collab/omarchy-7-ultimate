@@ -66,8 +66,6 @@ if kill -0 "$producer_pid" 2>/dev/null; then
 fi
 pass "sleep monitor reaps its event producer"
 
-# Terminating the monitor must also clean up the producer instead of orphaning
-# it under the user systemd instance.
 cat >"$mock_bin/dbus-monitor" <<'SH'
 #!/bin/bash
 

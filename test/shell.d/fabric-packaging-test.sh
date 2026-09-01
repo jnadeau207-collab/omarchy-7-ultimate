@@ -67,9 +67,6 @@ for package in bubblewrap python python-jsonschema; do
 done
 pass "fresh install, existing-user migration, package refresh, and runtime dependencies are wired"
 
-# Cross-repository release assertions belong to omarchy-pkgs, where the built
-# .PKGINFO and archive contents can be checked together. This repository keeps
-# its lifecycle suite hermetic and verifies only the runtime behavior it owns.
 grep -F '[[ $OMARCHY_PATH == "/usr/share/omarchy" ]] || return 0' "$lifecycle" >/dev/null ||
   fail "packaged Fabric does not activate its installed-pair version check"
 grep -F '[[ $runtime_version == "$settings_version" ]]' "$lifecycle" >/dev/null ||

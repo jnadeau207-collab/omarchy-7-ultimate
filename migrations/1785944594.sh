@@ -17,9 +17,6 @@ if [[ -f $limine_conf ]] && grep -q 'pcie_ports=compat' "$limine_conf"; then
   needs_limine_rebuild=1
 fi
 
-# t2fanrd reads one section per detected fan and fails when a section is
-# missing. Extra sections are ignored, so this also remains safe on one-fan
-# models.
 if [[ -f $fan_conf ]] && ! grep -Eq '^[[:space:]]*\[Fan2\][[:space:]]*$' "$fan_conf"; then
   sudo tee -a "$fan_conf" >/dev/null <<'EOF'
 
@@ -31,16 +28,11 @@ always_full_speed=false
 EOF
 fi
 
-# The kernel's built-in Boot Camp-style Touch Bar works without tiny-dfr. The
-# optional daemon holds stale device descriptors across suspend with t2bce.
 if omarchy-pkg-present tiny-dfr; then
   sudo systemctl disable --now tiny-dfr.service || true
   omarchy-pkg-drop tiny-dfr
 fi
 
-# The current kernel keeps its old command line until reboot. Record a
-# successful machine-wide rebuild so another user's migration does not repeat
-# it before then, while a missing marker still retries an interrupted rebuild.
 if [[ -f $limine_conf ]] &&
   [[ ! -e $repair_marker ]] &&
   grep -q 'pm_async=off' "$limine_conf" &&

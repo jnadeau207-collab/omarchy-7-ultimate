@@ -22,8 +22,8 @@ from typing import Any, Mapping, Sequence
 
 try:
     import fcntl
-except ImportError:  # pragma: no cover - exercised by import-only non-Linux tooling
-    fcntl = None  # type: ignore[assignment]
+except ImportError:
+    fcntl = None
 
 from .db import FabricDatabase, request_fingerprint
 from .events import EventBroker, EventSubscription
@@ -71,7 +71,6 @@ SCHEMA_VERSION = re.compile(r"^v[0-9]+(?:\.[0-9]+){0,2}$")
 MAX_CONNECTION_REQUEST_IDS = 8192
 MAX_CONNECTION_SUBSCRIPTIONS = 32
 
-
 def _require_exact_fields(
     value: Mapping[str, Any],
     *,
@@ -94,7 +93,6 @@ def _require_exact_fields(
             detail="; ".join(parts),
         )
 
-
 def _stable_id(value: Any, label: str, *, maximum: int = 160) -> str:
     if (
         not isinstance(value, str)
@@ -108,7 +106,6 @@ def _stable_id(value: Any, label: str, *, maximum: int = 160) -> str:
             f"{label} must be a stable lowercase identifier.",
         )
     return value
-
 
 def _json_copy(value: Any) -> Any:
     try:
@@ -128,7 +125,6 @@ def _json_copy(value: Any) -> Any:
             "The value must be finite JSON.",
             detail=str(error),
         ) from error
-
 
 @dataclass
 class FakeProvider:
@@ -173,7 +169,6 @@ class FakeProvider:
             "The stored provider behavior is not supported by this daemon.",
             detail=str(kind),
         )
-
 
 class FakeProviderRegistry:
     def __init__(self, database: FabricDatabase) -> None:
@@ -354,7 +349,6 @@ class FakeProviderRegistry:
             for provider in sorted(self.providers.values(), key=lambda item: item.provider_id)
         ]
 
-
 @dataclass(frozen=True)
 class DaemonConfig:
     socket_path: Path
@@ -366,7 +360,6 @@ class DaemonConfig:
     @property
     def managed_work_path(self) -> Path:
         return self.managed_work_database_path or self.database_path.with_name("managed-work.db")
-
 
 class ClientConnection:
     def __init__(
@@ -534,7 +527,6 @@ class ClientConnection:
             pass
         self.daemon.connections.discard(self)
 
-
 class FabricDaemon:
     def __init__(self, config: DaemonConfig) -> None:
         self.config = config
@@ -658,30 +650,30 @@ class FabricDaemon:
             if bound_socket is not None:
                 try:
                     bound_socket.close()
-                except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                except Exception as error:
                     LOGGER.error("startup socket cleanup failed: %s", type(error).__name__)
             if self.server is not None:
                 try:
                     self.server.close()
                     await self.server.wait_closed()
-                except Exception as error:  # pragma: no cover - exceptional OS cleanup
+                except Exception as error:
                     LOGGER.error("startup server cleanup failed: %s", type(error).__name__)
                 self.server = None
             try:
                 self._remove_owned_socket()
-            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+            except Exception as error:
                 LOGGER.error("startup socket-path cleanup failed: %s", type(error).__name__)
             try:
                 self.managed_work.close()
-            except Exception as error:  # pragma: no cover - exceptional SQLite cleanup
+            except Exception as error:
                 LOGGER.error("startup managed-work cleanup failed: %s", type(error).__name__)
             try:
                 self.database.close()
-            except Exception as error:  # pragma: no cover - exceptional SQLite cleanup
+            except Exception as error:
                 LOGGER.error("startup Fabric database cleanup failed: %s", type(error).__name__)
             try:
                 self._release_instance_locks()
-            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+            except Exception as error:
                 LOGGER.error("startup database lease cleanup failed: %s", type(error).__name__)
             raise
 
@@ -701,7 +693,7 @@ class FabricDaemon:
         if server is not None:
             try:
                 server.close()
-            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+            except Exception as error:
                 remember(error)
         active_connections = list(self.connections)
         if active_connections:
@@ -729,7 +721,7 @@ class FabricDaemon:
         if server is not None:
             try:
                 await server.wait_closed()
-            except Exception as error:  # pragma: no cover - exceptional OS cleanup
+            except Exception as error:
                 remember(error)
         try:
             await self.reference_operations.shutdown()
@@ -752,7 +744,7 @@ class FabricDaemon:
         ):
             try:
                 cleanup()
-            except Exception as error:  # pragma: no cover - exceptional cleanup path
+            except Exception as error:
                 remember(error)
         if first_error is not None:
             raise first_error
@@ -1881,7 +1873,6 @@ class FabricDaemon:
             "removed": connection.remove_subscription(subscription_id),
         }
 
-
 async def run_daemon(config: DaemonConfig) -> None:
     daemon = FabricDaemon(config)
     stop_event = asyncio.Event()
@@ -1906,7 +1897,6 @@ async def run_daemon(config: DaemonConfig) -> None:
     finally:
         await daemon.stop(stop_reason)
 
-
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the provisional Omarchy Fabric user daemon")
     parser.add_argument("--socket", type=Path, help="override the owner-only Unix socket path")
@@ -1923,7 +1913,6 @@ def _parser() -> argparse.ArgumentParser:
         default="WARNING",
     )
     return parser
-
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
@@ -1950,11 +1939,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 130
     except FabricError as error:
         print(json.dumps({"error": error.to_dict()}, sort_keys=True), file=sys.stderr)
-        # A typed startup refusal is persistent configuration/state failure.
-        # systemd must not spin on it, while an unexpected Python exception is
-        # deliberately left uncaught so the service can restart exit status 1.
         return os.EX_CONFIG
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

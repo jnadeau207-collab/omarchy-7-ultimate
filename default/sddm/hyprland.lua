@@ -1,5 +1,3 @@
--- Minimal Hyprland config for the SDDM Wayland greeter.
--- SDDM starts the greeter itself after the compositor is ready.
 hl.config({
   misc = {
     disable_hyprland_logo = true,

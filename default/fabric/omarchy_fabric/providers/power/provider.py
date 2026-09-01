@@ -97,7 +97,6 @@ SCHEMAS = build_contracts(
     state_schema=PROFILE_STATE_SCHEMA,
 )
 
-
 def _parse_profiles(text: str) -> tuple[list[str], str]:
     profiles: list[str] = []
     active: list[str] = []
@@ -116,7 +115,6 @@ def _parse_profiles(text: str) -> tuple[list[str], str]:
         raise ValueError("power profile inventory requires one active profile")
     return sorted(profiles), active[0]
 
-
 def _parse_source(text: str) -> str:
     value = text.strip()
     if value == "b true":
@@ -124,7 +122,6 @@ def _parse_source(text: str) -> str:
     if value == "b false":
         return "ac"
     raise ValueError("UPower OnBattery property is invalid")
-
 
 def _parse_battery(text: str) -> Mapping[str, Any] | None:
     if not text.strip():
@@ -148,7 +145,6 @@ def _parse_battery(text: str) -> Mapping[str, Any] | None:
         raise ValueError("battery status is invalid")
     return {"percentage": int(percentage.group(1)), "state": state}
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     profiles, active = _parse_profiles((await invoke_probe(PROFILES_COMMAND, runner)).stdout)
     source = _parse_source((await invoke_probe(SOURCE_COMMAND, runner)).stdout)
@@ -163,10 +159,8 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         }
     ]
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": RESOURCE_ID, "profile": arguments["profile"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if arguments["profile"] not in current["availableProfiles"]:
@@ -177,12 +171,10 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         "availableProfiles": list(current["availableProfiles"]),
     }
 
-
 def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
     if current == proposed:
         return "The current power source already uses the requested profile; no change will be made."
     return f"Set the {current['source']} power profile to {proposed['activeProfile']}."
-
 
 SPEC = DomainSpec(
     domain=DOMAIN,
@@ -197,14 +189,11 @@ SPEC = DomainSpec(
     describe_change=_describe,
 )
 
-
 def _manifest() -> Mapping[str, Any]:
     return load_frozen_json(Path(__file__).with_name("manifest-v0.json"))
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, _manifest(), SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

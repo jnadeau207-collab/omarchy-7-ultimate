@@ -10,7 +10,6 @@ SCHEMA_DIR = ROOT / "default" / "fabric" / "schema"
 SECURITY_SCHEMAS = tuple(sorted(SCHEMA_DIR.glob("security-*.json")))
 FORBIDDEN_EXECUTOR_FIELDS = re.compile(r"(?:command|cmd|shell|executable|binary|argv|env|path|directory|helper)", re.I)
 
-
 def walk(value):
     yield value
     if isinstance(value, dict):
@@ -20,13 +19,11 @@ def walk(value):
         for child in value:
             yield from walk(child)
 
-
 def resolve_pointer(document, pointer: str):
     current = document
     for part in pointer.removeprefix("/").split("/") if pointer else ():
         current = current[part.replace("~1", "/").replace("~0", "~")]
     return current
-
 
 class SecuritySchemaTests(unittest.TestCase):
     def test_all_security_schemas_are_parseable_closed_draft_2020_contracts(self) -> None:
@@ -123,7 +120,6 @@ class SecuritySchemaTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertNotIn(forbidden, path.name.lower())
                 self.assertNotIn(forbidden, path.read_text(encoding="utf-8").lower())
-
 
 if __name__ == "__main__":
     unittest.main()

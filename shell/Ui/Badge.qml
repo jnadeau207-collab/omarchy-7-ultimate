@@ -1,17 +1,12 @@
 import QtQuick
 import qs.Commons
 
-// Badge: small count/status pill for taskbar buttons, tray icons, and list
-// rows. `tone` picks the semantic state color; `count` renders a number,
-// `text` renders a short label. Color-blind-safe rule: never rely on color
-// alone — badges carry a count, glyph, or text.
 Rectangle {
   id: root
 
   property int count: -1
   property string text: ""
 
-  // "accent" | "danger" | "success" | "warning" | "info"
   property string tone: "accent"
 
   readonly property color _tone: tone === "danger" ? Tokens.state.danger

@@ -37,7 +37,6 @@ assert_status() {
   pass "$description"
 }
 
-# LOCK in solitaryBlockedBy is how an active ext-session-lock shows up.
 assert_status $LOCKED \
   '[{"name":"HDMI-A-1","solitaryBlockedBy":["WINDOWED","LOCK","CANDIDATE"]}]' \
   "a locked session is detected"
@@ -50,17 +49,14 @@ assert_status $UNLOCKED \
   '[{"name":"HDMI-A-1","solitaryBlockedBy":["WINDOWED","CANDIDATE"]}]' \
   "an unlocked session is reported as unlocked"
 
-# A monitor showing a solitary client has no blockers at all.
 assert_status $UNLOCKED \
   '[{"name":"HDMI-A-1","solitaryBlockedBy":null}]' \
   "a monitor with no solitary blockers is reported as unlocked"
 
-# LOCK only carries this meaning inside the reason list.
 assert_status $UNLOCKED \
   '[{"name":"LOCK-1","description":"LOCK display","activeWorkspace":{"name":"LOCK"},"solitaryBlockedBy":["WINDOWED"]}]' \
   "LOCK elsewhere in the monitor payload is not a locked session"
 
-# Guessing "unlocked" with nothing to read strands the session.
 assert_status $UNDETERMINED '[]' \
   "a session with no monitors to read cannot say"
 
@@ -70,7 +66,6 @@ assert_status $UNDETERMINED '[]' \
 assert_status $UNDETERMINED 'not json at all' \
   "an unreadable monitor payload cannot say"
 
-# Hyprland stops at the first reason and never reaches the lock check.
 assert_status $UNDETERMINED \
   '[{"name":"HDMI-A-1","solitaryBlockedBy":["WORKSPACE"]}]' \
   "a monitor with no workspace yet cannot say"

@@ -9,9 +9,6 @@ require_command jq
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
-# A plugin folder with whatever kinds and entry points the case needs. Every
-# entry point named gets a file, so a rejection is about the manifest and not a
-# missing QML file.
 write_plugin() {
   local name="$1" kinds="$2" entry_points="$3" bar_widget="${4:-null}"
   local dir="$TMPDIR/$name"
@@ -42,15 +39,11 @@ validate() {
   OMARCHY_PATH="$ROOT" "$ROOT/bin/omarchy-plugin-validate" "$1" 2>&1
 }
 
-# Every kind the shell knows how to load names the entry point it loads from.
-# Declaring the kind without it installs a plugin that does nothing at all.
 while IFS=: read -r kind entry_point; do
   dir=$(write_plugin "wants-$kind" "[\"$kind\"]" "{\"$entry_point\": \"Entry.qml\"}")
   validate "$dir" >/dev/null || fail "validate accepts $kind with its $entry_point entry point"
   pass "validate accepts $kind with its $entry_point entry point"
 
-  # Swap in an entry point the kind does not read, so the manifest is otherwise
-  # complete and only the promised one is missing.
   other_key="service"
   [[ $entry_point == "service" ]] && other_key="panel"
   dir=$(write_plugin "missing-$kind" "[\"$kind\"]" "{\"$other_key\": \"Entry.qml\"}")
@@ -67,7 +60,6 @@ panel:panel
 service:service
 KINDS
 
-# A plugin that is both a bar and a widget owes an entry point for each.
 dir=$(write_plugin "both" '["bar","bar-widget"]' '{"bar": "Bar.qml", "barWidget": "Widget.qml"}')
 validate "$dir" >/dev/null || fail "validate accepts a plugin that satisfies every kind it declares"
 pass "validate accepts a plugin that satisfies every kind it declares"
@@ -78,7 +70,6 @@ grep -qF "kind 'bar-widget' requires" <<<"$output" \
   || fail "validate names the unsatisfied kind" "$output"
 pass "validate refuses a plugin that satisfies only one of its kinds"
 
-# A widget can choose its default bar section, but no other section name.
 for section in left center right; do
   dir=$(write_plugin "defaults-$section" '["bar-widget"]' '{"barWidget": "Widget.qml"}' "{\"defaultSection\": \"$section\"}")
   validate "$dir" >/dev/null || fail "validate accepts $section as a default bar widget section"
@@ -91,14 +82,10 @@ grep -qF "'barWidget.defaultSection' must be left, center, or right" <<<"$output
   || fail "validate explains the default bar widget section contract" "$output"
 pass "validate refuses an invalid default bar widget section"
 
-# A kind the table does not cover is left alone rather than guessed at, so an
-# unknown kind is not turned into a demand for an entry point nobody reads.
 dir=$(write_plugin "unknown" '["future-thing"]' '{"service": "Entry.qml"}')
 validate "$dir" >/dev/null || fail "validate leaves a kind it does not know alone"
 pass "validate leaves a kind it does not know alone"
 
-# The check reports the manifest, so a path that does not resolve still gets the
-# more specific complaint it had before.
 dir="$TMPDIR/ghost"
 mkdir -p "$dir"
 cat >"$dir/manifest.json" <<'JSON'

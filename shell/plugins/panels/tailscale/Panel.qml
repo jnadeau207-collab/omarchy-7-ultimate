@@ -48,8 +48,6 @@ Panel {
   readonly property var exitNodes: displayExitNodes()
   readonly property bool showExitNodes: tailscale.active && (exitNodes.length > 0 || tailscale.mullvadRegions.length > 0)
   readonly property var filteredMullvadRegions: filteredMullvadRegionNodes()
-  // Only claim the header cursor when the switch is actually on screen —
-  // "header" stays navigable, but an absent CLI leaves nothing to highlight.
   readonly property bool headerHasCursor: cursorActive && focusSection === "header" && tailscale.installed
   readonly property color iconColor: tailscale.active ? foreground : dim
   readonly property string toggleHint: tailscale.active ? "Turn Tailscale off" : (tailscale.needsLogin ? "Authorize this device" : "Turn Tailscale on")
@@ -297,7 +295,6 @@ Panel {
     scrollCursorIntoView()
   }
 
-  // The file picker takes over from here, so get the panel out of the way.
   function sendPeerFile(peer) {
     if (!tailscale.canSendFiles(peer)) return
     tailscale.sendFile(peer)
@@ -449,8 +446,6 @@ Panel {
             id: header
             width: parent.width
             implicitHeight: hero.implicitHeight
-            // Exposed for the hero's trailingControl, whose `root` resolves to
-            // PanelHero (not this Panel) — reach panel state via `header`.
             readonly property bool ringVisible: root.headerHasCursor
             function focusHero() { root.setHeaderCursor() }
 
@@ -462,7 +457,6 @@ Panel {
               foreground: root.foreground
               fontFamily: root.fontFamily
               iconOpacity: tailscale.active ? 1.0 : 0.5
-              // Status only — the switch owns toggling, mouse and keyboard alike.
               iconComponent: Component {
                 TailscaleIcon {
                   iconSize: Style.font.display
@@ -473,9 +467,6 @@ Panel {
                 }
               }
 
-              // Compact on/off switch on the trailing edge of the hero, and the
-              // header's only cursor target. The service already flips `active`
-              // optimistically, so the knob throws the instant you click it.
               trailingControl: Component {
                 ToggleSwitch {
                   id: powerSwitch

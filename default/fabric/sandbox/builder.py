@@ -42,14 +42,11 @@ _RUNNER_VALUE_FLAGS = {
 }
 _EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"})
 
-
 class SandboxViolation(ValueError):
     pass
 
-
 class SandboxUnavailable(RuntimeError):
     pass
-
 
 @dataclass(frozen=True)
 class ScopedBind:
@@ -57,7 +54,6 @@ class ScopedBind:
     source_root: Path
     target: str
     writable: bool = False
-
 
 @dataclass(frozen=True)
 class NetworkScope:
@@ -77,7 +73,6 @@ class NetworkScope:
             raise SandboxViolation("Task proxy port is invalid.")
         object.__setattr__(self, "host", normalized_host)
 
-
 @dataclass(frozen=True)
 class TaskProxy:
     source: Path
@@ -95,7 +90,6 @@ class TaskProxy:
         if len(set(self.scopes)) != len(self.scopes):
             raise SandboxViolation("Task proxy network scopes must be unique.")
 
-
 @dataclass(frozen=True)
 class SandboxSpec:
     task_id: str
@@ -110,7 +104,6 @@ class SandboxSpec:
             raise SandboxViolation("Task ID must be a stable identifier.")
         validate_runner_argv(self.runner_argv, task_id=self.task_id)
         _validate_environment(self.environment)
-
 
 def validate_runner_argv(argv: Sequence[str], *, task_id: str) -> tuple[str, ...]:
     if not isinstance(argv, (list, tuple)) or not argv or argv[0] != FIXED_AGENT_RUNNER:
@@ -144,7 +137,6 @@ def validate_runner_argv(argv: Sequence[str], *, task_id: str) -> tuple[str, ...
         raise SandboxViolation("Runner argv must bind task identity and a manifest file descriptor.")
     return normalized
 
-
 def _validate_environment(environment: Mapping[str, str]) -> None:
     if not isinstance(environment, Mapping):
         raise SandboxViolation("Sandbox environment must be a mapping.")
@@ -153,7 +145,6 @@ def _validate_environment(environment: Mapping[str, str]) -> None:
             raise SandboxViolation(f"Environment variable {key!r} is not allowed.")
         if not isinstance(value, str) or len(value) > 256 or "\x00" in value or "\n" in value or "\r" in value:
             raise SandboxViolation("Sandbox environment value is invalid.")
-
 
 def _has_symlink_component(path: Path) -> bool:
     current = Path(path.anchor) if path.anchor else Path()
@@ -166,7 +157,6 @@ def _has_symlink_component(path: Path) -> bool:
         except OSError:
             return True
     return False
-
 
 def _validate_host_source(
     source: Path,
@@ -216,7 +206,6 @@ def _validate_host_source(
         raise SandboxViolation("General home-directory access is forbidden.")
     return resolved_source
 
-
 def _validate_target(target: str) -> str:
     if not isinstance(target, str) or "\x00" in target:
         raise SandboxViolation("Bind target is invalid.")
@@ -228,7 +217,6 @@ def _validate_target(target: str) -> str:
         raise SandboxViolation("Scoped binds are limited to workspace and artifact namespaces.")
     return normalized
 
-
 def require_bwrap(path: str = "/usr/bin/bwrap") -> str:
     if path not in TRUSTED_BWRAP_PATHS:
         raise SandboxUnavailable("bubblewrap must be the packaged system binary.")
@@ -236,7 +224,6 @@ def require_bwrap(path: str = "/usr/bin/bwrap") -> str:
     if not candidate.is_file() or candidate.is_symlink() or not os.access(candidate, os.X_OK):
         raise SandboxUnavailable("bubblewrap is unavailable; managed execution fails closed.")
     return path
-
 
 def build_bwrap_command(
     spec: SandboxSpec,
@@ -332,7 +319,6 @@ def build_bwrap_command(
         command.extend(("--setenv", key, spec.environment[key]))
     command.extend(spec.runner_argv)
     return tuple(command)
-
 
 def prepare_bwrap_command(
     spec: SandboxSpec,

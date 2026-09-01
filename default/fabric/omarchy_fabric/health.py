@@ -22,7 +22,6 @@ from .models import (
     FabricError,
 )
 
-
 def socket_health(path: Path) -> dict[str, Any]:
     try:
         metadata = path.stat()
@@ -43,7 +42,6 @@ def socket_health(path: Path) -> dict[str, Any]:
         and metadata.st_uid == os.getuid()
         and mode == 0o600,
     }
-
 
 def daemon_health(
     *,
@@ -98,7 +96,6 @@ def daemon_health(
         "events": {"subscriptions": subscription_count},
     }
 
-
 def doctor_report(health: dict[str, Any]) -> dict[str, Any]:
     checks = [
         {
@@ -134,14 +131,12 @@ def doctor_report(health: dict[str, Any]) -> dict[str, Any]:
         "health": health,
     }
 
-
 TASK_METHODS = {
     "create": "managed-work.task.create",
     "list": "managed-work.task.list",
     "cancel": "managed-work.task.cancel",
     "recover": "managed-work.task.recover",
 }
-
 
 async def _query(
     socket_path: Path,
@@ -164,7 +159,6 @@ async def _query(
     finally:
         await client.close()
 
-
 def _payload(raw: str) -> dict[str, Any]:
     try:
         data = json.loads(raw)
@@ -184,7 +178,6 @@ def _payload(raw: str) -> dict[str, Any]:
     if "version" not in data:
         data = {**data, "version": "v0"}
     return data
-
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Inspect the provisional Omarchy Fabric daemon")
@@ -208,7 +201,6 @@ def _parser() -> argparse.ArgumentParser:
     execute.add_argument("payload")
     return parser
 
-
 def _print_text(command: str, result: dict[str, Any]) -> None:
     if command == "health":
         print(f"Fabric: {result['status']}")
@@ -229,7 +221,6 @@ def _print_text(command: str, result: dict[str, Any]) -> None:
     for check in result["checks"]:
         print(f"[{check['status']}] {check['id']}: {check['explanation']}")
 
-
 def _rpc_target(args: argparse.Namespace) -> tuple[str, dict[str, Any] | None, bool]:
     if args.command == "version":
         return "version", None, False
@@ -240,7 +231,6 @@ def _rpc_target(args: argparse.Namespace) -> tuple[str, dict[str, Any] | None, b
     if args.command == "context":
         return "managed-work.context.capture", _payload(args.payload), True
     return "managed-work.run.execute", _payload(args.payload), True
-
 
 def main(argv: Sequence[str] | None = None) -> int:
     from .models import default_socket_path
@@ -268,7 +258,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"Fabric: unavailable ({error.code})", file=sys.stderr)
             print(error.explanation, file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

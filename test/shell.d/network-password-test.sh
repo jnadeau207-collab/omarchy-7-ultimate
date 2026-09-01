@@ -31,8 +31,6 @@ run_failure_case() {
   pass "$description"
 }
 
-# The password comes back raw -- no QR escaping -- because it is shown to a
-# human, not embedded in a WIFI: payload.
 export PW_NMCLI_FIELDS=$'wpa-psk\np,a:ss;word\\42\n'
 output=$(PATH="$tmp/bin:$PATH" "$ROOT/bin/omarchy-network-password" wlan0)
 [[ $output == 'p,a:ss;word\42' ]] || fail "network password helper prints the raw password" "expected: p,a:ss;word\\42\nactual: $output"
@@ -43,7 +41,6 @@ run_failure_case \
   $'none\n\n' \
   "This network has no password"
 
-# WEP looks like an open network (key-mgmt "none") but carries a wep-key.
 export PW_NMCLI_FIELDS=$'none\n\nwep-secret\n'
 output=$(PATH="$tmp/bin:$PATH" "$ROOT/bin/omarchy-network-password" wlan0)
 [[ $output == "wep-secret" ]] || fail "network password helper prints WEP keys" "expected: wep-secret\nactual: $output"

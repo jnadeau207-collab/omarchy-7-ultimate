@@ -2,8 +2,6 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value))
 }
 
-// The widest glyph `iconFor` can return. The progress OSD sizes its icon
-// column to it so the bar keeps its place as the icon changes.
 var widestIcon = "\u266B"
 
 function iconFor(name, percent) {

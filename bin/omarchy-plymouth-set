@@ -7,10 +7,6 @@
 
 set -euo pipefail
 
-# Build the authoritative theme in a root-owned directory, then publish each
-# fixed destination atomically. The caller opens the selected logo before sudo,
-# so the privileged process never resolves a user-controlled input path.
-
 usage() {
   echo "Usage: omarchy-plymouth-set <background-hex> <text-hex> <path-to-logo.png>" >&2
   exit 1
@@ -68,8 +64,6 @@ else
     exit 1
   fi
 
-  # Open the logo while still unprivileged. A replacement symlink to a root-only
-  # file therefore fails here instead of being followed after sudo starts.
   if ! exec {logo_fd}<"$logo_path"; then
     echo "Unable to open logo file as the current user: $logo_path" >&2
     exit 1
@@ -87,8 +81,6 @@ run_root_transaction() {
     export PATH
     umask 077
 
-    # Every check below is a bare assertion that aborts under set -e. Name the
-    # subject of each one so a refusal reaches the user instead of exiting mute.
     failure_context="the privileged Plymouth transaction"
     failure_reported=
     report_failure() {
@@ -152,11 +144,6 @@ run_root_transaction() {
       (( size > 0 && size <= 4096 ))
     }
 
-    # A packaged tree must be root-owned. A development checkout is the one
-    # deliberate exception: omarchy dev link records its canonical path in a
-    # root-owned /etc/omarchy.conf. That is already an explicit decision to run
-    # privileged Omarchy commands from user-editable code in the checkout, so
-    # reading its packaged assets does not widen the development trust boundary.
     development_source=false
     source_root_uid=$(stat -c %u -- "$source_root")
     if (( source_root_uid != 0 )); then
@@ -165,12 +152,6 @@ run_root_transaction() {
       failure_hint="$source_root is user-owned; run omarchy dev link to authorize this development checkout, or omarchy dev unlink to use the packaged tree"
       validate_trusted_configuration_file "$omarchy_conf"
 
-      # validate_trusted_configuration_file walks /etc up to / and leaves its own
-      # subject behind in failure_context. Without restoring ours, a checkout
-      # that simply is not the authorized one refuses with "directory / must be
-      # root-owned and not group- or world-writable" -- naming a directory that
-      # passed, and sending the reader after a filesystem problem that is not
-      # there.
       failure_context="the dev-link authorization in $omarchy_conf, which must name $source_root"
 
       quoted_source_root=$source_root
@@ -268,8 +249,6 @@ run_root_transaction() {
     done
 
     if [[ $mode == "set" ]]; then
-      # stdin was opened by the unprivileged caller. Read no more than the
-      # documented limit into the root-owned stage before doing other work.
       failure_context="the selected logo (expected 1 to $max_asset_size bytes)"
       head -c "$((max_asset_size + 1))" >"$plymouth_stage/logo.png"
       logo_size=$(stat -c %s -- "$plymouth_stage/logo.png")

@@ -72,13 +72,9 @@ Item {
   }
 
   function applyPendingTheme() {
-    // Background polling can advance backgroundVersion while a theme switch is
-    // pending; the latest theme payload should still apply.
     if (pendingThemeVersion < 0) return
     pendingThemeFallbackTimer.stop()
     Color.loadColors(pendingColorsRaw)
-    // Color.loadShell also refreshes Style so the type scale flips with the
-    // background reveal instead of waiting for a separate reload path.
     Color.loadShell(pendingShellRaw)
     Style.scheduleRefresh()
     pendingThemeVersion = -1
@@ -195,11 +191,6 @@ Item {
         window: panel
       }
       color: "transparent"
-      // Keep render updates enabled. The background layer has been observed to
-      // lose its committed buffer while parked with updatesEnabled=false,
-      // leaving a black desktop until omarchy-shell is restarted. The wallpaper
-      // itself is static, so this favors correctness over a small render-loop
-      // optimization.
       updatesEnabled: true
 
       property bool maskReady: false

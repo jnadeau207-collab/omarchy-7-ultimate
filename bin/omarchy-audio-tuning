@@ -10,12 +10,6 @@ set -uo pipefail
 tunings_dir="$OMARCHY_PATH/default/audio/tunings"
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-# The tuning is hosted by its own PipeWire client, under its own config name, so
-# switching it needs no audio restart -- a restart drops every PulseAudio client's
-# connection, and applications that do not reconnect (Spotify) then have to be
-# restarted by hand. The name is deliberately not PipeWire's stock
-# filter-chain.conf, which merges every fragment in filter-chain.conf.d/ and would
-# make this service host unrelated user filters too.
 host_config_name=omarchy-speaker-tuning.conf
 host_config="$config_home/pipewire/$host_config_name"
 host_source="$OMARCHY_PATH/default/audio/filter-chain-host.conf"
@@ -24,9 +18,6 @@ unit_name=omarchy-speaker-tuning.service
 unit="$config_home/systemd/user/$unit_name"
 unit_source="$OMARCHY_PATH/default/systemd/user/$unit_name"
 
-# Earlier revisions loaded the tuning into the daemon, as a WirePlumber smart
-# filter, or into the shared filter-chain.conf.d namespace. Remove all three so
-# they cannot be loaded alongside the current one.
 stale_daemon="$config_home/pipewire/pipewire.conf.d/90-omarchy-speaker-tuning.conf"
 stale_wireplumber="$config_home/wireplumber/wireplumber.conf.d/90-omarchy-speaker-tuning.conf"
 stale_shared="$config_home/pipewire/filter-chain.conf.d/90-omarchy-speaker-tuning.conf"
@@ -41,11 +32,6 @@ sink_matching() {
   pactl list sinks short 2>/dev/null | awk -v p="$1" '$2 ~ p {print $2; exit}'
 }
 
-# Dell keys its Cirrus speaker firmware on the DMI product SKU, which makes it the
-# most precise identifier available for these machines -- narrower than a product
-# name, and it distinguishes models whose names differ only by marketing. Compared
-# case-insensitively against an exact SKU, never a substring, so a tuning cannot
-# accidentally widen to a whole product line.
 sku_matches() {
   local sku want
   sku="$(cat /sys/class/dmi/id/product_sku 2>/dev/null)"
@@ -64,10 +50,6 @@ dmi_matches() {
   return 1
 }
 
-# Print the tuning directory matching this laptop, if any. Matching is data, not
-# code: a tuning declares the DMI string it belongs to and the sink it expects, so
-# most tunings can be added as a directory with no new script. A tuning whose
-# hardware needs a sharper test can set match_command to any predicate instead.
 tuning_match() {
   local dir
   for dir in "$tunings_dir"/*/; do
@@ -77,12 +59,6 @@ tuning_match() {
     # shellcheck disable=SC1090
     source "$dir/tuning.conf"
 
-    # Deliberately does not look at the live audio graph. The install hooks run in
-    # the ISO chroot with no audio server, and a match that depended on a present
-    # sink would come back empty there -- so the machine would get neither the LV2
-    # dependency nor the tuning, and nothing would retry.
-    # A tuning may list several models it has been validated on. match_dmi and
-    # match_sku are arrays, so a plain string still works as a single entry.
     if [[ -n ${match_command:-} ]]; then
       "$match_command" 2>/dev/null || continue
     elif [[ -n ${match_sku:-} ]]; then
@@ -93,9 +69,6 @@ tuning_match() {
       continue
     fi
 
-    # Required whichever way the tuning matched: the graph's target sink is
-    # substituted from it, so a tuning without one cannot be installed and must
-    # not be reported as a match.
     [[ -n ${sink_pattern:-} ]] || continue
 
     printf '%s\n' "${dir%/}"
@@ -104,9 +77,6 @@ tuning_match() {
   return 1
 }
 
-# The physical sink the matched tuning is built for, taken from the tuning's own
-# sink_pattern rather than a hard-coded regex, so hardware with a different sink
-# name needs no change here.
 tuned_hardware_sink() {
   local dir found
   dir="$(tuning_match)" || return 1
@@ -123,12 +93,9 @@ tuning_present() {
   pactl list sinks short 2>/dev/null | awk '{print $2}' | grep -x "$sink_name" >/dev/null
 }
 
-# Only real application streams may be moved. A filter-chain's own output is also
-# a sink input but carries no application.name, and moving it would rewire the
-# tuning itself.
 app_streams() {
   pactl list sink-inputs 2>/dev/null | awk '
-    /^Sink Input #/ {id = substr($3, 2)}
+    /^Sink Input
     /application\.name = / {
       app = $0
       sub(/.*application\.name = "/, "", app)
@@ -144,8 +111,6 @@ move_apps_to() {
   done
 }
 
-# WirePlumber can link the output elsewhere if the target is missing when the host
-# starts. node.dont-fallback guards against it, but verify rather than assume.
 tuning_downstream_sink() {
   omarchy-audio-output-sink "$sink_name" 2>/dev/null
 }
@@ -156,8 +121,6 @@ easyeffects_running() {
     systemctl --user is-active --quiet easyeffects.service 2>/dev/null
 }
 
-# Unloading a daemon-loaded drop-in is the one case that still needs an audio
-# restart, because the daemon only reads its own config at startup.
 drop_stale_daemon_config() {
   [[ -e $stale_daemon || -e $stale_wireplumber ]] || return 0
   rm -f "$stale_daemon" "$stale_wireplumber"
@@ -175,11 +138,6 @@ case "$action" in
     ;;
 
   fronted-sink)
-    # The tuning is a virtual sink in front of the real speakers, so both exist in
-    # the graph. Selecting the physical one would only bypass the tuning, so
-    # callers keep it out of the output list while the tuning is up. This answers
-    # "is a tuning in place", not "where should volume go" -- for the latter see
-    # omarchy-audio-output-sink, which follows the current default output.
     tuning_present || exit 1
     tuned_hardware_sink
     ;;
@@ -190,8 +148,6 @@ case "$action" in
     else
       echo "Installed:    no"
     fi
-    # Both is-active and is-enabled print their answer *and* exit non-zero when
-    # negative, so a "|| echo" fallback prints it twice.
     host_state="$(systemctl --user is-active "$unit_name" 2>/dev/null)"
     host_enabled="$(systemctl --user is-enabled "$unit_name" 2>/dev/null)"
     echo "Host service: ${host_state:-inactive} (${host_enabled:-disabled})"
@@ -233,8 +189,6 @@ case "$action" in
 
     if [[ -n $speakers ]]; then
       pactl set-default-sink "$speakers" >/dev/null 2>&1
-      # Streams left on the vanished tuning sink reconnect wherever PipeWire puts
-      # them, which is not necessarily the speakers.
       move_apps_to "$speakers"
     fi
     echo "Speaker tuning removed."
@@ -255,7 +209,6 @@ case "$action" in
     # shellcheck disable=SC1090
     source "$selected/tuning.conf"
 
-    # At first-run the session is up but the sink can still be settling.
     for _ in {1..20}; do
       speaker_sink="$(sink_matching "$sink_pattern")"
       [[ -n $speaker_sink ]] && break
@@ -278,8 +231,6 @@ EOF
       exit 1
     fi
 
-    # Every tuning ends in a limiter, which is an LV2 plugin. Without it the graph
-    # fails to instantiate and the tuning sink never appears.
     ls /usr/lib/lv2/lsp-plugins.lv2/limiter_stereo.ttl >/dev/null 2>&1 || {
       echo "lsp-plugins-lv2 is required for the tuning limiter." >&2
       exit 1
@@ -289,9 +240,6 @@ EOF
     trap 'rm -f "$rendered"' EXIT
     sed "s|@SPEAKER_SINK@|$speaker_sink|g" "$selected/filter-chain.conf" >"$rendered"
 
-    # Everything that makes the tuning current has to match, not just the graph:
-    # an active-but-disabled service disappears at next login, and a stale unit
-    # file would shadow later fixes to the shipped one indefinitely.
     if ((!force)) && [[ -r $fragment ]] && cmp -s "$rendered" "$fragment" &&
       [[ -r $host_config ]] && cmp -s "$host_source" "$host_config" &&
       [[ -r $unit ]] && cmp -s "$unit_source" "$unit" &&
@@ -326,7 +274,6 @@ EOF
       exit 1
     fi
 
-    # Confirm the output really landed on the sink this tuning was measured for.
     for _ in {1..20}; do
       [[ "$(tuning_downstream_sink)" == "$speaker_sink" ]] && break
       sleep 0.25
@@ -343,8 +290,6 @@ EOF
     fi
 
     pactl set-default-sink "$sink_name" >/dev/null 2>&1
-    # A default sink only captures newly created streams, so anything already
-    # playing would keep bypassing the tuning until its app was restarted.
     move_apps_to "$sink_name"
 
     echo "Speakers now play through the tuning."

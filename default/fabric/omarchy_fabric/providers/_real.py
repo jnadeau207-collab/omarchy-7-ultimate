@@ -13,7 +13,6 @@ from ._probe import probe_error
 
 ResourceLoader = Callable[[], Awaitable[list[Mapping[str, Any]]]]
 
-
 class ReadOnlyProbeBackend:
     def __init__(self, domain: str, loader: ResourceLoader) -> None:
         self.domain = domain

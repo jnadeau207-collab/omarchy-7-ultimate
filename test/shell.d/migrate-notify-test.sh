@@ -22,10 +22,6 @@ fi
 SH
 chmod +x "$stub_bin/omarchy-migrate"
 
-# Waiting for the notification server is the notifier's one long pause, so it is
-# also where an update can start underneath it. Stand one up from inside the
-# wait to prove the notifier re-checks afterwards instead of sending a toast it
-# decided to send before the update existed.
 cat >"$stub_bin/omarchy-notification-wait" <<'SH'
 #!/bin/bash
 [[ ${OMARCHY_TEST_LOCK_DURING_WAIT:-0} == 1 ]] || exit 0
@@ -97,9 +93,6 @@ grep -Fx 'Click to run 1 pending migration.' "$test_tmp/notify-args" >/dev/null 
 grep -Fx '' "$test_tmp/notify-args" >/dev/null || fail "migration notifier includes the large-slot glyph"
 pass "migration notifier uses the actionable notification format"
 
-# `omarchy update` applies migrations itself, so nothing may notify about them
-# while it holds its lock -- a stale trigger firing mid-transaction is exactly
-# how the retired omarchy-update-user-notify.path used to interrupt updates.
 rm -f "$test_tmp/notify-args"
 update_lock="$runtime_dir/omarchy-update.lock"
 : >"$update_lock"
@@ -133,9 +126,6 @@ fi
   fail "migration notifier sends no notification when an update starts while it waits for the notification server"
 pass "migration notifier re-checks for an update after waiting for the notification server"
 
-# The guard must never read a lock outside this user's runtime directory: a
-# shared /tmp path belongs to whoever created it first, so honouring it would
-# let one user silence another user's critical notification.
 rm -f "$test_tmp/notify-args" /tmp/omarchy-update.lock
 foreign_lock="$test_tmp/foreign/omarchy-update.lock"
 mkdir -p "$(dirname "$foreign_lock")"
@@ -151,10 +141,6 @@ pass "migration notifier ignores update locks outside its own runtime directory"
 
 exec {foreign_lock_fd}>&-
 
-# The notifier is a Type=oneshot with no start timeout, so it must not stay
-# activating until the toast is answered. Handing the click command to the shell
-# is what lets it exit immediately -- and what keeps the toast working after the
-# shell restart an update performs.
 rm -f "$test_tmp/notify-args"
 run_notify 1 >/dev/null 2>&1
 notify_args_written || fail "migration notifier sends the notification before exiting"

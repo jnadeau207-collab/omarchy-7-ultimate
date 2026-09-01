@@ -25,7 +25,6 @@ cat >"$FAKE_OMARCHY/bin/omarchy-agent-usage-skipped" <<'EOF'
 echo '{"id":"skipped"}'
 EOF
 
-# The updater itself lives in the same namespace as the collectors it globs.
 cat >"$FAKE_OMARCHY/bin/omarchy-agent-usage-update" <<'EOF'
 #!/bin/bash
 echo '{"id":"update"}'

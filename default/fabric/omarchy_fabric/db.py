@@ -138,7 +138,6 @@ MIGRATIONS: dict[int, tuple[str, ...]] = {
     ),
 }
 
-
 def canonical_json(value: Any) -> str:
     return json.dumps(
         value,
@@ -148,10 +147,8 @@ def canonical_json(value: Any) -> str:
         sort_keys=True,
     )
 
-
 def request_fingerprint(value: Mapping[str, Any]) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
-
 
 class FabricDatabase:
     def __init__(self, path: Path) -> None:

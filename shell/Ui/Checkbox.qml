@@ -1,9 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Labeled checkbox. The caller owns the value: bind `checked` and flip it in
-// `toggled()`, mirroring Toggle/ToggleSwitch. The whole row is the hitbox —
-// Windows users click the label, not the 14px square.
 Item {
   id: root
 

@@ -6,9 +6,6 @@ import qs.Commons
 import "AppSearch.js" as AppSearch
 import "JumpList.js" as JumpList
 
-// Shared desktop-application library: the sorted entry list with hidden-entry
-// filtering, the icon fallback index, launch feedback, and entry removal.
-// Injected as shell.appLibrary; the menu's Apps submenu is the consumer.
 Item {
   id: root
 
@@ -17,10 +14,6 @@ Item {
   property var configuredHiddenEntryIds: ({})
   property var desktopHiddenEntryIds: ({})
 
-  // Maps an icon name to a file on disk (e.g. "omacut" -> ".../apps/omacut.svg").
-  // Used as a fallback for icons that Qt's themed lookup misses because they were
-  // installed after this process started (its icon cache never re-scans). Refreshed
-  // whenever the app list changes, so newly installed apps get their icon live.
   property var iconIndex: ({})
   property var pendingIconIndex: ({})
   property var actionIndex: ({})
@@ -30,14 +23,9 @@ Item {
   property int launchSerial: 0
   property int launchToplevelCount: 0
   property var launchActiveToplevel: null
-  // True while the launch OSD is on screen. It outlives the launch that opened
-  // it: the OSD shows with duration 0, so only closeLaunchFeedback() takes it
-  // down.
   property bool launchOsdOpen: false
   property string launchOsdMessage: ""
 
-  // Emitted whenever the visible application set may have changed: desktop
-  // entries appeared or vanished, or the hidden-entry filters reloaded.
   signal appsChanged()
 
   function entryName(entry) {
@@ -89,8 +77,6 @@ Item {
     if (value.length === 0) return Quickshell.iconPath("application-x-executable", true)
     if (value.indexOf("file://") === 0 || value.indexOf("image://") === 0) return value
     if (value.charAt(0) === "/") return Util.fileUrl(value)
-    // Prefer the context-limited app/device index. An unconstrained themed
-    // lookup can resolve an app name such as "zoom" to an action icon instead.
     var found = root.iconIndex[value]
     if (found) return Util.fileUrl(found)
     var aliased = JumpList.iconNameFor(value)
@@ -108,8 +94,6 @@ Item {
       var themedEntry = Quickshell.iconPath(entryIcon, true)
       if (themedEntry.length > 0) return themedEntry
     }
-    // Reverse-DNS compositor ids are not icon names. A themed fallback here
-    // painted org.omarchy.terminal as the Settings gear.
     if (value.indexOf(".") < 0) {
       var themed = Quickshell.iconPath(value, true)
       if (themed.length > 0) return themed
@@ -117,8 +101,6 @@ Item {
     return Quickshell.iconPath("application-x-executable", true)
   }
 
-  // The shell may start before first-install packages have finished placing
-  // their icons; consumers call this when they open so icons appear live.
   function refreshIcons() {
     if (!iconIndexScan.running) iconIndexScan.running = true
   }
@@ -147,10 +129,6 @@ Item {
     if (!id) return
     root.recordLaunch(id)
     root.beginLaunchFeedback(name)
-    // Product launchers live under $OMARCHY_PATH/bin. gtk-launch resolves the
-    // desktop Exec name against uwsm-app's PATH, which does not search that
-    // tree, so Superbar/Start pins of omarchy-* apps fail as "not executable"
-    // / "command not found". Jump actions already quote the full path.
     var command = JumpList.actionCommand(root.entryByDesktopId(id))
     if (command) {
       var space = command.indexOf(" ")
@@ -160,10 +138,6 @@ Item {
         return
       }
     }
-    // Start gtk-launch inside a scope under app-graphical.slice so apps do not
-    // inherit wayland-wm@.service. Keeping gtk-launch as the desktop-entry
-    // resolver supports IDs with spaces and entries that UWSM rejects.
-    // Keep the .desktop suffix or ids like org.telegram.desktop won't resolve.
     Util.execDetached("uwsm-app -- gtk-launch " + Util.shellQuote(id + ".desktop"))
   }
 
@@ -185,8 +159,6 @@ Item {
       return
     }
     root.beginLaunchFeedback(name || action.name || desktopId)
-    // Desktop Actions keep their Exec line, but omarchy-* verbs live under
-    // $OMARCHY_PATH/bin. uwsm-app's PATH does not search that tree.
     Util.execDetached("uwsm-app -- " + root.launchCommand(action.command))
   }
 
@@ -225,10 +197,6 @@ Item {
   }
 
   function iconIndexScanCommand() {
-    // List app/device icons across the XDG icon dirs and /usr/share/pixmaps as
-    // "<path>" lines. Some desktop entries, such as Print Settings, use device
-    // icons like "printer" instead of app icons. SVGs are emitted before PNGs
-    // so the parser, which keeps the first hit per name, prefers scalable icons.
     return [
       'dirs="$HOME/.icons $HOME/.local/share/icons";',
       'IFS=":"; for d in ${XDG_DATA_DIRS:-/usr/local/share:/usr/share}; do dirs="$dirs $d/icons"; done; unset IFS;',
@@ -292,10 +260,6 @@ Item {
     property string text: ""
   }
 
-  // Both scans must run in non-login shells. A login shell sources the user's
-  // profile, and tools like mise touch ~/.local/share on activation — a
-  // directory the desktop-entry watcher monitors — so every scan would
-  // trigger the next one, pinning a core at idle.
   Process {
     id: hiddenEntryScan
     command: ["bash", "-c", root.hiddenEntryScanCommand()]
@@ -309,8 +273,6 @@ Item {
     command: ["bash", "-c", root.iconIndexScanCommand()]
     stdout: SplitParser { onRead: function(line) { root.indexIconLine(line) } }
     onStarted: root.pendingIconIndex = ({})
-    // Swapping the property re-evaluates every iconSource() binding, so
-    // newly found icons appear without rebuilding the list.
     onExited: root.iconIndex = root.pendingIconIndex
   }
 
@@ -328,8 +290,6 @@ Item {
     }
   }
 
-  // Coalesces bursts of app-list changes (a package install touches many
-  // entries) into a single rescan.
   Timer {
     id: iconIndexDebounce
     interval: 750

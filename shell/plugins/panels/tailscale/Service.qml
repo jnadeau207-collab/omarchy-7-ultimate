@@ -13,9 +13,6 @@ Item {
   property bool running: false
   property bool needsLogin: false
 
-  // Optimistic off state so the UI reacts the instant you click, rather than
-  // waiting for the next status refresh. _desired is -1 while we just follow
-  // the real state, or 0/1 while a toggle is still catching up.
   property int _desired: -1
   readonly property bool active: _desired === -1 ? running : (_desired === 1)
   property bool refreshing: false
@@ -185,10 +182,6 @@ Item {
       accountsProcess.running = true
       launched = true
     }
-    // Arm on the launch that needs watching and leave it alone after that.
-    // Restarting it every refresh pushes the deadline out ahead of a hung
-    // process forever once the refresh interval is shorter than the timeout,
-    // and refreshIntervalSec goes down to five seconds.
     if (launched && !pollWatchdog.running) pollWatchdog.start()
   }
 
@@ -237,7 +230,6 @@ Item {
 
     backendState = parsed.backendState
     running = parsed.running
-    // Reality caught up to the pending toggle — stop overriding.
     if (_desired !== -1 && running === (_desired === 1)) _desired = -1
     needsLogin = parsed.needsLogin
     authUrl = parsed.authUrl
@@ -287,8 +279,6 @@ Item {
   }
 
   function down() {
-    // No progress status here — the greyed icon and hero line already convey
-    // the optimistic off; only surface a message if the command fails.
     _desired = 0
     runAction(["tailscale", "down"])
   }
@@ -368,7 +358,6 @@ Item {
     var match = String(text || "").match(/https?:\/\/\S+/)
     var url = match && match[0] ? match[0] : (allowFallback === true ? authUrl : "")
     if (url !== "") {
-      // Turning on ended up needing browser auth — stop pretending we're up.
       _desired = -1
       _loginUrlOpened = true
       _loginInProgress = false
@@ -396,9 +385,6 @@ Item {
   }
 
   Timer {
-    // After a fresh boot the startup poll usually lands before tailscaled has
-    // connected, which left the icon stale until the next periodic refresh.
-    // Poll quickly until the service shows up, or give up after ~30 seconds.
     id: startupRamp
     property int ticks: 0
     interval: 2000
@@ -419,11 +405,6 @@ Item {
   }
 
   Timer {
-    // Every poll is skipped while its own process is still running, so one that
-    // never exits — tailscale can hang on a network that is coming and going —
-    // silently stops the panel refreshing at all, and it stays stopped. Reap
-    // anything still running well inside the refresh interval so the next tick
-    // starts clean.
     id: pollWatchdog
     interval: 15000
     repeat: false

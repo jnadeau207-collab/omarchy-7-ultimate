@@ -2,13 +2,6 @@
 
 # omarchy:summary=Detect whether the computer has an NVIDIA GPU without GSP firmware (Maxwell/Pascal/Volta).
 
-# Bounded at both ends, because the callers install the 580xx driver on a match
-# and it supports exactly this span. GSP firmware arrived with Turing, which is
-# also where device IDs cross 0x1e00. Maxwell opens at 0x1340, one ID after the
-# last Kepler part; anything older needs a legacy driver we don't package.
-#
-# Read the cached sysfs IDs rather than lspci, which reads PCI config space and
-# resumes runtime-suspended GPUs.
 pci_devices_path="${OMARCHY_PCI_DEVICES_PATH:-/sys/bus/pci/devices}"
 
 shopt -s nullglob

@@ -12,7 +12,6 @@ from helper import FABRIC_ROOT
 from omarchy_fabric.db import FabricDatabase, MIGRATIONS
 from omarchy_fabric.models import CURRENT_DATABASE_SCHEMA, FabricError
 
-
 def create_version_one(path: Path) -> None:
     connection = sqlite3.connect(path, isolation_level=None)
     connection.execute("BEGIN IMMEDIATE")
@@ -29,7 +28,6 @@ def create_version_one(path: Path) -> None:
         raise
     finally:
         connection.close()
-
 
 def create_version_two(path: Path) -> None:
     create_version_one(path)
@@ -48,7 +46,6 @@ def create_version_two(path: Path) -> None:
         raise
     finally:
         connection.close()
-
 
 class DatabaseTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -261,7 +258,6 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual([event["payload"]["number"] for event in replay], [2, 3, 4])
         finally:
             database.close()
-
 
 if __name__ == "__main__":
     unittest.main()

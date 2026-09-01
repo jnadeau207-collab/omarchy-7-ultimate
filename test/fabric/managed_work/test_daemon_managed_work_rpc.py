@@ -20,7 +20,6 @@ if os.name != "nt":
     from omarchy_fabric.models import RpcRequest
     from omarchy_fabric.protocol import FabricClient
 
-
 VIEWS = (
     "agent.overview",
     "agent.tasks",
@@ -36,7 +35,6 @@ VIEWS = (
     "agent.troubleshooting",
 )
 
-
 def budget() -> dict[str, object]:
     return {
         "timeSeconds": 60,
@@ -44,7 +42,6 @@ def budget() -> dict[str, object]:
         "costMicrounits": 0,
         "network": False,
     }
-
 
 @unittest.skipIf(os.name == "nt", "daemon imports require the Linux runtime")
 class DaemonManagedWorkContractTests(unittest.IsolatedAsyncioTestCase):
@@ -272,7 +269,6 @@ class DaemonManagedWorkContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("system.info.read", executed["result"]["capability"])
         self.assertEqual("succeeded", executed["task"]["state"])
 
-
 @unittest.skipUnless(
     hasattr(socket, "SO_PEERCRED") and hasattr(os, "getuid"),
     "requires Linux SO_PEERCRED",
@@ -480,7 +476,6 @@ class DaemonManagedWorkMetalTests(unittest.IsolatedAsyncioTestCase):
                 {"version": "v0", "view": "agent.activity"},
             )
         self.assertEqual("ledger.integrity-failed", corrupt.exception.code)
-
 
 if __name__ == "__main__":
     unittest.main()

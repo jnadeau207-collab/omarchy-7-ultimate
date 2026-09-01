@@ -12,7 +12,6 @@ def start_chrome() -> dict:
   root = Path(__file__).resolve().parents[2]
   return json.loads((root / "default" / "ultimate" / "start-chrome.json").read_text(encoding="utf-8"))
 
-
 HELPER = Path(__file__).resolve().parent / "hyprbars-pointer-proof.py"
 spec = importlib.util.spec_from_file_location("hyprbars_pointer_proof", HELPER)
 mod = importlib.util.module_from_spec(spec)
@@ -32,26 +31,21 @@ wait_until = mod.wait_until
 tuck_cursor_windows = mod.tuck_cursor_windows
 restore_cursor_windows = mod.restore_cursor_windows
 
-
 def shell(*args: str, timeout: float = 8):
   return as_user(["omarchy-shell", *args], wait=True, timeout=timeout)
-
 
 def start_open() -> bool:
   return layer_named("omarchy-start")
 
-
 def hide_start() -> None:
   shell("shell", "hide", "omarchy.ultimate-start")
   time.sleep(0.2)
-
 
 def summon_start() -> None:
   proc = shell("shell", "summon", "omarchy.ultimate-start", "{}")
   if proc.returncode != 0:
     raise ProofError(f"summon Start failed: {proc.stdout} {proc.stderr}")
   wait_until("Start overlay mapped", 8, start_open)
-
 
 def click(pointer: AbsPointer, x: int, y: int, gw: int, gh: int) -> None:
   pointer.move(x, y, gw, gh)
@@ -71,13 +65,11 @@ def click(pointer: AbsPointer, x: int, y: int, gw: int, gh: int) -> None:
   pointer.button(False)
   time.sleep(0.4)
 
-
 def close_proof_feet() -> None:
   for client in clients():
     blob = " ".join(str(client.get(k) or "") for k in ("title", "initialTitle", "class"))
     if "omarchy-start-clickthrough" in blob:
       as_user(["omarchy-shell", "window", "close", client["address"]], wait=True, timeout=5)
-
 
 def main() -> int:
   report: dict = {"ok": False}
@@ -256,7 +248,6 @@ def main() -> int:
       hypr("eval", 'hl.device({ name = "ydotoold-virtual-device-1", enabled = true })')
     except Exception:
       pass
-
 
 if __name__ == "__main__":
   sys.exit(main())

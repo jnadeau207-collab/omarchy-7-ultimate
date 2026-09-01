@@ -20,9 +20,6 @@ Item {
   readonly property real mid: (root.iconSize - dotSize) / 2
   readonly property real end: root.iconSize - dotSize
 
-  // Native rendering of the Tailscale mark from the SVG: a 3×3 dot grid
-  // with the inactive dots faded. This avoids Qt SVG/effect rendering quirks
-  // in tiny bar slots while keeping the official silhouette.
   Dot { x: 0; y: 0; opacity: 0.24 }
   Dot { x: root.mid; y: 0; opacity: 0.24 }
   Dot { x: root.end; y: 0; opacity: 0.24 }

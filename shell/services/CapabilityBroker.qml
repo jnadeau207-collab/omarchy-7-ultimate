@@ -2,8 +2,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Agent Fabric minimum: catalog, permission, ledger, dispatch to typed providers.
-// WindowService is the first provider. UI and agents share the same verbs.
 QtObject {
   id: broker
 

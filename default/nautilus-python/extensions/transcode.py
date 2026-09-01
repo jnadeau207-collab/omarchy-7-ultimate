@@ -7,13 +7,11 @@ require_version("Nautilus", "4.1")
 
 from gi.repository import GObject, Gio, Nautilus
 
-
 SUPPORTED_MIME_PREFIXES = ("image/", "video/")
 SUPPORTED_EXTENSIONS = {
     ".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".avif",
     ".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi",
 }
-
 
 class TranscodeAction(GObject.GObject, Nautilus.MenuProvider):
     def _launch_transcode(self, paths):

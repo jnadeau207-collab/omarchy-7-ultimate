@@ -78,7 +78,6 @@ SCHEMA_FILES = (
     "defaults-operation-result-v0.json",
 )
 
-
 def _load_json(path: Path, maximum: int = MAX_CONFIG_BYTES) -> dict[str, Any]:
     raw = read_regular_file_no_follow(Path(path), maximum)
 
@@ -98,20 +97,16 @@ def _load_json(path: Path, maximum: int = MAX_CONFIG_BYTES) -> dict[str, Any]:
         raise ValueError("JSON document must be an object")
     return document
 
-
 def _schema_directory() -> Path:
     return Path(__file__).resolve().parents[3] / "schema"
-
 
 def _load_schemas() -> dict[str, Mapping[str, Any]]:
     documents = [_load_json(_schema_directory() / name, 128 * 1024) for name in SCHEMA_FILES]
     return {document["$id"]: document for document in documents}
 
-
 SCHEMAS = _load_schemas()
 STATE_SCHEMA = SCHEMAS[STATE_CONTRACT_ID]
 STATE_VALIDATOR = Draft202012Validator(STATE_SCHEMA)
-
 
 def _validate_database_schema(state: Mapping[str, Any]) -> None:
     wrapper = {"resourceId": RESOURCE_ID, "revision": state_revision(state), "value": thaw(state)}
@@ -120,14 +115,11 @@ def _validate_database_schema(state: Mapping[str, Any]) -> None:
         path = ".".join(str(part) for part in error.absolute_path)
         raise ValueError(f"default database schema invalid at {path or '<root>'}")
 
-
 def _association_id(kind: str, key: str) -> str:
     return stable_resource_id(DOMAIN, "association", f"{kind}\0{key}")
 
-
 def _application_id(desktop_id: str) -> str:
     return stable_resource_id(DOMAIN, "app", desktop_id)
-
 
 def _association_identity(association: Mapping[str, Any]) -> str:
     return state_revision({
@@ -138,7 +130,6 @@ def _association_identity(association: Mapping[str, Any]) -> str:
         "source": association["source"],
         "status": association["status"],
     })
-
 
 def validate_database(state: Mapping[str, Any]) -> None:
     _validate_database_schema(state)
@@ -194,7 +185,6 @@ def validate_database(state: Mapping[str, Any]) -> None:
         if association["identity"] != _association_identity(association):
             raise ValueError("association revision is inconsistent")
 
-
 def canonicalize_database(state: Mapping[str, Any]) -> dict[str, Any]:
     normalized = deepcopy(dict(state))
     for app in normalized["applications"]:
@@ -206,7 +196,6 @@ def canonicalize_database(state: Mapping[str, Any]) -> dict[str, Any]:
     normalized["associations"] = sorted(normalized["associations"], key=lambda item: item["id"])
     validate_database(normalized)
     return normalized
-
 
 class RealDefaultsBackend:
     """No-follow desktop inventory plus code-owned fixed-argv xdg-mime reads."""
@@ -466,7 +455,6 @@ class RealDefaultsBackend:
             ("system", Path("/usr/share/applications")),
         )
 
-
 def _read_bounded(descriptor: int, maximum: int) -> bytes:
     chunks: list[bytes] = []
     total = 0
@@ -480,7 +468,6 @@ def _read_bounded(descriptor: int, maximum: int) -> bytes:
             raise ValueError("desktop file exceeds bound")
     return b"".join(chunks)
 
-
 def _valid_desktop_id(value: str) -> bool:
     return (
         isinstance(value, str)
@@ -491,7 +478,6 @@ def _valid_desktop_id(value: str) -> bool:
         and "/" not in value
         and "\\" not in value
     )
-
 
 def _parse_desktop(raw: bytes, desktop_id: str, source: str, file_stat: os.stat_result) -> dict[str, Any] | None:
     text = raw.decode("utf-8", errors="strict")
@@ -545,14 +531,12 @@ def _parse_desktop(raw: bytes, desktop_id: str, source: str, file_stat: os.stat_
         "reason": None,
     }
 
-
 def _safe_display_field(value: str, maximum: int) -> str:
     if not value or len(value) > maximum:
         raise ValueError("desktop display field is outside its bound")
     if any(unicodedata.category(character).startswith("C") for character in value):
         raise ValueError("desktop display field contains a control character")
     return value
-
 
 def _directory_is_safe(path: Path) -> bool:
     try:
@@ -564,7 +548,6 @@ def _directory_is_safe(path: Path) -> bool:
         return stat.S_ISDIR(opened.st_mode) and not stat.S_ISLNK(opened.st_mode)
     except (OSError, ValueError):
         return False
-
 
 def _sanitized_probe_error(error: Exception) -> FabricError:
     normalized = probe_error(DOMAIN, error)
@@ -584,7 +567,6 @@ def _sanitized_probe_error(error: Exception) -> FabricError:
         recovery_actions=normalized.recovery_actions,
     )
 
-
 def _reason(
     code: str,
     title: str,
@@ -596,7 +578,6 @@ def _reason(
 ) -> FabricError:
     return FabricError(code, title, explanation, detail=detail, retryable=retryable, recovery_actions=recovery)
 
-
 def _metadata(action: str, snapshot: StateSnapshot) -> dict[str, Any]:
     return {
         "schemaVersion": "v0",
@@ -607,10 +588,8 @@ def _metadata(action: str, snapshot: StateSnapshot) -> dict[str, Any]:
         "revision": state_revision(thaw(snapshot.state)) if snapshot.state is not None else None,
     }
 
-
 def _inspect(_arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     return {**_metadata("inspect", snapshot), "state": thaw(snapshot.state) if snapshot.state is not None else None}
-
 
 def _query(kind: str, key: str, action: str, snapshot: StateSnapshot) -> dict[str, Any]:
     association = None
@@ -621,14 +600,11 @@ def _query(kind: str, key: str, action: str, snapshot: StateSnapshot) -> dict[st
             application = next((thaw(app) for app in snapshot.state["applications"] if app["id"] == association["defaultAppId"]), None)
     return {**_metadata(action, snapshot), "association": association, "application": application}
 
-
 def _mime_query(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     return _query("mime", arguments["mimeType"], "mime.query", snapshot)
 
-
 def _protocol_query(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
     return _query("protocol", arguments["scheme"], "protocol.query", snapshot)
-
 
 def _association(state: Mapping[str, Any], *, kind: str | None = None, key: str | None = None, association_id: str | None = None) -> Mapping[str, Any]:
     matches = [
@@ -642,13 +618,11 @@ def _association(state: Mapping[str, Any], *, kind: str | None = None, key: str 
         raise _precondition("The selected default association is read-only.", matches[0]["id"])
     return matches[0]
 
-
 def _application(state: Mapping[str, Any], app_id: str) -> Mapping[str, Any]:
     matches = [app for app in state["applications"] if app["id"] == app_id]
     if len(matches) != 1 or matches[0]["state"] != "available":
         raise _precondition("The selected application is unavailable.", app_id)
     return matches[0]
-
 
 def _precondition(explanation: str, detail: str) -> FabricError:
     return FabricError(
@@ -660,18 +634,14 @@ def _precondition(explanation: str, detail: str) -> FabricError:
         recovery_actions=("defaults.inspect",),
     )
 
-
 def _normalize_mime(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"mimeType": arguments["mimeType"].lower(), "appId": arguments["appId"]}
-
 
 def _normalize_protocol(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"scheme": arguments["scheme"].lower(), "appId": arguments["appId"]}
 
-
 def _normalize_clear(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"associationId": arguments["associationId"]}
-
 
 def _set(kind: str, key_name: str):
     def propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
@@ -689,7 +659,6 @@ def _set(kind: str, key_name: str):
 
     return propose
 
-
 def _clear(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     association = _association(state, association_id=arguments["associationId"])
@@ -698,7 +667,6 @@ def _clear(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str
     association["status"] = "unconfigured"
     association["identity"] = _association_identity(association)
     return state
-
 
 def _guard_target(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> tuple[Mapping[str, Any], Mapping[str, Any] | None]:
     if "mimeType" in arguments:
@@ -710,7 +678,6 @@ def _guard_target(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> t
     app = _application(current, arguments["appId"]) if "appId" in arguments else None
     return association, app
 
-
 def _guards(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     association, app = _guard_target(current, arguments)
     return {
@@ -721,7 +688,6 @@ def _guards(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[st
         "executor": {"mode": "typed-helper", "commandId": "defaults.apply-v0", "shell": False},
     }
 
-
 def _summary(label: str):
     def summarize(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
         if current == proposed:
@@ -729,7 +695,6 @@ def _summary(label: str):
         return f"Apply the typed {label} association after rechecking application and association revisions."
 
     return summarize
-
 
 OPERATIONS = {
     "mime.set": OperationSpec("mime.set", _normalize_mime, _set("mime", "mimeType"), _summary("MIME"), _guards),
@@ -739,10 +704,8 @@ OPERATIONS = {
 
 READ_HANDLERS = {"inspect": _inspect, "mime.query": _mime_query, "protocol.query": _protocol_query}
 
-
 def _manifest() -> Mapping[str, Any]:
     return _load_json(Path(__file__).with_name("manifest-v0.json"), 128 * 1024)
-
 
 def _provider(backend: Any) -> StateDomainProvider:
     return StateDomainProvider(
@@ -758,7 +721,6 @@ def _provider(backend: Any) -> StateDomainProvider:
         read_handlers=READ_HANDLERS,
         operations=OPERATIONS,
     )
-
 
 def build_provider(
     *,
@@ -779,7 +741,6 @@ def build_provider(
             )
         config_path = Path(omarchy_path) / "default" / "ultimate" / "files" / "default-associations-v0.json"
     return _provider(RealDefaultsBackend(home, config_path, runner))
-
 
 def build_fake_provider(
     state: Mapping[str, Any],

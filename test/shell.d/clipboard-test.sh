@@ -324,8 +324,6 @@ capture_output=$(printf 'a\fb' | iconv -f UTF-8 -t UTF-16LE | XDG_RUNTIME_DIR="$
 [[ $capture_output == '{"type":"text","text":"a\fb"}' ]] || fail "clipboard capture preserves UTF-16LE form feeds"
 pass "clipboard capture preserves UTF-16LE form feeds"
 
-# BOM-less UTF-16LE "A" is byte-identical to UTF-8 "A\0". The padding
-# heuristic intentionally resolves that ambiguity as UTF-16.
 capture_output=$(printf 'A' | iconv -f UTF-8 -t UTF-16LE | XDG_RUNTIME_DIR="$TMPDIR" XDG_STATE_HOME="$TMPDIR/state" PATH="$TMPDIR/bin:$PATH" "$ROOT/shell/plugins/clipboard/capture.sh" text)
 [[ $capture_output == '{"type":"text","text":"A"}' ]] || fail "clipboard capture decodes exact NUL-padded UTF-16LE text"
 pass "clipboard capture decodes exact NUL-padded UTF-16LE text"

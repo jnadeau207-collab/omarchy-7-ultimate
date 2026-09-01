@@ -1,9 +1,5 @@
 echo "Repair the pre-suspend lock monitor's graphical session environment"
 
-# The old unit started before UWSM finished importing OMARCHY_PATH and
-# WAYLAND_DISPLAY. A full unit retained from before Omarchy 4 also shadows the
-# corrected package unit, so add the lifecycle constraints as a drop-in without
-# discarding any user customizations.
 user_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 sleep_lock_unit="$user_config_home/systemd/user/omarchy-sleep-lock.service"
 sleep_lock_dropin_dir="$user_config_home/systemd/user/omarchy-sleep-lock.service.d"
@@ -20,9 +16,6 @@ if [[ -f $sleep_lock_unit ]]; then
     'ConditionEnvironment=WAYLAND_DISPLAY' >"$sleep_lock_dropin"
 fi
 
-# With no live user manager there cannot be an inherited monitor to replace.
-# The package unit (and compatibility drop-in, when needed) will be loaded by
-# the fresh manager at the next login.
 user_manager_socket="${XDG_RUNTIME_DIR:-/run/user/$UID}/systemd/private"
 if ! error=$(systemctl --user show-environment 2>&1); then
   if [[ -S $user_manager_socket ]]; then
@@ -64,9 +57,6 @@ if [[ $graphical_state == "active" ]]; then
     exit 1
   fi
 else
-  # A pre-fix monitor was not tied to graphical-session.target and can outlive
-  # logout under a lingering user manager. Stop it so the next target start
-  # creates a process with the next graphical session's environment.
   if ! error=$(systemctl --user stop omarchy-sleep-lock.service 2>&1); then
     echo "Could not stop stale omarchy-sleep-lock.service: $error"
     echo "The pre-suspend lock repair will be retried by omarchy-migrate."

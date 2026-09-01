@@ -4,9 +4,6 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-# The fixture below uses Unicode block art and exercises character-to-cell
-# accounting. Establish the locale it requires so non-login invocations (for
-# example, an SSH test run with LANG unset) do not make Bash count UTF-8 bytes.
 export LC_ALL=C.UTF-8
 
 tmp_dir="$(mktemp -d)"
@@ -37,9 +34,6 @@ mapfile -t expected <"$logo"
 (( ${#SHEEN_FRAMES[@]} > ${#expected[0]} )) || fail "the glint takes more frames than the logo is wide" "${#SHEEN_FRAMES[@]}"
 pass "the glint takes more frames than the logo is wide"
 
-# Every frame is the same logo in different colours. A frame that changed a
-# character, reached past the logo, or lit more than the band is wide would be
-# drawing over whatever the caller put beside it, and nothing on screen would say so.
 esc=$'\e'
 band_width=$(( SHEEN_HALF * 2 + 1 ))
 misplaced=0 rewritten=0 overrun=0 washed=0 unbased=0 widest_glint=0 first_lit=0
@@ -83,7 +77,6 @@ pass "the sheen only recolours the logo, never rewrites it"
 (( overrun == 0 )) || fail "no frame reaches past the logo" "$overrun overruns"
 pass "no frame reaches past the logo"
 
-# A band of light leaning across the logo, not a wash over half of it.
 (( washed == 0 )) || fail "the glint stays a band the whole way across" "$washed rows lit wider than $band_width"
 pass "the glint stays a band the whole way across"
 
@@ -105,16 +98,9 @@ done
 [[ ${SHEEN_FRAMES[-1]} == "$settled" ]] || fail "a glint settles back to the logo it was given"
 pass "a glint settles back to the logo it was given"
 
-# A terminal that renders bold text in bright colours — foot's bold-text-in-bright
-# does exactly this — maps a bold regular colour to its bright counterpart, so a
-# band using one of those vanishes into a logo drawn in the matching regular
-# colour, and nobody sees the animation at all.
 [[ ! $SHEEN_BAND =~ \[9[0-6]m ]] || fail "the band avoids the colours a bold logo can brighten into" "$(printf '%q' "$SHEEN_BAND")"
 pass "the band avoids the colours a bold logo can brighten into"
 
-# One character has to be one cell, or putting a row back moves what follows it.
-# Everything that breaks that is refused by the one check, so everything that
-# breaks it is tested against the one check.
 write_logo '$1████' '  ████'
 refuses "a logo built from colour placeholders is left still"
 write_logo "$(printf 'A\tB')" 'CC'
@@ -128,8 +114,6 @@ refuses "a logo with a combining mark is left still"
 write_logo "$(printf 'AA\xf0\x9f\x91\xa8\xe2\x80\x8d\xf0\x9f\x91\xa9BB')" 'CCCCCCC'
 refuses "a logo with a joined emoji is left still"
 
-# The same check answers for a shell that is counting bytes rather than
-# characters, which is the only thing that would make a block logo unsafe here.
 write_logo '████████' '████████'
 byte_counting=$(LC_ALL=C bash -c 'source "$1"; sheen_build "$2" 3 3 "" 120 && echo animated || echo still' _ "$animation" "$logo")
 [[ $byte_counting == "still" ]] || fail "a shell counting bytes leaves a block logo still" "$byte_counting"

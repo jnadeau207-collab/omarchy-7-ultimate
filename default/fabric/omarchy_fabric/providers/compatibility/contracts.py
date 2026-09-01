@@ -13,10 +13,8 @@ DIGEST = r"^sha256:[0-9a-f]{64}$"
 ROUTES = ["native", "pwa", "known-good-recipe", "game-proton", "isolated-app", "vm"]
 PERMISSIONS = ["network", "audio", "camera", "microphone", "notifications", "filesystem-home", "filesystem-removable", "devices", "session"]
 
-
 def _doc(name: str, properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
     return {"$schema": DIALECT, "$id": f"urn:omarchy:fabric:provider:compatibility:{name}:v0", "x-omarchy-version": VERSION, "type": "object", "required": required, "properties": properties, "additionalProperties": False}
-
 
 REQUEST = {
     "type": "object", "required": ["id", "name", "workloadType", "architecture", "artifact", "permissions", "constraints"],
@@ -102,7 +100,6 @@ RESULT_PROPERTIES = {
 }
 result = _doc("operation-result", RESULT_PROPERTIES, list(RESULT_PROPERTIES))
 CONTRACTS[result["$id"]] = result
-
 
 def ref(name: str) -> dict[str, str]:
     return {"id": f"urn:omarchy:fabric:provider:compatibility:{name}:v0", "version": VERSION}

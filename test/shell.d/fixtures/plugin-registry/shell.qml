@@ -216,7 +216,6 @@ ShellRoot {
     registry.setEnabled("third.widget", true, { section: "right", index: 0 })
     root.assertDeepEqual(root.config.bar.layout.right, [{ id: "third.widget" }], "enabling with placement is one registry transition")
 
-    // A bar the placement's neighbour is not on still gets the widget.
     root.config = {
       version: 1,
       bar: { layout: { left: [], center: [{ id: "omarchy.weather" }], right: [] } },
@@ -243,7 +242,6 @@ ShellRoot {
       "put falls back to the section anchor when its target is missing"
     )
 
-    // The anchor sits after the clone, so a fallback would land elsewhere.
     root.config = {
       version: 1,
       bar: { layout: { left: [], center: [{ id: "local.first-widget" }, { id: "omarchy.weather" }], right: [] } },
@@ -260,7 +258,6 @@ ShellRoot {
       "a clone stands in for the widget it was cloned from as a placement target"
     )
 
-    // The anchor a fallback lands against is as clonable as the target.
     root.config = {
       version: 1,
       bar: { layout: { left: [], center: [{ id: "local.weather" }, { id: "omarchy.clock" }], right: [] } },
@@ -303,7 +300,6 @@ ShellRoot {
       "put leaves a clone of the widget it was asked to place alone"
     )
 
-    // Refusing an id the scan has not reached would fail the migration.
     root.config = { version: 1, bar: { layout: { left: [], center: [], right: [] } }, plugins: [] }
     registry.scanning = true
     root.assertEqual(registry.putBarWidget("third.absent", {}), "not ready", "put waits for a scan that has not reached its widget")
@@ -397,8 +393,6 @@ ShellRoot {
     registry.setEnabled("third.panel", true)
     root.assertDeepEqual(root.config.plugins, [{ id: "third.panel" }], "setEnabled repairs missing plugin config shape")
 
-    // A built-in loads by default, so switching one off is recorded the other
-    // way round and has to survive round-tripping back on.
     root.config = { version: 1, bar: { layout: { left: [], center: [], right: [] } }, plugins: [] }
     registry.setEnabled("omarchy.grouped-panel", false)
     root.assertDeepEqual(root.config.disabledPlugins, ["omarchy.grouped-panel"], "disabling a first-party plugin records it")
@@ -409,9 +403,6 @@ ShellRoot {
     root.assertTrue(registry.isEnabled("omarchy.grouped-panel"), "a first-party plugin returns to enabled")
     root.assertDeepEqual(root.config.plugins, [], "re-enabling a first-party plugin adds no redundant entry")
 
-    // A widget's place in the bar is its on/off switch. Loadability must not
-    // follow it down, or a plugin that is both widget and menu (omarchy.menu)
-    // would be locked out of the shell by taking its button off the bar.
     root.config = {
       version: 1,
       bar: { layout: { left: [], center: [], right: [{ id: "omarchy.first-widget" }] } },

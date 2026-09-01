@@ -4,12 +4,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/base-test.sh"
 
 require_command lua
 
-# The console is sized by the gap underneath it, recomputed from the monitor,
-# because a window rule's size would freeze at whatever the screen measured when
-# the console first opened. The arithmetic is what keeps it half a screen on a
-# scaled display, so it is worth pinning down.
-# base-test.sh does not set -e, so the assertions have to fail the file
-# themselves rather than leaving the pass below to run regardless.
 OMARCHY_PATH="$ROOT" lua - <<'LUA' || fail "the console covers half the work area at any monitor scale"
 local rules, handlers = {}, {}
 local monitor = nil

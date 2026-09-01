@@ -45,10 +45,6 @@ EOF
   chmod +x "$stub_dir/omarchy-hw-$kind"
 }
 
-# XDG_STATE_HOME deliberately points away from HOME everywhere below: the
-# input-device state is hardcoded to ~/.local/state like the sibling toggle
-# tools and the pre-migration script, so nothing may read or write the XDG
-# directory.
 run_toggle() {
   HOME="$home_dir" \
     XDG_STATE_HOME="$xdg_decoy" \
@@ -128,8 +124,6 @@ assert(seen[1].name == 'touchpad"; touch ' .. os.getenv("MARKER") .. '; echo "',
 LUA
 pass "Hyprland reload loads the device name as a string"
 
-# Public PoC device name: USB iProduct is interpolated into hl.device({ name = "..." }).
-# os.execute is stubbed so the string is only checked as data.
 poc_name='trackpad"})os.execute("~/calc&")--'
 stub_device touchpad "$poc_name"
 
@@ -211,8 +205,6 @@ set -e
 [[ ! -e $name_file ]] || fail "no state is written when no device is found"
 pass "disable errors when no device is found"
 
-# The migration runs with the same XDG decoy: legacy files were written to
-# ~/.local/state, so that is where it must look no matter what XDG says.
 run_migration() {
   HOME="$home_dir" XDG_STATE_HOME="$xdg_decoy" HYPRCTL_LOG="$log_file" \
     PATH="$stub_dir:$ROOT/bin:$PATH" \
@@ -234,8 +226,6 @@ run_migration
 [[ ! -e $state_dir/touchscreen-disabled.lua ]] ||
   fail "migration deletes hostile generated Lua even when no name is recovered"
 assert_decoy_untouched
-# The package hook reloads Hyprland before migrations run, so the disable was
-# already dropped for this session; the migration has to put it back.
 grep -Fx 'reload' "$log_file" >/dev/null ||
   fail "migration reloads so the recovered disable applies to this session"
 pass "migration recovers plain names and discards hostile generated Lua"
@@ -260,10 +250,6 @@ run_migration
 [[ ! -s $log_file ]] || fail "migration with nothing to migrate does not reload"
 pass "migration no-ops with nothing left to migrate"
 
-# A compromised install carries a leftover generated touchpad-disabled.lua whose
-# device name broke out into os.execute. Until the migration deletes it, a reload
-# must not source it. toggles.lua excludes those two names from require_all, so the
-# payload never runs, while a current name-file disable still applies.
 reload_home="$tmpdir/reload-home"
 reload_state="$reload_home/.local/state/omarchy/toggles/hypr"
 mkdir -p "$reload_state"

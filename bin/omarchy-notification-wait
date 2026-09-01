@@ -16,8 +16,6 @@ notification_server_ready() {
     GetServerInformation >/dev/null 2>&1
 }
 
-# The shell has to be up to serve the IPC, and it has to have claimed the
-# notification bus name before notify-send has anywhere to deliver.
 attempts=$((timeout * 10))
 while (( attempts > 0 )); do
   if omarchy-shell notifications ping >/dev/null 2>&1 && notification_server_ready; then

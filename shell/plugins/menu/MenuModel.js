@@ -95,16 +95,6 @@ function mergeMenuSources(defaultItems, userItems) {
   }
 }
 
-// Both merges below return fresh items/itemOrder objects for the caller to
-// assign in one go. They must never write into the maps they are handed: those
-// live in QML `var` properties, and an in-place write into such an object is
-// occasionally dropped by the engine — the key lands with an undefined value.
-// A lost write used to leave an id in itemOrder with no item behind it, and
-// the next merge then kept that orphan and appended a second row for the same
-// app, so the launcher listed it twice (and again on every later rescan).
-
-// Swaps every app row for the current set. Rows keep the order they arrive in;
-// ids already claimed (including duplicate desktop ids) are listed once.
 function mergeAppRows(items, itemOrder, appRows) {
   var source = items || ({})
   var order = Array.isArray(itemOrder) ? itemOrder : []
@@ -115,8 +105,6 @@ function mergeAppRows(items, itemOrder, appRows) {
   for (var i = 0; i < order.length; i++) {
     var id = order[i]
     var existing = source[id]
-    // Orphans (an id with no item) are dropped rather than carried forward,
-    // so a single lost write cannot compound into a duplicate row.
     if (!existing || existing.kind === "app") continue
     nextItems[id] = existing
     nextOrder.push(id)
@@ -133,10 +121,6 @@ function mergeAppRows(items, itemOrder, appRows) {
   return { items: nextItems, itemOrder: nextOrder }
 }
 
-// Swaps the rows one provider contributed, leaving every other item untouched.
-// Rows carry the id of the submenu that produced them, so a provider that runs
-// again drops its previous batch — a plugin that was just enabled disappears
-// from the Enable list — without disturbing static children declared in JSONC.
 function swapProviderRows(items, itemOrder, menuId, rows) {
   var source = items || ({})
   var order = Array.isArray(itemOrder) ? itemOrder : []
@@ -168,12 +152,6 @@ function item(items, id) {
   return items && items[id] ? items[id] : null
 }
 
-// Routes may name a real id (`system`, `setup.power`) or an alias declared in
-// JSONC (`power-menu`, `settings`). An exact id beats any alias, and app rows
-// are never routable: their aliases carry .desktop Keywords and GenericName
-// for search, so an installed application could otherwise shadow a menu route
-// (htop ships `Keywords=system;...`). Unknown strings fall through as the
-// literal input so misspellings still attempt to open that id.
 function resolveRoute(items, itemOrder, input) {
   var raw = String(input || "").toLowerCase().replace(/_/g, "-")
   if (!raw || raw === "go" || raw === "menu") return "root"
@@ -271,16 +249,11 @@ function isVisible(items, itemOrder, whenResults, entry, depth) {
   return false
 }
 
-// A `disabled:` row stays listed but goes dim and unselectable. The
-// Install submenus use it so software already on the machine reads as
-// installed rather than disappearing from the list it was installed from.
 function isDisabled(disabledResults, entry) {
   if (!entry || !entry.disabled) return false
   return !!(disabledResults && disabledResults[entry.id])
 }
 
-// A disabled row is software you already have, which is the same thing the ✓
-// says everywhere else in the menu, so it earns the same marker.
 function labelFor(entry, checkedResults, disabledResults) {
   if (!entry) return ""
   var marked = (entry.checked && checkedResults && checkedResults[entry.id]) || isDisabled(disabledResults, entry)
@@ -346,8 +319,6 @@ function searchScore(items, entry, query) {
   var score = 80
 
   if (label === needle) score = entry.parent === "root" ? 2 : 0
-  // An installed app whose name contains the query as a whole word ("zen"
-  // for Zen Browser) beats exact-labeled menu entries like Install > Zen.
   else if (entry.kind === "app" && label.split(/\s+/).indexOf(needle) >= 0) score = 0
   else if (label.indexOf(needle) === 0) score = 10
   else if (label.indexOf(needle) >= 0) score = 30
@@ -355,8 +326,6 @@ function searchScore(items, entry, query) {
   else if (descriptionTextMatches(needle, descriptionText)) score = 60
 
   if (entry.kind === "menu" || entry.kind === "link") score -= 2
-  // App rows sort after all menu items, so they lose the tiebreak below to an
-  // equal match. Outrank those, but stay inside the tier so better ones win.
   if (entry.kind === "app") score -= 5
 
   return score * 1000 + depthFor(items, entry.id) * 25 + entry.order
@@ -384,14 +353,6 @@ function displayRow(items, itemOrder, checkedResults, disabledResults, entry, de
   }
 }
 
-// Commands a `checked:` expression reads a value out of. Every sibling row
-// asks the same one -- Defaults > Browser has seven rows all comparing
-// against `omarchy-default-browser` -- so the batch runs it once and the rows
-// read the captured answer.
-//
-// The capture has to be eager. These are read inside `$(...)`, and a value
-// cached while one expression runs lives in that subshell only, so a lazy
-// memo never survives to the expression after it.
 var GUARD_READERS = [
   "omarchy-channel-current",
   "omarchy-default-agent",
@@ -401,24 +362,6 @@ var GUARD_READERS = [
   "omarchy-dns"
 ]
 
-// Package and command presence account for most of what the guards ask, and
-// asked one at a time they are almost all fork: the shipped menu spends over
-// a second on them. Answer them inside the guard process instead. These
-// shadow the real commands for the batch only, so they have to agree with
-// them everywhere, including for no arguments at all (present is true of
-// nothing, missing is not).
-//
-// `pacman -Q` resolves a name through what installed packages provide, not
-// just what they are called -- with gvim installed it reports `vim` as
-// present -- so the set has to carry provides too, or `install.editor.vim`
-// comes back and offers to install what is already there. A version
-// constraint (`bash>=1`) is not a name any set can answer, so it goes to
-// pacman itself; no shipped guard writes one.
-//
-// `pacman -Qi` wraps a long list across continuation lines whenever COLUMNS
-// is set in the environment, which a login shell may well have done, so the
-// parser follows the indented lines rather than reading the first one and
-// dropping half of what is installed.
 function guardHelpers() {
   return 'declare -A __omarchy_pkgs=()\n'
     + 'mapfile -t __omarchy_pkg_names < <({ pacman -Qq; LC_ALL=C pacman -Qi'
@@ -434,21 +377,11 @@ function guardHelpers() {
     + 'omarchy-cmd-missing() { local c; for c in "$@"; do command -v "$c" &>/dev/null || return 0; done; return 1; }\n'
 }
 
-// Substitute the captured answer into the expression rather than shadowing
-// the reader with a function. `$(reader)` and the variable holding what it
-// printed are interchangeable -- both strip trailing newlines, both split the
-// same way unquoted -- while a function would also catch `command -v reader`,
-// `VAR=x reader`, and every other form, and answer those wrong. Anything but
-// the plain substitution is left alone to run the real command.
 function guardPrelude(guards) {
   var prelude = guardHelpers()
 
   for (var i = 0; i < GUARD_READERS.length; i++) {
-    // The guards arrive already substituted, so what marks a reader as wanted
-    // is the slot standing in for it, not the call it replaced.
     if (guards.indexOf(guardReaderSlot(i)) < 0) continue
-    // `|| :` so a reader that exits nonzero cannot take the batch down with
-    // it under a login shell that turned on errexit.
     prelude += "__omarchy_read_" + i + "=$(" + GUARD_READERS[i] + " 2>/dev/null) || :\n"
   }
 
@@ -471,10 +404,6 @@ function guardLine(id, tag, expression) {
     + id + ":" + tag + ":1; else echo " + id + ":" + tag + ":0; fi\n"
 }
 
-// One bash script for every `when:`, `checked:` and `disabled:` in the menu,
-// reporting `<id>:<w|c|d>:<0|1>` per line. Speed is the whole point: the menu
-// opens on the last evaluation's answers, so however long this takes is how
-// long a row can contradict the state it describes.
 function guardScript(items) {
   var guards = ""
   var ids = Object.keys(items || {})

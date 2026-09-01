@@ -10,8 +10,6 @@ trap 'rm -rf "$test_tmp"' EXIT
 stub_bin="$test_tmp/bin"
 mkdir -p "$stub_bin"
 
-# The edge channel installs omarchy-dev. Older builds did not declare
-# provides=(omarchy), so a query for plain omarchy finds nothing there.
 cat >"$stub_bin/pacman" <<'STUB'
 #!/bin/bash
 [[ $1 == "-Q" ]] || exit 1
@@ -42,7 +40,6 @@ pass "version reports the stable package"
 [[ $(version omarchy-dev) == "4.0.0-1" ]] || fail "version reports the edge package"
 pass "version reports the edge package"
 
-# A checkout reports its hash instead, so packages are irrelevant there.
 [[ $(version "" "$test_tmp/checkout") == "dev" ]] || fail "version reports a dev checkout"
 pass "version reports a dev checkout"
 
@@ -51,8 +48,6 @@ if version "" >/dev/null 2>&1; then
 fi
 pass "version fails when no Omarchy package is installed"
 
-# The snapshot description is only a label, so a failed lookup must not abort
-# the update under set -e.
 snapshot_desc=$(
   set -e
   PATH="$stub_bin:$PATH" OMARCHY_TEST_PACKAGES="" OMARCHY_PATH=/usr/share/omarchy \

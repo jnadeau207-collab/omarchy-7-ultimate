@@ -55,14 +55,12 @@ ARGUMENTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-
 def _timestamp_or_none(value: object) -> int | None:
     if value is None or value == 0:
         return None
     if isinstance(value, bool) or not isinstance(value, int) or not 0 < value <= 9223372036854775807:
         raise ValueError("timer timestamp is invalid")
     return value
-
 
 def parse_schedules(text: str) -> list[dict[str, Any]]:
     document = parse_probe_json(text)
@@ -106,14 +104,11 @@ def parse_schedules(text: str) -> list[dict[str, Any]]:
         )
     return resources
 
-
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     return parse_schedules((await invoke_probe(SCHEDULE_COMMAND, runner)).stdout)
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "action": arguments["action"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     action = arguments["action"]
@@ -122,7 +117,6 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
     if action == "disable" and current["enabled"] == "disabled":
         raise ValueError("timer is already disabled")
     return {**dict(current), "pendingAction": action}
-
 
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "timer", OPERATION_ACTION, "schedule.timer.plan", "consequential", ("mutating", "privileged")),
@@ -135,10 +129,8 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     describe_change=lambda _current, _proposed, arguments: f"Plan timer action {arguments['action']}; no timer is changed or triggered.",
 )
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(resources: list[Mapping[str, Any]], *, state_path: Path | None = None, fail_on: frozenset[str] = frozenset()) -> LeafProvider:
     return LeafProvider(SPEC, MANIFEST, SCHEMAS, FakeBackend(DOMAIN, resources, state_path=state_path, fail_on=fail_on))

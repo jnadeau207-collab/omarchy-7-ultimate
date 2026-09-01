@@ -24,10 +24,6 @@ if [[ -f /etc/omarchy.conf ]]; then
   fi
 fi
 
-# /etc/sudoers.d is root-only, so report what sudo resolves rather than reading
-# the drop-in — and say so plainly instead of guessing when there is no cached
-# credential to ask with. A missing entry here is what makes `sudo omarchy-*`
-# run the packaged copy of a command the checkout has changed.
 sudo_bin_dir() {
   local resolved
 

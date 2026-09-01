@@ -43,7 +43,6 @@ wrapper_error=$(PATH="$wrapper_bin:$PATH" \
 [[ $wrapper_error == "omarchy-shell is not responding" ]] || fail "hung shell IPC reports that the shell is unresponsive" "$wrapper_error"
 pass "shell IPC calls time out when Quickshell is unresponsive"
 
-# A starting shell answers on stdout and exits 0, so a ping reads it as up.
 wrapper_error=$(PATH="$wrapper_bin:$PATH" \
   OMARCHY_PATH="$wrapper_root" \
   OMARCHY_TEST_QS_STARTING=1 \
@@ -149,7 +148,6 @@ elif [[ ${1:-} == "dispatch" ]]; then
 fi
 SH
 
-# Keep the test hermetic where journald has no usable stream socket.
 cat >"$restart_bin/systemd-cat" <<'SH'
 #!/bin/bash
 
@@ -234,9 +232,6 @@ locked_error=$(PATH="$restart_bin:$PATH" \
 [[ ! -s $restart_log ]] || fail "locked restart does not stop or launch Quickshell"
 pass "restart preserves the shell while its lock is active"
 
-# A LOCK session without an active locker — dead shell or a crash-handler
-# relaunch holding no lock — is the failsafe: restart must proceed,
-# re-acquire the session lock, and wait for it to report secure.
 sleep 30 &
 restart_pid_one=$!
 printf '%s\n' "$restart_pid_one" >"$restart_state"

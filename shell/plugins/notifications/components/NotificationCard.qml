@@ -1,6 +1,3 @@
-// Notification card. Pure presentational — no service, Notification, or
-// ListModel references. The popup container drives lifetime; the history
-// panel drives static rendering. Both use the same component.
 
 import QtQuick
 import QtQuick.Layouts
@@ -17,25 +14,17 @@ BorderSurface {
   property string summary: ""
   property string body: ""
   property string image: ""
-  // Nerd Font glyph rendered in the icon slot when no real icon is set.
-  // Used by omarchy-notification-send so user-action toasts (`Silenced
-  // notifications` etc.) show their bell/lock/etc. glyph without leaking
-  // into the summary text.
   property string glyph: ""
-  // NotificationUrgency: Low=0, Normal=1, Critical=2 (upstream).
   property int urgency: 1
   property double timestamp: 0
   property int cornerRadius: 0
 
-  // System monospace font injected by the container.
   property string fontFamily: ""
 
   readonly property bool hovered: hoverTracker.hovered
 
   signal closeRequested()
   signal cardClicked()
-  // Prefer per-notification media/avatar data, then fall back to the app icon.
-  // The `check` flag avoids Qt's missing-texture placeholder for unknown names.
   readonly property string smallIconSource: image.length > 0 ? image : iconSource(appIcon)
   readonly property bool hasGlyph: glyph.length > 0
   readonly property bool compactGlyph: NotificationLogic.shouldRenderCompactGlyph(glyph, smallIconSource, singleLineToast)
@@ -64,8 +53,6 @@ BorderSurface {
   }
 
   implicitWidth: Style.space(380)
-  // Add vertical border insets so mainColumn (inset by border on top/left/right)
-  // doesn't push content under the bottom edge.
   implicitHeight: mainColumn.implicitHeight + borderTop + borderBottom
   radius: cornerRadius
   color: Tokens.chrome.menu
@@ -89,8 +76,6 @@ BorderSurface {
 
   ColumnLayout {
     id: mainColumn
-    // Inset by the card border so the content doesn't paint over the card's
-    // outer border.
     anchors.top: parent.top
     anchors.left: parent.left
     anchors.right: parent.right
@@ -99,7 +84,6 @@ BorderSurface {
     anchors.rightMargin: root.borderRight
     spacing: 0
 
-    // Text content.
     RowLayout {
       Layout.fillWidth: true
       Layout.leftMargin: Style.space(12)
@@ -113,9 +97,6 @@ BorderSurface {
         Layout.preferredWidth: visible ? Style.space(40) : 0
         Layout.preferredHeight: visible ? Style.space(40) : 0
         Layout.alignment: Qt.AlignVCenter
-        // Hide the slot when the icon failed to resolve (themed-icon name
-        // not in the user's icon theme) AND we don't have a glyph fallback
-        // — prevents rendering Qt's pink broken-image placeholder.
         visible: !root.collapseRedundantIcon && !root.compactGlyph && (root.hasSmallIcon || root.hasGlyph) && (root.hasGlyph || smallIconImage.status !== Image.Error)
 
         Image {
@@ -130,8 +111,6 @@ BorderSurface {
           visible: !root.hasGlyph || smallIconImage.status === Image.Ready
         }
 
-        // Glyph fallback (Nerd Font character) when no image icon is
-        // available. Used by omarchy-notification-send's `-g` flag.
         Text {
           textFormat: Text.PlainText
           anchors.centerIn: parent
@@ -156,15 +135,10 @@ BorderSurface {
       ColumnLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
-        // Keep the first line clear of the hover-revealed close button.
         Layout.rightMargin: Style.space(10)
         spacing: Style.space(2)
 
         Text {
-          // The spec defines the summary as a single line of plain text, so
-          // AutoText could only ever promote a hostile string to rich text.
-          // The body below is StyledText on purpose — see Service.qml's
-          // bodyMarkupSupported — and is stripped in NotificationLogic.
           textFormat: Text.PlainText
           Layout.fillWidth: true
           visible: root.summary.length > 0
@@ -195,8 +169,6 @@ BorderSurface {
     }
   }
 
-  // Hover-revealed close. Stacked after mainColumn so its MouseArea sits
-  // above the full-card one and the click never reaches cardClicked.
   Item {
     anchors.top: parent.top
     anchors.right: parent.right

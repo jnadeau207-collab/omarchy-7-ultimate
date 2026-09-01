@@ -9,9 +9,6 @@ for dir in "${BROWSER_POLICY_MANAGED_DIRS[@]}"; do
   repaired=1
 done
 
-# Repainting the policy color is cosmetic and the next theme change redoes it.
-# Under bash -euo pipefail a failure here would abort the migration before the
-# Firefox directories below are hardened, and the marker would never be written.
 if (( repaired )); then
   omarchy-theme-set-browser || true
 fi

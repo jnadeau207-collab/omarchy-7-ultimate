@@ -48,8 +48,6 @@ open_and_capture_panel() {
   wait_until "$name panel closes" 15 layer_absent "omarchy-keyboard-panel"
 }
 
-# Give weather deterministic coordinates so this test exercises the real
-# Open-Meteo forecast instead of IP geolocation through wttr.in.
 omarchy-weather-location --set "San Francisco" "37.7749,-122.4194"
 omarchy-shell shell summon omarchy.weather >/dev/null
 wait_until "weather panel opens" 15 layer_present "omarchy-keyboard-panel"
@@ -73,9 +71,6 @@ while IFS='|' read -r name plugin; do
   fi
 done <<<"$panels"
 
-# The power widget intentionally disappears on desktops and VMs without a
-# battery. Exercise it on laptops, and verify that hardware-less sessions take
-# the supported no-panel path instead of treating that as a shell failure.
 if upower -e | grep '/battery_' >/dev/null; then
   if ! (trap - EXIT; open_and_capture_panel "power" "omarchy.power"); then
     status=1
@@ -87,7 +82,6 @@ else
   screenshot "success-panel-power-unavailable"
 fi
 
-# The common panel keyboard contract uses Tab to move to the next bar panel.
 omarchy-shell shell summon omarchy.bluetooth >/dev/null
 wait_until "panel keyboard navigation starts on bluetooth" 15 screen_contains "Bluetooth"
 screenshot "success-panel-navigation-01-bluetooth"
@@ -98,9 +92,6 @@ screenshot "success-panel-navigation-02-next"
 hide_panels
 wait_until "keyboard-navigated panel closes" 15 layer_absent "omarchy-keyboard-panel"
 
-# Reopening during the fade keeps the layer surface mapped. Verify the focus
-# prime reacquires compositor keyboard focus instead of relying on map-time
-# OnDemand behavior, which would leave Escape in the previously focused app.
 omarchy-shell shell summon omarchy.bluetooth >/dev/null
 wait_until "focus-prime panel opens" 15 layer_present "omarchy-keyboard-panel"
 if (( $(hyprctl -j monitors | jq length) == 1 )); then

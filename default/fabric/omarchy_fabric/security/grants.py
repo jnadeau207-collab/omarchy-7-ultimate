@@ -17,7 +17,6 @@ from .types import OperationRequest, ResourceRef, RiskLevel
 _STABLE_RE = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 _CAPABILITY_RE = re.compile(r"^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$")
 
-
 def _is_aware(value: Any) -> bool:
     if not isinstance(value, datetime) or value.tzinfo is None:
         return False
@@ -26,12 +25,10 @@ def _is_aware(value: Any) -> bool:
     except (TypeError, ValueError, OverflowError):
         return False
 
-
 class GrantPersistence(str, Enum):
     SESSION = "session"
     DURATION = "duration"
     PERSISTENT = "persistent"
-
 
 def _lookup_dotted(request: OperationRequest, path: str) -> Any:
     if path.startswith("arguments."):
@@ -55,9 +52,7 @@ def _lookup_dotted(request: OperationRequest, path: str) -> Any:
         value = value[part]
     return value
 
-
 _MISSING = object()
-
 
 @dataclass(frozen=True)
 class CapabilityGrant:
@@ -124,7 +119,6 @@ class CapabilityGrant:
                     "Constraint values must be explicit JSON scalars.",
                 )
             normalized[path] = normalized_values
-            # Validate path syntax at grant issuance, not first authorization.
             dummy = object.__new__(OperationRequest)
             object.__setattr__(dummy, "arguments", {})
             object.__setattr__(dummy, "context", {})

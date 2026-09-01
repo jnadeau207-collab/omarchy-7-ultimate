@@ -15,8 +15,6 @@ usage() {
 
 case "$action" in
   autodetect)
-    # Use the same signal as the shell (UPower.onBattery) so every entry point
-    # saves and restores the profile under the same ac/battery key.
     if [[ $(busctl get-property org.freedesktop.UPower /org/freedesktop/UPower org.freedesktop.UPower OnBattery 2>/dev/null) == "b true" ]]; then
       action=battery
     else

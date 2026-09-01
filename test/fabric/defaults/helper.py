@@ -14,7 +14,6 @@ from omarchy_fabric.providers._engine import state_revision
 from omarchy_fabric.providers.defaults import provider as defaults
 from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
-
 def principal() -> EndpointPrincipal:
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     return EndpointPrincipal(
@@ -26,7 +25,6 @@ def principal() -> EndpointPrincipal:
         now,
         now + timedelta(hours=1),
     )
-
 
 def application(
     desktop_id: str,
@@ -48,7 +46,6 @@ def application(
         "identity": state_revision({"desktopId": desktop_id, "generation": 1}),
         "reason": None,
     }
-
 
 def association(
     kind: str,
@@ -72,7 +69,6 @@ def association(
     value["identity"] = defaults._association_identity(value)
     return value
 
-
 def database() -> dict[str, object]:
     editor = application("editor.desktop", "Editor", mime_types=("application/json", "text/plain"))
     browser = application("browser.desktop", "Browser", mime_types=("text/html",), protocols=("http", "https"))
@@ -90,7 +86,6 @@ def database() -> dict[str, object]:
             association("protocol", "mailto", [mailer["id"]], mailer["id"]),
         ],
     }
-
 
 def clone_database() -> dict[str, object]:
     return deepcopy(database())

@@ -22,11 +22,9 @@ from .models import (
     RpcRequest,
 )
 
-
 STABLE_ID = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 CHANGE_STATES = {"none", "partial", "complete", "unknown"}
-
 
 class ProtocolViolation(Exception):
     def __init__(
@@ -41,7 +39,6 @@ class ProtocolViolation(Exception):
         self.request_id = request_id
         self.fatal = fatal
 
-
 def _object_without_duplicates(pairs: Iterable[tuple[str, Any]]) -> dict[str, Any]:
     value: dict[str, Any] = {}
     for key, item in pairs:
@@ -50,10 +47,8 @@ def _object_without_duplicates(pairs: Iterable[tuple[str, Any]]) -> dict[str, An
         value[key] = item
     return value
 
-
 def _reject_constant(value: str) -> None:
     raise ValueError(f"non-finite JSON number: {value}")
-
 
 def decode_frame(frame: bytes) -> dict[str, Any]:
     if len(frame) > MAX_FRAME_BYTES:
@@ -103,7 +98,6 @@ def decode_frame(frame: bytes) -> dict[str, Any]:
         )
     return value
 
-
 def encode_frame(message: Mapping[str, Any]) -> bytes:
     try:
         encoded = json.dumps(
@@ -130,7 +124,6 @@ def encode_frame(message: Mapping[str, Any]) -> bytes:
         )
     return encoded + b"\n"
 
-
 async def read_frame(reader: asyncio.StreamReader) -> dict[str, Any] | None:
     try:
         frame = await reader.readuntil(b"\n")
@@ -156,7 +149,6 @@ async def read_frame(reader: asyncio.StreamReader) -> dict[str, Any] | None:
         ) from error
 
     return decode_frame(frame[:-1])
-
 
 def validate_request(message: Mapping[str, Any]) -> RpcRequest:
     request_id = message.get("id")
@@ -230,18 +222,14 @@ def validate_request(message: Mapping[str, Any]) -> RpcRequest:
         )
     return RpcRequest(request_id=request_id, method=method, params=params)
 
-
 def success_response(request_id: str, result: Mapping[str, Any] | list[Any]) -> dict[str, Any]:
     return {"protocol": PROTOCOL_NAME, "id": request_id, "result": result}
-
 
 def error_response(request_id: str | None, error: FabricError) -> dict[str, Any]:
     return {"protocol": PROTOCOL_NAME, "id": request_id, "error": error.to_dict()}
 
-
 def event_message(event: Mapping[str, Any]) -> dict[str, Any]:
     return {"protocol": PROTOCOL_NAME, "event": event}
-
 
 def _invalid_server_message(explanation: str, *, detail: str = "") -> ProtocolViolation:
     return ProtocolViolation(
@@ -254,14 +242,12 @@ def _invalid_server_message(explanation: str, *, detail: str = "") -> ProtocolVi
         fatal=True,
     )
 
-
 def _valid_stable_id(value: Any) -> bool:
     return (
         isinstance(value, str)
         and 1 <= len(value) <= 160
         and STABLE_ID.fullmatch(value) is not None
     )
-
 
 def _validate_event(event: Any) -> dict[str, Any]:
     if not isinstance(event, dict) or set(event) != {
@@ -290,7 +276,6 @@ def _validate_event(event: Any) -> dict[str, Any]:
     ):
         raise _invalid_server_message("The daemon returned an invalid event timestamp.")
     return event
-
 
 def _validate_remote_error(raw_error: Any) -> FabricError:
     required = {"code", "title", "explanation", "detail", "retryable", "changeState"}
@@ -323,7 +308,6 @@ def _validate_remote_error(raw_error: Any) -> FabricError:
         change_state=raw_error["changeState"],
         recovery_actions=tuple(actions),
     )
-
 
 def validate_server_message(message: Mapping[str, Any]) -> tuple[str, str | None, Any]:
     """Validate one daemon envelope without trusting coercible JSON values."""
@@ -361,7 +345,6 @@ def validate_server_message(message: Mapping[str, Any]) -> tuple[str, str | None
     raise _invalid_server_message(
         "The daemon response does not match exactly one result, error, or event envelope."
     )
-
 
 class FabricClient:
     """Small reconnectable async client used by diagnostics and provider tests."""

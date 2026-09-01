@@ -48,10 +48,8 @@ MAX_GRANTS_PER_OPERATION = 1024
 
 CheckpointHook = Callable[[str, str], Awaitable[None] | None]
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 class OperationCoordinator:
     """Coordinates preflight, exact approval, execution, and reconciliation.

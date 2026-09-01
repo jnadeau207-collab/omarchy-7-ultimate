@@ -8,7 +8,6 @@ from gi.repository import Gdk, GLib, Gtk
 
 Gdk.set_program_class("org.omarchy.w0parent")
 
-
 def main():
   parent = Gtk.Window(title="W0-Parent")
   parent.set_default_size(880, 560)
@@ -26,7 +25,6 @@ def main():
   dialog.show_all()
   GLib.timeout_add_seconds(20, Gtk.main_quit)
   Gtk.main()
-
 
 if __name__ == "__main__":
   main()

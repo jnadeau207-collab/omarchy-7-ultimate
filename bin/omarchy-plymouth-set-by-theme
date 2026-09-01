@@ -4,9 +4,6 @@
 # omarchy:args=<theme-name>
 # omarchy:requires-sudo=true
 
-# Resolve a theme by name and apply its unlock.png + colors.toml as the
-# Plymouth boot screen via omarchy-plymouth-set.
-
 if (( $# != 1 )); then
   echo "Usage: omarchy-plymouth-set-by-theme <theme-name>" >&2
   exit 1

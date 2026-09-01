@@ -18,15 +18,12 @@ from omarchy_fabric.models import FabricError, FixedArgvCommand
 MAX_PROBE_BYTES = 256 * 1024
 MAX_PROBE_SECONDS = 5.0
 
-
 @dataclass(frozen=True)
 class ProbeOutput:
     stdout: str
     stderr: str
 
-
 ProbeRunner = Callable[[FixedArgvCommand], ProbeOutput]
-
 
 def parse_probe_json(text: str) -> object:
     """Decode finite JSON while rejecting duplicate object keys."""
@@ -43,7 +40,6 @@ def parse_probe_json(text: str) -> object:
         raise ValueError(f"probe JSON contains non-finite number: {value}")
 
     return json.loads(text, object_pairs_hook=unique_object, parse_constant=reject_constant)
-
 
 def run_probe(command: FixedArgvCommand) -> ProbeOutput:
     if not isinstance(command, FixedArgvCommand):
@@ -125,10 +121,8 @@ def run_probe(command: FixedArgvCommand) -> ProbeOutput:
         raise subprocess.CalledProcessError(process.returncode, command.argv, stdout, stderr)
     return ProbeOutput(stdout=stdout, stderr=stderr)
 
-
 async def invoke_probe(command: FixedArgvCommand, runner: ProbeRunner = run_probe) -> ProbeOutput:
     return await asyncio.to_thread(runner, command)
-
 
 def probe_error(domain: str, error: Exception) -> FabricError:
     if isinstance(error, FileNotFoundError):

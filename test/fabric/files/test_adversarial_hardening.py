@@ -15,7 +15,6 @@ from omarchy_fabric.models import FabricError
 from omarchy_fabric.providers._engine import state_revision
 from omarchy_fabric.providers.files import provider as files
 
-
 def _persistent_cas_worker(state_path: str, new_name: str, barrier, results) -> None:
     async def run() -> tuple[str, str]:
         provider = files.build_fake_provider(clone_workspace(), state_path=Path(state_path))
@@ -36,7 +35,6 @@ def _persistent_cas_worker(state_path: str, new_name: str, barrier, results) -> 
             return "error", f"{error.code}:{error.detail}"
 
     results.put(asyncio.run(run()))
-
 
 class FilesAdversarialHardeningTests(unittest.IsolatedAsyncioTestCase):
     def test_workspace_rejects_orphaned_descendant_paths(self) -> None:
@@ -310,7 +308,6 @@ class FilesAdversarialHardeningTests(unittest.IsolatedAsyncioTestCase):
             home.mkdir()
             with self.assertRaises(ValueError):
                 files.build_provider(home=home, config_path=alias / "locations.json")
-
 
 if __name__ == "__main__":
     unittest.main()

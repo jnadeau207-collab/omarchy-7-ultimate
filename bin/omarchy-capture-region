@@ -4,26 +4,9 @@
 # omarchy:args=[region|windows|smart|fullscreen] [--keep-freeze] [--match-monitor] | --take-fullscreen | --take-window | --select-window <next|prev|left|right|up|down>
 # omarchy:hidden=true
 
-# Prints the picked geometry in slurp's "X,Y WxH" format, or exits 1 when the
-# pick is cancelled. Shared by screenshot and screen recording so the picker
-# UX stays identical.
-#
-#   region          freeform selection
-#   windows         snap selection to a monitor or window rectangle
-#   smart           freeform with window/monitor rects hinted; a bare click
-#                   (area < 20px^2) snaps to the rectangle it landed in
-#   fullscreen      the focused monitor, no interaction
-#
-#   --keep-freeze   leave the hyprpicker screen freeze running and print its
-#                   PID as the first output line (empty when no freeze was
-#                   started); the caller owns killing it
-#   --match-monitor print "monitor:NAME" instead when the picked geometry
-#                   exactly matches a monitor
-
 FULLSCREEN_MARKER="${XDG_RUNTIME_DIR:-/tmp}/omarchy-capture-region-fullscreen"
 WINDOW_MARKER="${XDG_RUNTIME_DIR:-/tmp}/omarchy-capture-region-window"
 
-# accounting for portrait/transformed displays
 JQ_MONITOR_GEO='
   def format_geo:
     .x as $x | .y as $y |
@@ -41,9 +24,6 @@ active_workspace() {
   hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .activeWorkspace.id'
 }
 
-# Hidden group members and windows stacked at identical geometry collapse to
-# one rectangle: slurp cannot tell them apart, and duplicates would stall the
-# Tab cycle on the first copy.
 window_rects() {
   hyprctl clients -j | jq -r --arg ws "$(active_workspace)" \
     '[.[] | select(.workspace.id == ($ws | tonumber) and .hidden != true) | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"] | unique[]'
@@ -62,11 +42,6 @@ focused_monitor_geo() {
   hyprctl monitors -j | jq -r "${JQ_MONITOR_GEO} .[] | select(.focused == true) | format_geo"
 }
 
-# slurp highlights the smallest box containing the point and keeps the first
-# one on a tie, so overlapping rectangles resolve the same way here (e.g.
-# floating over tiled). Reads candidates on stdin and leaves the answer in
-# RESOLVED_RECT; returns 1 when no candidate contains the point. Assigning to
-# a global rather than printing keeps the probing in warp_point_in fork-free.
 resolve_rect_at() {
   local x=$1 y=$2
   local rect area
@@ -88,12 +63,6 @@ resolve_rect_at() {
   [[ -n $RESOLVED_RECT ]]
 }
 
-# A rectangle whose center is covered by a smaller one cannot be selected by
-# warping to that center: slurp would go on highlighting the coverer. Probe
-# points inside the rectangle, nearest its center first, for one that resolves
-# back to it, and leave that point in WARP_X / WARP_Y. Returns 1 when the
-# rectangle is buried well enough that no point resolves to it, in which case
-# hovering could not reach it either.
 warp_point_in() {
   local rect=$1 candidates=$2
   [[ $rect =~ ^(-?[0-9]+),(-?[0-9]+)[[:space:]]([0-9]+)x([0-9]+)$ ]] || return 1
@@ -116,9 +85,6 @@ warp_point_in() {
   return 1
 }
 
-# Whatever slurp is highlighting under the cursor. It is fed monitor rects as
-# well as window rects, so a cursor in a gap or over the bar highlights the
-# monitor rather than any window.
 geo_at_cursor() {
   local pos=$(hyprctl cursorpos)
   local x=${pos%,*}
@@ -131,9 +97,6 @@ geo_at_cursor() {
   fi
 }
 
-# Keyboard control while slurp is open: binds scoped to slurp's layer
-# surface (default/hypr/bindings/utilities.lua) invoke these modes. The
-# --take-* modes flag the intent with a marker file and dismiss slurp.
 if [[ ${1:-} == "--take-fullscreen" ]]; then
   pgrep -x slurp >/dev/null || exit 0
   touch "$FULLSCREEN_MARKER"
@@ -148,8 +111,6 @@ if [[ ${1:-} == "--take-window" ]]; then
   exit 0
 fi
 
-# Warps the cursor to another window's center, so slurp's own hover
-# highlight tracks the selection.
 if [[ ${1:-} == "--select-window" ]]; then
   pgrep -x slurp >/dev/null || exit 0
 
@@ -160,8 +121,6 @@ if [[ ${1:-} == "--select-window" ]]; then
 
   candidates=$(window_rects)
 
-  # Eighth fractions of a rectangle's width and height, ordered by distance
-  # from its center so warp_point_in prefers the most central point it can use.
   mapfile -t WARP_PROBES < <(
     for fx in {1..7}; do
       for fy in {1..7}; do
@@ -170,8 +129,6 @@ if [[ ${1:-} == "--select-window" ]]; then
     done | sort -n | cut -d' ' -f2-
   )
 
-  # Only rectangles that hovering could actually reach take part in navigation,
-  # each paired with the point to warp to.
   declare -A warp_points
   reachable=""
   while IFS= read -r rect; do
@@ -181,15 +138,11 @@ if [[ ${1:-} == "--select-window" ]]; then
   done <<<"$candidates"
   [[ -n $reachable ]] || exit 0
 
-  # Reading order: top-to-bottom, then left-to-right.
   rects=$(while IFS= read -r rect; do
     [[ $rect =~ ^(-?[0-9]+),(-?[0-9]+)[[:space:]]([0-9]+)x([0-9]+)$ ]] || continue
     printf '%d\t%d\t%s\n' "${BASH_REMATCH[2]}" "${BASH_REMATCH[1]}" "$rect"
   done <<<"$reachable" | sort -n -k1,1 -k2,2 | cut -f3-)
 
-  # The selection to move from is the one slurp highlights, resolved from the
-  # same list in the same order as --take-window so navigation and capture
-  # never disagree. Measure from its center.
   current=""
   resolve_rect_at "$origin_x" "$origin_y" <<<"$candidates" && current=$RESOLVED_RECT
 
@@ -283,9 +236,6 @@ for arg in "$@"; do
   esac
 done
 
-# Runs slurp; an empty result with a marker present means one of the --take-*
-# binds was pressed, so the highlighted rectangle or the monitor is the
-# selection.
 pick() {
   local selection
   rm -f "$FULLSCREEN_MARKER" "$WINDOW_MARKER"
@@ -332,9 +282,6 @@ smart | *)
   freeze_screen
   SELECTION=$(echo "$RECTS" | pick)
 
-  # A bare click (area < 20px^2) snaps to whichever rectangle it landed in,
-  # so users don't end up with accidental 2px captures. X and Y can be
-  # negative (Hyprland monitor positions in multi-display layouts).
   if [[ $SELECTION =~ ^(-?[0-9]+),(-?[0-9]+)[[:space:]]([0-9]+)x([0-9]+)$ ]] && ((BASH_REMATCH[3] * BASH_REMATCH[4] < 20)); then
     click_x=${BASH_REMATCH[1]}
     click_y=${BASH_REMATCH[2]}

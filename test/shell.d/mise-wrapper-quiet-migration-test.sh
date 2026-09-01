@@ -12,9 +12,6 @@ home="$test_dir/home"
 bin_dir="$home/.local/bin"
 mkdir -p "$bin_dir"
 
-# The migration calls omarchy-mise-install to rewrite a wrapper, so the real
-# one has to be reachable: this proves the template it writes today, not a
-# copy of it that could drift.
 run_migration() {
   HOME="$home" PATH="$ROOT/bin:$PATH" bash -euo pipefail "$migration" >/dev/null
 }
@@ -31,8 +28,6 @@ EOF
   chmod +x "$bin_dir/$command"
 }
 
-# The template before MISE_MINIMUM_RELEASE_AGE was added. A wrapper installed
-# by hand for a custom tool can still be on this form.
 write_pre_export_wrapper() {
   local command=$1 package=$2 bin=$3
 
@@ -49,8 +44,6 @@ write_stale_wrapper omp github:can1357/oh-my-pi omp
 write_stale_wrapper ghui npm:@kitlangton/ghui ghui
 write_pre_export_wrapper custom-tool "github:someone/custom-tool" custom-tool
 
-# The form omarchy-mise-install wrote when the earlier PATH-recursion migration
-# ran, and the one before that. Neither carries `|| exit 1`.
 cat >"$bin_dir/mise-exec-era" <<'EOF'
 #!/bin/bash
 mise use -g "npm:some/tool"
@@ -98,13 +91,11 @@ pass "migration rewrites every generated form that predates --quiet"
 [[ -x $bin_dir/claude ]] || fail "migration leaves the rewritten wrapper executable"
 pass "migration leaves the rewritten wrapper executable"
 
-# Running twice must not touch an already-quiet wrapper.
 before=$(cat "$bin_dir/claude")
 run_migration
 [[ $(cat "$bin_dir/claude") == "$before" ]] || fail "migration is idempotent"
 pass "migration is idempotent"
 
-# Anything the generator did not write is the user's own file.
 cat >"$bin_dir/hand-written" <<'EOF'
 #!/bin/bash
 export MISE_MINIMUM_RELEASE_AGE=0
@@ -117,8 +108,6 @@ export MISE_MINIMUM_RELEASE_AGE=0
 mise use -g "one-package" || exit 1
 exec mise x "another-package" -- "bin" "$@"
 EOF
-# A generated wrapper someone added a line to. Regenerating would drop that
-# line, so the exact-match check has to leave the whole file alone.
 cat >"$bin_dir/customized" <<'EOF'
 #!/bin/bash
 export MISE_MINIMUM_RELEASE_AGE=0
@@ -127,8 +116,6 @@ mise use -g "customized" || exit 1
 exec mise x "customized" -- "customized" "$@"
 EOF
 printf '#!/bin/bash\necho hi\n' >"$bin_dir/unrelated"
-# uv and uvx land in ~/.local/bin from the Python dev env. A wrapper is a few
-# short lines, so a real binary must be skipped on size, never read in whole.
 head -c 5000000 /dev/urandom >"$bin_dir/uv"
 chmod +x "$bin_dir/uv"
 ln -s "$bin_dir/claude" "$bin_dir/linked"
@@ -152,7 +139,6 @@ run_migration
 [[ $(stat -c%s "$bin_dir/uv") -eq 5000000 ]] || fail "migration leaves a native binary alone"
 pass "migration only rewrites wrappers it recognizes"
 
-# A machine with no ~/.local/bin at all must not fail the run.
 empty_home="$test_dir/empty-home"
 mkdir -p "$empty_home"
 HOME="$empty_home" PATH="$ROOT/bin:$PATH" bash -euo pipefail "$migration" >/dev/null ||

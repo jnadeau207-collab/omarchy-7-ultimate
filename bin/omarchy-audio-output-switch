@@ -2,8 +2,6 @@
 
 # omarchy:summary=Switch between audio outputs while preserving the mute status
 
-# Skip the physical sink an active speaker tuning fronts: rotating onto it would
-# silently bypass the tuning rather than pick a different output.
 fronted=$(omarchy-audio-tuning fronted-sink 2>/dev/null || true)
 
 sinks=$(timeout 2 pactl -f json list sinks |
@@ -29,9 +27,6 @@ fi
 next_sink=$(jq -c ".[$next_sink_index]" <<<"$sinks")
 next_sink_name=$(jq -r '.name' <<<"$next_sink")
 next_sink_description=$(jq -r '.description // .properties."device.description" // .name' <<<"$next_sink")
-# A tuning sink sits at a fixed 100% and unmuted while real loudness lives on the
-# physical sink beneath it, so read the level from whichever sink actually carries
-# it or the OSD contradicts the volume keys.
 next_sink_effective=$(omarchy-audio-output-sink "$next_sink_name")
 next_sink_volume=$(timeout 2 pactl get-sink-volume "$next_sink_effective" 2>/dev/null |
   awk 'NR == 1 {for (i = 1; i <= NF; i++) if ($i ~ /%$/) {sub("%", "", $i); print $i; exit}}')

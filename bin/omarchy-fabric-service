@@ -176,15 +176,11 @@ refresh_service() {
     was_enabled=1
   fi
 
-  # Stop first so a package mismatch can never leave the previous daemon
-  # serving against assets that were replaced underneath it.
   if systemctl --user is-active --quiet "$fabric_unit"; then
     systemctl --user stop "$fabric_unit" ||
       fail_temporary "the user systemd manager could not stop Fabric; the running daemon state is unknown"
   fi
 
-  # Package verification happens after the stop. If an update replaced only
-  # one half, stale code must not continue serving from its old process image.
   verify_package_contract
   verify_runtime_dependencies
 

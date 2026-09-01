@@ -29,9 +29,6 @@ EOF
 
 chmod +x "$test_bin"/*
 
-# The panel reads this output by line index, so every case has to answer with
-# the same number of lines. A helper that dies mid-script drops its line and
-# silently shifts every field below it into the wrong property.
 state_lines=()
 monitor_state() {
   printf '%s\n' "$1" >"$monitors_file"
@@ -61,14 +58,11 @@ extended='[
   { "name": "DP-1", "mirrorOf": "none", "disabled": false, "focused": true, "width": 2560, "height": 1440 }
 ]'
 
-# Omarchy mirrors by pointing the external at the internal, so `mirrorOf` lands
-# on the external and the internal keeps saying "none".
 mirrored='[
   { "name": "eDP-1", "mirrorOf": "none", "disabled": false, "focused": true, "width": 1920, "height": 1080 },
   { "name": "DP-1", "mirrorOf": "eDP-1", "disabled": false, "focused": false, "width": 1920, "height": 1080 }
 ]'
 
-# A monitors.lua of the user's own can mirror the other way instead.
 reverse_mirrored='[
   { "name": "eDP-1", "mirrorOf": "DP-1", "disabled": false, "focused": false, "width": 2560, "height": 1440 },
   { "name": "DP-1", "mirrorOf": "none", "disabled": false, "focused": true, "width": 2560, "height": 1440 }

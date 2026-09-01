@@ -19,9 +19,6 @@ Item {
 
   property string historyPath: Quickshell.env("HOME") + "/.local/state/omarchy/clipboard-history.json"
   property string captureScript: root.omarchyPath + "/shell/plugins/clipboard/capture.sh"
-  // Shares the [menu] surface tokens — themes that style the menu also
-  // style the clipboard. Selected-row colors composed in the
-  // singleton so consumers drop them straight into Rectangle bindings.
   property color background: Color.menu.background
   property color foreground: Color.menu.text
   property color border: Color.menu.border
@@ -258,9 +255,6 @@ Item {
     onFileChanged: reload()
   }
 
-  // Reap watchers left behind by a previous shell instance, then start our
-  // own. The pdeathsig on the watchers makes the kernel kill them whenever
-  // the shell exits, however it exits, so no further lifecycle management.
   Process {
     id: initProc
     command: ["pkill", "-f", "wl-paste .*--watch .*/shell/plugins/clipboard/capture\\.sh"]
@@ -298,9 +292,6 @@ Item {
     }
   }
 
-  // A watcher that dies takes clipboard history with it, silently: copying still
-  // works, the picker still opens, and the old entries are all still there, so
-  // nothing recorded until the next shell reload. Bring it back instead.
   Timer {
     id: watchRestartTimer
     interval: 1000

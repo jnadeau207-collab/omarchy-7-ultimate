@@ -99,7 +99,6 @@ SCHEMAS = build_contracts(
     state_schema=BRIGHTNESS_STATE_SCHEMA,
 )
 
-
 def _label(value: Any) -> str:
     if not isinstance(value, str) or not 1 <= len(value) <= 160:
         raise ValueError("display connector is not a bounded string")
@@ -107,18 +106,15 @@ def _label(value: Any) -> str:
         raise ValueError("display connector contains a control character")
     return value
 
-
 def _integer(value: Any, name: str, minimum: int, maximum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
         raise ValueError(f"display {name} is invalid")
     return value
 
-
 def _number(value: Any, name: str, minimum: float, maximum: float) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not minimum < float(value) <= maximum:
         raise ValueError(f"display {name} is invalid")
     return float(value)
-
 
 def _boolean(value: Any, name: str, *, default: bool | None = None) -> bool:
     if value is None and default is not None:
@@ -126,7 +122,6 @@ def _boolean(value: Any, name: str, *, default: bool | None = None) -> bool:
     if not isinstance(value, bool):
         raise ValueError(f"display {name} is not a boolean")
     return value
-
 
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     document = parse_probe_json((await invoke_probe(MONITORS_COMMAND, runner)).stdout)
@@ -158,8 +153,6 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         elif not isinstance(mirror_value, str):
             raise ValueError("hyprctl monitor mirror target is invalid")
         elif mirror_value in ("", "none"):
-            # Hyprland emits "none" when the output is not mirroring; older
-            # fixtures use an empty string for the same sentinel.
             mirror_native = None
         else:
             mirror_native = _label(mirror_value)
@@ -186,22 +179,18 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         )
     return resources
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "percent": arguments["percent"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if not current["available"]:
         raise ValueError("display does not expose controllable brightness")
     return {"available": True, "percent": arguments["percent"]}
 
-
 def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
     if current == proposed:
         return "The display already uses the requested brightness; no change will be made."
     return f"Set the selected display brightness to {proposed['percent']} percent."
-
 
 SPEC = DomainSpec(
     domain=DOMAIN,
@@ -216,14 +205,11 @@ SPEC = DomainSpec(
     describe_change=_describe,
 )
 
-
 def _manifest() -> Mapping[str, Any]:
     return load_frozen_json(Path(__file__).with_name("manifest-v0.json"))
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, _manifest(), SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

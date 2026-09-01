@@ -21,14 +21,11 @@ from ._immutable import freeze, thaw
 
 JsonObject = Mapping[str, Any]
 
-
 def canonical_json(value: Any) -> str:
     return json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
-
 def state_revision(value: Any) -> str:
     return f"sha256.{hashlib.sha256(canonical_json(value).encode('utf-8')).hexdigest()}"
-
 
 @dataclass(frozen=True)
 class BackendSnapshot:
@@ -36,7 +33,6 @@ class BackendSnapshot:
     operation_available: bool
     resources: tuple[Mapping[str, Any], ...]
     reason: FabricError | None = None
-
 
 class LeafBackend(Protocol):
     async def snapshot(self) -> BackendSnapshot: ...
@@ -48,12 +44,10 @@ class LeafBackend(Protocol):
         expected_revision: str,
     ) -> BackendSnapshot: ...
 
-
 NormalizeArguments = Callable[[Mapping[str, Any]], dict[str, Any]]
 TargetId = Callable[[Mapping[str, Any]], str]
 ProposeState = Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]]
 DescribeChange = Callable[[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]], str]
-
 
 @dataclass(frozen=True)
 class DomainSpec:
@@ -67,7 +61,6 @@ class DomainSpec:
     target_id: TargetId
     propose_state: ProposeState
     describe_change: DescribeChange
-
 
 class FakeBackend:
     """Hermetic resource backend with optional atomic persistence for restart tests."""
@@ -179,7 +172,6 @@ class FakeBackend:
                 raise KeyError(resource_id)
             resource["state"] = deepcopy(dict(value))
             self._persist()
-
 
 class LeafProvider:
     def __init__(
@@ -600,7 +592,6 @@ class LeafProvider:
         self._validate(definition["result"], result, "result")
         return result
 
-
 def _resource_missing(domain: str, resource_id: str) -> FabricError:
     return FabricError(
         f"{domain}.resource-unavailable",
@@ -610,7 +601,6 @@ def _resource_missing(domain: str, resource_id: str) -> FabricError:
         retryable=True,
         recovery_actions=(f"{domain}.inventory.refresh",),
     )
-
 
 def _stale_state(domain: str, resource_id: str) -> FabricError:
     return FabricError(

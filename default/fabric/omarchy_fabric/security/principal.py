@@ -16,10 +16,8 @@ from .errors import SecurityValidationError
 
 _STABLE_RE = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 def _validate_time(value: datetime, name: str) -> None:
     try:
@@ -29,12 +27,10 @@ def _validate_time(value: datetime, name: str) -> None:
     if not aware:
         raise SecurityValidationError("principal.time", f"{name} must be timezone-aware.")
 
-
 class PrincipalKind(str, Enum):
     SHELL = "shell"
     PROVIDER = "provider"
     TASK = "task"
-
 
 @dataclass(frozen=True)
 class EndpointAdmission:
@@ -61,7 +57,6 @@ class EndpointAdmission:
         elif self.task_id is not None:
             raise SecurityValidationError("principal.task", "Only task endpoints carry a task ID.")
 
-
 @dataclass(frozen=True)
 class EndpointPrincipal:
     principal_id: str
@@ -74,19 +69,16 @@ class EndpointPrincipal:
     provider_id: str | None = None
     task_id: str | None = None
 
-
 @dataclass(frozen=True)
 class SessionCredential:
     session_id: str
     token: str
-
 
 @dataclass
 class _StoredBinding:
     principal: EndpointPrincipal
     token_digest: bytes
     revoked: bool = False
-
 
 class SessionBindingStore:
     """Binds an admitted endpoint to peer UID and an opaque session token.

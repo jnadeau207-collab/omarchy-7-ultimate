@@ -18,14 +18,11 @@ from .catalog import PackageCatalog
 from .contracts import CONTRACTS, ref
 from .engine import FakeExecutionAdapter, PackageOperationEngine, inventory_revision
 
-
 MAX_POLICY_BYTES = 128 * 1024
 PLAN_ONLY_DETAIL = "The code-owned Software Center catalog is a contract seed; reads and preflights are available, but live package mutation is not admitted."
 
-
 def _manifest_path() -> Path:
     return Path(__file__).with_name("manifest-v0.json")
-
 
 class PackageProvider:
     def __init__(
@@ -128,14 +125,11 @@ class PackageProvider:
                 recovery_actions=("software.release-catalog.install",),
             )
 
-
 def _default_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
-
 def _reject_json_constant(value: str) -> None:
     raise ValueError(f"non-finite JSON constant: {value}")
-
 
 def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     document: dict[str, Any] = {}
@@ -144,7 +138,6 @@ def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
             raise ValueError("duplicate JSON object key")
         document[key] = value
     return document
-
 
 def _load_source_policy(path: Path, schema_path: Path) -> Mapping[str, Any]:
     try:
@@ -196,7 +189,6 @@ def _load_source_policy(path: Path, schema_path: Path) -> Mapping[str, Any]:
         )
     return deepcopy(document)
 
-
 def build_provider() -> PackageProvider:
     """Build the code-owned, contract-seed production provider without a live adapter."""
 
@@ -219,7 +211,6 @@ def build_provider() -> PackageProvider:
         plan_only=True,
         availability=ProviderAvailability("degraded", PLAN_ONLY_DETAIL),
     )
-
 
 def build_fake_provider(
     catalog_document: Mapping[str, Any],

@@ -269,11 +269,6 @@ function radiiFit(w, h, r) {
     && r.trry + r.brry <= h
 }
 
-// Internal geometry output used by ringPath and focused topology tests.
-// Connected enabled-side runs share one closed contour; opposite-only sides
-// need two. The all-sides case is one compound winding path with a reversed
-// inner loop. Disabled sides never require touching or epsilon-offset inner
-// geometry, so a zero/zero rounded corner emits no border pixels.
 function borderPaths(w, h, radius, widths) {
   w = Math.max(0, Number(w) || 0)
   h = Math.max(0, Number(h) || 0)
@@ -316,9 +311,6 @@ function borderPaths(w, h, radius, widths) {
     blry: Math.max(0, outerRadii.bl.ry - bottom),
   }
 
-  // Normalizing an inner radius that cannot fit can move its tangent beyond
-  // the outer rounded boundary. Winding fill may then paint outside the outer
-  // contour. Conservatively treat that rounded interior as consumed instead.
   if (!radiiFit(iw, ih, desiredInnerRadii)) return [outerPath]
 
   var innerRadii = normalizeRadii(iw, ih, desiredInnerRadii)

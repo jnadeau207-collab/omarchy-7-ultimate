@@ -21,5 +21,4 @@ done
 
 omarchy-pkg-add yt-dlp
 
-# Register the native messaging host that runs yt-dlp for the extension.
 omarchy-install-chromium-ytdlp || true

@@ -4,11 +4,6 @@
 # omarchy:args=<pid> [comm] [exe] [signal]
 # omarchy:examples=omarchy agent crash 1516893
 
-# Clicked from a "Process crashed:" notification, or run by hand against any PID
-# in `coredumpctl list`. The method lives in the diagnose-crash skill so it is
-# edited in one place and works with whichever agent is default; this only
-# gathers the facts and points at it.
-
 set -euo pipefail
 
 pid=${1:?usage: omarchy-agent-crash <pid> [comm] [exe] [signal]}
@@ -25,8 +20,6 @@ signal=${4:-unknown}
 
 skill="$OMARCHY_PATH/default/agents/skills/diagnose-crash/SKILL.md"
 
-# Looked up live so a hand-run PID still gets a timestamp. A rotated-away core
-# only costs the timestamp, so failure is tolerated.
 when=$(coredumpctl list "$pid" --no-pager --no-legend 2>/dev/null | tail -1 | cut -d' ' -f1-4) || true
 when=${when:-unknown}
 

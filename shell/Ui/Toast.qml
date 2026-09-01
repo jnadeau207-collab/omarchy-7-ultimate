@@ -3,23 +3,14 @@ import QtQuick.Controls
 import qs.Commons
 import qs.Ui
 
-// Toast: transient notification card for operation results (Rule 6 — every
-// consequential operation reports its result with a recovery path). The
-// visual card only; queueing and screen placement belong to the
-// notification service/surface.
-//
-// `tone` picks the semantic state color stripe; actions render as buttons.
 Card {
   id: root
 
   property string title: ""
   property string message: ""
 
-  // "accent" | "success" | "danger" | "warning" | "info"
   property string tone: "accent"
 
-  // Optional action labels; each click emits `actionClicked(index)` and
-  // dismisses unless the handler keeps it alive.
   property var actions: []
 
   signal actionClicked(int index)
@@ -34,8 +25,6 @@ Card {
   Accessible.name: Semantics.text(semanticProfile, title !== "" ? title : "Notification")
   Accessible.description: Semantics.text(semanticProfile, message)
 
-  // State stripe: color plus the title carrying meaning, so the tone is
-  // never signaled by color alone.
   Rectangle {
     width: Semantics.metric(root.semanticProfile, Style.space(3), 3)
     height: parent.height

@@ -1,9 +1,3 @@
-# Disable hardware cursors when the nouveau driver is in use.
-#
-# The nouveau DRM driver does not display the hardware cursor plane on many
-# older NVIDIA GPUs, leaving the mouse pointer invisible under Hyprland.
-# Skip the fix when the proprietary driver was configured: supported GPUs can
-# still use nouveau during installation before switching drivers on reboot.
 nvidia_config="${OMARCHY_NVIDIA_MODPROBE_CONFIG:-/etc/modprobe.d/nvidia.conf}"
 
 if [[ ! -f $nvidia_config ]] &&

@@ -13,8 +13,6 @@ grep -q 'run_logged .*hardware/dell-xps13-sidecar-amps.sh' "$all" ||
   fail "the sidecar amplifier workaround runs during hardware setup"
 pass "the sidecar amplifier workaround runs during hardware setup"
 
-# The apply step rebuilds the boot image, so it has to see the Panther Lake
-# kernel that ptl-kernel.sh swaps in rather than the stock one it replaces.
 ptl_line=$(grep -n 'hardware/intel/ptl-kernel.sh' "$all" | cut -d: -f1)
 amps_line=$(grep -n 'hardware/dell-xps13-sidecar-amps.sh' "$all" | cut -d: -f1)
 ((ptl_line < amps_line)) ||
@@ -77,7 +75,6 @@ pass "the detector rejects another model"
 run_detector "XPS 13 DX13260" "0E54" && fail "the detector rejects another SKU"
 pass "the detector rejects another SKU"
 
-# An exact match must not be satisfied by a SKU that merely contains it.
 run_detector "XPS 13 DX13260" "0E530" && fail "the detector rejects a longer SKU"
 pass "the detector rejects a longer SKU"
 
@@ -85,7 +82,6 @@ run_detector "XPS 13 DX13260" "0E53" "$test_tmp/absent" &&
   fail "the detector fails closed when the SKU attribute is missing"
 pass "the detector fails closed when the SKU attribute is missing"
 
-# Sourced the way run_logged runs it.
 run_leaf() {
   : >"$call_log"
   printf '0E53\n' >"$sku_file"
@@ -109,8 +105,6 @@ run_leaf "ThinkPad X1" || fail "the leaf no-ops on other hardware"
 [[ -s $call_log ]] && fail "the leaf no-ops on other hardware"
 pass "the leaf no-ops on other hardware"
 
-# Pacman registers a package even when its scriptlet fails, so a failing apply
-# has to surface rather than be swallowed by a successful install.
 run_leaf "XPS 13 DX13260" 0 1 && fail "a failing apply fails the leaf"
 pass "a failing apply fails the leaf"
 
@@ -118,8 +112,6 @@ run_leaf "XPS 13 DX13260" 1 && fail "a failing package install fails the leaf"
 grep -q '^apply$' "$call_log" && fail "a failing package install skips the apply"
 pass "a failing package install fails the leaf without applying"
 
-# The migration runner uses bash -euo pipefail and only records the migration
-# when it exits clean, so a failed apply has to leave reboot-required unset.
 run_migration() {
   : >"$call_log"
   printf '0E53\n' >"$sku_file"

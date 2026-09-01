@@ -3,10 +3,6 @@ import QtQuick.Layouts
 import qs.Ui
 import qs.Commons
 
-// Executable presentation fixture: every case instantiates the same real
-// shared controls under a different semantic profile. It is intentionally
-// self-contained so light/dark, density and accessibility cases can coexist
-// without mutating the process-wide theme.
 Card {
   id: root
 

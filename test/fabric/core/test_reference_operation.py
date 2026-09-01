@@ -19,7 +19,6 @@ from omarchy_fabric.db import canonical_json
 from omarchy_fabric.models import MAX_FRAME_BYTES, FabricError
 from omarchy_fabric.reference_operation import ReferenceOperationStore
 
-
 SCHEMA_DIRECTORY = Path(__file__).resolve().parents[3] / "default" / "fabric" / "schema"
 REFERENCE_SCHEMA = json.loads((SCHEMA_DIRECTORY / "reference-operation-v0.json").read_text())
 COMMON_SCHEMA = json.loads((SCHEMA_DIRECTORY / "common-v0.json").read_text())
@@ -34,7 +33,6 @@ METHOD_RESULT_VALIDATOR = Draft202012Validator(
     REFERENCE_SCHEMA,
     registry=SCHEMA_REGISTRY,
 ).evolve(schema=REFERENCE_SCHEMA["$defs"]["methodResultContract"])
-
 
 def preflight_params(
     *,
@@ -59,7 +57,6 @@ def preflight_params(
             "pace": pace,
         },
     }
-
 
 class ReferenceOperationRpcTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
@@ -1204,7 +1201,6 @@ class ReferenceOperationRpcTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(integrity.exception.code, "ledger.integrity-failed")
         finally:
             await client.close()
-
 
 if __name__ == "__main__":
     unittest.main()

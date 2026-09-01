@@ -13,7 +13,6 @@ from omarchy_fabric.models import FabricError
 from omarchy_fabric.providers._engine import state_revision
 from omarchy_fabric.providers.files import provider as files
 
-
 class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
     async def exercise(
         self,
@@ -182,7 +181,6 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             ))
         with self.assertRaisesRegex(ValueError, "12 KiB"):
             files.build_fake_provider(oversized)
-
 
 if __name__ == "__main__":
     unittest.main()

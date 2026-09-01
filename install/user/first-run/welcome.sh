@@ -1,5 +1,3 @@
-# Desktop Mode is the default product. Do not teach Power User chords that
-# desktop.lua does not bind. Power User keeps the cheatsheet toast.
 mode=desktop
 mode_file="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/ultimate/mode"
 if [[ -f $mode_file ]]; then

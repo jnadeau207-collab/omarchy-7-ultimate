@@ -4,21 +4,6 @@ import QtQuick.Window
 import Quickshell.Io
 import qs.Commons
 
-// Searchable multi-select dropdown. Trigger shape matches Dropdown /
-// SearchableDropdown; the popup shows a search field, an optional refresh
-// button, and a checkbox list. Click rows to toggle. Use when callers
-// need to pick zero or more items from a (possibly long, possibly
-// dynamic) list.
-//
-// Options are either:
-//   - static `options`: string[] or [{ value, label, description? }]
-//   - dynamic `optionsCommand`: argv array. The command's stdout is
-//     parsed as JSON when it trims to start with `[`, otherwise as
-//     one option per non-empty newline. Re-runs whenever the popup opens
-//     and via the refresh button.
-//
-// `values` is the persisted selection — always an array of strings.
-// Emits `changed(values)` whenever the selection mutates.
 Item {
   id: root
 
@@ -53,8 +38,6 @@ Item {
   signal changed(var values)
   signal hovered(bool isHovered)
 
-  // Loaded options after merging static + dynamic. Always normalized
-  // into the [{ value, label, description }] shape for delegate use.
   property var resolvedOptions: []
   property bool loadingOptions: false
   property string optionsError: ""
@@ -71,10 +54,6 @@ Item {
     return { value: s, label: s, description: "" }
   }
 
-  // QML schema arrays sometimes arrive as JSValue lists that fail
-  // `Array.isArray`. arrayFrom accepts anything array-like (`.length`
-  // numeric) and returns a real JS array so the rest of the component can
-  // rely on standard array operations.
   function arrayFrom(v) {
     if (!v || typeof v.length !== "number" || typeof v === "string") return []
     var out = []
@@ -150,11 +129,6 @@ Item {
     recomputeFiltered()
   }
 
-  // Parse stdout from a dynamic optionsCommand into `{ options, error }`.
-  // Output starting with `[` is parsed strictly as JSON — a malformed array
-  // surfaces as an error rather than silently falling back to newline
-  // parsing, which would render the broken text as a literal option label.
-  // Output not starting with `[` is treated as one value per non-empty line.
   function parseCommandOutput(text) {
     var raw = String(text || "").trim()
     if (raw === "") return { options: [], error: "" }
@@ -175,9 +149,6 @@ Item {
     return { options: out, error: "" }
   }
 
-  // Monotonic request id so stale stdout/exit signals from a previous
-  // refresh can't clobber the resolvedOptions of a newer refresh, and
-  // a runaway command can be detected after a timeout.
   property int refreshSeq: 0
   readonly property int refreshTimeoutMs: 6000
 
@@ -334,11 +305,6 @@ Item {
 
       QQC.Popup {
         id: popup
-        // Reparent to the window's content item so the popup is free of any
-        // clipping ancestor. Position
-        // and available height are recomputed on open and any time the
-        // trigger's geometry changes, since a binding on mapToItem alone
-        // won't reliably re-evaluate when ancestors scroll or resize.
         parent: trigger.Window.window ? trigger.Window.window.contentItem : trigger
         property real _anchorX: 0
         property real _anchorY: 0
@@ -358,8 +324,6 @@ Item {
         x: _anchorX
         y: _anchorY
         width: trigger.width
-        // Clamp to whatever fits below the trigger; don't force popupMinHeight
-        // when there isn't room, otherwise the popup overflows the window.
         implicitHeight: Math.min(_availableBelow, _idealContent, _maxRowsHeight)
         padding: Style.spacing.hairline
         leftPadding: Border.left(root.popupBorderSpec) + Style.spacing.hairline

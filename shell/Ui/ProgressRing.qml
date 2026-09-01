@@ -1,9 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Circular progress indicator for compact surfaces: taskbar buttons, panel
-// headers, list rows. Same contract as ProgressBar — determinate `value`
-// 0..1 or `indeterminate` spin, semantic `tone`.
 Item {
   id: root
 
@@ -25,8 +22,6 @@ Item {
   Accessible.description: Semantics.accessibleProgress(
     Semantics.text(semanticProfile, accessibleName), value, indeterminate)
 
-  // Track + value arc drawn as a conic-ish approximation: a full ring at
-  // low alpha with an arc segment on top. Canvas is the honest tool here.
   Canvas {
     id: canvas
     anchors.fill: parent
@@ -79,7 +74,6 @@ Item {
       loops: Animation.Infinite
     }
 
-    // Repaint the indeterminate arc position as the sweep advances.
     SequentialAnimation {
       id: spin
       property real phase: 0.25

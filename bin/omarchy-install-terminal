@@ -11,7 +11,6 @@ fi
 
 package="$1"
 
-# Map package name to desktop entry ID
 case "$package" in
 alacritty) desktop_id="Alacritty.desktop" ;;
 foot) desktop_id="foot.desktop" ;;
@@ -25,9 +24,7 @@ esac
 
 echo "Installing $package..."
 
-# Install package
 if omarchy-pkg-add $package; then
-  # Copy custom desktop entries with X-TerminalArg* keys
   if [[ $package == "alacritty" ]]; then
     mkdir -p ~/.local/share/applications
     cp "$OMARCHY_PATH/default/alacritty/$desktop_id" ~/.local/share/applications/
@@ -36,12 +33,10 @@ if omarchy-pkg-add $package; then
     cp "$OMARCHY_PATH/applications/$desktop_id" ~/.local/share/applications/
   fi
 
-  # Copy default config for optional terminals when missing
   if [[ ! -e ~/.config/$package ]]; then
     cp -Rpf "$OMARCHY_PATH/config/$package" ~/.config/
   fi
 
-  # Update xdg-terminals.list to prioritize the proper terminal
   cat >~/.config/xdg-terminals.list <<EOF
 # Terminal emulator preference order for xdg-terminal-exec
 # The first found and valid terminal will be used

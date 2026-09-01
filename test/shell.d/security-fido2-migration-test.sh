@@ -13,9 +13,6 @@ stub_bin="$test_tmp/bin"
 calls="$test_tmp/calls.log"
 stages="$test_tmp/stages.log"
 notifications="$test_tmp/notifications.log"
-# A directory of its own, not $test_tmp: the migration derives the FIDO2
-# directory from the authfile, and the case below where that directory is
-# untraversable has to be able to take the permissions off it.
 authdir="$test_tmp/etc-fido2"
 authfile="$authdir/fido2"
 migration_copy="$test_tmp/migration.sh"
@@ -23,11 +20,6 @@ mkdir -p "$stub_bin" "$authdir"
 : >"$stages"
 : >"$notifications"
 
-# The migration repairs an absolute path no unprivileged suite can write, and an
-# environment override in the shipped file would hand a root install and mv an
-# operand the caller chooses. Retarget a scratch copy instead, and fail if the
-# path is not named exactly once, so this seam cannot quietly stop standing for
-# the file it copies.
 occurrences=$(grep -Fo /etc/fido2/fido2 "$migration" | wc -l) || occurrences=0
 (( occurrences == 1 )) ||
   fail "the migration names its authfile exactly once, so the test can retarget a copy" \
@@ -36,10 +28,6 @@ grep -Fxq 'authfile="/etc/fido2/fido2"' "$migration" ||
   fail "the production authfile path is a fixed literal, not caller-controlled"
 pass "migration names its authfile once, and the test drives a retargeted copy"
 
-# Log every escalation, then execute only the expected bare sudo forms. Each
-# operand is matched against the scratch authfile or a stage this stub created.
-# This contains malformed calls made through that interface; arbitrary direct
-# privileged commands in the migration are outside this harness.
 cat >"$stub_bin/sudo" <<'SH'
 #!/bin/bash
 
@@ -201,9 +189,6 @@ SH
 
 chmod +x "$stub_bin/stat"
 
-# omarchy-migrate records this migration complete on any zero exit, so the
-# states it cannot repair have to reach the user somewhere that outlives the
-# update terminal's scrollback.
 cat >"$stub_bin/omarchy-notification-send" <<'SH'
 #!/bin/bash
 
@@ -253,23 +238,16 @@ safe_fixture_stage_path() {
   [[ $suffix =~ ^[[:alnum:]]{6}$ ]]
 }
 
-# Every repair case is about an authfile its own user can still rewrite. The
-# calls below give stat an explicit caller-owned state, so the same assertions
-# work as an ordinary user, as real root, and in a namespace mapping only UID 0.
 write_authfile() {
   printf 'tester:credential-handle,public-key,es256,+presence\n' >"$authfile"
   chmod "$1" "$authfile"
 }
 
-# Almost every machine has never registered a key, and establishing that must
-# not cost those users a password prompt.
 rm -f "$authfile"
 run_migration
 [[ ! -s $calls ]] || fail "a machine with no authfile escalates nothing" "$(cat "$calls")"
 pass "migration skips a machine that never set FIDO2 up"
 
-# What the old `sudo mv` left behind on every machine that did: the authfile PAM
-# consults for sudo, owned by the account it authenticates, at the caller's umask.
 write_authfile 644 || fail "the test can stage a non-root-owned authfile"
 before_inode=$(stat -c %i "$authfile")
 run_migration 0 0 caller caller 644
@@ -297,10 +275,6 @@ if (( EUID == 0 )) && [[ $(stat -c %U:%G "$authfile") != "root:root" ]]; then
 fi
 pass "migration preserves the credential with its PAM-readable mode"
 
-# The whole point of replacing rather than chowning. Permission is checked at
-# open(2), so a descriptor the registering user opened before the update stays
-# writable on the old inode through any chmod or chown -- and pam_u2f resolving
-# the authfile path would keep reading exactly that inode.
 [[ $(stat -c %i "$authfile") != "$before_inode" ]] ||
   fail "the repair lands on a new inode, orphaning any descriptor already open on the old one"
 pass "migration replaces the inode a pre-existing writer would still hold"
@@ -315,10 +289,6 @@ safe_fixture_stage_path "$first_stage" ||
   fail "the staged copy does not outlive the repair" "left behind: $first_stage"
 pass "migration uses a unique sibling and leaves no staged copy behind"
 
-# Treat mktemp's output as untrusted even though sudo normally resolves the
-# system binary. This existing regular path has a six-character suffix only if
-# `/` is accepted as one of the characters, as the old ?????? glob did. The
-# strict shape check must reject it before any privileged write or cleanup.
 write_authfile 644 || fail "the test can stage the malformed-output fixture"
 before_inode=$(stat -c %i "$authfile")
 malformed_parent="$authfile.new.A"
@@ -340,10 +310,6 @@ fi
 /usr/bin/rmdir -- "$malformed_parent"
 pass "migration rejects malformed mktemp output before any privileged write"
 
-# A name can have the right prefix and six-character suffix but still name an
-# object mktemp would never return. Production must reject that object before
-# install/mv; its cleanup may address only that validated scratch sibling and
-# must not recursively remove the unexpected directory.
 write_authfile 644 || fail "the test can stage the nonregular-output fixture"
 before_inode=$(stat -c %i "$authfile")
 nonregular_stage="$authfile.new.BAD123"
@@ -365,8 +331,6 @@ grep -Fq $'sudo\trm\t-f\t--\t'"$nonregular_stage" "$calls" ||
 /usr/bin/rmdir -- "$nonregular_stage"
 pass "migration rejects and safely handles nonregular mktemp output"
 
-# A caller-owned file still needs a fresh inode and root ownership whatever its
-# current mode.
 write_authfile 600 || fail "the test can restage a non-root-owned authfile"
 run_migration 0 0 caller caller 600
 grep -Fq $'sudo\tinstall\t-T\t' "$calls" ||
@@ -380,8 +344,6 @@ second_stage=${staged_paths[1]}
   fail "the second staged copy does not outlive the repair" "left behind: $second_stage"
 pass "migration repairs a user-owned authfile whatever its mode and cleans its stage"
 
-# A failure after mktemp must remove only the exact stage the stub created. The
-# live authfile stays on its original inode because mv was never reached.
 write_authfile 644 || fail "the test can stage the cleanup fixture"
 before_inode=$(stat -c %i "$authfile")
 if run_migration 1 0 caller caller 644; then
@@ -400,8 +362,6 @@ grep -Fq $'sudo\trm\t-f\t--\t'"$failed_stage" "$calls" ||
   fail "a failed repair leaves the live authfile inode alone"
 pass "migration cleans its unique stage after a failed repair"
 
-# A failure after install has the same cleanup obligation. In particular, the
-# EXIT trap must still be armed when mv fails.
 write_authfile 644 || fail "the test can stage the mv-failure fixture"
 before_inode=$(stat -c %i "$authfile")
 if run_migration 0 1 caller caller 644; then
@@ -422,19 +382,12 @@ grep -Fq $'sudo\trm\t-f\t--\t'"$failed_mv_stage" "$calls" ||
   fail "an mv failure leaves the live authfile inode alone"
 pass "migration cleans its unique stage after a failed rename"
 
-# The state a completed repair leaves, which is also where every machine that
-# registers after this fix starts. A second account, and a second run for the
-# same account, must find it done and escalate nothing. Fake only stat's view of
-# the scratch authfile so this stays deterministic without borrowing a host
-# file or requiring the suite itself to run as root.
 write_authfile 644 || fail "the test can stage the settled-state fixture"
 run_migration 0 0 root root 644
 [[ ! -s $calls ]] ||
   fail "an already root:root mode-644 authfile escalates nothing" "$(cat "$calls")"
 pass "migration deterministically no-ops on its settled state"
 
-# Owner, group and mode are independent parts of that state check. Hold two at
-# their settled values while making each third value wrong, and require repair.
 write_authfile 644 || fail "the test can stage the wrong-owner fixture"
 run_migration 0 0 nobody root 644
 grep -Fq $'sudo\tinstall\t-T\t' "$calls" ||
@@ -453,9 +406,6 @@ grep -Fq $'sudo\tinstall\t-T\t' "$calls" ||
   fail "a mode-600 authfile is repaired even when owner and group are settled" "$(cat "$calls")"
 pass "migration repairs an authfile with the wrong mode"
 
-# Neither of these is ours to rewrite, and both must say so without escalating:
-# chown follows a symlink and would take the target instead, while changing a
-# directory's mode would alter an object the migration does not own.
 rm -rf "$authfile"
 ln -s "$test_tmp/elsewhere" "$authfile"
 : >"$test_tmp/elsewhere"
@@ -478,14 +428,6 @@ run_migration
 [[ -s $notifications ]] || fail "a non-regular authfile is raised the same way"
 pass "migration reports a non-regular authfile and repairs nothing"
 
-# omarchy-migrate writes this migration's completion marker on any zero exit, so
-# a machine it cannot repair gets one shot at telling the user. The states above
-# are exactly the ones where the authfile may already be under someone else's
-# control, and a line in the update terminal scrolls past.
-# Assert the argument shape rather than a substring. The glyph is a private-use
-# codepoint that an edit can silently drop, and losing it shifts every argument
-# left: -g swallows the headline, the body becomes the title, and the message
-# goes out with no description. A substring match sees all of that as fine.
 awk -F'\t' '
   $1 == "notify" && NF == 7 && $2 == "-u" && $3 == "critical" && $4 == "-g" &&
     $5 != "" && $6 == "FIDO2 authfile needs attention" && $7 != "" { found = 1 }
@@ -495,11 +437,6 @@ awk -F'\t' '
     "$(cat -A "$notifications")"
 pass "migration raises its unrepairable states as a desktop notification"
 
-# The old setup created the FIDO2 directory with `sudo mkdir -p`, which took the
-# caller's umask: registering under `umask 077` left it mode 0700 with the
-# user-owned authfile still inside. Absence and "cannot look" are the same
-# answer to an unprivileged test, so keying the early exit on the authfile
-# recorded a repair on exactly the machines that still needed one.
 rm -rf "$authfile"
 write_authfile 644 || fail "the test can stage the untraversable-directory fixture"
 before_inode=$(stat -c %i "$authfile")
@@ -515,8 +452,6 @@ grep -Fq $'sudo\tinstall\t-T\t' "$calls" ||
   fail "the repair behind an untraversable directory still replaces the inode"
 pass "migration repairs an authfile an unreadable directory hid from it"
 
-# The narrow escalation above must not reach a machine that never registered a
-# key, which is almost all of them.
 rm -f "$authfile"
 rm -rf "$authdir"
 run_migration
@@ -528,10 +463,6 @@ run_migration
   fail "an empty readable FIDO2 directory escalates nothing" "$(cat "$calls")"
 pass "migration still costs no password prompt on a machine that never set FIDO2 up"
 
-# An aborted setup can leave the directory behind with nothing in it, and an
-# administrator may keep one deliberately private. Looking costs a probe, but
-# neither may have its mode widened, or its group and special bits discarded,
-# for a repair that is not needed.
 rm -f "$authfile"
 chmod 000 "$authdir"
 run_migration
@@ -545,9 +476,6 @@ fi
 chmod 755 "$authdir"
 pass "migration looks behind an inaccessible FIDO2 directory without widening it"
 
-# Notification delivery fails on a machine with no user bus or no notification
-# server. That must not abort the migration under `bash -euo pipefail` and take
-# every later migration with it.
 rm -f "$authfile"
 ln -s "$test_tmp/missing" "$authfile"
 run_migration 0 0 "" "" "" normal 1

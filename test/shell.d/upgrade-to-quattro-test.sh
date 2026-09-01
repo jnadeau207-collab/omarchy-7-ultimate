@@ -13,8 +13,6 @@ pacman_line=$(grep -n '^configure_pacman_channel$' "$upgrade_to_quattro" | cut -
 grep -F 'omarchy-snapshot create || (($? == 127))' "$upgrade_to_quattro" >/dev/null
 pass "Omarchy 4 upgrade snapshots the system before mutation"
 
-# The mirrors are repointed immediately before the keyrings go in, so only a
-# forced refresh replaces the legacy database and its stale checksums.
 grep -F 'pacman -Syy --noconfirm archlinux-keyring omarchy-keyring' "$upgrade_to_quattro" >/dev/null
 if grep -F 'pacman -Sy --noconfirm archlinux-keyring omarchy-keyring' "$upgrade_to_quattro" >/dev/null; then
   fail "Omarchy 4 upgrade forces a database refresh before installing keyrings"
@@ -49,9 +47,6 @@ grep -F 'touch "$done_dir/first-run-user" "$done_dir/finalize-user"' "$upgrade_t
 grep -F 'rm -f "$state_dir/first-run-user.done" "$state_dir/finalize-user.done"' "$upgrade_to_quattro" >/dev/null
 pass "Omarchy 4 upgrade completes first-run and migrates legacy completion markers"
 
-# The script runs from the branch against whatever packaged tree the channel
-# serves, so a packaged command missing from an older build must never be able
-# to abort the upgrade partway through.
 if grep -F '"$root/bin/omarchy-done"' "$upgrade_to_quattro" >/dev/null; then
   fail "Omarchy 4 upgrade writes completion markers without the packaged omarchy-done"
 fi
@@ -97,9 +92,6 @@ grep -F 'systemd-networkd.socket' "$upgrade_to_quattro" >/dev/null
 grep -F 'systemd-networkd-resolve-hook.socket' "$upgrade_to_quattro" >/dev/null
 pass "Omarchy 4 upgrade retires systemd-networkd for NetworkManager"
 
-# Booting with both managers enabled leaves them fighting over the Wi-Fi
-# adapter, so enabling NetworkManager and disabling iwd cannot be separated by
-# any step that might abort in between.
 function_body() {
   awk -v name="$1" '$0 == name "() {" { inside = 1; next } inside && $0 == "}" { exit } inside' "$upgrade_to_quattro"
 }
@@ -159,8 +151,6 @@ grep -A1 -F '  enable_system_service NetworkManager.service' "$upgrade_to_quattr
   fail "Omarchy 4 upgrade retires iwd in the step that enables NetworkManager"
 pass "Omarchy 4 upgrade switches from iwd to NetworkManager atomically"
 
-# set -e aborts silently, so only an explicit banner distinguishes a
-# half-upgraded system from a finished one.
 grep -Fx 'trap cleanup_on_exit EXIT' "$upgrade_to_quattro" >/dev/null ||
   fail "Omarchy 4 upgrade reports an aborted run instead of exiting silently"
 cleanup_body=$(function_body cleanup_on_exit)
@@ -175,8 +165,6 @@ grep -F '>&2' <<<"$cleanup_body" >/dev/null ||
 started_line=$(grep -n '^upgrade_started=1$' "$upgrade_to_quattro" | cut -d: -f1)
 completed_line=$(grep -n '^upgrade_completed=1$' "$upgrade_to_quattro" | cut -d: -f1)
 suppress_line=$(grep -n '^suppress_hyprland_config_reload$' "$upgrade_to_quattro" | cut -d: -f1)
-# The reboot is the cutover, so the last mutating step hands the live session
-# back rather than swapping the shell out underneath it.
 last_step_line=$(grep -n '^restore_hyprland_config_reload$' "$upgrade_to_quattro" | cut -d: -f1)
 [[ -n $started_line && -n $completed_line && -n $suppress_line && -n $last_step_line ]] ||
   fail "upgrade progress markers and the mutating step range exist"
@@ -184,9 +172,6 @@ last_step_line=$(grep -n '^restore_hyprland_config_reload$' "$upgrade_to_quattro
 (( completed_line > last_step_line )) || fail "the upgrade is marked complete only after the last step"
 pass "Omarchy 4 upgrade reports an aborted run instead of exiting silently"
 
-# Ordering alone would still pass if either retired entry point came back, so
-# name them: the reboot is the cutover, and nothing may swap the shell out from
-# under the session being replaced.
 ! grep -q 'start_omarchy_shell_session' "$upgrade_to_quattro" ||
   fail "Omarchy 4 upgrade does not start the shell in the session it is replacing"
 ! grep -q 'stop_retired_session_processes' "$upgrade_to_quattro" ||
@@ -222,24 +207,16 @@ grep -F 'rootflags=subvol=' "$upgrade_to_quattro" >/dev/null
 grep -F 'cryptdevice' "$upgrade_to_quattro" >/dev/null
 pass "Omarchy 4 upgrade preserves the kernel cmdline root parameters"
 
-# The += drop-ins make limine-entry-tool ignore /etc/kernel/cmdline and
-# /proc/cmdline, so only the tool's own merge can say whether root= survives.
-# Queried for the default key, so a kernel-specific pin cannot cover for the
-# entries this repairs.
 grep -F 'limine-entry-tool --get-cmdline default' "$upgrade_to_quattro" >/dev/null
 grep -F "grep -qE '(^|[[:space:]])root='" "$upgrade_to_quattro" >/dev/null
 pass "Omarchy 4 upgrade asks limine-entry-tool whether root= survives"
 
-# The crypt layer hides in the parents on LVM-on-LUKS, and a partial cmdline
-# for an encrypted root must not be written at all.
 grep -F 'findmnt -no SOURCE --nofsroot /' "$upgrade_to_quattro" >/dev/null
 grep -F 'lsblk -nso TYPE "$root_source"' "$upgrade_to_quattro" >/dev/null
 grep -F 'grep -qx crypt' "$upgrade_to_quattro" >/dev/null
 grep -F '((have_mount_mode)) || boot_params+=(rw)' "$upgrade_to_quattro" >/dev/null
 pass "Omarchy 4 upgrade repair path refuses a partial dm-crypt cmdline"
 
-# The cmdline that boots is the one embedded in the UKIs, and an unverified
-# root= must block the reboot rather than just warn.
 grep -F -- '--only-section=.cmdline' "$upgrade_to_quattro" >/dev/null
 grep -F "as_root find /boot/EFI/Linux -maxdepth 1 -name 'omarchy_linux*.efi'" "$upgrade_to_quattro" >/dev/null
 grep -F 'boot_cmdline_unsafe=1' "$upgrade_to_quattro" >/dev/null

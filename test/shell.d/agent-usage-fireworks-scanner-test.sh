@@ -24,8 +24,6 @@ cat >"$TEST_HOME/.config/omarchy/agents/fireworks.json" <<'EOF'
 }
 EOF
 
-# Without credentials the collector must still print a full, hidden-by-default
-# record: the update runner writes whatever valid JSON appears on stdout.
 no_key=$(HOME="$TEST_HOME" XDG_CONFIG_HOME="$TEST_HOME/.config" XDG_DATA_HOME="$TEST_HOME/.local/share" \
   FIREWORKS_API_KEY="" FIREWORKS_AUTH_PATH="$TEST_HOME/missing.ini" "$ROOT/bin/omarchy-agent-usage-fireworks")
 

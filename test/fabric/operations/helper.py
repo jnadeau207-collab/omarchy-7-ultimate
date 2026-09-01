@@ -27,14 +27,12 @@ from omarchy_fabric.security.approval import ApprovalAuthority
 from omarchy_fabric.security.policy import PolicyEngine
 from omarchy_fabric.security.principal import EndpointAdmission, PrincipalKind, SessionBindingStore
 
-
 class Clock:
     def __init__(self) -> None:
         self.now = datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc)
 
     def __call__(self) -> datetime:
         return self.now
-
 
 class FakeGateway:
     def __init__(self, executor: FakeResourceExecutor) -> None:
@@ -100,7 +98,6 @@ class FakeGateway:
 
             raise operation_error("operation.provider-stale", "Fake provider binding changed.")
 
-
 def fake_intents() -> IntentCatalog:
     executable = (
         "/usr/libexec/omarchy-fabric-fake-executor"
@@ -119,7 +116,6 @@ def fake_intents() -> IntentCatalog:
             ),
         )
     )
-
 
 class Harness:
     def __init__(

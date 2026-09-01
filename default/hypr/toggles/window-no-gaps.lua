@@ -1,4 +1,3 @@
--- Remove all window gaps and borders.
 hl.config({
   general = {
     gaps_out = 0,

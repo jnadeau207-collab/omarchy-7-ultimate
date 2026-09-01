@@ -8,7 +8,6 @@ from ..reference_operation import REFERENCE_CAPABILITY
 from .plane import ManagedWorkPlane
 from .types import Actor
 
-
 class DaemonProjectionBridge:
     """Project only truth already owned by the running Fabric daemon.
 

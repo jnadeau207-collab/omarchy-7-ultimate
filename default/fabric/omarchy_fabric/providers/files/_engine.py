@@ -34,7 +34,6 @@ MAX_FAKE_DOCUMENT_BYTES = 16 * 1024
 _STATE_LOCKS: dict[str, threading.RLock] = {}
 _STATE_LOCKS_GUARD = threading.Lock()
 
-
 def _directory_flags() -> int:
     return (
         os.O_RDONLY
@@ -43,10 +42,8 @@ def _directory_flags() -> int:
         | getattr(os, "O_CLOEXEC", 0)
     )
 
-
 def _file_flags() -> int:
     return os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
-
 
 def open_directory_path_no_follow(path: Path) -> int:
     """Open every component of an absolute POSIX directory path without links."""
@@ -75,7 +72,6 @@ def open_directory_path_no_follow(path: Path) -> int:
     except BaseException:
         os.close(descriptor)
         raise
-
 
 def _read_bounded_descriptor(descriptor: int, maximum: int) -> bytes:
     before = os.fstat(descriptor)
@@ -112,7 +108,6 @@ def _read_bounded_descriptor(descriptor: int, maximum: int) -> bytes:
         raise ValueError("bounded input changed while it was read")
     return b"".join(chunks)
 
-
 def read_regular_file_no_follow(path: Path, maximum: int) -> bytes:
     """Read one stable regular file without following it or a POSIX ancestor."""
 
@@ -143,7 +138,6 @@ def read_regular_file_no_follow(path: Path, maximum: int) -> bytes:
     finally:
         os.close(descriptor)
 
-
 def directory_writable_no_follow(path: Path) -> bool:
     """Report writability only after proving the directory path has no link hop."""
 
@@ -173,12 +167,10 @@ def directory_writable_no_follow(path: Path) -> bool:
         return False
     return bool(opened.st_mode & (stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH))
 
-
 def _state_lock(path: Path) -> threading.RLock:
     key = os.path.normcase(os.path.abspath(os.fspath(path)))
     with _STATE_LOCKS_GUARD:
         return _STATE_LOCKS.setdefault(key, threading.RLock())
-
 
 def _strict_json(raw: bytes) -> Any:
     def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -194,14 +186,12 @@ def _strict_json(raw: bytes) -> Any:
 
     return json.loads(raw, object_pairs_hook=unique_object, parse_constant=reject_constant)
 
-
 @dataclass(frozen=True)
 class StateSnapshot:
     availability: str
     operation_available: bool
     state: Mapping[str, Any] | None
     reasons: tuple[FabricError, ...] = ()
-
 
 class StateBackend(Protocol):
     async def snapshot(self) -> StateSnapshot: ...
@@ -212,13 +202,11 @@ class StateBackend(Protocol):
         proposed_state: Mapping[str, Any],
     ) -> StateSnapshot: ...
 
-
 Normalize = Callable[[Mapping[str, Any]], dict[str, Any]]
 Propose = Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]]
 Summarize = Callable[[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]], str]
 Guard = Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]]
 ReadHandler = Callable[[Mapping[str, Any], StateSnapshot], dict[str, Any]]
-
 
 @dataclass(frozen=True)
 class OperationSpec:
@@ -227,7 +215,6 @@ class OperationSpec:
     propose: Propose
     summarize: Summarize
     guards: Guard
-
 
 class FakeStateBackend:
     """Atomic, restartable state backend used only by hermetic lifecycle tests."""
@@ -450,7 +437,6 @@ class FakeStateBackend:
     def _ensure_state_bound(state: Mapping[str, Any]) -> None:
         if len(canonical_json(thaw(state)).encode("utf-8")) > MAX_FAKE_STATE_BYTES:
             raise ValueError("fake operation state exceeds 12 KiB")
-
 
 class StateDomainProvider:
     def __init__(
@@ -970,7 +956,6 @@ class StateDomainProvider:
             explanation,
         )
 
-
 def availability_payload(snapshot: StateSnapshot) -> dict[str, Any]:
     return {
         "state": snapshot.availability,
@@ -978,7 +963,6 @@ def availability_payload(snapshot: StateSnapshot) -> dict[str, Any]:
         "operation": snapshot.operation_available,
         "reasons": [reason.to_dict() for reason in snapshot.reasons],
     }
-
 
 def stale_state(domain: str) -> FabricError:
     return FabricError(

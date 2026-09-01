@@ -1,5 +1,3 @@
--- Desktop Mode keybindings: Windows muscle memory is the API.
--- Loaded instead of tiling/utilities/applications when Ultimate mode is desktop.
 
 o.bind("SUPER + Super_L", "Start", "omarchy-shell shell toggle omarchy.ultimate-start '{}'", { release = true })
 o.bind("SUPER + S", "Search", "omarchy-shell shell summon omarchy.ultimate-start '{\"focusSearch\":true}'")

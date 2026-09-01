@@ -12,7 +12,6 @@ from omarchy_fabric.models import FabricError, FixedArgvCommand
 from omarchy_fabric.provider_registry import ProviderRegistry, ensure_async_provider_hooks
 from omarchy_fabric.providers._probe import ProbeOutput
 
-
 class AdministrationAdmissionTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_administration_leaves_admit_and_read_through_central_registry(self) -> None:
         registry = ProviderRegistry(clock=lambda: 42.0)
@@ -79,7 +78,6 @@ class AdministrationAdmissionTests(unittest.IsolatedAsyncioTestCase):
         failed_result = await printer.build_provider(runner=failed).read("inspect", {})
         self.assertFalse(failed_result["availability"]["read"])
 
-
 class AdministrationFakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
     async def test_every_fake_crosses_preflight_apply_validate_noop_and_rollback(self) -> None:
         actor = principal()
@@ -135,7 +133,6 @@ class AdministrationFakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
                     path.write_text('{"schemaVersion":"v0","domain":"wrong","resources":[]}', encoding="utf-8")
                     with self.assertRaises(ValueError):
                         case.module.build_fake_provider([copy.deepcopy(case.resource)], state_path=path)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -42,8 +42,6 @@ restore_menu_test() {
 
 trap restore_menu_test EXIT
 
-# Bar-position items in the Omarchy menu drive the heritage top bar. Desktop
-# Mode overlays a bottom taskbar, so this file switches to Power User Mode.
 if command -v omarchy-mode >/dev/null 2>&1 && [[ $saved_mode == "desktop" ]]; then
   omarchy-mode set power-user >/dev/null
   wait_until "omarchy-shell responds after Power User Mode switch" 60 omarchy-shell shell ping

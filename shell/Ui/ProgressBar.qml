@@ -1,12 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Determinate progress bar for consequential operations (Rule 6: every
-// operation shows state). Bind `value` 0..1; when `indeterminate`, a
-// sweeping bar communicates "working" without lying about progress.
-//
-// `tone` picks the semantic state color so a failed update can turn the
-// same bar into an error surface.
 Rectangle {
   id: root
 
@@ -15,7 +9,6 @@ Rectangle {
   property var semanticProfile: null
   property string accessibleName: "Progress"
 
-  // "accent" | "success" | "danger" | "warning" | "info"
   property string tone: "accent"
 
   readonly property color _tone: Semantics.toneColor(tone, semanticProfile)
@@ -46,8 +39,6 @@ Rectangle {
 
     Behavior on width { NumberAnimation { duration: Semantics.duration(root.semanticProfile, Tokens.motion.normal) } }
 
-    // Indeterminate sweep. Reduced-motion support arrives with the
-    // accessibility phase; until then the sweep is the only animation here.
     SequentialAnimation {
       id: sweep
       property real phase: 0

@@ -21,7 +21,6 @@ from omarchy_fabric.providers.packages import provider as package_provider_modul
 from omarchy_fabric.providers.packages.engine import inventory_revision
 from omarchy_fabric.security import EndpointPrincipal, PrincipalKind
 
-
 ROOT = Path(__file__).resolve().parents[3]
 MISSING_PRODUCT_ENGINES = (
     "personalization.provider",
@@ -41,7 +40,6 @@ REQUIRED_SETTINGS_PROVIDERS = {
     "settings.recovery.overview": "recovery.provider",
 }
 
-
 def principal() -> EndpointPrincipal:
     now = datetime(2026, 8, 27, tzinfo=timezone.utc)
     return EndpointPrincipal(
@@ -54,7 +52,6 @@ def principal() -> EndpointPrincipal:
         now + timedelta(hours=1),
     )
 
-
 def host() -> dict[str, object]:
     return {
         "architecture": "x86_64",
@@ -66,7 +63,6 @@ def host() -> dict[str, object]:
         "memoryMiB": 16384,
         "diskMiB": 262144,
     }
-
 
 def native_request() -> dict[str, object]:
     return {
@@ -88,7 +84,6 @@ def native_request() -> dict[str, object]:
             "acceptsBrowser": False,
         },
     }
-
 
 class ProductionProviderSocketTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -277,7 +272,6 @@ class ProductionProviderSocketTests(unittest.IsolatedAsyncioTestCase):
             await compatibility.rollback("deploy", {}, deployment_revision([]))
         self.assertEqual(compatibility_rollback.exception.code, "compatibility.execution-unavailable")
 
-
 class UnavailableDependencyTests(unittest.TestCase):
     def test_missing_fixed_probe_is_an_explicit_bounded_inventory_result(self) -> None:
         def missing(_command):
@@ -292,7 +286,6 @@ class UnavailableDependencyTests(unittest.TestCase):
         self.assertFalse(availability["operation"])
         self.assertEqual(availability["reason"]["code"], "provider.dependency-missing")
         self.assertLess(len(json.dumps(result, allow_nan=False).encode("utf-8")), MAX_FRAME_BYTES)
-
 
 class ProductionPolicyBoundsTests(unittest.TestCase):
     def test_code_owned_policy_schemas_are_read_with_hard_byte_bounds(self) -> None:
@@ -350,7 +343,6 @@ class ProductionPolicyBoundsTests(unittest.TestCase):
                         loader(policy, schema)
                     self.assertEqual(invalid.exception.code, expected_code)
 
-
 def provider_manifest_capabilities(provider_id: str) -> tuple[str, ...]:
     domain = provider_id.removesuffix(".provider")
     manifest_path = ROOT / "default/fabric/omarchy_fabric/providers" / domain / "manifest-v0.json"
@@ -358,7 +350,6 @@ def provider_manifest_capabilities(provider_id: str) -> tuple[str, ...]:
         return tuple(json.loads(manifest_path.read_text(encoding="utf-8"))["capabilities"])
     module = importlib.import_module(f"omarchy_fabric.providers.{domain}.provider")
     return tuple(module.MANIFEST["capabilities"])
-
 
 class CatalogConvergenceLockTests(unittest.TestCase):
     def test_catalog_reader_ids_are_on_provider_manifests(self) -> None:
@@ -404,7 +395,6 @@ class CatalogConvergenceLockTests(unittest.TestCase):
             self.assertEqual(settings_routes[route_id], provider_id)
         for missing in MISSING_PRODUCT_ENGINES:
             self.assertNotIn(missing, BUILTIN_PROVIDER_IDS)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,14 +1,11 @@
 local paths = require("default.hypr.paths")
 local require_optional = require("default.hypr.require_optional")
 
--- GUM environment variables for styling purposes.
 require_optional.module("omarchy.current.theme.gum_env")
 
--- Cursor size.
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
--- Force all apps to use Wayland.
 hl.env("GDK_BACKEND", "wayland,x11,*")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("QT_QPA_PLATFORMTHEME", "gtk3")
@@ -17,19 +14,11 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 hl.env("OZONE_PLATFORM", "wayland")
 hl.env("XDG_SESSION_TYPE", "wayland")
 
--- Allow better support for screen sharing (Google Meet, Discord, etc).
--- Chromium draws its own caption and only recognizes a known desktop here. On a
--- bare "Hyprland" it falls back to a degraded layout that paints the close
--- button as a "›" chevron instead of an "×" in every non-maximized window.
--- Hyprland stays first, so xdg-desktop-portal-hyprland is still preferred; the
--- GNOME entry is what Chromium matches for the standard min/max/close layout.
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland:GNOME")
 hl.env("XDG_SESSION_DESKTOP", "Hyprland")
 
--- Use XCompose file.
 hl.env("XCOMPOSEFILE", paths.home .. "/.XCompose")
 
--- hyprctl setenv doesn't reach keybind dispatcher env; use hl.env.
 hl.env("OMARCHY_PATH", paths.omarchy_path)
 
 local bin_dir = paths.omarchy_path .. "/bin"
@@ -40,7 +29,6 @@ end
 table.insert(kept, 1, bin_dir)
 hl.env("PATH", table.concat(kept, ":"))
 
--- Hardware-specific environment.
 require("default.hypr.nvidia")
 
 hl.config({

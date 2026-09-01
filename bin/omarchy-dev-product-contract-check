@@ -54,15 +54,12 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-
 root = Path(sys.argv[1]).resolve()
 contracts_dir = Path(sys.argv[2]).resolve()
 errors = []
 
-
 def report(message):
     errors.append(message)
-
 
 def relative(path):
     for base in (root, contracts_dir):
@@ -71,7 +68,6 @@ def relative(path):
         except ValueError:
             continue
     return str(path)
-
 
 def load_json(path):
     try:
@@ -82,12 +78,10 @@ def load_json(path):
         report(f"invalid JSON in {relative(path)}: line {exc.lineno}, column {exc.colno}: {exc.msg}")
     return None
 
-
 def pointer(parts):
     if not parts:
         return "$"
     return "$" + "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts)
-
 
 manifest_specs = {
     "surfaces-v0.json": "surfaces-v0.schema.json",
@@ -126,13 +120,11 @@ search = documents.get("search-v0.json") or {}
 processes = documents.get("processes-v0.json") or {}
 debt = documents.get("legacy-debt-v0.json") or {}
 
-
 def duplicate_values(values, label, fold=False):
     normalized = [(value.casefold() if fold and isinstance(value, str) else value) for value in values if value]
     for value, count in sorted(Counter(normalized).items(), key=lambda item: str(item[0])):
         if count > 1:
             report(f"duplicate {label}: {value}")
-
 
 debt_entries = debt.get("debts", [])
 debt_ids = {entry.get("id") for entry in debt_entries if isinstance(entry, dict) and entry.get("id")}
@@ -173,7 +165,6 @@ duplicate_values([entry.get("id") for entry in application_entries if isinstance
 duplicate_values([entry.get("contractPrincipalId") for entry in application_entries if isinstance(entry, dict)], "application contract principal")
 duplicate_values([entry.get("id") for entry in provider_entries if isinstance(entry, dict)], "search provider id")
 
-
 def check_repo_path(path_value, label, must_exist=True):
     if not isinstance(path_value, str) or not path_value:
         report(f"{label} has no path")
@@ -187,7 +178,6 @@ def check_repo_path(path_value, label, must_exist=True):
     if must_exist and not candidate.exists():
         report(f"{label} names a missing path: {path_value}")
     return candidate
-
 
 for entry in debt_entries:
     if not isinstance(entry, dict):
@@ -225,7 +215,6 @@ for entry in plugin_entries:
     if entry.get("taskbarApplication"):
         report(f"hosted plugin {entry.get('pluginId')} falsely claims taskbar application identity")
 
-
 def discover_plugin_manifests():
     discovered = {}
     plugin_root = root / "shell/plugins"
@@ -245,7 +234,6 @@ def discover_plugin_manifests():
         discovered[plugin_id] = (rel, data, path)
     return discovered
 
-
 discovered_plugins = discover_plugin_manifests()
 if plugin_ids != set(discovered_plugins):
     missing = sorted(set(discovered_plugins) - plugin_ids)
@@ -262,7 +250,6 @@ for plugin_id, (manifest_path, manifest, path) in discovered_plugins.items():
         continue
     if inventory.get("manifestPath") != manifest_path:
         report(f"plugin {plugin_id} manifest path changed: source={manifest_path}, inventory={inventory.get('manifestPath')}")
-
 
 def plugin_is_invocable(manifest, path):
     kinds = manifest.get("kinds", [])
@@ -285,7 +272,6 @@ def plugin_is_invocable(manifest, path):
         r"(?:readonly\s+)?property\s+bool\s+opened",
     ))
     return inherits_panel or shaped
-
 
 invocable_plugins = {
     plugin_id for plugin_id, (_, manifest, path) in discovered_plugins.items()
@@ -351,7 +337,6 @@ for entry in focus_entries:
     if entry.get("state") != "contract" and not entry.get("debtIds"):
         report(f"focus semantics {entry.get('id')} hides unsupported behavior without debt")
 
-
 def matching_brace(text, start):
     depth = 0
     index = start
@@ -392,7 +377,6 @@ def matching_brace(text, start):
                 return index
         index += 1
     return None
-
 
 def discover_ipc():
     found = {}
@@ -466,7 +450,6 @@ def discover_ipc():
             found[target] = dict(template)
     return found
 
-
 discovered_ipc = discover_ipc()
 inventory_ipc = {entry.get("target"): entry for entry in endpoint_entries if isinstance(entry, dict)}
 if set(discovered_ipc) != set(inventory_ipc):
@@ -499,7 +482,6 @@ for entry in endpoint_entries:
         report(f"IPC endpoint {entry.get('id')} has unknown plugin: {plugin_id}")
     duplicate_values([f"{entry.get('target')}.{method}" for method in entry.get("methods", [])], "IPC route")
 
-
 def desktop_group(path):
     parser = configparser.ConfigParser(interpolation=None, strict=False)
     parser.optionxform = str
@@ -509,7 +491,6 @@ def desktop_group(path):
         report(f"invalid desktop entry {relative(path)}: {exc}")
         return {}
     return dict(parser["Desktop Entry"]) if parser.has_section("Desktop Entry") else {}
-
 
 launcher_paths = []
 for directory in (root / "applications", root / "default/alacritty", root / "default/applications"):
@@ -597,7 +578,6 @@ if set(pin_ids) != set(inventory_pins):
     if stale:
         report("application identities falsely claim shipped pins: " + ", ".join(stale))
 
-
 capability_ids = set()
 capability_dir = root / "default/ultimate/capabilities"
 if capability_dir.is_dir():
@@ -666,7 +646,6 @@ if discovered_search_consumers != inventory_search_consumers:
         report("unregistered current search consumers: " + ", ".join(missing))
     if stale:
         report("stale current search consumer inventory: " + ", ".join(stale))
-
 
 process_pattern = re.compile(r"\bProcess\s*\{|\b(?:Util|Quickshell)\.execDetached\s*\(|\bHyprland\.dispatch\s*\(")
 discovered_process_paths = {

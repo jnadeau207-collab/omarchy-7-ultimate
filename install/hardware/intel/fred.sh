@@ -1,4 +1,3 @@
-# Enable Flexible Return and Event Delivery on Intel Panther Lake.
 
 DROP_IN="/etc/limine-entry-tool.d/intel-panther-lake-fred.conf"
 

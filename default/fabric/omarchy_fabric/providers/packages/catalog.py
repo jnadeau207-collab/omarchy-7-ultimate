@@ -20,7 +20,6 @@ MAX_CATALOG_BYTES = 2 * 1024 * 1024
 TRUST_LEVELS = {"core", "signed", "reviewed", "sandboxed"}
 PACKAGE_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9@._+:-]*$")
 
-
 def _https_url(value: object) -> bool:
     if not isinstance(value, str) or any(character.isspace() or ord(character) < 32 or ord(character) == 127 for character in value):
         return False
@@ -30,10 +29,8 @@ def _https_url(value: object) -> bool:
         return False
     return parsed.scheme == "https" and bool(parsed.hostname) and parsed.username is None and parsed.password is None
 
-
 def _schema_path() -> Path:
     return Path(__file__).resolve().parents[3] / "schema" / "packages-catalog-v0.json"
-
 
 class PackageCatalog:
     def __init__(self, document: Mapping[str, Any], *, schema_path: Path | None = None, verified_catalog_revisions: frozenset[str] = frozenset()) -> None:
@@ -149,7 +146,6 @@ class PackageCatalog:
                 state, reason = "adoptable", "The installed artifact exactly matches a trusted catalog entry."
             output.append({"installedId": installed["id"], "catalogId": match["id"] if match else None, "state": state, "reason": reason})
         return output
-
 
 def catalog_revision(document: Mapping[str, Any]) -> str:
     normalized = deepcopy(dict(document))

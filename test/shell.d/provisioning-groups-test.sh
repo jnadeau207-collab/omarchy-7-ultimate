@@ -1,8 +1,4 @@
 #!/bin/bash
-#
-# Privileged groups are never granted by the default install. Docker remains an
-# explicit opt-in, and raw input-device access is granted only by the optional
-# controller and ydotool installers.
 
 set -euo pipefail
 
@@ -39,7 +35,6 @@ chmod +x "$TMPDIR/bin"/{usermod,groupadd,install,find,sudo}
 export PATH="$TMPDIR/bin:$PATH"
 export OMARCHY_PATH="$ROOT"
 
-# A deferred-provisioning install records neither privileged group.
 OMARCHY_INSTALL_USER="" bash -eE "$ROOT/install/config/docker.sh"
 OMARCHY_INSTALL_USER="" bash -eE "$ROOT/install/config/browser-policy.sh"
 
@@ -53,7 +48,6 @@ grep -F -- '-d -m 0755 -o root -g root /etc/chromium/policies/managed' "$TMPDIR/
   fail "browser-policy directory is created root-owned"
 pass "deferred provisioning records no privileged groups"
 
-# The same remains true when an install user already exists.
 OMARCHY_INSTALL_USER=existing bash -eE "$ROOT/install/config/docker.sh"
 OMARCHY_INSTALL_USER=existing bash -eE "$ROOT/install/config/browser-policy.sh"
 [[ ! -f $TMPDIR/usermod.calls ]] || fail "default install must not grant privileged groups"

@@ -78,8 +78,6 @@ run_link "$checkout" --no-reboot >"$test_tmp/link.out"
   fail "dev link points OMARCHY_PATH at the checkout" "$(<"$conf_file")"
 pass "dev link points OMARCHY_PATH at the checkout"
 
-# sudo reads secure_path, not the caller's PATH, so the checkout has to come
-# first there too or `sudo omarchy-*` runs the packaged copy.
 [[ $(<"$sudoers_file") == "Defaults secure_path=\"$checkout/bin:/usr/local/sbin:/usr/local/bin:/usr/bin\"" ]] ||
   fail "dev link prepends the checkout to sudo's secure_path" "$(<"$sudoers_file")"
 pass "dev link prepends the checkout to sudo's secure_path"
@@ -101,7 +99,6 @@ if grep -Eq '^(gum|reboot)' "$log_file"; then
 fi
 pass "dev link --no-reboot skips the reboot prompt"
 
-# A path sudoers would have to escape, not one the shell alone handles.
 quoted_checkout=$(make_checkout 'check "out"')
 
 : >"$log_file"

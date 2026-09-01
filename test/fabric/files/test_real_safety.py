@@ -10,7 +10,6 @@ from helper import ROOT, principal
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.providers.files import provider as files
 
-
 @unittest.skipUnless(os.name == "posix", "no-follow openat coverage requires Linux")
 class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
     async def test_real_inventory_reads_bounded_state_without_following_symlinks(self) -> None:
@@ -197,7 +196,6 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
                 files.build_provider(home=home, config_path=config_link)
             with self.assertRaisesRegex(ValueError, "absolute"):
                 files.build_provider(home=Path("relative-home"), config_path=config)
-
 
 if __name__ == "__main__":
     unittest.main()

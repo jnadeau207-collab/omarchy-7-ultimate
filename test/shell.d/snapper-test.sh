@@ -87,8 +87,6 @@ grep -F 'as_root env OMARCHY_PATH="$OMARCHY_PATH" bash -euo pipefail "$snapper_c
 ! grep -F 'NUMBER_LIMIT="5"' "$migration" >/dev/null || fail "Snapper service migration does not overwrite working custom retention"
 pass "Snapper service migration only repairs broken services idempotently"
 
-# Checkouts differ per machine, so allow an explicit pointer at the sibling repo.
-# Accepts either the omarchy-pkgs checkout or its pkgbuilds/ directory.
 find_omarchy_pks_root() {
   local candidate
   for candidate in \
@@ -120,7 +118,6 @@ grep -F 'cp -a install "$pkgdir/usr/share/omarchy/"' "$omarchy_pkgbuild" >/dev/n
 grep -F 'cp -a migrations "$pkgdir/usr/share/omarchy/"' "$omarchy_pkgbuild" >/dev/null || fail "omarchy package bundles migrations"
 pass "omarchy-pkgs packages Snapper template, setup, and migration coverage"
 
-# Same per-machine checkout problem as omarchy-pkgs; OMARCHY_ISO_PATH points at it.
 find_omarchy_iso_root() {
   local candidate
   for candidate in \
@@ -146,8 +143,6 @@ manifest="$iso_root/manifests/fresh-4-semantic.json"
 
 ! grep -F 'snapshot_config' "$configurator" >/dev/null || fail "ISO does not ask archinstall to create Snapper timeline config"
 
-# The phases/manifest assertions cover the newer ISO orchestrator structure.
-# Skip them when the checkout predates that layout.
 if [[ -f $phases && -f $manifest ]]; then
   ! grep -F '_configure_snapper_root' "$phases" >/dev/null || fail "ISO does not duplicate Omarchy Snapper setup"
   grep -F 'run_system_finalizer' "$phases" >/dev/null || fail "ISO runs packaged system setup"

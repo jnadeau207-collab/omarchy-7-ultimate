@@ -101,14 +101,12 @@ SCHEMAS = build_contracts(
     state_schema=VOLUME_STATE_SCHEMA,
 )
 
-
 def _bounded_text(value: Any, label: str, maximum: int = 160) -> str:
     if not isinstance(value, str) or not 1 <= len(value) <= maximum:
         raise ValueError(f"audio {label} is not a bounded string")
     if any(ord(character) < 32 or ord(character) == 127 for character in value):
         raise ValueError(f"audio {label} contains a control character")
     return value
-
 
 def _volume(value: Any) -> dict[str, int]:
     if not isinstance(value, dict) or not 1 <= len(value) <= 16:
@@ -126,7 +124,6 @@ def _volume(value: Any) -> dict[str, int]:
             raise ValueError("pactl channel percentage is invalid")
         channels[bounded_name] = int(match.group(1))
     return channels
-
 
 def _ports(sink_name: str, value: Any) -> tuple[list[dict[str, Any]], dict[str, str]]:
     if value is None:
@@ -152,7 +149,6 @@ def _ports(sink_name: str, value: Any) -> tuple[list[dict[str, Any]], dict[str, 
             }
         )
     return sorted(ports, key=lambda port: port["id"]), identities
-
 
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     document = parse_probe_json((await invoke_probe(SINKS_COMMAND, runner)).stdout)
@@ -194,10 +190,8 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         raise ValueError("pactl default sink is absent from the sink inventory")
     return resources
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": arguments["resourceId"], "percent": arguments["percent"]}
-
 
 def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {
@@ -205,12 +199,10 @@ def _propose(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[s
         "channels": {name: arguments["percent"] for name in current["channels"]},
     }
 
-
 def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
     if current == proposed:
         return "The audio output already uses the requested volume; no change will be made."
     return f"Set every channel on the selected audio output to {next(iter(proposed['channels'].values()))} percent without changing mute."
-
 
 SPEC = DomainSpec(
     domain=DOMAIN,
@@ -225,14 +217,11 @@ SPEC = DomainSpec(
     describe_change=_describe,
 )
 
-
 def _manifest() -> Mapping[str, Any]:
     return load_frozen_json(Path(__file__).with_name("manifest-v0.json"))
 
-
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     return LeafProvider(SPEC, _manifest(), SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
-
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

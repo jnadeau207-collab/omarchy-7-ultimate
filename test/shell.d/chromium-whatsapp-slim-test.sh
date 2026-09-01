@@ -6,9 +6,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/base-test.sh"
 
 require_command node
 
-# A keyless unpacked extension gets a path-derived id, so its settings — and
-# any shortcut registrations it may grow — would go stale if its load path or
-# packaging ever changed. The pinned key keeps the id stable everywhere.
 whatsapp_slim_id=$(node - <<'JS' "$ROOT/default/chromium/extensions/whatsapp-slim/manifest.json"
 const crypto = require('crypto')
 const fs = require('fs')

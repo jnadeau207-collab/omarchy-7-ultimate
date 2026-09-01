@@ -6,7 +6,6 @@ import sys
 import heapq
 from pathlib import Path
 
-
 PLAN_QUOTAS = {
   "basic": 2_000_000_000,
   "plus": 2_000_000_000_000,
@@ -14,7 +13,6 @@ PLAN_QUOTAS = {
   "professional": 3_000_000_000_000,
   "essentials": 3_000_000_000_000,
 }
-
 
 def read_info():
   info_path = Path.home() / ".dropbox" / "info.json"
@@ -26,7 +24,6 @@ def read_info():
   except (OSError, json.JSONDecodeError):
     return {}
 
-
 def dropbox_account(info):
   for key in ("personal", "business"):
     account = info.get(key)
@@ -34,14 +31,12 @@ def dropbox_account(info):
       return account
   return {}
 
-
 def command_output(command):
   try:
     completed = subprocess.run(command, check=False, capture_output=True, text=True, timeout=4)
   except (OSError, subprocess.TimeoutExpired):
     return 1, ""
   return completed.returncode, (completed.stdout + completed.stderr).strip()
-
 
 def scan_dropbox(path, limit):
   total = 0
@@ -78,7 +73,6 @@ def scan_dropbox(path, limit):
     return 0, []
   rows = [entry[2] for entry in sorted(recent, reverse=True)]
   return total, rows
-
 
 def main():
   limit = 25
@@ -122,7 +116,6 @@ def main():
     "quotaKnown": quota > 0,
     "files": files,
   }))
-
 
 if __name__ == "__main__":
   main()

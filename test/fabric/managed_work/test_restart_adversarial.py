@@ -16,7 +16,6 @@ from helper import ACTOR, OTHER_ACTOR, ManagedWorkPlane, budget, create_task, in
 from omarchy_fabric.managed_work import Actor, CapacityLimits, ManagedWorkError
 from omarchy_fabric.managed_work.store import CURRENT_SCHEMA, MIGRATIONS
 
-
 class RestartAdversarialTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -1004,7 +1003,6 @@ class RestartAdversarialTests(unittest.TestCase):
         refused = ManagedWorkPlane(path)
         self.assert_code("managed-work.database-corrupt", refused.open)
         self.assertIsNone(refused.store.connection)
-
 
 if __name__ == "__main__":
     unittest.main()

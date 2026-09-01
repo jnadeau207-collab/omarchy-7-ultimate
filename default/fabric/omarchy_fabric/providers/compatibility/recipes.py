@@ -14,10 +14,8 @@ from omarchy_fabric.providers.packages.identity import canonical_json, revision
 
 MAX_RECIPE_BYTES = 2 * 1024 * 1024
 
-
 def _schema_path() -> Path:
     return Path(__file__).resolve().parents[3] / "schema" / "compatibility-recipes-v0.json"
-
 
 class RecipeCatalog:
     def __init__(

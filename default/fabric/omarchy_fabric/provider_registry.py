@@ -25,7 +25,6 @@ from referencing.exceptions import Unresolvable
 
 from .models import MAX_FRAME_BYTES, PROTOCOL_VERSION, FabricError
 
-
 MANIFEST_SCHEMA_ID = "urn:omarchy:fabric:schema:provider-manifest-v0"
 SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
 MAX_PROVIDER_DOCUMENT_BYTES = 256 * 1024
@@ -34,7 +33,6 @@ MAX_PROVIDER_READ_SECONDS = 8.0
 MAX_PROVIDER_PREFLIGHT_SECONDS = 8.0
 MAX_PROVIDER_AVAILABILITY_DETAIL_BYTES = 500
 USABLE_PROVIDER_STATES = frozenset({"available", "degraded"})
-
 
 @runtime_checkable
 class TypedProvider(Protocol):
@@ -46,7 +44,6 @@ class TypedProvider(Protocol):
     async def read(self, action: str, arguments: Mapping[str, Any]) -> Any:
         """Return the typed, side-effect-free result for one read action."""
 
-
 @dataclass(frozen=True)
 class ProviderRegistration:
     provider_id: str
@@ -55,14 +52,12 @@ class ProviderRegistration:
     disposition: str
     state: str
 
-
 @dataclass(frozen=True)
 class ProviderAvailability:
     """Code-owned initial availability declared by a typed provider builder."""
 
     state: str
     detail: str = ""
-
 
 @dataclass
 class _ProviderRecord:
@@ -77,10 +72,8 @@ class _ProviderRecord:
     registered_at: float
     changed_at: float
 
-
 def _schema_directory() -> Path:
     return Path(__file__).resolve().parent.parent / "schema"
-
 
 def _finite_json_copy(value: Any, *, label: str, maximum: int) -> Any:
     def thaw(candidate: Any) -> Any:
@@ -114,13 +107,11 @@ def _finite_json_copy(value: Any, *, label: str, maximum: int) -> Any:
         )
     return json.loads(encoded)
 
-
 def _validation_detail(error: ValidationError) -> str:
     path = ".".join(str(part) for part in error.absolute_path)
     if path:
         return f"{path}: {error.message}"
     return error.message
-
 
 def _valid_availability_detail(value: object, *, required: bool) -> bool:
     if (
@@ -135,7 +126,6 @@ def _valid_availability_detail(value: object, *, required: bool) -> bool:
         return False
     return len(encoded) <= MAX_PROVIDER_AVAILABILITY_DETAIL_BYTES
 
-
 def _walk_json(value: Any):
     yield value
     if isinstance(value, dict):
@@ -144,7 +134,6 @@ def _walk_json(value: Any):
     elif isinstance(value, list):
         for child in value:
             yield from _walk_json(child)
-
 
 def _resolve_json_pointer(document: Any, pointer: str) -> Any:
     if not pointer:
@@ -161,7 +150,6 @@ def _resolve_json_pointer(document: Any, pointer: str) -> Any:
         else:
             raise KeyError(part)
     return current
-
 
 class ProviderRegistry:
     """Own typed provider admission, lifecycle, and read-only dispatch."""
@@ -979,7 +967,6 @@ class ProviderRegistry:
     def _emit(self, topic: str, payload: Mapping[str, Any]) -> None:
         if self._event_sink is not None:
             self._event_sink(topic, payload)
-
 
 def ensure_async_provider_hooks(provider: Any) -> None:
     """Static/testing aid for enforcing asynchronous provider boundaries."""

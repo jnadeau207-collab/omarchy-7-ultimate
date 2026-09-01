@@ -8,7 +8,6 @@ import "IdleModel.js" as IdleModel
 Item {
   id: root
 
-  // Injected by omarchy-shell (the first-party service loader).
   property var shell: null
 
   readonly property string home: Quickshell.env("HOME")
@@ -132,9 +131,6 @@ Item {
     if (!root.idleEnabled || !root.idledThisCycle || !root.screensaverStartedThisCycle) return
     if (root.screensaverWindowCount > 0) return
 
-    // The user dismissed the screensaver before the lock deadline. Treat that
-    // as activity and cancel the pending lock; the lock timer is only allowed
-    // to fire while the screensaver remains up.
     root.cancelIdleCycle("screensaver-dismissed")
   }
 
@@ -157,10 +153,6 @@ Item {
   function handleActiveSignal() {
     if (!root.idledThisCycle) return
 
-    // Starting the screensaver can make the compositor report activity. Keep
-    // the lock timer running once the screensaver exists (or during its short
-    // launch grace); Hyprland window events cancel the cycle if it exits before
-    // the normal lock deadline.
     if (root.screensaverStartedThisCycle && (root.screensaverWindowCount > 0 || screensaverLaunchGraceTimer.running)) {
       logEvent("idle-monitor-active", "screensaver cycle remains armed")
       return

@@ -93,7 +93,6 @@ SCHEMAS = build_contracts(
     state_schema=RADIO_STATE_SCHEMA,
 )
 
-
 def _split_terse(line: str) -> list[str]:
     fields: list[str] = []
     current: list[str] = []
@@ -114,16 +113,13 @@ def _split_terse(line: str) -> list[str]:
     fields.append("".join(current))
     return fields
 
-
 def _network_type(value: str) -> str:
     normalized = value.lower()
     return normalized if normalized in _TYPE_VALUES[:-1] else "other"
 
-
 def _network_state(value: str) -> str:
     normalized = value.lower()
     return normalized if normalized in _STATE_VALUES[:-1] else "unknown"
-
 
 async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
     general = _split_terse((await invoke_probe(WIFI_COMMAND, runner)).stdout.strip())
@@ -181,10 +177,8 @@ async def _probe_resources(runner: ProbeRunner) -> list[Mapping[str, Any]]:
         )
     return resources
 
-
 def _normalize(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"resourceId": WIFI_ID, "enabled": arguments["enabled"]}
-
 
 def _propose(_current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     if arguments["enabled"] and (not _current["managerRunning"] or not _current["hardwareEnabled"]):
@@ -195,12 +189,10 @@ def _propose(_current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[
         "enabled": arguments["enabled"],
     }
 
-
 def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], _arguments: Mapping[str, Any]) -> str:
     if current == proposed:
         return "Wi-Fi radio already has the requested state; no change will be made."
     return "Turn the Wi-Fi radio on." if proposed["enabled"] else "Turn the Wi-Fi radio off and disconnect Wi-Fi links."
-
 
 SPEC = DomainSpec(
     domain=DOMAIN,
@@ -215,15 +207,12 @@ SPEC = DomainSpec(
     describe_change=_describe,
 )
 
-
 def _manifest() -> Mapping[str, Any]:
     return load_frozen_json(Path(__file__).with_name("manifest-v0.json"))
-
 
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
     backend = ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner))
     return LeafProvider(SPEC, _manifest(), SCHEMAS, backend)
-
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

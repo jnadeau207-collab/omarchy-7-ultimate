@@ -11,7 +11,6 @@ from helper import ROOT, clone_database, principal
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.providers.defaults import provider as defaults
 
-
 class DefaultsAdversarialHardeningTests(unittest.IsolatedAsyncioTestCase):
     async def test_forged_recovery_revision_is_rejected_before_any_write(self) -> None:
         state = clone_database()
@@ -187,7 +186,6 @@ class DefaultsAdversarialHardeningTests(unittest.IsolatedAsyncioTestCase):
             missing_serialized = str(missing["availability"]["reasons"])
             self.assertNotIn("still-secret", missing_serialized)
             self.assertNotIn("/private/tool", missing_serialized)
-
 
 if __name__ == "__main__":
     unittest.main()

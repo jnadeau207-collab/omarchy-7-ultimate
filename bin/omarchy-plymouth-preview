@@ -4,9 +4,6 @@
 # omarchy:args=<background-hex> <text-hex> <path-to-logo.png> <output-path>
 # omarchy:examples=omarchy plymouth preview '#1d2021' '#ebdbb2' ~/.local/state/omarchy/current/theme/plymouth/logo.png /tmp/plymouth-preview.png
 
-# Render a Plymouth login-screen preview PNG by compositing the staged omarchy
-# theme assets (recolored with the given text color) onto the background.
-
 if (( $# != 4 )); then
   echo "Usage: omarchy-plymouth-preview <background-hex> <text-hex> <path-to-logo.png> <output-path>" >&2
   exit 1

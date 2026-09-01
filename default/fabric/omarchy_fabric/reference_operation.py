@@ -66,10 +66,8 @@ _UPDATE_FIELDS = frozenset(
     }
 )
 
-
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
 
 def _operation_id(value: Any) -> str:
     if not isinstance(value, str) or _UUID_RE.fullmatch(value) is None:
@@ -79,7 +77,6 @@ def _operation_id(value: Any) -> str:
             "operationId must be a lowercase UUID.",
         )
     return value
-
 
 def _stable_resource_id(value: Any) -> str:
     if (
@@ -94,7 +91,6 @@ def _stable_resource_id(value: Any) -> str:
         )
     return value
 
-
 def _idempotency_key(value: Any) -> str:
     if not isinstance(value, str) or _IDEMPOTENCY_RE.fullmatch(value) is None:
         raise FabricError(
@@ -103,7 +99,6 @@ def _idempotency_key(value: Any) -> str:
             "idempotencyKey must contain 1 through 256 bounded identifier characters.",
         )
     return value
-
 
 def _exact_fields(
     value: Mapping[str, Any],
@@ -127,7 +122,6 @@ def _exact_fields(
             detail="; ".join(details),
         )
 
-
 def _recovery_token(value: Any, *, required: bool) -> str | None:
     if value is None and not required:
         return None
@@ -140,7 +134,6 @@ def _recovery_token(value: Any, *, required: bool) -> str | None:
         )
     return value
 
-
 def _ledger_after_sequence(value: Any) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 9_223_372_036_854_775_807:
         raise FabricError(
@@ -151,7 +144,6 @@ def _ledger_after_sequence(value: Any) -> int:
         )
     return value
 
-
 def _ledger_limit(value: Any) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= _MAX_LEDGER_PAGE_ENTRIES:
         raise FabricError(
@@ -161,7 +153,6 @@ def _ledger_limit(value: Any) -> int:
             change_state="none",
         )
     return value
-
 
 def _revision_number(value: str) -> int:
     prefix = "revision."
@@ -174,7 +165,6 @@ def _revision_number(value: str) -> int:
             recovery_actions=("fabric.restore-database",),
         )
     return int(value[len(prefix) :])
-
 
 class ReferenceOperationStore:
     """Transactional state, event, and tamper-evident ledger persistence."""
@@ -1594,7 +1584,6 @@ class ReferenceOperationStore:
             "entries": page,
             "nextAfterSequence": next_after_sequence,
         }
-
 
 class ReferenceOperationManager:
     """Executes the closed fake operation through Trust and durable checkpoints."""

@@ -7,11 +7,6 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 tmp_dir=$(mktemp -d)
 trap 'rm -r "$tmp_dir"' EXIT
 
-# gum reads its scripted answers from GUM_SCRIPT, one "status:output" line per
-# invocation, so a test spells out exactly what the human did at each screen:
-# "0:dhh" answers, "1:" is Esc, "130:" is Ctrl+C. Only the widgets that take a
-# list drain stdin, matching the real ones, so the piped layouts and timezones
-# can be asserted.
 cat >"$tmp_dir/gum" <<'EOF'
 #!/bin/bash
 count=$(($(cat "$GUM_COUNT") + 1))
@@ -38,11 +33,6 @@ cat >"$tmp_dir/timedatectl" <<'EOF'
 printf '%s\n' UTC Europe/Copenhagen America/Chicago
 EOF
 
-# Calls one prompt bare under `set -euo pipefail` — the shape that makes the
-# status capture load-bearing. A cancelled prompt is a failing assignment, so a
-# regression to a plain `status=$?` kills the shell before the function can
-# return; both cases exit with the same status, and this marker is the only
-# thing that tells them apart.
 cat >"$tmp_dir/driver" <<'EOF'
 #!/bin/bash
 
@@ -79,7 +69,6 @@ export NOTICES="$tmp_dir/notices" MARKER="$tmp_dir/marker"
 
 status=0
 
-# run_prompt <function> <status:output>... — each response answers one gum screen
 run_prompt() {
   local prompt=$1
   shift
@@ -114,7 +103,6 @@ assert_notices() {
 actual notices:   $actual"
 }
 
-# The contract both callers read, and the ordering the shared list exists to keep
 source "$ROOT/install/provisioning/setup-form.sh"
 
 ((OMARCHY_FORM_BACK == 1)) || fail "Esc reports status 1"
@@ -122,8 +110,6 @@ source "$ROOT/install/provisioning/setup-form.sh"
 [[ $(printf '%s\n' "$OMARCHY_KEYBOARD_LAYOUTS" | head -n 1) == "English (US)|us" ]] ||
   fail "English (US) leads the keyboard layouts so gum choose opens on the default"
 pass "the form publishes the 0/1/130 status contract and leads with English (US)"
-
-# Keyboard
 
 run_prompt omarchy_prompt_keyboard "0:German"
 assert_status 0 "keyboard prompt succeeds"
@@ -141,8 +127,6 @@ run_prompt omarchy_prompt_keyboard "130:"
 assert_status "$OMARCHY_FORM_SIGNAL" "keyboard prompt reports Ctrl+C as the caller's signal"
 assert_returned "keyboard prompt survives Ctrl+C under set -e"
 pass "keyboard prompt propagates Esc and Ctrl+C without dying under set -e"
-
-# Username
 
 TAKEN_USERS=dhh run_prompt omarchy_prompt_username "0:Not A Username" "0:root" "0:cups-browsed" "0:dhh" "0:david"
 assert_status 0 "username prompt accepts a valid name"
@@ -162,8 +146,6 @@ assert_status "$OMARCHY_FORM_SIGNAL" "username prompt reports Ctrl+C as the call
 assert_returned "username prompt survives Ctrl+C under set -e"
 pass "username prompt propagates Esc and Ctrl+C without dying under set -e"
 
-# Password
-
 run_prompt omarchy_prompt_password "0:one" "0:two" "0:" "0:" "0:s3cret" "0:s3cret"
 assert_status 0 "password prompt accepts a confirmed password"
 [[ $(field password) == "s3cret" ]] || fail "password prompt keeps the confirmed password"
@@ -180,8 +162,6 @@ assert_status "$OMARCHY_FORM_SIGNAL" "password prompt reports Ctrl+C on the conf
 assert_returned "password confirmation survives Ctrl+C under set -e"
 pass "password confirmation propagates Esc and Ctrl+C without dying under set -e"
 
-# Identity — both fields are skippable, so empty is an answer and not a cancel
-
 run_prompt omarchy_prompt_identity "0:" "0:"
 assert_status 0 "identity prompt treats empty fields as answers"
 [[ -z $(field full_name) && -z $(field email_address) ]] || fail "identity prompt leaves skipped fields empty"
@@ -191,8 +171,6 @@ run_prompt omarchy_prompt_identity "0:David" "1:"
 assert_status "$OMARCHY_FORM_BACK" "identity prompt reports Esc on the email as back"
 assert_returned "identity prompt survives Esc under set -e"
 pass "identity prompt propagates Esc from its second field"
-
-# Hostname
 
 run_prompt omarchy_prompt_hostname "0:-nope-" "0:workshop"
 assert_status 0 "hostname prompt accepts a valid hostname"
@@ -209,8 +187,6 @@ assert_status "$OMARCHY_FORM_BACK" "hostname prompt reports Esc as back"
 assert_returned "hostname prompt survives Esc under set -e"
 pass "hostname prompt propagates Esc without dying under set -e"
 
-# Timezone
-
 TZ_GUESS=Europe/Copenhagen run_prompt omarchy_prompt_timezone "0:Europe/Copenhagen"
 assert_status 0 "timezone prompt accepts the geo guess"
 [[ $(field timezone) == "Europe/Copenhagen" ]] || fail "timezone prompt keeps the chosen timezone"
@@ -218,7 +194,6 @@ grep -qF -- '--selected Europe/Copenhagen' "$GUM_ARGS" || fail "timezone prompt 
 grep -qF UTC "$tmp_dir/stdin.1" || fail "timezone prompt offers the system timezone list"
 pass "timezone prompt preselects the geo guess when one is available"
 
-# An unnetworked first boot has no guess, and the fallback has to survive `set -e`
 run_prompt omarchy_prompt_timezone "0:America/Chicago"
 assert_status 0 "timezone prompt survives a failed geo guess"
 [[ $(field timezone) == "America/Chicago" ]] || fail "timezone prompt keeps the filtered timezone"

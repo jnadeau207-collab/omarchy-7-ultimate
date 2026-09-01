@@ -1,9 +1,6 @@
 import QtQuick
 import qs.Commons
 
-// Labeled radio button for exclusive-choice groups. Give every radio in a
-// group the same `group` string; only one per group paints its dot. Like
-// Checkbox, the whole row is the hitbox and the caller owns the value.
 Item {
   id: root
 
@@ -90,9 +87,6 @@ Item {
     onContainsMouseChanged: root.hovered(containsMouse)
     onClicked: {
       if (!root.checked) {
-        // Exclusive selection within a group: uncheck siblings by walking
-        // the parent's children. Cheap, dependency-free, good enough for
-        // the small static groups this kit serves.
         if (root.group !== "" && root.parent) {
           var siblings = root.parent.children
           for (var i = 0; i < siblings.length; i++) {

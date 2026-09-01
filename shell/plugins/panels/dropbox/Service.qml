@@ -14,9 +14,6 @@ Item {
   property bool running: false
   property bool authenticated: false
 
-  // Optimistic sync state so the UI reacts the instant you click, rather than
-  // waiting for dropboxd to actually settle. _desired is -1 while we just
-  // follow the real state, or 0/1 while a pause/resume is still catching up.
   property int _desired: -1
   readonly property bool active: _desired === -1 ? running : (_desired === 1)
   property bool refreshing: false
@@ -74,7 +71,6 @@ Item {
     installed = parsed.installed === true
     running = parsed.running === true
     authenticated = parsed.authenticated === true
-    // Reality caught up to the pending pause/resume — stop overriding.
     if (_desired !== -1 && running === (_desired === 1)) _desired = -1
     statusText = String(parsed.statusText || (installed ? "Stopped" : "Not installed"))
     accountPath = String(parsed.accountPath || "")
@@ -116,8 +112,6 @@ Item {
   }
 
   function runControl(command, desired) {
-    // No progress status here — the greyed icon and hero phrase already convey
-    // the pause/resume; only surface a message if the command fails.
     if (!installed || controlProcess.running) return
     _desired = desired
     _controlOutput = ""
@@ -167,10 +161,6 @@ Item {
   }
 
   Timer {
-    // After a fresh boot the startup poll usually lands before dropboxd has
-    // finished its respawn dance, which left the icon stale until the next
-    // periodic refresh. Poll quickly until the daemon shows up, or give up
-    // after ~30 seconds.
     id: startupRamp
     property int ticks: 0
     interval: 2000
@@ -198,9 +188,6 @@ Item {
   }
 
   Timer {
-    // dropboxd takes a few (variable) seconds to settle after stop/start, so
-    // re-poll a handful of times to reflect the new state without waiting for
-    // the next periodic refresh.
     id: settleTimer
     property int ticks: 0
     interval: 1500

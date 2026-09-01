@@ -50,7 +50,6 @@ cp -a "$ROOT/shell" "$test_root/shell"
 ln -s "$ROOT/config" "$test_root/config"
 ln -s "$ROOT/bin" "$test_root/bin"
 
-# Every plugin under ~/.config/omarchy/plugins hot-reloads, whoever wrote it.
 hot_reload_id="acme.hot-reload"
 hot_reload_dir="$test_home/.config/omarchy/plugins/$hot_reload_id"
 mkdir -p "$hot_reload_dir"
@@ -352,15 +351,8 @@ for panel_id in omarchy.audio omarchy.bluetooth omarchy.monitor omarchy.network 
 done
 pass "direct panel IPC opens and closes default panels"
 
-# Each widget registers its IPC handler once per bar, and the bar is
-# instantiated once per screen, so Quickshell reports one collision per screen
-# past the first. Anything beyond that is two instances on the same screen —
-# the shape duplicate component loads produced, where a sync pass that ran
-# while a widget's asynchronous load was still in flight started a second one.
-# Checked before the reload below, which rebuilds widgets by design.
 screens=$(hyprctl -j monitors 2>/dev/null | jq 'length' 2>/dev/null || true)
 [[ $screens =~ ^[0-9]+$ ]] && (( screens > 0 )) || screens=1
-# No matches is the good case, and pipefail would otherwise abort the run.
 worst=$(grep -oE "another handler is registered for target [a-z.-]+" "$log" |
   sort | uniq -c | sort -rn | head -1 | awk '{print $1}' || true)
 worst=${worst:-0}
@@ -398,9 +390,6 @@ jq -e 'all(.[]; .id != "omarchy.audio")' <<<"$geometry" >/dev/null || {
 
 pass "bar remove reloads shell config and updates bar layout"
 
-# 'bar put' is what migrations use to place a newly shipped widget, so it has
-# to place one that is missing and leave one that is already there alone,
-# however often it runs.
 bar_put() {
   HOME="$test_home" OMARCHY_PATH="$test_root" PATH="$ROOT/bin:$PATH" "$ROOT/bin/omarchy-bar" put "$@"
 }

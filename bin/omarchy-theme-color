@@ -4,19 +4,6 @@
 # omarchy:args=[--file <colors.toml>] (--all | --raw | <key> [fallback])
 # omarchy:hidden=true
 
-# Shared colors.toml parser/resolver. The alias/fallback cascade mirrors what
-# omarchy-theme-set-templates bakes into the generated configs at theme-set
-# time, so every consumer (templates, OSC sequences, tmux, GNOME, previews)
-# resolves the exact same palette.
-#
-#   --all            print every resolved key<TAB>value pair (sorted by key)
-#   --raw            print only the key<TAB>value pairs defined in the file
-#   <key> [fallback] print one resolved value; the fallback is tried as
-#                    another palette key first, then used verbatim
-#
-# Theme mode precedence: `mode` key, legacy `theme_type` key, a light.mode
-# file beside the colors.toml, background luminance auto-detect, dark.
-
 COLORS_FILE="$HOME/.local/state/omarchy/current/theme/colors.toml"
 OUTPUT=""
 QUERY_KEY=""
@@ -67,7 +54,6 @@ COLORS_DIR=$(dirname "$COLORS_FILE")
 
 declare -A THEME_COLORS
 
-# Mix two hex colors. Amount may be a fraction (0.30) or percentage (30%).
 mix_color() {
   local start="${1#\#}"
   local end="${2#\#}"
@@ -140,22 +126,17 @@ parse_colors_file() {
   [[ -f $COLORS_FILE ]] || return 0
 
   while IFS='=' read -r key value; do
-    key="${key//[\"\' ]/}"                # strip quotes and spaces from key
-    [[ $key && $key != \#* ]] || continue # skip empty lines and comments
+    key="${key//[\"\' ]/}"
+    [[ $key && $key != \#* ]] || continue
 
     if [[ $value == *[\"\']* ]]; then
       value="${value#*[\"\']}"
-      value="${value%%[\"\']*}" # extract value between quotes (ignores inline comments)
+      value="${value%%[\"\']*}"
     else
       value="${value#"${value%%[![:space:]]*}"}"
-      value="${value%"${value##*[![:space:]]}"}" # trim unquoted values
+      value="${value%"${value##*[![:space:]]}"}"
     fi
 
-    # Values reach consumers as sed replacement text, so the charset excludes
-    # the delimiter, backslash, and & while still covering everything a real
-    # palette holds: hex, rgb()/rgba() lists, gradient angles like -45deg,
-    # decimals, and bare words. Rejections are announced so a third-party theme
-    # doesn't lose a key silently and leave a raw {{ placeholder }} behind.
     if [[ ! $key =~ ^[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-]+$ ]]; then
       printf 'omarchy-theme-color: skipping key with unsupported characters\n' >&2
       continue
@@ -176,9 +157,6 @@ parse_colors_file() {
 resolve_theme_colors() {
   local key
 
-  # Accept the complete legacy short-name palette before applying ANSI
-  # fallbacks or deriving shades. Canonical names take precedence when a theme
-  # defines both forms.
   declare -A legacy_palette_alias=(
     [background]=bg
     [dark_background]=dark_bg
@@ -193,13 +171,11 @@ resolve_theme_colors() {
     alias_theme_color "$key" "${legacy_palette_alias[$key]}"
   done
 
-  # Themes generated before the semantic palette may only define ANSI names.
   [[ ${THEME_COLORS[background]} ]] || THEME_COLORS[background]="${THEME_COLORS[color0]}"
   [[ ${THEME_COLORS[foreground]} ]] || THEME_COLORS[foreground]="${THEME_COLORS[color7]}"
   [[ ${THEME_COLORS[background]} ]] && THEME_COLORS[color0]="${THEME_COLORS[background]}"
   [[ ${THEME_COLORS[foreground]} ]] && THEME_COLORS[color7]="${THEME_COLORS[foreground]}"
 
-  # Legacy compatibility: map ANSI color0..color15 to semantic names.
   declare -A legacy_alias=(
     [red]=color1
     [green]=color2
@@ -232,7 +208,6 @@ resolve_theme_colors() {
   [[ ${THEME_COLORS[orange]} ]]               || THEME_COLORS[orange]="${THEME_COLORS[yellow]}"
   [[ ${THEME_COLORS[brown]} ]]      || THEME_COLORS[brown]=$(mix_color "${THEME_COLORS[orange]}" "#000000" 50%)
 
-  # Auto-derive shades from base accents when not defined and not aliased from colorN
   [[ ${THEME_COLORS[dark_background]} ]]   || THEME_COLORS[dark_background]=$(mix_color "${THEME_COLORS[background]}" "#000000" 25%)
   [[ ${THEME_COLORS[darker_background]} ]] || THEME_COLORS[darker_background]=$(mix_color "${THEME_COLORS[background]}" "#000000" 50%)
   [[ ${THEME_COLORS[bright_red]} ]]    || THEME_COLORS[bright_red]=$(mix_color "${THEME_COLORS[red]}" "#ffffff" 20%)
@@ -244,8 +219,6 @@ resolve_theme_colors() {
   alias_theme_color purple magenta
   alias_theme_color bright_purple bright_magenta
 
-  # Keep semantic themes compatible with consumers that still reference the
-  # legacy ANSI names directly.
   declare -A ansi_alias=(
     [color0]=background
     [color1]=red
@@ -268,8 +241,6 @@ resolve_theme_colors() {
     alias_theme_color "$key" "${ansi_alias[$key]}"
   done
 
-  # Keep canonical themes compatible with old user templates and consumers
-  # that still query the short palette names directly.
   for key in "${!legacy_palette_alias[@]}"; do
     if [[ ${THEME_COLORS[$key]} ]]; then
       THEME_COLORS["${legacy_palette_alias[$key]}"]="${THEME_COLORS[$key]}"
