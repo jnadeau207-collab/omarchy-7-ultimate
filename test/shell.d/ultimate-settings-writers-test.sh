@@ -23,6 +23,15 @@ grep -Fq 'if (queryState.records[i].brightnessAvailable) return queryState.recor
   fail "Settings offers brightness only for an output that reports a controllable backlight"
 pass "Settings drives brightness.set through the typed operation plane only"
 
+grep -Fq 'provider: "input.provider"' "$application" || fail "Settings sets the layout through input.provider"
+grep -Fq 'action: "keyboard-layout.set"' "$application" || fail "Settings uses the typed keyboard-layout.set action"
+grep -Fq 'if (!(index >= 0 && index < record.layouts.length)) return' "$application" ||
+  fail "Settings refuses a layout index outside the reported list"
+if grep -Fq 'switchxkblayout' "$application"; then
+  fail "Settings assembles a compositor shell string instead of the typed verb"
+fi
+pass "Settings drives keyboard-layout.set through the typed operation plane only"
+
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-settings/SettingsModel.js')
 
@@ -74,6 +83,22 @@ assertEqual(displayRecord({ available: false, percent: 40 }).brightnessAvailable
 assertEqual(displayRecord({ available: true, percent: 900 }).brightnessAvailable, false, 'an out-of-range percent is refused')
 assertEqual(displayRecord({ available: true, percent: '40' }).brightnessAvailable, false, 'a non-numeric percent is refused')
 assertEqual(displayRecord({}).brightnessPercent, -1, 'a host reporting no brightness claims none')
+
+function keyboardRecord(state) {
+  return Model.normalizeLeafResource({ id: 'input.keyboard.abc', label: 'Internal keyboard', kind: 'keyboard', main: true, state: state }, 0)
+}
+
+const twoLayouts = keyboardRecord({ activeIndex: 1, activeKeymap: 'German', layouts: ['us', 'de'], switchable: true })
+assertDeepEqual(twoLayouts.layouts, ['us', 'de'], 'a switchable keyboard offers its layouts')
+assertEqual(twoLayouts.activeLayoutIndex, 1, 'the active layout index survives as a structured value')
+assertDeepEqual(keyboardRecord({ activeIndex: 0, activeKeymap: 'English', layouts: ['us'], switchable: false }).layouts, [], 'a single-layout keyboard offers no control')
+assertDeepEqual(keyboardRecord({ activeIndex: 0, activeKeymap: 'x', layouts: ['us', 'de'], switchable: false }).layouts, [], 'a keyboard the compositor calls unswitchable offers no control')
+assertEqual(keyboardRecord({ activeIndex: 9, activeKeymap: 'x', layouts: ['us', 'de'], switchable: true }).activeLayoutIndex, -1, 'an out-of-range active index is refused')
+assertDeepEqual(keyboardRecord({ activeIndex: 0, activeKeymap: 'x', layouts: ['us', 123], switchable: true }).layouts, [], 'a non-string layout name voids the whole list')
+
+const inputQuery = Model.queryForRoute('settings.input.overview')
+assert(inputQuery.coverage.indexOf('keyboard-layout.set') >= 0, 'the input coverage note names the settable verb')
+assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility input changes remain unavailable') >= 0, 'the input coverage note still refuses what Settings cannot do')
 
 const displayQuery = Model.queryForRoute('settings.display.overview')
 assert(displayQuery.coverage.indexOf('brightness.set') >= 0, 'the display coverage note names the settable verb')

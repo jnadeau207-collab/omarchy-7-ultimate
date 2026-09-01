@@ -657,7 +657,16 @@ class FabricDaemon:
             raise FabricError(
                 "operation.invalid-arguments",
                 "Fabric operation arguments are invalid",
-                "The requested volume percent is outside its bound.",
+                "The requested percent is outside its bound.",
+            )
+        return value
+
+    def _operation_layout_index(self, value: Any) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 7:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The requested keyboard layout index is outside its bound.",
             )
         return value
 
@@ -828,6 +837,11 @@ class FabricDaemon:
                         required={"resourceId": stable_token, "percent": self._operation_percent},
                     ),
                     IntentDefinition(
+                        "input.keyboard-layout.set",
+                        FixedArgvCommand(str(helper), ("input-keyboard-layout-set",)),
+                        required={"resourceId": stable_token, "layoutIndex": self._operation_layout_index},
+                    ),
+                    IntentDefinition(
                         "display.brightness.set",
                         FixedArgvCommand(str(helper), ("display-brightness-set",)),
                         required={"resourceId": stable_token, "percent": self._operation_percent},
@@ -865,6 +879,15 @@ class FabricDaemon:
                     lambda preflight: {
                         "resourceId": preflight["resource"]["id"],
                         "percent": preflight["normalizedArguments"]["percent"],
+                    },
+                ),
+                OperationDefinition(
+                    "input.provider",
+                    "keyboard-layout.set",
+                    "input.keyboard-layout.set",
+                    lambda preflight: {
+                        "resourceId": preflight["resource"]["id"],
+                        "layoutIndex": preflight["normalizedArguments"]["layoutIndex"],
                     },
                 ),
                 OperationDefinition(

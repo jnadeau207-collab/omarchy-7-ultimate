@@ -33,6 +33,10 @@ def stable_display_id(monitor_name: str) -> str:
     digest = hashlib.sha256(f"display\0{monitor_name}".encode("utf-8")).hexdigest()
     return f"display.output.{digest}"
 
+def stable_keyboard_id(device_name: str) -> str:
+    digest = hashlib.sha256(f"input\0{device_name}".encode("utf-8")).hexdigest()
+    return f"input.keyboard.{digest}"
+
 def read_payload(stream: Any) -> Mapping[str, Any]:
     raw = stream.read(MAX_PAYLOAD_BYTES + 1)
     if isinstance(raw, bytes):
@@ -140,6 +144,54 @@ def apply_brightness(monitor_name: str, percent: int, run: Any = subprocess.run)
     )
     if completed.returncode != 0:
         raise ApplyError("apply.failed", "Setting the display brightness reported a failure status.")
+
+def require_layout_index(payload: Mapping[str, Any]) -> int:
+    index = payload.get("layoutIndex")
+    if not isinstance(index, int) or isinstance(index, bool):
+        raise ApplyError("payload.invalid", "The apply payload names no layout index.")
+    if not 0 <= index <= 7:
+        raise ApplyError("payload.out-of-range", "The requested layout index is outside its bound.")
+    return index
+
+def list_keyboards(run: Any = subprocess.run) -> list[Mapping[str, Any]]:
+    completed = run(
+        [HYPRCTL, "-j", "devices"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("probe.failed", "The input inventory probe reported a failure status.")
+    try:
+        devices = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        raise ApplyError("probe.invalid", "The input inventory probe returned unreadable output.") from error
+    keyboards = devices.get("keyboards") if isinstance(devices, Mapping) else None
+    if not isinstance(keyboards, list):
+        raise ApplyError("probe.invalid", "The input inventory probe returned no keyboard list.")
+    return keyboards
+
+def resolve_keyboard_name(resource_id: str, keyboards: list[Mapping[str, Any]]) -> str:
+    matches = []
+    for keyboard in keyboards:
+        if not isinstance(keyboard, Mapping):
+            continue
+        name = keyboard.get("name")
+        if isinstance(name, str) and name and stable_keyboard_id(name) == resource_id:
+            matches.append(name)
+    if len(matches) != 1:
+        raise ApplyError("resource.unresolved", "The named keyboard is not present exactly once.")
+    return matches[0]
+
+def apply_keyboard_layout(device_name: str, index: int, run: Any = subprocess.run) -> None:
+    completed = run(
+        [HYPRCTL, "switchxkblayout", device_name, str(index)],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("apply.failed", "Switching the keyboard layout reported a failure status.")
 
 FILES_XDG_KEYS = {
     "desktop": "XDG_DESKTOP_DIR",
@@ -269,6 +321,16 @@ def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+def apply_input_keyboard_layout(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_resource_id(payload)
+    index = require_layout_index(payload)
+    device_name = resolve_keyboard_name(resource_id, list_keyboards())
+    apply_keyboard_layout(device_name, index)
+    json.dump({"ok": True, "resourceId": resource_id, "layoutIndex": index}, stdout)
+    stdout.write("\n")
+    return 0
+
 def apply_display_brightness(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = require_resource_id(payload)
@@ -384,6 +446,7 @@ def apply_process_terminate(stdin: Any, stdout: Any) -> int:
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
+    "input-keyboard-layout-set": apply_input_keyboard_layout,
     "process-terminate": apply_process_terminate,
     "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,
