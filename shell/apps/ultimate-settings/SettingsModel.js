@@ -42,7 +42,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "power.inspect",
     supportsResource: true,
-    coverage: "Power inventory is readable from power.inspect (AC/battery source, active profile, available profiles, battery percentage). Profile, sleep, lock, and lid changes remain unavailable from Settings."
+    coverage: "Power inventory is readable from power.inspect (AC/battery source, active profile, available profiles, battery percentage), and the active profile is settable through power.provider profile.set. Sleep, lock, and lid changes remain unavailable from Settings."
   },
   {
     routeId: "settings.bluetooth.overview",
@@ -496,6 +496,22 @@ function resourceSubtitle(resource) {
   return "Provider resource"
 }
 
+var POWER_PROFILES = ["power-saver", "balanced", "performance"]
+
+function closedProfiles(state) {
+  var available = state && Array.isArray(state.availableProfiles) ? state.availableProfiles : []
+  var closed = []
+  for (var i = 0; i < available.length; i++) {
+    if (POWER_PROFILES.indexOf(available[i]) >= 0 && closed.indexOf(available[i]) < 0) closed.push(available[i])
+  }
+  return closed
+}
+
+function closedActiveProfile(state) {
+  var active = state && typeof state.activeProfile === "string" ? state.activeProfile : ""
+  return POWER_PROFILES.indexOf(active) >= 0 ? active : ""
+}
+
 function normalizeLeafResource(resource, index) {
   if (!isObject(resource)) return null
   var id = typeof resource.id === "string" && resource.id.length <= 160 ? resource.id : ""
@@ -511,6 +527,8 @@ function normalizeLeafResource(resource, index) {
     status: clippedText(resourceStatus(resource), 80),
     subtitle: clippedText(resourceSubtitle(resource), 240),
     details: details,
+    profiles: closedProfiles(state),
+    activeProfile: closedActiveProfile(state),
     order: index
   }
 }
@@ -1036,6 +1054,7 @@ if (typeof module !== "undefined") {
     MAX_SOURCE_RECORDS: MAX_SOURCE_RECORDS,
     MAX_VISIBLE_RECORDS: MAX_VISIBLE_RECORDS,
     MAX_VISIBLE_FIELDS: MAX_VISIBLE_FIELDS,
+    POWER_PROFILES: POWER_PROFILES,
     MAX_DISPLAY_TEXT: MAX_DISPLAY_TEXT,
     queryForRoute: queryForRoute,
     normalizedSelection: normalizedSelection,
