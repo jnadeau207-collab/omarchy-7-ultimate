@@ -48,7 +48,7 @@ def principal() -> EndpointPrincipal:
 
 def runner_outputs() -> dict[str, str]:
     return {
-        str(process.PROCESS_COMMAND.argv): "1 0 init /init.scope\n2 1000 worker /user.slice/app.scope\n",
+        str(process.PROCESS_COMMAND.argv): "1 0 0.5 1.2 20480 init /init.scope\n2 1000 13.7 4.8 131072 worker /user.slice/app.scope\n",
         str(device.DEVICE_COMMAND.argv): json.dumps({"DEVPATH": "/devices/pci0/usb1", "SUBSYSTEM": "usb", "DEVNAME": "/dev/bus/usb/001/001", "ID_MODEL": "Test Device", "ID_BUS": "usb", "AUTHORIZED": "1", "DRIVER": "usb"}) + "\n",
         str(storage.STORAGE_COMMAND.argv): json.dumps({"blockdevices": [{"name": "sda1", "path": "/dev/sda1", "type": "part", "size": 4096, "rm": False, "ro": False, "fstype": "ext4", "uuid": "volume-a", "mountpoints": ["/"]}, {"name": "sdb1", "path": "/dev/sdb1", "type": "part", "size": 8192, "rm": True, "ro": False, "fstype": "exfat", "uuid": "volume-b", "mountpoints": [None]}]}),
         str(printer.PRINTER_COMMAND.argv): "device for office: ipps://printer.example/ipp/print\n",
