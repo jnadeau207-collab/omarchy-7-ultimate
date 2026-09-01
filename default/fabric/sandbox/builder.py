@@ -91,12 +91,21 @@ class TaskProxy:
             raise SandboxViolation("Task proxy network scopes must be unique.")
 
 @dataclass(frozen=True)
+class GrantTokenBind:
+    """Host-sealed grant file bound only into this sandbox. Never an environment value."""
+
+    source: Path
+    source_root: Path
+
+
+@dataclass(frozen=True)
 class SandboxSpec:
     task_id: str
     runner_argv: tuple[str, ...]
     binds: tuple[ScopedBind, ...] = ()
     environment: Mapping[str, str] = field(default_factory=dict)
     task_proxy: TaskProxy | None = None
+    grant_token: GrantTokenBind | None = None
     runner_source: Path | None = None
 
     def __post_init__(self) -> None:
@@ -164,6 +173,7 @@ def _validate_host_source(
     *,
     protected_home: Path,
     task_proxy: bool = False,
+    grant_token: bool = False,
 ) -> Path:
     try:
         source = Path(source)
@@ -189,6 +199,9 @@ def _validate_host_source(
     if task_proxy:
         if not stat.S_ISSOCK(source_mode):
             raise SandboxViolation("Task proxy source must be one exact Unix socket.")
+    elif grant_token:
+        if not stat.S_ISREG(source_mode):
+            raise SandboxViolation("Task grant source must be one exact regular file.")
     elif stat.S_ISSOCK(source_mode):
         raise SandboxViolation("Sockets are forbidden in workspace and artifact binds.")
     parts = {part.lower() for part in resolved_source.parts}
@@ -315,6 +328,14 @@ def build_bwrap_command(
         command.extend(("--setenv", "OMARCHY_TASK_PROXY", "/run/omarchy/task-proxy.sock"))
         scopes = ",".join(f"{scope.protocol}://{scope.host}:{scope.port}" for scope in spec.task_proxy.scopes)
         command.extend(("--setenv", "OMARCHY_TASK_NETWORK_SCOPES", scopes))
+    if spec.grant_token is not None:
+        grant = _validate_host_source(
+            spec.grant_token.source,
+            spec.grant_token.source_root,
+            protected_home=home,
+            grant_token=True,
+        )
+        command.extend(("--ro-bind", str(grant), "/run/omarchy/task-grant"))
     for key in sorted(spec.environment):
         command.extend(("--setenv", key, spec.environment[key]))
     command.extend(spec.runner_argv)

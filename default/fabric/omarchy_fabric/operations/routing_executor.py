@@ -12,8 +12,8 @@ class PrivilegeRoutingExecutor:
     """Keep privileged package/system intents off the session executor.
 
     Session-scoped audio and files stay on the user helper. Privileged intents
-    go to the system executor, which is unavailable until a root-owned service
-    exists. Request data cannot choose the route: the intent ID is code-owned.
+    go to the system executor. Request data cannot choose the route: the
+    intent ID is code-owned.
     """
 
     def __init__(

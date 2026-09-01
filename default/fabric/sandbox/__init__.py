@@ -4,6 +4,7 @@ from .builder import (
     SandboxSpec,
     SandboxUnavailable,
     SandboxViolation,
+    GrantTokenBind,
     ScopedBind,
     TaskProxy,
     build_bwrap_command,
@@ -17,6 +18,7 @@ from .runner import IsolatedRun, packaged_runner_source, run_isolated, run_repre
 __all__ = [
     "DEFAULT_EXPOSURE",
     "FIXED_AGENT_RUNNER",
+    "GrantTokenBind",
     "IsolatedRun",
     "NetworkScope",
     "SandboxSpec",

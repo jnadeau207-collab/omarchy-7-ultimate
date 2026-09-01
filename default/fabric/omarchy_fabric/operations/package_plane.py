@@ -176,6 +176,14 @@ class CoordinatedRegistryGateway:
         envelope = await self._inner.preflight(provider_id, action, arguments, principal)
         if provider_id == "packages.provider" and action in {"install", "remove"}:
             return project_package_preflight(envelope)
+        if provider_id == "compatibility.provider" and action in {"deploy", "remove", "export"}:
+            from .compatibility_plane import project_compatibility_preflight
+
+            return project_compatibility_preflight(envelope)
+        if provider_id == "device.provider" and action == "authorization.plan":
+            from .device_plane import project_device_preflight
+
+            return project_device_preflight(envelope)
         return envelope
 
     def assert_current(self, binding):
