@@ -36,6 +36,15 @@ var ROUTE_QUERIES = [
     coverage: "Network inventory is readable from network.inspect (Wi-Fi radio, interfaces, connection status). Radio and connection changes remain unavailable from Settings."
   },
   {
+    routeId: "settings.power.overview",
+    title: "Power & battery",
+    providerId: "power.provider",
+    action: "inspect",
+    capability: "power.inspect",
+    supportsResource: true,
+    coverage: "Power inventory is readable from power.inspect (AC/battery source, active profile, available profiles, battery percentage). Profile, sleep, lock, and lid changes remain unavailable from Settings."
+  },
+  {
     routeId: "settings.bluetooth.overview",
     title: "Bluetooth & devices",
     providerId: "bluetooth.provider",
@@ -72,15 +81,6 @@ var ROUTE_QUERIES = [
     coverage: "Default applications and associations are readable. Startup and background application inventory has no registered read contract."
   },
   {
-    routeId: "settings.power.overview",
-    title: "Power & battery",
-    providerId: "power.provider",
-    action: "inspect",
-    capability: "power.inspect",
-    supportsResource: true,
-    coverage: "Power inventory is readable from power.inspect (AC/battery source, active profile, available profiles, battery percentage). Profile, sleep, lock, and lid changes remain unavailable from Settings."
-  },
-  {
     routeId: "settings.accessibility.overview",
     title: "Accessibility",
     providerId: "accessibility.provider",
@@ -115,8 +115,7 @@ var ROUTE_QUERIES = [
     capability: "system-information.inspect",
     supportsResource: false,
     coverage: "No code-owned aggregate system-information provider is registered. Settings does not assemble an unofficial substitute from direct commands."
-  }
-]
+  }]
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)

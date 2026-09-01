@@ -10,9 +10,16 @@
       "section": "Home",
       "title": "Settings home",
       "description": "Find a system setting and see which typed providers are available.",
-      "keywords": ["settings", "system", "overview"],
+      "keywords": [
+        "settings",
+        "system",
+        "overview"
+      ],
       "providerId": "",
-      "deepLink": { "host": "overview", "path": "" },
+      "deepLink": {
+        "host": "overview",
+        "path": ""
+      },
       "argumentSchema": {}
     },
     {
@@ -20,59 +27,165 @@
       "section": "System",
       "title": "Display",
       "description": "Displays, arrangement, scale, brightness, color, and night light.",
-      "keywords": ["monitor", "screen", "resolution", "scale", "brightness", "hdr"],
+      "keywords": [
+        "monitor",
+        "screen",
+        "resolution",
+        "scale",
+        "brightness",
+        "hdr"
+      ],
       "providerId": "display.provider",
-      "deepLink": { "host": "display", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
+      "deepLink": {
+        "host": "display",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
     },
     {
       "id": "settings.audio.overview",
       "section": "System",
       "title": "Sound",
       "description": "Output, input, application streams, routing, and volume.",
-      "keywords": ["audio", "sound", "speaker", "microphone", "volume"],
+      "keywords": [
+        "audio",
+        "sound",
+        "speaker",
+        "microphone",
+        "volume"
+      ],
       "providerId": "audio.provider",
-      "deepLink": { "host": "audio", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
+      "deepLink": {
+        "host": "audio",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
     },
     {
       "id": "settings.network.overview",
       "section": "System",
       "title": "Network & internet",
       "description": "Network interfaces, Wi-Fi state, connections, and diagnostics.",
-      "keywords": ["network", "internet", "wifi", "ethernet", "vpn"],
+      "keywords": [
+        "network",
+        "internet",
+        "wifi",
+        "ethernet",
+        "vpn"
+      ],
       "providerId": "network.provider",
-      "deepLink": { "host": "network", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
+      "deepLink": {
+        "host": "network",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "settings.power.overview",
+      "section": "System",
+      "title": "Power & battery",
+      "description": "Power profiles, battery, sleep, lock, and lid behavior.",
+      "keywords": [
+        "power",
+        "battery",
+        "sleep",
+        "lid",
+        "profile"
+      ],
+      "providerId": "power.provider",
+      "deepLink": {
+        "host": "power",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
     },
     {
       "id": "settings.bluetooth.overview",
       "section": "Devices",
       "title": "Bluetooth & devices",
       "description": "Bluetooth controllers, paired devices, discovery, and connection state.",
-      "keywords": ["bluetooth", "device", "pair", "headset", "controller"],
+      "keywords": [
+        "bluetooth",
+        "device",
+        "pair",
+        "headset",
+        "controller"
+      ],
       "providerId": "bluetooth.provider",
-      "deepLink": { "host": "bluetooth", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
+      "deepLink": {
+        "host": "bluetooth",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
     },
     {
       "id": "settings.input.overview",
       "section": "Devices",
       "title": "Input",
       "description": "Keyboard layouts, pointer, touchpad, controllers, and device-specific input.",
-      "keywords": ["keyboard", "mouse", "pointer", "touchpad", "controller", "layout"],
+      "keywords": [
+        "keyboard",
+        "mouse",
+        "pointer",
+        "touchpad",
+        "controller",
+        "layout"
+      ],
       "providerId": "input.provider",
-      "deepLink": { "host": "input", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
+      "deepLink": {
+        "host": "input",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
     },
     {
       "id": "settings.personalization.overview",
       "section": "Personal",
       "title": "Personalization",
       "description": "Themes, wallpaper, color mode, density, text size, cursor, and motion.",
-      "keywords": ["theme", "wallpaper", "appearance", "density", "cursor", "motion"],
+      "keywords": [
+        "theme",
+        "wallpaper",
+        "appearance",
+        "density",
+        "cursor",
+        "motion"
+      ],
       "providerId": "personalization.provider",
-      "deepLink": { "host": "personalization", "path": "overview" },
+      "deepLink": {
+        "host": "personalization",
+        "path": "overview"
+      },
       "argumentSchema": {}
     },
     {
@@ -80,29 +193,42 @@
       "section": "Personal",
       "title": "Apps",
       "description": "Default applications, file associations, startup, and background behavior.",
-      "keywords": ["apps", "defaults", "associations", "startup", "background"],
+      "keywords": [
+        "apps",
+        "defaults",
+        "associations",
+        "startup",
+        "background"
+      ],
       "providerId": "defaults.provider",
-      "deepLink": { "host": "apps", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
-    },
-    {
-      "id": "settings.power.overview",
-      "section": "System",
-      "title": "Power & battery",
-      "description": "Power profiles, battery, sleep, lock, and lid behavior.",
-      "keywords": ["power", "battery", "sleep", "lid", "profile"],
-      "providerId": "power.provider",
-      "deepLink": { "host": "power", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
+      "deepLink": {
+        "host": "apps",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
     },
     {
       "id": "settings.accessibility.overview",
       "section": "Personal",
       "title": "Accessibility",
       "description": "Text, contrast, motion, screen reader, keyboard, and pointer assistance.",
-      "keywords": ["accessibility", "contrast", "screen reader", "large text", "reduced motion"],
+      "keywords": [
+        "accessibility",
+        "contrast",
+        "screen reader",
+        "large text",
+        "reduced motion"
+      ],
       "providerId": "accessibility.provider",
-      "deepLink": { "host": "accessibility", "path": "overview" },
+      "deepLink": {
+        "host": "accessibility",
+        "path": "overview"
+      },
       "argumentSchema": {}
     },
     {
@@ -110,9 +236,17 @@
       "section": "Support",
       "title": "Update",
       "description": "Product and system update state, history, restart requirements, and recovery.",
-      "keywords": ["update", "upgrade", "restart", "history"],
+      "keywords": [
+        "update",
+        "upgrade",
+        "restart",
+        "history"
+      ],
       "providerId": "update.provider",
-      "deepLink": { "host": "update", "path": "overview" },
+      "deepLink": {
+        "host": "update",
+        "path": "overview"
+      },
       "argumentSchema": {}
     },
     {
@@ -120,19 +254,43 @@
       "section": "Support",
       "title": "Recovery",
       "description": "Restore points, rollback, repair, reset, and recovery status.",
-      "keywords": ["recovery", "restore", "rollback", "repair", "reset"],
+      "keywords": [
+        "recovery",
+        "restore",
+        "rollback",
+        "repair",
+        "reset"
+      ],
       "providerId": "recovery.provider",
-      "deepLink": { "host": "recovery", "path": "overview" },
-      "argumentSchema": { "resourceId": { "type": "opaque-id", "optional": true } }
+      "deepLink": {
+        "host": "recovery",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
     },
     {
       "id": "settings.system.overview",
       "section": "Support",
       "title": "System information",
       "description": "Product, OS, hardware, firmware, storage, encryption, and support details.",
-      "keywords": ["about", "system", "hardware", "firmware", "storage", "support"],
+      "keywords": [
+        "about",
+        "system",
+        "hardware",
+        "firmware",
+        "storage",
+        "support"
+      ],
       "providerId": "system-information.provider",
-      "deepLink": { "host": "system", "path": "overview" },
+      "deepLink": {
+        "host": "system",
+        "path": "overview"
+      },
       "argumentSchema": {}
     }
   ],
