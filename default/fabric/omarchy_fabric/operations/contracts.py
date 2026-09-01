@@ -305,7 +305,7 @@ class OperationPlan:
 
     def _verify_preflight_coherence(self) -> None:
         required = {
-            "provider", "providerVersion", "action", "capability", "resource",
+            "schemaVersion", "provider", "providerVersion", "action", "capability", "resource",
             "normalizedArguments", "stateRevision", "currentState", "proposedState",
             "changed", "summary", "risk", "effects", "recovery",
         }

@@ -17,6 +17,7 @@ import sys
 import time
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -66,6 +67,8 @@ from .operations.executor import IntentCatalog, IntentDefinition, stable_token
 from .operations.registry_gateway import RegistryOperationGateway
 from .operations.session_executor import SessionCommandExecutor
 from .operations.store import OperationStore
+from .security.approval import ApprovalAuthority
+from .security.grants import CapabilityGrant, GrantPersistence
 from .providers._engine import state_revision
 from .provider_builtins import build_builtin_providers
 from .provider_registry import ProviderRegistry, TypedProvider
@@ -589,6 +592,8 @@ class FabricDaemon:
             self.reference_operations,
         )
         self.operation_store: OperationStore | None = None
+        self.operation_approvals = ApprovalAuthority()
+        self.operation_grants: dict[str, CapabilityGrant] = {}
         self.operations: OperationCoordinator | None = None
         self._build_operations()
         self.server: asyncio.AbstractServer | None = None
@@ -612,7 +617,8 @@ class FabricDaemon:
 
     async def _operation_state(self, resource_id: str) -> Mapping[str, Any]:
         result = await self.typed_providers.read("audio.provider", "inspect", {})
-        for resource in result.get("resources", ()):
+        payload = result.get("value") if isinstance(result.get("value"), Mapping) else result
+        for resource in payload.get("resources", ()):
             if resource.get("id") == resource_id:
                 value = resource.get("state")
                 return {
@@ -1412,8 +1418,48 @@ class FabricDaemon:
             return self.reference_operations.ledger(principal, request.params)
         if request.method == "operation.preflight":
             return await self._require_operations().preflight(principal, **_operation_preflight_arguments(request.params))
+        if request.method == "operation.approve":
+            coordinator = self._require_operations()
+            operation_id = _operation_id(request.params)
+            operation_request = coordinator.approval_request(principal, operation_id)
+            issued_at = datetime.now(timezone.utc)
+            expires_at = issued_at + timedelta(minutes=5)
+            approval = self.operation_approvals.issue(
+                principal,
+                operation_request,
+                expires_at=expires_at,
+            )
+            self.operation_grants[operation_id] = CapabilityGrant(
+                grant_id=f"grant.{approval.approval_id}",
+                principal_id=operation_request.principal_id,
+                principal_kind=principal.kind,
+                capability=operation_request.capability,
+                resource=operation_request.resource,
+                issued_at=issued_at,
+                expires_at=expires_at,
+                maximum_risk=operation_request.risk,
+                persistence=GrantPersistence.SESSION,
+            )
+            return {"operationId": operation_id, "approvalId": approval.approval_id}
         if request.method == "operation.start":
-            return await self._require_operations().start(principal, _operation_id(request.params))
+            _require_exact_fields(
+                request.params,
+                required=("operationId", "approvalId"),
+                optional=(),
+                context="operation start",
+            )
+            operation_id = request.params["operationId"]
+            grant = self.operation_grants.get(operation_id)
+            try:
+                return await self._require_operations().start(
+                    principal,
+                    operation_id,
+                    approval_id=request.params["approvalId"],
+                    approvals=self.operation_approvals,
+                    grants=(grant,) if grant is not None else (),
+                )
+            finally:
+                self.operation_grants.pop(operation_id, None)
         if request.method == "operation.get":
             return self._require_operations().get(principal, _operation_id(request.params))
         if request.method == "operation.cancel":
