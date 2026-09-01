@@ -551,11 +551,11 @@ function payloadAvailability(value) {
   }
   if (availability.read === false) {
     var reason = isObject(availability.reason) ? availability.reason : null
-    return { state: "unavailable", detail: clippedText(reason && (reason.explanation || reason.title) || "Provider read state is unavailable.") }
+    return { state: "unavailable", detail: clippedText(reason && (reason.explanation || reason.title) || "This information is not available right now.") }
   }
   if (availability.read === true && availability.reason) {
     var degradedReason = isObject(availability.reason) ? availability.reason : null
-    return { state: "degraded", detail: clippedText(degradedReason && (degradedReason.explanation || degradedReason.title) || "Provider state is degraded.") }
+    return { state: "degraded", detail: clippedText(degradedReason && (degradedReason.explanation || degradedReason.title) || "Some changes are not available yet.") }
   }
   return { state: availability.read === true ? "available" : "unknown", detail: "" }
 }
@@ -651,14 +651,14 @@ function acceptedReadState(previous, result) {
   if (availability.state === "unavailable") {
     next.phase = "unavailable"
     next.error = structuredError(
-      "provider.read-unavailable", "Provider state is unavailable",
+      "provider.read-unavailable", "This information is not available right now",
       availability.detail || "The provider explicitly reported that its read state is unavailable.",
       previous.query.providerId, ["provider.refresh"]
     )
   } else if (entry.state === "degraded" || availability.state === "degraded") {
     next.phase = "degraded"
     if (availability.detail !== "") next.error = structuredError(
-      "provider.read-degraded", "Provider state is degraded", availability.detail,
+      "provider.read-degraded", "Some changes are not available yet", availability.detail,
       previous.query.providerId, ["provider.refresh"]
     )
   } else if (normalized.records.length === 0) {
@@ -927,8 +927,8 @@ function stateTitle(state) {
   if (phase === "ready") return "Current provider state"
   if (phase === "empty") return state && state.selectedMissing ? "Requested resource is absent" : "No resources reported"
   if (phase === "missing") return "Provider is not registered"
-  if (phase === "unavailable") return "Provider state is unavailable"
-  if (phase === "degraded") return "Provider state is degraded"
+  if (phase === "unavailable") return "This information is not available right now"
+  if (phase === "degraded") return "Some changes are not available yet"
   if (phase === "contract-mismatch") return "Provider contract does not match"
   if (phase === "denied") return "Settings read was denied"
   if (phase === "interrupted") return "Settings read was interrupted"
