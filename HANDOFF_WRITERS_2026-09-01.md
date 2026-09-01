@@ -44,17 +44,24 @@ Each device-scoped writer resolves its opaque resource id by recomputing the pro
 
 ## The next piece, precisely
 
-`files-entry-trash` and `files-trash-restore` are implemented and proven against a real temporary tree, including both security guards failing the test when removed. They are not reachable because the operation definitions cannot get what the helper needs.
+`files-entry-trash` and `files-trash-restore` are implemented and proven against a real temporary tree, including both security guards failing the test when removed. They are not reachable, and the reason is narrower than it first looks.
 
-The helper wants `locationId` and `entryRelativePath`. `_normalize_entry` returns `{entryId}` alone, so `preflight["normalizedArguments"]` does not carry them. The lambda can read `preflight["currentState"]`, which for a scoped operation is the scope's `current` document — so the work is:
+Scoping `entry.trash` needs no new read action and no new daemon dispatch. The scope is the entry's **parent directory**, reusing the existing `files.directory.<digest>` resource that `directory.create` already uses, because trashing an entry removes exactly one name from that directory's listing and `directory.inspect` already reads that listing from disk. The helper's `locationId` and `entryRelativePath` come from the diff between the scope's current and proposed names — no argument-schema change either. Both halves were written and verified this session:
 
-1. Write an `_entry_scope` alongside `_directory_scope` whose `current` document carries `locationId` and `relativePath`.
-2. Give the backend an entry read action equivalent to `directory.inspect`, so the daemon's validation reader recomputes the scoped state from disk rather than from the bounded inventory. This is the same fix the state-domain handoff made for `directory.create`, and for the same reason: whole-state equality cannot validate a real filesystem mutation.
-3. Dispatch on resource id kind in `daemon._operation_state`.
-4. Add the two `IntentDefinition`s and `OperationDefinition`s.
-5. Surface Trash and Restore in the Files app, and widen nothing — the allowlist already carries the four operation methods.
+- `_entry_trash_scope` resolves the entry, derives its parent, and proposes the listing minus that name.
+- A payload deriver returns the right path for root-level and nested entries, and refuses any plan that does not remove exactly one name.
 
-Do not shortcut step 2. The state-domain handoff records three separate contract conflicts that surfaced only when that path first executed.
+**The actual blocker is the schema family.** `files-operation-preflight-v0`, which `entry.trash` uses, pins `resource.kind` to `const: "files.workspace"`. The scoped family `files-directory-{preflight,result,state}-v1` allows `files.directory`, but pins `action` to `const: "directory.create"` and lists only `files.directory.create` in its capability enum. So a second scoped operation requires either widening those three `const`s to enums in a published v1 family, or minting a parallel family for Trash. That is a contract revision and should be a deliberate decision, not a side effect.
+
+Three tests catch the mismatch immediately, which is how it was found:
+
+- `test_trash_restore_has_exact_recovery_metadata_and_undo`
+- `test_all_safe_representative_operations_execute_validate_and_undo`
+- `test_trashing_a_directory_removes_its_whole_subtree_from_recent`
+
+The scope function and payload deriver were reverted rather than left half-applied. Reinstate them once the schema decision is made; nothing else in the path needs to change.
+
+`trash.restore` is harder and was not attempted. Its natural scope is the destination directory, which is only known from the `.trashinfo` record the provider does not read at preflight.
 
 ## What still blocks Software Center
 
