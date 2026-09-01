@@ -38,6 +38,7 @@ from .models import (
     PROTOCOL_NAME,
     PROTOCOL_VERSION,
     FabricError,
+    FixedArgvCommand,
     RpcRequest,
     default_socket_path,
     default_state_directory,
@@ -59,6 +60,13 @@ from .managed_work import (
     ManagedWorkPlane,
     StableOwnerSessionStore,
 )
+from .operations.contracts import OperationDefinition
+from .operations.coordinator import OperationCoordinator
+from .operations.executor import IntentCatalog, IntentDefinition, stable_token
+from .operations.registry_gateway import RegistryOperationGateway
+from .operations.session_executor import SessionCommandExecutor
+from .operations.store import OperationStore
+from .providers._engine import state_revision
 from .provider_builtins import build_builtin_providers
 from .provider_registry import ProviderRegistry, TypedProvider
 from .reference_operation import ReferenceOperationManager
@@ -66,6 +74,7 @@ from .security import EndpointAdmission, EndpointPrincipal, PrincipalKind
 from .security.errors import SecurityValidationError
 
 LOGGER = logging.getLogger("omarchy-fabricd")
+OPERATION_POLICY_REVISION = "policy.revision.session-v0"
 STABLE_ID = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 SCHEMA_VERSION = re.compile(r"^v[0-9]+(?:\.[0-9]+){0,2}$")
 MAX_CONNECTION_REQUEST_IDS = 8192
@@ -527,6 +536,38 @@ class ClientConnection:
             pass
         self.daemon.connections.discard(self)
 
+
+def _operation_id(params: Mapping[str, Any]) -> str:
+    _require_exact_fields(params, required=("operationId",), optional=(), context="operation request")
+    operation_id = params["operationId"]
+    if not isinstance(operation_id, str) or not operation_id:
+        raise FabricError(
+            "operation.invalid-arguments",
+            "Fabric operation arguments are invalid",
+            "An operation identity is required.",
+        )
+    return operation_id
+
+def _operation_preflight_arguments(params: Mapping[str, Any]) -> dict[str, Any]:
+    _require_exact_fields(
+        params,
+        required=("provider", "action", "arguments", "idempotencyKey"),
+        optional=(),
+        context="operation preflight",
+    )
+    if not isinstance(params["arguments"], Mapping):
+        raise FabricError(
+            "operation.invalid-arguments",
+            "Fabric operation arguments are invalid",
+            "Operation arguments must be a JSON object.",
+        )
+    return {
+        "provider_id": params["provider"],
+        "action": params["action"],
+        "arguments": params["arguments"],
+        "idempotency_key": params["idempotencyKey"],
+    }
+
 class FabricDaemon:
     def __init__(self, config: DaemonConfig) -> None:
         self.config = config
@@ -547,6 +588,9 @@ class FabricDaemon:
             self.managed_work,
             self.reference_operations,
         )
+        self.operation_store: OperationStore | None = None
+        self.operations: OperationCoordinator | None = None
+        self._build_operations()
         self.server: asyncio.AbstractServer | None = None
         self.connections: set[ClientConnection] = set()
         self.run_id = ""
@@ -555,6 +599,83 @@ class FabricDaemon:
         self._instance_lock_fds: list[int] = []
         self._database_lease_fds: list[tuple[Path, int, tuple[int, int]]] = []
         self._stopped = False
+
+
+    def _operation_percent(self, value: Any) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 100:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The requested volume percent is outside its bound.",
+            )
+        return value
+
+    async def _operation_state(self, resource_id: str) -> Mapping[str, Any]:
+        result = await self.typed_providers.read("audio.provider", "inspect", {})
+        for resource in result.get("resources", ()):
+            if resource.get("id") == resource_id:
+                value = resource.get("state")
+                return {
+                    "resourceId": resource_id,
+                    "revision": state_revision(value),
+                    "value": value,
+                }
+        raise FabricError(
+            "operation.resource-unavailable",
+            "Fabric operation resource is unavailable",
+            "The named audio output is not present in the current inventory.",
+        )
+
+    def _build_operations(self) -> None:
+        root = os.environ.get("OMARCHY_PATH")
+        base = Path(root) if root else Path(__file__).resolve().parents[3]
+        helper = base / "bin" / "omarchy-fabric-session-apply"
+        if not helper.is_file():
+            return
+        try:
+            intents = IntentCatalog(
+                (
+                    IntentDefinition(
+                        "audio.output-volume.set",
+                        FixedArgvCommand(str(helper), ()),
+                        required={"resourceId": stable_token, "percent": self._operation_percent},
+                    ),
+                )
+            )
+            definitions = (
+                OperationDefinition(
+                    "audio.provider",
+                    "output-volume.set",
+                    "audio.output-volume.set",
+                    lambda preflight: {
+                        "resourceId": preflight["resource"]["id"],
+                        "percent": preflight["normalizedArguments"]["percent"],
+                    },
+                ),
+            )
+            store = OperationStore(self.config.database_path.with_name("operations.db"))
+            self.operation_store = store
+            self.operations = OperationCoordinator(
+                store=store,
+                gateway=RegistryOperationGateway(registry=self.typed_providers),
+                definitions=definitions,
+                intents=intents,
+                executor=SessionCommandExecutor(intents, self._operation_state),
+                session_resolver=self.session_bindings.require_active,
+                policy_revision=lambda: OPERATION_POLICY_REVISION,
+            )
+        except Exception:
+            self.operation_store = None
+            self.operations = None
+
+    def _require_operations(self) -> OperationCoordinator:
+        if self.operations is None:
+            raise FabricError(
+                "operation.unavailable",
+                "Fabric operations are unavailable",
+                "No code-owned operation coordinator is registered for this daemon.",
+            )
+        return self.operations
 
     async def start(self) -> None:
         self._secure_directory(self.config.database_path.parent)
@@ -632,6 +753,8 @@ class FabricDaemon:
                 ) from error
             self._verify_database_leases()
             self.reference_operations.recover_startup()
+            if self.operation_store is not None:
+                self.operation_store.open()
             self.providers.load()
             for provider in self.config.typed_providers:
                 self.typed_providers.register(provider)
@@ -725,6 +848,8 @@ class FabricDaemon:
                 remember(error)
         try:
             await self.reference_operations.shutdown()
+            if self.operation_store is not None:
+                self.operation_store.close()
         except Exception as error:
             remember(error)
         try:
@@ -1285,6 +1410,18 @@ class FabricDaemon:
             return self.reference_operations.reconcile(principal, request.params)
         if request.method == "reference.operation.ledger":
             return self.reference_operations.ledger(principal, request.params)
+        if request.method == "operation.preflight":
+            return await self._require_operations().preflight(principal, **_operation_preflight_arguments(request.params))
+        if request.method == "operation.start":
+            return await self._require_operations().start(principal, _operation_id(request.params))
+        if request.method == "operation.get":
+            return self._require_operations().get(principal, _operation_id(request.params))
+        if request.method == "operation.cancel":
+            return await self._require_operations().cancel(principal, _operation_id(request.params))
+        if request.method == "operation.reconcile":
+            return await self._require_operations().reconcile(principal, _operation_id(request.params))
+        if request.method == "operation.ledger":
+            return self._require_operations().ledger(principal, _operation_id(request.params))
         if request.method == "events.subscribe":
             return self._subscribe(connection, request.request_id, request.params)
         if request.method == "events.unsubscribe":
