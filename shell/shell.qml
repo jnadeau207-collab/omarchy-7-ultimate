@@ -63,8 +63,15 @@ ShellRoot {
 
   // Both flags are session state. Republishing them as the shell starts keeps a
   // stale file from outliving the session that summoned it, so a product window
-  // never comes back pseudo-localized after a restart.
-  Component.onCompleted: shell.publishPresentation()
+  // never comes back pseudo-localized after a restart. setText on a FileView
+  // that has not loaded yet is dropped, so this runs once off the event loop
+  // rather than from Component.onCompleted.
+  Timer {
+    interval: 750
+    running: true
+    repeat: false
+    onTriggered: shell.publishPresentation()
+  }
 
   // The omarchy-shell host is the long-running entry point. Plugins live in
   // sibling directories under plugins/. OMARCHY_PATH is provided by the uwsm

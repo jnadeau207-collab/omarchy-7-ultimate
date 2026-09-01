@@ -247,6 +247,6 @@ if grep -Eq 'profileId: "product"$' "$ROOT/shell/apps/shared/ProductAppHost.qml"
   fail "product profile must not stay pinned to a default locale"
 fi
 pass "Settings, Files, Agent Center, Software, and Compatibility share the summoned presentation"
-grep -Fq 'Component.onCompleted: shell.publishPresentation()' "$ROOT/shell/shell.qml" \
+grep -Fq 'onTriggered: shell.publishPresentation()' "$ROOT/shell/shell.qml" \
   || fail "shell start republishes presentation so a stale file cannot outlive its session"
 pass "summoned presentation does not survive the session that set it"
