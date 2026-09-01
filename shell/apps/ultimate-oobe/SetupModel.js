@@ -457,6 +457,28 @@ function normalizeAssociation(association, index) {
   }
 }
 
+function normalizeFilesLocation(location, entries, index) {
+  if (!isObject(location) || typeof location.id !== "string" || location.id.length > 160) return null
+  var count = 0
+  if (Array.isArray(entries)) {
+    for (var i = 0; i < entries.length; i++) {
+      if (isObject(entries[i]) && entries[i].locationId === location.id) count++
+    }
+  }
+  return {
+    id: location.id,
+    label: clippedText(location.label || location.id, 240),
+    kind: clippedText((location.kind || "location") + " location", 160),
+    status: clippedText(location.state || "unknown", 80),
+    subtitle: clippedText(location.reason && location.reason.title ? location.reason.title : "", 240),
+    details: [
+      { label: fieldLabel("writable"), value: compactValue(location.writable === true) },
+      { label: fieldLabel("entries"), value: compactValue(count) }
+    ],
+    order: index
+  }
+}
+
 function normalizeApplication(application, index) {
   if (!isObject(application) || typeof application.id !== "string" || application.id.length > 160) return null
   return {
@@ -523,6 +545,13 @@ function normalizedRecords(query, value, selectedResourceId) {
     for (var i = 0; i < value.resources.length; i++) {
       var resource = normalizeLeafResource(value.resources[i], i)
       if (resource) all.push(resource)
+    }
+  } else if (query.providerId === "files.provider" && isObject(value.state)) {
+    var locations = Array.isArray(value.state.locations) ? value.state.locations : []
+    sourceCount = locations.length
+    for (var f = 0; f < locations.length; f++) {
+      var place = normalizeFilesLocation(locations[f], value.state.entries, f)
+      if (place) all.push(place)
     }
   } else if (query.providerId === "defaults.provider" && isObject(value.state)) {
     var associations = value.state.associations
