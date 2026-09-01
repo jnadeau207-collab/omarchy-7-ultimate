@@ -1,0 +1,60 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Administration
+GenericName=System Administration
+Comment=Manage this computer through typed system providers
+TryExec=omarchy-launch-administration
+Exec=omarchy-launch-administration --source desktop %u
+Icon=preferences-system
+Terminal=false
+Categories=System;Settings;
+Keywords=administration;task manager;processes;services;devices;storage;printers;backup;firewall;accounts;troubleshoot;
+MimeType=x-scheme-handler/omarchy-administration;
+StartupNotify=true
+StartupWMClass=org.omarchy.Administration
+Actions=Home;Processes;Services;DeviceManager;Storage;Printers;Backup;Scheduled;Troubleshoot;Firewall;Accounts;
+
+[Desktop Action Home]
+Name=Administration home
+Exec=omarchy-launch-administration --source desktop administration.overview
+
+[Desktop Action Processes]
+Name=Task Manager
+Exec=omarchy-launch-administration --source desktop administration.processes.overview
+
+[Desktop Action Services]
+Name=Services
+Exec=omarchy-launch-administration --source desktop administration.services.overview
+
+[Desktop Action DeviceManager]
+Name=Device Manager
+Exec=omarchy-launch-administration --source desktop administration.devices.overview
+
+[Desktop Action Storage]
+Name=Storage
+Exec=omarchy-launch-administration --source desktop administration.storage.overview
+
+[Desktop Action Printers]
+Name=Printers and scanners
+Exec=omarchy-launch-administration --source desktop administration.printers.overview
+
+[Desktop Action Backup]
+Name=Backup
+Exec=omarchy-launch-administration --source desktop administration.backup.overview
+
+[Desktop Action Scheduled]
+Name=Scheduled tasks
+Exec=omarchy-launch-administration --source desktop administration.schedule.overview
+
+[Desktop Action Troubleshoot]
+Name=Troubleshooting
+Exec=omarchy-launch-administration --source desktop administration.troubleshoot.overview
+
+[Desktop Action Firewall]
+Name=Firewall
+Exec=omarchy-launch-administration --source desktop administration.firewall.overview
+
+[Desktop Action Accounts]
+Name=User accounts
+Exec=omarchy-launch-administration --source desktop administration.accounts.overview
