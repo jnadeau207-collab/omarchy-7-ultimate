@@ -24,7 +24,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "audio.inspect",
     supportsResource: true,
-    coverage: "Audio output inventory is readable from audio.inspect (sink, default, mute, channel volume, ports). Volume and routing changes remain unavailable from Settings."
+    coverage: "Audio output inventory is readable from audio.inspect (sink, default, mute, channel volume, ports). Output volume applies through the durable operation service as this user. Routing, mute, and port changes remain unavailable from Settings."
   },
   {
     routeId: "settings.network.overview",
