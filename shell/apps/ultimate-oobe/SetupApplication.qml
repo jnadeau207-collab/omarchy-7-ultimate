@@ -178,9 +178,13 @@ Item {
       Ui.Card {
         visible: root.providerStep
         Layout.fillWidth: true
+        implicitHeight: providerColumn.implicitHeight + Style.space(32)
 
         ColumnLayout {
-          anchors.fill: parent
+          id: providerColumn
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.top: parent.top
           anchors.margins: Style.space(16)
           spacing: Style.space(6)
 
