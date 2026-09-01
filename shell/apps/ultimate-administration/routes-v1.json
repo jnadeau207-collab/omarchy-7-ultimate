@@ -28,7 +28,7 @@
       "id": "administration.processes.overview",
       "section": "Performance",
       "title": "Processes",
-      "description": "Running processes with user, command, and control group. End Task is planned, not wired.",
+      "description": "Running processes with user, command, and control group. End Task runs through the durable operation service.",
       "keywords": [
         "task manager",
         "processes",
