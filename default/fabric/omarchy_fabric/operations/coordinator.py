@@ -416,7 +416,9 @@ class OperationCoordinator:
             "normalizedArguments", "stateRevision", "currentState", "proposedState", "risk", "effects",
         }
         optional = {"changed", "summary", "recovery"}
-        if not isinstance(value, Mapping) or set(value) != required | optional:
+        tolerated = {"guards"}
+        fields = set(value) if isinstance(value, Mapping) else set()
+        if not isinstance(value, Mapping) or not required | optional <= fields <= required | optional | tolerated:
             raise operation_error("operation.preflight-invalid", "Provider preflight lacks required exact bindings.")
         if (
             value["provider"] != outer["provider"]

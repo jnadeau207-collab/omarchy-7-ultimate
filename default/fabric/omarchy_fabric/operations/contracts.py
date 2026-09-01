@@ -309,8 +309,9 @@ class OperationPlan:
             "normalizedArguments", "stateRevision", "currentState", "proposedState",
             "changed", "summary", "risk", "effects", "recovery",
         }
+        optional = {"guards"}
         preflight = self.preflight
-        if set(preflight) != required:
+        if not required <= set(preflight) <= required | optional:
             raise operation_error("operation.plan-corrupt", "Durable provider preflight fields are not exact.")
         if (
             preflight["provider"] != self.provider.provider_id

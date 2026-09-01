@@ -95,6 +95,7 @@ def _build_files_provider() -> TypedProvider:
     from .providers.files import build_provider
 
     return build_provider(
+        session_operable=True,
         home=_trusted_account_home(),
         config_path=_default_root() / "ultimate" / "files" / "locations-v0.json",
     )
