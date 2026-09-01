@@ -147,7 +147,7 @@ class ParserBoundaryTests(unittest.TestCase):
                 self.assertTrue(all(";" not in argument and "$" not in argument for argument in command.argv))
 
     def test_large_inventories_publish_explicit_bounded_selection_truth(self) -> None:
-        process_text = "\n".join(f"{pid} {1000 if pid % 2 else 0} proc{pid} /group/{pid % 4}" for pid in range(1, 81))
+        process_text = "\n".join(f"{pid} {1000 if pid % 2 else 0} 1.0 2.0 4096 proc{pid} /group/{pid % 4}" for pid in range(1, 81))
         processes = process.parse_processes(process_text, boot_id=BOOT_ID, start_ticks_by_pid={pid: pid * 10 for pid in range(1, 81)})
         self.assertEqual(len(processes), 64)
         self.assertEqual(processes[0]["observedCount"], 80)
@@ -198,8 +198,8 @@ class ParserBoundaryTests(unittest.TestCase):
             storage.parse_storage(json.dumps(unsafe))
 
     def test_stable_resource_ids_still_revision_bind_mutable_identity_metadata(self) -> None:
-        original_process = process.parse_processes("2 1000 worker /user.slice/app.scope\n", boot_id=BOOT_ID, start_ticks_by_pid={2: 200})[0]
-        changed_process = process.parse_processes("2 1001 replacement /user.slice/other.scope\n", boot_id=BOOT_ID, start_ticks_by_pid={2: 200})[0]
+        original_process = process.parse_processes("2 1000 13.7 4.8 131072 worker /user.slice/app.scope\n", boot_id=BOOT_ID, start_ticks_by_pid={2: 200})[0]
+        changed_process = process.parse_processes("2 1001 9.0 2.5 65536 replacement /user.slice/other.scope\n", boot_id=BOOT_ID, start_ticks_by_pid={2: 200})[0]
         self.assertEqual(original_process["id"], changed_process["id"])
         self.assertNotEqual(original_process["state"]["identityRevision"], changed_process["state"]["identityRevision"])
 
