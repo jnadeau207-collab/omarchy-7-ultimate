@@ -18,7 +18,7 @@ from .executor import (
     _REVISION,
 )
 
-SessionStateReader = Callable[[str], Mapping[str, Any]]
+SessionStateReader = Callable[[str], Awaitable[Mapping[str, Any]]]
 
 @dataclass(frozen=True)
 class SessionCommandResult:
@@ -69,8 +69,8 @@ class SessionCommandExecutor:
         self.runner = runner or run_session_command
         self.timeout_seconds = timeout_seconds
 
-    def state(self, resource_id: str) -> dict[str, Any]:
-        observed = self.reader(resource_id)
+    async def state(self, resource_id: str) -> dict[str, Any]:
+        observed = await self.reader(resource_id)
         if not isinstance(observed, Mapping):
             raise operation_error("executor.resource-unavailable", "Session state reader returned no typed state.")
         value = normalize_json(observed.get("value"))
@@ -145,7 +145,7 @@ class SessionCommandExecutor:
     ) -> ExecutorApplyResult:
         definition = self._resolve(plan, intent)
         self._require_live(cancelled, "none")
-        current = self.state(plan.resource.resource_id)
+        current = await self.state(plan.resource.resource_id)
         if current["revision"] != plan.resource.revision:
             raise operation_error(
                 "executor.stale-resource",
@@ -155,7 +155,7 @@ class SessionCommandExecutor:
             )
         self._require_live(cancelled, "none")
         result = await self._run(definition, intent.payload, "unknown")
-        observed = self.state(plan.resource.resource_id)
+        observed = await self.state(plan.resource.resource_id)
         return ExecutorApplyResult(observed["revision"], observed, self._evidence(result, "apply"))
 
     async def validate(
@@ -167,7 +167,7 @@ class SessionCommandExecutor:
     ) -> Mapping[str, Any]:
         self._resolve(plan, intent)
         self._require_live(cancelled, "unknown")
-        observed = self.state(plan.resource.resource_id)
+        observed = await self.state(plan.resource.resource_id)
         expected = normalize_json(dict(expected_state).get("value"))
         return {"observedState": observed, "matchesExpected": observed["value"] == expected}
 
@@ -184,7 +184,7 @@ class SessionCommandExecutor:
         restore = dict(intent.payload)
         restore["desired"] = normalize_json(dict(prior_state).get("value"))
         result = await self._run(definition, restore, "unknown")
-        observed = self.state(plan.resource.resource_id)
+        observed = await self.state(plan.resource.resource_id)
         return ExecutorApplyResult(observed["revision"], observed, self._evidence(result, "rollback"))
 
     async def reconcile(
@@ -195,7 +195,7 @@ class SessionCommandExecutor:
     ) -> ExecutorReconcileResult:
         self._resolve(plan, intent)
         self._require_live(cancelled, "unknown")
-        observed = self.state(plan.resource.resource_id)
+        observed = await self.state(plan.resource.resource_id)
         desired = normalize_json(plan.preflight["proposedState"]["value"])
         before = normalize_json(plan.preflight.get("currentState", {}).get("value"))
         if observed["value"] == desired:
