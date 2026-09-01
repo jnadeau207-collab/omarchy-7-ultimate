@@ -557,8 +557,11 @@ grep -Fq '"captionCloseBgHex"' "$ROOT/default/ultimate/chrome-tokens.json" \
   || fail "dark chrome tokens include caption close color"
 grep -Fq '"captionMaxBgHex"' "$ROOT/default/ultimate/chrome-tokens.json" \
   || fail "dark chrome tokens include caption maximize color"
-grep -Fq 'chrome-tokens.json' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
-  || fail "Superbar glass reads chrome-tokens.json"
+grep -Fq 'Tokens.chrome.' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
+  || fail "Superbar chrome resolves through the token pipeline"
+if grep -Eq '(FileView|readFile|chrome-tokens)' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"; then
+  fail "Superbar must not read a chrome palette file directly"
+fi
 grep -Fq 'chrome-tokens-light.json' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar glass reads chrome-tokens-light.json for a light theme"
 grep -Fq 'function applyChromeTokens' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
