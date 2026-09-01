@@ -1,12 +1,12 @@
 # State-domain writes — what landed and what blocks
 
-SHA `f6248d3d` on `work`. Shell gates: 13 of 247 files fail, the identical list that fails at `e3ec490b` before this work. No regression.
+SHA `6ac3b401` on `work`. Shell gates: 13 of 247 files fail, the identical list that fails at `e3ec490b` before this work. No regression.
 
 The audio write path is proven again on the live daemon this session: 40 → 55 → 40 through preflight, approve, start, and the durable coordinator.
 
 ## What landed
 
-`files.directory.create` is wired end to end and **executes**. On a workspace that satisfies the mutation precondition, the operation plane creates a real directory on a real filesystem through the code-owned helper.
+`files.directory.create` is wired end to end and **succeeds**. On a workspace that satisfies the mutation precondition, the operation plane creates a real directory on a real filesystem through the code-owned helper and passes validation, reaching `status: succeeded`.
 
 - `providers/files/provider.py` takes `session_operable`, and `provider_builtins` opts files in. The provider still never mutates.
 - `operations/session_apply.py` grew a second action, selected by argv so request data still cannot choose a command. It resolves `locationId` through the code-owned catalog and XDG user-dirs, rejects traversal, absolute paths, unsafe names, and non-writable locations, then creates the directory with a single `mkdir` that fails closed if the name is taken.
