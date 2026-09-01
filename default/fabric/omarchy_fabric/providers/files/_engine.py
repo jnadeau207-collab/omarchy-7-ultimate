@@ -591,8 +591,8 @@ class StateDomainProvider:
         if spec.scope is not None:
             guards["snapshotRevision"] = current_state["revision"]
         recovery_state = {
-            **deepcopy(current_state),
-            "recoveryFromRevision": proposed_state["revision"],
+            **deepcopy(self._state(current)),
+            "recoveryFromRevision": state_revision(proposed),
             "recoveryAction": action,
         }
         result = {
@@ -632,7 +632,7 @@ class StateDomainProvider:
             raise stale_state(self.domain)
         proposed = self._proposed(spec, current, normalized)
         if current == proposed:
-            return self._result(definition, action, current, changed=False)
+            return self._result(definition, action, current, changed=False, plan_state=self._plan_scope(spec, current, normalized))
         updated = await self._swap(state_revision(current), proposed)
         assert updated.state is not None
         actual = thaw(updated.state)
@@ -645,7 +645,7 @@ class StateDomainProvider:
                 change_state="unknown",
                 recovery_actions=(f"{self.domain}.undo",),
             )
-        return self._result(definition, action, actual, changed=True)
+        return self._result(definition, action, actual, changed=True, plan_state=self._plan_scope(spec, actual, normalized))
 
     async def apply(
         self,
@@ -685,7 +685,7 @@ class StateDomainProvider:
                 change_state="unknown",
                 recovery_actions=(f"{self.domain}.undo",),
             )
-        return self._result(definition, action, actual["value"], changed=False)
+        return self._result(definition, action, actual["value"], changed=False, plan_state=actual if spec.scope is not None else None)
 
     async def undo(
         self,
@@ -937,6 +937,11 @@ class StateDomainProvider:
             ) from error
         return StateSnapshot("available", True, freeze(thaw(snapshot.state)))
 
+    def _plan_scope(self, spec: Any, state: Mapping[str, Any], normalized: Mapping[str, Any]) -> dict[str, Any] | None:
+        if spec.scope is None:
+            return None
+        return self._plan_state(spec, state, normalized)
+
     def _plan_state(self, spec: Any, state: Mapping[str, Any], normalized: Mapping[str, Any]) -> dict[str, Any]:
         if spec.scope is None:
             return self._state(state)
@@ -966,15 +971,19 @@ class StateDomainProvider:
         state: Mapping[str, Any],
         *,
         changed: bool,
+        plan_state: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any]:
-        operation_state = self._state(state)
+        operation_state = self._state(state) if plan_state is None else dict(plan_state)
+        resource = {"kind": self.resource_kind, "id": self.resource_id}
+        if plan_state is not None:
+            resource = {"kind": "files.directory", "id": operation_state["resourceId"]}
         result = {
             "schemaVersion": "v0",
             "provider": self.provider_id,
             "providerVersion": "v0",
             "action": action,
             "capability": definition["capability"],
-            "resource": {"kind": self.resource_kind, "id": self.resource_id},
+            "resource": resource,
             "changed": changed,
             "changeState": "complete" if changed else "none",
             "stateRevision": operation_state["revision"],
