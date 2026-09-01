@@ -226,3 +226,24 @@ if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/Ui/WidgetButton.qml
   fail "reduced motion is not an invented Accessibility Settings surface"
 fi
 pass "Superbar, QS, NC, and calendar motion bind Semantics.duration"
+
+# Product windows are separate processes, so the RTL and pseudo-locale flags a
+# Start summon sets have to cross a process boundary or the design system stops
+# at shell chrome.
+grep -Fq 'presentation.json' "$ROOT/shell/shell.qml" \
+  || fail "shell publishes the summoned presentation flags for product windows"
+grep -Fq 'onSummonedRtlChanged: shell.publishPresentation()' "$ROOT/shell/shell.qml" \
+  || fail "shell republishes presentation when RTL is summoned"
+grep -Fq 'onSummonedPseudoLocaleChanged: shell.publishPresentation()' "$ROOT/shell/shell.qml" \
+  || fail "shell republishes presentation when the pseudo-locale is summoned"
+grep -Fq 'presentation.json' "$ROOT/shell/apps/shared/ProductAppHost.qml" \
+  || fail "product windows read the published presentation flags"
+grep -Fq 'rtl: root.presentationRtl' "$ROOT/shell/apps/shared/ProductAppHost.qml" \
+  || fail "product SemanticProfile takes RTL from the published flags"
+grep -Fq 'pseudoLocale: root.presentationPseudoLocale' "$ROOT/shell/apps/shared/ProductAppHost.qml" \
+  || fail "product SemanticProfile takes the pseudo-locale from the published flags"
+if grep -Eq 'profileId: "product"$' "$ROOT/shell/apps/shared/ProductAppHost.qml" && \
+   ! grep -Fq 'presentationPseudoLocale' "$ROOT/shell/apps/shared/ProductAppHost.qml"; then
+  fail "product profile must not stay pinned to a default locale"
+fi
+pass "Settings, Files, Agent Center, Software, and Compatibility share the summoned presentation"
