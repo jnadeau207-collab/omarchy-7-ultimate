@@ -706,6 +706,7 @@ class StateDomainProvider:
             prior_state,
             "priorState",
             recovery_action=action,
+            state_reference={"id": self.state_contract_id},
         )
         assert recovery_revision is not None
         snapshot = await self._available_snapshot(operation=True)
@@ -757,8 +758,9 @@ class StateDomainProvider:
         *,
         recovery_action: str | None = None,
         scoped: bool = False,
+        state_reference: Mapping[str, Any] | None = None,
     ) -> tuple[dict[str, Any], str | None]:
-        self._validate(definition["state"], supplied, label)
+        self._validate(state_reference or definition["state"], supplied, label)
         if not scoped and supplied["resourceId"] != self.resource_id:
             raise FabricError(
                 f"{self.domain}.resource-mismatch",
