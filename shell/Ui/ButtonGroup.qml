@@ -9,7 +9,7 @@ Row {
   property color foreground: Tokens.text.primary
   property color background: Tokens.surface.base
   property color accent: Tokens.accent.primary
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property real fontSize: Style.font.body
   property bool focusable: true
 

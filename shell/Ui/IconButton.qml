@@ -76,7 +76,7 @@ BorderSurface {
       textFormat: Text.PlainText
       text: Semantics.text(root.semanticProfile, root.tooltipText)
       color: Tokens.text.primary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
     }
   }
@@ -86,7 +86,7 @@ BorderSurface {
     anchors.centerIn: parent
     text: root.iconText
     color: root._fg
-    font.family: Style.font.family
+    font.family: Tokens.icons.family
     font.pixelSize: root.glyphSize
     anchors.verticalCenterOffset: -1
   }
