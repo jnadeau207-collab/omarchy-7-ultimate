@@ -30,6 +30,10 @@ product_app_usage() {
     command_name="omarchy-launch-administration"
     scheme="omarchy-administration"
     default_route="administration.overview"
+  elif [[ $application == "oobe" ]]; then
+    command_name="omarchy-launch-oobe"
+    scheme="omarchy-setup"
+    default_route="oobe.welcome"
   else
     printf 'Unknown standalone application: %s\n' "$application" >&2
     return 2
@@ -213,6 +217,11 @@ launch_product_app() {
     ipc_target="omarchy.administration"
     app_id="org.omarchy.Administration"
     unit_name="omarchy-ultimate-administration"
+  elif [[ $application == "oobe" ]]; then
+    entrypoint="$OMARCHY_PATH/shell/ultimate-oobe.qml"
+    ipc_target="omarchy.setup"
+    app_id="org.omarchy.Setup"
+    unit_name="omarchy-ultimate-oobe"
   else
     printf 'Unknown standalone application: %s\n' "$application" >&2
     return 2

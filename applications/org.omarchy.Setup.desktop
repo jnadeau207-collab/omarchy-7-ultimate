@@ -1,0 +1,21 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Set up this computer
+GenericName=Setup
+Comment=First-boot setup for this computer
+TryExec=omarchy-launch-oobe
+Exec=omarchy-launch-oobe --source desktop %u
+Icon=preferences-system
+Terminal=false
+Categories=System;Settings;
+Keywords=setup;oobe;first boot;welcome;migration;
+MimeType=x-scheme-handler/omarchy-setup;
+StartupNotify=true
+StartupWMClass=org.omarchy.Setup
+NoDisplay=true
+Actions=Welcome;
+
+[Desktop Action Welcome]
+Name=Start setup
+Exec=omarchy-launch-oobe --source desktop oobe.welcome
