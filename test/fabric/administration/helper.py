@@ -68,7 +68,7 @@ def resource_cases() -> list[Case]:
     service_resource = service.parse_services(runner_outputs()[str(service.SERVICE_COMMAND.argv)])[0]
     schedule_resource = schedule.parse_schedules(runner_outputs()[str(schedule.SCHEDULE_COMMAND.argv)])[0]
     return [
-        Case(process, process_resource, {"resourceId": process_resource["id"], "expectedStartToken": process_resource["state"]["startToken"], "signal": "term"}),
+        Case(process, process_resource, {"resourceId": process_resource["id"], "expectedStartDigest": process_resource["state"]["startDigest"], "signal": "term"}),
         Case(device, device_resource, {"resourceId": device_resource["id"], "authorized": False}),
         Case(storage, storage_resources[1], {"resourceId": storage_resources[1]["id"], "action": "eject", "filesystem": None, "confirmation": None}),
         Case(printer, printer_resource, {"resourceId": printer_resource["id"], "action": "pause"}),
