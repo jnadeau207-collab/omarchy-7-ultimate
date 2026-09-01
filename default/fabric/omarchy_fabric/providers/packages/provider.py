@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator, ValidationError
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.provider_registry import ProviderAvailability
 from omarchy_fabric.security.principal import EndpointPrincipal
+from omarchy_fabric.security.release_attestation import default_release_attestation
 
 from .adapters import SOURCE_TYPES
 from .catalog import PackageCatalog
@@ -20,6 +21,7 @@ from .engine import FakeExecutionAdapter, PackageOperationEngine, inventory_revi
 
 MAX_POLICY_BYTES = 128 * 1024
 PLAN_ONLY_DETAIL = "The code-owned Software Center catalog is a contract seed; reads and preflights are available, but live package mutation is not admitted."
+RELEASE_PLAN_ONLY_DETAIL = "The Software Center catalog is release-attested; reads and preflights are available, but live package mutation waits for the privileged system executor."
 
 def _manifest_path() -> Path:
     return Path(__file__).with_name("manifest-v0.json")
@@ -190,26 +192,34 @@ def _load_source_policy(path: Path, schema_path: Path) -> Mapping[str, Any]:
     return deepcopy(document)
 
 def build_provider() -> PackageProvider:
-    """Build the code-owned, contract-seed production provider without a live adapter."""
+    """Build the production provider from the installed catalog and attestation."""
 
     root = _default_root()
+    attestation = default_release_attestation(root)
     _load_source_policy(
         root / "ultimate" / "software" / "source-policy-v0.json",
         root / "fabric" / "schema" / "packages-source-policy-v0.json",
     )
-    catalog = PackageCatalog.load(root / "ultimate" / "software" / "catalog-v0.json")
-    if catalog.assurance != "contract-seed":
+    catalog = PackageCatalog.load(
+        root / "ultimate" / "software" / "catalog-v0.json",
+        verified_catalog_revisions=attestation.admitted_revisions("packages-catalog"),
+    )
+    if catalog.assurance == "contract-seed":
+        detail = PLAN_ONLY_DETAIL
+    elif catalog.assurance == "release-verified":
+        detail = RELEASE_PLAN_ONLY_DETAIL
+    else:
         raise FabricError(
             "packages.catalog-assurance-unavailable",
             "Software catalog assurance is unavailable",
-            "Production registration admits the checked-in catalog only as a contract seed until an external release revision is configured.",
+            "Production registration admits only contract-seed or release-attested catalogs.",
         )
     engine = PackageOperationEngine(catalog, [])
     return PackageProvider(
         catalog,
         engine,
         plan_only=True,
-        availability=ProviderAvailability("degraded", PLAN_ONLY_DETAIL),
+        availability=ProviderAvailability("degraded", detail),
     )
 
 def build_fake_provider(

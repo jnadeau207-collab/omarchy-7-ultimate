@@ -42,8 +42,16 @@ import pathlib
 import sys
 
 from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 
 root = pathlib.Path(sys.argv[1])
+common = json.loads((root / "default/fabric/schema/common-v0.json").read_text(encoding="utf-8"))
+common_registry = Registry().with_resources(
+    (
+        (common["$id"], Resource.from_contents(common)),
+        ("common-v0.json", Resource.from_contents(common)),
+    )
+)
 schema_paths = sorted((root / "default/fabric/schema").glob("packages-*.json")) + sorted((root / "default/fabric/schema").glob("compatibility-*.json"))
 assert len(schema_paths) >= 6
 for path in schema_paths:
@@ -73,10 +81,11 @@ for path in (
 policy_pairs = (
     (root / "default/fabric/schema/packages-source-policy-v0.json", root / "default/ultimate/software/source-policy-v0.json"),
     (root / "default/fabric/schema/compatibility-routing-policy-v0.json", root / "default/ultimate/compatibility/routing-policy-v0.json"),
+    (root / "default/fabric/schema/security-release-attestation-v0.json", root / "default/ultimate/release-attestation-v0.json"),
 )
 for schema_path, document_path in policy_pairs:
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     document = json.loads(document_path.read_text(encoding="utf-8"))
-    Draft202012Validator(schema).validate(document)
+    Draft202012Validator(schema, registry=common_registry).validate(document)
 PY
 pass "Software and compatibility schemas, manifests, catalog, and recipes are closed valid JSON documents"

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:schema:security-release-attestation-v0",
+  "title": "External release revision attestation",
+  "description": "Code-owned admission of exact catalog and recipe revisions. A product document cannot self-attest; its revision must appear here before it may claim release-verified.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "attestationId",
+    "admittedRevisions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "v0"
+    },
+    "attestationId": {
+      "$ref": "common-v0.json#/$defs/stableId"
+    },
+    "admittedRevisions": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/admittedRevision"
+      }
+    }
+  },
+  "$defs": {
+    "admittedRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "revision",
+        "documentId"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "packages-catalog",
+            "compatibility-recipes"
+          ]
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^sha256\\.[0-9a-f]{64}$"
+        },
+        "documentId": {
+          "$ref": "common-v0.json#/$defs/stableId"
+        }
+      }
+    }
+  }
+}
