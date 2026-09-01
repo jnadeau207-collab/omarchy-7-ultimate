@@ -715,9 +715,12 @@ class StateDomainProvider:
         if current == target:
             return self._result(definition, action, current, changed=False)
         current_revision = state_revision(current)
-        if current_revision != expected_revision or current_revision != recovery_revision:
+        scoped = self._operation(action).scope is not None
+        if current_revision != recovery_revision:
             raise stale_state(self.domain)
-        updated = await self._swap(expected_revision, target)
+        if not scoped and current_revision != expected_revision:
+            raise stale_state(self.domain)
+        updated = await self._swap(current_revision, target)
         assert updated.state is not None
         actual = self._state(thaw(updated.state))
         if actual != self._state(target):
