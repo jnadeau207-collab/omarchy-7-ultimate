@@ -133,7 +133,7 @@ Item {
               textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.title : "Software Center"
               color: Tokens.text.primary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.heading
               font.bold: true
               wrapMode: Text.WrapAnywhere
@@ -145,7 +145,7 @@ Item {
               textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.description : "The requested Software Center route is unavailable."
               color: Tokens.text.secondary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.body
               wrapMode: Text.WordWrap
               maximumLineCount: 4
@@ -210,7 +210,7 @@ Item {
                     textFormat: Text.PlainText
                     text: SoftwareModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
-                    font.family: Style.font.family
+                    font.family: Tokens.typography.family
                     font.pixelSize: Style.font.title
                     font.bold: true
                     wrapMode: Text.WordWrap
@@ -224,7 +224,7 @@ Item {
                   textFormat: Text.PlainText
                   text: SoftwareModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.body
                   wrapMode: Text.WordWrap
                   maximumLineCount: 8
@@ -236,7 +236,7 @@ Item {
                   visible: root.queryState.revision !== ""
                   text: "Revision " + root.queryState.revision + " \u00b7 assurance " + root.queryState.assurance + " \u00b7 generation " + root.queryState.providerGeneration + " \u00b7 " + root.queryState.totalRecords + " source record" + (root.queryState.totalRecords === 1 ? "" : "s")
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.WrapAnywhere
                   maximumLineCount: 4
@@ -286,7 +286,7 @@ Item {
                 anchors.margins: Style.space(10)
                 text: "Read-only packages v0 \u00b7 install, remove, adopt, and recover controls remain unavailable until the durable coordinator, executor, and release-attested catalogs are connected. This surface never invokes a package manager."
                 color: Tokens.text.secondary
-                font.family: Style.font.family
+                font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.WordWrap
               }

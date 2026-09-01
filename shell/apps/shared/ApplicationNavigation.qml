@@ -29,7 +29,7 @@ Rectangle {
       textFormat: Text.PlainText
       text: Semantics.text(root.semanticProfile, root.title)
       color: Tokens.text.primary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Style.font.title
       font.bold: true
       Layout.fillWidth: true
@@ -71,7 +71,7 @@ Rectangle {
           anchors.topMargin: parent.index === 0 ? 0 : Style.space(6)
           text: Semantics.text(root.semanticProfile, parent.modelData.section.toUpperCase())
           color: Tokens.text.disabled
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Style.font.caption
           font.bold: true
         }

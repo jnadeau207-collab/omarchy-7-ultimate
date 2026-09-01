@@ -178,7 +178,7 @@ Item {
               textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, root.currentRoute ? root.currentRoute.title : "Settings")
               color: Tokens.text.primary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.heading
               font.bold: true
               wrapMode: Text.WordWrap
@@ -193,7 +193,7 @@ Item {
                 ? root.hostedSpec.honesty
                 : (root.currentRoute ? root.currentRoute.description : "The requested route is unavailable.")
               color: Tokens.text.secondary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.body
               wrapMode: Text.WordWrap
               maximumLineCount: 4
@@ -255,7 +255,7 @@ Item {
                     textFormat: Text.PlainText
                     text: SettingsModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
-                    font.family: Style.font.family
+                    font.family: Tokens.typography.family
                     font.pixelSize: Style.font.title
                     font.bold: true
                     wrapMode: Text.WordWrap
@@ -281,7 +281,7 @@ Item {
                   textFormat: Text.PlainText
                   text: SettingsModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.body
                   wrapMode: Text.WordWrap
                   maximumLineCount: 7
@@ -303,7 +303,7 @@ Item {
                   visible: root.domainVisible
                   text: SettingsModel.provenance(root.queryState)
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.WrapAnywhere
                   maximumLineCount: 4
@@ -316,7 +316,7 @@ Item {
                   visible: root.queryState.selectedResourceId !== ""
                   text: "Exact resource: " + SettingsModel.clippedText(root.queryState.selectedResourceId, 180)
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.WrapAnywhere
                   maximumLineCount: 3
@@ -329,7 +329,7 @@ Item {
                   visible: root.queryState.error && root.queryState.error.detail
                   text: "Detail: " + SettingsModel.clippedText(root.queryState.error ? root.queryState.error.detail : "", 480)
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.WrapAnywhere
                   maximumLineCount: 4
@@ -346,7 +346,7 @@ Item {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "RECOVERY PATHS")
                     color: Tokens.state.warning
-                    font.family: Style.font.family
+                    font.family: Tokens.typography.family
                     font.pixelSize: Style.font.caption
                     font.bold: true
                     Layout.fillWidth: true
@@ -361,7 +361,7 @@ Item {
 
                       text: "\u2022 " + SettingsModel.clippedText(modelData, 320)
                       color: Tokens.text.secondary
-                      font.family: Style.font.family
+                      font.family: Tokens.typography.family
                       font.pixelSize: Style.font.bodySmall
                       wrapMode: Text.WrapAnywhere
                       maximumLineCount: 3
@@ -410,7 +410,7 @@ Item {
                         textFormat: Text.PlainText
                         text: modelData.title
                         color: Tokens.text.primary
-                        font.family: Style.font.family
+                        font.family: Tokens.typography.family
                         font.pixelSize: Style.font.title
                         font.bold: true
                         wrapMode: Text.WordWrap
@@ -430,7 +430,7 @@ Item {
                       textFormat: Text.PlainText
                       text: modelData.detail
                       color: Tokens.text.secondary
-                      font.family: Style.font.family
+                      font.family: Tokens.typography.family
                       font.pixelSize: Style.font.bodySmall
                       wrapMode: Text.WordWrap
                       maximumLineCount: 5
@@ -442,7 +442,7 @@ Item {
                       textFormat: Text.PlainText
                       text: modelData.providerId
                       color: Tokens.text.disabled
-                      font.family: Style.font.family
+                      font.family: Tokens.typography.family
                       font.pixelSize: Style.font.caption
                       wrapMode: Text.WrapAnywhere
                       maximumLineCount: 2
@@ -491,7 +491,7 @@ Item {
                   Text {
                     text: Semantics.text(root.productProfile, "Coverage")
                     color: Tokens.text.primary
-                    font.family: Style.font.family
+                    font.family: Tokens.typography.family
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -508,7 +508,7 @@ Item {
                   textFormat: Text.PlainText
                   text: root.queryState.query ? root.queryState.query.coverage : ""
                   color: Tokens.text.secondary
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.WordWrap
                   maximumLineCount: 6
@@ -522,7 +522,7 @@ Item {
                   text: "Declared provider operations: " + root.queryState.operationActions.join(", ") +
                     ". Settings exposes no preflight, approval, or execution control until the durable coordinator is integrated."
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.WrapAnywhere
                   maximumLineCount: 5
@@ -582,7 +582,7 @@ Item {
                 text: "Display bound reached at " + SettingsModel.MAX_VISIBLE_RECORDS + " records. " +
                   root.queryState.totalRecords + " records were reported; use an exact resource deep link for a narrower view."
                 color: Tokens.text.secondary
-                font.family: Style.font.family
+                font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.WordWrap
               }
@@ -592,7 +592,7 @@ Item {
               visible: !root.queryBusy
               text: Semantics.text(root.productProfile, "Read-only Fabric provider state \u00b7 no direct commands, mutation, preflight, approval, or execution authority")
               color: Tokens.text.disabled
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.caption
               horizontalAlignment: Text.AlignHCenter
               wrapMode: Text.WordWrap

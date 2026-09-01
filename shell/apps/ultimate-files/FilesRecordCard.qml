@@ -36,7 +36,7 @@ Rectangle {
           textFormat: Text.PlainText
           text: String(root.record.title || root.record.id || "Unnamed file record")
           color: Tokens.text.primary
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Style.font.title
           font.bold: true
           wrapMode: Text.WrapAnywhere
@@ -49,7 +49,7 @@ Rectangle {
           textFormat: Text.PlainText
           text: String(root.record.subtitle || root.record.kind || "File metadata")
           color: Tokens.text.secondary
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Style.font.bodySmall
           wrapMode: Text.WrapAnywhere
           maximumLineCount: 4
@@ -69,7 +69,7 @@ Rectangle {
       textFormat: Text.PlainText
       text: String(root.record.kind || "record") + " \u00b7 " + String(root.record.id || "")
       color: Tokens.text.disabled
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Style.font.caption
       wrapMode: Text.WrapAnywhere
       maximumLineCount: 3
@@ -105,7 +105,7 @@ Rectangle {
               textFormat: Text.PlainText
               text: modelData.label
               color: Tokens.text.disabled
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.caption
               font.bold: true
               wrapMode: Text.WordWrap
@@ -118,7 +118,7 @@ Rectangle {
               textFormat: Text.PlainText
               text: modelData.value
               color: Tokens.text.secondary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.bodySmall
               wrapMode: Text.WrapAnywhere
               maximumLineCount: 6

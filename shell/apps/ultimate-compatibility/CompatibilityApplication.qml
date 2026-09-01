@@ -167,7 +167,7 @@ Item {
               textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.title : "Compatibility Center"
               color: Tokens.text.primary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.heading
               font.bold: true
               wrapMode: Text.WrapAnywhere
@@ -179,7 +179,7 @@ Item {
               textFormat: Text.PlainText
               text: root.currentRoute ? root.currentRoute.description : "The requested Compatibility Center route is unavailable."
               color: Tokens.text.secondary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.body
               wrapMode: Text.WordWrap
               maximumLineCount: 4
@@ -224,7 +224,7 @@ Item {
                     textFormat: Text.PlainText
                     text: CompatibilityModel.stateTitle(root.queryState)
                     color: Tokens.text.primary
-                    font.family: Style.font.family
+                    font.family: Tokens.typography.family
                     font.pixelSize: Style.font.title
                     font.bold: true
                     wrapMode: Text.WordWrap
@@ -238,7 +238,7 @@ Item {
                   textFormat: Text.PlainText
                   text: CompatibilityModel.stateExplanation(root.queryState)
                   color: Tokens.text.secondary
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.body
                   wrapMode: Text.WordWrap
                   maximumLineCount: 9
@@ -250,7 +250,7 @@ Item {
                   visible: root.queryState.revision !== "" || root.queryState.providerGeneration > 0
                   text: (root.queryState.revision !== "" ? "Revision " + root.queryState.revision + " \u00b7 " : "") + "assurance " + root.queryState.assurance + " \u00b7 generation " + root.queryState.providerGeneration + " \u00b7 " + root.queryState.totalRecords + " source record" + (root.queryState.totalRecords === 1 ? "" : "s")
                   color: Tokens.text.disabled
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.WrapAnywhere
                   maximumLineCount: 4
@@ -280,7 +280,7 @@ Item {
                 Text {
                   text: "USER-DECLARED INPUT \u00b7 NOT HOST-MEASURED"
                   color: Tokens.state.warning
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   font.bold: true
                   Layout.fillWidth: true
@@ -288,7 +288,7 @@ Item {
                 Text {
                   text: "Every field is sent only to compatibility.provider route.decide. The result is a read-only decision, not a deployment plan or execution request."
                   color: Tokens.text.secondary
-                  font.family: Style.font.family
+                  font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.WordWrap
                   Layout.fillWidth: true
@@ -302,12 +302,12 @@ Item {
 
                   ColumnLayout {
                     Layout.fillWidth: true
-                    Text { text: "Workload identity"; color: Tokens.text.disabled; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.bold: true }
+                    Text { text: "Workload identity"; color: Tokens.text.disabled; font.family: Tokens.typography.family; font.pixelSize: Style.font.caption; font.bold: true }
                     Ui.TextField { id: workloadId; Layout.fillWidth: true; semanticPlaceholderText: "workload.example"; accessibleName: "Stable workload identity"; maximumLength: 160; onTextEdited: root.decisionTouched = true }
                   }
                   ColumnLayout {
                     Layout.fillWidth: true
-                    Text { text: "Display name"; color: Tokens.text.disabled; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.bold: true }
+                    Text { text: "Display name"; color: Tokens.text.disabled; font.family: Tokens.typography.family; font.pixelSize: Style.font.caption; font.bold: true }
                     Ui.TextField { id: workloadName; Layout.fillWidth: true; semanticPlaceholderText: "Application name"; accessibleName: "Workload display name"; maximumLength: 160; onTextEdited: root.decisionTouched = true }
                   }
                   Ui.Dropdown { id: workloadType; Layout.fillWidth: true; label: "Workload type"; value: "desktop"; options: ["desktop", "web", "windows-game", "windows-app", "portable"]; onChanged: root.decisionTouched = true }
@@ -315,24 +315,24 @@ Item {
                   Ui.Dropdown { id: artifactKind; Layout.fillWidth: true; label: "Artifact kind"; value: "none"; options: ["none", "native-package", "web-url", "windows-executable", "portable"]; onChanged: root.decisionTouched = true }
                   ColumnLayout {
                     Layout.fillWidth: true
-                    Text { text: "HTTPS artifact origin"; color: Tokens.text.disabled; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.bold: true }
+                    Text { text: "HTTPS artifact origin"; color: Tokens.text.disabled; font.family: Tokens.typography.family; font.pixelSize: Style.font.caption; font.bold: true }
                     Ui.TextField { id: artifactOrigin; Layout.fillWidth: true; semanticPlaceholderText: "https://example.invalid/artifact"; accessibleName: "HTTPS artifact origin"; maximumLength: 500; enabled: artifactKind.value !== "none"; onTextEdited: root.decisionTouched = true }
                   }
                   ColumnLayout {
                     Layout.fillWidth: true
-                    Text { text: "Pinned artifact digest"; color: Tokens.text.disabled; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.bold: true }
+                    Text { text: "Pinned artifact digest"; color: Tokens.text.disabled; font.family: Tokens.typography.family; font.pixelSize: Style.font.caption; font.bold: true }
                     Ui.TextField { id: artifactDigest; Layout.fillWidth: true; semanticPlaceholderText: "sha256:64 lowercase hex characters"; accessibleName: "Pinned artifact digest"; maximumLength: 71; enabled: artifactKind.value !== "none"; onTextEdited: root.decisionTouched = true }
                   }
                   ColumnLayout {
                     Layout.fillWidth: true
-                    Text { text: "Permissions (comma-separated)"; color: Tokens.text.disabled; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.bold: true }
+                    Text { text: "Permissions (comma-separated)"; color: Tokens.text.disabled; font.family: Tokens.typography.family; font.pixelSize: Style.font.caption; font.bold: true }
                     Ui.TextField { id: permissionList; Layout.fillWidth: true; semanticPlaceholderText: "network, audio"; accessibleName: "Requested permissions"; maximumLength: 300; onTextEdited: root.decisionTouched = true }
                   }
                   Ui.Dropdown { id: antiCheat; Layout.fillWidth: true; label: "Anti-cheat"; value: "none"; options: ["none", "supported", "blocked", "unknown"]; onChanged: root.decisionTouched = true }
                   Ui.Dropdown { id: hostArchitecture; Layout.fillWidth: true; label: "Declared host architecture"; value: "x86_64"; options: ["x86_64", "aarch64"]; onChanged: root.decisionTouched = true }
                   ColumnLayout {
                     Layout.fillWidth: true
-                    Text { text: "Available runtimes (comma-separated)"; color: Tokens.text.disabled; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.bold: true }
+                    Text { text: "Available runtimes (comma-separated)"; color: Tokens.text.disabled; font.family: Tokens.typography.family; font.pixelSize: Style.font.caption; font.bold: true }
                     Ui.TextField { id: runtimeList; Layout.fillWidth: true; semanticPlaceholderText: "native, browser"; accessibleName: "Declared available runtimes"; maximumLength: 100; onTextEdited: root.decisionTouched = true }
                   }
                   RowLayout {
@@ -410,7 +410,7 @@ Item {
                 anchors.margins: Style.space(10)
                 text: "Read-only compatibility v0 \u00b7 deploy, remove, export, recipe execution, VM provisioning, and host mutation controls remain unavailable until coordinator, executor, measured-host, and release-attestation integration is complete."
                 color: Tokens.text.secondary
-                font.family: Style.font.family
+                font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.WordWrap
               }

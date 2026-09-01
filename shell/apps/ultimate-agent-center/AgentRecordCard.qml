@@ -54,7 +54,7 @@ Rectangle {
           textFormat: Text.PlainText
           text: root.presentation.title
           color: Tokens.text.primary
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Style.font.title
           font.bold: true
           wrapMode: Text.WrapAnywhere
@@ -68,7 +68,7 @@ Rectangle {
           visible: root.presentation.subtitle !== ""
           text: root.presentation.subtitle
           color: Tokens.text.disabled
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Style.font.bodySmall
           wrapMode: Text.WrapAnywhere
           maximumLineCount: 3
@@ -108,7 +108,7 @@ Rectangle {
       visible: root.presentation.body !== ""
       text: root.presentation.body
       color: Tokens.text.secondary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Style.font.bodySmall
       wrapMode: Text.WrapAnywhere
       maximumLineCount: 6
@@ -144,7 +144,7 @@ Rectangle {
               textFormat: Text.PlainText
               text: modelData.label
               color: Tokens.text.disabled
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.caption
               font.bold: true
               wrapMode: Text.WordWrap
@@ -157,7 +157,7 @@ Rectangle {
               textFormat: Text.PlainText
               text: modelData.value
               color: Tokens.text.secondary
-              font.family: Style.font.family
+              font.family: Tokens.typography.family
               font.pixelSize: Style.font.bodySmall
               wrapMode: Text.WrapAnywhere
               maximumLineCount: 5
@@ -190,7 +190,7 @@ Rectangle {
           textFormat: Text.PlainText
           text: Semantics.text(root.semanticProfile, "RECOVERY STATUS")
           color: Tokens.state.warning
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Style.font.caption
           font.bold: true
           Layout.fillWidth: true
@@ -205,7 +205,7 @@ Rectangle {
 
             text: "\u2022 " + AgentCenterModel.clippedText(modelData, 320)
             color: Tokens.text.secondary
-            font.family: Style.font.family
+            font.family: Tokens.typography.family
             font.pixelSize: Style.font.bodySmall
             wrapMode: Text.WrapAnywhere
             maximumLineCount: 4
