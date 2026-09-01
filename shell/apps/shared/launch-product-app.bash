@@ -26,6 +26,10 @@ product_app_usage() {
     command_name="omarchy-launch-compatibility"
     scheme="omarchy-compatibility"
     default_route="compatibility.overview"
+  elif [[ $application == "administration" ]]; then
+    command_name="omarchy-launch-administration"
+    scheme="omarchy-administration"
+    default_route="administration.overview"
   else
     printf 'Unknown standalone application: %s\n' "$application" >&2
     return 2
@@ -204,6 +208,11 @@ launch_product_app() {
     ipc_target="omarchy.compatibility"
     app_id="org.omarchy.Compatibility"
     unit_name="omarchy-ultimate-compatibility"
+  elif [[ $application == "administration" ]]; then
+    entrypoint="$OMARCHY_PATH/shell/ultimate-administration.qml"
+    ipc_target="omarchy.administration"
+    app_id="org.omarchy.Administration"
+    unit_name="omarchy-ultimate-administration"
   else
     printf 'Unknown standalone application: %s\n' "$application" >&2
     return 2
