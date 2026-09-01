@@ -32,6 +32,15 @@ if grep -Fq 'switchxkblayout' "$application"; then
 fi
 pass "Settings drives keyboard-layout.set through the typed operation plane only"
 
+grep -Fq 'provider: "network.provider"' "$application" || fail "Settings switches the radio through network.provider"
+grep -Fq 'action: "wifi.set-enabled"' "$application" || fail "Settings uses the typed wifi.set-enabled action"
+grep -Fq 'if (enabled && record.radioBlocked) return' "$application" ||
+  fail "Settings refuses to enable a radio the hardware is holding off"
+if grep -Eq 'nmcli|rfkill' "$application"; then
+  fail "Settings assembles a network shell string instead of the typed verb"
+fi
+pass "Settings drives wifi.set-enabled through the typed operation plane only"
+
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-settings/SettingsModel.js')
 
@@ -83,6 +92,29 @@ assertEqual(displayRecord({ available: false, percent: 40 }).brightnessAvailable
 assertEqual(displayRecord({ available: true, percent: 900 }).brightnessAvailable, false, 'an out-of-range percent is refused')
 assertEqual(displayRecord({ available: true, percent: '40' }).brightnessAvailable, false, 'a non-numeric percent is refused')
 assertEqual(displayRecord({}).brightnessPercent, -1, 'a host reporting no brightness claims none')
+
+function radioRecord(state) {
+  return Model.normalizeLeafResource({ id: 'network.radio.wifi', label: 'Wi-Fi', kind: 'radio', state: state }, 0)
+}
+
+const radioOn = radioRecord({ managerRunning: true, hardwareEnabled: true, enabled: true })
+assertEqual(radioOn.radioControllable, true, 'a running manager exposes a controllable radio')
+assertEqual(radioOn.radioEnabled, true, 'the radio state survives as a structured value')
+assertEqual(radioOn.radioBlocked, false, 'an unblocked radio is not reported as blocked')
+
+const blocked = radioRecord({ managerRunning: true, hardwareEnabled: false, enabled: false })
+assertEqual(blocked.radioBlocked, true, 'a hardware-blocked radio is reported as blocked')
+
+const managerDown = radioRecord({ managerRunning: false, hardwareEnabled: true, enabled: true })
+assertEqual(managerDown.radioControllable, false, 'a stopped network manager offers no control')
+assertEqual(managerDown.radioEnabled, false, 'a stopped manager never claims the radio is on')
+
+assertEqual(radioRecord({}).radioControllable, false, 'an interface record is not mistaken for the radio')
+assertEqual(radioRecord({ managerRunning: true, hardwareEnabled: true, enabled: 'yes' }).radioControllable, false, 'a non-boolean radio state is refused')
+
+const networkQuery = Model.queryForRoute('settings.network.overview')
+assert(networkQuery.coverage.indexOf('wifi.set-enabled') >= 0, 'the network coverage note names the settable verb')
+assert(networkQuery.coverage.indexOf('Joining a network and per-connection changes remain unavailable') >= 0, 'the network coverage note still refuses what Settings cannot do')
 
 function keyboardRecord(state) {
   return Model.normalizeLeafResource({ id: 'input.keyboard.abc', label: 'Internal keyboard', kind: 'keyboard', main: true, state: state }, 0)
