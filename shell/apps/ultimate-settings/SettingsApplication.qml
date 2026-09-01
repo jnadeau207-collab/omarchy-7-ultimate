@@ -253,7 +253,7 @@ Item {
 
                   Text {
                     textFormat: Text.PlainText
-                    text: SettingsModel.stateTitle(root.queryState)
+                    text: Semantics.text(root.productProfile, SettingsModel.stateTitle(root.queryState))
                     color: Tokens.text.primary
                     font.family: Tokens.typography.family
                     font.pixelSize: Style.font.title
@@ -279,7 +279,7 @@ Item {
 
                 Text {
                   textFormat: Text.PlainText
-                  text: SettingsModel.stateExplanation(root.queryState)
+                  text: Semantics.text(root.productProfile, SettingsModel.stateExplanation(root.queryState))
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.body
@@ -327,7 +327,7 @@ Item {
                 Text {
                   textFormat: Text.PlainText
                   visible: root.queryState.error && root.queryState.error.detail
-                  text: "Detail: " + SettingsModel.clippedText(root.queryState.error ? root.queryState.error.detail : "", 480)
+                  text: Semantics.text(root.productProfile, "Detail") + ": " + SettingsModel.clippedText(root.queryState.error ? root.queryState.error.detail : "", 480)
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
@@ -408,7 +408,7 @@ Item {
 
                       Text {
                         textFormat: Text.PlainText
-                        text: modelData.title
+                        text: Semantics.text(root.productProfile, modelData.title)
                         color: Tokens.text.primary
                         font.family: Tokens.typography.family
                         font.pixelSize: Style.font.title
@@ -428,7 +428,7 @@ Item {
 
                     Text {
                       textFormat: Text.PlainText
-                      text: modelData.detail
+                      text: Semantics.text(root.productProfile, modelData.detail)
                       color: Tokens.text.secondary
                       font.family: Tokens.typography.family
                       font.pixelSize: Style.font.bodySmall
@@ -451,7 +451,7 @@ Item {
                     }
 
                     Ui.Button {
-                      text: "Open " + modelData.title
+                      text: Semantics.text(root.productProfile, "Open") + " " + Semantics.text(root.productProfile, modelData.title)
                       tooltipText: "Open the read-only " + modelData.title + " Settings route"
                       semanticProfile: root.productProfile
                       accessibleDescription: modelData.status + ". " + modelData.detail
@@ -506,7 +506,7 @@ Item {
 
                 Text {
                   textFormat: Text.PlainText
-                  text: root.queryState.query ? root.queryState.query.coverage : ""
+                  text: root.queryState.query ? Semantics.text(root.productProfile, root.queryState.query.coverage) : ""
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
@@ -519,8 +519,9 @@ Item {
                 Text {
                   textFormat: Text.PlainText
                   visible: root.queryState.operationActions.length > 0
-                  text: "Declared provider operations: " + root.queryState.operationActions.join(", ") +
-                    ". Settings exposes no preflight, approval, or execution control until the durable coordinator is integrated."
+                  text: Semantics.text(root.productProfile, "Declared provider operations") + ": " +
+                    root.queryState.operationActions.join(", ") + ". " +
+                    Semantics.text(root.productProfile, "Settings exposes no preflight, approval, or execution control until the durable coordinator is integrated.")
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption

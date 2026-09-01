@@ -250,3 +250,17 @@ pass "Settings, Files, Agent Center, Software, and Compatibility share the summo
 grep -Fq 'onTriggered: shell.publishPresentation()' "$ROOT/shell/shell.qml" \
   || fail "shell start republishes presentation so a stale file cannot outlive its session"
 pass "summoned presentation does not survive the session that set it"
+
+# The pseudo-locale only proves coverage if authored copy actually routes
+# through Semantics.text. Machine provenance must stay untranslated.
+settings_app="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
+grep -Fq 'Semantics.text(root.productProfile, SettingsModel.stateTitle(root.queryState))' "$settings_app" \
+  || fail "Settings read-state title routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, SettingsModel.stateExplanation(root.queryState))' "$settings_app" \
+  || fail "Settings read-state explanation routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, root.queryState.query.coverage)' "$settings_app" \
+  || fail "Settings coverage copy routes through Semantics.text"
+if grep -Fq 'Semantics.text(root.productProfile, SettingsModel.provenance(root.queryState))' "$settings_app"; then
+  fail "provider provenance is machine data and must not be pseudo-localized"
+fi
+pass "Settings authored copy localizes and machine provenance does not"
