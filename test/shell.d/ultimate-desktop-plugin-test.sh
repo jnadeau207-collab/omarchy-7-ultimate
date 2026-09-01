@@ -562,8 +562,22 @@ grep -Fq 'Tokens.chrome.' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
 if grep -Eq 'chrome-tokens[-a-z]*\.json' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml"; then
   fail "Superbar must not read a chrome palette file directly"
 fi
-grep -Fq 'chrome-tokens-light.json' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
-  || fail "Superbar glass reads chrome-tokens-light.json for a light theme"
+python3 - "$ROOT" <<'LIGHT' || fail "the light chrome projection is a light palette, not a copy of dark"
+import json, sys
+from pathlib import Path
+root = Path(sys.argv[1], "default/ultimate")
+dark = json.loads((root / "chrome-tokens.json").read_text(encoding="utf-8"))
+light = json.loads((root / "chrome-tokens-light.json").read_text(encoding="utf-8"))
+keys = ("glassRed", "glassGreen", "glassBlue")
+dark_level = sum(int(dark[k]) for k in keys) / 3
+light_level = sum(int(light[k]) for k in keys) / 3
+if light_level <= dark_level:
+    raise SystemExit(f"light glass {light_level} is not lighter than dark {dark_level}")
+if light_level < 160:
+    raise SystemExit(f"light glass {light_level} is not a light surface")
+if light["hyprbarsTextHex"] == dark["hyprbarsTextHex"]:
+    raise SystemExit("light caption text repeats the dark value")
+LIGHT
 grep -Fq 'function applyChromeTokens' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar applies chrome tokens after FileView loads"
 hlcfg=$(grep -F -c 'hl.config({' "$ROOT/default/hypr/desktop-windows.lua" || true)
