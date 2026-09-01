@@ -633,6 +633,15 @@ class FabricDaemon:
             )
         return value
 
+    def _operation_pid(self, value: Any) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or not 2 <= value <= 4194304:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The requested process id is outside its bound.",
+            )
+        return value
+
     def _operation_profile(self, value: Any) -> str:
         if not isinstance(value, str) or not 1 <= len(value) <= 64:
             raise FabricError(
@@ -643,6 +652,8 @@ class FabricDaemon:
         return value
 
     async def _operation_state(self, resource_id: str) -> Mapping[str, Any]:
+        if resource_id.startswith("process.termination."):
+            return await self._process_termination_state(resource_id)
         if resource_id.startswith("files.directory."):
             return await self._files_directory_state(resource_id)
         if resource_id.startswith("files.workspace."):
@@ -667,6 +678,24 @@ class FabricDaemon:
             "Fabric operation resource is unavailable",
             "The named resource is not present in the current inventory.",
         )
+
+    async def _process_termination_state(self, resource_id: str) -> Mapping[str, Any]:
+        from .providers.process.provider import termination_resource_id
+
+        result = await self.typed_providers.read("process.provider", "inspect", {})
+        payload = result.get("value") if isinstance(result.get("value"), Mapping) else result
+        present = False
+        for resource in payload.get("resources", ()):
+            candidate = resource.get("id")
+            if isinstance(candidate, str) and termination_resource_id(candidate) == resource_id:
+                present = True
+                break
+        value = {"present": present}
+        return {
+            "resourceId": resource_id,
+            "revision": state_revision(value),
+            "value": value,
+        }
 
     async def _files_directory_state(self, resource_id: str) -> Mapping[str, Any]:
         import hashlib
@@ -751,6 +780,11 @@ class FabricDaemon:
                         required={"resourceId": stable_token, "percent": self._operation_percent},
                     ),
                     IntentDefinition(
+                        "process.termination",
+                        FixedArgvCommand(str(helper), ("process-terminate",)),
+                        required={"resourceId": stable_token, "pid": self._operation_pid},
+                    ),
+                    IntentDefinition(
                         "power.profile.set",
                         FixedArgvCommand(str(helper), ("power-profile-set",)),
                         required={"resourceId": stable_token, "profile": self._operation_profile},
@@ -775,6 +809,15 @@ class FabricDaemon:
                     lambda preflight: {
                         "resourceId": preflight["resource"]["id"],
                         "percent": preflight["normalizedArguments"]["percent"],
+                    },
+                ),
+                OperationDefinition(
+                    "process.provider",
+                    "termination.plan",
+                    "process.termination",
+                    lambda preflight: {
+                        "resourceId": preflight["resource"]["id"],
+                        "pid": int(preflight["normalizedArguments"]["resourceId"].split(".")[1]),
                     },
                 ),
                 OperationDefinition(

@@ -29,7 +29,7 @@ from omarchy_fabric.providers.power import provider as power
 from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
 FIXTURES = Path(__file__).with_name("fixtures")
-SESSION_OPERABLE_DOMAINS = frozenset({"audio"})
+SESSION_OPERABLE_DOMAINS = frozenset({"audio", "process"})
 
 MODULES = (display, audio, network, bluetooth, input_provider, power)
 
