@@ -615,7 +615,42 @@ class FabricDaemon:
             )
         return value
 
+    def _operation_relative(self, value: Any) -> str:
+        if not isinstance(value, str) or len(value) > 512:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The parent relative path is outside its bound.",
+            )
+        return value
+
+    def _operation_name(self, value: Any) -> str:
+        if not isinstance(value, str) or not 1 <= len(value) <= 128 or value != value.strip():
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The directory name is outside its bound.",
+            )
+        return value
+
     async def _operation_state(self, resource_id: str) -> Mapping[str, Any]:
+        if resource_id.startswith("files.workspace."):
+            return await self._files_state(resource_id)
+        return await self._audio_state(resource_id)
+
+    async def _files_state(self, resource_id: str) -> Mapping[str, Any]:
+        result = await self.typed_providers.read("files.provider", "inspect", {})
+        payload = result.get("value") if isinstance(result.get("value"), Mapping) else result
+        value = payload.get("state")
+        if not isinstance(value, Mapping):
+            raise FabricError(
+                "operation.resource-unavailable",
+                "Fabric operation resource is unavailable",
+                "The files workspace state is not present in the current inventory.",
+            )
+        return {"resourceId": resource_id, "revision": state_revision(value), "value": value}
+
+    async def _audio_state(self, resource_id: str) -> Mapping[str, Any]:
         result = await self.typed_providers.read("audio.provider", "inspect", {})
         payload = result.get("value") if isinstance(result.get("value"), Mapping) else result
         for resource in payload.get("resources", ()):
@@ -646,6 +681,16 @@ class FabricDaemon:
                         FixedArgvCommand(str(helper), ()),
                         required={"resourceId": stable_token, "percent": self._operation_percent},
                     ),
+                    IntentDefinition(
+                        "files.directory.create",
+                        FixedArgvCommand(str(helper), ("files-directory-create",)),
+                        required={
+                            "resourceId": stable_token,
+                            "locationId": stable_token,
+                            "parentRelativePath": self._operation_relative,
+                            "name": self._operation_name,
+                        },
+                    ),
                 )
             )
             definitions = (
@@ -656,6 +701,17 @@ class FabricDaemon:
                     lambda preflight: {
                         "resourceId": preflight["resource"]["id"],
                         "percent": preflight["normalizedArguments"]["percent"],
+                    },
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "directory.create",
+                    "files.directory.create",
+                    lambda preflight: {
+                        "resourceId": preflight["resource"]["id"],
+                        "locationId": preflight["normalizedArguments"]["locationId"],
+                        "parentRelativePath": preflight["normalizedArguments"]["parentRelativePath"],
+                        "name": preflight["normalizedArguments"]["name"],
                     },
                 ),
             )
