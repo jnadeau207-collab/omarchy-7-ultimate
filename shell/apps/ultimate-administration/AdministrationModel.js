@@ -45,6 +45,15 @@ var ROUTE_QUERIES = [
     coverage: "Disks, partitions, and mounts are readable from storage.inspect. Format, mount, and eject remain unavailable."
   },
   {
+    routeId: "administration.printers.overview",
+    title: "Printers and scanners",
+    providerId: "printer.provider",
+    action: "inspect",
+    capability: "printer.inspect",
+    supportsResource: true,
+    coverage: "Printer and queue inventory is readable from printer.inspect. Adding a printer and cancelling a job remain unavailable."
+  },
+  {
     routeId: "administration.backup.overview",
     title: "Backup",
     providerId: "backup.provider",
@@ -63,6 +72,15 @@ var ROUTE_QUERIES = [
     coverage: "Timer and scheduled job inventory is readable from schedule.inspect. Creating and disabling a task remains unavailable."
   },
   {
+    routeId: "administration.troubleshoot.overview",
+    title: "Troubleshooting",
+    providerId: "diagnostics.provider",
+    action: "inspect",
+    capability: "diagnostics.inspect",
+    supportsResource: true,
+    coverage: "Diagnostic probes are readable from diagnostics.inspect. Running a guided repair remains unavailable."
+  },
+  {
     routeId: "administration.firewall.overview",
     title: "Firewall",
     providerId: "firewall.provider",
@@ -72,15 +90,6 @@ var ROUTE_QUERIES = [
     coverage: "Firewall state and rules are readable from firewall.inspect. Rule changes remain unavailable."
   },
   {
-    routeId: "administration.printers.overview",
-    title: "Printers and scanners",
-    providerId: "printer.provider",
-    action: "inspect",
-    capability: "printer.inspect",
-    supportsResource: true,
-    coverage: "Printer and queue inventory is readable from printer.inspect. Adding a printer and cancelling a job remain unavailable."
-  },
-  {
     routeId: "administration.accounts.overview",
     title: "User accounts",
     providerId: "account.provider",
@@ -88,17 +97,7 @@ var ROUTE_QUERIES = [
     capability: "account.inspect",
     supportsResource: true,
     coverage: "Local account and group inventory is readable from account.inspect. Creating accounts and changing passwords remain unavailable."
-  },
-  {
-    routeId: "administration.troubleshoot.overview",
-    title: "Troubleshooting",
-    providerId: "diagnostics.provider",
-    action: "inspect",
-    capability: "diagnostics.inspect",
-    supportsResource: true,
-    coverage: "Diagnostic probes are readable from diagnostics.inspect. Running a guided repair remains unavailable."
-  }
-]
+  }]
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)
