@@ -628,13 +628,12 @@ class StateDomainProvider:
         snapshot = await self._available_snapshot(operation=True)
         assert snapshot.state is not None
         current = thaw(snapshot.state)
-        current_revision = state_revision(current)
-        if current_revision != expected_revision:
+        if self._plan_state(spec, current, normalized)["revision"] != expected_revision:
             raise stale_state(self.domain)
         proposed = self._proposed(spec, current, normalized)
         if current == proposed:
             return self._result(definition, action, current, changed=False)
-        updated = await self._swap(expected_revision, proposed)
+        updated = await self._swap(state_revision(current), proposed)
         assert updated.state is not None
         actual = thaw(updated.state)
         if actual != proposed:
@@ -672,8 +671,12 @@ class StateDomainProvider:
         )
         snapshot = await self._available_snapshot(operation=False)
         assert snapshot.state is not None
-        actual = self._state(thaw(snapshot.state))
-        if actual != self._state(expected_value):
+        actual = self._plan_state(spec, thaw(snapshot.state), self._normalized(definition, spec, normalized_arguments))
+        if spec.scope is None:
+            expected_document = self._state(expected_value)
+        else:
+            expected_document = self._scoped_state(actual["resourceId"], expected_value)
+        if actual != expected_document:
             raise FabricError(
                 f"{self.domain}.validation-failed",
                 f"{self.domain.title()} operation state drifted",
@@ -933,6 +936,12 @@ class StateDomainProvider:
                 recovery_actions=(f"{self.domain}.reconcile",),
             ) from error
         return StateSnapshot("available", True, freeze(thaw(snapshot.state)))
+
+    def _plan_state(self, spec: Any, state: Mapping[str, Any], normalized: Mapping[str, Any]) -> dict[str, Any]:
+        if spec.scope is None:
+            return self._state(state)
+        scoped = spec.scope(state, normalized)
+        return self._scoped_state(scoped["id"], scoped["value"])
 
     def _scoped_state(self, resource_id: str, value: Mapping[str, Any]) -> dict[str, Any]:
         normalized = thaw(value)
