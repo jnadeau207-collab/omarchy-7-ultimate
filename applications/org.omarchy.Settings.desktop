@@ -13,7 +13,7 @@ Keywords=settings;display;sound;network;bluetooth;input;power;apps;defaults;acce
 MimeType=x-scheme-handler/omarchy-settings;
 StartupNotify=true
 StartupWMClass=org.omarchy.Settings
-Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;
+Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;
 
 [Desktop Action Home]
 Name=Settings home
@@ -59,10 +59,3 @@ Exec=omarchy-launch-settings --source desktop settings.update.overview
 Name=Recovery
 Exec=omarchy-launch-settings --source desktop settings.recovery.overview
 
-[Desktop Action Accessibility]
-Name=Accessibility
-Exec=omarchy-launch-settings --source desktop settings.accessibility.overview
-
-[Desktop Action System]
-Name=System information
-Exec=omarchy-launch-settings --source desktop settings.system.overview

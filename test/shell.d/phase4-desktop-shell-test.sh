@@ -628,7 +628,7 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
 grep -Fq 'Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Search;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
   || fail "published Files launcher keeps Home plus This PC, Desktop, Documents, Downloads, Pictures, Recent, Trash, and Search"
-grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;Accessibility;System;' \
+grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
   || fail "published Settings launcher keeps Settings home plus inspect pages and the honest missing Accessibility and System actions"
 grep -Fq 'Actions=Overview;Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
