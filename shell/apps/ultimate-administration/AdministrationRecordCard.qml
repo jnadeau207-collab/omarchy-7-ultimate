@@ -10,6 +10,10 @@ Rectangle {
 
   required property var record
   property bool selected: false
+  property bool endTaskEnabled: false
+  property bool endTaskBusy: false
+
+  signal endTaskRequested(var record)
 
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Style.space(28)
@@ -133,6 +137,20 @@ Rectangle {
             }
           }
         }
+      }
+    }
+
+    RowLayout {
+      visible: root.endTaskEnabled
+      Layout.fillWidth: true
+      spacing: Style.space(8)
+
+      Item { Layout.fillWidth: true }
+
+      Ui.Button {
+        text: root.endTaskBusy ? "Ending task" : "End task"
+        enabled: !root.endTaskBusy
+        onClicked: root.endTaskRequested(root.record)
       }
     }
   }
