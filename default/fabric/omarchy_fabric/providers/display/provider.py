@@ -209,7 +209,7 @@ def _manifest() -> Mapping[str, Any]:
     return load_frozen_json(Path(__file__).with_name("manifest-v0.json"))
 
 def build_provider(*, runner: ProbeRunner = run_probe) -> LeafProvider:
-    return LeafProvider(SPEC, _manifest(), SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner)))
+    return LeafProvider(SPEC, _manifest(), SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner), session_operable=True))
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

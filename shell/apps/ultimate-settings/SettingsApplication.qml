@@ -46,6 +46,35 @@ Item {
   readonly property var powerProfiles: powerResource && powerResource.profiles ? powerResource.profiles : []
   readonly property string activePowerProfile: powerResource ? String(powerResource.activeProfile || "") : ""
 
+  readonly property var brightnessResource: firstBrightnessResource()
+  readonly property int brightnessPercent: brightnessResource ? brightnessResource.brightnessPercent : -1
+
+  function firstBrightnessResource() {
+    if (!currentRoute || currentRoute.id !== "settings.display.overview") return null
+    if (!queryState.records) return null
+    for (var i = 0; i < queryState.records.length; i++) {
+      if (queryState.records[i].brightnessAvailable) return queryState.records[i]
+    }
+    return null
+  }
+
+  function applyBrightness(percent) {
+    if (!host || operationBusy) return
+    var record = firstBrightnessResource()
+    if (!record) return
+    root.operationKind = "display"
+    root.operationTarget = Math.max(0, Math.min(100, Math.round(percent)))
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "display.provider",
+      action: "brightness.set",
+      arguments: { resourceId: record.id, percent: root.operationTarget },
+      idempotencyKey: "settings.brightness." + record.id + "." + root.operationTarget + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
+  }
+
   function firstPowerResource() {
     if (!currentRoute || currentRoute.id !== "settings.power.overview") return null
     if (!queryState.records || queryState.records.length === 0) return null
@@ -138,10 +167,14 @@ Item {
       var succeeded = String(result.status || "") === "succeeded"
       var applied = root.operationKind === "power"
         ? "Power profile set to " + root.profileLabel(root.operationProfile) + "."
-        : "Output volume set to " + root.operationTarget + " percent."
+        : root.operationKind === "display"
+          ? "Brightness set to " + root.operationTarget + " percent."
+          : "Output volume set to " + root.operationTarget + " percent."
       var refused = root.operationKind === "power"
         ? "The power profile change ended as " + String(result.status || "unknown") + "."
-        : "The volume change ended as " + String(result.status || "unknown") + "."
+        : root.operationKind === "display"
+          ? "The brightness change ended as " + String(result.status || "unknown") + "."
+          : "The volume change ended as " + String(result.status || "unknown") + "."
       root.resetOperation(succeeded ? applied : refused)
       if (root.controller) root.controller.refresh()
     }
@@ -645,6 +678,70 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
+
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.display.overview" && root.brightnessResource !== null
+              Layout.fillWidth: true
+              implicitHeight: brightnessColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: "Display brightness"
+
+              ColumnLayout {
+                id: brightnessColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    text: Semantics.text(root.productProfile,
+                      root.brightnessResource ? "Brightness — " + root.brightnessResource.label : "Brightness")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: root.operationBusy && root.operationKind === "display" ? "APPLYING" : "LIVE CONTROL"
+                    tone: root.operationBusy && root.operationKind === "display" ? "info" : "success"
+                  }
+                }
+
+                Ui.PanelSlider {
+                  id: brightnessSlider
+                  Layout.fillWidth: true
+                  minimum: 0
+                  maximum: 100
+                  value: root.operationBusy && root.operationKind === "display" ? root.operationTarget : root.brightnessPercent
+                  enabled: !root.operationBusy
+                  onReleased: function(next) { root.applyBrightness(next) }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: root.operationMessage !== "" && root.operationKind === "display"
+                    ? root.operationMessage
+                    : Semantics.text(root.productProfile,
+                        "Only outputs that expose a controllable backlight are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall

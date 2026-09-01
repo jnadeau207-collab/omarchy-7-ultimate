@@ -17,6 +17,12 @@ if grep -Fq 'omarchy-powerprofiles-set' "$application"; then
 fi
 pass "Settings drives profile.set through the typed operation plane only"
 
+grep -Fq 'provider: "display.provider"' "$application" || fail "Settings sets brightness through display.provider"
+grep -Fq 'action: "brightness.set"' "$application" || fail "Settings uses the typed brightness.set action"
+grep -Fq 'if (queryState.records[i].brightnessAvailable) return queryState.records[i]' "$application" ||
+  fail "Settings offers brightness only for an output that reports a controllable backlight"
+pass "Settings drives brightness.set through the typed operation plane only"
+
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-settings/SettingsModel.js')
 
@@ -56,5 +62,21 @@ assertEqual(wrongTypes.activeProfile, '', 'a non-string active profile is refuse
 const powerQuery = Model.queryForRoute('settings.power.overview')
 assert(powerQuery.coverage.indexOf('profile.set') >= 0, 'the power coverage note names the settable verb')
 assert(powerQuery.coverage.indexOf('Sleep, lock, and lid changes remain unavailable') >= 0, 'the power coverage note still refuses what Settings cannot do')
+
+function displayRecord(state) {
+  return Model.normalizeLeafResource({ id: 'display.output.abc', label: 'eDP-1', kind: 'output', state: state }, 0)
+}
+
+const controllable = displayRecord({ available: true, percent: 40 })
+assertEqual(controllable.brightnessAvailable, true, 'a controllable backlight is offered')
+assertEqual(controllable.brightnessPercent, 40, 'the current brightness survives as a structured value')
+assertEqual(displayRecord({ available: false, percent: 40 }).brightnessAvailable, false, 'an output without a backlight offers no slider')
+assertEqual(displayRecord({ available: true, percent: 900 }).brightnessAvailable, false, 'an out-of-range percent is refused')
+assertEqual(displayRecord({ available: true, percent: '40' }).brightnessAvailable, false, 'a non-numeric percent is refused')
+assertEqual(displayRecord({}).brightnessPercent, -1, 'a host reporting no brightness claims none')
+
+const displayQuery = Model.queryForRoute('settings.display.overview')
+assert(displayQuery.coverage.indexOf('brightness.set') >= 0, 'the display coverage note names the settable verb')
+assert(displayQuery.coverage.indexOf('Resolution, scale, and arrangement changes remain unavailable') >= 0, 'the display coverage note still refuses what Settings cannot do')
 JS
 pass "the power profile option set is closed, deduplicated, and refuses spoofed host values"

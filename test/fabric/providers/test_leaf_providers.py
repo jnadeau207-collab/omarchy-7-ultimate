@@ -29,7 +29,7 @@ from omarchy_fabric.providers.power import provider as power
 from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
 FIXTURES = Path(__file__).with_name("fixtures")
-SESSION_OPERABLE_DOMAINS = frozenset({"audio", "power", "process"})
+SESSION_OPERABLE_DOMAINS = frozenset({"audio", "display", "power", "process"})
 
 MODULES = (display, audio, network, bluetooth, input_provider, power)
 
@@ -450,7 +450,11 @@ class RealInventoryTests(unittest.IsolatedAsyncioTestCase):
                     try:
                         await provider.preflight(module.OPERATION_ACTION, case.arguments, actor)
                     except FabricError as unavailable:
-                        self.assertEqual(unavailable.code, f"{module.DOMAIN}.resource-unavailable")
+                        self.assertTrue(
+                            unavailable.code.startswith(f"{module.DOMAIN}."),
+                            f"{module.DOMAIN} refused with a foreign code: {unavailable.code}",
+                        )
+                        self.assertNotEqual(unavailable.code, f"{module.DOMAIN}.operation-unavailable")
                 else:
                     with self.assertRaises(FabricError) as refused_action:
                         await provider.preflight(module.OPERATION_ACTION, case.arguments, actor)
