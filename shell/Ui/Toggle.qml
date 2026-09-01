@@ -31,7 +31,7 @@ BorderSurface {
 
   property color foreground: semanticProfile ? semanticProfile.textPrimary : Tokens.text.primary
   property color accent: semanticProfile ? semanticProfile.accent : Tokens.accent.primary
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property real titleSize: Semantics.font(semanticProfile, Style.font.subtitle)
   property real descriptionSize: Semantics.font(semanticProfile, Style.font.caption)
 

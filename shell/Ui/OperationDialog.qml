@@ -102,7 +102,7 @@ Item {
             textFormat: Text.PlainText
             text: root.definition.symbol
             color: root.toneColor
-            font.family: Style.font.family
+            font.family: Tokens.typography.family
             font.pixelSize: Semantics.font(root.semanticProfile, Style.font.title)
             font.bold: true
           }
@@ -112,7 +112,7 @@ Item {
             width: parent.width - x
             text: Semantics.text(root.semanticProfile, root.resolvedTitle)
             color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
-            font.family: Style.font.family
+            font.family: Tokens.typography.family
             font.pixelSize: Semantics.font(root.semanticProfile, Style.font.title)
             font.bold: true
             wrapMode: Text.WordWrap
@@ -125,7 +125,7 @@ Item {
           width: parent.width
           text: Semantics.text(root.semanticProfile, root.resolvedMessage)
           color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
           wrapMode: Text.WordWrap
           horizontalAlignment: root.semanticProfile && root.semanticProfile.rtl ? Text.AlignRight : Text.AlignLeft
@@ -137,7 +137,7 @@ Item {
           visible: root.recoveryText !== ""
           text: Semantics.text(root.semanticProfile, root.recoveryText)
           color: root.toneColor
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
           font.bold: true
           wrapMode: Text.WordWrap

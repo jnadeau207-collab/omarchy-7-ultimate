@@ -21,7 +21,7 @@ ToolTip {
   property color panelForeground: Tokens.text.primary
   property color panelBackground: Tokens.chrome.menu
   property color panelBorder: Tokens.chrome.edge
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property real fontSize: Style.font.bodySmall
 
   readonly property var panelBorderSpec: Border.localOrSurfaceSpec("tooltip", "border", panelBorder, Tokens.chrome.edge, Style.normalBorderWidth)
