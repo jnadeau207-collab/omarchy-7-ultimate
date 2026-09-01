@@ -49,7 +49,7 @@ Rectangle {
         id: statusTitle
         text: Semantics.text(root.semanticProfile, root.connected ? "Fabric connected" : (root.incompatible ? "Fabric update required" : "Fabric unavailable"))
         color: Tokens.text.primary
-        font.family: Style.font.family
+        font.family: Tokens.typography.family
         font.pixelSize: Style.font.body
         font.bold: true
         Layout.fillWidth: true
@@ -64,7 +64,7 @@ Rectangle {
             ? "This app and the Fabric daemon do not share a compatible protocol."
             : "Provider-backed state stays unavailable until the owner-scoped Fabric connection is ready.")
         color: Tokens.text.secondary
-        font.family: Style.font.family
+        font.family: Tokens.typography.family
         font.pixelSize: Style.font.bodySmall
         wrapMode: Text.WordWrap
         Layout.fillWidth: true
