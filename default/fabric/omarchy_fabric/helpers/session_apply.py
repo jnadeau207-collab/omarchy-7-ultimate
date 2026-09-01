@@ -12,6 +12,8 @@ import sys
 from typing import Any, Mapping
 
 PACTL = "/usr/bin/pactl"
+HYPRCTL = "/usr/bin/hyprctl"
+BRIGHTNESS = "/usr/bin/omarchy-brightness-display"
 POWERPROFILESCTL = "/usr/bin/powerprofilesctl"
 POWER_RESOURCE_ID = "power.profile.current"
 FILES_WORKSPACE_ID = "files.workspace.primary"
@@ -26,6 +28,10 @@ class ApplyError(Exception):
 def stable_sink_id(sink_name: str) -> str:
     digest = hashlib.sha256(f"audio\0{sink_name}".encode("utf-8")).hexdigest()
     return f"audio.sink.{digest}"
+
+def stable_display_id(monitor_name: str) -> str:
+    digest = hashlib.sha256(f"display\0{monitor_name}".encode("utf-8")).hexdigest()
+    return f"display.output.{digest}"
 
 def read_payload(stream: Any) -> Mapping[str, Any]:
     raw = stream.read(MAX_PAYLOAD_BYTES + 1)
@@ -95,6 +101,45 @@ def apply_volume(sink_name: str, percent: int, run: Any = subprocess.run) -> Non
     )
     if completed.returncode != 0:
         raise ApplyError("apply.failed", "Setting the audio output volume reported a failure status.")
+
+def list_monitors(run: Any = subprocess.run) -> list[Mapping[str, Any]]:
+    completed = run(
+        [HYPRCTL, "-j", "monitors", "all"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("probe.failed", "The display inventory probe reported a failure status.")
+    try:
+        monitors = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        raise ApplyError("probe.invalid", "The display inventory probe returned unreadable output.") from error
+    if not isinstance(monitors, list):
+        raise ApplyError("probe.invalid", "The display inventory probe returned no monitor list.")
+    return monitors
+
+def resolve_monitor_name(resource_id: str, monitors: list[Mapping[str, Any]]) -> str:
+    matches = []
+    for monitor in monitors:
+        if not isinstance(monitor, Mapping):
+            continue
+        name = monitor.get("name")
+        if isinstance(name, str) and name and stable_display_id(name) == resource_id:
+            matches.append(name)
+    if len(matches) != 1:
+        raise ApplyError("resource.unresolved", "The named display is not present exactly once.")
+    return matches[0]
+
+def apply_brightness(monitor_name: str, percent: int, run: Any = subprocess.run) -> None:
+    completed = run(
+        [BRIGHTNESS, "--no-osd", "--monitor", monitor_name, f"{percent}%"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("apply.failed", "Setting the display brightness reported a failure status.")
 
 FILES_XDG_KEYS = {
     "desktop": "XDG_DESKTOP_DIR",
@@ -224,6 +269,16 @@ def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+def apply_display_brightness(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_resource_id(payload)
+    percent = require_percent(payload)
+    monitor_name = resolve_monitor_name(resource_id, list_monitors())
+    apply_brightness(monitor_name, percent)
+    json.dump({"ok": True, "resourceId": resource_id, "percent": percent}, stdout)
+    stdout.write("\n")
+    return 0
+
 def apply_audio_output_volume(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = require_resource_id(payload)
@@ -328,6 +383,7 @@ def apply_process_terminate(stdin: Any, stdout: Any) -> int:
 
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
+    "display-brightness-set": apply_display_brightness,
     "process-terminate": apply_process_terminate,
     "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,
