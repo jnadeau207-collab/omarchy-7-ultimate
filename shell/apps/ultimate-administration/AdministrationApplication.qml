@@ -35,6 +35,7 @@ Item {
   readonly property bool terminationAvailable: queryState.query
     && String(queryState.query.providerId || "") === "process.provider"
     && queryState.operationAvailable === true
+  readonly property bool terminationAuthorized: false
 
   function endTask(record) {
     if (!host || operationBusy || !record) return
@@ -557,8 +558,8 @@ Item {
                   }
 
                   Ui.Badge {
-                    text: root.terminationAvailable ? "LIVE CONTROL" : "CHANGES UNAVAILABLE"
-                    tone: root.terminationAvailable ? "info" : "warning"
+                    text: root.terminationAuthorized ? "LIVE CONTROL" : "CHANGES UNAVAILABLE"
+                    tone: root.terminationAuthorized ? "info" : "warning"
                     Layout.alignment: Qt.AlignTop
                   }
                 }
@@ -580,9 +581,9 @@ Item {
                   visible: root.queryState.operationActions.length > 0
                   text: Semantics.text(root.productProfile, "Declared provider operations") + ": " +
                     root.queryState.operationActions.join(", ") + ". " +
-                    (root.terminationAvailable
+                    (root.terminationAuthorized
                       ? Semantics.text(root.productProfile, "Ending a task runs through preflight, approval, and the durable coordinator as this user.")
-                      : Semantics.text(root.productProfile, "Administration exposes no preflight, approval, or execution control for this domain yet."))
+                      : Semantics.text(root.productProfile, "Ending a task is declared consequential, and the shell principal cannot hold that authorization."))
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
@@ -610,7 +611,7 @@ Item {
                   record: modelData
                   selected: root.queryState.selectedResourceId !== "" &&
                     root.queryState.selectedResourceId === modelData.id
-                  endTaskEnabled: root.terminationAvailable && String(modelData.kind || "") === "process"
+                  endTaskEnabled: root.terminationAuthorized && String(modelData.kind || "") === "process"
                   endTaskBusy: root.operationBusy && root.operationTargetId === modelData.id
                   onEndTaskRequested: function(record) { root.endTask(record) }
                 }
