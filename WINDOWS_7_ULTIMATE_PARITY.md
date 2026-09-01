@@ -27,7 +27,7 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 | Devices & Printers | missing / prototype | Settings → Bluetooth reads Fabric `bluetooth.inspect` (controller power, paired/connected devices). Typed pair/connect writers remain Phase 5. Superbar still hosts the heritage `omarchy.bluetooth` panel. Printer add is forty-task pending. |
 | Device Manager | missing | Fabric `device.inspect` exists. The leftover catalog keeps it planned as Administration > Devices; it does not invent a Settings Device Manager page. |
 | Programs and Features | missing | No Software Center; no Programs and Features. |
-| Default Programs | prototype | Settings → Apps reads Fabric `defaults.inspect` (MIME/protocol associations and default applications). Typed default writers remain Phase 5. Forty-task "Change the default browser" is pending. |
+| Default Programs | missing | Settings → Apps reads Fabric `defaults.inspect` (MIME/protocol associations and default applications) and cannot set one. `apps.defaults.set` and `files.associations.set` are still planned symbols, so this job has no human route. Forty-task "Change the default browser" is pending. |
 | User Accounts | missing | Fabric `account.inspect` exists. The leftover catalog keeps it planned as Administration > Accounts; it does not invent a Settings or Start Accounts page. |
 | Credential Manager | missing | |
 | Power Options | prototype | Settings → Power reads Fabric `power.inspect` (AC/battery source, active profile, available profiles, battery). Typed profile/sleep writers remain Phase 5. Superbar still hosts the heritage `omarchy.power` panel. |

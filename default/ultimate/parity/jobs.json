@@ -283,16 +283,16 @@
       "id": "parity.default-programs",
       "kind": "parity-job",
       "sourceLabel": "Default Programs",
-      "sourceStatus": "prototype",
-      "claim": "prototype",
+      "sourceStatus": "missing",
+      "claim": "missing",
       "capabilityIds": [
         "apps.defaults.set",
         "files.associations.set"
       ],
       "humanRoute": {
-        "status": "visible",
+        "status": "planned",
         "surface": "Settings Apps",
-        "path": "Start > Settings > Apps"
+        "path": ""
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior associations and offer guarded undo.",
