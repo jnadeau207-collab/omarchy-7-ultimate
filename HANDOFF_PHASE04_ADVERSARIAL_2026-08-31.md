@@ -1,12 +1,14 @@
 # Phase 0-4 adversarial review and close — 2026-08-31
 
-Reviewed SHA: `b91b77d4` on `work`, pushed to `origin/work`. Nineteen commits on top of `60fbb967`.
+Reviewed SHA: `152bd844` on `work`, pushed to `origin/work`. Twenty-one commits on top of `60fbb967`.
 
-This turn adversarially reviewed the 65-commit Cursor/Grok run that preceded it, corrected what that run broke, and closed every Phase 0-4 gate that a machine can close. The product is still **REJECTED** as an OS. Phase 0-4 is **not** closed; two gates are blocked on things no agent can do, and they are named below.
+This turn adversarially reviewed the 65-commit Cursor/Grok run that preceded it, corrected what that run broke, and closed every Phase 0-4 gate. **All twenty gates pass at `152bd844`.** The product is still **REJECTED** as an OS: Phases 5-11 are not built, and release additionally requires the three acceptance matrices at one packaged candidate SHA, which is a gate after Phase 11, not a Phase 0-4 gate.
 
 ## Gate state on metal (192.168.1.171, HDMI-A-1 1920x1080)
 
-**19 of 20 pass.** The baseline before this turn was 17 of 20.
+**20 of 20 pass.** The baseline before this turn was 17 of 20.
+
+Verification runs against a clean clone of the pushed SHA at `/tmp/p04verify`, not the live checkout. That is deliberate: several assertions read `git ls-files --stage`, so they test what is committed. The live checkout is behind (see "Blocked"), while its working tree carries the reviewed content byte-for-byte, which is what the pixel captures were taken against.
 
 Red at baseline, green now:
 
@@ -14,7 +16,7 @@ Red at baseline, green now:
 - `product-contracts-test` — 2 errors at baseline, 3 after the Cursor run. `product contracts valid` now.
 - `visual-regression-test` — `bin/omarchy-dev-visual-regression` was committed `100644`.
 
-Still red: `phase4-desktop-shell-test`. It is **not a defect**. The assertion reads `git ls-files --stage` and sees the metal checkout's stale `100644` launcher modes; the `100755` fix is committed. See "Blocked" below.
+`phase4-desktop-shell-test` also carried a stale jump-list assertion that still required the Accessibility and System information rows after `cf87e813` unpublished them. Inverted in `152bd844`; it now pins their absence. It had been masked by the launcher-mode failure and cannot run on Windows because it needs `jq`.
 
 ## What the Cursor run got right
 
@@ -42,9 +44,9 @@ Tests passed on all of these. Reading the captures found them.
 - **Pseudo-locale and RTL across processes.** Product windows are separate processes and could not see the shell's summon flags, so Start localized while Settings stayed English. The shell publishes both flags to `~/.local/state/omarchy/ultimate/presentation.json` and `ProductAppHost` watches it (`0732b07a`). That made session state durable, so `657a4ba4` republishes on shell start — `Component.onCompleted` fires before `FileView` loads and `setText` is silently dropped, which is why the reset uses a zero-repeat `Timer`.
 - **Authored copy localizes; machine data does not** (`568cb77f`, `b91b77d4`). Verified in pixels: `[!! Çö·vë·ŕä·ĝê· !!]` translates while `brightness.set`, `display.provider.inspect`, the provenance line, and `HDMI-A-1` stay literal.
 
-## Blocked — not closeable by an agent
+## Blocked — does not affect the gate result
 
-**1. Metal fast-forward.** The checkout at `/home/jesse/omarchy7ultimate` is behind. `git clean` and `git merge --ff-only` are denied by the harness sandbox; they were attempted four times and not disguised inside a script to evade the check. File **content** was deployed instead and verified byte-identical by hash, which is why 19 gates pass, but content cannot fix a git index. One command finishes it:
+**1. Metal fast-forward.** The checkout at `/home/jesse/omarchy7ultimate` is behind. `git clean` and `git merge --ff-only` are denied by the harness sandbox; they were attempted four times and not disguised inside a script to evade the check. File **content** was deployed instead and verified byte-identical by hash, so the running session is the reviewed code and the captures are valid. Content cannot fix a git index, which is why gates are verified from a clean clone. Fast-forward the live checkout so it stops drifting:
 
 ```
 cd omarchy7ultimate && git clean -f -- migrations/1788042600.sh migrations/1788042700.sh \
@@ -56,7 +58,7 @@ cd omarchy7ultimate && git clean -f -- migrations/1788042600.sh migrations/17880
 
 Pre-sync backup is at `/tmp/metal-presync-backup/` (9180-line patch plus 9 files). Do **not** close the gate with `git update-index --chmod=+x` on metal: that is a green gate on a stale checkout, which is the exact failure this review opened by flagging.
 
-**2. The forty-task acceptance.** All forty rows in `WINDOWS_NATIVE_ACCEPTANCE.md` read `pending`. The doctrine requires a Windows-native tester completing them with a mouse, without Terminal or web search. Six are automatable. No suite passes this gate.
+**2. The forty-task acceptance is a release gate, not a Phase 0-4 gate.** All forty rows in `WINDOWS_NATIVE_ACCEPTANCE.md` read `pending`, and they stay that way until a Windows-native tester completes them with a mouse, without Terminal or web search. The plan places the three matrices under release conditions "at one packaged candidate SHA", after Phase 11. Do not treat it as blocking a phase close, and do not mark rows passed without a human.
 
 ## Do not reopen
 
