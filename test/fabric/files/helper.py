@@ -51,7 +51,7 @@ def location(
         "label": label,
         "state": state,
         "writable": writable if state == "available" else False,
-        "rootToken": state_revision({"location": identifier}),
+        "rootDigest": state_revision({"location": identifier}),
         "reason": unavailable,
     }
 
