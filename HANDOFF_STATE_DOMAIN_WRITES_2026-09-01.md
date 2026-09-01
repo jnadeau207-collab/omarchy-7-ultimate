@@ -36,20 +36,17 @@ Proving execution required a workspace sparse enough to fit under the cap. Raisi
 
 ### 3. Whole-state equality cannot validate a real filesystem mutation
 
-After a successful apply the executor compares observed state to `plan.preflight["proposedState"]["value"]`. The provider must therefore predict the entire post-mutation workspace exactly. Against a real filesystem it cannot. The observed diff separates into two classes:
+`coordinator._validate_executor_state` compares observed state to `plan.preflight["proposedState"]["value"]` with strict equality, excluding only `revision`. The provider must therefore predict the entire post-mutation workspace exactly.
 
-Projection defects, fixable:
-- `relativePath` for the new entry is written as the bare name rather than location-relative, so the derived `id` and `identity` digests are both wrong
-- `parentId` is left null where the real scan sets it
-- the entry is inserted at a different index than the real scan order, which cascades through every later index
+`_create_directory` is a state transformer: it deep-copies current state, appends one entry, and re-sorts. That is correct for a backend that **stores** its state and replays it. The real files backend **derives** state by scanning the filesystem. The two cannot agree, for reasons that are structural rather than incidental:
 
-Structurally unpredictable, not fixable by better prediction:
-- `modifiedNs` is null in the projection and a real mtime on disk
-- the parent location's `rootDigest` changes because creating a child changes the directory mtime
+- **The projection appends one entry; the scan produces two.** Verified on metal: creating `Documents/ProbeDir` yields an entry under `files.location.documents` with relativePath `ProbeDir` **and** one under `files.location.home` with relativePath `Documents/ProbeDir`, because home and Documents are both scanned locations and one nests inside the other. Any create inside a nested location has this property.
+- **The projected id can never be reproduced.** It is `stable_resource_id(DOMAIN, "entry", f"created\0{location}\0{parent_identity}\0{relative}")`, and `identity` is `state_revision({"created": entry_id, ...})`. Both are synthetic tokens meaningful only to a backend that keeps them. A rescan derives ids from the actual path. Entries are sorted by id, so a mismatched id also reorders the list and cascades through every later index.
+- **Two values are unpredictable in principle.** `modifiedNs` is null in the projection and a real mtime on disk, and the parent location's `rootDigest` shifts because creating a child changes the directory mtime.
 
 So the operation applies correctly and then fails validation with `executor.invalid-result`. The directory exists on disk; the plane reports failure.
 
-The fix is a scoped resource: bind the operation to the target parent rather than the whole workspace, and validate the relevant subset instead of whole-state equality. That also removes a second defect — today any unrelated file change anywhere in the workspace invalidates a pending plan. This is a contract change shared with `defaults` and should not be rushed.
+This is not a matter of correcting a few fields. The state-domain operation model assumes stored state, and the real files backend is derived state. Closing it needs one of: an overlay the real backend stores and replays, a resource scoped to the target parent rather than the whole workspace, or validation by predicate — the named directory now exists under the named parent — instead of whole-state equality. The last also removes a second defect: today any unrelated file change anywhere in the workspace invalidates a pending plan. This is a contract change shared with `defaults` and should not be rushed.
 
 ## A UI defect found with pixels
 
