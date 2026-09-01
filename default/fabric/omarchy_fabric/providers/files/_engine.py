@@ -549,7 +549,7 @@ class StateDomainProvider:
                 "The bounded read handler could not construct trusted typed state.",
                 detail=type(error).__name__,
             ) from error
-        self._validate(result_reference or definition["result"], result, "result")
+        self._validate(definition["result"], result, "result")
         return result
 
     def _workspace_result_reference(self) -> Mapping[str, Any] | None:
@@ -1017,7 +1017,7 @@ class StateDomainProvider:
             "state": operation_state,
             "error": None,
         }
-        self._validate(definition["result"], result, "result")
+        self._validate(result_reference or definition["result"], result, "result")
         return result
 
     def _backend_invalid(self, explanation: str) -> FabricError:
