@@ -271,6 +271,27 @@ def _describe(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments
         return "The exact process identity already has this termination plan."
     return f"Plan {arguments['signal']} for the exact PID and start identity; no signal is sent by this provider."
 
+TERMINATION_RESOURCE_KIND = "process-termination"
+
+TERMINATION_STATE_SCHEMA = {
+    "type": "object",
+    "required": ["present"],
+    "properties": {"present": {"type": "boolean"}},
+    "additionalProperties": False,
+}
+
+def termination_resource_id(resource_id: str) -> str:
+    digest = hashlib.sha256(f"process.termination\0{resource_id}".encode("utf-8")).hexdigest()
+    return f"process.termination.{digest}"
+
+def _termination_scope(resource, _proposed_value, _arguments):
+    return {
+        "kind": TERMINATION_RESOURCE_KIND,
+        "id": termination_resource_id(resource["id"]),
+        "current": {"present": True},
+        "proposed": {"present": False},
+    }
+
 SPEC, MANIFEST, SCHEMAS = provider_bundle(
     LeafDefinition(DOMAIN, PROVIDER_ID, "process", OPERATION_ACTION, "process.termination.plan", "consequential", ("mutating",)),
     resource_schema=RESOURCE_SCHEMA,
@@ -280,10 +301,13 @@ SPEC, MANIFEST, SCHEMAS = provider_bundle(
     target_id=lambda arguments: arguments["resourceId"],
     propose_state=_propose,
     describe_change=_describe,
+    operation_state_schema=TERMINATION_STATE_SCHEMA,
+    operation_resource_kind=TERMINATION_RESOURCE_KIND,
+    scope=_termination_scope,
 )
 
 def build_provider(*, runner: ProbeRunner = run_probe, proc_reader: ProcReader = _read_proc_text) -> LeafProvider:
-    return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner, proc_reader)))
+    return LeafProvider(SPEC, MANIFEST, SCHEMAS, ReadOnlyProbeBackend(DOMAIN, lambda: _probe_resources(runner, proc_reader), session_operable=True))
 
 def build_fake_provider(
     resources: list[Mapping[str, Any]],

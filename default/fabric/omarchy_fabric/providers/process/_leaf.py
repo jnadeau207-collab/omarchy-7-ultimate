@@ -30,6 +30,9 @@ def provider_bundle(
     target_id: Callable[[Mapping[str, Any]], str],
     propose_state: Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]],
     describe_change: Callable[[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]], str],
+    operation_state_schema: Mapping[str, Any] | None = None,
+    operation_resource_kind: str | None = None,
+    scope: Any = None,
 ) -> tuple[DomainSpec, dict[str, Any], dict[str, dict[str, Any]]]:
     """Build closed schemas and a manifest consumed by the central registry."""
 
@@ -46,6 +49,8 @@ def provider_bundle(
         resource_schema=resource_schema,
         arguments_schema=arguments_schema,
         state_schema=state_schema,
+        operation_state_schema=operation_state_schema,
+        operation_resource_kind=operation_resource_kind,
     )
     manifest = {
         "schemaVersion": "v0",
@@ -92,5 +97,6 @@ def provider_bundle(
         target_id=target_id,
         propose_state=propose_state,
         describe_change=describe_change,
+        scope=scope,
     )
     return spec, manifest, contracts

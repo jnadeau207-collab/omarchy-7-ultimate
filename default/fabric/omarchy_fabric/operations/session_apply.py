@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import pathlib
+import signal
 import subprocess
 import sys
 from typing import Any, Mapping
@@ -269,8 +271,64 @@ def apply_power_profile(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+BOOT_ID_PATH = "/proc/sys/kernel/random/boot_id"
+
+def process_start_token(pid: int) -> str | None:
+    try:
+        with open(BOOT_ID_PATH, "r", encoding="utf-8") as handle:
+            boot_id = handle.read(128).strip()
+        with open(f"/proc/{pid}/stat", "r", encoding="utf-8") as handle:
+            stat_line = handle.read(4096)
+    except OSError:
+        return None
+    close = stat_line.rfind(")")
+    if close < 0:
+        return None
+    fields = stat_line[close + 2:].split()
+    if len(fields) < 20:
+        return None
+    try:
+        start_ticks = int(fields[19])
+    except ValueError:
+        return None
+    return hashlib.sha256(f"{boot_id}:{pid}:{start_ticks}".encode("utf-8")).hexdigest()[:16]
+
+def process_owner(pid: int) -> int | None:
+    try:
+        return os.stat(f"/proc/{pid}").st_uid
+    except OSError:
+        return None
+
+def stable_termination_id(pid: int, token: str) -> str:
+    digest = hashlib.sha256(f"process.termination\0process.{pid}.{token}".encode("utf-8")).hexdigest()
+    return f"process.termination.{digest}"
+
+def apply_process_terminate(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = payload.get("resourceId")
+    pid = payload.get("pid")
+    if not isinstance(resource_id, str) or not resource_id.startswith("process.termination."):
+        raise ApplyError("payload.invalid", "The apply payload names no process termination resource.")
+    if isinstance(pid, bool) or not isinstance(pid, int) or pid <= 1:
+        raise ApplyError("payload.invalid", "The apply payload names no terminable process id.")
+    token = process_start_token(pid)
+    if token is None:
+        raise ApplyError("resource.unresolved", "The named process is not present.")
+    if stable_termination_id(pid, token) != resource_id:
+        raise ApplyError("resource.unresolved", "The live process identity does not match the approved resource.")
+    if process_owner(pid) != os.getuid():
+        raise ApplyError("payload.invalid", "The named process is not owned by this account.")
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except OSError as error:
+        raise ApplyError("apply.failed", "Signalling the process reported a failure status.") from error
+    json.dump({"ok": True, "resourceId": resource_id, "pid": pid}, stdout)
+    stdout.write("\n")
+    return 0
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
+    "process-terminate": apply_process_terminate,
     "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,
 }
