@@ -241,6 +241,87 @@ Item {
         }
       }
 
+      Repeater {
+        model: root.providerStep ? root.queryState.records : []
+
+        Ui.Card {
+          required property var modelData
+          Layout.fillWidth: true
+          implicitHeight: recordColumn.implicitHeight + Style.space(32)
+
+          ColumnLayout {
+            id: recordColumn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Style.space(16)
+            spacing: Style.space(4)
+
+            RowLayout {
+              Layout.fillWidth: true
+              spacing: Style.space(8)
+
+              Text {
+                textFormat: Text.PlainText
+                text: modelData.label
+                color: Tokens.text.primary
+                font.family: Tokens.typography.family
+                font.pixelSize: Style.font.body
+                font.bold: true
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+              }
+
+              Ui.Badge {
+                visible: modelData.status !== ""
+                text: modelData.status
+                tone: "info"
+              }
+            }
+
+            Text {
+              textFormat: Text.PlainText
+              visible: modelData.subtitle !== "" && modelData.subtitle !== modelData.label
+              text: modelData.subtitle
+              color: Tokens.text.secondary
+              font.family: Tokens.typography.family
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.Wrap
+              Layout.fillWidth: true
+            }
+
+            Repeater {
+              model: modelData.details
+
+              RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: Style.space(8)
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: modelData.label
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.caption
+                  Layout.preferredWidth: Style.space(140)
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: modelData.value
+                  color: Tokens.text.disabled
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
+          }
+        }
+      }
+
       Ui.EmptyState {
         visible: !root.providerStep
         semanticProfile: root.productProfile
