@@ -5,4 +5,4 @@
 
 set -euo pipefail
 
-exec python3 -m omarchy_fabric.operations.session_apply "$@"
+exec python3 -m omarchy_fabric.helpers.session_apply "$@"
