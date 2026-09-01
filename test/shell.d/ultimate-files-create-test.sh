@@ -23,6 +23,20 @@ grep -Fq 'if (!host || operationBusy || !createVisible) return' "$application" |
   fail "Files refuses a create outside a writable location route or during another operation"
 pass "Files drives preflight, approve, and start against files.provider only"
 
+card="$ROOT/shell/apps/ultimate-files/FilesRecordCard.qml"
+grep -Fq 'action: "entry.trash"' "$application" || fail "Files trashes through the typed entry.trash action"
+grep -Fq 'arguments: { entryId: String(record.id) }' "$application" ||
+  fail "Files sends only the entry identity; the daemon derives the path from its own scope"
+grep -Fq 'if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return' "$application" ||
+  fail "Files refuses to trash a non-entry record or a symlink"
+grep -Fq 'if (!host || operationBusy || createLocationId === "") return' "$application" ||
+  fail "Files offers Trash only where the route is a writable location"
+grep -Fq "signal trashRequested()" "$card" || fail "the record card raises a Trash request rather than acting itself"
+if grep -Eq 'rm |unlink|shutil' "$application"; then
+  fail "Files deletes directly instead of routing through the operation plane"
+fi
+pass "Files moves an entry to Trash through entry.trash and never deletes directly"
+
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')
 

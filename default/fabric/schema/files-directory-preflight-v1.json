@@ -33,7 +33,10 @@
       "const": "v0"
     },
     "action": {
-      "const": "directory.create"
+      "enum": [
+        "directory.create",
+        "entry.trash"
+      ]
     },
     "capability": {
       "type": "string",
