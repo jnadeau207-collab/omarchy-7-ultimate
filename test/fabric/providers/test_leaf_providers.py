@@ -29,6 +29,8 @@ from omarchy_fabric.providers.power import provider as power
 from omarchy_fabric.security.principal import EndpointPrincipal, PrincipalKind
 
 FIXTURES = Path(__file__).with_name("fixtures")
+SESSION_OPERABLE_DOMAINS = frozenset({"audio"})
+
 MODULES = (display, audio, network, bluetooth, input_provider, power)
 
 def load_fixture(domain: str) -> dict[str, Any]:
@@ -343,8 +345,12 @@ class RealInventoryTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(domain=module.DOMAIN):
                 result = await provider.read("inspect", {})
                 self.assertTrue(result["availability"]["read"])
-                self.assertFalse(result["availability"]["operation"])
-                self.assertEqual(result["availability"]["reason"]["code"], f"{module.DOMAIN}.operation-read-only")
+                if module.DOMAIN in SESSION_OPERABLE_DOMAINS:
+                    self.assertTrue(result["availability"]["operation"])
+                    self.assertIsNone(result["availability"]["reason"])
+                else:
+                    self.assertFalse(result["availability"]["operation"])
+                    self.assertEqual(result["availability"]["reason"]["code"], f"{module.DOMAIN}.operation-read-only")
                 self.assertGreaterEqual(len(result["resources"]), 1)
                 self.assertRegex(result["revision"], r"^sha256\.[0-9a-f]{64}$")
                 self.assertTrue(runner.calls)
@@ -442,7 +448,13 @@ class RealInventoryTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(domain=module.DOMAIN):
                 with self.assertRaises(FabricError) as unavailable:
                     await provider.preflight(module.OPERATION_ACTION, case.arguments, actor)
-                self.assertEqual(unavailable.exception.code, f"{module.DOMAIN}.operation-unavailable")
+                if module.DOMAIN in SESSION_OPERABLE_DOMAINS:
+                    self.assertEqual(unavailable.exception.code, f"{module.DOMAIN}.resource-unavailable")
+                    with self.assertRaises(FabricError) as refused:
+                        await provider.backend.replace(case.arguments["resourceId"], {}, "sha256." + "0" * 64)
+                    self.assertEqual(refused.exception.code, f"{module.DOMAIN}.operation-unavailable")
+                else:
+                    self.assertEqual(unavailable.exception.code, f"{module.DOMAIN}.operation-unavailable")
                 self.assertTrue(runner.calls)
                 self.assertTrue(all(call[0].startswith("/usr/bin/") for call in runner.calls))
 
