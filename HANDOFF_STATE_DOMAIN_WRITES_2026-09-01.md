@@ -143,3 +143,23 @@ Restart `omarchy-fabric-checkout.service` and the shell together for any field r
 ## Do not reopen
 
 Do not weaken `operation_available ⇒ available` to make a proof pass. Do not add a name to the sensitive-key allowlist; rename the field instead. Do not widen `session_operable` to a domain with no code-owned helper action.
+
+## The ceiling on shell-driven writes
+
+`security/grants.py:94` refuses any `CapabilityGrant` where the principal is `SHELL` and `maximum_risk.rank >= CONSEQUENTIAL.rank`. Unconditionally — persistence is irrelevant.
+
+That single rule explains exactly which write paths work. `audio.output-volume.set` and `files.directory.create` are declared `low`, so the shell may hold their grants; both are proven end to end. `process.termination.plan` is declared `consequential`, so `operation.approve` fails with `grant.shell-consequential` and Administration can never end a task, however completely it is wired.
+
+So the reachable write plane from Settings and Administration is, by design, the low-risk one. Anything consequential needs an authorization path that is not a standing shell grant — a distinct elevated principal, or a per-operation authorization the coordinator accepts without minting a capability the shell then holds.
+
+End Task is wired and correct up to that line: scoped `process.termination.<sha256>` resource with `{present}` state, a helper that re-derives identity from `/proc` so a stale plan cannot signal a reused PID, and the Administration control plus its state machine. `terminationAuthorized` is `false` so the product does not offer a button that cannot succeed, and the page says why.
+
+Process inventory selection also changed. It took `sorted(users, key=(uid, pid))[:48]` — the 48 oldest user processes, which is session infrastructure and nothing a person launched. It now ranks by resident memory then CPU, so the bounded 64 shows what is actually consuming the machine.
+
+## What is left, and why
+
+Three deliberate boundaries, none of them bugs:
+
+- **polkit cannot see an Omarchy session.** Blocks `power.profile.set`, which is otherwise complete.
+- **The shell cannot authorize consequential operations.** Blocks End Task.
+- **Root.** Blocks packages and compatibility; compatibility also needs measured-host attestation.
