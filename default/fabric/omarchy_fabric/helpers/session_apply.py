@@ -13,6 +13,8 @@ from typing import Any, Mapping
 
 PACTL = "/usr/bin/pactl"
 HYPRCTL = "/usr/bin/hyprctl"
+NMCLI = "/usr/bin/nmcli"
+NETWORK_WIFI_ID = "network.radio.wifi"
 BRIGHTNESS = "/usr/bin/omarchy-brightness-display"
 POWERPROFILESCTL = "/usr/bin/powerprofilesctl"
 POWER_RESOURCE_ID = "power.profile.current"
@@ -193,6 +195,22 @@ def apply_keyboard_layout(device_name: str, index: int, run: Any = subprocess.ru
     if completed.returncode != 0:
         raise ApplyError("apply.failed", "Switching the keyboard layout reported a failure status.")
 
+def require_enabled(payload: Mapping[str, Any]) -> bool:
+    enabled = payload.get("enabled")
+    if not isinstance(enabled, bool):
+        raise ApplyError("payload.invalid", "The apply payload names no radio state.")
+    return enabled
+
+def apply_wifi_radio(enabled: bool, run: Any = subprocess.run) -> None:
+    completed = run(
+        [NMCLI, "radio", "wifi", "on" if enabled else "off"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("apply.failed", "Switching the Wi-Fi radio reported a failure status.")
+
 FILES_XDG_KEYS = {
     "desktop": "XDG_DESKTOP_DIR",
     "documents": "XDG_DOCUMENTS_DIR",
@@ -318,6 +336,17 @@ def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
         raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
     created = create_directory(payload, pathlib.Path.home())
     json.dump({"ok": True, "resourceId": resource_id, "created": created.name}, stdout)
+    stdout.write("\n")
+    return 0
+
+def apply_network_wifi_enabled(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_resource_id(payload)
+    if resource_id != NETWORK_WIFI_ID:
+        raise ApplyError("resource.unresolved", "The apply payload names no code-owned radio.")
+    enabled = require_enabled(payload)
+    apply_wifi_radio(enabled)
+    json.dump({"ok": True, "resourceId": resource_id, "enabled": enabled}, stdout)
     stdout.write("\n")
     return 0
 
@@ -447,6 +476,7 @@ ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
     "input-keyboard-layout-set": apply_input_keyboard_layout,
+    "network-wifi-enabled-set": apply_network_wifi_enabled,
     "process-terminate": apply_process_terminate,
     "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,
