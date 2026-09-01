@@ -241,20 +241,14 @@ if locale.get("status") != "planned" or locale.get("path"):
     raise SystemExit(f"locale.configure invents a Settings page: {locale}")
 
 system_info = by_id["system.info.read"]["humanRoute"]
-if (
-    system_info.get("status") != "missing"
-    or system_info.get("path") != "Settings jump list > System information"
-):
-    raise SystemExit(f"system.info.read route is {system_info}")
+if system_info.get("status") != "missing" or system_info.get("path"):
+    raise SystemExit(f"system.info.read invents a System information route: {system_info}")
 accessibility = by_id["accessibility.configure"]["humanRoute"]
-if (
-    accessibility.get("status") != "missing"
-    or accessibility.get("path") != "Settings jump list > Accessibility"
-):
-    raise SystemExit(f"accessibility.configure invents or underclaims Accessibility: {accessibility}")
+if accessibility.get("status") != "missing" or accessibility.get("path"):
+    raise SystemExit(f"accessibility.configure invents an Accessibility route: {accessibility}")
 jobs_a11y = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
 parity_a11y = next(job for job in jobs_a11y["jobs"] if job["id"] == "parity.accessibility")
-if parity_a11y.get("claim") == "present" or parity_a11y["humanRoute"].get("path") != "Settings jump list > Accessibility":
+if parity_a11y.get("claim") == "present" or parity_a11y["humanRoute"].get("path"):
     raise SystemExit(f"parity.accessibility invents a present Accessibility engine: {parity_a11y}")
 files_inspect = by_id["files.inspect"]["humanRoute"]
 if files_inspect.get("path") != "Start > Files; Superbar > Files > Home":
