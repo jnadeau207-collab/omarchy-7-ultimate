@@ -549,8 +549,14 @@ class StateDomainProvider:
                 "The bounded read handler could not construct trusted typed state.",
                 detail=type(error).__name__,
             ) from error
-        self._validate(definition["result"], result, "result")
+        self._validate(result_reference or definition["result"], result, "result")
         return result
+
+    def _workspace_result_reference(self) -> Mapping[str, Any] | None:
+        for name, candidate in self.operations.items():
+            if candidate.scope is None:
+                return self._action(name, "operation")["result"]
+        return None
 
     async def preflight(
         self,
@@ -713,7 +719,13 @@ class StateDomainProvider:
         assert snapshot.state is not None
         current = thaw(snapshot.state)
         if current == target:
-            return self._result(definition, action, current, changed=False)
+            return self._result(
+                definition,
+                action,
+                current,
+                changed=False,
+                result_reference=self._workspace_result_reference() if self._operation(action).scope is not None else None,
+            )
         current_revision = state_revision(current)
         scoped = self._operation(action).scope is not None
         if current_revision != recovery_revision:
@@ -732,7 +744,13 @@ class StateDomainProvider:
                 change_state="unknown",
                 recovery_actions=(f"{self.domain}.reconcile",),
             )
-        return self._result(definition, action, actual["value"], changed=True)
+        return self._result(
+            definition,
+            action,
+            actual["value"],
+            changed=True,
+            result_reference=self._workspace_result_reference() if scoped else None,
+        )
 
     async def rollback(
         self,
@@ -980,6 +998,7 @@ class StateDomainProvider:
         *,
         changed: bool,
         plan_state: Mapping[str, Any] | None = None,
+        result_reference: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any]:
         operation_state = self._state(state) if plan_state is None else dict(plan_state)
         resource = {"kind": self.resource_kind, "id": self.resource_id}
