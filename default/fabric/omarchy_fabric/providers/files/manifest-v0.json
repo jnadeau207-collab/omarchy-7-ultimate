@@ -101,8 +101,8 @@
         "version": "v0"
       },
       "result": {
-        "id": "urn:omarchy:fabric:provider:files:operation-result:v0",
-        "version": "v0"
+        "id": "urn:omarchy:fabric:provider:files:directory-result:v1",
+        "version": "v1"
       },
       "preflight": {
         "id": "urn:omarchy:fabric:provider:files:directory-preflight:v1",

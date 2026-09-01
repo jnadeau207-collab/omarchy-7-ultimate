@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:directory-result:v1",
+  "x-omarchy-version": "v1",
+  "title": "Files directory operation result",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "provider",
+    "providerVersion",
+    "action",
+    "capability",
+    "resource",
+    "changed",
+    "changeState",
+    "stateRevision",
+    "state",
+    "error"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "v0"
+    },
+    "provider": {
+      "const": "files.provider"
+    },
+    "providerVersion": {
+      "const": "v0"
+    },
+    "action": {
+      "const": "directory.create"
+    },
+    "capability": {
+      "type": "string",
+      "enum": [
+        "files.directory.create",
+        "files.entry.rename",
+        "files.entry.trash",
+        "files.trash.restore",
+        "files.mount.connect",
+        "files.mount.disconnect"
+      ]
+    },
+    "resource": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "files.directory"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^files\\.directory\\.[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "changed": {
+      "type": "boolean"
+    },
+    "changeState": {
+      "type": "string",
+      "enum": [
+        "none",
+        "complete"
+      ]
+    },
+    "stateRevision": {
+      "$ref": "urn:omarchy:fabric:provider:files:operation-state:v0#/$defs/revision"
+    },
+    "state": {
+      "$ref": "urn:omarchy:fabric:provider:files:directory-state:v1"
+    },
+    "error": {
+      "type": "null"
+    }
+  },
+  "additionalProperties": false
+}

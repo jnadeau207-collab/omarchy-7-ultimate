@@ -88,6 +88,7 @@ SCHEMA_FILES = (
     "files-operation-result-v0.json",
     "files-directory-state-v1.json",
     "files-directory-preflight-v1.json",
+    "files-directory-result-v1.json",
 )
 
 def _load_json(path: Path, maximum: int = MAX_CONFIG_BYTES) -> dict[str, Any]:
