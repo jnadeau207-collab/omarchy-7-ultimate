@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -euo pipefail
+
+exec /usr/bin/python3 -m omarchy_fabric.helpers.system_apply packages.install
