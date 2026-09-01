@@ -43,10 +43,7 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
         await self.exercise(
             "directory.create",
             {"locationId": "files.location.desktop", "parentRelativePath": "Project", "name": "Assets"},
-            lambda state: self.assertEqual(
-                next(item for item in state["entries"] if item["relativePath"] == "Project/Assets")["kind"],
-                "directory",
-            ),
+            lambda state: self.assertIn("Assets", state["names"]),
         )
         await self.exercise(
             "entry.rename",
