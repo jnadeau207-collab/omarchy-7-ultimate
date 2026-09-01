@@ -58,7 +58,21 @@ The state-domain operation model assumes stored state throughout. The real files
 2. **Stored overlay.** The real backend records applied mutations and replays them over the derived scan. Preserves equality, but the overlay can drift from the filesystem and becomes a second source of truth.
 3. **Predicate validation.** Assert only that the fields the operation claimed to change actually changed. Cheapest, and it **weakens the contract**: it stops verifying that nothing else changed. Do not choose this one to make a proof go green.
 
-Whichever is chosen also removes a second defect: today any unrelated file change anywhere in the workspace invalidates a pending plan. This is a contract change shared with `defaults` and with `process.termination.plan`, so it wants a deliberate decision rather than an agent's judgment call.
+Whichever is chosen also removes a second defect: today any unrelated file change anywhere in the workspace invalidates a pending plan.
+
+### It is a v1, not an edit
+
+Option 1 cannot be done inside the current schemas. They pin the binding exactly:
+
+```
+files-operation-preflight-v0.json  resource.kind → const "files.workspace"
+                                   resource.id   → const "files.workspace.primary"
+files-operation-state-v0.json      value         → $ref #/$defs/workspace
+```
+
+A scoped resource needs a second resource kind and a directory-listing state value, so both files change shape. Editing them in place silently redefines `v0` for every client already speaking it, and the provider manifest, the durable plans in `operations.db`, and the shell's closed read contract all reference these ids. The honest form of this change is `files-operation-state-v1.json` plus `files-operation-preflight-v1.json`, a manifest version bump, and a migration path for stored plans.
+
+That is a product decision about contract versioning, shared with `defaults` and `process.termination.plan`. It is not a change to slip in to make a proof pass, which is the only reason an agent would be tempted to edit v0 in place.
 
 ## A UI defect found with pixels
 
