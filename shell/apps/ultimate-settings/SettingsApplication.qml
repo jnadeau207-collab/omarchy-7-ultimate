@@ -46,6 +46,38 @@ Item {
   readonly property var powerProfiles: powerResource && powerResource.profiles ? powerResource.profiles : []
   readonly property string activePowerProfile: powerResource ? String(powerResource.activeProfile || "") : ""
 
+  readonly property var layoutResource: firstLayoutResource()
+  readonly property var keyboardLayouts: layoutResource && layoutResource.layouts ? layoutResource.layouts : []
+  readonly property int activeLayoutIndex: layoutResource ? layoutResource.activeLayoutIndex : -1
+  property int operationLayoutIndex: -1
+
+  function firstLayoutResource() {
+    if (!currentRoute || currentRoute.id !== "settings.input.overview") return null
+    if (!queryState.records) return null
+    for (var i = 0; i < queryState.records.length; i++) {
+      if (queryState.records[i].layouts && queryState.records[i].layouts.length > 1) return queryState.records[i]
+    }
+    return null
+  }
+
+  function applyKeyboardLayout(index) {
+    if (!host || operationBusy) return
+    var record = firstLayoutResource()
+    if (!record) return
+    if (!(index >= 0 && index < record.layouts.length)) return
+    root.operationKind = "input"
+    root.operationLayoutIndex = index
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "input.provider",
+      action: "keyboard-layout.set",
+      arguments: { resourceId: record.id, layoutIndex: index },
+      idempotencyKey: "settings.keyboard-layout." + record.id + "." + index + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
+  }
+
   readonly property var brightnessResource: firstBrightnessResource()
   readonly property int brightnessPercent: brightnessResource ? brightnessResource.brightnessPercent : -1
 
@@ -169,12 +201,16 @@ Item {
         ? "Power profile set to " + root.profileLabel(root.operationProfile) + "."
         : root.operationKind === "display"
           ? "Brightness set to " + root.operationTarget + " percent."
-          : "Output volume set to " + root.operationTarget + " percent."
+          : root.operationKind === "input"
+            ? "Keyboard layout set to " + root.keyboardLayouts[root.operationLayoutIndex] + "."
+            : "Output volume set to " + root.operationTarget + " percent."
       var refused = root.operationKind === "power"
         ? "The power profile change ended as " + String(result.status || "unknown") + "."
         : root.operationKind === "display"
           ? "The brightness change ended as " + String(result.status || "unknown") + "."
-          : "The volume change ended as " + String(result.status || "unknown") + "."
+          : root.operationKind === "input"
+            ? "The keyboard layout change ended as " + String(result.status || "unknown") + "."
+            : "The volume change ended as " + String(result.status || "unknown") + "."
       root.resetOperation(succeeded ? applied : refused)
       if (root.controller) root.controller.refresh()
     }
@@ -687,6 +723,78 @@ Item {
               }
             }
 
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.input.overview" && root.keyboardLayouts.length > 1
+              Layout.fillWidth: true
+              implicitHeight: layoutColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: "Keyboard layout"
+
+              ColumnLayout {
+                id: layoutColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    text: Semantics.text(root.productProfile,
+                      root.layoutResource ? "Keyboard layout — " + root.layoutResource.label : "Keyboard layout")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: root.operationBusy && root.operationKind === "input" ? "APPLYING" : "LIVE CONTROL"
+                    tone: root.operationBusy && root.operationKind === "input" ? "info" : "success"
+                  }
+                }
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Repeater {
+                    model: root.keyboardLayouts
+                    delegate: Ui.Button {
+                      required property int index
+                      required property string modelData
+                      text: modelData
+                      focusable: true
+                      bordered: true
+                      enabled: !root.operationBusy && index !== root.activeLayoutIndex
+                      accessibleDescription: "Set the active keyboard layout through input.provider keyboard-layout.set"
+                      onClicked: root.applyKeyboardLayout(index)
+                    }
+                  }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: root.operationMessage !== "" && root.operationKind === "input"
+                    ? root.operationMessage
+                    : Semantics.text(root.productProfile,
+                        "Only keyboards carrying more than one layout are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.display.overview" && root.brightnessResource !== null
               Layout.fillWidth: true

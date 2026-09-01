@@ -60,7 +60,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "input.inspect",
     supportsResource: true,
-    coverage: "Keyboard inventory and layout state are readable. Input changes remain unavailable from Settings."
+    coverage: "Keyboard inventory and layout state are readable, and the active layout applies through input.provider keyboard-layout.set on keyboards that carry more than one layout. Pointer, repeat rate, and accessibility input changes remain unavailable from Settings."
   },
   {
     routeId: "settings.personalization.overview",
@@ -521,6 +521,26 @@ function brightnessPercent(state) {
   return brightnessAvailable(state) ? Math.round(state.percent) : -1
 }
 
+function closedLayouts(state) {
+  if (!state || state.switchable !== true || !Array.isArray(state.layouts)) return []
+  var layouts = []
+  for (var i = 0; i < state.layouts.length && i < 8; i++) {
+    var name = state.layouts[i]
+    if (typeof name !== "string" || name.length === 0 || name.length > 64) return []
+    layouts.push(name)
+  }
+  return layouts.length > 1 ? layouts : []
+}
+
+function closedLayoutIndex(state) {
+  var layouts = closedLayouts(state)
+  if (layouts.length === 0) return -1
+  var active = state.activeIndex
+  if (typeof active !== "number" || !isFinite(active)) return -1
+  active = Math.round(active)
+  return active >= 0 && active < layouts.length ? active : -1
+}
+
 function normalizeLeafResource(resource, index) {
   if (!isObject(resource)) return null
   var id = typeof resource.id === "string" && resource.id.length <= 160 ? resource.id : ""
@@ -537,6 +557,8 @@ function normalizeLeafResource(resource, index) {
     subtitle: clippedText(resourceSubtitle(resource), 240),
     details: details,
     profiles: closedProfiles(state),
+    layouts: closedLayouts(state),
+    activeLayoutIndex: closedLayoutIndex(state),
     brightnessAvailable: brightnessAvailable(state),
     brightnessPercent: brightnessPercent(state),
     activeProfile: closedActiveProfile(state),
