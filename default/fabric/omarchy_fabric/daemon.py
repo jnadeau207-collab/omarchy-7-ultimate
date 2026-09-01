@@ -669,7 +669,7 @@ class FabricDaemon:
         )
 
     async def _files_directory_state(self, resource_id: str) -> Mapping[str, Any]:
-        from .providers.files.provider import _directory_scope
+        import hashlib
 
         workspace = await self._files_state("files.workspace.primary")
         state = workspace["value"]
@@ -680,15 +680,27 @@ class FabricDaemon:
             candidates = {""}
             for entry in state.get("entries", ()):
                 if entry.get("locationId") == location_id and entry.get("kind") == "directory":
-                    candidates.add(entry.get("relativePath", ""))
+                    relative = entry.get("relativePath")
+                    if isinstance(relative, str):
+                        candidates.add(relative)
             for parent in candidates:
-                scoped = _directory_scope(state, {"locationId": location_id, "parentRelativePath": parent})
-                if scoped["id"] == resource_id:
-                    return {
-                        "resourceId": resource_id,
-                        "revision": state_revision(scoped["value"]),
-                        "value": scoped["value"],
-                    }
+                digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
+                if f"files.directory.{digest}" != resource_id:
+                    continue
+                read = await self.typed_providers.read(
+                    "files.provider",
+                    "directory.inspect",
+                    {"locationId": location_id, "parentRelativePath": parent},
+                )
+                payload = read.get("value") if isinstance(read.get("value"), Mapping) else read
+                value = payload.get("state")
+                if not isinstance(value, Mapping):
+                    break
+                return {
+                    "resourceId": resource_id,
+                    "revision": state_revision(value),
+                    "value": value,
+                }
         raise FabricError(
             "operation.resource-unavailable",
             "Fabric operation resource is unavailable",

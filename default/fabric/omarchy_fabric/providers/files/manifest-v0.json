@@ -246,6 +246,24 @@
       },
       "supportsRollback": true,
       "supportsCancellation": false
+    },
+    "directory.inspect": {
+      "capability": "files.inspect",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:files:directory-arguments:v1",
+        "version": "v1"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:files:directory-read:v1",
+        "version": "v1"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
     }
   }
 }
