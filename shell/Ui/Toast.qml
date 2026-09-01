@@ -56,7 +56,7 @@ Card {
       textFormat: Text.PlainText
       text: Semantics.text(root.semanticProfile, root.title)
       color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
       font.bold: true
       width: parent.width
@@ -68,7 +68,7 @@ Card {
       visible: root.message !== ""
       text: Semantics.text(root.semanticProfile, root.message)
       color: root.semanticProfile ? root.semanticProfile.textSecondary : Tokens.text.secondary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
       width: parent.width
       wrapMode: Text.WordWrap

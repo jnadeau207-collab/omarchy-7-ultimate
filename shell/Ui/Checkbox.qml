@@ -64,7 +64,7 @@ Item {
         visible: root.checked
         text: "\u2713"
         color: root.semanticProfile ? root.semanticProfile.surfaceBase : Tokens.surface.base
-        font.family: Style.font.family
+        font.family: Tokens.typography.family
         font.pixelSize: root.boxSize * 0.8
         font.bold: true
       }
@@ -77,7 +77,7 @@ Item {
       text: Semantics.text(root.semanticProfile, root.label)
       width: root.labelMaximumWidth > 0 ? root.labelMaximumWidth : implicitWidth
       color: root.foreground
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
       wrapMode: Text.WordWrap
     }

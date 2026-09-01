@@ -14,7 +14,7 @@ Item {
   property color scrim: Tokens.surface.overlay
   property color selectedBackground: Tokens.chrome.hover
   property color selectedText: Tokens.accent.primary
-  property string fontFamily: Style.font.family
+  property string fontFamily: Tokens.typography.family
   property int cornerRadius: Style.cornerRadius
 
   signal canceled()

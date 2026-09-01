@@ -14,7 +14,7 @@ Item {
     property color foreground: Tokens.text.primary
     property color barForeground: Tokens.text.primary
     property color urgent: Tokens.state.danger
-    property string fontFamily: Style.font.family
+    property string fontFamily: Tokens.typography.family
     property string position: "bottom"
     property var shell: null
   }
@@ -42,7 +42,7 @@ Item {
     textFormat: Text.PlainText
     wrapMode: Text.WordWrap
     color: Tokens.state.danger
-    font.family: Style.font.family
+    font.family: Tokens.typography.family
     font.pixelSize: Style.font.body
     text: "This Settings page failed to load the live panel."
   }

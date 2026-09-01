@@ -77,7 +77,7 @@ Card {
           anchors.centerIn: parent
           text: root.definition.symbol
           color: root.toneColor
-          font.family: Style.font.family
+          font.family: Tokens.typography.family
           font.pixelSize: Semantics.font(root.semanticProfile, Style.font.subtitle)
           font.bold: true
         }
@@ -88,7 +88,7 @@ Card {
         Layout.fillWidth: true
         text: Semantics.text(root.semanticProfile, root.resolvedTitle)
         color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
-        font.family: Style.font.family
+        font.family: Tokens.typography.family
         font.pixelSize: Semantics.font(root.semanticProfile, Style.font.body)
         font.bold: true
         wrapMode: Text.WordWrap
@@ -99,7 +99,7 @@ Card {
         textFormat: Text.PlainText
         text: root.definition.id
         color: root.semanticProfile ? root.semanticProfile.textDisabled : Tokens.text.disabled
-        font.family: Style.font.family
+        font.family: Tokens.typography.family
         font.pixelSize: Semantics.font(root.semanticProfile, Style.font.caption)
       }
     }
@@ -109,7 +109,7 @@ Card {
       width: parent.width
       text: Semantics.text(root.semanticProfile, root.resolvedMessage)
       color: root.semanticProfile ? root.semanticProfile.textPrimary : Tokens.text.primary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Semantics.font(root.semanticProfile, Style.font.bodySmall)
       wrapMode: Text.WordWrap
       horizontalAlignment: root.semanticProfile && root.semanticProfile.rtl ? Text.AlignRight : Text.AlignLeft

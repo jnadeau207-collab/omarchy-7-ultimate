@@ -77,7 +77,7 @@ Item {
       textFormat: Text.PlainText
       text: "Theme packs"
       color: Tokens.text.secondary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Style.font.caption
       Layout.fillWidth: true
     }
@@ -99,7 +99,7 @@ Item {
       textFormat: Text.PlainText
       text: "Wallpaper"
       color: Tokens.text.secondary
-      font.family: Style.font.family
+      font.family: Tokens.typography.family
       font.pixelSize: Style.font.caption
       Layout.fillWidth: true
     }
