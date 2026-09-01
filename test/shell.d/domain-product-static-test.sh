@@ -23,7 +23,12 @@ for spec in \
   grep -Fqx "//@ pragma StateDir \$BASE/omarchy/$application" "$entrypoint" || fail "$label declares its isolated state directory"
   grep -Fqx "//@ pragma CacheDir \$BASE/omarchy/$application" "$entrypoint" || fail "$label declares its isolated cache directory"
   grep -Fqx "  fabricIdentity: \"$fabric_id\"" "$entrypoint" || fail "$label declares its Fabric client identity"
-  grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read"]' "$entrypoint" || fail "$label has the exact read-only Fabric allowlist"
+  if [[ $application == "files" ]]; then
+    grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read", "operation.preflight", "operation.approve", "operation.start", "operation.get"]' "$entrypoint" ||
+      fail "$label has the exact read plus bounded-operation Fabric allowlist"
+  else
+    grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read"]' "$entrypoint" || fail "$label has the exact read-only Fabric allowlist"
+  fi
   grep -Fqx "  ipcTarget: \"$ipc_target\"" "$entrypoint" || fail "$label declares its distinct IPC target"
   grep -Fqx "  applicationSourcePath: \"apps/$directory/$application_qml\"" "$entrypoint" || fail "$label loads only its own application surface"
 

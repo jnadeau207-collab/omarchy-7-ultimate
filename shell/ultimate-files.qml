@@ -15,6 +15,6 @@ Shared.ProductAppHost {
   ipcTarget: "omarchy.files"
   routeCatalogPath: "apps/ultimate-files/routes-v1.json"
   fabricIdentity: "omarchy-files"
-  fabricAllowedMethods: ["provider.catalog", "provider.read"]
+  fabricAllowedMethods: ["provider.catalog", "provider.read", "operation.preflight", "operation.approve", "operation.start", "operation.get"]
   applicationSourcePath: "apps/ultimate-files/FilesApplication.qml"
 }
