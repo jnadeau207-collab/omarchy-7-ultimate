@@ -58,6 +58,7 @@ class FakeGateway:
             "value": arguments["desired"],
         }
         inner = {
+            "schemaVersion": "v0",
             "provider": provider_id,
             "providerVersion": self.version,
             "action": action,
