@@ -5705,7 +5705,7 @@
       "provider": {
         "id": "input.provider",
         "version": "v0",
-        "state": "legacy-direct"
+        "state": "present"
       },
       "kind": "writer",
       "effects": [
@@ -5772,10 +5772,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
         "label": "Change keyboard layout",
-        "path": ""
+        "path": "Settings > Input"
       },
       "agentCenterLabel": "Change keyboard layout",
       "proofIds": {
