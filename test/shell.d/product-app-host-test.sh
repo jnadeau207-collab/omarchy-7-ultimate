@@ -251,7 +251,7 @@ pass "Agent Center entity links cover task, run, operation, and provider"
 grep -Fqx '//@ pragma AppId org.omarchy.Settings' "$ROOT/shell/ultimate-settings.qml" || fail "Settings declares its stable app ID"
 grep -Fqx '//@ pragma ShellId omarchy-ultimate-settings' "$ROOT/shell/ultimate-settings.qml" || fail "Settings declares its stable shell ID"
 grep -Fqx '  fabricIdentity: "omarchy-settings"' "$ROOT/shell/ultimate-settings.qml" || fail "Settings declares its Fabric client identity"
-grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read"]' "$ROOT/shell/ultimate-settings.qml" || fail "Settings has a read-only Fabric method allowlist"
+grep -Fqx '  fabricAllowedMethods: ["provider.catalog", "provider.read", "operation.preflight", "operation.approve", "operation.start", "operation.get"]' "$ROOT/shell/ultimate-settings.qml" || fail "Settings has an exact reads-plus-operation-steps allowlist"
 pass "Settings entrypoint fixes process, app, and least-privilege Fabric identity"
 
 grep -Fqx '//@ pragma AppId org.omarchy.AgentCenter' "$ROOT/shell/ultimate-agent-center.qml" || fail "Agent Center declares its stable app ID"
