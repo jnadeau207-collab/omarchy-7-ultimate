@@ -305,7 +305,7 @@ Item {
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
-                  wrapMode: Text.WrapAnywhere
+                  wrapMode: Text.Wrap
                   maximumLineCount: 4
                   elide: Text.ElideRight
                   Layout.fillWidth: true
@@ -318,7 +318,7 @@ Item {
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
-                  wrapMode: Text.WrapAnywhere
+                  wrapMode: Text.Wrap
                   maximumLineCount: 3
                   elide: Text.ElideRight
                   Layout.fillWidth: true
@@ -331,7 +331,7 @@ Item {
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
-                  wrapMode: Text.WrapAnywhere
+                  wrapMode: Text.Wrap
                   maximumLineCount: 4
                   elide: Text.ElideRight
                   Layout.fillWidth: true
@@ -363,7 +363,7 @@ Item {
                       color: Tokens.text.secondary
                       font.family: Tokens.typography.family
                       font.pixelSize: Style.font.bodySmall
-                      wrapMode: Text.WrapAnywhere
+                      wrapMode: Text.Wrap
                       maximumLineCount: 3
                       elide: Text.ElideRight
                       Layout.fillWidth: true
@@ -444,7 +444,7 @@ Item {
                       color: Tokens.text.disabled
                       font.family: Tokens.typography.family
                       font.pixelSize: Style.font.caption
-                      wrapMode: Text.WrapAnywhere
+                      wrapMode: Text.Wrap
                       maximumLineCount: 2
                       elide: Text.ElideRight
                       Layout.fillWidth: true
@@ -524,7 +524,7 @@ Item {
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
-                  wrapMode: Text.WrapAnywhere
+                  wrapMode: Text.Wrap
                   maximumLineCount: 5
                   elide: Text.ElideRight
                   Layout.fillWidth: true
