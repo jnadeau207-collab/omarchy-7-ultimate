@@ -61,6 +61,11 @@ ShellRoot {
   onSummonedRtlChanged: shell.publishPresentation()
   onSummonedPseudoLocaleChanged: shell.publishPresentation()
 
+  // Both flags are session state. Republishing them as the shell starts keeps a
+  // stale file from outliving the session that summoned it, so a product window
+  // never comes back pseudo-localized after a restart.
+  Component.onCompleted: shell.publishPresentation()
+
   // The omarchy-shell host is the long-running entry point. Plugins live in
   // sibling directories under plugins/. OMARCHY_PATH is provided by the uwsm
   // session environment and is the single source of truth for this checkout.
