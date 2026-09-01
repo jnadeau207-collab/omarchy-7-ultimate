@@ -22,7 +22,9 @@ The trust plane protects the user's desktop authority, durable Fabric records, s
 
 The daemon must keep endpoint admission and the raw session token outside caller-controlled operation data. A provider endpoint is admitted with one provider identity. A managed-task endpoint is admitted with one task identity. The policy engine independently rejects a request whose principal, session, or task does not match that endpoint.
 
-Unix socket ownership and `SO_PEERCRED` are still required at the transport seam. A mode-0600 user socket prevents other UIDs from connecting, but it does not distinguish two processes already running as the same UID.
+`hello` on `fabric.owner-rpc` always issues `PrincipalKind.SHELL`. It does not read a caller `kind` or `taskId`. A connection becomes `PrincipalKind.TASK` only when `TaskAdmissionAuthority` already holds a daemon-registered sandbox binding for that peer: the task socket inode, `SO_PEERCRED` pid and uid, the sandbox cgroup and unit, and the digest of a grant token the daemon placed only in that sandbox. Same-UID code that merely reaches a socket, including the owner socket, is not a task principal.
+
+Unix socket ownership and `SO_PEERCRED` are still required at the transport seam. A mode-0600 user socket prevents other UIDs from connecting, but it does not distinguish two processes already running as the same UID. Task admission is what distinguishes the sandbox from the rest of that account.
 
 ## Honest same-UID and in-process QML boundary
 
