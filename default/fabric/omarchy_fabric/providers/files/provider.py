@@ -71,6 +71,10 @@ PLACE_LOCATION_IDS = frozenset({
     "files.location.pictures",
 })
 LOCATION_ENTRY_FLOOR = 8
+READ_COMPLETENESS_CODES = frozenset({
+    "files.inventory-truncated",
+    "files.mount-inventory-truncated",
+})
 
 SCHEMA_FILES = (
     "files-empty-arguments-v0.json",
@@ -89,6 +93,8 @@ SCHEMA_FILES = (
     "files-directory-state-v1.json",
     "files-directory-preflight-v1.json",
     "files-directory-result-v1.json",
+    "files-directory-read-v1.json",
+    "files-directory-arguments-v1.json",
 )
 
 def _load_json(path: Path, maximum: int = MAX_CONFIG_BYTES) -> dict[str, Any]:
@@ -507,9 +513,12 @@ class RealFilesBackend:
             ))
         if self.session_operable and not reasons:
             return StateSnapshot("available", True, freeze(state), ())
+        operable = self.session_operable and all(
+            reason.code in READ_COMPLETENESS_CODES for reason in reasons
+        )
         return StateSnapshot(
             "degraded",
-            False,
+            operable,
             freeze(state),
             tuple(reasons),
         )
@@ -553,6 +562,30 @@ class RealFilesBackend:
                 recovery=("files.user-dirs.repair",),
             ))
             return {}
+
+    def directory_listing(self, location_id: str, parent: str) -> list[str] | None:
+        key = location_id.rsplit(".", 1)[-1]
+        definition = LOCATION_CATALOG.get(key)
+        if definition is None or not definition[2] and key not in {"desktop", "documents", "downloads", "pictures"}:
+            return None
+        reasons: list[FabricError] = []
+        root = self._root_paths(self._user_dirs(reasons)).get(definition[1])
+        if root is None:
+            return None
+        target = root
+        if parent:
+            for segment in parent.split("/"):
+                if segment in {"", ".", ".."}:
+                    return None
+                target = target / segment
+        try:
+            with os.scandir(target) as scan:
+                names = sorted(item.name for item in scan)
+        except OSError:
+            return None
+        if len(names) > 4096:
+            return None
+        return names
 
     def _root_paths(self, user_dirs: Mapping[str, Path]) -> dict[str, Path]:
         return {
@@ -1076,9 +1109,7 @@ def _normalize_entry(arguments: Mapping[str, Any]) -> dict[str, Any]:
 def _normalize_mount(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"mountId": arguments["mountId"]}
 
-def _directory_scope(state: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
-    location_id = arguments["locationId"]
-    parent = arguments["parentRelativePath"]
+def _directory_names_from_state(state: Mapping[str, Any], location_id: str, parent: str) -> list[str]:
     prefix = f"{parent}/" if parent else ""
     names = []
     for entry in state["entries"]:
@@ -1090,16 +1121,30 @@ def _directory_scope(state: Mapping[str, Any], arguments: Mapping[str, Any]) -> 
         remainder = relative[len(prefix):]
         if remainder and "/" not in remainder:
             names.append(remainder)
-    names.sort()
+    return sorted(names)
+
+def _directory_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+    location_id = arguments["locationId"]
+    parent = arguments["parentRelativePath"]
+    listing = None
+    if backend is not None and hasattr(backend, "directory_listing"):
+        listing = backend.directory_listing(location_id, parent)
+    if listing is None:
+        current_names = _directory_names_from_state(current, location_id, parent)
+        proposed_names = _directory_names_from_state(proposed, location_id, parent)
+    else:
+        current_names = sorted(listing)
+        proposed_names = sorted(set(listing) | {arguments["name"]})
     digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
+
+    def document(names: list[str]) -> dict[str, Any]:
+        return {"locationId": location_id, "parentRelativePath": parent, "names": names}
+
     return {
         "kind": "files.directory",
         "id": f"files.directory.{digest}",
-        "value": {
-            "locationId": location_id,
-            "parentRelativePath": parent,
-            "names": names,
-        },
+        "current": document(current_names),
+        "proposed": document(proposed_names),
     }
 
 def _create_directory(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
@@ -1309,6 +1354,24 @@ OPERATIONS = {
 
 READ_HANDLERS = {"inspect": _inspect, "browse": _browse, "search": _search, "recent": _recent}
 
+def _directory_inspect_handler(backend: Any):
+    def handler(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
+        location_id = arguments["locationId"]
+        parent = arguments["parentRelativePath"]
+        names = None
+        if hasattr(backend, "directory_listing"):
+            names = backend.directory_listing(location_id, parent)
+        if names is None and snapshot.state is not None:
+            names = _directory_names_from_state(thaw(snapshot.state), location_id, parent)
+        state = None
+        if names is not None:
+            state = {"locationId": location_id, "parentRelativePath": parent, "names": sorted(names)}
+        metadata = _metadata("directory.inspect", snapshot)
+        metadata["revision"] = state_revision(state) if state is not None else None
+        return {**metadata, "state": state}
+
+    return handler
+
 def _manifest() -> Mapping[str, Any]:
     return _load_json(Path(__file__).with_name("manifest-v0.json"), 128 * 1024)
 
@@ -1323,7 +1386,8 @@ def _provider(backend: Any) -> StateDomainProvider:
         backend=backend,
         state_contract_id=STATE_CONTRACT_ID,
         state_validator=validate_workspace,
-        read_handlers=READ_HANDLERS,
+        read_handlers={**READ_HANDLERS, "directory.inspect": _directory_inspect_handler(backend)},
+        read_completeness_codes=READ_COMPLETENESS_CODES,
         operations=OPERATIONS,
     )
 

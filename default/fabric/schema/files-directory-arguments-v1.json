@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:directory-arguments:v1",
+  "x-omarchy-version": "v1",
+  "title": "Files directory read arguments",
+  "type": "object",
+  "required": [
+    "locationId",
+    "parentRelativePath"
+  ],
+  "properties": {
+    "locationId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "maxLength": 160
+    },
+    "parentRelativePath": {
+      "type": "string",
+      "maxLength": 1024
+    }
+  },
+  "additionalProperties": false
+}
