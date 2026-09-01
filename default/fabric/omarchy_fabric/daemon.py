@@ -63,12 +63,24 @@ from .managed_work import (
 )
 from .operations.contracts import OperationDefinition
 from .operations.coordinator import OperationCoordinator
-from .operations.executor import IntentCatalog, IntentDefinition, stable_token
-from .operations.registry_gateway import RegistryOperationGateway
+from .operations.executor import IntentCatalog, IntentDefinition, UnavailableProductionExecutor, stable_token
+from .operations.package_plane import (
+    PRIVILEGED_PACKAGE_INTENTS,
+    CoordinatedRegistryGateway,
+    package_definitions,
+    package_intents,
+)
+from .operations.routing_executor import PrivilegeRoutingExecutor
 from .operations.session_executor import SessionCommandExecutor
 from .operations.store import OperationStore
 from .security.approval import ApprovalAuthority
 from .security.grants import CapabilityGrant, GrantPersistence
+from .security.task_admission import (
+    PeerIdentity,
+    TaskAdmissionAuthority,
+    TaskEndpointBinding,
+    read_peer_identity,
+)
 from .providers._engine import state_revision
 from .provider_builtins import build_builtin_providers
 from .provider_registry import ProviderRegistry, TypedProvider
@@ -393,6 +405,12 @@ class ClientConnection:
         self.run_task: asyncio.Task[None] | None = None
         self.principal: EndpointPrincipal | None = None
         self.peer_uid: int | None = None
+        self.peer_pid: int | None = None
+        self.peer_unit: str | None = None
+        self.peer_cgroup: str | None = None
+        self.endpoint_scope: str = "owner"
+        self.socket_dev: int | None = None
+        self.socket_ino: int | None = None
 
     async def run(self) -> None:
         self.run_task = asyncio.current_task()
@@ -464,6 +482,9 @@ class ClientConnection:
 
     def _peer_is_owner(self) -> bool:
         self.peer_uid = None
+        self.peer_pid = None
+        self.peer_unit = None
+        self.peer_cgroup = None
         peer_socket = self.writer.get_extra_info("socket")
         if peer_socket is None or not hasattr(socket, "SO_PEERCRED"):
             return False
@@ -474,10 +495,18 @@ class ClientConnection:
                 socket.SO_PEERCRED,
                 credential_size,
             )
-            _pid, uid, _gid = struct.unpack("iII", credentials)
+            pid, uid, _gid = struct.unpack("iII", credentials)
             if uid != self.daemon.daemon_uid:
                 return False
             self.peer_uid = uid
+            self.peer_pid = pid
+            try:
+                identity = read_peer_identity(pid)
+            except SecurityValidationError:
+                identity = None
+            if identity is not None:
+                self.peer_unit = identity.unit
+                self.peer_cgroup = identity.cgroup
             return True
         except (AttributeError, OSError, struct.error):
             return False
@@ -595,8 +624,11 @@ class FabricDaemon:
         self.operation_approvals = ApprovalAuthority()
         self.operation_grants: dict[str, CapabilityGrant] = {}
         self.operations: OperationCoordinator | None = None
+        self.task_admissions = TaskAdmissionAuthority()
         self._build_operations()
         self.server: asyncio.AbstractServer | None = None
+        self._task_servers: dict[str, asyncio.AbstractServer] = {}
+        self._task_socket_identities: dict[str, tuple[int, int]] = {}
         self.connections: set[ClientConnection] = set()
         self.run_id = ""
         self.started_monotonic = 0.0
@@ -799,6 +831,7 @@ class FabricDaemon:
                             "name": self._operation_name,
                         },
                     ),
+                    *package_intents(),
                 )
             )
             definitions = (
@@ -840,15 +873,20 @@ class FabricDaemon:
                         "name": preflight["normalizedArguments"]["name"],
                     },
                 ),
+                *package_definitions(),
             )
             store = OperationStore(self.config.database_path.with_name("operations.db"))
             self.operation_store = store
             self.operations = OperationCoordinator(
                 store=store,
-                gateway=RegistryOperationGateway(registry=self.typed_providers),
+                gateway=CoordinatedRegistryGateway(self.typed_providers),
                 definitions=definitions,
                 intents=intents,
-                executor=SessionCommandExecutor(intents, self._operation_state),
+                executor=PrivilegeRoutingExecutor(
+                    SessionCommandExecutor(intents, self._operation_state),
+                    UnavailableProductionExecutor(),
+                    PRIVILEGED_PACKAGE_INTENTS,
+                ),
                 session_resolver=self.session_bindings.require_active,
                 policy_revision=lambda: OPERATION_POLICY_REVISION,
             )
@@ -1006,6 +1044,13 @@ class FabricDaemon:
                 server.close()
             except Exception as error:
                 remember(error)
+        task_servers = list(self._task_servers.items())
+        self._task_servers.clear()
+        for _path, task_server in task_servers:
+            try:
+                task_server.close()
+            except Exception as error:
+                remember(error)
         active_connections = list(self.connections)
         if active_connections:
             await asyncio.gather(
@@ -1032,6 +1077,11 @@ class FabricDaemon:
         if server is not None:
             try:
                 await server.wait_closed()
+            except Exception as error:
+                remember(error)
+        for _path, task_server in task_servers:
+            try:
+                await task_server.wait_closed()
             except Exception as error:
                 remember(error)
         try:
@@ -1068,8 +1118,114 @@ class FabricDaemon:
         writer: asyncio.StreamWriter,
     ) -> None:
         connection = ClientConnection(self, reader, writer)
+        if self._socket_identity is not None:
+            connection.socket_dev, connection.socket_ino = self._socket_identity
         self.connections.add(connection)
         await connection.run()
+
+    def require_task_socket_path(self, socket_path: Path) -> Path:
+        """Refuse to treat the owner-rpc socket as a task endpoint."""
+
+        path = Path(socket_path)
+        owner = Path(self.config.socket_path)
+        try:
+            same = path.resolve() == owner.resolve()
+        except OSError:
+            same = path == owner
+        if same or path.name == owner.name or path.name == "fabric.sock":
+            raise SecurityValidationError(
+                "task-admission.owner-rpc",
+                "The owner RPC socket can never carry a task endpoint.",
+            )
+        return path
+
+    def attach_task_connection(
+        self,
+        connection: ClientConnection,
+        socket_identity: tuple[int, int],
+    ) -> None:
+        connection.endpoint_scope = "task"
+        connection.socket_dev, connection.socket_ino = socket_identity
+
+    def register_task_sandbox(self, binding: TaskEndpointBinding, grant_token: str) -> None:
+        self.task_admissions.register(binding, grant_token)
+
+    async def _accept_task(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        socket_identity: tuple[int, int],
+    ) -> None:
+        connection = ClientConnection(self, reader, writer)
+        self.attach_task_connection(connection, socket_identity)
+        self.connections.add(connection)
+        await connection.run()
+
+    async def open_task_endpoint(self, socket_path: Path) -> tuple[int, int]:
+        """Listen on a task-scoped socket that is never fabric.owner-rpc."""
+
+        if not hasattr(socket, "AF_UNIX"):
+            raise SecurityValidationError(
+                "task-admission.unavailable",
+                "Task endpoints require a Unix domain socket.",
+            )
+        path = self.require_task_socket_path(socket_path)
+        key = str(path)
+        if key in self._task_servers:
+            raise SecurityValidationError(
+                "task-admission.duplicate",
+                "A task endpoint is already listening on this path.",
+            )
+        self._secure_directory(path.parent)
+        if path.exists():
+            raise SecurityValidationError(
+                "task-admission.socket",
+                "Task socket path already exists.",
+            )
+        old_umask = os.umask(0o077)
+        bound: socket.socket | None = None
+        try:
+            bound = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            bound.setblocking(False)
+            bound.bind(str(path))
+            metadata = path.lstat()
+            identity = (int(metadata.st_dev), int(metadata.st_ino))
+            bound.listen(socket.SOMAXCONN)
+            os.chmod(path, 0o600)
+            server = await asyncio.start_unix_server(
+                lambda reader, writer, bound_identity=identity: self._accept_task(
+                    reader,
+                    writer,
+                    bound_identity,
+                ),
+                sock=bound,
+                limit=MAX_FRAME_BYTES + 1,
+            )
+            bound = None
+        finally:
+            os.umask(old_umask)
+            if bound is not None:
+                bound.close()
+        self._task_servers[key] = server
+        self._task_socket_identities[key] = identity
+        return identity
+
+    async def close_task_endpoint(self, socket_path: Path) -> None:
+        path = self.require_task_socket_path(socket_path)
+        key = str(path)
+        server = self._task_servers.pop(key, None)
+        identity = self._task_socket_identities.pop(key, None)
+        if server is not None:
+            server.close()
+            await server.wait_closed()
+        if identity is None:
+            return
+        try:
+            metadata = path.lstat()
+        except FileNotFoundError:
+            return
+        if (int(metadata.st_dev), int(metadata.st_ino)) == identity:
+            path.unlink()
 
     @staticmethod
     def _secure_directory(path: Path) -> None:
@@ -1611,17 +1767,26 @@ class FabricDaemon:
                 operation_request,
                 expires_at=expires_at,
             )
-            self.operation_grants[operation_id] = CapabilityGrant(
-                grant_id=f"grant.{approval.approval_id}",
-                principal_id=operation_request.principal_id,
-                principal_kind=principal.kind,
-                capability=operation_request.capability,
-                resource=operation_request.resource,
-                issued_at=issued_at,
-                expires_at=expires_at,
-                maximum_risk=operation_request.risk,
-                persistence=GrantPersistence.SESSION,
-            )
+            try:
+                self.operation_grants[operation_id] = CapabilityGrant(
+                    grant_id=f"grant.{approval.approval_id}",
+                    principal_id=operation_request.principal_id,
+                    principal_kind=principal.kind,
+                    capability=operation_request.capability,
+                    resource=operation_request.resource,
+                    issued_at=issued_at,
+                    expires_at=expires_at,
+                    maximum_risk=operation_request.risk,
+                    persistence=GrantPersistence.SESSION,
+                    task_id=principal.task_id if principal.kind is PrincipalKind.TASK else None,
+                )
+            except SecurityValidationError as error:
+                raise FabricError(
+                    error.code,
+                    "Fabric capability grant could not be issued",
+                    error.explanation,
+                    change_state="none",
+                ) from error
             return {"operationId": operation_id, "approvalId": approval.approval_id}
         if request.method == "operation.start":
             _require_exact_fields(
@@ -1835,9 +2000,10 @@ class FabricDaemon:
                 "Fabric handshake is already complete",
                 "Reconnect to negotiate a new Fabric session.",
             )
+        task_scope = getattr(connection, "endpoint_scope", "owner") == "task"
         _require_exact_fields(
             params,
-            required=("client", "minVersion", "maxVersion"),
+            required=("client", "minVersion", "maxVersion", "grantToken") if task_scope else ("client", "minVersion", "maxVersion"),
             context="hello",
         )
         client = params["client"]
@@ -1878,9 +2044,15 @@ class FabricDaemon:
                     "principal.peer-credentials",
                     "The connection has no authenticated Unix peer UID.",
                 )
+            if task_scope:
+                admission = self._task_admission_for(connection, params["grantToken"])
+            else:
+                # Owner-rpc hello is always SHELL. kind/taskId are not hello
+                # fields; extra keys are already rejected above.
+                admission = EndpointAdmission(endpoint_id="fabric.owner-rpc", kind=PrincipalKind.SHELL)
             principal, _credential = self.session_bindings.issue(
                 connection.peer_uid,
-                EndpointAdmission(endpoint_id="fabric.owner-rpc", kind=PrincipalKind.SHELL),
+                admission,
             )
         except SecurityValidationError as error:
             raise FabricError(
@@ -1892,20 +2064,47 @@ class FabricDaemon:
             ) from error
         connection.principal = principal
         connection.hello_complete = True
+        principal_payload = {
+            "id": principal.principal_id,
+            "ownerId": principal.principal_id,
+            "sessionId": principal.session_id,
+            "endpoint": principal.endpoint_id,
+            "kind": principal.kind.value,
+        }
+        if principal.task_id is not None:
+            principal_payload["taskId"] = principal.task_id
         return {
             "connectionId": connection.connection_id,
             "client": client,
             "protocol": PROTOCOL_NAME,
             "version": PROTOCOL_VERSION,
             "databaseSchema": CURRENT_DATABASE_SCHEMA,
-            "principal": {
-                "id": principal.principal_id,
-                "ownerId": principal.principal_id,
-                "sessionId": principal.session_id,
-                "endpoint": principal.endpoint_id,
-                "kind": principal.kind.value,
-            },
+            "principal": principal_payload,
         }
+
+    def _task_admission_for(self, connection: ClientConnection, grant_token: object):
+        if (
+            connection.peer_pid is None
+            or connection.peer_unit is None
+            or connection.peer_cgroup is None
+            or connection.socket_dev is None
+            or connection.socket_ino is None
+        ):
+            raise SecurityValidationError(
+                "task-admission.peer-unreadable",
+                "A task endpoint requires kernel peer pid, cgroup, unit, and socket identity.",
+            )
+        return self.task_admissions.admit(
+            PeerIdentity(
+                uid=connection.peer_uid,
+                pid=connection.peer_pid,
+                unit=connection.peer_unit,
+                cgroup=connection.peer_cgroup,
+            ),
+            socket_dev=connection.socket_dev,
+            socket_ino=connection.socket_ino,
+            grant_token=grant_token,
+        )
 
     @staticmethod
     def _version() -> Mapping[str, Any]:

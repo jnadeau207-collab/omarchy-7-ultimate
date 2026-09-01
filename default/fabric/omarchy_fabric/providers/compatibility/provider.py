@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any, Mapping
 
 from jsonschema import Draft202012Validator, ValidationError
@@ -12,14 +13,17 @@ from jsonschema import Draft202012Validator, ValidationError
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.provider_registry import ProviderAvailability
 from omarchy_fabric.security.principal import EndpointPrincipal
+from omarchy_fabric.security.release_attestation import default_release_attestation
 
 from .contracts import CONTRACTS
 from .engine import CompatibilityEngine, FakeCompatibilityAdapter
+from .measured_host import measure_host
 from .recipes import RecipeCatalog
 from .router import ROUTE_ORDER
 
 MAX_POLICY_BYTES = 128 * 1024
 PLAN_ONLY_DETAIL = "The code-owned Compatibility Center recipes are contract seeds; reads and preflights are available, but live compatibility deployment is not admitted."
+RELEASE_PLAN_ONLY_DETAIL = "Compatibility recipes are release-attested; reads and preflights use the measured host, but live deployment waits for the privileged system executor."
 
 class CompatibilityProvider:
     def __init__(
@@ -29,10 +33,12 @@ class CompatibilityProvider:
         *,
         plan_only: bool = False,
         availability: ProviderAvailability | None = None,
+        host_probe: Callable[[], Mapping[str, object]] | None = None,
     ) -> None:
         self.recipes = recipes
         self.engine = engine
         self.plan_only = plan_only
+        self.host_probe = host_probe
         if availability is not None:
             self.availability = availability
         self.manifest = json.loads(Path(__file__).with_name("manifest-v0.json").read_text(encoding="utf-8"))
@@ -58,7 +64,7 @@ class CompatibilityProvider:
         definition = self._action(action, "read")
         self._validate(definition["arguments"], arguments, "arguments")
         if action == "route.decide":
-            result = self.engine.router.decide(arguments["request"], arguments["host"])
+            result = self.engine.router.decide(arguments["request"], self._host(arguments["host"]))
         elif action == "deployments.inspect":
             result = self.engine.deployments()
         else:
@@ -69,7 +75,9 @@ class CompatibilityProvider:
     async def preflight(self, action: str, arguments: Mapping[str, Any], principal: EndpointPrincipal) -> Mapping[str, Any]:
         definition = self._action(action, "operation")
         self._validate(definition["arguments"], arguments, "arguments")
-        result = self.engine.preflight(action, arguments, principal)
+        measured = dict(arguments)
+        measured["host"] = self._host(arguments["host"])
+        result = self.engine.preflight(action, measured, principal)
         result.pop("_targetDeployment", None)
         self._validate(definition["preflight"], result, "preflight")
         return result
@@ -109,6 +117,11 @@ class CompatibilityProvider:
         result = await self.engine.rollback(prior_state["operationId"], expected_revision)
         self._validate(definition["result"], result, "result")
         return result
+
+    def _host(self, supplied: Mapping[str, Any]) -> Mapping[str, Any]:
+        if self.host_probe is None:
+            return supplied
+        return self.host_probe()
 
     def _require_live_execution(self) -> None:
         if self.plan_only:
@@ -184,9 +197,10 @@ def _load_routing_policy(path: Path, schema_path: Path) -> Mapping[str, Any]:
     return deepcopy(document)
 
 def build_provider() -> CompatibilityProvider:
-    """Build the code-owned, contract-seed production provider without a live adapter."""
+    """Build the production provider from installed recipes, attestation, and the measured host."""
 
     root = _default_root()
+    attestation = default_release_attestation(root)
     policy = _load_routing_policy(
         root / "ultimate" / "compatibility" / "routing-policy-v0.json",
         root / "fabric" / "schema" / "compatibility-routing-policy-v0.json",
@@ -194,19 +208,25 @@ def build_provider() -> CompatibilityProvider:
     recipes = RecipeCatalog.load(
         root / "ultimate" / "compatibility" / "recipes-v0.json",
         trusted_keys=frozenset(policy["recipeTrustKeyIds"]),
+        verified_recipe_revisions=attestation.admitted_revisions("compatibility-recipes"),
     )
-    if recipes.assurance != "contract-seed":
+    if recipes.assurance == "contract-seed":
+        detail = PLAN_ONLY_DETAIL
+    elif recipes.assurance == "release-verified":
+        detail = RELEASE_PLAN_ONLY_DETAIL
+    else:
         raise FabricError(
             "compatibility.recipes-assurance-unavailable",
             "Compatibility recipe assurance is unavailable",
-            "Production registration admits the checked-in recipes only as contract seeds until an external release revision is configured.",
+            "Production registration admits only contract-seed or release-attested recipes.",
         )
     engine = CompatibilityEngine(recipes)
     return CompatibilityProvider(
         recipes,
         engine,
         plan_only=True,
-        availability=ProviderAvailability("degraded", PLAN_ONLY_DETAIL),
+        availability=ProviderAvailability("degraded", detail),
+        host_probe=measure_host,
     )
 
 def build_fake_provider(recipe_document: Mapping[str, Any], *, deployments: list[Mapping[str, Any]] | None = None, state_path: Path | None = None, adapter: FakeCompatibilityAdapter | None = None) -> CompatibilityProvider:

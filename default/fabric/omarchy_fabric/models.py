@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import posixpath
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -73,7 +74,8 @@ class FixedArgvCommand:
     def __post_init__(self) -> None:
         if not isinstance(self.executable, str) or not self.executable:
             raise ValueError("fixed argv executable must be a non-empty string")
-        if not os.path.isabs(self.executable):
+        # Linux-target helpers are POSIX-absolute. os.path.isabs rejects them on a Windows checkout.
+        if not os.path.isabs(self.executable) and not posixpath.isabs(self.executable):
             raise ValueError("fixed argv executable must be an absolute path")
         if "\x00" in self.executable:
             raise ValueError("fixed argv executable contains NUL")

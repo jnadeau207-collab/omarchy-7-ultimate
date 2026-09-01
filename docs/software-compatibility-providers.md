@@ -50,14 +50,18 @@ The initial inputs live under `default/ultimate/software/` and `default/ultimate
 
 ## Integration seams
 
+Release attestation and measured-host routing are wired:
+
+- `default/ultimate/release-attestation-v0.json` is the code-owned admission list. Production builders pass its revisions into `PackageCatalog` and `RecipeCatalog`. The checked-in file admits nothing, so a document still cannot self-assert `release-verified`.
+- Production `compatibility.provider` measures architecture, memory, disk, and fixed runtime paths for `route.decide` and operation preflight. Caller-supplied host documents are ignored once a probe is configured. The probe never executes a process.
+
 The remaining integration must stay centralized:
 
 - bind apply, validation, rollback, cancellation, and reconciliation to the central durable operation coordinator rather than exposing a direct RPC mutation route;
 - translate adapter plans into existing Omarchy helpers or add reviewed privileged helpers where the declared executable does not exist;
 - publish checkpoint progress and operation projections through Fabric events;
-- replace seed catalog digests and recipe key names with the package build and release signing pipeline, then inject the exact externally attested catalog and recipe revisions;
-- populate Compatibility Center host inputs from measured runtime, memory, disk, architecture, isolation, browser, Proton, and virtualization state rather than caller guesses;
-- connect Settings, Software Center, and Compatibility Center surfaces to the read and preflight contracts.
+- replace seed catalog digests and recipe key names with the package build and release signing pipeline, then list those exact revisions in the release-attestation document;
+- connect Settings, Software Center, and Compatibility Center surfaces to the read and preflight contracts. A TASK principal is required before a consequential package grant can be minted.
 
 Production construction loads the catalog, source policy, recipes, and routing policy only from paths derived from the installed code root. It does not accept environment-selected roots or caller-selected files. Builder or admission failure is isolated as an unavailable placeholder under the expected provider ID, without copying the failed provider's capabilities or leaking exception text.
 

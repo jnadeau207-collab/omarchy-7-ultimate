@@ -14,6 +14,19 @@ from .principal import (
     SessionBindingStore,
     SessionCredential,
 )
+from .release_attestation import (
+    ReleaseAttestation,
+    default_release_attestation,
+    load_release_attestation,
+    parse_release_attestation,
+)
+from .task_admission import (
+    TASK_ENDPOINT_ID,
+    PeerIdentity,
+    TaskAdmissionAuthority,
+    TaskEndpointBinding,
+    read_peer_identity,
+)
 from .redaction import SecretFinding, redact, redact_text, scan_for_secrets
 from .system_executor import (
     SYSTEM_ACTIONS,
@@ -39,10 +52,15 @@ __all__ = [
     "GrantPersistence",
     "OperationRequest",
     "PolicyDecision",
+    "PeerIdentity",
     "PolicyEngine",
     "PrincipalKind",
+    "ReleaseAttestation",
     "ResourceRef",
     "RiskLevel",
+    "TASK_ENDPOINT_ID",
+    "TaskAdmissionAuthority",
+    "TaskEndpointBinding",
     "SYSTEM_ACTIONS",
     "SecretFinding",
     "SessionBindingStore",
@@ -51,5 +69,9 @@ __all__ = [
     "redact",
     "redact_text",
     "scan_for_secrets",
+    "default_release_attestation",
+    "load_release_attestation",
+    "parse_release_attestation",
+    "read_peer_identity",
     "validate_system_executor_request",
 ]
