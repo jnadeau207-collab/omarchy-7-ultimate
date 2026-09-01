@@ -1,0 +1,197 @@
+{
+  "schemaVersion": "omarchy.product-routes/v1",
+  "application": "oobe",
+  "appId": "org.omarchy.Setup",
+  "scheme": "omarchy-setup",
+  "defaultRoute": "oobe.welcome",
+  "entityDeepLinks": [],
+  "routes": [
+    {
+      "id": "oobe.welcome",
+      "section": "Setup",
+      "title": "Welcome",
+      "description": "A quick pass through the few things worth deciding before you start.",
+      "keywords": [
+        "welcome",
+        "start",
+        "setup",
+        "first boot"
+      ],
+      "providerId": "",
+      "deepLink": {
+        "host": "welcome",
+        "path": ""
+      },
+      "argumentSchema": {}
+    },
+    {
+      "id": "oobe.region",
+      "section": "Setup",
+      "title": "Language and region",
+      "description": "Your language, region, and keyboard layout.",
+      "keywords": [
+        "language",
+        "region",
+        "locale",
+        "keyboard",
+        "layout"
+      ],
+      "providerId": "",
+      "deepLink": {
+        "host": "region",
+        "path": ""
+      },
+      "argumentSchema": {}
+    },
+    {
+      "id": "oobe.network",
+      "section": "Setup",
+      "title": "Network",
+      "description": "Get online so updates and software can reach this computer.",
+      "keywords": [
+        "network",
+        "wifi",
+        "internet",
+        "ethernet"
+      ],
+      "providerId": "network.provider",
+      "deepLink": {
+        "host": "network",
+        "path": ""
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "oobe.display",
+      "section": "Setup",
+      "title": "Display and scaling",
+      "description": "Check the display is running at its own resolution before you go further.",
+      "keywords": [
+        "display",
+        "resolution",
+        "scaling",
+        "monitor"
+      ],
+      "providerId": "display.provider",
+      "deepLink": {
+        "host": "display",
+        "path": ""
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "oobe.appearance",
+      "section": "Personal",
+      "title": "Appearance",
+      "description": "Light or dark, and the accent this computer uses.",
+      "keywords": [
+        "appearance",
+        "theme",
+        "wallpaper",
+        "accent",
+        "dark",
+        "light"
+      ],
+      "providerId": "",
+      "deepLink": {
+        "host": "appearance",
+        "path": ""
+      },
+      "argumentSchema": {}
+    },
+    {
+      "id": "oobe.privacy",
+      "section": "Personal",
+      "title": "Privacy",
+      "description": "What this computer collects, which is nothing it does not tell you about.",
+      "keywords": [
+        "privacy",
+        "telemetry",
+        "data",
+        "location"
+      ],
+      "providerId": "",
+      "deepLink": {
+        "host": "privacy",
+        "path": ""
+      },
+      "argumentSchema": {}
+    },
+    {
+      "id": "oobe.migration",
+      "section": "Personal",
+      "title": "Bring your files",
+      "description": "Copy documents, pictures, and downloads from an existing Windows installation.",
+      "keywords": [
+        "migration",
+        "windows",
+        "import",
+        "files",
+        "transfer"
+      ],
+      "providerId": "files.provider",
+      "deepLink": {
+        "host": "migration",
+        "path": ""
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "oobe.recovery",
+      "section": "Safety",
+      "title": "Backup and recovery",
+      "description": "Where this computer can roll back to if an update goes wrong.",
+      "keywords": [
+        "backup",
+        "restore",
+        "recovery",
+        "snapshot",
+        "rollback"
+      ],
+      "providerId": "recovery.provider",
+      "deepLink": {
+        "host": "recovery",
+        "path": ""
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
+      "id": "oobe.finish",
+      "section": "Safety",
+      "title": "You are ready",
+      "description": "What changed, and where to find everything from here.",
+      "keywords": [
+        "finish",
+        "done",
+        "ready",
+        "tour"
+      ],
+      "providerId": "",
+      "deepLink": {
+        "host": "finish",
+        "path": ""
+      },
+      "argumentSchema": {}
+    }
+  ]
+}
