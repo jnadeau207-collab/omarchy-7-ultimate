@@ -7,6 +7,10 @@ Rectangle {
   id: root
   required property var record
   property bool selected: false
+  property bool trashable: false
+  property bool trashBusy: false
+
+  signal trashRequested()
 
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Style.space(28)
@@ -62,6 +66,17 @@ Rectangle {
         text: String(root.record.status || "unknown").toUpperCase()
         tone: String(root.record.tone || "neutral")
         Layout.alignment: Qt.AlignTop
+      }
+
+      Ui.Button {
+        visible: root.trashable
+        text: "Move to Trash"
+        focusable: true
+        bordered: true
+        enabled: !root.trashBusy
+        accessibleDescription: "Move " + String(root.record.title || "this entry") + " to Trash through files.provider entry.trash"
+        Layout.alignment: Qt.AlignTop
+        onClicked: root.trashRequested()
       }
     }
 

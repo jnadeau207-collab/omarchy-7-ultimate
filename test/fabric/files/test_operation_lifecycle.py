@@ -57,8 +57,8 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             "entry.trash",
             {"entryId": "files.entry.project"},
             lambda state: self.assertEqual(
-                {item["locationId"] for item in state["entries"] if item["id"] in {"files.entry.project", "files.entry.readme"}},
-                {"files.location.trash"},
+                (state["locationId"], state["parentRelativePath"], "Project" in state["names"]),
+                ("files.location.desktop", "", False),
             ),
         )
         await self.exercise(
@@ -76,7 +76,9 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
         provider = files.build_fake_provider(clone_workspace())
         trash_plan = await provider.preflight("entry.trash", {"entryId": "files.entry.project"}, principal())
         trashed = await provider.execute("entry.trash", trash_plan["normalizedArguments"], trash_plan["stateRevision"])
-        selected = next(item for item in trashed["state"]["value"]["entries"] if item["id"] == "files.entry.project")
+        self.assertNotIn("Project", trashed["state"]["value"]["names"])
+        workspace = await provider.read("inspect", {})
+        selected = next(item for item in workspace["state"]["entries"] if item["id"] == "files.entry.project")
         self.assertEqual(selected["trash"], {
             "originalLocationId": "files.location.desktop",
             "originalParentId": None,
