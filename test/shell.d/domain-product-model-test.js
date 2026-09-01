@@ -172,10 +172,10 @@ const thisPcResult = {
     state: {
       schemaVersion: 'v0', workspaceId: 'files.workspace.primary',
       locations: [
-        { id: 'files.location.this-pc', kind: 'this-pc', label: 'This PC', state: 'available', writable: false, rootToken: revA, reason: null },
-        { id: 'files.location.home', kind: 'home', label: 'Home', state: 'available', writable: true, rootToken: revA, reason: null },
-        { id: 'files.location.desktop', kind: 'desktop', label: 'Desktop', state: 'available', writable: true, rootToken: revA, reason: null },
-        { id: 'files.location.pictures', kind: 'pictures', label: 'Pictures', state: 'available', writable: true, rootToken: revA, reason: null }
+        { id: 'files.location.this-pc', kind: 'this-pc', label: 'This PC', state: 'available', writable: false, rootDigest: revA, reason: null },
+        { id: 'files.location.home', kind: 'home', label: 'Home', state: 'available', writable: true, rootDigest: revA, reason: null },
+        { id: 'files.location.desktop', kind: 'desktop', label: 'Desktop', state: 'available', writable: true, rootDigest: revA, reason: null },
+        { id: 'files.location.pictures', kind: 'pictures', label: 'Pictures', state: 'available', writable: true, rootDigest: revA, reason: null }
       ],
       entries: [
         { id: 'files.entry.bashrc', locationId: 'files.location.home', parentId: null, name: '.bashrc', relativePath: '.bashrc', kind: 'file', sizeBytes: 12, modifiedNs: 1, mimeType: 'text/plain', hidden: true, writable: true, identity: revB, symlinkTargetState: null, trash: null },
