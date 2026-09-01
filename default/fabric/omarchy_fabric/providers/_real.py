@@ -31,8 +31,8 @@ class ReadOnlyProbeBackend:
             return BackendSnapshot(False, False, (), reason)
         reason = FabricError(
             f"{self.domain}.operation-read-only",
-            f"{self.domain.title()} mutations are not yet authorized",
-            "The real leaf exposes trusted inventory only until central durable operation wiring authorizes apply.",
+            f"{self.domain.title()} changes are not available yet",
+            "This page can read the current state. The controls that would change it are not connected yet.",
             retryable=True,
             recovery_actions=("operation.integration-required",),
         )
@@ -47,7 +47,7 @@ class ReadOnlyProbeBackend:
         raise FabricError(
             f"{self.domain}.operation-unavailable",
             f"{self.domain.title()} operation is unavailable",
-            "The read-only real backend never mutates host state.",
+            "This page only reads the current state; it never changes the computer.",
             detail=resource_id,
             retryable=True,
             recovery_actions=("operation.integration-required",),
