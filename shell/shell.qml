@@ -40,6 +40,27 @@ ShellRoot {
   property bool summonedRtl: false
   property bool summonedPseudoLocale: false
 
+  // Settings, Files, Agent Center, Software, and Compatibility are separate
+  // processes, so they cannot read the properties above. Publish both flags to
+  // one state file that ProductAppHost watches; the design system then covers
+  // the product windows, not just shell chrome.
+  FileView {
+    id: presentationFile
+    path: shell.home + "/.local/state/omarchy/ultimate/presentation.json"
+    printErrors: false
+  }
+
+  function publishPresentation() {
+    presentationFile.setText(JSON.stringify({
+      rtl: shell.summonedRtl,
+      pseudoLocale: shell.summonedPseudoLocale
+    }) + "
+")
+  }
+
+  onSummonedRtlChanged: shell.publishPresentation()
+  onSummonedPseudoLocaleChanged: shell.publishPresentation()
+
   // The omarchy-shell host is the long-running entry point. Plugins live in
   // sibling directories under plugins/. OMARCHY_PATH is provided by the uwsm
   // session environment and is the single source of truth for this checkout.

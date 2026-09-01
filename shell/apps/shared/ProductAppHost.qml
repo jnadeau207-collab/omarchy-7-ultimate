@@ -28,9 +28,33 @@ ShellRoot {
   property string placementState: "automatic"
   property var fabricPrincipal: null
 
+  // Shell chrome takes RTL and pseudo-locale from a Start summon payload. A
+  // product window is its own process, so it reads the same two flags from the
+  // state file the shell publishes them to.
+  property bool presentationRtl: false
+  property bool presentationPseudoLocale: false
+
+  function applyPresentation(raw) {
+    var parsed = ({})
+    try { parsed = JSON.parse(String(raw || "{}")) } catch (e) { parsed = ({}) }
+    root.presentationRtl = parsed.rtl === true
+    root.presentationPseudoLocale = parsed.pseudoLocale === true
+  }
+
+  FileView {
+    path: Quickshell.env("HOME") + "/.local/state/omarchy/ultimate/presentation.json"
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.applyPresentation(text())
+    onFileChanged: reload()
+    onLoadFailed: root.applyPresentation("")
+  }
+
   SemanticProfile {
     id: chromeProfile
     profileId: "product"
+    rtl: root.presentationRtl
+    pseudoLocale: root.presentationPseudoLocale
   }
   readonly property var productProfile: chromeProfile
 
