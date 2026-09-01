@@ -792,9 +792,9 @@
         "input.keyboard-layout.set"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": ""
+        "path": "Settings > Input"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior locale and layout and offer undo.",
@@ -1979,9 +1979,9 @@
         "input.keyboard-layout.set"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": ""
+        "path": "Settings > Input"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the prior layout.",
