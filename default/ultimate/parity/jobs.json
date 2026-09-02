@@ -124,7 +124,7 @@
       "claim": "prototype",
       "capabilityIds": [
         "files.this-pc.open",
-        "files.folder.create",
+        "files.directory.create",
         "files.entry.rename",
         "files.copy",
         "files.properties.read"
@@ -1373,7 +1373,7 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
-        "files.folder.create"
+        "files.directory.create"
       ],
       "humanRoute": {
         "status": "visible",

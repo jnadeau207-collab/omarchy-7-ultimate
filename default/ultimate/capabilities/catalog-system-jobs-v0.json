@@ -4865,12 +4865,12 @@
       }
     },
     {
-      "id": "files.folder.create",
+      "id": "files.directory.create",
       "version": "v0",
       "provider": {
         "id": "files.provider",
         "version": "v0",
-        "state": "legacy-direct"
+        "state": "present"
       },
       "kind": "writer",
       "effects": [
@@ -4945,15 +4945,15 @@
       "agentCenterLabel": "Create a folder",
       "proofIds": {
         "acceptance": [
-          "proof.capability.files-folder-create.tree-audit"
+          "proof.capability.files-directory-create.tree-audit"
         ],
         "parity": [
           "proof.parity.tree-audit"
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-folder-create",
+        "file": "shell/apps/ultimate-files/FilesApplication.qml",
+        "symbol": "createFolder",
         "brokerVerb": null
       }
     },
