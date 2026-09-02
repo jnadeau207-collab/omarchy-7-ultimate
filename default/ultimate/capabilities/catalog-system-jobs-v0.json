@@ -1305,10 +1305,10 @@
       }
     },
     {
-      "id": "apps.defaults.set",
+      "id": "defaults.protocol.set",
       "version": "v0",
       "provider": {
-        "id": "apps.provider",
+        "id": "defaults.provider",
         "version": "v0",
         "state": "present"
       },
@@ -1345,7 +1345,7 @@
         "claim": "partial"
       },
       "resourceScopes": [
-        "apps.resource"
+        "defaults.resource"
       ],
       "consent": {
         "mode": "implicit",
@@ -1357,7 +1357,7 @@
       },
       "concurrency": {
         "mode": "resource-serialized",
-        "scope": "apps.resource"
+        "scope": "defaults.resource"
       },
       "cancellation": {
         "mode": "before-apply",
@@ -1385,15 +1385,15 @@
       "agentCenterLabel": "Default apps",
       "proofIds": {
         "acceptance": [
-          "proof.capability.apps-defaults-set.tree-audit"
+          "proof.capability.defaults-protocol-set.tree-audit"
         ],
         "parity": [
           "proof.parity.tree-audit"
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:apps.defaults.set",
+        "file": "shell/apps/ultimate-settings/SettingsApplication.qml",
+        "symbol": "applyDefaultBrowser",
         "brokerVerb": null
       }
     },
