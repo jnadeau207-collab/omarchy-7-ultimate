@@ -702,6 +702,14 @@ if "57726ecc40d8" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #36 Administration inspect catalog tip for this PARITY batch")
 if "honest-unavailable as product" not in gaps or "do not flip system-job writers to visible" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep this PARITY Admin inspect batch honest-unavailable as product")
+if "85281460af3d" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #37 tip parent for the 06 Settings/Admin media honesty scrub")
+if "06-settings-admin-media" not in gaps or "defaults.protocol.set" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the 06 Settings/Admin media honesty close")
+if "Phase 5/9 exit criteria still open" not in gaps or "inspect inventory ≠ product MMC present" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Phase 5/9 exit open and inspect inventory not product MMC")
+if "apps.defaults.set" not in gaps or "leftover `apps.defaults.set`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name leftover apps.defaults.set as closed invent")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -784,6 +792,110 @@ for writer_id, (status, surface) in writer_planned.items():
         raise SystemExit(f"{writer_id} walked claim to present")
 if "METAL_HEAD OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep METAL_HEAD OPEN")
+
+gt06 = (root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.md").read_text(encoding="utf-8")
+gt06_json = json.loads((root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.json").read_text(encoding="utf-8"))
+gt06_json_text = json.dumps(gt06_json)
+if "apps.defaults.set" in gt06 or "apps.defaults.set" in gt06_json_text:
+    raise SystemExit("06-settings-admin-media still names leftover apps.defaults.set as the live Apps writer")
+if "defaults.protocol.set" not in gt06 or "browser LIVE only" not in gt06:
+    raise SystemExit("06-settings-admin-media does not name defaults.protocol.set as browser LIVE only")
+if "files.associations.set" not in gt06 or "missing/planned MIME" not in gt06:
+    raise SystemExit("06-settings-admin-media dropped files.associations.set missing/planned MIME")
+if "writers Phase 5" in gt06 or "Phase 5 writers remain" in gt06 or "Phase 9 Administration not started" in gt06:
+    raise SystemExit("06-settings-admin-media still blankets a Phase 5/9 fence")
+if "Phase 5 exit criteria still open" not in gt06 or "Phase 9 exit criteria still open" not in gt06:
+    raise SystemExit("06-settings-admin-media must keep Phase 5/9 exit criteria still open")
+if "live hosts today" not in gt06.lower() and "Live Administration inspect hosts today" not in gt06:
+    raise SystemExit("06-settings-admin-media must name live hosts today")
+admin_hosts = (
+    "Administration > Processes",
+    "Administration > Services",
+    "Administration > Device Manager",
+    "Administration > Storage",
+    "Administration > Printers and scanners",
+    "Administration > Backup",
+    "Administration > Scheduled tasks",
+    "Administration > Troubleshooting",
+    "Administration > Firewall",
+    "Administration > User accounts",
+)
+for host in admin_hosts:
+    if host not in gt06:
+        raise SystemExit(f"06-settings-admin-media does not name live host {host}")
+if "process.inspect" not in gt06 or "unauthorized End Task" not in gt06:
+    raise SystemExit("06-settings-admin-media must name process.inspect + unauthorized End Task path")
+if "inspect inventory" not in gt06.lower() or "product MMC present" not in gt06:
+    raise SystemExit("06-settings-admin-media must keep inspect inventory ≠ product MMC present")
+if "no Task Manager present" not in gt06:
+    raise SystemExit("06-settings-admin-media must refuse Task Manager present")
+if "no Device Manager present" not in gt06:
+    raise SystemExit("06-settings-admin-media must refuse Device Manager present")
+if "no Event Viewer present" not in gt06:
+    raise SystemExit("06-settings-admin-media must refuse Event Viewer present")
+if "no start/stop service LIVE" not in gt06:
+    raise SystemExit("06-settings-admin-media must refuse start/stop service LIVE")
+if "firewall.manage" not in gt06 or "backup.manage" not in gt06:
+    raise SystemExit("06-settings-admin-media must keep firewall.manage / backup.manage not LIVE")
+if "Accessibility panel missing as product" not in gt06:
+    raise SystemExit("06-settings-admin-media must keep Accessibility panel missing as product")
+if "System information aggregate missing" not in gt06 and "System Information remains missing as product" not in gt06:
+    raise SystemExit("06-settings-admin-media must keep System information aggregate missing")
+if "Software Center missing as product" not in gt06:
+    raise SystemExit("06-settings-admin-media must keep Software Center missing as product")
+if "Settings Power LIVE refused" not in gt06:
+    raise SystemExit("06-settings-admin-media must keep Settings Power LIVE refused")
+if "Restore LIVE" in gt06 and "Do not invent" not in gaps:
+    raise SystemExit("06-settings-admin-media invented Restore LIVE")
+if "events.subscribe" in gt06:
+    raise SystemExit("06-settings-admin-media invented events.subscribe")
+if "METAL_HEAD closed" in gt06:
+    raise SystemExit("06-settings-admin-media invented METAL_HEAD closed")
+honesty = gt06_json.get("product_honesty") or {}
+if honesty.get("defaults_writer") != "defaults.protocol.set":
+    raise SystemExit(f"06 JSON defaults_writer is {honesty.get('defaults_writer')}")
+if honesty.get("defaults_scope") != "browser LIVE only":
+    raise SystemExit(f"06 JSON defaults_scope is {honesty.get('defaults_scope')}")
+if honesty.get("files_associations") != "missing/planned MIME":
+    raise SystemExit(f"06 JSON files_associations is {honesty.get('files_associations')}")
+if honesty.get("settings_power_live") != "refused":
+    raise SystemExit(f"06 JSON settings_power_live is {honesty.get('settings_power_live')}")
+if honesty.get("accessibility_panel") != "missing":
+    raise SystemExit(f"06 JSON accessibility_panel is {honesty.get('accessibility_panel')}")
+if honesty.get("system_information_aggregate") != "missing":
+    raise SystemExit(f"06 JSON system_information_aggregate is {honesty.get('system_information_aggregate')}")
+if honesty.get("software_center") != "missing":
+    raise SystemExit(f"06 JSON software_center is {honesty.get('software_center')}")
+if honesty.get("inspect_inventory_is_product_mmc") is not False:
+    raise SystemExit("06 JSON must keep inspect inventory not product MMC")
+if honesty.get("phase_5_exit") != "still open" or honesty.get("phase_9_exit") != "still open":
+    raise SystemExit("06 JSON must keep Phase 5/9 exit still open")
+if honesty.get("product_status") != "REJECTED":
+    raise SystemExit("06 JSON product_status walked off REJECTED")
+json_hosts = {row.get("path"): row.get("capability") for row in honesty.get("live_admin_inspect_hosts") or []}
+expected_hosts = {
+    "Administration > Processes": "process.inspect",
+    "Administration > Services": "service.inspect",
+    "Administration > Device Manager": "device.inspect",
+    "Administration > Storage": "storage.inspect",
+    "Administration > Printers and scanners": "printer.inspect",
+    "Administration > Backup": "backup.inspect",
+    "Administration > Scheduled tasks": "schedule.inspect",
+    "Administration > Troubleshooting": "diagnostics.inspect",
+    "Administration > Firewall": "firewall.inspect",
+    "Administration > User accounts": "account.inspect",
+}
+if json_hosts != expected_hosts:
+    raise SystemExit(f"06 JSON live_admin_inspect_hosts walked off: {json_hosts}")
+for row in (gt06_json.get("interaction_tables") or {}).get("default_programs") or []:
+    if "apps.defaults.set" in str(row.get("omarchy") or ""):
+        raise SystemExit(f"06 JSON default_programs still names apps.defaults.set: {row}")
+    if row.get("job") == "Change default browser" and "defaults.protocol.set" not in str(row.get("omarchy") or ""):
+        raise SystemExit(f"06 JSON default browser row does not name defaults.protocol.set: {row}")
+for row in (gt06_json.get("interaction_tables") or {}).get("administration") or []:
+    mapped = str(row.get("omarchy") or "")
+    if mapped.startswith("Phase 9") and "Administration >" not in mapped:
+        raise SystemExit(f"06 JSON administration still treats Phase 9 as an empty MMC noun: {row}")
 
 if "files.folder.create" in by_id:
     raise SystemExit("files.folder.create remains as a catalog invent")
