@@ -114,7 +114,7 @@ class AdministrationFakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(preflight["changed"])
                 self.assertEqual(provider.backend.write_count, 0)
                 if scoped_operation(case.module):
-                    self.assertNotEqual(preflight["resource"]["kind"], case.module.RESOURCE_KIND)
+                    self.assertEqual(preflight["resource"]["kind"], case.module.SPEC.operation_resource_kind)
                     self.assertEqual(preflight["currentState"]["resourceId"], preflight["resource"]["id"])
                     continue
                 applied = await provider.apply(case.module.OPERATION_ACTION, case.arguments, preflight["stateRevision"])
