@@ -783,6 +783,22 @@ if "events.subscribe present" in gaps:
     raise SystemExit("fleet-doctrine-gaps invented events.subscribe present")
 if "hardware-key subscription LIVE" in gaps:
     raise SystemExit("fleet-doctrine-gaps invented hardware-key subscription LIVE")
+if "bb2e71d9625f" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #47 tip parent for the Task Manager present / End Task LIVE residual")
+if "Task Manager present / End Task LIVE residual OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry Task Manager present / End Task LIVE residual OPEN")
+if "Task Manager present / End Task LIVE residual OPEN after PR #47" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the Task Manager leftover after PR #47")
+if "Superbar > Task Manager present" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented Superbar > Task Manager present")
+if "Task Manager product-complete" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented Task Manager product-complete")
+if "Task Manager leftover CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the Task Manager present / End Task LIVE residual")
+if "End Task LIVE residual CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the End Task LIVE residual")
+if "End Task LIVE CONTROL" in gaps and "no End Task LIVE CONTROL" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented End Task LIVE CONTROL")
 
 def parity_notes(label):
     prefix = f"| {label} |"
