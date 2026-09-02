@@ -694,6 +694,94 @@ if "honest-unavailable as Device Manager / Services / product" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Administration inspect readers honest-unavailable as product")
 if "planned as Administration > Devices" in parity_md or "planned as Administration > Accounts" in parity_md:
     raise SystemExit("PARITY still underclaims Administration inspect readers as planned Admin paths")
+if "No Firewall Settings surface" in parity_md:
+    raise SystemExit("PARITY Firewall row still underclaims Administration > Firewall as absent")
+if "No Backup and Restore UI" in parity_md:
+    raise SystemExit("PARITY Backup & Restore row still underclaims Administration > Backup as absent")
+if "57726ecc40d8" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #36 Administration inspect catalog tip for this PARITY batch")
+if "honest-unavailable as product" not in gaps or "do not flip system-job writers to visible" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep this PARITY Admin inspect batch honest-unavailable as product")
+
+def parity_notes(label):
+    prefix = f"| {label} |"
+    for line in parity_md.splitlines():
+        if line.startswith(prefix):
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if len(cells) < 3:
+                raise SystemExit(f"PARITY {label} row is malformed: {line}")
+            return cells[1], cells[2]
+    raise SystemExit(f"PARITY missing {label} row")
+
+parity_hosts = {
+    "Firewall": ("plumbing", "Administration > Firewall", "firewall.inspect", "Firewall Settings"),
+    "Backup & Restore": ("plumbing", "Administration > Backup", "backup.inspect", "Backup and Restore"),
+    "Services": ("missing", "Administration > Services", "service.inspect", "Services"),
+    "Task Scheduler": ("missing", "Administration > Scheduled tasks", "schedule.inspect", "Task Scheduler"),
+    "Disk Management": ("missing", "Administration > Storage", "storage.inspect", "Disk Management"),
+    "Devices & Printers": ("missing / prototype", "Administration > Printers and scanners", "printer.inspect", "Devices and Printers"),
+}
+for label, (status, host, capability, product) in parity_hosts.items():
+    row_status, notes = parity_notes(label)
+    if row_status != status:
+        raise SystemExit(f"PARITY {label} status walked off {status}: {row_status}")
+    if status == "present" or row_status == "present":
+        raise SystemExit(f"PARITY {label} was flipped to present")
+    if not notes:
+        raise SystemExit(f"PARITY {label} still underclaims with an empty notes cell")
+    if host not in notes:
+        raise SystemExit(f"PARITY {label} does not name {host}")
+    if capability not in notes:
+        raise SystemExit(f"PARITY {label} does not name {capability}")
+    if "honest-unavailable" not in notes:
+        raise SystemExit(f"PARITY {label} does not keep inspect honest-unavailable as product")
+    if f"as {product} product" not in notes:
+        raise SystemExit(f"PARITY {label} does not keep {product} honest-unavailable as product")
+    if "this row is not present" not in notes:
+        raise SystemExit(f"PARITY {label} dropped the not-present close")
+    if label == "Devices & Printers" and ("bluetooth.inspect" not in notes or "Settings → Bluetooth" not in notes):
+        raise SystemExit("PARITY Devices & Printers dropped the Bluetooth Settings story")
+
+event_status, event_notes = parity_notes("Event / history")
+if event_status == "present":
+    raise SystemExit("PARITY Event / history was flipped to Event Viewer present")
+if "Not Event Viewer" not in event_notes:
+    raise SystemExit("PARITY Event / history must stay Not Event Viewer")
+if "Administration > Troubleshooting" in event_notes:
+    raise SystemExit("PARITY Event / history invented Administration Troubleshooting as Event Viewer")
+
+job_claims = {
+    "parity.firewall": "plumbing",
+    "parity.backup-restore": "plumbing",
+    "parity.services": "missing",
+    "parity.task-scheduler": "missing",
+    "parity.disk-management": "missing",
+    "parity.devices-printers": "missing",
+}
+for job_id, expected_claim in job_claims.items():
+    job = next(item for item in jobs_lock["jobs"] if item["id"] == job_id)
+    if job.get("claim") != expected_claim:
+        raise SystemExit(f"{job_id} claim walked off {expected_claim}: {job.get('claim')}")
+    if job.get("claim") == "present":
+        raise SystemExit(f"{job_id} was flipped to present")
+    if job["humanRoute"].get("status") == "visible":
+        raise SystemExit(f"{job_id} invents a visible product job from Admin inspect: {job.get('humanRoute')}")
+
+writer_planned = {
+    "firewall.manage": ("planned", "Settings"),
+    "backup.manage": ("planned", "Backup and Restore"),
+}
+for writer_id, (status, surface) in writer_planned.items():
+    writer = by_id[writer_id]
+    route = writer["humanRoute"]
+    if route.get("status") != status:
+        raise SystemExit(f"{writer_id} humanRoute.status walked off {status}: {route}")
+    if route.get("status") == "visible":
+        raise SystemExit(f"{writer_id} was flipped to visible")
+    if route.get("surface") != surface:
+        raise SystemExit(f"{writer_id} invents a mutation surface: {route}")
+    if writer.get("availability", {}).get("claim") == "present":
+        raise SystemExit(f"{writer_id} walked claim to present")
 if "METAL_HEAD OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep METAL_HEAD OPEN")
 
