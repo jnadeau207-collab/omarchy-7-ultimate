@@ -26,9 +26,9 @@ Item {
   }
 
   function openItem(item) {
-    var command = String(item && item.command || "")
-    if (command && root.appLibrary && typeof root.appLibrary.launchCommand === "function") {
-      Util.execDetached("uwsm-app -- " + root.appLibrary.launchCommand(command))
+    var argv = Util.resolveLaunchArgv(item && item.command, root.omarchyPath)
+    if (argv.length > 0) {
+      Util.execArgv(["uwsm-app", "--"].concat(argv))
       return
     }
     var path = String(item && item.path || "")
