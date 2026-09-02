@@ -363,6 +363,25 @@ if " yet" in unavailable or re.search(r"phase 5", unavailable, re.I) or re.searc
     raise SystemExit("declaredOpsHonesty still invents forthcoming writers with yet / Phase 5 / remain Phase")
 if "no preflight, approval, or execution control" not in unavailable:
     raise SystemExit("declaredOpsHonesty must keep unavailable / not-exposed honesty")
+if "not available yet" in model or " yet." in model:
+    raise SystemExit("SettingsModel.js still invents forthcoming writers with not available yet")
+footer_fn = re.search(r"function authorityFooter\(\) \{[\s\S]*?\n\}", model)
+if not footer_fn:
+    raise SystemExit("authorityFooter missing")
+footer = footer_fn.group(0)
+if "F5" not in footer or "Retry" not in footer or "focused" not in footer:
+    raise SystemExit("authorityFooter must name F5 / Retry for focused out-of-band stale")
+if "re-read when shown" not in footer or "after local writers" not in footer:
+    raise SystemExit("authorityFooter must name surface-visible and post-writer reread")
+if "events.subscribe" in footer:
+    raise SystemExit("authorityFooter invents events.subscribe")
+for sibling, label in (
+    ("shell/apps/ultimate-administration/AdministrationModel.js", "Administration"),
+    ("shell/apps/ultimate-files/FilesModel.js", "Files"),
+):
+    sibling_text = (root / sibling).read_text(encoding="utf-8")
+    if "not available yet" in sibling_text or "domain yet" in sibling_text:
+        raise SystemExit(f"{label} still invents forthcoming writers with not available yet / domain yet")
 gaps = (root / "plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md").read_text(encoding="utf-8")
 phase5_row = None
 for line in gaps.splitlines():
