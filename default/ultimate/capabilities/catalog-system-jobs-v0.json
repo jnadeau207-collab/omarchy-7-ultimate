@@ -1398,6 +1398,99 @@
       }
     },
     {
+      "id": "defaults.mime.set",
+      "version": "v0",
+      "provider": {
+        "id": "defaults.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "defaults.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "defaults.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Settings",
+        "label": "Choose file associations",
+        "path": ""
+      },
+      "agentCenterLabel": "Choose file associations",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.defaults-mime-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
+        "symbol": "apply_defaults_mime_set",
+        "brokerVerb": null
+      }
+    },
+    {
       "id": "accounts.manage",
       "version": "v0",
       "provider": {

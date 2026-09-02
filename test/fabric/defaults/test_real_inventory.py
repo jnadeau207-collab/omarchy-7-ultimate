@@ -7,6 +7,7 @@ from pathlib import Path
 
 from helper import ROOT, principal
 
+from omarchy_fabric.helpers import session_apply as session_apply
 from omarchy_fabric.models import FabricError
 from omarchy_fabric.providers._probe import ProbeOutput
 from omarchy_fabric.providers.defaults import provider as defaults
@@ -61,6 +62,38 @@ class RealDefaultsInventoryTests(unittest.IsolatedAsyncioTestCase):
                 await provider.preflight("mime.set", {"mimeType": "text/plain", "appId": app["id"]}, principal())
             self.assertEqual(unavailable.exception.code, "defaults.operation-unavailable")
 
+    async def test_session_operable_mime_set_preflight_is_reachable_and_provider_still_refuses_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            applications = home / ".local" / "share" / "applications"
+            applications.mkdir(parents=True)
+            (applications / "test-editor.desktop").write_text(
+                "[Desktop Entry]\nType=Application\nName=Test Editor\nMimeType=text/plain;application/json;\n"
+            )
+            values = {
+                defaults.QUERY_COMMANDS[("mime", "text/plain")].argv: "test-editor.desktop\n",
+            }
+            runner = FixtureRunner(values)
+            config = ROOT / "default" / "ultimate" / "files" / "default-associations-v0.json"
+            provider = defaults.build_provider(
+                home=home,
+                config_path=config,
+                runner=runner,
+                session_operable=True,
+            )
+            inventory = await provider.read("inspect", {})
+            self.assertTrue(inventory["availability"]["operation"])
+            app = next(item for item in inventory["state"]["applications"] if item["desktopId"] == "test-editor.desktop")
+            plan = await provider.preflight("mime.set", {"mimeType": "text/plain", "appId": app["id"]}, principal())
+            self.assertEqual(plan["capability"], "defaults.mime.set")
+            self.assertEqual(plan["risk"], "low")
+            self.assertEqual(plan["guards"]["executor"], {"mode": "typed-helper", "commandId": "defaults.apply-v0", "shell": False})
+            self.assertEqual(plan["proposedState"]["value"]["key"], "text/plain")
+            self.assertEqual(plan["proposedState"]["value"]["defaultAppId"], app["id"])
+            with self.assertRaises(FabricError) as refused:
+                await provider.execute("mime.set", plan["normalizedArguments"], plan["stateRevision"])
+            self.assertEqual(refused.exception.code, "defaults.operation-unavailable")
+
     async def test_missing_and_malformed_fixed_probes_are_explicit_degradation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
@@ -92,6 +125,21 @@ class RealDefaultsInventoryTests(unittest.IsolatedAsyncioTestCase):
                 path.stat(),
             )
             self.assertEqual(parsed, {"hidden": True})
+
+    def test_mime_helper_uses_fixed_xdg_mime_default_argv(self) -> None:
+        calls = []
+
+        def run(argv, **kwargs):
+            calls.append((tuple(argv), kwargs))
+            return type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+
+        session_apply.apply_default_mime("text/plain", "test-editor.desktop", run=run)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], ("/usr/bin/xdg-mime", "default", "test-editor.desktop", "text/plain"))
+        self.assertEqual(session_apply.require_mime_type({"mimeType": "text/plain"}), "text/plain")
+        with self.assertRaises(session_apply.ApplyError) as unsafe:
+            session_apply.require_mime_type({"mimeType": "text/plain; rm -rf /"})
+        self.assertEqual(unsafe.exception.code, "payload.invalid")
 
     def test_provider_rejects_symlinked_code_owned_config(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

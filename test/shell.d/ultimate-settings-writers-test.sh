@@ -131,6 +131,9 @@ grep -Fq 'return record && record.writable ? record : null' "$application" ||
 if grep -Eq 'xdg-mime|xdg-settings' "$application"; then
   fail "Settings assembles a defaults shell string instead of the typed verb"
 fi
+if grep -Fq 'action: "mime.set"' "$application"; then
+  fail "Settings does not offer mime.set LIVE CONTROL"
+fi
 pass "Settings drives protocol.set through the typed operation plane only"
 
 run_node_test <<'JS'
@@ -205,6 +208,9 @@ assertEqual(Model.normalizeAssociation({ id: 'defaults.association.c', kind: 'pr
 
 const appsQuery = Model.queryForRoute('settings.apps.overview')
 assert(appsQuery.coverage.indexOf('protocol.set') >= 0, 'the apps coverage note names the settable verb')
+assert(appsQuery.coverage.indexOf('defaults.inspect') >= 0, 'the apps coverage note names MIME inspect inventory')
+assert(appsQuery.coverage.indexOf('mime.set') >= 0, 'the apps coverage note names the MIME write plane')
+assert(appsQuery.coverage.indexOf('does not offer MIME LIVE CONTROL') >= 0, 'the apps coverage note refuses MIME LIVE CONTROL')
 assert(appsQuery.coverage.indexOf('startup, and background application inventory remain unavailable') >= 0, 'the apps coverage note still refuses what Settings cannot do')
 
 function radioRecord(state) {

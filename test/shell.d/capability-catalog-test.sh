@@ -478,6 +478,23 @@ if protocol_set["humanRoute"].get("path") != "Settings > Apps":
     raise SystemExit(f"defaults.protocol.set route is {protocol_set.get('humanRoute')}")
 if protocol_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
     raise SystemExit(f"defaults.protocol.set source is {protocol_set.get('source')}")
+mime_set = by_id["defaults.mime.set"]
+if mime_set.get("provider", {}).get("id") != "defaults.provider":
+    raise SystemExit(f"defaults.mime.set provider is {mime_set.get('provider')}")
+if mime_set.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"defaults.mime.set provider state is {mime_set.get('provider')}")
+if mime_set.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"defaults.mime.set claim is {mime_set.get('availability')}")
+if mime_set.get("availability", {}).get("claim") == "present":
+    raise SystemExit("defaults.mime.set must not claim present")
+if mime_set["humanRoute"].get("status") != "planned":
+    raise SystemExit(f"defaults.mime.set invents a Settings MIME setter route: {mime_set.get('humanRoute')}")
+if mime_set["humanRoute"].get("path"):
+    raise SystemExit(f"defaults.mime.set invents a Settings MIME setter path: {mime_set.get('humanRoute')}")
+if mime_set.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+    raise SystemExit(f"defaults.mime.set source is {mime_set.get('source')}")
+if mime_set.get("source", {}).get("symbol") != "apply_defaults_mime_set":
+    raise SystemExit(f"defaults.mime.set source is {mime_set.get('source')}")
 for row in writers["capabilities"]:
     provider = row.get("provider") or {}
     if provider.get("id") == "apps.provider" and provider.get("state") == "present":
@@ -498,6 +515,10 @@ if parity_file_associations.get("claim") == "present":
     raise SystemExit(f"parity.file-associations was flipped to present: {parity_file_associations}")
 if "apps.defaults.set" in (parity_file_associations.get("capabilityIds") or []):
     raise SystemExit("parity.file-associations still names apps.defaults.set")
+if "defaults.mime.set" not in (parity_file_associations.get("capabilityIds") or []):
+    raise SystemExit("parity.file-associations does not name defaults.mime.set")
+if parity_file_associations.get("humanRoute", {}).get("status") != "planned":
+    raise SystemExit(f"parity.file-associations walked off planned: {parity_file_associations.get('humanRoute')}")
 native19 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.19")
 if native19.get("claim") == "present":
     raise SystemExit(f"windows-native.19 was flipped to present: {native19}")
@@ -841,6 +862,12 @@ if "MIME association UI residual CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the MIME association UI residual")
 if "Default Programs leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the Default Programs leftover")
+if "`defaults.mime.set` write plane is reachable" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the reachable defaults.mime.set write plane")
+if "Settings does not offer MIME LIVE CONTROL" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Settings MIME LIVE CONTROL refused")
+if "defaults.inspect" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name MIME inspect via defaults.inspect")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -880,6 +907,24 @@ for label, (status, host, capability, product) in parity_hosts.items():
         raise SystemExit(f"PARITY {label} dropped the not-present close")
     if label == "Devices & Printers" and ("bluetooth.inspect" not in notes or "Settings → Bluetooth" not in notes):
         raise SystemExit("PARITY Devices & Printers dropped the Bluetooth Settings story")
+
+file_assoc_status, file_assoc_notes = parity_notes("File associations")
+if file_assoc_status != "missing as product":
+    raise SystemExit(f"PARITY File associations status walked off missing as product: {file_assoc_status}")
+if file_assoc_status == "present":
+    raise SystemExit("PARITY File associations was flipped to present")
+if not file_assoc_notes:
+    raise SystemExit("PARITY File associations still underclaims with an empty notes cell")
+if "defaults.inspect" not in file_assoc_notes:
+    raise SystemExit("PARITY File associations does not name defaults.inspect MIME inventory")
+if "defaults.mime.set" not in file_assoc_notes:
+    raise SystemExit("PARITY File associations does not name defaults.mime.set")
+if "Settings does not offer MIME LIVE CONTROL" not in file_assoc_notes:
+    raise SystemExit("PARITY File associations invented or dropped MIME LIVE CONTROL honesty")
+if "files.associations.set" not in file_assoc_notes or "missing/planned MIME" not in file_assoc_notes:
+    raise SystemExit("PARITY File associations dropped files.associations.set missing/planned MIME")
+if "this row is not present" not in file_assoc_notes:
+    raise SystemExit("PARITY File associations dropped the not-present close")
 
 event_status, event_notes = parity_notes("Event / history")
 if event_status == "present":
@@ -1169,6 +1214,8 @@ if honesty.get("defaults_scope") != "browser LIVE only":
     raise SystemExit(f"06 JSON defaults_scope is {honesty.get('defaults_scope')}")
 if honesty.get("files_associations") != "missing/planned MIME":
     raise SystemExit(f"06 JSON files_associations is {honesty.get('files_associations')}")
+if honesty.get("defaults_mime_plane") != "defaults.mime.set write-plane, no Settings LIVE":
+    raise SystemExit(f"06 JSON defaults_mime_plane is {honesty.get('defaults_mime_plane')}")
 if honesty.get("settings_power_live") != "refused":
     raise SystemExit(f"06 JSON settings_power_live is {honesty.get('settings_power_live')}")
 if honesty.get("accessibility_panel") != "missing":
@@ -1450,6 +1497,7 @@ inventory = {
     "display.brightness.set": "partial",
     "input.keyboard-layout.set": "partial",
     "defaults.protocol.set": "partial",
+    "defaults.mime.set": "partial",
     "files.directory.create": "partial",
     "files.entry.trash": "partial",
     "account.inspect": "missing",

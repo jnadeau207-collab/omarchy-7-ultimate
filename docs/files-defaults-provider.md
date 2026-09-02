@@ -39,7 +39,7 @@ The real Defaults adapter reads `.desktop` files through no-follow directory fil
 
 Default queries are a code-owned catalog of immutable `FixedArgvCommand` values for `/usr/bin/xdg-mime query default`. No caller value is appended to argv, no command is interpreted by a shell, and the shipped association catalog must match the code-owned MIME and protocol tuple exactly. Empty, missing, malformed, or dangling query results remain explicit unconfigured, degraded, or dangling association states.
 
-The real adapter deliberately does not call `xdg-mime default`. MIME and protocol mutations remain unavailable until the central durable operation coordinator can authorize and persist the plan and a reviewed typed helper can accept structured input without placing caller data in argv.
+The real adapter deliberately does not call `xdg-mime default`. Its `compare_and_swap` stays mutation-unavailable. Production builtins set `session_operable=True`, so `mime.set` and `protocol.set` preflight are reachable. The durable coordinator applies those plans through the typed `defaults-mime-set` and `defaults-protocol-set` helpers. Settings offers LIVE CONTROL only for the default browser (`protocol.set`). It does not offer MIME LIVE CONTROL.
 
 ## Availability
 
@@ -49,7 +49,7 @@ Availability is a three-state typed value:
 - `degraded` means a trusted partial or read-only snapshot exists, with one or more structured reasons.
 - `unavailable` means no trusted state exists and at least one structured reason explains why.
 
-The production backends are always mutation-unavailable in this tranche. They return trusted read state as degraded with an `operation.integration-required` recovery seam. Missing folders, unsafe roots, malformed recent XML, bounded-inventory truncation, missing `xdg-mime`, and malformed query output are reported independently instead of being hidden by mock data or fallback commands.
+The real Defaults backend still refuses provider-side mutation. Production preflight is session-operable; the helper owns the write. A `session_operable=False` builder stays read-only with an `operation.integration-required` recovery seam. Missing folders, unsafe roots, malformed recent XML, bounded-inventory truncation, missing `xdg-mime`, and malformed query output are reported independently instead of being hidden by mock data or fallback commands.
 
 ## Hermetic lifecycle adapters
 
