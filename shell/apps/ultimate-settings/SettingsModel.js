@@ -145,7 +145,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function isObject(value) {

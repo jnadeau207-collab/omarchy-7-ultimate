@@ -365,6 +365,16 @@ if "no preflight, approval, or execution control" not in unavailable:
     raise SystemExit("declaredOpsHonesty must keep unavailable / not-exposed honesty")
 if "not available yet" in model or " yet." in model:
     raise SystemExit("SettingsModel.js still invents forthcoming writers with not available yet")
+footer_fn = re.search(r"function authorityFooter\(\) \{[\s\S]*?\n\}", model)
+if not footer_fn:
+    raise SystemExit("authorityFooter missing")
+footer = footer_fn.group(0)
+if "F5" not in footer or "Retry" not in footer or "focused" not in footer:
+    raise SystemExit("authorityFooter must name F5 / Retry for focused out-of-band stale")
+if "re-read when shown" not in footer or "after local writers" not in footer:
+    raise SystemExit("authorityFooter must name surface-visible and post-writer reread")
+if "events.subscribe" in footer:
+    raise SystemExit("authorityFooter invents events.subscribe")
 for sibling, label in (
     ("shell/apps/ultimate-administration/AdministrationModel.js", "Administration"),
     ("shell/apps/ultimate-files/FilesModel.js", "Files"),

@@ -1,6 +1,6 @@
 # State-domain writes — what landed and what blocks
 
-SHA `6ac3b401` on `work` (session that landed files writes). Honesty addendum 2026-09-02 vs tip `891c2fea`: TASK admission and End Task scoped `{present}` are KEEP. The TASK-unwired / Wall-one “cannot be wired” paragraphs below are rewritten to residual. Do not invent End Task LIVE CONTROL or shell consequential authorize. Product REJECTED.
+SHA `6ac3b401` on `work` (session that landed files writes). Honesty addendum 2026-09-02 vs tip `85e2924a9188`: TASK admission and End Task scoped `{present}` are KEEP. The TASK-unwired / Wall-one “cannot be wired” paragraphs below are rewritten to residual. Do not invent End Task LIVE CONTROL or shell consequential authorize. Settings `authorityFooter()` now names the focused out-of-band stale inspect residual. Residual stays OPEN. Product REJECTED.
 
 Shell gates at the original SHA: 13 of 247 files fail, the identical list that fails at `e3ec490b` before this work. No regression.
 
@@ -111,7 +111,7 @@ Rendering is right. The original defect was that the page read once at load and 
 
 **Closed (Software/Compatibility follow-on).** Software Center and Compatibility Center now listen for the same host `surfaceBecameActive` signal. A thin `refreshWhenSurfaceVisible` wraps the existing `controller.refresh()` they already use for F5/Retry, and skips while offline, catalog-loading, loading, or QML `busy`. No writers, so no `operationBusy`. No `events.subscribe`. No polling daemon. Package LIVE mutation stays uninvented.
 
-**Residual.** A hardware-key or other out-of-band mutation while Settings, Administration, Files, Software, or Compatibility stays focused and already visible still leaves the open page stale until the next surface-visible or local-writer reread (or F5). No pixel leftover or METAL_HEAD claim. Settings badge METAL_HEAD residual stays OPEN. Product REJECTED.
+**Residual.** A hardware-key or other out-of-band mutation while Settings, Administration, Files, Software, or Compatibility stays focused and already visible still leaves the open page stale until the next surface-visible or local-writer reread (or F5). Settings `authorityFooter()` now names that residual: open pages re-read when shown and after local writers; focused out-of-band changes need F5 or Retry; no live hardware-key subscription. Residual stays OPEN. No `events.subscribe`. No pixel leftover or METAL_HEAD claim. Settings badge METAL_HEAD residual stays OPEN. Product REJECTED.
 
 ## What still blocks other domains
 
