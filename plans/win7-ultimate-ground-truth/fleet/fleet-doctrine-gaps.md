@@ -215,7 +215,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
 
 ## 5. Open doctrine MUST_FIX carry (context)
 
-- Files banner still underclaims trash/restore while UI offers them; `HANDOFF_WRITERS` helper-only / next-piece schema-blocker narrative stale vs Files UI.
+- Files banner names New folder and Trash as live writers; Restore stays honest-unavailable (no `.trashinfo` at real preflight). `HANDOFF_WRITERS` helper-only / schema-blocker narrative is stale for `entry.trash` after the v1 directory family widen.
 - Catalog soft invent: `apps.defaults.set` provider.id `apps.provider` vs live `defaults.provider`.
 - `HANDOFF_STATE_DOMAIN_WRITES` still carries TASK-unwired / Wall-one “cannot be wired” paragraphs after TASK admission present.
 - End Task: consequential / `terminationAuthorized=false`; digest label scrape fragile; do not invent Task Manager LIVE kill.
