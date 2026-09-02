@@ -73,7 +73,7 @@ Windowing Gate W0 is Phase 1 of `plans/project-ultimate.md` and is certified onl
 
 ## Win7 ground-truth pointers (honesty only — statuses unchanged)
 
-Concrete acceptance criteria for each job live under `plans/win7-ultimate-ground-truth/` and are indexed by `plans/WIN7_SPEC_INDEX.md`. Full pointer table: `plans/win7-ultimate-ground-truth/_PARITY_ACCEPTANCE_POINTERS.md`.
+Concrete acceptance criteria for each job live under the **FULL CORPUS** in `plans/win7-ultimate-ground-truth/` (`01`–`06` md+json + `fleet/`) and are indexed by `plans/WIN7_SPEC_INDEX.md`. Full pointer table: `plans/win7-ultimate-ground-truth/_PARITY_ACCEPTANCE_POINTERS.md`.
 
 **Caption BINDING LOCK:** restored visual top NC **30** px; `SM_CYCAPTION` **22** is metric band only (never ship a 22 px title bar). See `plans/win7-ultimate-ground-truth/01-window-chrome.md`.
 
