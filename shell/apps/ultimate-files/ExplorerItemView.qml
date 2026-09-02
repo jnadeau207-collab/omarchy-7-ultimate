@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as Controls
+import qs.Commons
 
 import "FilesModel.js" as FilesModel
 import "ExplorerTheme.js" as Aero
@@ -8,6 +9,7 @@ import "." as Files
 FocusScope {
   id: root
 
+  property var productProfile: null
   property var items: []
   property string mode: "details"
   property string sortColumn: "name"
@@ -117,7 +119,7 @@ FocusScope {
               anchors.leftMargin: 8
               anchors.right: sortMark.left
               anchors.verticalCenter: parent.verticalCenter
-              text: modelData.label
+              text: Semantics.text(root.productProfile, modelData.label)
               textFormat: Text.PlainText
               elide: Text.ElideRight
               color: Aero.headerText
@@ -174,7 +176,7 @@ FocusScope {
             TapHandler { onSingleTapped: root.sortRequested(modelData.key) }
 
             Accessible.role: Accessible.ColumnHeader
-            Accessible.name: modelData.label
+            Accessible.name: Semantics.text(root.productProfile, modelData.label)
           }
         }
       }
