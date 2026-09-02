@@ -85,12 +85,15 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             "originalRelativePath": "Project",
         })
         restore_plan = await provider.preflight("trash.restore", {"entryId": "files.entry.project"}, principal())
+        before_restore = await provider.read("inspect", {})
         restored = await provider.execute("trash.restore", restore_plan["normalizedArguments"], restore_plan["stateRevision"])
-        paths = {item["id"]: item["relativePath"] for item in restored["state"]["value"]["entries"]}
+        self.assertIn("Project", restored["state"]["value"]["names"])
+        workspace = await provider.read("inspect", {})
+        paths = {item["id"]: item["relativePath"] for item in workspace["state"]["entries"]}
         self.assertEqual(paths["files.entry.project"], "Project")
         self.assertEqual(paths["files.entry.readme"], "Project/README.txt")
         undone = await provider.undo("trash.restore", restore_plan["recovery"]["priorState"], restored["stateRevision"])
-        self.assertEqual(undone["state"], restore_plan["currentState"])
+        self.assertEqual(undone["state"]["value"], before_restore["state"])
 
     async def test_compare_and_swap_contains_concurrent_execution_and_toctou_drift(self) -> None:
         provider = files.build_fake_provider(clone_workspace())
