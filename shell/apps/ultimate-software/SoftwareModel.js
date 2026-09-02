@@ -241,6 +241,12 @@ Controller.prototype.activate = function(routeId, argumentsValue) {
   return this._send("catalog", CATALOG_METHOD, {})
 }
 Controller.prototype.refresh = function() { return this.connected ? this._refreshCatalog() : false }
+Controller.prototype.refreshWhenSurfaceVisible = function() {
+  if (!this.connected) return false
+  var phase = String(this.state && this.state.phase || "")
+  if (phase === "catalog-loading" || phase === "loading" || phase === "offline") return false
+  return this.refresh()
+}
 Controller.prototype.receiveResult = function(requestId, result) {
   var id = String(requestId || ""), ticket = this.pending[id]
   if (!ticket || id !== this.activeRequestId || ticket.generation !== this.generation || ticket.routeId !== this.state.routeId) return false
