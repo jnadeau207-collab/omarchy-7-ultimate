@@ -10,6 +10,7 @@ fi
 case "$1" in
   packages.install) target=/usr/libexec/omarchy-fabric/packages-install ;;
   packages.remove) target=/usr/libexec/omarchy-fabric/packages-remove ;;
+  system.update) target=/usr/libexec/omarchy-fabric/system-update ;;
   *)
     printf '{"ok":false,"code":"action.unknown","explanation":"The requested system action is not code owned."}\n'
     exit 1

@@ -14,6 +14,9 @@ from ..security.release_attestation import default_release_attestation
 from ..security.system_executor import SYSTEM_ACTIONS, validate_system_executor_request
 
 PACMAN = "/usr/bin/pacman"
+SNAPSHOT = "/usr/bin/omarchy-snapshot"
+UPDATE = "/usr/bin/omarchy-update"
+VERSION_CHANNEL = "/usr/bin/omarchy-version-channel"
 MAX_PAYLOAD_BYTES = 65536
 COMMAND_TIMEOUT_SECONDS = 900
 PACMAN_SOURCE_TYPES = frozenset({"curated", "signed-repo"})
@@ -108,9 +111,49 @@ def apply_packages_remove(request: Any) -> Mapping[str, Any]:
     return {"action": request.action, "packages": list(refs), "output": output}
 
 
+def active_channel() -> str:
+    try:
+        completed = subprocess.run(
+            [VERSION_CHANNEL],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned channel command is not installed.") from error
+    if completed.returncode != 0:
+        raise ApplyError("command.failed", "The channel probe reported a failure status.")
+    for line in completed.stdout.splitlines():
+        token = line.strip().lower()
+        if token in ("stable", "candidate"):
+            return token
+    raise ApplyError("command.failed", "The channel probe named no code-owned channel.")
+
+
+def apply_system_update(request: Any) -> Mapping[str, Any]:
+    channel = request.arguments["channel"]
+    active = active_channel()
+    if channel != active:
+        raise ApplyError(
+            "update.channel-mismatch",
+            "The requested channel is not the channel this machine tracks.",
+        )
+    restore_point = None
+    if not request.arguments["allow_without_restore_point"]:
+        restore_point = run_fixed((SNAPSHOT, "create"))
+    output = run_fixed((UPDATE,))
+    return {
+        "action": request.action,
+        "channel": channel,
+        "restorePoint": restore_point,
+        "output": output,
+    }
+
 ACTIONS = {
     "packages.install": apply_packages_install,
     "packages.remove": apply_packages_remove,
+    "system.update": apply_system_update,
 }
 
 
