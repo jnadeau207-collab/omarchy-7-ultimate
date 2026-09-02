@@ -13,14 +13,14 @@ Keywords=files;folders;desktop;documents;downloads;pictures;trash;network;
 MimeType=x-scheme-handler/omarchy-files;
 StartupNotify=true
 StartupWMClass=org.omarchy.Files
-Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Search;
+Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Music;Videos;Recent;Trash;Search;
 
 [Desktop Action Home]
 Name=Home
 Exec=omarchy-launch-files --source desktop files.overview
 
 [Desktop Action ThisPC]
-Name=This PC
+Name=Computer
 Exec=omarchy-launch-files --source desktop files.this-pc
 
 [Desktop Action Desktop]
@@ -39,12 +39,20 @@ Exec=omarchy-launch-files --source desktop files.downloads
 Name=Pictures
 Exec=omarchy-launch-files --source desktop files.pictures
 
+[Desktop Action Music]
+Name=Music
+Exec=omarchy-launch-files --source desktop files.music
+
+[Desktop Action Videos]
+Name=Videos
+Exec=omarchy-launch-files --source desktop files.videos
+
 [Desktop Action Recent]
 Name=Recent
 Exec=omarchy-launch-files --source desktop files.recent
 
 [Desktop Action Trash]
-Name=Trash
+Name=Recycle Bin
 Exec=omarchy-launch-files --source desktop files.trash
 
 [Desktop Action Search]

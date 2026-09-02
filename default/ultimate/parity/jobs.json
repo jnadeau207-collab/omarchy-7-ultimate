@@ -119,7 +119,7 @@
     {
       "id": "parity.explorer-this-pc",
       "kind": "parity-job",
-      "sourceLabel": "Explorer / This PC",
+      "sourceLabel": "Explorer / Computer",
       "sourceStatus": "prototype",
       "claim": "prototype",
       "capabilityIds": [
@@ -132,7 +132,7 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Files",
-        "path": "Start > Computer; Superbar > Files > This PC"
+        "path": "Start > Computer; Superbar > Files > Computer"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "File mutations require conflict-safe undo and truthful partial-change reporting.",

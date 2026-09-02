@@ -35,7 +35,7 @@
       "required": ["id", "kind", "label", "state", "writable", "rootDigest", "reason"],
       "properties": {
         "id": {"$ref": "#/$defs/stableId"},
-        "kind": {"type": "string", "enum": ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "trash", "mount", "network"]},
+        "kind": {"type": "string", "enum": ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "music", "videos", "trash", "mount", "network"]},
         "label": {"type": "string", "minLength": 1, "maxLength": 160},
         "state": {"type": "string", "enum": ["available", "degraded", "unavailable"]},
         "writable": {"type": "boolean"},
@@ -88,7 +88,7 @@
     },
     "mount": {
       "type": "object",
-      "required": ["id", "kind", "label", "state", "writable", "locationId", "source", "reason"],
+      "required": ["id", "kind", "label", "state", "writable", "locationId", "source", "totalBytes", "freeBytes", "reason"],
       "properties": {
         "id": {"$ref": "#/$defs/stableId"},
         "kind": {"type": "string", "enum": ["system", "removable", "smb"]},
@@ -97,6 +97,8 @@
         "writable": {"type": "boolean"},
         "locationId": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/stableId"}]},
         "source": {"$ref": "#/$defs/mountSource"},
+        "totalBytes": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0, "maximum": 9007199254740991}]},
+        "freeBytes": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0, "maximum": 9007199254740991}]},
         "reason": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/reason"}]}
       },
       "additionalProperties": false

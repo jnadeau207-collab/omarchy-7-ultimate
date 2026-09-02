@@ -253,7 +253,7 @@ if files_inspect.get("path") != "Start > Files; Superbar > Files > Home":
 if by_id["files.inspect"].get("availability", {}).get("claim") == "present":
     raise SystemExit("files.inspect must not mark Files Home AVAILABLE")
 this_pc = by_id["files.this-pc.open"]["humanRoute"]
-if this_pc.get("path") != "Start > Computer; Superbar > Files > This PC":
+if this_pc.get("path") != "Start > Computer; Superbar > Files > Computer":
     raise SystemExit(f"files.this-pc.open invents or underclaims This PC: {this_pc}")
 downloads = by_id["files.downloads.open"]
 if downloads["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > Downloads":

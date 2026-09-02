@@ -1,4 +1,4 @@
-"""Typed Files, This PC, Desktop, Trash, mount, recent, and search provider."""
+"""Typed Files, Computer, Desktop, Recycle Bin, mount, recent, and search provider."""
 
 from __future__ import annotations
 
@@ -50,6 +50,8 @@ LOCATION_CATALOG = {
     "documents": ("documents", "xdg-documents", False),
     "downloads": ("downloads", "xdg-download", False),
     "pictures": ("pictures", "xdg-pictures", False),
+    "music": ("music", "xdg-music", False),
+    "videos": ("videos", "xdg-videos", False),
     "trash": ("trash", "freedesktop-trash", False),
 }
 
@@ -59,8 +61,10 @@ SCAN_PRIORITY = {
     "desktop": 2,
     "documents": 3,
     "downloads": 4,
-    "trash": 5,
-    "home": 6,
+    "music": 5,
+    "videos": 6,
+    "trash": 7,
+    "home": 8,
 }
 HOME_LOCATION_ID = "files.location.home"
 PLACE_LOCATION_IDS = frozenset({
@@ -69,6 +73,8 @@ PLACE_LOCATION_IDS = frozenset({
     "files.location.documents",
     "files.location.downloads",
     "files.location.pictures",
+    "files.location.music",
+    "files.location.videos",
 })
 LOCATION_ENTRY_FLOOR = 8
 READ_COMPLETENESS_CODES = frozenset({
@@ -594,6 +600,8 @@ class RealFilesBackend:
             "xdg-documents": user_dirs.get("XDG_DOCUMENTS_DIR", self.home / "Documents"),
             "xdg-download": user_dirs.get("XDG_DOWNLOAD_DIR", self.home / "Downloads"),
             "xdg-pictures": user_dirs.get("XDG_PICTURES_DIR", self.home / "Pictures"),
+            "xdg-music": user_dirs.get("XDG_MUSIC_DIR", self.home / "Music"),
+            "xdg-videos": user_dirs.get("XDG_VIDEOS_DIR", self.home / "Videos"),
             "freedesktop-trash": self.home / ".local" / "share" / "Trash" / "files",
         }
 
@@ -794,6 +802,7 @@ class RealFilesBackend:
             if len(mounts) >= maximum:
                 reasons.append(_reason("files.mount-inventory-truncated", "Mount inventory is truncated", "The mount inventory reached its configured bound.", retryable=False))
                 break
+            capacity = _mount_capacity(mount_point)
             mount_id = stable_resource_id(DOMAIN, "mount", f"{identity_source}\0{mount_point}")
             location_id = stable_resource_id(DOMAIN, "location", f"mount\0{identity_source}\0{mount_point}") if kind != "system" else None
             mounts.append({
@@ -804,6 +813,8 @@ class RealFilesBackend:
                 "writable": "rw" in options,
                 "locationId": location_id,
                 "source": {"scheme": scheme, "display": display[:320], "host": host, "share": share},
+                "totalBytes": capacity[0],
+                "freeBytes": capacity[1],
                 "reason": None,
             })
             if location_id is not None:
@@ -921,6 +932,21 @@ def _safe_smb_source(source: str) -> tuple[str, str] | None:
     ):
         return None
     return authority, share
+
+def _mount_capacity(mount_point: str) -> tuple[int | None, int | None]:
+    try:
+        stats = os.statvfs(mount_point)
+    except OSError:
+        return (None, None)
+    block = stats.f_frsize or stats.f_bsize
+    if block <= 0:
+        return (None, None)
+    total = min(stats.f_blocks * block, 9007199254740991)
+    free = min(stats.f_bavail * block, 9007199254740991)
+    if total <= 0:
+        return (None, None)
+    return (total, min(free, total))
+
 
 def _safe_mount_label(mount_point: str, kind: str) -> str:
     candidate = Path(mount_point).name
