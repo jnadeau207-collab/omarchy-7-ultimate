@@ -733,6 +733,8 @@ if "consent/provider ops stay outside Agent Center" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the agent-center claim=prototype honesty close")
 if "Agent Center claim present" in gaps and "no Agent Center claim present" not in gaps:
     raise SystemExit("fleet-doctrine-gaps invented Agent Center claim present")
+if "d3f4841a496ea5fd9618b269ca268d922516434a" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the metal tip SHA for Settings coverage-badge PIXEL leftover CLOSED")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -813,8 +815,32 @@ for writer_id, (status, surface) in writer_planned.items():
         raise SystemExit(f"{writer_id} invents a mutation surface: {route}")
     if writer.get("availability", {}).get("claim") == "present":
         raise SystemExit(f"{writer_id} walked claim to present")
-if "METAL_HEAD OPEN" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep METAL_HEAD OPEN")
+if "Settings coverage-badge PIXEL leftover CLOSED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name Settings coverage-badge PIXEL leftover CLOSED")
+if "d3f4841a" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite metal tip d3f4841a for Settings coverage-badge PIXEL leftover CLOSED")
+if "28863386cf953f4b956515c7fcc7c5d35d6bc26abd7188a3f7df4b857d102b28" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite settings-sound grim sha256")
+if "876fc4c9ef73eae8cc907aa01f594ac87154313f89f963a8bd3b864787d5612b" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite settings-power grim sha256")
+if "PARTIAL LIVE CONTROL" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite Sound Coverage PARTIAL LIVE CONTROL")
+if "Power profile **CHANGES UNAVAILABLE**" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite Power CHANGES UNAVAILABLE")
+if "Settings badge pixel leftover still open pending METAL_HEAD" in gaps:
+    raise SystemExit("fleet-doctrine-gaps still carries Settings badge pixel leftover OPEN")
+if "Settings badge METAL_HEAD residual stays OPEN" in gaps:
+    raise SystemExit("fleet-doctrine-gaps still carries Settings badge METAL_HEAD residual OPEN")
+if "QS Power METAL_HEAD OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep QS Power METAL_HEAD OPEN")
+if "unverified on metal" not in gaps or "power.profile.set" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep QS Power leftover unverified on metal")
+if "No `events.subscribe`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep events.subscribe residual open")
+if "Product REJECTED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep product REJECTED")
+if "/home/jesse/omarchy7ultimate-work-tip" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the tip worktree for Settings coverage-badge PIXEL leftover CLOSED")
 
 gt06 = (root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.md").read_text(encoding="utf-8")
 gt06_json = json.loads((root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.json").read_text(encoding="utf-8"))
@@ -1004,8 +1030,12 @@ if "events.subscribe" in cp:
     raise SystemExit("fleet-catalog-controlpanel invented events.subscribe")
 if "METAL_HEAD closed" in cp:
     raise SystemExit("fleet-catalog-controlpanel invented METAL_HEAD closed")
-if "METAL_HEAD OPEN" not in cp:
-    raise SystemExit("fleet-catalog-controlpanel must keep METAL_HEAD OPEN")
+if "QS Power METAL_HEAD OPEN" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep QS Power METAL_HEAD OPEN")
+if "Settings coverage-badge PIXEL leftover CLOSED" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must retarget Settings coverage-badge PIXEL leftover CLOSED")
+if "d3f4841a" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must cite metal tip d3f4841a for Settings coverage-badge PIXEL leftover CLOSED")
 if "firewall.manage" not in cp or "backup.manage" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must keep firewall.manage / backup.manage planned/unavailable")
 if "claim=`missing` vs `sourceStatus=prototype`" in cp:
