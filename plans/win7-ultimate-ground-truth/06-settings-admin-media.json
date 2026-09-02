@@ -17,7 +17,8 @@
         "Personalization",
         "Desktop",
         "Sound"
-      ]
+      ],
+      "product_note": "Phase 5 exit criteria still open. Live host today: Settings Personalization image picker prototype. Typed Personalization writers remain unavailable."
     },
     {
       "area": "Sound applet + Volume Mixer",
@@ -25,7 +26,8 @@
       "phase_name": "Settings",
       "parity_jobs": [
         "Sound"
-      ]
+      ],
+      "product_note": "Phase 5 exit criteria still open. Live host today: Settings Sound audio.inspect + audio.volume.set. Per-app mixer not product-present."
     },
     {
       "area": "Default Programs (four links) + SPAD",
@@ -33,7 +35,8 @@
       "phase_name": "Settings (Apps/defaults)",
       "parity_jobs": [
         "Default Programs"
-      ]
+      ],
+      "product_note": "Phase 5 exit criteria still open. Live host today is defaults.protocol.set (browser LIVE only). Do not invent MIME UI."
     },
     {
       "area": "File/protocol associations + AutoPlay",
@@ -42,7 +45,8 @@
       "parity_jobs": [
         "File associations",
         "Default Programs"
-      ]
+      ],
+      "product_note": "Phase 6 exit criteria still open. files.associations.set stays missing/planned MIME. Do not invent MIME UI."
     },
     {
       "area": "Administration MMC / Task Manager / Device Manager / Disk / Services / Scheduler / Event Viewer / Local Users",
@@ -57,7 +61,8 @@
         "Event / history",
         "User Accounts",
         "Resource Monitor"
-      ]
+      ],
+      "product_note": "Phase 9 exit criteria still open. Live Administration inspect hosts today: Processes, Services, Device Manager, Storage, Printers and scanners, Backup, Scheduled tasks, Troubleshooting, Firewall, User accounts. Inspect inventory is not product MMC present. No start/stop service LIVE, no Device Manager present, no Task Manager present, no Event Viewer present, no firewall.manage / backup.manage LIVE."
     },
     {
       "area": "Windows Media Player 12 chrome (reference behaviors)",
@@ -706,17 +711,97 @@
       "parity_note": "Reference chrome/behaviors for default media player — not a clone mandate"
     }
   },
+  "product_honesty": {
+    "product_status": "REJECTED",
+    "phase_5_exit": "still open",
+    "phase_9_exit": "still open",
+    "live_settings_writers": [
+      "audio.volume.set",
+      "network.manage",
+      "display.brightness.set",
+      "input.keyboard-layout.set",
+      "defaults.protocol.set"
+    ],
+    "defaults_writer": "defaults.protocol.set",
+    "defaults_scope": "browser LIVE only",
+    "files_associations": "missing/planned MIME",
+    "settings_power_live": "refused",
+    "accessibility_panel": "missing",
+    "system_information_aggregate": "missing",
+    "software_center": "missing",
+    "live_admin_inspect_hosts": [
+      {
+        "path": "Administration > Processes",
+        "capability": "process.inspect",
+        "note": "unauthorized End Task path; not Task Manager present"
+      },
+      {
+        "path": "Administration > Services",
+        "capability": "service.inspect"
+      },
+      {
+        "path": "Administration > Device Manager",
+        "capability": "device.inspect"
+      },
+      {
+        "path": "Administration > Storage",
+        "capability": "storage.inspect"
+      },
+      {
+        "path": "Administration > Printers and scanners",
+        "capability": "printer.inspect"
+      },
+      {
+        "path": "Administration > Backup",
+        "capability": "backup.inspect"
+      },
+      {
+        "path": "Administration > Scheduled tasks",
+        "capability": "schedule.inspect"
+      },
+      {
+        "path": "Administration > Troubleshooting",
+        "capability": "diagnostics.inspect"
+      },
+      {
+        "path": "Administration > Firewall",
+        "capability": "firewall.inspect"
+      },
+      {
+        "path": "Administration > User accounts",
+        "capability": "account.inspect"
+      }
+    ],
+    "inspect_inventory_is_product_mmc": false,
+    "refused": [
+      "start/stop service LIVE",
+      "Device Manager present",
+      "Task Manager present",
+      "Event Viewer present",
+      "firewall.manage LIVE",
+      "backup.manage LIVE",
+      "MIME UI",
+      "Accessibility panel",
+      "System information aggregate",
+      "Software Center",
+      "Restore LIVE",
+      "Trash LIVE under SHELL",
+      "Settings Power LIVE",
+      "events.subscribe",
+      "METAL_HEAD closed"
+    ]
+  },
   "interaction_tables": {
     "default_programs": [
       {
         "job": "Change default browser",
         "win7": "Default Programs → Set your default programs → Set this program as default",
-        "omarchy": "Phase 5 apps.defaults.set"
+        "omarchy": "Phase 5 exit still open; Settings > Apps defaults.protocol.set (browser LIVE only)"
       },
       {
         "job": "Associate one extension",
         "win7": "Associate a file type… → Change program",
-        "omarchy": "Phase 6 files.associations.set"
+        "omarchy": "Phase 6 exit still open; files.associations.set missing/planned MIME; do not invent MIME UI"
       },
       {
         "job": "Configure AutoPlay",
@@ -733,54 +818,69 @@
       {
         "job": "End hung app",
         "win7": "Task Manager → Applications → End Task",
-        "omarchy": "Phase 9 Task Manager"
+        "omarchy": "Administration > Processes process.inspect + unauthorized End Task; not Task Manager present"
       },
       {
         "job": "Inspect CPU/RAM",
         "win7": "Task Manager → Performance → Resource Monitor",
-        "omarchy": "Phase 9"
+        "omarchy": "resources.inspect honest-missing; not Task Manager Performance; not btop"
       },
       {
         "job": "Manage service",
         "win7": "services.msc",
-        "omarchy": "Phase 9 Services"
+        "omarchy": "Administration > Services service.inspect; no start/stop service LIVE; not Services product"
       },
       {
         "job": "View system events",
         "win7": "eventvwr.msc → Windows Logs → System",
-        "omarchy": "Phase 9 Event Viewer"
+        "omarchy": "No Event Viewer present; Administration > Troubleshooting is diagnostics.inspect only"
       },
       {
         "job": "Schedule task",
         "win7": "taskschd.msc",
-        "omarchy": "Phase 9 Task Scheduler"
+        "omarchy": "Administration > Scheduled tasks schedule.inspect; not Task Scheduler product"
       },
       {
         "job": "Manage disks",
         "win7": "diskmgmt.msc",
-        "omarchy": "Phase 9 Storage"
+        "omarchy": "Administration > Storage storage.inspect; not Disk Management product"
       },
       {
         "job": "Device drivers",
         "win7": "devmgmt.msc",
-        "omarchy": "Phase 9 Device Manager"
+        "omarchy": "Administration > Device Manager device.inspect; not Device Manager present"
+      },
+      {
+        "job": "Printers",
+        "win7": "Devices and Printers / Print Management",
+        "omarchy": "Administration > Printers and scanners printer.inspect; not Devices and Printers product"
+      },
+      {
+        "job": "Backup inventory",
+        "win7": "Backup and Restore",
+        "omarchy": "Administration > Backup backup.inspect; no backup.manage LIVE; not Backup and Restore product"
+      },
+      {
+        "job": "Firewall",
+        "win7": "wf.msc",
+        "omarchy": "Administration > Firewall firewall.inspect; no firewall.manage LIVE; not Firewall Settings product"
       },
       {
         "job": "Local users",
         "win7": "lusrmgr.msc",
-        "omarchy": "Phase 9 Accounts"
+        "omarchy": "Administration > User accounts account.inspect; not User Accounts product"
       }
     ],
     "media": [
       {
         "job": "Per-app volume",
         "win7": "Tray → Open Volume Mixer",
-        "omarchy": "Phase 5 Sound + tray"
+        "omarchy": "Phase 5 exit still open; Settings > Sound audio.volume.set + tray. Per-app mixer not product-present."
       },
       {
         "job": "Default playback device",
         "win7": "Tray → Playback devices → Set Default",
-        "omarchy": "Phase 5 audio writers"
+        "omarchy": "Phase 5 exit still open; mute/routing remain unavailable"
       },
       {
         "job": "Sound scheme",
