@@ -193,3 +193,127 @@ if grep -Eq 'terminationAuthorized:\s*true' "$application"; then
   fail "Administration must not authorize shell consequential termination"
 fi
 pass "terminationAuthorized remains false; End Task stays hidden; no LIVE CONTROL claim"
+
+run_node_test <<'JS'
+const Model = requireFromRoot('shell/apps/ultimate-administration/AdministrationModel.js')
+
+function actionContract(capability, mode) {
+  return {
+    capability,
+    mode,
+    risk: mode === 'read' ? 'read-only' : 'low',
+    effects: mode === 'read' ? [] : ['mutating'],
+    arguments: { id: `urn:test:${capability}:arguments`, version: 'v0' },
+    result: { id: `urn:test:${capability}:result`, version: 'v0' },
+    preflight: mode === 'read' ? null : { id: `urn:test:${capability}:preflight`, version: 'v0' },
+    state: mode === 'read' ? null : { id: `urn:test:${capability}:state`, version: 'v0' },
+    supportsRollback: mode !== 'read',
+    supportsCancellation: false
+  }
+}
+
+function processCatalog() {
+  return {
+    providers: [{
+      manifest: {
+        schemaVersion: 'v0',
+        provider: 'process.provider',
+        providerVersion: 'v0',
+        minFabricProtocol: 0,
+        maxFabricProtocol: 0,
+        capabilities: ['process.inspect'],
+        actions: { inspect: actionContract('process.inspect', 'read') }
+      },
+      fingerprint: 'a'.repeat(64),
+      generation: 1,
+      registrationOrder: 0,
+      state: 'available',
+      detail: '',
+      registeredAt: 1,
+      changedAt: 1
+    }]
+  }
+}
+
+function processInspect(observedAt) {
+  return {
+    provider: 'process.provider',
+    providerVersion: 'v0',
+    generation: 1,
+    action: 'inspect',
+    capability: 'process.inspect',
+    value: {
+      schemaVersion: 'v0',
+      provider: 'process.provider',
+      providerVersion: 'v0',
+      action: 'inspect',
+      availability: { read: true, operation: false, reason: null },
+      revision: `sha256.${'a'.repeat(64)}`,
+      resources: [{
+        id: 'process.1234.0123456789abcdef',
+        label: 'firefox',
+        kind: 'process',
+        state: {
+          lifecycle: 'running',
+          startDigest: '0123456789abcdef',
+          identityRevision: `sha256.${'a'.repeat(64)}`,
+          plannedSignal: null
+        }
+      }]
+    },
+    observedAt
+  }
+}
+
+let sent = []
+let serial = 0
+const controller = Model.createController({
+  send: (method, params) => {
+    const id = `request.${++serial}`
+    sent.push({ id, method, params })
+    return id
+  },
+  cancel: () => true
+})
+
+controller.activate('administration.processes.overview', {})
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'an offline Administration surface does not reread')
+assertEqual(sent.length, 0, 'offline surface-visible refresh issues no Fabric request')
+
+assert(controller.setConnected(true), 'connecting starts the current catalog read')
+assertEqual(controller.state.phase, 'catalog-loading', 'connect waits on the provider catalog')
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'a catalog-loading surface does not start a second reread')
+assertEqual(sent.length, 1, 'catalog-loading surface-visible refresh does not duplicate the catalog request')
+
+const catalogRequest = sent.at(-1)
+assert(controller.receiveResult(catalogRequest.id, processCatalog()), 'current catalog response is accepted')
+assertEqual(controller.state.phase, 'loading', 'catalog selection advances to inspect')
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'a loading Administration surface does not start a second reread')
+assertEqual(sent.length, 2, 'in-flight inspect is not duplicated by surface-visible refresh')
+
+const inspectRequest = sent.at(-1)
+assertEqual(inspectRequest.method, 'provider.read', 'catalog selection issues process.inspect')
+assert(controller.receiveResult(inspectRequest.id, processInspect(11)), 'current process inspect is accepted')
+assertEqual(controller.state.phase, 'ready', 'non-empty process inspect reaches current state')
+
+assert(controller.refreshWhenSurfaceVisible(), 'a ready Administration surface rereads when it becomes visible')
+const visibleReread = sent.at(-1)
+assertEqual(visibleReread.method, 'provider.catalog', 'surface-visible refresh reuses controller.refresh catalog plus inspect')
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'a loading surface does not start a second reread')
+assertEqual(sent.at(-1).id, visibleReread.id, 'in-flight surface reread is not duplicated')
+JS
+pass "Administration rereads inspect when the surface becomes visible and skips while loading"
+
+entrypoint="$ROOT/shell/ultimate-administration.qml"
+grep -Fq 'refreshWhenSurfaceVisible()' "$application" \
+  || fail "Administration rereads Fabric inspect when the product surface becomes visible"
+grep -Fq 'function onSurfaceBecameActive()' "$application" \
+  || fail "Administration listens for host surface activation"
+grep -Fq 'if (!controller || !host || operationBusy) return' "$application" \
+  || fail "Administration skips surface-visible reread while an operation is busy"
+grep -Fq 'signal surfaceBecameActive()' "$ROOT/shell/apps/shared/ProductAppHost.qml" \
+  || fail "Product host publishes surface activation instead of an Administration polling loop"
+if grep -Eq 'events[.](subscribe|unsubscribe)' "$application" "$model" "$entrypoint"; then
+  fail "Administration does not invent an events.subscribe path"
+fi
+pass "Administration listens for surface activation without events.subscribe or a polling daemon"

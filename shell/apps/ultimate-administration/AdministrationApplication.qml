@@ -143,6 +143,12 @@ Item {
     else host.retryFabric()
   }
 
+  function refreshVisibleSurface() {
+    if (!controller || !host || operationBusy) return
+    if (!host.fabricReady) return
+    controller.refreshWhenSurfaceVisible()
+  }
+
   function statusBorderColor() {
     if (queryState.phase === "failed" || queryState.phase === "denied" || queryState.phase === "contract-mismatch")
       return Tokens.state.danger
@@ -188,6 +194,10 @@ Item {
     function onRouteActivated(routeId, routeArguments, context) {
       root.ensureController()
       root.controller.activate(routeId, routeArguments || {})
+    }
+
+    function onSurfaceBecameActive() {
+      root.refreshVisibleSurface()
     }
 
     function onFabricResult(requestId, result) {
