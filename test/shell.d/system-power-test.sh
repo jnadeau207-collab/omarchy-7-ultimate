@@ -21,7 +21,11 @@ for command in omarchy-state omarchy-hyprland-window-close-all sleep; do
   cat >"$mock_bin/$command" <<'SH'
 #!/bin/bash
 
-printf '%s %s\n' "$(basename "$0")" "$*" >>"$CALL_LOG"
+if (( $# )); then
+  printf '%s %s\n' "$(basename "$0")" "$*" >>"$CALL_LOG"
+else
+  printf '%s\n' "$(basename "$0")" >>"$CALL_LOG"
+fi
 SH
 done
 chmod +x "$mock_bin"/*
