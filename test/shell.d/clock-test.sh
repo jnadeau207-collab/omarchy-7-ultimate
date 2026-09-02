@@ -226,7 +226,7 @@ assert(/id: expectancyField/.test(panelSource) && /id: bornField/.test(panelSour
 assert(/visible: root\.editingLife\s*\n\s*anchors\.horizontalCenter: parent\.horizontalCenter/.test(panelSource), 'calendar centers the inputs over the bar they replace')
 assert(/visible: root\.birthYear > 0/.test(panelSource), 'calendar hides the life bar until a birth year is known')
 assert(/text:\s*(?:root\.chromeText\()?"LIFE"/.test(panelSource) && /root\.lifeDone/.test(panelSource), 'calendar shows the life bar')
-assert(/text: "Memento Mori"/.test(panelSource), 'calendar names the life bar on hover')
+assert(/text:\s*(?:root\.chromeText\()?"Memento Mori"/.test(panelSource), 'calendar names the life bar on hover')
 assert(/onDoubleTapped: root\.clearLife\(\)/.test(panelSource), 'calendar puts the life bar away when it is double-tapped')
 assert(/persistSettings\(\{ birthYear: 0 \}\)/.test(panelSource), 'calendar clears the birth year to hide the life bar')
 assertEqual(calendar.parseBirthYear(0, 2026), 0, 'a cleared birth year reads back as unset')
