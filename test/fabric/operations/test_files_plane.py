@@ -138,7 +138,7 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
             action="directory.create",
             arguments={
                 "locationId": "files.location.desktop",
-                "parentRelativePath": "",
+                "parentRelativePath": "Project",
                 "name": "Assets",
             },
             idempotency_key="files.directory.create.assets",
@@ -153,17 +153,18 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
             self.shell,
             provider_id="files.provider",
             action="entry.trash",
-            arguments={"entryId": "files.entry.project"},
-            idempotency_key="files.entry.trash.project",
+            arguments={"entryId": "files.entry.notes"},
+            idempotency_key="files.entry.trash.notes",
         )
         trash_request = self.coordinator.approval_request(self.shell, trashed["operationId"])
         self.assertEqual(trash_request.risk, RiskLevel.LOW)
         self.assertEqual(trash_request.capability, "files.entry.trash")
-        self.assertEqual(trash_request.resource.resource_id, create_request.resource.resource_id)
+        self.assertTrue(trash_request.resource.resource_id.startswith("files.directory."))
+        self.assertNotEqual(trash_request.resource.resource_id, create_request.resource.resource_id)
         payload = self.store.get(trashed["operationId"]).plan.intent.payload
         self.assertEqual(payload["locationId"], "files.location.desktop")
-        self.assertEqual(payload["entryRelativePath"], "Project")
-        self.assertEqual(payload["entryId"], "files.entry.project")
+        self.assertEqual(payload["entryRelativePath"], "notes.txt")
+        self.assertEqual(payload["entryId"], "files.entry.notes")
         self._shell_grant(trashed["operationId"])
 
     async def test_trash_restore_is_not_a_coordinator_definition(self) -> None:
