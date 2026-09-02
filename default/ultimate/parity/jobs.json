@@ -1606,7 +1606,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Change the default browser",
       "sourceStatus": "pending",
-      "claim": "present",
+      "claim": "prototype",
       "capabilityIds": [
         "apps.defaults.set"
       ],
@@ -1617,7 +1617,7 @@
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous default handler.",
-      "proofStatus": "automated",
+      "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.19"
       ],
