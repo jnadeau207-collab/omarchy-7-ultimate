@@ -1,6 +1,6 @@
 # Writers and the root executor — 2026-09-01
 
-SHA `6e01615d` on `work`, rebased onto `upstream/quattro` at `b71dcad9`.
+SHA `6e01615d` on `work` (session that landed the root executor and write-plane expansion), rebased onto `upstream/quattro` at `b71dcad9`. Honesty addendum 2026-09-02 vs tip `c192afea`: `entry.trash` write-plane reachability after PR #8 v1 directory family widen is KEEP. The helper-only / schema-blocker paragraphs below are rewritten to residual. Do not invent Restore LIVE, `files.trash.manage`, Empty Recycle, or Recycle Bin product-complete. Product REJECTED.
 
 ## Verified on metal
 
@@ -33,19 +33,19 @@ Local, `origin`, and metal hold the same commit and the same tree.
 
 **The root executor exists.** `SystemCommandExecutor` was wired into the daemon and invoked `/usr/libexec/omarchy-fabric-system-executor`, which was not in the repository. It is now, for `packages.install` and `packages.remove`, with a Polkit policy. Polkit binds one action id to one program path, so each verb has its own program under `/usr/libexec/omarchy-fabric/` and its own admin rule; the dispatcher maps a verb to a literal path through a fixed `case` and execs `pkexec`, so request data never reaches the argv. The root half re-validates the typed request from scratch and resolves package ids through the signed catalog.
 
-**The write plane went from four actions to nine, and from two reachable to seven.**
+**The write plane went from four actions to nine.** Honesty vs tip `c192afea`: `directory.create` stays `low` and SHELL-grantable. `entry.trash` is write-plane reachable at `consequential` (not helper-only); SHELL approve fails `grant.shell-consequential`. `trash.restore` stays honest-unavailable.
 
 | Action | Surface | State |
 |--------|---------|-------|
 | `audio-output-volume-set` | Settings › Sound | pre-existing |
 | `process-terminate` | Administration › End task | pre-existing |
 | `power-profile-set` | Settings › Power | surfaced here |
-| `files-directory-create` | Files › New folder | surfaced here |
+| `files-directory-create` | Files › New folder | LIVE (`directory.create`, risk `low`; SHELL grant OK) |
 | `display-brightness-set` | Settings › Display | new here |
 | `input-keyboard-layout-set` | Settings › Input | new here |
 | `network-wifi-enabled-set` | Settings › Network | new here |
-| `files-entry-trash` | none yet | helper only |
-| `files-trash-restore` | none yet | helper only |
+| `files-entry-trash` | Files › Trash | write plane LIVE (`entry.trash`, risk `consequential`; SHELL refused at `grant.shell-consequential`) |
+| `files-trash-restore` | none | honest-unavailable (no Restore UI; write plane `operation.definition-unavailable`; helper/lifecycle remain) |
 
 Each device-scoped writer resolves its opaque resource id by recomputing the provider's own digest over the live device list, so a payload can never name a monitor, keyboard or sink directly.
 
@@ -59,26 +59,26 @@ Each device-scoped writer resolves its opaque resource id by recomputing the pro
 
 3. **The power provider was never opted into session-operable mutation.** It had an intent, an operation definition and a helper branch, and `ReadOnlyProbeBackend` defaulted `session_operable` to `False`, so the Settings control would have been a dead button. Check this first for any new domain.
 
-## The next piece, precisely
+## Files writers vs tip (not helper-only)
 
-`files-entry-trash` and `files-trash-restore` are implemented and proven against a real temporary tree, including both security guards failing the test when removed. They are not reachable, and the reason is narrower than it first looks.
+`files-entry-trash` and `files-trash-restore` remain implemented and proven against a real temporary tree, including both security guards failing the test when removed. The schema-family blocker is closed. PR #8 widened `files-directory-{preflight,result,state}-v1` in place: `action` is an enum of `directory.create` and `entry.trash` (and still lists `trash.restore`) rather than a parallel Trash family. v0 workspace schemas were not edited. Shared family is not shared risk.
 
-Scoping `entry.trash` needs no new read action and no new daemon dispatch. The scope is the entry's **parent directory**, reusing the existing `files.directory.<digest>` resource that `directory.create` already uses, because trashing an entry removes exactly one name from that directory's listing and `directory.inspect` already reads that listing from disk. The helper's `locationId` and `entryRelativePath` come from the diff between the scope's current and proposed names — no argument-schema change either. Both halves were written and verified this session:
+**LIVE**
 
-- `_entry_trash_scope` resolves the entry, derives its parent, and proposes the listing minus that name.
-- A payload deriver returns the right path for root-level and nested entries, and refuses any plan that does not remove exactly one name.
+- `directory.create` — Files › New folder. Risk `low`. SHELL may hold a standing grant.
+- `entry.trash` — Files › Trash through `files.provider`. Write plane reachable. Scope is the entry's parent directory, reusing `files.directory.<digest>`. Risk `consequential`. SHELL cannot hold a standing grant (`grant.shell-consequential`). Same grant rule as End Task. Do not invent a TASK workaround.
 
-**The actual blocker is the schema family.** `files-operation-preflight-v0`, which `entry.trash` uses, pins `resource.kind` to `const: "files.workspace"`. The scoped family `files-directory-{preflight,result,state}-v1` allows `files.directory`, but pins `action` to `const: "directory.create"` and lists only `files.directory.create` in its capability enum. So a second scoped operation requires either widening those three `const`s to enums in a published v1 family, or minting a parallel family for Trash. That is a contract revision and should be a deliberate decision, not a side effect.
+**Unavailable (do not invent)**
 
-Three tests catch the mismatch immediately, which is how it was found:
+- Restore UI / `trash.restore` on the write plane. The real adapter does not read `.trashinfo` at preflight, so a restore destination cannot be derived from the directory listing. Provider lifecycle and the session helper still exist; the daemon does not register `trash.restore`; Files does not offer a Restore control (`operation.definition-unavailable`).
+- `files.trash.manage`
+- Empty Recycle Bin
+- Permanent delete
+- Recycle Bin as a product-complete place
 
-- `test_trash_restore_has_exact_recovery_metadata_and_undo`
-- `test_all_safe_representative_operations_execute_validate_and_undo`
-- `test_trashing_a_directory_removes_its_whole_subtree_from_recent`
+The Files banner matches: New folder and Trash run through `files.provider`; Restore, empty Recycle Bin, permanent delete, and `files.trash.manage` remain unavailable.
 
-The scope function and payload deriver were reverted rather than left half-applied. Reinstate them once the schema decision is made; nothing else in the path needs to change.
-
-`trash.restore` is harder and was not attempted. Its natural scope is the destination directory, which is only known from the `.trashinfo` record the provider does not read at preflight.
+The scope function and payload deriver shipped with the v1 widen (not left reverted). `_entry_trash_scope` resolves the entry, derives its parent, and proposes the listing minus that name. The payload deriver reads scoped `currentState.value` and refuses any plan that does not remove exactly one name.
 
 ## Why entry.rename is not scoped
 
@@ -86,7 +86,7 @@ Scoping `entry.rename` to its parent directory looks identical to the other thre
 
 `test_compare_and_swap_contains_concurrent_execution_and_toctou_drift` proves it: it drifts the target entry's `identity` between preflight and execute and requires `files.state-stale`. Against the whole-workspace revision that fires. Against a directory listing it does not, because the names did not move. Scoping rename would silently drop the provider-level TOCTOU check on the exact operation that resolves an entry by id and then moves it.
 
-Create, trash and restore are safe under this scope because their observable effect *is* a name appearing or disappearing, and an entry that drifted underneath still fails the helper's inode check. Rename needs a scope carrying the entry identity as well as the listing. That is a different document shape and a different schema family; it was attempted, caught by that test, and reverted rather than shipped weakened.
+Create and trash are safe under this scope because their observable effect *is* a name appearing or disappearing, and an entry that drifted underneath still fails the helper's inode check. Restore stays honest-unavailable (no `.trashinfo` at real preflight); do not invent Restore LIVE. Rename needs a scope carrying the entry identity as well as the listing. That is a different document shape and a different schema family; it was attempted, caught by that test, and reverted rather than shipped weakened.
 ## What still blocks Software Center
 
 Not the executor. The shipped catalog carries `assurance: contract-seed`, and `PackageProvider` deliberately refuses live mutation for an unattested seed. That gate is correct and was left closed. Opening it is a release-attestation decision.
