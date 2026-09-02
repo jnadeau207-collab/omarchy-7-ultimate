@@ -45,6 +45,7 @@ Item {
   readonly property var powerResource: firstPowerResource()
   readonly property var powerProfiles: powerResource && powerResource.profiles ? powerResource.profiles : []
   readonly property string activePowerProfile: powerResource ? String(powerResource.activeProfile || "") : ""
+  readonly property bool profileMutationAuthorized: false
 
   readonly property var browserResource: firstBrowserResource()
   readonly property var browserOptions: browserResource ? SettingsModel.browserCandidates(browserResource, queryState.records) : []
@@ -186,7 +187,7 @@ Item {
   }
 
   function applyPowerProfile(profile) {
-    if (!host || operationBusy) return
+    if (!root.profileMutationAuthorized || !host || operationBusy) return
     var record = firstPowerResource()
     if (!record || SettingsModel.POWER_PROFILES.indexOf(profile) < 0) return
     if (record.profiles.indexOf(profile) < 0) return
@@ -1124,13 +1125,18 @@ Item {
                   }
 
                   Ui.Badge {
-                    text: root.operationBusy && root.operationKind === "power" ? "APPLYING" : "LIVE CONTROL"
-                    tone: root.operationBusy && root.operationKind === "power" ? "info" : "success"
+                    text: root.profileMutationAuthorized
+                      ? (root.operationBusy && root.operationKind === "power" ? "APPLYING" : "LIVE CONTROL")
+                      : "CHANGES UNAVAILABLE"
+                    tone: root.profileMutationAuthorized
+                      ? (root.operationBusy && root.operationKind === "power" ? "info" : "success")
+                      : "warning"
                     semanticProfile: root.productProfile
                   }
                 }
 
                 RowLayout {
+                  visible: root.profileMutationAuthorized
                   Layout.fillWidth: true
                   spacing: Style.space(8)
 
@@ -1142,7 +1148,7 @@ Item {
                       semanticProfile: root.productProfile
                       focusable: true
                       bordered: true
-                      enabled: !root.operationBusy && modelData !== root.activePowerProfile
+                      enabled: root.profileMutationAuthorized && !root.operationBusy && modelData !== root.activePowerProfile
                       accessibleDescription: Semantics.text(root.productProfile, "Set the active power profile through") + " power.provider profile.set"
                       onClicked: root.applyPowerProfile(modelData)
                     }
@@ -1155,7 +1161,7 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "The active profile is " + root.profileLabel(root.activePowerProfile) +
-                        ". Changes run through the durable operation service as this user, never with elevated privilege.")
+                        ". Profile mutation is unavailable: the fabric daemon runs under app.slice without a login session scope, so polkit allow_active cannot authorize org.freedesktop.UPower.PowerProfiles.switch-profile.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall

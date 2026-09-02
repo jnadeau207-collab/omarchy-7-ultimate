@@ -48,7 +48,7 @@ Scope not delivered by W0 and now owned by the current program:
 - hyprbars is still not an ISO-mirror pacman package.
 - Tokyo Night seed, nvim-as-txt, TTY first-boot, no product ISO.
 - Chrome install-as-product, games, and “install any Windows app” are later phases.
-- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Live Settings writers are Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser; other domains stay inspect-only or host the existing Personalization picker. The Settings window already hosts those existing panels.
+- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Live Settings writers are Sound volume, Network Wi-Fi radio, Display brightness, Input layout, and Apps default browser; Power stays inspect-only because polkit cannot authorize profile.set from app.slice; other domains stay inspect-only or host the existing Personalization picker. The Settings window already hosts those existing panels.
 
 ## Preserved W0 outcome and packaging debt
 
@@ -137,7 +137,7 @@ Settings and Files writer honesty — LIVE means a typed Settings/Files control 
 |--------|---------|-------------|-----------------------------|
 | Sound | `audio.inspect` | `output-volume.set` | mute, routing, ports; `parity.sound` prototype; `windows-native.6` pending |
 | Network | `network.inspect` | `wifi.set-enabled` | join / per-connection; `parity.network` prototype; `windows-native.2` pending |
-| Power | `power.inspect` | `profile.set` | sleep / lock / lid; `parity.power-options` prototype; `windows-native.35` pending |
+| Power | `power.inspect` | none (polkit / app.slice) | `profile.set` write plane kept, not Settings LIVE; sleep / lock / lid; `parity.power-options` prototype; `windows-native.35` pending |
 | Display | `display.inspect` | `brightness.set` | resolution / scale / arrangement; `parity.display` prototype; `windows-native.3` pending |
 | Input / Language | `input.inspect` | `keyboard-layout.set` (multi-layout) | pointer / repeat / locale; `parity.language-locale` prototype; `windows-native.33` pending |
 | Apps | `defaults.inspect` | `protocol.set` (default browser) | other associations / startup / Default Programs applet; `parity.default-programs` prototype; `windows-native.19` pending |
