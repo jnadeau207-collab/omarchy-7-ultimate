@@ -130,11 +130,13 @@ is_allowed_duplicate() {
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
 
+SEED_PATH="$PATH"
+
 seed_chrome_tokens() {
   local home="$1"
 
-  mkdir -p "$home/.local/state/omarchy/current"
-  python3 "$ROOT/default/ultimate/design-system/resolve_tokens.py" \
+  PATH="$SEED_PATH" mkdir -p "$home/.local/state/omarchy/current"
+  PATH="$SEED_PATH" python3 "$ROOT/default/ultimate/design-system/resolve_tokens.py" \
     --colors "$ROOT/themes/ultimate-dark/colors.toml" \
     --chrome-output "$home/.local/state/omarchy/current/chrome-tokens-v0.json" \
     --output "$home/.local/state/omarchy/current/design-tokens-v0.json" >/dev/null ||
