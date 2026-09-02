@@ -59,6 +59,17 @@ grep -Fq 'METAL_HEAD OPEN' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-d
 pass "Settings does not offer LIVE power profile mutation"
 pass "heritage QS Power leftover stays cataloged and unverified on metal"
 
+if grep -Eiq 'nightlight|night-light|night light' "$application"; then
+  fail "Settings invents night-light LIVE"
+fi
+grep -Fq 'Night light remains a Superbar leftover, not a Settings LIVE writer.' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" ||
+  fail "Settings Display coverage refuses night-light LIVE"
+grep -Fq 'Settings does not invent night-light LIVE' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps keeps Settings from inventing night-light LIVE"
+grep -Fq 'Settings Power LIVE stays refused' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps keeps Settings Power LIVE refused"
+pass "Settings does not invent night-light LIVE"
+
 grep -Fq 'provider: "display.provider"' "$application" || fail "Settings sets brightness through display.provider"
 grep -Fq 'action: "brightness.set"' "$application" || fail "Settings uses the typed brightness.set action"
 grep -Fq 'if (queryState.records[i].brightnessAvailable) return queryState.records[i]' "$application" ||
@@ -210,5 +221,6 @@ assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility inpu
 const displayQuery = Model.queryForRoute('settings.display.overview')
 assert(displayQuery.coverage.indexOf('brightness.set') >= 0, 'the display coverage note names the settable verb')
 assert(displayQuery.coverage.indexOf('Resolution, scale, and arrangement changes remain unavailable') >= 0, 'the display coverage note still refuses what Settings cannot do')
+assert(displayQuery.coverage.indexOf('Night light remains a Superbar leftover, not a Settings LIVE writer.') >= 0, 'the display coverage note refuses Settings night-light LIVE')
 JS
 pass "the power profile option set is closed, deduplicated, and refuses spoofed host values"

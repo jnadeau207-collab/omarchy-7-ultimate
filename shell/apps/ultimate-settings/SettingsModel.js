@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "display.inspect",
     supportsResource: true,
-    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position), and brightness applies through display.provider brightness.set on outputs that expose a controllable backlight. Resolution, scale, and arrangement changes remain unavailable from Settings."
+    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position), and brightness applies through display.provider brightness.set on outputs that expose a controllable backlight. Resolution, scale, and arrangement changes remain unavailable from Settings. Night light remains a Superbar leftover, not a Settings LIVE writer."
   },
   {
     routeId: "settings.audio.overview",
