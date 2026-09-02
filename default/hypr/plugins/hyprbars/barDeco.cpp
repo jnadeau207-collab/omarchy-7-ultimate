@@ -381,6 +381,51 @@ bool CHyprBar::doButtonPress(Config::INTEGER barPadding, Config::INTEGER barButt
     return false;
 }
 
+void CHyprBar::renderAeroGlass(const CBox& barBox, const float rounding, const float a) {
+    static constexpr int BANDS = 18;
+
+    const float height = barBox.h;
+    if (height < 2)
+        return;
+
+    const float sheenStop = 0.58F;
+
+    for (int i = 0; i < BANDS; ++i) {
+        const float top    = static_cast<float>(i) / BANDS;
+        const float bottom = static_cast<float>(i + 1) / BANDS;
+
+        float alpha = 0.F;
+        if (bottom <= sheenStop) {
+            const float t = top / sheenStop;
+            alpha = (0.26F - 0.20F * t * t) * a;
+        } else if (top >= sheenStop) {
+            const float t = (top - sheenStop) / (1.F - sheenStop);
+            alpha = (0.010F + 0.030F * t) * a;
+        } else {
+            alpha = 0.010F * a;
+        }
+
+        if (alpha <= 0.004F)
+            continue;
+
+        const bool  lit  = bottom <= sheenStop;
+        const float tint = lit ? 1.F : 0.F;
+
+        CBox band = {barBox.x, barBox.y + height * top, barBox.w, height * (bottom - top) + 1};
+        g_pHyprOpenGL->renderRect(band, CHyprColor(tint, tint, tint, alpha),
+                                  {.round = i == 0 ? (int)rounding : 0, .roundingPower = m_pWindow->roundingPower()});
+    }
+
+    CBox highlight = {barBox.x + 1, barBox.y + 1, barBox.w - 2, 1};
+    g_pHyprOpenGL->renderRect(highlight, CHyprColor(1.F, 1.F, 1.F, 0.55F * a), {.round = 0, .roundingPower = 2.F});
+
+    CBox seam = {barBox.x, barBox.y + height * sheenStop, barBox.w, 1};
+    g_pHyprOpenGL->renderRect(seam, CHyprColor(1.F, 1.F, 1.F, 0.26F * a), {.round = 0, .roundingPower = 2.F});
+
+    CBox foot = {barBox.x, barBox.y + height - 1, barBox.w, 1};
+    g_pHyprOpenGL->renderRect(foot, CHyprColor(0.F, 0.F, 0.F, 0.12F * a), {.round = 0, .roundingPower = 2.F});
+}
+
 void CHyprBar::renderBarTitle(const Vector2D& bufferSize, const float scale) {
     const auto COLORVAL         = g_pGlobalState->config.textColor->value();
     const auto SIZE             = g_pGlobalState->config.barTextSize->value();
@@ -629,6 +674,9 @@ void CHyprBar::renderPass(PHLMONITOR pMonitor, const float& a) {
         g_pHyprOpenGL->renderRect(titleBarBox, color, {.round = scaledRounding, .roundingPower = m_pWindow->roundingPower(), .blur = true, .blurA = a});
     else
         g_pHyprOpenGL->renderRect(titleBarBox, color, {.round = scaledRounding, .roundingPower = m_pWindow->roundingPower()});
+
+    if (g_pGlobalState->config.barAero->value())
+        renderAeroGlass(titleBarBox, scaledRounding, a);
 
     // render title
     if (ENABLETITLE && (m_szLastTitle != PWINDOW->m_title || m_bWindowSizeChanged || !m_pTextTex || m_pTextTex->m_texID == 0 || m_bTitleColorChanged)) {

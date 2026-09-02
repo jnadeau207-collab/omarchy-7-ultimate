@@ -78,6 +78,7 @@ class CHyprBar : public IHyprWindowDecoration {
     Vector2D                   cursorRelativeToBar();
 
     void                       renderPass(PHLMONITOR, float const& a);
+    void                       renderAeroGlass(const CBox& barBox, const float rounding, const float a);
     void                       renderBarTitle(const Vector2D& bufferSize, const float scale);
     void renderBarButtons(CBox* barBox, const float scale, const float a);
     void renderBarButtonsText(CBox* barBox, const float scale, const float a);
