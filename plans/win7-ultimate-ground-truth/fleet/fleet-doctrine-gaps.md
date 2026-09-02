@@ -219,7 +219,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
 - Catalog soft invent: `apps.defaults.set` provider.id `apps.provider` vs live `defaults.provider`.
 - `HANDOFF_STATE_DOMAIN_WRITES` still carries TASK-unwired / Wall-one “cannot be wired” paragraphs after TASK admission present.
 - End Task: consequential / `terminationAuthorized=false`; digest label scrape fragile; do not invent Task Manager LIVE kill.
-- Semantics.text / authored English leftovers. DesktopIcons bash-lc argv comma-join closed via execArgv; product still REJECTED.
+- Semantics.text / authored English leftovers. DesktopIcons argv→execArgv landed in tree (PR #5); metal leftover pending; product REJECTED.
 - Product **REJECTED**; refuse merge as OS.
 
 ---
