@@ -13,6 +13,8 @@ Status (tree audited at `1334ba30` on 2026-08-26; metal windowing baseline HDMI-
 
 Do not mark a row `present` because a panel or hotkey exists for power users.
 
+When extending a row, cite the matching ground-truth file from `plans/win7-ultimate-ground-truth/` (see `_PARITY_ACCEPTANCE_POINTERS.md`). Pointers do not change status.
+
 ## Desktop jobs
 
 | Job | Status | Tree notes |
@@ -68,3 +70,11 @@ Do not mark a row `present` because a panel or hotkey exists for power users.
 ## Caption / windowing (not a substitute for the jobs above)
 
 Windowing Gate W0 is Phase 1 of `plans/project-ultimate.md` and is certified only by `W0_GATE.md` (Hyprland stays; three-button SSD, one-row CSD, min/max/restore, LTRB snap, Alt+Tab, Show Desktop, reopen memory, click-to-raise, Start click-through). The OS remains rejected because the product jobs above are incomplete. Founding execution authority is `PRODUCT_DOCTRINE.md` and `plans/project-ultimate.md`.
+
+## Win7 ground-truth pointers (honesty only — statuses unchanged)
+
+Concrete acceptance criteria for each job live under the **FULL CORPUS** in `plans/win7-ultimate-ground-truth/` (`01`–`06` md+json + `fleet/`) and are indexed by `plans/WIN7_SPEC_INDEX.md`. Full pointer table: `plans/win7-ultimate-ground-truth/_PARITY_ACCEPTANCE_POINTERS.md`.
+
+**Caption BINDING LOCK:** restored visual top NC **30** px; `SM_CYCAPTION` **22** is metric band only (never ship a 22 px title bar). See `plans/win7-ultimate-ground-truth/01-window-chrome.md`.
+
+Do **not** read these pointers as a status upgrade. Product remains **REJECTED**.
