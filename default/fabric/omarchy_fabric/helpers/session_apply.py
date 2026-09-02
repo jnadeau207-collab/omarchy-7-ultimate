@@ -18,6 +18,7 @@ HYPRCTL = "/usr/bin/hyprctl"
 NMCLI = "/usr/bin/nmcli"
 XDG_MIME = "/usr/bin/xdg-mime"
 DEFAULTS_PROTOCOLS = frozenset({"http", "https", "mailto"})
+MAX_MIME_LENGTH = 160
 NETWORK_WIFI_ID = "network.radio.wifi"
 BRIGHTNESS = "/usr/bin/omarchy-brightness-display"
 POWERPROFILESCTL = "/usr/bin/powerprofilesctl"
@@ -564,6 +565,41 @@ def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+def require_mime_type(payload):
+    value = payload.get("mimeType")
+    if not isinstance(value, str) or not value or len(value) > MAX_MIME_LENGTH:
+        raise ApplyError("payload.invalid", "The apply payload names no MIME type.")
+    parts = value.split("/")
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise ApplyError("payload.invalid", "The MIME type is not a type/subtype pair.")
+    for part in parts:
+        for character in part:
+            if not (character.isalnum() or character in "._-+"):
+                raise ApplyError("payload.invalid", "The MIME type holds an unsafe character.")
+    return value
+
+def apply_default_mime(mime_type, desktop_id, run=subprocess.run):
+    completed = run(
+        [XDG_MIME, "default", desktop_id, mime_type],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("apply.failed", "Setting the default application reported a failure status.")
+
+def apply_defaults_mime_set(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = payload.get("resourceId")
+    if not isinstance(resource_id, str) or not resource_id.startswith("defaults.association."):
+        raise ApplyError("payload.invalid", "The apply payload names no default association.")
+    mime_type = require_mime_type(payload)
+    desktop_id = resolve_application(payload)
+    apply_default_mime(mime_type, desktop_id)
+    json.dump({"ok": True, "resourceId": resource_id, "mimeType": mime_type, "desktopId": desktop_id}, stdout)
+    stdout.write("\n")
+    return 0
+
 def apply_defaults_protocol_set(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
@@ -715,6 +751,7 @@ ACTIONS = {
     "input-keyboard-layout-set": apply_input_keyboard_layout,
     "network-wifi-enabled-set": apply_network_wifi_enabled,
     "defaults-protocol-set": apply_defaults_protocol_set,
+    "defaults-mime-set": apply_defaults_mime_set,
     "process-terminate": apply_process_terminate,
     "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,

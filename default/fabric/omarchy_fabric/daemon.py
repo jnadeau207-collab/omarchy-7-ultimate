@@ -722,6 +722,14 @@ class FabricDaemon:
             "locationId": current["locationId"],
             "entryRelativePath": added[0],
         }
+    def _operation_mime(self, value: Any) -> str:
+        if not isinstance(value, str) or not 3 <= len(value) <= 160 or value.count("/") != 1:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The requested MIME type is not a type/subtype pair.",
+            )
+        return value
     def _operation_scheme(self, value: Any) -> str:
         if value not in ("http", "https", "mailto"):
             raise FabricError(
@@ -731,6 +739,21 @@ class FabricDaemon:
             )
         return value
 
+    @staticmethod
+    def _defaults_mime_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        proposed = preflight["proposedState"]
+        app_id = proposed["defaultAppId"]
+        if not isinstance(app_id, str) or not app_id:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The default application plan names no application.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "mimeType": proposed["key"],
+            "appId": app_id,
+        }
     @staticmethod
     def _defaults_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
         proposed = preflight["proposedState"]
@@ -981,6 +1004,15 @@ class FabricDaemon:
                         },
                     ),
                     IntentDefinition(
+                        "defaults.mime.set",
+                        FixedArgvCommand(str(helper), ("defaults-mime-set",)),
+                        required={
+                            "resourceId": stable_token,
+                            "mimeType": self._operation_mime,
+                            "appId": stable_token,
+                        },
+                    ),
+                    IntentDefinition(
                         "defaults.protocol.set",
                         FixedArgvCommand(str(helper), ("defaults-protocol-set",)),
                         required={
@@ -1074,6 +1106,12 @@ class FabricDaemon:
                     "trash.restore",
                     "files.trash.restore",
                     self._restore_payload,
+                ),
+                OperationDefinition(
+                    "defaults.provider",
+                    "mime.set",
+                    "defaults.mime.set",
+                    self._defaults_mime_payload,
                 ),
                 OperationDefinition(
                     "defaults.provider",
