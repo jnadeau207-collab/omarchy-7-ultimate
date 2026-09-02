@@ -24,18 +24,40 @@ grep -Fq 'if (!host || operationBusy || !createVisible) return' "$application" |
 pass "Files drives preflight, approve, and start against files.provider only"
 
 card="$ROOT/shell/apps/ultimate-files/FilesRecordCard.qml"
-grep -Fq 'action: "entry.trash"' "$application" || fail "Files trashes through the typed entry.trash action"
+grep -Fq 'readonly property bool trashAuthorized: false' "$application" \
+  || fail "trashAuthorized stays false; shell principal cannot authorize Trash"
+if grep -Eq 'trashAuthorized:\s*true' "$application"; then
+  fail "Files must not authorize shell consequential trash"
+fi
+grep -Fq 'if (!root.trashAuthorized) return' "$application" \
+  || fail "trashEntry refuses to start a doomed shell preflight"
+grep -Fq 'if (root.createVisible && root.trashAuthorized)' "$application" \
+  || fail "Delete stays hidden while trashAuthorized is false"
+grep -Fq 'if (root.trashAuthorized) {' "$application" \
+  || fail "Organize and context Delete stay hidden while trashAuthorized is false"
+grep -Fq 'action: "entry.trash"' "$application" || fail "Files keeps the typed entry.trash action"
 grep -Fq 'arguments: { entryId: String(record.id) }' "$application" ||
   fail "Files sends only the entry identity; the daemon derives the path from its own scope"
 grep -Fq 'if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return' "$application" ||
   fail "Files refuses to trash a non-entry record or a symlink"
 grep -Fq 'if (!host || operationBusy || createLocationId === "") return' "$application" ||
-  fail "Files offers Trash only where the route is a writable location"
+  fail "Files still scopes trash to a writable location if authorization is ever granted"
 grep -Fq "signal trashRequested()" "$card" || fail "the record card raises a Trash request rather than acting itself"
+grep -Fq 'trashable: false' "$application" || fail "the properties card does not enable Move to Trash under the shell principal"
 if grep -Eq 'rm |unlink|shutil' "$application"; then
   fail "Files deletes directly instead of routing through the operation plane"
 fi
-pass "Files moves an entry to Trash through entry.trash and never deletes directly"
+if grep -Fq 'files.trash.manage' "$application"; then
+  fail "Files does not invent files.trash.manage"
+fi
+if grep -Fq 'LIVE CONTROL' "$application"; then
+  fail "Files must not claim LIVE CONTROL for Trash under the shell principal"
+fi
+grep -Fq 'readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady' "$application" \
+  || fail "New folder stays enabled on writable location routes"
+grep -Fq 'if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })' "$application" \
+  || fail "New folder remains a LIVE command-bar control"
+pass "Files keeps typed entry.trash but does not enable LIVE Trash under the shell principal"
 
 if grep -Fq 'action: "trash.restore"' "$application"; then
   fail "Files does not offer trash.restore while the write plane cannot derive a Trash path"
