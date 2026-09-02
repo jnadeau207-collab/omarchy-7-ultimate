@@ -61,6 +61,12 @@ Item {
     else host.retryFabric()
   }
 
+  function refreshVisibleSurface() {
+    if (!controller || !host || busy) return
+    if (!host.fabricReady) return
+    controller.refreshWhenSurfaceVisible()
+  }
+
   function splitValues(text) {
     var raw = String(text || "").split(",")
     var result = []
@@ -129,6 +135,7 @@ Item {
     enabled: root.host !== null
     function onFabricConnectionReady(hello) { root.ensureController(); root.controller.setConnected(true) }
     function onFabricReadyChanged() { root.ensureController(); root.controller.setConnected(root.host.fabricReady) }
+    function onSurfaceBecameActive() { root.refreshVisibleSurface() }
     function onRouteActivated(routeId, routeArguments, context) { root.ensureController(); root.decisionTouched = false; root.controller.activate(routeId, routeArguments || {}) }
     function onFabricResult(requestId, result) { if (root.controller) root.controller.receiveResult(requestId, result) }
     function onFabricFailure(requestId, error) { if (root.controller) root.controller.receiveFailure(requestId, error) }
