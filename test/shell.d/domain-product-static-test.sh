@@ -202,6 +202,11 @@ grep -Fq 'File contents are never read' "$ROOT/shell/apps/ultimate-files/FilesAp
 grep -Fq 'New folder and Trash run through files.provider' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live New folder and Trash writers"
 grep -Fq 'Restore, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore and files.trash.manage unavailable"
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
+if grep -Eq 'files-entry-trash.*helper only|The actual blocker is the schema family' "$ROOT/HANDOFF_WRITERS_2026-09-01.md"; then
+  fail "HANDOFF_WRITERS must not claim entry.trash is helper-only or schema-blocked after the v1 directory family widen"
+fi
+grep -Fq 'grant.shell-consequential' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names the SHELL consequential refuse for entry.trash"
+grep -Fq 'files.trash.manage' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS keeps files.trash.manage unavailable"
 if grep -Eq 'maximumLineCount:[[:space:]]*2' "$ROOT/shell/apps/ultimate-files/ExplorerDetailsPane.qml"; then
   fail "Files details boundary Text is limited to 2 lines and can clip the unavailable half"
 fi
