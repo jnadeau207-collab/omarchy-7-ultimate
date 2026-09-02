@@ -228,6 +228,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     g_pGlobalState->config.barTextWeight   = makeShared<Config::Values::CFontWeightValue>("plugin:hyprbars:bar_text_weight", "Bar's title text weight (e.g. \"bold\" or an integer 100-1000)", 400);
     g_pGlobalState->config.barTitleEnabled = makeShared<Config::Values::CBoolValue>("plugin:hyprbars:bar_title_enabled", "Whether to enable titles in the bar", true);
     g_pGlobalState->config.barBlur         = makeShared<Config::Values::CBoolValue>("plugin:hyprbars:bar_blur", "Whether to enable blur of the bar", false);
+    g_pGlobalState->config.barAero         = makeShared<Config::Values::CBoolValue>("plugin:hyprbars:bar_aero", "Whether to shade the bar as Aero glass", false);
     g_pGlobalState->config.barTextFont     = makeShared<Config::Values::CStringValue>("plugin:hyprbars:bar_text_font", "Bar's text font", "Sans");
     g_pGlobalState->config.barTextAlign    = makeShared<Config::Values::CStringValue>("plugin:hyprbars:bar_text_align", "Bar's text alignment", "center");
     g_pGlobalState->config.barPartOfWindow =
@@ -249,6 +250,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     HyprlandAPI::addConfigValueV2(PHANDLE, g_pGlobalState->config.barTextWeight);
     HyprlandAPI::addConfigValueV2(PHANDLE, g_pGlobalState->config.barTitleEnabled);
     HyprlandAPI::addConfigValueV2(PHANDLE, g_pGlobalState->config.barBlur);
+    HyprlandAPI::addConfigValueV2(PHANDLE, g_pGlobalState->config.barAero);
     HyprlandAPI::addConfigValueV2(PHANDLE, g_pGlobalState->config.barTextFont);
     HyprlandAPI::addConfigValueV2(PHANDLE, g_pGlobalState->config.barTextAlign);
     HyprlandAPI::addConfigValueV2(PHANDLE, g_pGlobalState->config.barPartOfWindow);

@@ -533,8 +533,9 @@ GLASS
 [[ -f $ROOT/themes/ultimate-dark/chrome-tokens.json ]] || fail "ultimate-dark ships chrome-tokens.json for theme-set"
 grep -Fq 'chrome-tokens-v0.json' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars caption chrome reads chrome-tokens-v0.json"
-grep -Fq 'bar_color = chrome_glass_rgba' "$ROOT/default/hypr/desktop-windows.lua" \
+grep -Fq 'bar_color = chrome_aero_rgba' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars bar_color comes from chrome tokens, not a private rgba"
+grep -Fq 'aero_channel(tonumber(tokens.glassRed))' "$ROOT/default/hypr/desktop-windows.lua" \n  || fail "the Aero caption lifts the chrome token glass channels rather than inventing a colour"
 grep -Fq 'captionCloseBgHex' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars close button color comes from chrome tokens"
 grep -Fq 'captionMaxBgHex' "$ROOT/default/hypr/desktop-windows.lua" \

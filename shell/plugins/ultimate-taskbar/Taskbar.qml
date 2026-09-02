@@ -49,6 +49,14 @@ Item {
   readonly property color chromeEdge: highContrast ? Tokens.border.strong : Tokens.chrome.edge
   readonly property int chromeEdgeWidth: highContrast ? 2 : 1
   property color background: chromeBar
+
+  function aeroShade(base, lift) {
+    return Qt.rgba(base.r + (1 - base.r) * lift, base.g + (1 - base.g) * lift, base.b + (1 - base.b) * lift, base.a)
+  }
+
+  function aeroSink(base, sink) {
+    return Qt.rgba(base.r * (1 - sink), base.g * (1 - sink), base.b * (1 - sink), base.a)
+  }
   property var moduleSlots: []
   readonly property var windowService: shell ? shell.windowService : null
   readonly property var appLibrary: shell ? shell.appLibrary : null
@@ -271,7 +279,7 @@ Item {
         visible: !remapGuard.remapping && !root.barHidden
         exclusionMode: root.barHidden ? ExclusionMode.Ignore : ExclusionMode.Normal
         exclusiveZone: root.barHidden ? 0 : implicitHeight
-        color: root.background
+        color: "transparent"
         implicitHeight: root.barSize
         implicitWidth: 0
         surfaceFormat.opaque: false
@@ -293,12 +301,34 @@ Item {
         }
 
         Rectangle {
+          anchors.fill: parent
+          z: -1
+          gradient: Gradient {
+            GradientStop { position: 0.0; color: root.aeroShade(root.background, 0.20) }
+            GradientStop { position: 0.46; color: root.aeroShade(root.background, 0.07) }
+            GradientStop { position: 0.47; color: root.aeroSink(root.background, 0.10) }
+            GradientStop { position: 1.0; color: root.aeroSink(root.background, 0.02) }
+          }
+        }
+
+        Rectangle {
           anchors.top: parent.top
           anchors.left: parent.left
           anchors.right: parent.right
           height: root.chromeEdgeWidth
           z: 2
           color: root.chromeEdge
+        }
+
+        Rectangle {
+          anchors.top: parent.top
+          anchors.topMargin: root.chromeEdgeWidth
+          anchors.left: parent.left
+          anchors.right: parent.right
+          height: 1
+          z: 2
+          visible: !root.highContrast
+          color: Qt.rgba(1, 1, 1, 0.16)
         }
 
         ScreenMoveRemap {
