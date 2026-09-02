@@ -596,7 +596,8 @@ if night_light.get("source", {}).get("file") != "shell/plugins/services/nightlig
     raise SystemExit(f"display.night-light.set source is {night_light.get('source')}")
 if night_light.get("source", {}).get("symbol") != "NightlightService":
     raise SystemExit(f"display.night-light.set source is {night_light.get('source')}")
-if "Settings" in str(night_light["humanRoute"].get("path") or ""):
+night_light_path = str(night_light["humanRoute"].get("path") or "")
+if night_light_path.startswith("Settings") or "Start > Settings" in night_light_path:
     raise SystemExit(f"display.night-light.set invents Settings night-light LIVE: {night_light.get('humanRoute')}")
 settings_app = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
 if "nightlight" in settings_app.lower() or "night-light" in settings_app.lower() or "night light" in settings_app.lower():
@@ -617,7 +618,8 @@ if native34["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.34 underclaims a visible QS tile: {native34.get('humanRoute')}")
 if native34["humanRoute"].get("path") != "Superbar > Quick Settings > Night light":
     raise SystemExit(f"windows-native.34 invents Settings night-light LIVE: {native34['humanRoute']}")
-if "Settings" in str(native34["humanRoute"].get("path") or ""):
+native34_path = str(native34["humanRoute"].get("path") or "")
+if native34_path.startswith("Settings") or "Start > Settings" in native34_path:
     raise SystemExit(f"windows-native.34 invents Settings night-light LIVE: {native34['humanRoute']}")
 parity_modern = next(job for job in jobs["jobs"] if job["id"] == "parity.modern-display-scaling-hdr-night-light")
 if parity_modern.get("claim") == "present":
