@@ -568,6 +568,19 @@ fi
 if grep -Fq 'no direct commands, mutation, preflight, approval, or execution authority' "$application"; then
   fail "Settings footer no longer claims the mutating window has no mutation authority"
 fi
+python3 - "$application" <<'PY' || fail "Settings Coverage honesty Texts still ElideRight-clip"
+import pathlib
+import sys
+
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+start = text.find("id: coverageColumn")
+if start < 0:
+    raise SystemExit("coverageColumn missing")
+end = text.find("GridLayout", start)
+block = text[start:end] if end > start else text[start : start + 4000]
+if "ElideRight" in block:
+    raise SystemExit("coverageColumn still uses ElideRight on honesty text")
+PY
 pass "Settings coverage badge, declared ops, and footer match live writers"
 
 if grep -Eiq 'typed (settings |domain )?writers remain phase 5' "$ROOT/plans/project-ultimate.md" "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
