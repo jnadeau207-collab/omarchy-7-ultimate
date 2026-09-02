@@ -580,7 +580,7 @@
       "sourceStatus": "missing as product",
       "claim": "missing",
       "capabilityIds": [
-        "processes.inspect",
+        "process.inspect",
         "process.termination.plan",
         "apps.startup.disable"
       ],
@@ -1796,7 +1796,7 @@
       "sourceStatus": "pending",
       "claim": "missing",
       "capabilityIds": [
-        "processes.inspect"
+        "process.inspect"
       ],
       "humanRoute": {
         "status": "planned",
