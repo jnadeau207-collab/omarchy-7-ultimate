@@ -10,8 +10,11 @@ import pathlib
 import signal
 import subprocess
 import sys
-import urllib.parse
 from typing import Any, Mapping
+
+from omarchy_fabric.providers.files._trashinfo import parse_trash_info_path
+
+from .trash_info import parse_trash_info_path, trash_info_document
 
 PACTL = "/usr/bin/pactl"
 HYPRCTL = "/usr/bin/hyprctl"
@@ -456,19 +459,11 @@ def trash_names(directory: pathlib.Path, name: str) -> str:
     return candidate
 
 
-def trash_info_document(original: pathlib.Path, deleted_at: str) -> str:
-    quoted = urllib.parse.quote(str(original), safe="/")
-    return f"[Trash Info]\nPath={quoted}\nDeletionDate={deleted_at}\n"
-
-
 def parse_trash_info(text: str) -> str:
-    path = ""
-    for line in text.splitlines():
-        if line.startswith("Path="):
-            path = urllib.parse.unquote(line[len("Path="):])
-    if not os.path.isabs(path) or "\x00" in path:
-        raise ApplyError("apply.failed", "The Trash record does not name an absolute original path.")
-    return path
+    try:
+        return parse_trash_info_path(text)
+    except ValueError as error:
+        raise ApplyError("apply.failed", "The Trash record does not name an absolute original path.") from error
 
 
 def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:
@@ -509,34 +504,48 @@ def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:
 def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = require_files_resource_id(payload)
+    entry_id = require_entry_id(payload)
     home = pathlib.Path.home()
-    _, final, relative = resolve_entry_path(payload, home)
+    _, destination, relative = resolve_destination_path(payload, home)
+    parent = "/".join(relative.split("/")[:-1])
+    if resource_id != stable_directory_id(payload["locationId"], parent):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
     root = trash_root(home)
+    files_dir = root / "files"
+    info_dir = root / "info"
+    if not files_dir.is_dir() or not info_dir.is_dir():
+        raise ApplyError("resource.unresolved", "The Trash directory is not present.")
+    trash_file = None
     try:
-        root_resolved = root.resolve(strict=True)
-        files_dir = (root / "files").resolve(strict=True)
+        names = sorted(os.listdir(files_dir))
     except OSError as error:
         raise ApplyError("resource.unresolved", "The Trash directory is not present.") from error
-    if files_dir != final.parent:
-        raise ApplyError("payload.invalid", "The entry is not held in Trash.")
-    info_path = root_resolved / "info" / f"{final.name}.trashinfo"
+    if len(names) > 4096:
+        raise ApplyError("apply.failed", "The Trash directory exceeds its scan bound.")
+    for name in names:
+        candidate = files_dir / name
+        try:
+            info = candidate.lstat()
+        except OSError:
+            continue
+        if stable_entry_id("files.location.trash", info.st_dev, info.st_ino, name) == entry_id:
+            trash_file = candidate
+            break
+    if trash_file is None:
+        raise ApplyError("resource.unresolved", "The Trash record for this entry is missing.")
+    info_path = info_dir / f"{trash_file.name}.trashinfo"
     try:
         record = info_path.read_text(encoding="utf-8")
     except OSError as error:
         raise ApplyError("resource.unresolved", "The Trash record for this entry is missing.") from error
     original = pathlib.Path(parse_trash_info(record))
-    try:
-        parent = original.parent.resolve(strict=True)
-    except OSError as error:
-        raise ApplyError("resource.unresolved", "The original location is no longer present.") from error
     home_resolved = home.resolve()
-    if parent != home_resolved and home_resolved not in parent.parents:
+    if original != home_resolved and home_resolved not in original.parents:
         raise ApplyError("payload.invalid", "The Trash record points outside this account's home.")
-    destination = parent / original.name
-    if destination.exists():
-        raise ApplyError("apply.exists", "Something already occupies the original location.")
+    if original != destination and (original.parent, original.name) != (destination.parent, destination.name):
+        raise ApplyError("payload.invalid", "The Trash record does not name this restore destination.")
     try:
-        os.rename(final, destination)
+        os.rename(trash_file, destination)
     except OSError as error:
         raise ApplyError("apply.failed", "Restoring the entry reported a failure status.") from error
     try:

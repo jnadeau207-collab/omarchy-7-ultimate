@@ -141,7 +141,7 @@ check("the earlier trashed entry is not overwritten", trashed.read_text(encoding
 escaped = trash / "info" / "escaped.trashinfo"
 escaped.parent.mkdir(parents=True, exist_ok=True)
 (trash / "files" / "escaped").write_text("x", encoding="utf-8")
-escaped.write_text("[Trash Info]\nPath=" + sa.urllib.parse.quote(str(pathlib.Path(tempfile.mkdtemp()) / "outside.txt"), safe="/") + "\nDeletionDate=2026-01-01T00:00:00\n", encoding="utf-8")
+escaped.write_text(sa.trash_info_document(pathlib.Path(tempfile.mkdtemp()) / "outside.txt", "2026-01-01T00:00:00"), encoding="utf-8")
 outside = trash / "files" / "escaped"
 status, result = run("files-trash-restore", entry_payload("files.location.home", ".local/share/Trash/files/escaped", outside))
 check("a Trash record pointing outside home refuses", result.get("code") == "payload.invalid", json.dumps(result))
