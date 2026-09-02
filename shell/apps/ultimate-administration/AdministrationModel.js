@@ -479,6 +479,50 @@ function resourceSubtitle(resource) {
   return "Provider resource"
 }
 
+var START_DIGEST_PATTERN = /^[0-9a-f]{16}$/
+
+function processStartDigest(resource) {
+  if (!isObject(resource) || String(resource.kind || "") !== "process") return ""
+  var state = isObject(resource.state) ? resource.state : {}
+  if (typeof state.startDigest !== "string") return ""
+  if (!START_DIGEST_PATTERN.test(state.startDigest)) return ""
+  return state.startDigest
+}
+
+function recordStartDigest(record) {
+  if (!isObject(record) || typeof record.startDigest !== "string") return ""
+  if (!START_DIGEST_PATTERN.test(record.startDigest)) return ""
+  return record.startDigest
+}
+
+function endTaskPreflightArguments(record) {
+  if (!isObject(record) || typeof record.id !== "string" || record.id === "") return null
+  var digest = recordStartDigest(record)
+  if (digest === "") return null
+  return { resourceId: record.id, expectedStartDigest: digest, signal: "term" }
+}
+
+function endTaskPreflightRequest(record, idempotencyNonce) {
+  var argumentsValue = endTaskPreflightArguments(record)
+  if (!argumentsValue) return null
+  return {
+    provider: "process.provider",
+    action: "termination.plan",
+    arguments: argumentsValue,
+    idempotencyKey: "administration.endtask." + argumentsValue.resourceId + "." + String(idempotencyNonce || "")
+  }
+}
+
+function endTaskConfirmCopy() {
+  return {
+    title: "End Task",
+    message: "Do you want to end this task? Unsaved work in this program may be lost.",
+    recovery: "The process will not be given a chance to save its state or data before it is terminated.",
+    confirm: "End Task",
+    cancel: "Cancel"
+  }
+}
+
 function normalizeLeafResource(resource, index) {
   if (!isObject(resource)) return null
   var id = typeof resource.id === "string" && resource.id.length <= 160 ? resource.id : ""
@@ -494,6 +538,7 @@ function normalizeLeafResource(resource, index) {
     status: clippedText(resourceStatus(resource), 80),
     subtitle: clippedText(resourceSubtitle(resource), 240),
     details: details,
+    startDigest: processStartDigest(resource),
     order: index
   }
 }
@@ -1028,6 +1073,11 @@ if (typeof module !== "undefined") {
     operationActions: operationActions,
     validateReadResult: validateReadResult,
     normalizeLeafResource: normalizeLeafResource,
+    processStartDigest: processStartDigest,
+    recordStartDigest: recordStartDigest,
+    endTaskPreflightArguments: endTaskPreflightArguments,
+    endTaskPreflightRequest: endTaskPreflightRequest,
+    endTaskConfirmCopy: endTaskConfirmCopy,
     normalizedRecords: normalizedRecords,
     acceptedReadState: acceptedReadState,
     baseState: baseState,

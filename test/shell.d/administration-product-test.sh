@@ -76,3 +76,113 @@ for registry in normalize_launch.py launch-product-app.bash ProductProtocol.js; 
   grep -Fq 'administration' "$ROOT/shell/apps/shared/$registry"     || fail "$registry registers the administration application"
 done
 pass "the standalone launch path registers administration everywhere it dispatches"
+
+application="$ROOT/shell/apps/ultimate-administration/AdministrationApplication.qml"
+model="$ROOT/shell/apps/ultimate-administration/AdministrationModel.js"
+
+run_node_test <<'JS'
+const Model = requireFromRoot('shell/apps/ultimate-administration/AdministrationModel.js')
+
+const processResource = Model.normalizeLeafResource({
+  id: 'process.1234.0123456789abcdef',
+  label: 'firefox',
+  kind: 'process',
+  state: {
+    lifecycle: 'running',
+    startDigest: '0123456789abcdef',
+    identityRevision: `sha256.${'a'.repeat(64)}`,
+    plannedSignal: null
+  }
+}, 0)
+assert(processResource, 'process inspect resources project into Administration records')
+assertEqual(processResource.startDigest, '0123456789abcdef', 'process records carry typed startDigest from inspect state')
+assertEqual(Model.recordStartDigest(processResource), '0123456789abcdef', 'endTask reads typed startDigest only')
+assertEqual(Model.processStartDigest({
+  kind: 'process',
+  state: { startDigest: '0123456789abcdef' }
+}), '0123456789abcdef', 'processStartDigest reads state.startDigest, not details labels')
+assertDeepEqual(
+  Model.endTaskPreflightArguments(processResource),
+  { resourceId: 'process.1234.0123456789abcdef', expectedStartDigest: '0123456789abcdef', signal: 'term' },
+  'End Task preflight arguments use the typed startDigest field'
+)
+
+assertEqual(
+  Model.recordStartDigest({
+    id: 'process.1.deadbeefdeadbeef',
+    kind: 'process',
+    details: [{ label: 'Start Digest', value: 'deadbeefdeadbeef' }]
+  }),
+  '',
+  'details-label scrape is not a startDigest path'
+)
+assertEqual(
+  Model.processStartDigest({
+    kind: 'service',
+    state: { startDigest: '0123456789abcdef' }
+  }),
+  '',
+  'non-process records do not carry process startDigest'
+)
+assertEqual(
+  Model.processStartDigest({
+    kind: 'process',
+    state: { startDigest: 'not-a-digest' }
+  }),
+  '',
+  'invalid startDigest tokens are refused'
+)
+
+const copy = Model.endTaskConfirmCopy()
+assertEqual(copy.title, 'End Task', 'confirm copy uses Win7 End Task title')
+assert(copy.message.includes('end this task'), 'confirm copy asks before ending the task')
+assertEqual(copy.cancel, 'Cancel', 'confirm copy has a cancel path')
+JS
+pass "Administration carries typed startDigest and refuses details-label scrape"
+
+if grep -Eiq 'indexOf\(["'"'"']start digest' "$application"; then
+  fail "AdministrationApplication no longer scrapes details labels for start digest"
+fi
+if grep -En 'details\[.*\]\.label|toLowerCase\(\)\.indexOf\("start' "$application"; then
+  fail "AdministrationApplication contains no details-label scrape loop"
+fi
+grep -Fq 'AdministrationModel.endTaskPreflightArguments(record)' "$application" \
+  || fail "endTask gates on typed preflight arguments"
+grep -Fq 'AdministrationModel.endTaskPreflightRequest(record, Date.now())' "$application" \
+  || fail "confirmEndTask builds preflight from the typed startDigest path"
+grep -Fq 'startDigest: processStartDigest(resource)' "$model" \
+  || fail "normalizeLeafResource carries typed startDigest from process inspect state"
+pass "typed startDigest path exists; details-label scrape is gone"
+
+grep -Fq 'function confirmEndTask()' "$application" \
+  || fail "End Task has an explicit confirm function"
+grep -Fq 'onConfirmed: root.confirmEndTask()' "$application" \
+  || fail "the confirm dialog confirm action runs confirmEndTask"
+grep -Fq 'onCanceled: root.cancelEndTaskConfirm()' "$application" \
+  || fail "the confirm dialog cancel action is wired"
+grep -Fq 'function cancelEndTaskConfirm()' "$application" \
+  || fail "Cancel has an explicit no-op handler"
+if grep -A6 'function cancelEndTaskConfirm()' "$application" | grep -Fq 'operation.preflight'; then
+  fail "Cancel must not issue operation.preflight"
+fi
+if grep -A8 'function endTask(record)' "$application" | grep -Fq 'operation.preflight'; then
+  fail "endTask must not issue operation.preflight before confirm"
+fi
+grep -Fq 'root.operationRequestId = host.requestFabric("operation.preflight", request)' "$application" \
+  || fail "confirmEndTask is the operation.preflight call site"
+preflight_sites=$(grep -c 'operation.preflight' "$application" || true)
+(( preflight_sites == 1 )) || fail "operation.preflight has exactly one Administration call site" "found $preflight_sites"
+grep -Fq 'Ui.OperationDialog' "$application" \
+  || fail "End Task confirm uses the existing OperationDialog"
+pass "confirm gate exists before End Task preflight"
+
+grep -Fq 'readonly property bool terminationAuthorized: false' "$application" \
+  || fail "terminationAuthorized stays false; shell principal cannot authorize End Task"
+grep -Fq 'text: root.terminationAuthorized ? "LIVE CONTROL" : "CHANGES UNAVAILABLE"' "$application" \
+  || fail "unauthorized Administration coverage badge stays CHANGES UNAVAILABLE"
+grep -Fq 'endTaskEnabled: root.terminationAuthorized && String(modelData.kind || "") === "process"' "$application" \
+  || fail "End Task control stays hidden while terminationAuthorized is false"
+if grep -Eq 'terminationAuthorized:\s*true' "$application"; then
+  fail "Administration must not authorize shell consequential termination"
+fi
+pass "terminationAuthorized remains false; End Task stays hidden; no LIVE CONTROL claim"
