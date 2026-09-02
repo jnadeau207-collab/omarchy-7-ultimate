@@ -256,4 +256,31 @@ for path in paths:
             f"{path.name}: declared-operations Text maximumLineCount {declared.group(1)} can clip honesty copy"
         )
 PY
+python3 - "$ROOT" <<'PY' || fail "Settings Personalization honesty/coverage still invent Phase 5 or underclaim the hosted picker"
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+model = (root / "shell/apps/ultimate-settings/SettingsModel.js").read_text(encoding="utf-8")
+coverage = re.search(r'routeId: "settings.personalization.overview"[\s\S]*?coverage: "([^"]+)"', model)
+honesty = re.search(r'if \(id === "settings.personalization.overview"\) return \{[\s\S]*?honesty: "([^"]+)"', model)
+if not coverage:
+    raise SystemExit("personalization coverage string missing")
+if not honesty:
+    raise SystemExit("personalization hosted honesty string missing")
+for label, text in (("coverage", coverage.group(1)), ("honesty", honesty.group(1))):
+    if re.search(r"phase 5", text, re.I):
+        raise SystemExit(f"personalization {label} still invents a Phase 5 fence")
+    if re.search(r"remains phase 5", text, re.I):
+        raise SystemExit(f"personalization {label} still invents a remains-Phase-5 fence")
+    if "image picker" not in text:
+        raise SystemExit(f"personalization {label} must name the hosted picker")
+    if "unavailable" not in text:
+        raise SystemExit(f"personalization {label} must still refuse typed writers")
+if "not represented as live state" in coverage.group(1):
+    raise SystemExit("personalization coverage underclaims the hosted picker as non-live")
+if "No code-owned personalization.provider is registered" not in coverage.group(1):
+    raise SystemExit("personalization coverage must not invent a registered typed writer inventory")
+PY
 pass "Domain products explain trust, provenance, and unavailable mutation boundaries"
