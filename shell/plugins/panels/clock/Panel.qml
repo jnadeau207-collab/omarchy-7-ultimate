@@ -228,6 +228,7 @@ Panel {
 
           Text {
             width: parent.width
+            textFormat: Text.PlainText
             text: root.chromeText("Calendar")
             color: root.contentForeground
             font.family: root.contentFontFamily
@@ -312,6 +313,7 @@ Panel {
 
                 Text {
                   anchors.verticalCenter: parent.verticalCenter
+                  textFormat: Text.PlainText
                   text: root.chromeText("BORN")
                   color: Qt.darker(root.contentForeground, 1.5)
                   font.family: root.contentFontFamily
@@ -335,6 +337,7 @@ Panel {
                   anchors.verticalCenter: parent.verticalCenter
                   anchors.verticalCenterOffset: 0
                   leftPadding: Style.space(6)
+                  textFormat: Text.PlainText
                   text: root.chromeText("LIVE TO")
                   color: Qt.darker(root.contentForeground, 1.5)
                   font.family: root.contentFontFamily
@@ -419,6 +422,7 @@ Panel {
                 id: lifeLabel
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                textFormat: Text.PlainText
                 text: root.chromeText("LIFE")
                 color: Qt.darker(root.contentForeground, 1.5)
                 font.family: root.contentFontFamily
@@ -507,6 +511,7 @@ Panel {
 
                   Text {
                     anchors.centerIn: parent
+                    textFormat: Text.PlainText
                     text: root.chromeText("W")
                     color: weekStartMouse.containsMouse
                       ? Style.hoverStateColor(root.contentForeground, Tokens.accent.primary)

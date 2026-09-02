@@ -79,6 +79,7 @@ Item {
         spacing: 8
 
         Text {
+          textFormat: Text.PlainText
           text: root.chromeText("Run")
           color: Tokens.text.secondary
           font.family: Style.font.family

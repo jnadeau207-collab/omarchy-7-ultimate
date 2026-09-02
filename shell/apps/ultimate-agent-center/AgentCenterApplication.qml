@@ -509,6 +509,7 @@ Item {
 
             Text {
               visible: root.queryState.phase === "ready" || root.queryState.phase === "empty" || root.queryState.phase === "partial"
+              textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, "Managed-work v0 \u00b7 inspect tasks can be created, run, cancelled, and recovered. Consent and provider operations stay outside Agent Center.")
               color: Tokens.text.disabled
               font.family: Tokens.typography.family

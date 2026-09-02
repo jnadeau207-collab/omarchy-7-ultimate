@@ -389,6 +389,7 @@ Item {
 
           Text {
             visible: root.pins.length > 0 && root.filter.length === 0
+            textFormat: Text.PlainText
             text: productProfile.text("Pinned")
             color: Tokens.text.secondary
             font.pixelSize: Style.font.bodySmall
@@ -450,6 +451,7 @@ Item {
 
           Text {
             visible: root.recentApps.length > 0 && root.filter.length === 0
+            textFormat: Text.PlainText
             text: productProfile.text("Recent")
             color: Tokens.text.secondary
             font.pixelSize: Style.font.bodySmall
@@ -509,6 +511,7 @@ Item {
 
           Text {
             visible: root.filter.length === 0
+            textFormat: Text.PlainText
             text: productProfile.text("All programs")
             color: Tokens.text.secondary
             font.pixelSize: Style.font.bodySmall
@@ -537,6 +540,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 8
+                textFormat: Text.PlainText
                 text: modelData.letter
                 color: Tokens.text.secondary
                 font.family: Tokens.typography.family
@@ -626,6 +630,7 @@ Item {
               border.width: 1
               Text {
                 anchors.centerIn: parent
+                textFormat: Text.PlainText
                 text: root.userInitial
                 color: Tokens.text.primary
                 font.family: Tokens.typography.family
@@ -706,6 +711,7 @@ Item {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               anchors.left: parent.left
+              textFormat: Text.PlainText
               text: productProfile.text(modeProfile && modeProfile.mode === "desktop" ? "Power User Mode" : "Desktop Mode")
               color: modeMouse.containsMouse ? Tokens.text.primary : Tokens.text.secondary
               font.family: Tokens.typography.family
@@ -809,6 +815,7 @@ Item {
                   anchors.verticalCenter: parent.verticalCenter
                   anchors.left: parent.left
                   anchors.leftMargin: 8
+                  textFormat: Text.PlainText
                   text: modelData.icon
                   color: Tokens.text.primary
                   font.family: Tokens.typography.family
@@ -818,6 +825,7 @@ Item {
                   anchors.verticalCenter: parent.verticalCenter
                   anchors.left: parent.left
                   anchors.leftMargin: 32
+                  textFormat: Text.PlainText
                   text: productProfile.text(modelData.label)
                   color: Tokens.text.primary
                   font.family: Tokens.typography.family
@@ -925,6 +933,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 8
+                textFormat: Text.PlainText
                 text: productProfile.text(root.isPinnedId(root.desktopIdOf(root.pinMenuItem)) ? "Unpin from taskbar" : "Pin to taskbar")
                 color: Tokens.text.primary
                 font.family: Tokens.typography.family

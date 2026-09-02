@@ -719,6 +719,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Output volume")
                     color: Tokens.text.primary
                     font.family: Tokens.typography.family
@@ -782,6 +783,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Wi-Fi")
                     color: Tokens.text.primary
                     font.family: Tokens.typography.family
@@ -846,6 +848,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile,
                       root.layoutResource ? "Keyboard layout — " + root.layoutResource.label : "Keyboard layout")
                     color: Tokens.text.primary
@@ -918,6 +921,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile,
                       root.brightnessResource ? "Brightness — " + root.brightnessResource.label : "Brightness")
                     color: Tokens.text.primary
@@ -982,6 +986,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Power profile")
                     color: Tokens.text.primary
                     font.family: Tokens.typography.family
@@ -1053,6 +1058,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Coverage")
                     color: Tokens.text.primary
                     font.family: Tokens.typography.family
@@ -1157,6 +1163,7 @@ Item {
 
             Text {
               visible: !root.queryBusy
+              textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, "Read-only Fabric provider state \u00b7 no direct commands, mutation, preflight, approval, or execution authority")
               color: Tokens.text.disabled
               font.family: Tokens.typography.family
