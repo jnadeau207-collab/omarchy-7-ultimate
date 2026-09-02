@@ -30,6 +30,7 @@ Item {
   readonly property bool operationBusy: operationStage !== ""
   readonly property string createLocationId: FilesModel.createLocationForRoute(host ? host.currentRoute : "")
   readonly property bool createVisible: createLocationId !== ""
+  readonly property bool restoreVisible: FilesModel.isTrashRoute(host ? host.currentRoute : "")
   readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady
 
   focus: true
@@ -74,6 +75,21 @@ Item {
     host.navigate("files.search", searchInput.text === "" ? {} : { query: searchInput.text })
   }
 
+  function restoreEntry(record) {
+    if (!host || operationBusy || !restoreVisible) return
+    if (!record || String(record.kind || "") !== "entry") return
+    root.operationName = String(record.title || "this entry")
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationKind = "restore"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "files.provider",
+      action: "trash.restore",
+      arguments: { entryId: String(record.id) },
+      idempotencyKey: "files.trash.restore." + String(record.id)
+    })
+    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
+  }
   function trashEntry(record) {
     if (!host || operationBusy || createLocationId === "") return
     if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return
@@ -134,8 +150,8 @@ Item {
     }
     if (root.operationStage === "start") {
       var succeeded = String(result.status || "") === "succeeded"
-      var verb = root.operationKind === "trash" ? "Moved " : "Created "
-      var gerund = root.operationKind === "trash" ? "Moving " : "Creating "
+      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "restore" ? "Restored " : "Created "
+      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "restore" ? "Restoring " : "Creating "
       var tail = root.operationKind === "trash" ? " to Trash." : "."
       root.resetOperation(succeeded
         ? verb + root.operationName + tail
@@ -402,7 +418,9 @@ Item {
                   selected: root.queryState.entityId !== "" && modelData.id === root.queryState.entityId
                   trashable: root.createLocationId !== "" && String(modelData.kind || "") === "entry" && String(modelData.status || "") !== "symlink"
                   trashBusy: root.operationBusy
+                  restorable: root.restoreVisible && String(modelData.kind || "") === "entry"
                   onTrashRequested: root.trashEntry(modelData)
+                  onRestoreRequested: root.restoreEntry(modelData)
                   Layout.fillWidth: true
                   Layout.columnSpan: 1
                 }
