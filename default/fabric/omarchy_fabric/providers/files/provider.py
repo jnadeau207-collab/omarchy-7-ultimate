@@ -34,7 +34,6 @@ from ._engine import (
     open_directory_path_no_follow,
     read_regular_file_no_follow,
 )
-from ._trashinfo import parse_trash_info_path
 
 DOMAIN = "files"
 PROVIDER_ID = "files.provider"

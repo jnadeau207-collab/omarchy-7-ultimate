@@ -480,8 +480,6 @@ def resolve_destination_path(payload: Mapping[str, Any], home: pathlib.Path) -> 
     if resolved_parent != root and root not in resolved_parent.parents:
         raise ApplyError("payload.invalid", "The entry escapes its files location.")
     destination = resolved_parent / target.name
-    if destination.exists():
-        raise ApplyError("apply.exists", "Something already occupies the original location.")
     return root, destination, "/".join(segments)
 
 
@@ -563,6 +561,8 @@ def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
         raise ApplyError("payload.invalid", "The Trash record points outside this account's home.")
     if original != destination and (original.parent, original.name) != (destination.parent, destination.name):
         raise ApplyError("payload.invalid", "The Trash record does not name this restore destination.")
+    if destination.exists():
+        raise ApplyError("apply.exists", "Something already occupies the original location.")
     try:
         os.rename(trash_file, destination)
     except OSError as error:
