@@ -32,14 +32,16 @@ def check(label, condition, detail=""):
         failures.append(f"{label}{': ' + detail if detail else ''}")
 
 
-def fake_run(argv, **_kwargs):
-    opened.append(list(argv))
-    return type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+def fake_open(path, run=None):
+    opened.append(str(path))
 
 
-def run(payload, run=fake_run):
+sa.apply_open = fake_open
+
+
+def run(payload):
     stream = io.StringIO()
-    status = sa.apply_files_entry_open(io.StringIO(json.dumps(payload)), stream, run=run)
+    status = sa.main(["files-entry-open"], io.StringIO(json.dumps(payload)), stream)
     return status, json.loads(stream.getvalue())
 
 
@@ -63,7 +65,7 @@ target.write_text("hello", encoding="utf-8")
 payload = entry_payload("files.location.documents", "report.txt", target)
 status, result = run(payload)
 check("a regular file launches xdg-open", status == 0 and result.get("ok") and result.get("launched"), json.dumps(result))
-check("xdg-open receives the resolved path", opened == [[sa.XDG_OPEN, str(target)]], str(opened))
+check("xdg-open receives the resolved path", opened == [str(target)], str(opened))
 
 drifted = dict(payload)
 drifted["entryId"] = "files.entry." + "0" * 64
