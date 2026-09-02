@@ -331,13 +331,15 @@ pass "desktop icon lister reads the real Desktop directory"
   || fail "Desktop Mode ships a Computer desktop shortcut"
 grep -Fq 'files.this-pc' "$ROOT/default/ultimate/desktop/Computer.desktop" \
   || fail "Desktop Computer shortcut opens Files This PC"
-grep -Fq 'launchCommand' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
-  || fail "Desktop shortcuts launch through the same AppLibrary path as Start"
+grep -Fq 'Util.execArgv(["uwsm-app", "--"].concat(argv))' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
+  || fail "Desktop shortcuts launch Exec through uwsm argv, not bash -lc string concat"
+grep -Fq 'Util.resolveLaunchArgv(item && item.command, root.omarchyPath)' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
+  || fail "Desktop shortcuts resolve Exec argv the same way as AppLibrary omarchy-* launches"
 grep -Fq 'JumpList.actionCommand(root.entryByDesktopId(id))' "$ROOT/shell/services/AppLibrary.qml" \
   || fail "Superbar pin launch reads the desktop Exec before gtk-launch"
 grep -Fq 'root.omarchyPath + "/bin/omarchy-"' "$ROOT/shell/services/AppLibrary.qml" \
   || fail "Superbar pin launch quotes omarchy-* from OMARCHY_PATH"
-grep -Fq 'uwsm-app --' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
+grep -Fq '"uwsm-app", "--"' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
   || fail "Desktop shortcuts use the uwsm session graph"
 grep -Fq 'xdg-user-dirs-update --set DESKTOP "$HOME/Desktop"' "$ROOT/bin/omarchy-provision-user" \
   || fail "new users keep a real Desktop directory"

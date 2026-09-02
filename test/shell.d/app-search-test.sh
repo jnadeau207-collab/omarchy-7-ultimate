@@ -255,8 +255,10 @@ assert(
   /function launchAction\([\s\S]*?uwsm-app -- /.test(appLibraryQml) &&
     appLibraryQml.includes('function launchCommand(command)') &&
     appLibraryQml.includes('root.omarchyPath + "/bin/" + bin') &&
-    appLibraryQml.includes('.replace(/\\s+%[A-Za-z@]/g, "")'),
-  'app library runs desktop Actions through uwsm and resolves omarchy-* from OMARCHY_PATH'
+    appLibraryQml.includes('.replace(/\\s+%[A-Za-z@]/g, "")') &&
+    appLibraryQml.includes('Util.isArgvList(command)') &&
+    appLibraryQml.includes('Util.argvFrom(command).join(" ")'),
+  'app library runs desktop Actions through uwsm, space-joins argv lists, and resolves omarchy-* from OMARCHY_PATH'
 )
 
 assert(
