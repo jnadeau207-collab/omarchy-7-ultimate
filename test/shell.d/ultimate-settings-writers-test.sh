@@ -30,7 +30,34 @@ grep -Fq 'SESSION_OPERABLE_DOMAINS = frozenset({"audio", "display", "input", "ne
 if grep -Fq 'org.freedesktop.UPower.PowerProfiles' "$ROOT/default/polkit-1/actions/org.omarchy.fabric.policy"; then
   fail "Omarchy polkit policy does not invent a PowerProfiles authorization"
 fi
+grep -Fq 'WantedBy=graphical-session.target' "$ROOT/default/systemd/user/omarchy-fabric.service" ||
+  fail "fabric remains WantedBy graphical-session.target"
+grep -Fq 'WantedBy=graphical-session.target' "$ROOT/default/systemd/user/omarchy-fabric-checkout.service" ||
+  fail "fabric checkout remains WantedBy graphical-session.target"
+grep -Fq 'hl.exec_cmd("omarchy-launch-shell")' "$ROOT/default/hypr/autostart.lua" ||
+  fail "the shell is launched by Hyprland exec_cmd, not uwsm-app"
+if grep -Fq 'o.launch("omarchy-launch-shell")' "$ROOT/default/hypr/autostart.lua"; then
+  fail "the shell launch is not wrapped in uwsm-app"
+fi
+grep -Fq 'Hyprland runs in session.slice, as wayland-wm@hyprland.desktop.service' "$ROOT/default/systemd/user/app.slice.d/10-oomd.conf" ||
+  fail "oomd notes place Hyprland in session.slice, not session-N.scope"
+grep -Fq 'actionProc.command = ["omarchy-powerprofiles-set", root.discharging ? "battery" : "ac", profile]' "$ROOT/shell/plugins/panels/power/Panel.qml" ||
+  fail "heritage QS Power still mutates through Process/omarchy-powerprofiles-set"
+grep -Fq 'onClicked: root.setProfile(modelData)' "$ROOT/shell/plugins/panels/power/Panel.qml" ||
+  fail "heritage QS Power profile buttons stay offered without a metal leftover"
+if grep -Fq 'profileMutationAuthorized' "$ROOT/shell/plugins/panels/power/Panel.qml"; then
+  fail "heritage QS Power is not honesty-gated without a metal leftover"
+fi
+grep -Fq 'unverified on metal' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps names the Superbar QS Power leftover unverified on metal"
+grep -Fq 'unverified on metal' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api names the Superbar QS Power leftover unverified on metal"
+grep -Fq 'unverified on metal' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md" ||
+  fail "PARITY names the Superbar QS Power leftover unverified on metal"
+grep -Fq 'METAL_HEAD OPEN' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps keeps METAL_HEAD OPEN for the Superbar QS Power leftover"
 pass "Settings does not offer LIVE power profile mutation"
+pass "heritage QS Power leftover stays cataloged and unverified on metal"
 
 grep -Fq 'provider: "display.provider"' "$application" || fail "Settings sets brightness through display.provider"
 grep -Fq 'action: "brightness.set"' "$application" || fail "Settings uses the typed brightness.set action"
