@@ -844,7 +844,7 @@
       "provider": {
         "id": "network.provider",
         "version": "v0",
-        "state": "legacy-direct"
+        "state": "present"
       },
       "kind": "writer",
       "effects": [
@@ -913,11 +913,11 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
-        "label": "Manage network connections",
-        "path": "Superbar > Quick Settings > Network"
+        "surface": "Settings",
+        "label": "Toggle Wi-Fi radio",
+        "path": "Settings > Network"
       },
-      "agentCenterLabel": "Manage network connections",
+      "agentCenterLabel": "Toggle Wi-Fi radio",
       "proofIds": {
         "acceptance": [
           "proof.capability.network-manage.tree-audit"
@@ -927,8 +927,8 @@
         ]
       },
       "source": {
-        "file": "shell/plugins/panels/network/Panel.qml",
-        "symbol": "NetworkPanel",
+        "file": "shell/apps/ultimate-settings/SettingsApplication.qml",
+        "symbol": "applyWifiEnabled",
         "brokerVerb": null
       }
     },
@@ -1861,6 +1861,99 @@
       "source": {
         "file": "shell/plugins/panels/monitor/Panel.qml",
         "symbol": "MonitorPanel",
+        "brokerVerb": null
+      }
+    },
+    {
+      "id": "display.brightness.set",
+      "version": "v0",
+      "provider": {
+        "id": "display.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "display.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "display.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Settings",
+        "label": "Set display brightness",
+        "path": "Settings > Display"
+      },
+      "agentCenterLabel": "Set display brightness",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.display-brightness-set.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/apps/ultimate-settings/SettingsApplication.qml",
+        "symbol": "applyBrightness",
         "brokerVerb": null
       }
     },
@@ -4688,7 +4781,7 @@
       "provider": {
         "id": "audio.provider",
         "version": "v0",
-        "state": "legacy-direct"
+        "state": "present"
       },
       "kind": "writer",
       "effects": [
@@ -4756,9 +4849,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Adjust output volume",
-        "path": "Superbar > Quick Settings > Sound"
+        "path": "Settings > Sound"
       },
       "agentCenterLabel": "Adjust output volume",
       "proofIds": {
@@ -4770,8 +4863,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-audio-output-volume",
-        "symbol": "omarchy-audio-output-volume",
+        "file": "shell/apps/ultimate-settings/SettingsApplication.qml",
+        "symbol": "applyAudioVolume",
         "brokerVerb": null
       }
     },
@@ -5882,8 +5975,8 @@
         ]
       },
       "source": {
-        "file": "shell/plugins/bar/widgets/KeyboardLayout.qml",
-        "symbol": "keyboard-layout",
+        "file": "shell/apps/ultimate-settings/SettingsApplication.qml",
+        "symbol": "applyKeyboardLayout",
         "brokerVerb": null
       }
     },
