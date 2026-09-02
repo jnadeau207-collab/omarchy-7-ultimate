@@ -283,4 +283,52 @@ if "not represented as live state" in coverage.group(1):
 if "No code-owned personalization.provider is registered" not in coverage.group(1):
     raise SystemExit("personalization coverage must not invent a registered typed writer inventory")
 PY
+python3 - "$ROOT" <<'PY' || fail "PARITY Desktop/Context-menus or project-ultimate Current position still invent a Phase-N fence"
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+parity = (root / "WINDOWS_7_ULTIMATE_PARITY.md").read_text(encoding="utf-8")
+plan = (root / "plans/project-ultimate.md").read_text(encoding="utf-8")
+
+def table_row(md, job):
+    for line in md.splitlines():
+        if line.startswith("| ") and line[2:].startswith(job):
+            return line
+    raise SystemExit(f"PARITY row missing: {job}")
+
+desktop = table_row(parity, "Desktop (icons")
+context = table_row(parity, "Context menus")
+for label, row in (("Desktop", desktop), ("Context menus", context)):
+    if re.search(r"remain Phase 6|stay Phase 6|Phase 6", row):
+        raise SystemExit(f"{label} row still invents a Phase 6 fence")
+    if not re.search(r"unavailable|not product-complete", row, re.I):
+        raise SystemExit(f"{label} row must name unavailable / not product-complete")
+if "honest-unavailable" not in desktop:
+    raise SystemExit("Desktop row dropped Restore honest-unavailable")
+if "files.trash.manage" not in desktop:
+    raise SystemExit("Desktop row dropped files.trash.manage missing")
+if "not product-complete" not in desktop:
+    raise SystemExit("Desktop row dropped Recycle not product-complete")
+if "prototype" not in desktop:
+    raise SystemExit("Desktop row dropped prototype claim")
+if "Typed Settings services are Phase 5" in plan:
+    raise SystemExit("project-ultimate still blankets typed Settings as Phase 5")
+scope = None
+for line in plan.splitlines():
+    if "Jump lists and Agent Center UI" in line and "Peek captures live window thumbnails" in line:
+        scope = line
+        break
+if not scope:
+    raise SystemExit("project-ultimate W0/current-program Settings bullet missing")
+if re.search(r"Phase 5", scope):
+    raise SystemExit("Current position Settings bullet still invents a Phase 5 fence")
+needed = ["volume", "Wi-Fi", "power", "brightness", "layout", "default browser"]
+missing = [name for name in needed if name.lower() not in scope.lower()]
+if missing:
+    raise SystemExit(f"Current position Settings bullet missing live-writer split: {missing}")
+if "inspect-only" not in scope.lower() and "hosted" not in scope.lower():
+    raise SystemExit("Current position Settings bullet must keep inspect-only / hosted picker")
+PY
 pass "Domain products explain trust, provenance, and unavailable mutation boundaries"
