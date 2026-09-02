@@ -102,7 +102,7 @@ const fileResult = {
   provider: 'files.provider', providerVersion: 'v0', generation: 4, action: 'search', capability: 'files.search', observedAt: 20,
   value: {
     schemaVersion: 'v0', provider: 'files.provider', providerVersion: 'v0', action: 'search', availability, revision: revA, truncated: false,
-    entries: [{ id: 'files.entry.readme', locationId: 'files.location.desktop', parentId: null, name: 'README.md', relativePath: 'README.md', kind: 'file', sizeBytes: 42, modifiedNs: 1, mimeType: 'text/plain', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }]
+    entries: [{ id: 'files.entry.readme', locationId: 'files.location.desktop', parentId: null, name: 'README.md', relativePath: 'README.md', kind: 'file', sizeBytes: 42, modifiedMs: 1, mimeType: 'text/plain', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }]
   }
 }
 const normalizedFiles = Files.normalizeResult(fileReadState, fileResult)
@@ -155,7 +155,7 @@ picturesController.receiveResult('pictures-2', {
     schemaVersion: 'v0', provider: 'files.provider', providerVersion: 'v0', action: 'browse',
     availability: { state: 'available', read: true, operation: false, reasons: [] },
     revision: revA, truncated: false,
-    entries: [{ id: 'files.entry.sunset', locationId: 'files.location.pictures', parentId: null, name: 'sunset.png', relativePath: 'sunset.png', kind: 'file', sizeBytes: 8, modifiedNs: 1, mimeType: 'image/png', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }]
+    entries: [{ id: 'files.entry.sunset', locationId: 'files.location.pictures', parentId: null, name: 'sunset.png', relativePath: 'sunset.png', kind: 'file', sizeBytes: 8, modifiedMs: 1, mimeType: 'image/png', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }]
   }
 })
 assert(picturesController.state.phase === 'available', 'Pictures browse stays available when only the workspace catalog is degraded')
@@ -178,8 +178,8 @@ const thisPcResult = {
         { id: 'files.location.pictures', kind: 'pictures', label: 'Pictures', state: 'available', writable: true, rootDigest: revA, reason: null }
       ],
       entries: [
-        { id: 'files.entry.bashrc', locationId: 'files.location.home', parentId: null, name: '.bashrc', relativePath: '.bashrc', kind: 'file', sizeBytes: 12, modifiedNs: 1, mimeType: 'text/plain', hidden: true, writable: true, identity: revB, symlinkTargetState: null, trash: null },
-        { id: 'files.entry.note', locationId: 'files.location.desktop', parentId: null, name: 'note.txt', relativePath: 'note.txt', kind: 'file', sizeBytes: 4, modifiedNs: 1, mimeType: 'text/plain', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }
+        { id: 'files.entry.bashrc', locationId: 'files.location.home', parentId: null, name: '.bashrc', relativePath: '.bashrc', kind: 'file', sizeBytes: 12, modifiedMs: 1, mimeType: 'text/plain', hidden: true, writable: true, identity: revB, symlinkTargetState: null, trash: null },
+        { id: 'files.entry.note', locationId: 'files.location.desktop', parentId: null, name: 'note.txt', relativePath: 'note.txt', kind: 'file', sizeBytes: 4, modifiedMs: 1, mimeType: 'text/plain', hidden: false, writable: true, identity: revB, symlinkTargetState: null, trash: null }
       ],
       mounts: [],
       recent: []

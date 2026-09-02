@@ -73,7 +73,7 @@ def entry(
         "relativePath": relative_path,
         "kind": kind,
         "sizeBytes": 128 if kind == "file" else None,
-        "modifiedNs": 1000,
+        "modifiedMs": 1756800000000,
         "mimeType": "text/plain" if kind == "file" else None,
         "hidden": name.startswith("."),
         "writable": writable if kind != "symlink" else False,
