@@ -785,6 +785,31 @@ class FabricDaemon:
         }
 
     @staticmethod
+    def _open_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        selected = preflight.get("guards", {}).get("selectedEntry") if isinstance(preflight.get("guards"), Mapping) else None
+        if not isinstance(selected, Mapping):
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The open plan does not name a scoped entry.",
+            )
+        entry_id = selected.get("entryId")
+        location_id = selected.get("locationId")
+        relative = selected.get("entryRelativePath")
+        if not isinstance(entry_id, str) or not isinstance(location_id, str) or not isinstance(relative, str) or not relative:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The open plan does not name a scoped entry.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "entryId": entry_id,
+            "locationId": location_id,
+            "entryRelativePath": relative,
+        }
+
+    @staticmethod
     def _restore_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
         current = FabricDaemon._directory_listing(preflight["currentState"])
         proposed = FabricDaemon._directory_listing(preflight["proposedState"])
@@ -1057,6 +1082,16 @@ class FabricDaemon:
                             "name": self._operation_name,
                         },
                     ),
+                    IntentDefinition(
+                        "files.entry.open",
+                        FixedArgvCommand(str(helper), ("files-entry-open",)),
+                        required={
+                            "resourceId": stable_token,
+                            "entryId": stable_token,
+                            "locationId": stable_token,
+                            "entryRelativePath": self._operation_entry_relative,
+                        },
+                    ),
                     *package_intents(),
                     *compatibility_intents(),
                     *device_intents(),
@@ -1151,6 +1186,12 @@ class FabricDaemon:
                         "parentRelativePath": preflight["normalizedArguments"]["parentRelativePath"],
                         "name": preflight["normalizedArguments"]["name"],
                     },
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.open",
+                    "files.entry.open",
+                    self._open_payload,
                 ),
                 *package_definitions(),
                 *compatibility_definitions(),

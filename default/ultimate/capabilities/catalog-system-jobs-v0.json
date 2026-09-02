@@ -5332,6 +5332,99 @@
       }
     },
     {
+      "id": "files.entry.open",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "launch"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
+      },
+      "idempotency": {
+        "mode": "non-idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the launch begins."
+      },
+      "recovery": {
+        "mode": "none",
+        "expectation": "Opening a file with its default handler does not mutate Files inventory and has no undo.",
+        "stateFingerprintRequired": false
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "visible",
+        "surface": "Files",
+        "label": "Open an item",
+        "path": "Files > Open"
+      },
+      "agentCenterLabel": "Open an item",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-entry-open.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "shell/apps/ultimate-files/FilesApplication.qml",
+        "symbol": "openEntry",
+        "brokerVerb": null
+      }
+    },
+    {
       "id": "files.entry.rename",
       "version": "v0",
       "provider": {

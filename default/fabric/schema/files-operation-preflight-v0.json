@@ -9,8 +9,8 @@
     "schemaVersion": {"const": "v0"},
     "provider": {"const": "files.provider"},
     "providerVersion": {"const": "v0"},
-    "action": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.trash", "trash.restore", "mount.connect", "mount.disconnect"]},
-    "capability": {"type": "string", "enum": ["files.directory.create", "files.entry.rename", "files.entry.trash", "files.trash.restore", "files.mount.connect", "files.mount.disconnect"]},
+    "action": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.trash", "trash.restore", "entry.open", "mount.connect", "mount.disconnect"]},
+    "capability": {"type": "string", "enum": ["files.directory.create", "files.entry.rename", "files.entry.trash", "files.trash.restore", "files.entry.open", "files.mount.connect", "files.mount.disconnect"]},
     "resource": {"$ref": "#/$defs/resource"},
     "normalizedArguments": {"oneOf": [
       {"$ref": "urn:omarchy:fabric:provider:files:create-directory-arguments:v0"},
@@ -24,7 +24,7 @@
     "changed": {"type": "boolean"},
     "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
     "risk": {"type": "string", "enum": ["low", "consequential"]},
-    "effects": {"type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "enum": ["mutating", "network"]}},
+    "effects": {"type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": {"type": "string", "enum": ["mutating", "network", "launch"]}},
     "guards": {"$ref": "#/$defs/guards"},
     "recovery": {"$ref": "#/$defs/recovery"}
   },

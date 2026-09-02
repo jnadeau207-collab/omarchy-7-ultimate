@@ -8,6 +8,7 @@ import json
 import os
 import pathlib
 import signal
+import stat
 import subprocess
 import sys
 from typing import Any, Mapping
@@ -18,6 +19,7 @@ PACTL = "/usr/bin/pactl"
 HYPRCTL = "/usr/bin/hyprctl"
 NMCLI = "/usr/bin/nmcli"
 XDG_MIME = "/usr/bin/xdg-mime"
+XDG_OPEN = "/usr/bin/xdg-open"
 DEFAULTS_PROTOCOLS = frozenset({"http", "https", "mailto"})
 MAX_MIME_LENGTH = 160
 NETWORK_WIFI_ID = "network.radio.wifi"
@@ -555,6 +557,45 @@ def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
     return 0
 
 
+def apply_open(path: pathlib.Path, run: Any = subprocess.run) -> None:
+    completed = run(
+        [XDG_OPEN, str(path)],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("apply.failed", "Opening the entry with its default application reported a failure status.")
+
+
+def apply_files_entry_open(stdin: Any, stdout: Any, run: Any = subprocess.run) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_files_resource_id(payload)
+    if "desired" in payload:
+        json.dump({"ok": True, "resourceId": resource_id, "launched": False}, stdout)
+        stdout.write("\n")
+        return 0
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot be opened with the default handler.")
+    home = pathlib.Path.home()
+    _, final, relative = resolve_entry_path(payload, home)
+    parent = "/".join(relative.split("/")[:-1])
+    if resource_id != stable_directory_id(payload["locationId"], parent):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    try:
+        info = final.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be opened with the default handler.")
+    if not stat.S_ISREG(info.st_mode):
+        raise ApplyError("payload.invalid", "The selected entry is not a regular file.")
+    apply_open(final, run)
+    json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "launched": True}, stdout)
+    stdout.write("\n")
+    return 0
+
+
 def stable_directory_id(location_id: str, parent: str) -> str:
     digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
     return f"files.directory.{digest}"
@@ -767,6 +808,7 @@ ACTIONS = {
     "files-directory-create": apply_files_directory_create,
     "files-entry-trash": apply_files_entry_trash,
     "files-trash-restore": apply_files_trash_restore,
+    "files-entry-open": apply_files_entry_open,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

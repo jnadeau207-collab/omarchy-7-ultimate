@@ -39,6 +39,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Administrative Tools folder | `org.omarchy.Administration` (+ MMC-class tools still missing as product; inspect hosts visible, claim missing) |
 | Default Programs | Settings → Apps (`defaults.provider`); `defaults.protocol.set` browser LIVE only; `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; MIME associations still missing/planned |
 | Recycle Bin | Files Trash routes / `files.trash.*` plane; `files.trash.restore` write plane is reachable (claim=partial; humanRoute planned empty); catalog `files.trash.manage` still missing |
+| Explorer Open | Files Open / `files.entry.open` launch plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Open`); no Open With / MIME association UI |
 
 ---
 

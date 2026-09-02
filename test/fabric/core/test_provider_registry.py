@@ -443,6 +443,25 @@ class ProviderRegistryTests(unittest.IsolatedAsyncioTestCase):
             registry.register(SyncProvider())
         self.assertEqual(synchronous.exception.code, "provider.invalid-adapter")
 
+    def test_launch_plane_operations_admit_and_effectless_operations_do_not(self) -> None:
+        launched = OperationProvider()
+        launched.manifest["actions"]["set-mode"]["effects"] = ["launch"]
+        launched.manifest["actions"]["set-mode"]["supportsRollback"] = False
+        registration = ProviderRegistry().register(launched)
+        self.assertEqual(registration.provider_id, "test.display")
+
+        network_only = OperationProvider()
+        network_only.manifest["actions"]["set-mode"]["effects"] = ["network"]
+        with self.assertRaises(FabricError) as network:
+            ProviderRegistry().register(network_only)
+        self.assertEqual(network.exception.code, "provider.invalid-manifest")
+
+        empty = OperationProvider()
+        empty.manifest["actions"]["set-mode"]["effects"] = []
+        with self.assertRaises(FabricError) as missing:
+            ProviderRegistry().register(empty)
+        self.assertEqual(missing.exception.code, "provider.invalid-manifest")
+
     def test_registration_conflicts_require_explicit_generation_handoff(self) -> None:
         registry = ProviderRegistry()
         registry.register(ReadProvider())
