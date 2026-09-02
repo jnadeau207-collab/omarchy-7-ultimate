@@ -147,7 +147,7 @@ Settings and Files writer honesty — LIVE means a typed Settings/Files control 
 | Personalization | hosted Process picker | no typed service | typed Personalization writers |
 | Accessibility | none | none | no `accessibility.provider` |
 | System information | none | none | no aggregate provider; `windows-native.38` pending |
-| Files | `files.browse` | `directory.create` (New folder LIVE); `entry.trash` write plane, CHANGES UNAVAILABLE under SHELL | `trash.restore` (do not invent Restore LIVE), empty Recycle Bin, permanent delete, desktop Recycle icon, desktop context menu; `files.trash.manage` missing; Recycle Bin is not product-complete |
+| Files | `files.browse` | `directory.create` (New folder LIVE); `entry.trash` and `trash.restore` write planes, CHANGES UNAVAILABLE under SHELL | Restore UI (do not invent Restore LIVE), empty Recycle Bin, permanent delete, desktop Recycle icon, desktop context menu; `files.trash.manage` missing; Recycle Bin is not product-complete |
 
 The named phases below are the live program. After W0: Phase 2 leftover fabric (persistent tasks, context broker, sandboxed runtime), then Phases 3–11 in order. Overlay programs written after this taxonomy do not replace it.
 

@@ -62,12 +62,12 @@ grep -Fq 'if (root.createVisible) list.push({ key: "new-folder", label: "New fol
 pass "Files keeps typed entry.trash but does not enable LIVE Trash under the shell principal"
 
 if grep -Fq 'action: "trash.restore"' "$application"; then
-  fail "Files does not offer trash.restore while the write plane cannot derive a Trash path"
+  fail "Files does not offer trash.restore LIVE under the shell principal"
 fi
 if grep -Eq 'key: "restore"' "$application"; then
-  fail "Files does not show a Restore control that the write plane cannot complete"
+  fail "Files does not show a Restore LIVE control under the shell principal"
 fi
-pass "Files keeps Restore honest-unavailable; Recycle Bin is not product-complete"
+pass "Files keeps Restore UI honest-unavailable; Recycle Bin is not product-complete"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')

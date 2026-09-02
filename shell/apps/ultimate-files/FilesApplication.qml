@@ -559,7 +559,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
