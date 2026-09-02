@@ -16,6 +16,8 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 
 Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Administrator’s Reference Control Panel categories, Omarchy `WINDOWS_7_ULTIMATE_PARITY.md`, `default/ultimate/parity/jobs.json`, `catalog-provider-readers-v0.json`, `catalog-system-jobs-v0.json`, Settings/Administration `routes-v1.json`.
 
+**Product honesty after #35–#39:** Administration inspect readers are **visible** on live Administration titles after #36; `availability.claim` stays **missing**; Phase 9 exit still open; inspect ≠ MMC product present. `process.inspect` is **visible** on `Administration > Processes`; claim **missing**; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`); do not invent Task Manager present / End Task LIVE. Writers (`firewall.manage`, `backup.manage`, start/stop, …) stay planned/unavailable. Default Programs writer is `defaults.protocol.set` (browser LIVE only); `files.associations.set` stays missing/planned MIME. Catalog humanRoutes already published visible; residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty. Catalog caught up for Admin inspect visibility (#35–#36). Product remains **REJECTED**. Do not invent Accessibility panel. Software Center missing as product. Settings Power LIVE refused. METAL_HEAD OPEN.
+
 ---
 
 ## 1. How Win7 Control Panel is organized
@@ -34,8 +36,8 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | --- | --- |
 | Control Panel home | `org.omarchy.Settings` home + Start search Settings hits |
 | Control Panel icon applets | Settings routes, Superbar/QS panels, Administration, Files, Start places |
-| Administrative Tools folder | `org.omarchy.Administration` (+ MMC-class tools still missing as product) |
-| Default Programs | Settings → Apps (`defaults.provider`); MIME associations still under-claimed |
+| Administrative Tools folder | `org.omarchy.Administration` (+ MMC-class tools still missing as product; inspect hosts visible, claim missing) |
+| Default Programs | Settings → Apps (`defaults.provider`); `defaults.protocol.set` browser LIVE only; MIME associations still missing/planned |
 | Recycle Bin | Files Trash routes / `files.trash.*` plane (catalog `files.trash.manage` still missing) |
 
 ---
@@ -47,24 +49,24 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Win7 item | Canonical / notes | Omarchy surface | Catalog / jobs | Provider truth |
 | --- | --- | --- | --- | --- |
 | Action Center | `Microsoft.ActionCenter` | Partial: Notification Center + Superbar update/security cues; **no** Action Center applet | `parity.event-history` prototype (`events.history.read`); no `action-center.*` | No Action Center provider |
-| Windows Firewall | `Microsoft.WindowsFirewall` | Administration → Firewall (planned host); Settings network firewall path empty | `parity.firewall` plumbing; `firewall.manage` partial/legacy-direct; reader `firewall.inspect` missing→Admin | `firewall.provider` |
+| Windows Firewall | `Microsoft.WindowsFirewall` | Administration > Firewall (visible inspect host); Settings network firewall path empty | `parity.firewall` plumbing; `firewall.inspect` visible; claim missing; honest-unavailable as Firewall Settings product; `firewall.manage` stays planned/unavailable | `firewall.provider` |
 | System | `Microsoft.System` | Settings jump **System information** dropped; Admin/system info missing | `system.info.read` missing; `windows-native.38` jump-list leftover vs empty catalog path | No `system-information.provider` product page |
 | Windows Update | `Microsoft.WindowsUpdate` | Settings → Update | `parity.update` prototype; `update.inspect` partial; `update.install` / history writers Phase-5/pending | `update.provider` |
 | Power Options | `Microsoft.PowerOptions` | Settings → Power; Superbar/QS Power leftover | `parity.power-options` prototype; `power.inspect`; `power.profile.set` write plane not Settings LIVE (fabric polkit `app.slice`); QS Process leftover unverified on metal | `power.provider` (session_operable=False) |
-| Backup and Restore | `Microsoft.BackupAndRestore` | Administration → Backup (planned); Settings Recovery | `parity.backup-restore` / `parity.system-restore` plumbing; `backup.inspect` missing | `backup.provider` / `recovery.provider` |
+| Backup and Restore | `Microsoft.BackupAndRestore` | Administration > Backup (visible inspect); Settings Recovery | `parity.backup-restore` / `parity.system-restore` plumbing; `backup.inspect` visible; claim missing; honest-unavailable as Backup and Restore product; `backup.manage` stays planned/unavailable | `backup.provider` / `recovery.provider` |
 | BitLocker Drive Encryption | `Microsoft.BitLockerDriveEncryption` (**Ultimate**) | **Missing** product | `parity.drive-encryption` missing; `storage.encryption.manage` | No encryption writer surface |
-| Administrative Tools | `Microsoft.AdministrativeTools` (folder) | Administration app (partial stand-in) | See §4 | Mix of leaf inspect providers |
+| Administrative Tools | `Microsoft.AdministrativeTools` (folder) | Administration app (partial stand-in; inspect hosts visible, claim missing) | See §4 | Mix of leaf inspect providers |
 
 **Administrative Tools (folder contents) — Ultimate:**
 
 | Tool | Omarchy map | Catalog / jobs |
 | --- | --- | --- |
-| Event Viewer | Notification history / capability ledger only | `parity.event-history` prototype — **not** Event Viewer |
-| Task Scheduler | Administration → Scheduled tasks (planned) | `parity.task-scheduler` missing; `schedule.inspect` planned Admin |
-| Services | Administration → Services | `parity.services` missing; `service.inspect` planned |
-| Computer Management / Disk Management | Administration → Storage (planned) | `parity.disk-management` missing; `storage.inspect` planned |
+| Event Viewer | Notification history / capability ledger only | `parity.event-history` prototype — **not** Event Viewer; no Event Viewer present |
+| Task Scheduler | Administration > Scheduled tasks (visible inspect) | `parity.task-scheduler` missing; `schedule.inspect` visible; claim missing; honest-unavailable as Task Scheduler product; schedule create/disable stays planned/unavailable |
+| Services | Administration > Services (visible inspect) | `parity.services` missing; `service.inspect` visible; claim missing; honest-unavailable as Services product; no start/stop service LIVE |
+| Computer Management / Disk Management | Administration > Storage (visible inspect) | `parity.disk-management` missing; `storage.inspect` visible; claim missing; honest-unavailable as Disk Management product; format/mount/eject stays planned/unavailable |
 | Performance / Resource Monitor | **Missing** (btop TUI only) | `parity.resource-monitor` missing; `resources.inspect` missing |
-| Task Manager (often reached via Ctrl+Shift+Esc, not only Admin Tools) | Administration → Processes named Task Manager | **MUST_FIX:** invent vs `parity.task-manager` missing / `process.inspect` planned empty path |
+| Task Manager (often reached via Ctrl+Shift+Esc, not only Admin Tools) | Administration > Processes (visible inspect; do not invent Task Manager present) | `process.inspect` **visible** on `Administration > Processes`; claim **missing**; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`); do not invent Task Manager present / End Task LIVE; `parity.task-manager` stays missing as product |
 | System Configuration / iSCSI / etc. | **Missing** | No catalog rows |
 
 ### 2.2 Network and Internet
@@ -79,8 +81,8 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
-| Devices and Printers | Administration → Printers; Bluetooth in Settings | `parity.devices-printers` missing/prototype; `printer.inspect` planned Admin; `printers.manage` missing | `printer.provider` / `bluetooth.provider` |
-| Device Manager | Administration → Device Manager | `parity.device-manager` missing; `device.inspect` planned Admin | `device.provider` |
+| Devices and Printers | Administration > Printers and scanners (visible inspect); Bluetooth in Settings | `parity.devices-printers` missing/prototype; `printer.inspect` visible; claim missing; honest-unavailable as Devices and Printers product; `printers.manage` / add stays planned/unavailable | `printer.provider` / `bluetooth.provider` |
+| Device Manager | Administration > Device Manager (visible inspect) | `parity.device-manager` missing; `device.inspect` visible; claim missing; honest-unavailable as Device Manager product; no driver mutation | `device.provider` |
 | AutoPlay | **Missing** | No catalog row | — |
 | Sound | Settings → Sound; Superbar/QS | `parity.sound` prototype; `audio.inspect`; Settings volume `audio.volume.set` | `audio.provider` |
 | Display | Settings → Display | `parity.display` + modern display prototype; `display.inspect`; Settings brightness `display.brightness.set`; QS leftover `display.configure` / night-light | `display.provider` |
@@ -93,15 +95,15 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
-| Programs and Features | Settings → Apps (read defaults); Software Center **missing** as product | `parity.programs-and-features` missing; `software.*` / packages inspect claim Software Center paths | `packages.provider` plan_only; `apps.provider` **invented** on `apps.defaults.set` |
-| Default Programs | Settings → Apps | See **§3** | `defaults.provider` (real); catalog still names `apps.defaults.set` |
+| Programs and Features | Settings → Apps (read defaults); Software Center **missing** as product | `parity.programs-and-features` missing; `software.*` / packages inspect claim Software Center paths | `packages.provider` plan_only; do not invent `apps.provider` present |
+| Default Programs | Settings → Apps | See **§3** | `defaults.provider` (real); writer is `defaults.protocol.set` (browser LIVE only) |
 | Desktop Gadgets | N/A (Win7 feature; removed later) | No Omarchy gadget surface | — |
 
 ### 2.5 User Accounts and Family Safety
 
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
-| User Accounts | Administration → Accounts (planned) | `parity.user-accounts` missing; `account.inspect` planned Admin | `account.provider` |
+| User Accounts | Administration > User accounts (visible inspect) | `parity.user-accounts` missing; `account.inspect` visible; claim missing; honest-unavailable as User Accounts product; create/password stays planned/unavailable | `account.provider` |
 | Parental Controls / Family Safety | **Missing** | No row | — |
 | Credential Manager | **Missing** | `parity.credential-manager` missing; `credentials.manage` | No product |
 | Mail (profile) | **Missing** | No row | — |
@@ -146,11 +148,11 @@ Win7 **Default Programs** (`Microsoft.DefaultPrograms`) exposes:
 
 | Win7 sub-job | Omarchy today | Catalog / jobs honesty |
 | --- | --- | --- |
-| Change default browser (protocol http/https) | Settings → Apps drives `defaults.provider` `protocol.set` (typed plane) | `windows-native.19` claim **prototype** (not present); `parity.default-programs` claim **prototype** but `sourceStatus` still **missing**; PARITY.md prose still “cannot set” — **stale** |
-| MIME / file associations | Plane: `defaults.mime.set` exists; Settings MIME UI not a full Default Programs | `files.associations.set` **missing**; File associations parity **missing as product** — do **not** invent MIME Default Programs LIVE |
+| Change default browser (protocol http/https) | Settings → Apps drives `defaults.provider` `protocol.set` (typed plane) | `windows-native.19` claim **prototype** (not present); `parity.default-programs` claim **prototype** but `sourceStatus` still **missing**; writer is `defaults.protocol.set` (browser LIVE only) |
+| MIME / file associations | Plane: `defaults.mime.set` exists; Settings MIME UI not a full Default Programs | `files.associations.set` stays missing/planned MIME; File associations parity **missing as product** — do **not** invent MIME Default Programs LIVE |
 | AutoPlay | **Missing** | No catalog |
 | SPAD / program access | **Missing** | No catalog |
-| Catalog ID used by jobs | Jobs still list `apps.defaults.set` | **MUST_FIX:** retarget to `defaults.provider` / `defaults.protocol.set` (or rename); stop inventing `apps.provider` **present** |
+| Catalog ID used by jobs | Settings → Apps `defaults.protocol.set` | Writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present. MIME stays missing/planned. |
 
 ---
 
@@ -161,17 +163,17 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | # | Applet | Ultimate? | Omarchy analog | Primary jobs / caps | Status |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Action Center | Yes | NC / Superbar cues only | `parity.event-history` | Gap |
-| 2 | Administrative Tools | Yes | Administration app (partial) | Admin readers planned | Partial / invent risk on Task Manager naming |
+| 2 | Administrative Tools | Yes | Administration app (partial; inspect hosts visible) | Admin readers visible; claim missing; Phase 9 exit still open | Partial; invent risk is Task Manager present / MMC product, not catalog planned-empty |
 | 3 | AutoPlay | Yes | — | — | Gap |
-| 4 | Backup and Restore | Yes | Admin Backup / Recovery | `parity.backup-restore` plumbing | Gap |
+| 4 | Backup and Restore | Yes | Administration > Backup (visible inspect) / Recovery | `parity.backup-restore` plumbing; `backup.inspect` visible; claim missing | Visible inspect; product Backup and Restore still missing; `backup.manage` planned/unavailable |
 | 5 | Biometric Devices | HW | — | — | Gap / HW |
 | 6 | BitLocker Drive Encryption | **Ultimate** | — | `parity.drive-encryption` missing | Gap |
 | 7 | Color Management | Yes | — | — | Gap |
 | 8 | Credential Manager | Yes | — | `parity.credential-manager` missing | Gap |
 | 9 | Date and Time | Yes | Superbar clock | — | Partial chrome |
-| 10 | Default Programs | Yes | Settings → Apps | `parity.default-programs` / `windows-native.19` | Prototype browser only; MIME not LIVE |
-| 11 | Device Manager | Yes | Admin → Devices | `parity.device-manager` / `device.inspect` | Planned Admin |
-| 12 | Devices and Printers | Yes | Admin Printers + Settings Bluetooth | `parity.devices-printers` | Gap / partial BT |
+| 10 | Default Programs | Yes | Settings → Apps | `parity.default-programs` / `windows-native.19`; `defaults.protocol.set` browser LIVE only | Prototype browser only; MIME not LIVE |
+| 11 | Device Manager | Yes | Administration > Device Manager | `parity.device-manager` / `device.inspect` visible; claim missing | Visible inspect; honest-unavailable as Device Manager product |
+| 12 | Devices and Printers | Yes | Administration > Printers and scanners + Settings Bluetooth | `parity.devices-printers`; `printer.inspect` visible; claim missing | Visible inspect / partial BT; honest-unavailable as Devices and Printers product |
 | 13 | Display | Yes | Settings → Display | `parity.display` | Prototype |
 | 14 | Ease of Access Center | Yes | Settings Accessibility missing | `parity.accessibility` | Honest missing |
 | 15 | Folder Options | Yes | — | — | Gap |
@@ -192,9 +194,9 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | 30 | Performance Information and Tools | Yes | — | — | Gap |
 | 31 | Personalization | Yes | Settings → Personalization | `parity.personalization` | Prototype |
 | 32 | Phone and Modem | Yes | — | — | Gap |
-| 33 | Power Options | Yes | Settings → Power | `parity.power-options` | Prototype |
-| 34 | Programs and Features | Yes | Software Center missing; Apps inspect | `parity.programs-and-features` / packages.* | Gap / plan_only packages |
-| 35 | Recovery | Yes | Settings → Recovery | `recovery.inspect` | Partial inspect |
+| 33 | Power Options | Yes | Settings → Power | `parity.power-options` | Prototype; Settings Power LIVE refused |
+| 34 | Programs and Features | Yes | Software Center missing as product; Apps inspect | `parity.programs-and-features` / packages.* | Gap / plan_only packages |
+| 35 | Recovery | Yes | Settings → Recovery | `recovery.inspect` | Partial inspect; do not invent Restore LIVE |
 | 36 | Region and Language | Yes | Settings → Input | `parity.language-locale` | Prototype layout; locale planned |
 | 37 | RemoteApp and Desktop Connections | Yes | — | `parity.remote-desktop` missing | Gap |
 | 38 | Sound | Yes | Settings → Sound | `parity.sound` | Prototype |
@@ -203,12 +205,12 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | 41 | System | Yes | System information missing page | `system.info.read` missing | Gap |
 | 42 | Tablet PC Settings | HW | — | — | Gap / HW |
 | 43 | Taskbar and Start Menu | Yes | Superbar + Start | `parity.superbar-taskbar` / `parity.start` | Prototype |
-| 44 | Troubleshooting | Yes | Admin → Troubleshooting | `diagnostics.inspect` planned | Planned |
-| 45 | User Accounts | Yes | Admin → Accounts | `parity.user-accounts` | Planned |
+| 44 | Troubleshooting | Yes | Administration > Troubleshooting | `diagnostics.inspect` visible; claim missing | Visible inspect; honest-unavailable as Troubleshooting product |
+| 45 | User Accounts | Yes | Administration > User accounts | `parity.user-accounts`; `account.inspect` visible; claim missing | Visible inspect; honest-unavailable as User Accounts product |
 | 46 | Windows Anytime Upgrade | Ultimate | N/A (SKU) | — | N/A |
 | 47 | Windows CardSpace | Yes (legacy) | — | — | N/A / removed later |
 | 48 | Windows Defender | Yes | — | — | Gap |
-| 49 | Windows Firewall | Yes | Admin Firewall | `parity.firewall` | Plumbing |
+| 49 | Windows Firewall | Yes | Administration > Firewall | `parity.firewall`; `firewall.inspect` visible; claim missing | Plumbing; visible inspect; honest-unavailable as Firewall Settings product; `firewall.manage` planned/unavailable |
 | 50 | Windows Mobility Center | Laptop | — | — | Gap / HW |
 | 51 | Windows Update | Yes | Settings → Update | `parity.update` | Prototype inspect |
 | 52 | Desktop Gadgets | Yes | — | — | N/A / removed later |
@@ -218,7 +220,7 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | Destination | Omarchy | Catalog |
 | --- | --- | --- |
 | Recycle Bin | Files Trash | `files.trash.manage` **MUST_FIX** missing vs product |
-| Task Manager | Administration Processes | **MUST_FIX** invent |
+| Task Manager | Administration > Processes | `process.inspect` visible; claim missing; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`); do not invent Task Manager present / End Task LIVE |
 | Resource Monitor | — | missing |
 | Explorer Folder Options | — | Gap |
 
@@ -232,11 +234,11 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | `settings.display.overview` | Display | `display.provider` |
 | `settings.audio.overview` | Sound | `audio.provider` |
 | `settings.network.overview` | Network and Sharing Center | `network.provider` |
-| `settings.power.overview` | Power Options | `power.provider` |
+| `settings.power.overview` | Power Options | `power.provider` (Settings Power LIVE refused) |
 | `settings.bluetooth.overview` | Devices and Printers (BT slice) | `bluetooth.provider` |
 | `settings.input.overview` | Keyboard / Region (partial) | `input.provider` |
 | `settings.personalization.overview` | Personalization | personalization / wallpaper |
-| `settings.apps.overview` | Default Programs / Programs and Features (partial) | `defaults.provider` |
+| `settings.apps.overview` | Default Programs / Programs and Features (partial) | `defaults.provider`; `defaults.protocol.set` browser LIVE only |
 | `settings.accessibility.overview` | Ease of Access | honest missing (`accessibility.provider` absent) |
 | `settings.update.overview` | Windows Update | `update.provider` |
 | `settings.recovery.overview` | Recovery / Backup adjacency | `recovery.provider` |
@@ -246,31 +248,33 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 
 ## 6. Administration routes ↔ Administrative Tools / MMC
 
+Catalog humanRoutes already published **visible**. Residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty. Phase 9 exit still open; inspect ≠ MMC product present.
+
 | Admin route | Win7 nearest | Catalog honesty |
 | --- | --- | --- |
 | `administration.overview` | Administrative Tools home | `providerId` `""` (correct empty) |
-| `administration.processes.overview` | Task Manager | **MUST_FIX** invent vs planned `process.inspect` |
-| `administration.services.overview` | Services | `service.inspect` planned |
-| `administration.devices.overview` | Device Manager | `device.inspect` planned |
-| `administration.storage.overview` | Disk Management (partial) | `storage.inspect` planned |
-| `administration.printers.overview` | Devices and Printers | `printer.inspect` planned |
-| `administration.backup.overview` | Backup and Restore | `backup.inspect` missing |
-| `administration.schedule.overview` | Task Scheduler | `schedule.inspect` planned |
-| `administration.troubleshoot.overview` | Troubleshooting | `diagnostics.inspect` planned |
-| `administration.firewall.overview` | Windows Firewall | `firewall.inspect` planned |
-| `administration.accounts.overview` | User Accounts | `account.inspect` planned |
+| `administration.processes.overview` | Task Manager | `process.inspect` **visible** on `Administration > Processes`; claim **missing**; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`); do not invent Task Manager present / End Task LIVE |
+| `administration.services.overview` | Services | `service.inspect` visible on `Administration > Services`; claim missing; honest-unavailable as Services product; no start/stop service LIVE |
+| `administration.devices.overview` | Device Manager | `device.inspect` visible on `Administration > Device Manager`; claim missing; honest-unavailable as Device Manager product |
+| `administration.storage.overview` | Disk Management (partial) | `storage.inspect` visible on `Administration > Storage`; claim missing; honest-unavailable as Disk Management product |
+| `administration.printers.overview` | Devices and Printers | `printer.inspect` visible on `Administration > Printers and scanners`; claim missing; honest-unavailable as Devices and Printers product |
+| `administration.backup.overview` | Backup and Restore | `backup.inspect` visible on `Administration > Backup`; claim missing; honest-unavailable as Backup and Restore product; `backup.manage` planned/unavailable |
+| `administration.schedule.overview` | Task Scheduler | `schedule.inspect` visible on `Administration > Scheduled tasks`; claim missing; honest-unavailable as Task Scheduler product |
+| `administration.troubleshoot.overview` | Troubleshooting | `diagnostics.inspect` visible on `Administration > Troubleshooting`; claim missing; honest-unavailable as Troubleshooting product |
+| `administration.firewall.overview` | Windows Firewall | `firewall.inspect` visible on `Administration > Firewall`; claim missing; honest-unavailable as Firewall Settings product; `firewall.manage` planned/unavailable |
+| `administration.accounts.overview` | User Accounts | `account.inspect` visible on `Administration > User accounts`; claim missing; honest-unavailable as User Accounts product |
 
 ---
 
 ## 7. Open Catalog MUST_FIX (carry into this map)
 
-Do not mark claim=`present` to “close” these.
+Do not mark claim=`present` to “close” these. Residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty.
 
-1. **`apps.defaults.set` → invent `apps.provider` present** while Settings drives `defaults.provider` `protocol.set`. Retarget or rename; sync PARITY Default Programs; align `parity.default-programs` `sourceStatus`.  
-2. **Recycle Bin product vs `files.trash.manage` missing / provider-missing.**  
-3. **Administration Task Manager invent** vs `parity.task-manager` missing / `process.inspect` planned empty path.  
-4. **`parity.agent-center` claim=`missing` vs `sourceStatus=prototype` / PARITY prototype.**  
-5. **Do not invent MIME Default Programs LIVE** — `files.associations.set` / File associations stay missing until Settings + catalog + PARITY agree.
+1. **Recycle Bin product vs `files.trash.manage` missing / provider-missing.**  
+2. **Task Manager present / End Task LIVE / product MMC still missing.** Catalog `process.inspect` is visible on `Administration > Processes`; claim missing; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`). Do not invent Task Manager present / End Task LIVE.  
+3. **`parity.agent-center` claim=`missing` vs `sourceStatus=prototype` / PARITY prototype.**  
+4. **Do not invent MIME Default Programs LIVE** — `files.associations.set` stays missing/planned MIME until Settings + catalog + PARITY agree. Browser writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present.  
+5. **Writers stay planned/unavailable** — `firewall.manage`, `backup.manage`, start/stop, printer add, schedule create/disable, format/mount/eject. Inspect visibility is not mutation LIVE.
 
 ---
 
@@ -279,18 +283,17 @@ Do not mark claim=`present` to “close” these.
 | Bucket | Count (approx.) | Meaning |
 | --- | --- | --- |
 | Prototype / partial Settings or QS | ~12–15 | Display, Sound, Network, Power, Personalization, Update inspect, Input layout, Default browser slice, etc. |
-| Planned Administration inspect hosts | ~8–10 | Accounts, Devices, Printers, Storage, Services, Schedule, Firewall, Diagnostics, Backup |
-| Honest missing | Accessibility page, System information jump cleared | Catalog empty paths |
+| Visible Administration inspect hosts (claim missing) | ~10 | Processes, Services, Device Manager, Storage, Printers and scanners, Backup, Scheduled tasks, Troubleshooting, Firewall, User accounts — Phase 9 exit still open; inspect ≠ MMC product present |
+| Honest missing | Accessibility page, System information jump cleared | Catalog empty paths; Accessibility panel missing as product |
 | Hard gaps (no product + missing jobs) | BitLocker, Credential Manager, HomeGroup, Internet Options, AutoPlay, Fonts, Folder Options, Speech, Defender, Mobility Center, Remote Desktop, Parental Controls, … | Ultimate SKU still incomplete |
-| Honesty debt (product ahead of catalog/PARITY) | Task Manager naming, Recycle Bin, Default Programs ID/provider split | Catalog MUST_FIX |
+| Residual honesty (product MMC / mutation still missing) | Recycle Bin vs `files.trash.manage`; Task Manager present / End Task LIVE; MIME Default Programs; writers planned/unavailable | Catalog caught up for Admin inspect visibility (#35–#36); Default Programs writer is `defaults.protocol.set` (browser LIVE only) |
 
 ---
 
 ## 9. Suggested next catalog work (for Lead / Doctrine, not auto-executed)
 
-1. Close **Default Programs** ID honesty (`defaults.protocol.set` / `defaults.provider`) without raising MIME to LIVE.  
+1. Keep **Default Programs** MIME withheld. Writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present or MIME LIVE.  
 2. Sync **PARITY.md** Default Programs / Language / Recycle / Update writer prose to jobs.  
-3. Either publish honest **Administration** humanRoutes for real inspect hosts or stop Task Manager product naming.  
+3. Administration humanRoutes already published visible. Residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty. Do not invent Task Manager present / End Task LIVE / MMC product from inspect hosts.  
 4. Raise or withhold **Recycle** catalog claim to match Files Trash.  
-5. Keep **BitLocker / Credential Manager / Programs and Features** as missing until Software Center / encryption surfaces exist — do not point them at Settings Apps alone.
-
+5. Keep **BitLocker / Credential Manager / Programs and Features** as missing until Software Center / encryption surfaces exist — do not point them at Settings Apps alone. Software Center missing as product.
