@@ -287,6 +287,41 @@ grep -Fq 'readonly property var productProfile: host && host.productProfile ? ho
   || fail "Files reads the standalone host SemanticProfile"
 grep -Fq 'Semantics.text(root.productProfile, root.queryState.phase === "offline" ? "Reconnect" : "Try again")' "$files_app" \
   || fail "Files Reconnect/Try again routes through Semantics.text"
+software_app="$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml"
+compat_app="$ROOT/shell/apps/ultimate-compatibility/CompatibilityApplication.qml"
+for app_label in "Software:$software_app" "Compatibility:$compat_app"; do
+  label="${app_label%%:*}"
+  app="${app_label#*:}"
+  grep -Fq 'readonly property var productProfile: host && host.productProfile ? host.productProfile : null' "$app" \
+    || fail "$label reads the standalone host SemanticProfile"
+  grep -A6 'visible: root.canRetry' "$app" | grep -Fq 'semanticProfile: root.productProfile' \
+    || fail "$label Reconnect/Retry consumes Semantics.text through Ui.Button"
+  grep -Fq 'semanticProfile: root.productProfile' "$app" \
+    || fail "$label Try again banner consumes the host SemanticProfile"
+done
+command_bar="$ROOT/shell/apps/ultimate-files/ExplorerCommandBar.qml"
+address_bar="$ROOT/shell/apps/ultimate-files/ExplorerAddressBar.qml"
+item_view="$ROOT/shell/apps/ultimate-files/ExplorerItemView.qml"
+grep -Fq 'productProfile: root.productProfile' "$files_app" \
+  || fail "Files passes the host SemanticProfile into Explorer Aero chrome"
+grep -Fq 'Semantics.text(root.productProfile, modelData.label)' "$command_bar" \
+  || fail "Files command bar verbs route through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Change your view")' "$command_bar" \
+  || fail "Files view-menu affordance routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Refresh")' "$address_bar" \
+  || fail "Files address-bar Refresh routes through Semantics.text"
+grep -Fq 'index === 0 ? Semantics.text(root.productProfile, modelData.label) : modelData.label' "$address_bar" \
+  || fail "Files address-bar route crumb is chrome; path crumbs stay literal"
+grep -Fq 'Semantics.text(root.productProfile, root.searchPlaceholder)' "$address_bar" \
+  || fail "Files address-bar Search placeholder routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, modelData.label)' "$item_view" \
+  || fail "Files details view labels route through Semantics.text"
+if grep -Fq 'Semantics.text(root.productProfile, detailRow.modelData.title)' "$item_view"; then
+  fail "Files entry titles are machine data and must not be pseudo-localized"
+fi
+if grep -Fq 'Semantics.text(root.productProfile, detailRow.modelData.typeLabel)' "$item_view"; then
+  fail "Files type cells are machine data and must not be pseudo-localized"
+fi
 grep -Fq 'Semantics.text(root.semanticProfile, root.tooltipText)' "$ROOT/shell/Ui/Button.qml" \
   || fail "Button tooltips consume Semantics.text"
 grep -Fq 'accessibleDescription: Semantics.text(semanticProfile, tooltipText)' "$ROOT/shell/Ui/Button.qml" \
