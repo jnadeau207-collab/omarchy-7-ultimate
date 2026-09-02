@@ -121,7 +121,11 @@ for (const routeId of liveWriterRoutes) {
 for (const routeId of ['settings.bluetooth.overview', 'settings.update.overview', 'settings.recovery.overview', 'settings.accessibility.overview', 'settings.system.overview', 'settings.personalization.overview', '']) {
   assertEqual(Model.routeHasLiveWriter(routeId), false, `${routeId || '(none)'} is not a live writer`)
   assertEqual(Model.coverageBadge(routeId), 'CHANGES UNAVAILABLE', `${routeId || '(none)'} coverage badge stays unavailable`)
-  assert(Model.declaredOpsHonesty(routeId).includes('no preflight, approval, or execution control'), `${routeId || '(none)'} declared ops stay unavailable`)
+  const declaredOps = Model.declaredOpsHonesty(routeId)
+  assert(declaredOps.includes('no preflight, approval, or execution control'), `${routeId || '(none)'} declared ops stay unavailable`)
+  assert(!declaredOps.includes(' yet'), `${routeId || '(none)'} declared ops do not invent forthcoming writers with yet`)
+  assert(!/phase 5/i.test(declaredOps), `${routeId || '(none)'} declared ops do not invent a Phase 5 fence`)
+  assert(!/remain Phase/i.test(declaredOps), `${routeId || '(none)'} declared ops do not invent a remain-Phase fence`)
 }
 const footer = Model.authorityFooter()
 assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Power profile') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser'), 'authority footer names every live writer')
@@ -606,6 +610,9 @@ fi
 if grep -Fq 'remain Phase 5' "$ROOT/docs/settings-service-api.md"; then
   fail "settings-service-api no longer blankets typed writers as remaining Phase 5"
 fi
+if grep -Fq 'not yet typed' "$ROOT/docs/settings-service-api.md"; then
+  fail "settings-service-api no longer invents that heritage panels mean Settings writers are not yet typed"
+fi
 if grep -Fq 'Accessibility, Input, and System information have no hostable panel' "$ROOT/docs/settings-service-api.md"; then
   fail "settings-service-api no longer underclaims Input as having no hostable panel"
 fi
@@ -633,6 +640,24 @@ fi
 if grep -Fq 'Typed Settings services are Phase 5' "$ROOT/plans/project-ultimate.md"; then
   fail "Current position no longer blankets typed Settings as Phase 5"
 fi
+python3 - "$ROOT" <<'PY' || fail "fleet-doctrine-gaps Current position Phase 5 fence row is not marked scrubbed / do-not-reintroduce"
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+gaps = (root / "plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md").read_text(encoding="utf-8")
+row = None
+for line in gaps.splitlines():
+    if "Typed Settings writers remain Phase 5" in line:
+        row = line
+        break
+if row is None:
+    raise SystemExit("fleet-doctrine-gaps Current position Phase 5 fence row missing")
+if "scrubbed" not in row.lower():
+    raise SystemExit("Phase 5 fence row must mark scrubbed in product docs")
+if "do-not-reintroduce" not in row.lower() and "reintroduction" not in row.lower():
+    raise SystemExit("Phase 5 fence row must name remaining invent risk as reintroduction / do-not-reintroduce")
+PY
 if grep -Fq 'and cannot set one' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
   fail "PARITY Default Programs notes no longer deny the live browser writer"
 fi

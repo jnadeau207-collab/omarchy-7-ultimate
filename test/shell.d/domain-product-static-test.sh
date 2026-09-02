@@ -333,6 +333,8 @@ if "inspect-only" not in scope.lower() and "hosted" not in scope.lower():
 api = (root / "docs/settings-service-api.md").read_text(encoding="utf-8")
 if "Typed writers remain Phase 5" in api or "remain Phase 5" in api:
     raise SystemExit("settings-service-api still blankets typed writers as remaining Phase 5")
+if "not yet typed" in api:
+    raise SystemExit("settings-service-api still invents that heritage panels mean Settings writers are not yet typed")
 needed_api = ["Sound volume", "Network Wi-Fi radio", "Power profile", "Display brightness", "Input layout", "Apps default browser"]
 missing_api = [name for name in needed_api if name not in api]
 if missing_api:
@@ -349,5 +351,29 @@ if "Process" not in api or "execDetached" not in api:
     raise SystemExit("settings-service-api must keep Personalization Process/execDetached honesty")
 if re.search(r"events\.subscribe|MIME associations|Empty Bin|Task Manager LIVE|End Task LIVE", api):
     raise SystemExit("settings-service-api invents MIME, Empty Bin, Task Manager LIVE, End Task LIVE, or events.subscribe")
+model = (root / "shell/apps/ultimate-settings/SettingsModel.js").read_text(encoding="utf-8")
+honesty_fn = re.search(r"function declaredOpsHonesty\(routeId\) \{[\s\S]*?\n\}", model)
+if not honesty_fn:
+    raise SystemExit("declaredOpsHonesty missing")
+honesty_strings = re.findall(r'"([^"]+)"', honesty_fn.group(0))
+if len(honesty_strings) < 2:
+    raise SystemExit("declaredOpsHonesty unavailable string missing")
+unavailable = honesty_strings[1]
+if " yet" in unavailable or re.search(r"phase 5", unavailable, re.I) or re.search(r"remain Phase", unavailable):
+    raise SystemExit("declaredOpsHonesty still invents forthcoming writers with yet / Phase 5 / remain Phase")
+if "no preflight, approval, or execution control" not in unavailable:
+    raise SystemExit("declaredOpsHonesty must keep unavailable / not-exposed honesty")
+gaps = (root / "plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md").read_text(encoding="utf-8")
+phase5_row = None
+for line in gaps.splitlines():
+    if "Typed Settings writers remain Phase 5" in line:
+        phase5_row = line
+        break
+if phase5_row is None:
+    raise SystemExit("fleet-doctrine-gaps Current position Phase 5 fence row missing")
+if "scrubbed" not in phase5_row.lower():
+    raise SystemExit("fleet-doctrine-gaps Phase 5 fence row must mark scrubbed in product docs")
+if "do-not-reintroduce" not in phase5_row.lower() and "reintroduction" not in phase5_row.lower():
+    raise SystemExit("fleet-doctrine-gaps Phase 5 fence row must name remaining invent risk as reintroduction / do-not-reintroduce")
 PY
 pass "Domain products explain trust, provenance, and unavailable mutation boundaries"
