@@ -149,7 +149,7 @@ Win7 **Default Programs** (`Microsoft.DefaultPrograms`) exposes:
 | Win7 sub-job | Omarchy today | Catalog / jobs honesty |
 | --- | --- | --- |
 | Change default browser (protocol http/https) | Settings → Apps drives `defaults.provider` `protocol.set` (typed plane) | `windows-native.19` claim **prototype** (not present); `parity.default-programs` claim **prototype** but `sourceStatus` still **missing**; writer is `defaults.protocol.set` (browser LIVE only) |
-| MIME / file associations | Plane: `defaults.mime.set` write plane is reachable (`defaults-mime-set` helper; preflight OK; risk low); Settings MIME UI not a full Default Programs | `files.associations.set` stays missing/planned MIME; File associations parity **missing as product** — Settings does not offer MIME LIVE CONTROL — do **not** invent MIME Default Programs LIVE |
+| MIME / file associations | Plane: `defaults.mime.set` write plane is reachable (`defaults-mime-set` helper; preflight OK; risk low); `association.inspect` is published for durable apply re-read; Settings MIME UI not a full Default Programs | `files.associations.set` stays missing/planned MIME; File associations parity **missing as product** — Settings does not offer MIME LIVE CONTROL — do **not** invent MIME Default Programs LIVE |
 | AutoPlay | **Missing** | No catalog |
 | SPAD / program access | **Missing** | No catalog |
 | Catalog ID used by jobs | Settings → Apps `defaults.protocol.set` | Writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present. MIME stays missing/planned. |

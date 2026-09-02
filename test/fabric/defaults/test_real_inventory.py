@@ -9,6 +9,7 @@ from helper import ROOT, principal
 
 from omarchy_fabric.helpers import session_apply as session_apply
 from omarchy_fabric.models import FabricError
+from omarchy_fabric.provider_registry import ProviderRegistry
 from omarchy_fabric.providers._probe import ProbeOutput
 from omarchy_fabric.providers.defaults import provider as defaults
 
@@ -93,6 +94,31 @@ class RealDefaultsInventoryTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(FabricError) as refused:
                 await provider.execute("mime.set", plan["normalizedArguments"], plan["stateRevision"])
             self.assertEqual(refused.exception.code, "defaults.operation-unavailable")
+            scoped = await provider.read("association.inspect", {"kind": "mime", "key": "text/plain"})
+            self.assertEqual(scoped["action"], "association.inspect")
+            self.assertEqual(scoped["state"], {
+                "kind": "mime",
+                "key": "text/plain",
+                "defaultAppId": app["id"],
+            })
+            missing = await provider.read("association.inspect", {"kind": "mime", "key": "image/gif"})
+            self.assertIsNone(missing["state"])
+            registry = ProviderRegistry()
+            registry.register(provider)
+            wrapped = await registry.read(
+                "defaults.provider",
+                "association.inspect",
+                {"kind": "mime", "key": "text/plain"},
+            )
+            self.assertEqual(wrapped["capability"], "defaults.inspect")
+            self.assertEqual(wrapped["value"]["state"]["defaultAppId"], app["id"])
+            with self.assertRaises(FabricError) as unpublished:
+                await registry.read(
+                    "defaults.provider",
+                    "association.missing",
+                    {"kind": "mime", "key": "text/plain"},
+                )
+            self.assertEqual(unpublished.exception.code, "provider.action-unavailable")
 
     async def test_missing_and_malformed_fixed_probes_are_explicit_degradation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

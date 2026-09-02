@@ -67,6 +67,24 @@
       "supportsRollback": false,
       "supportsCancellation": false
     },
+    "association.inspect": {
+      "capability": "defaults.inspect",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-inspect-arguments:v1",
+        "version": "v1"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-inspect-result:v1",
+        "version": "v1"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
+    },
     "mime.set": {
       "capability": "defaults.mime.set",
       "mode": "operation",

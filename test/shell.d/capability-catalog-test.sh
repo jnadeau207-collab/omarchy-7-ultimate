@@ -864,6 +864,8 @@ if "Default Programs leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the Default Programs leftover")
 if "`defaults.mime.set` write plane is reachable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the reachable defaults.mime.set write plane")
+if "association.inspect" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite published association.inspect apply re-read")
 if "Settings does not offer MIME LIVE CONTROL" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Settings MIME LIVE CONTROL refused")
 if "defaults.inspect" not in gaps:
