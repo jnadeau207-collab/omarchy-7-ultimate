@@ -30,7 +30,8 @@
     "action": {
       "enum": [
         "directory.create",
-        "entry.trash"
+        "entry.trash",
+        "trash.restore"
       ]
     },
     "capability": {
