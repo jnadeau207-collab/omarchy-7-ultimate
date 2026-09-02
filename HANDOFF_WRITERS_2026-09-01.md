@@ -1,6 +1,6 @@
 # Writers and the root executor — 2026-09-01
 
-SHA `6e01615d` on `work` (session that landed the root executor and write-plane expansion), rebased onto `upstream/quattro` at `b71dcad9`. Honesty addendum 2026-09-02 vs tip `c192afea`: `entry.trash` write-plane reachability after PR #8 v1 directory family widen is KEEP. The helper-only / schema-blocker paragraphs below are rewritten to residual. Honesty addendum 2026-09-02 vs tip `c1490f82`: Files Trash controls stay gated `trashAuthorized=false` for the shell principal (same invent class as LIVE End Task). Write plane remains reachable at `consequential`; SHELL still refused at `grant.shell-consequential`. Do not invent Restore LIVE, `files.trash.manage`, Empty Recycle, Recycle Bin product-complete, or LIVE Trash under SHELL. Product REJECTED.
+SHA `6e01615d` on `work` (session that landed the root executor and write-plane expansion), rebased onto `upstream/quattro` at `b71dcad9`. Honesty addendum 2026-09-02 vs tip `c192afea`: `entry.trash` write-plane reachability after PR #8 v1 directory family widen is KEEP. The helper-only / schema-blocker paragraphs below are rewritten to residual. Honesty addendum 2026-09-02 vs tip `c1490f82`: Files Trash controls stay gated `trashAuthorized=false` for the shell principal (same invent class as LIVE End Task). Write plane remains reachable at `consequential`; SHELL still refused at `grant.shell-consequential`. Honesty addendum 2026-09-02: `trash.restore` write plane is reachable the same way. Real preflight reads `.trashinfo` to derive the restore destination. Risk stays `consequential`. SHELL still refused at `grant.shell-consequential`. Files does not offer Restore LIVE. Do not invent Restore LIVE, `files.trash.manage`, Empty Recycle, Recycle Bin product-complete, or LIVE Trash under SHELL. Product REJECTED.
 
 Honesty addendum 2026-09-02 vs tip after PR #31 (`62372edf9e62`): Settings Power LIVE stays refused. Heritage Superbar / Quick Settings Power remains the catalog leftover (`power.profile.set` / `legacy-direct` / Process/`omarchy-powerprofiles-set`). Distinct from fabric `app.slice`: shell launch is Hyprland `exec_cmd`, compositor documented in `session.slice`. Not a `session-N.scope` leftover. That leftover was unverified on metal after PR #31. Metal FAIL on tip `20484de6` (Not authorized / session-5103; !batteryPresent; amd_pstate EINVAL). QS Power METAL_HEAD OPEN / KEEP OPEN. Settings Power LIVE refused. Do not claim the heritage QS Power panel works on this metal. Do not honesty-gate the heritage panel; do not invent Settings LIVE or a broad polkit grant. Product REJECTED.
 
@@ -37,7 +37,7 @@ Local, `origin`, and metal hold the same commit and the same tree.
 
 **The root executor exists.** `SystemCommandExecutor` was wired into the daemon and invoked `/usr/libexec/omarchy-fabric-system-executor`, which was not in the repository. It is now, for `packages.install` and `packages.remove`, with a Polkit policy. Polkit binds one action id to one program path, so each verb has its own program under `/usr/libexec/omarchy-fabric/` and its own admin rule; the dispatcher maps a verb to a literal path through a fixed `case` and execs `pkexec`, so request data never reaches the argv. The root half re-validates the typed request from scratch and resolves package ids through the signed catalog.
 
-**The write plane went from four actions to nine.** Honesty vs tip `c192afea`: `directory.create` stays `low` and SHELL-grantable. `entry.trash` is write-plane reachable at `consequential` (not helper-only); SHELL approve fails `grant.shell-consequential`. `trash.restore` stays honest-unavailable.
+**The write plane went from four actions to nine.** Honesty vs tip `c192afea`: `directory.create` stays `low` and SHELL-grantable. `entry.trash` is write-plane reachable at `consequential` (not helper-only); SHELL approve fails `grant.shell-consequential`. `trash.restore` is write-plane reachable at `consequential` after real `.trashinfo` preflight; SHELL approve fails `grant.shell-consequential`. Restore UI stays unavailable.
 
 | Action | Surface | State |
 |--------|---------|-------|
@@ -49,7 +49,7 @@ Local, `origin`, and metal hold the same commit and the same tree.
 | `input-keyboard-layout-set` | Settings › Input | new here |
 | `network-wifi-enabled-set` | Settings › Network | new here |
 | `files-entry-trash` | Files › Trash | write plane reachable (`entry.trash`, risk `consequential`; SHELL refused at `grant.shell-consequential`; Files Trash controls gated `trashAuthorized=false`, not LIVE) |
-| `files-trash-restore` | none | honest-unavailable (no Restore UI; write plane `operation.definition-unavailable`; helper/lifecycle remain) |
+| `files-trash-restore` | none | write plane reachable (`trash.restore`, risk `consequential`; SHELL refused at `grant.shell-consequential`; no Restore UI; Recycle residual stays OPEN) |
 
 Each device-scoped writer resolves its opaque resource id by recomputing the provider's own digest over the live device list, so a payload can never name a monitor, keyboard or sink directly.
 
@@ -77,13 +77,13 @@ Each device-scoped writer resolves its opaque resource id by recomputing the pro
 
 **Unavailable (do not invent)**
 
-- Restore UI / `trash.restore` on the write plane. The real adapter does not read `.trashinfo` at preflight, so a restore destination cannot be derived from the directory listing. Provider lifecycle and the session helper still exist; the daemon does not register `trash.restore`; Files does not offer a Restore control (`operation.definition-unavailable`).
+- Restore UI. The `trash.restore` write plane is reachable. Real preflight reads `.trashinfo` and scopes the original destination directory. Risk `consequential`. SHELL cannot hold a standing grant. Files does not offer a Restore control.
 - `files.trash.manage`
 - Empty Recycle Bin
 - Permanent delete
 - Recycle Bin as a product-complete place
 
-The Files banner matches: New folder runs through `files.provider`; Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE); Restore, empty Recycle Bin, permanent delete, and `files.trash.manage` remain unavailable.
+The Files banner matches: New folder runs through `files.provider`; Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE); Restore write plane exists but is not shell-authorizable; Restore UI, empty Recycle Bin, permanent delete, and `files.trash.manage` remain unavailable.
 
 The scope function and payload deriver shipped with the v1 widen (not left reverted). `_entry_trash_scope` resolves the entry, derives its parent, and proposes the listing minus that name. The payload deriver reads scoped `currentState.value` and refuses any plan that does not remove exactly one name.
 
@@ -93,7 +93,7 @@ Scoping `entry.rename` to its parent directory looks identical to the other thre
 
 `test_compare_and_swap_contains_concurrent_execution_and_toctou_drift` proves it: it drifts the target entry's `identity` between preflight and execute and requires `files.state-stale`. Against the whole-workspace revision that fires. Against a directory listing it does not, because the names did not move. Scoping rename would silently drop the provider-level TOCTOU check on the exact operation that resolves an entry by id and then moves it.
 
-Create and trash are safe under this scope because their observable effect *is* a name appearing or disappearing, and an entry that drifted underneath still fails the helper's inode check. Restore stays honest-unavailable (no `.trashinfo` at real preflight); do not invent Restore LIVE. Rename needs a scope carrying the entry identity as well as the listing. That is a different document shape and a different schema family; it was attempted, caught by that test, and reverted rather than shipped weakened.
+Create and trash are safe under this scope because their observable effect *is* a name appearing or disappearing, and an entry that drifted underneath still fails the helper's inode check. Restore write plane is reachable from `.trashinfo` at real preflight; Restore UI stays honest-unavailable. Do not invent Restore LIVE. Rename needs a scope carrying the entry identity as well as the listing. That is a different document shape and a different schema family; it was attempted, caught by that test, and reverted rather than shipped weakened.
 ## What still blocks Software Center
 
 Not the executor. The shipped catalog carries `assurance: contract-seed`, and `PackageProvider` deliberately refuses live mutation for an unattested seed. That gate is correct and was left closed. Opening it is a release-attestation decision.

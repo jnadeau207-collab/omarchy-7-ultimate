@@ -52,6 +52,16 @@ def entry_payload(location_id, relative, path, resource=None):
     }
 
 
+def restore_payload(location_id, relative, trash_file):
+    info = trash_file.lstat()
+    return {
+        "resourceId": directory_resource(location_id, relative),
+        "locationId": location_id,
+        "entryRelativePath": relative,
+        "entryId": sa.stable_entry_id("files.location.trash", info.st_dev, info.st_ino, trash_file.name),
+    }
+
+
 import atexit
 
 
@@ -76,8 +86,7 @@ check("the Trash record is a freedesktop record", record.startswith("[Trash Info
 check("the Trash record carries a deletion date", "\nDeletionDate=" in record, record)
 
 moved = (trash / "files" / "report.txt")
-relative = ".local/share/Trash/files/report.txt"
-status, result = run("files-trash-restore", entry_payload("files.location.home", relative, moved))
+status, result = run("files-trash-restore", restore_payload("files.location.documents", "report.txt", moved))
 check("a trashed entry restores", status == 0 and result.get("ok"), json.dumps(result))
 check("the entry is back where it was", target.is_file())
 check("the restored content is intact", target.read_text(encoding="utf-8") == "hello")
@@ -123,13 +132,13 @@ check("a workspace resource refuses", result.get("code") == "payload.invalid", j
 check("the workspace-scoped entry is untouched", second.is_file())
 
 status, result = run("files-trash-restore", entry_payload("files.location.documents", "drift.txt", second))
-check("restoring an entry that is not in Trash refuses", result.get("code") == "payload.invalid", json.dumps(result))
+check("restoring an entry that is not in Trash refuses", result.get("code") == "resource.unresolved", json.dumps(result))
 
 run("files-entry-trash", entry_payload("files.location.documents", "report.txt", target))
 occupant = home / "Documents" / "report.txt"
 occupant.write_text("newer", encoding="utf-8")
 trashed = trash / "files" / "report.txt"
-status, result = run("files-trash-restore", entry_payload("files.location.home", relative, trashed))
+status, result = run("files-trash-restore", restore_payload("files.location.documents", "report.txt", trashed))
 check("restoring onto an occupied original location refuses", result.get("code") == "apply.exists", json.dumps(result))
 check("the occupant is untouched", occupant.read_text(encoding="utf-8") == "newer")
 
@@ -141,9 +150,9 @@ check("the earlier trashed entry is not overwritten", trashed.read_text(encoding
 escaped = trash / "info" / "escaped.trashinfo"
 escaped.parent.mkdir(parents=True, exist_ok=True)
 (trash / "files" / "escaped").write_text("x", encoding="utf-8")
-escaped.write_text("[Trash Info]\nPath=" + sa.urllib.parse.quote(str(pathlib.Path(tempfile.mkdtemp()) / "outside.txt"), safe="/") + "\nDeletionDate=2026-01-01T00:00:00\n", encoding="utf-8")
+escaped.write_text(sa.trash_info_document(pathlib.Path(tempfile.mkdtemp()) / "outside.txt", "2026-01-01T00:00:00"), encoding="utf-8")
 outside = trash / "files" / "escaped"
-status, result = run("files-trash-restore", entry_payload("files.location.home", ".local/share/Trash/files/escaped", outside))
+status, result = run("files-trash-restore", restore_payload("files.location.documents", "escaped.txt", outside))
 check("a Trash record pointing outside home refuses", result.get("code") == "payload.invalid", json.dumps(result))
 
 if failures:

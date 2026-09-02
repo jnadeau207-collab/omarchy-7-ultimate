@@ -202,7 +202,8 @@ grep -Fq 'File contents are never read' "$ROOT/shell/apps/ultimate-files/FilesAp
 grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live New folder writer"
 grep -Fq 'Trash write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner states Trash is not shell-authorizable"
 grep -Fq 'CHANGES UNAVAILABLE' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names CHANGES UNAVAILABLE for Trash"
-grep -Fq 'Restore, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore and files.trash.manage unavailable"
+grep -Fq 'Restore write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the Restore write plane as not shell-authorizable"
+grep -Fq 'Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore UI and files.trash.manage unavailable"
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
 grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins trashAuthorized false; Trash is not LIVE under the shell principal"

@@ -783,6 +783,26 @@ class FabricDaemon:
             "locationId": current["locationId"],
             "entryRelativePath": f"{parent}/{removed[0]}" if parent else removed[0],
         }
+
+    @staticmethod
+    def _restore_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        current = FabricDaemon._directory_listing(preflight["currentState"])
+        proposed = FabricDaemon._directory_listing(preflight["proposedState"])
+        added = [name for name in proposed["names"] if name not in set(current["names"])]
+        if len(added) != 1:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The restore plan does not add exactly one entry to its directory.",
+            )
+        parent = current["parentRelativePath"]
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "entryId": preflight["normalizedArguments"]["entryId"],
+            "locationId": current["locationId"],
+            "entryRelativePath": f"{parent}/{added[0]}" if parent else added[0],
+        }
+
     def _operation_pid(self, value: Any) -> int:
         if isinstance(value, bool) or not isinstance(value, int) or not 2 <= value <= 4194304:
             raise FabricError(
@@ -1018,6 +1038,16 @@ class FabricDaemon:
                         },
                     ),
                     IntentDefinition(
+                        "files.trash.restore",
+                        FixedArgvCommand(str(helper), ("files-trash-restore",)),
+                        required={
+                            "resourceId": stable_token,
+                            "entryId": stable_token,
+                            "locationId": stable_token,
+                            "entryRelativePath": self._operation_entry_relative,
+                        },
+                    ),
+                    IntentDefinition(
                         "files.directory.create",
                         FixedArgvCommand(str(helper), ("files-directory-create",)),
                         required={
@@ -1104,6 +1134,12 @@ class FabricDaemon:
                     "entry.trash",
                     "files.entry.trash",
                     self._trash_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "trash.restore",
+                    "files.trash.restore",
+                    self._restore_payload,
                 ),
                 OperationDefinition(
                     "files.provider",
