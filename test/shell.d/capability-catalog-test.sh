@@ -765,6 +765,24 @@ if "62c95ebae058" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #45 tip parent for the powerprofiles-set-test QS Power honesty twin")
 if "Process-test QS Power leftover after PR #45" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the powerprofiles-set-test QS Power underclaim close")
+if "2804e464daa9" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #46 tip parent for the focused-stale inspect residual")
+if "Focused out-of-band stale inspect residual OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry Focused out-of-band stale inspect residual OPEN")
+if "Focused out-of-band stale inspect residual OPEN after PR #46" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the focused-stale leftover after PR #46")
+if "authorityFooter()" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name Settings authorityFooter() for the focused-stale residual")
+if "No `events.subscribe`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep No `events.subscribe` on the focused-stale residual")
+if "surface-visible / local-writer only" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep surface-visible / local-writer refresh as those paths only")
+if "closed focused stale" in gaps:
+    raise SystemExit("fleet-doctrine-gaps still claims focused stale was closed")
+if "events.subscribe present" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented events.subscribe present")
+if "hardware-key subscription LIVE" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented hardware-key subscription LIVE")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -963,6 +981,18 @@ if "d3f4841a" not in state_handoff:
     raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must cite metal tip d3f4841a")
 if "focused out-of-band stale" not in state_handoff:
     raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep focused out-of-band stale OPEN")
+if "Focused out-of-band stale inspect residual OPEN" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep Focused out-of-band stale inspect residual OPEN")
+if "authorityFooter()" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must name Settings authorityFooter() for the focused-stale residual")
+if "surface-visible / local-writer only" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep surface-visible / local-writer refresh as those paths only")
+if "closed focused stale" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES still claims focused stale was closed")
+if "events.subscribe present" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES invented events.subscribe present")
+if "hardware-key subscription LIVE" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES invented hardware-key subscription LIVE")
 if "events.subscribe" not in state_handoff:
     raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep no events.subscribe residual OPEN")
 if "QS Power METAL_HEAD OPEN" not in state_handoff:
@@ -1003,6 +1033,18 @@ if "heritage QS Power works on metal" in settings_api:
     raise SystemExit("settings-service-api invented heritage QS Power works on metal")
 if "KEEP OPEN" not in settings_api:
     raise SystemExit("settings-service-api must KEEP OPEN the QS Power leftover")
+if "Focused out-of-band stale inspect residual OPEN" not in settings_api:
+    raise SystemExit("settings-service-api must keep Focused out-of-band stale inspect residual OPEN")
+if "authorityFooter()" not in settings_api:
+    raise SystemExit("settings-service-api must name Settings authorityFooter() for the focused-stale residual")
+if "surface-visible / local-writer only" not in settings_api:
+    raise SystemExit("settings-service-api must keep surface-visible / local-writer refresh as those paths only")
+if "events.subscribe" in settings_api:
+    raise SystemExit("settings-service-api invented events.subscribe")
+if "hardware-key subscription LIVE" in settings_api:
+    raise SystemExit("settings-service-api invented hardware-key subscription LIVE")
+if "LIVE hardware-key subscription" not in settings_api:
+    raise SystemExit("settings-service-api must refuse inventing LIVE hardware-key subscription")
 
 gt06 = (root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.md").read_text(encoding="utf-8")
 gt06_json = json.loads((root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.json").read_text(encoding="utf-8"))
