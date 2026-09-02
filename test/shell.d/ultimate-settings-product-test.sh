@@ -633,6 +633,7 @@ if grep -Fq 'Live typed writers are Sound volume, Network Wi-Fi radio, Power pro
 fi
 grep -Fq 'polkit' "$settings_api" || fail "settings-service-api names the Power polkit residual"
 grep -Fq 'unverified on metal' "$settings_api" || fail "settings-service-api names the Superbar QS Power leftover unverified on metal"
+grep -Fq 'Night light remains a Superbar leftover' "$settings_api" || fail "settings-service-api keeps night light as a Superbar leftover, not Settings LIVE"
 grep -Fq 'keyboard-layout' "$settings_api" || fail "settings-service-api names the Input keyboard-layout writer"
 grep -Fq 'execDetached' "$settings_api" || fail "settings-service-api keeps Personalization Process/execDetached honesty"
 if grep -Eiq 'events[.]subscribe|MIME associations|Empty Bin|Task Manager LIVE|End Task LIVE' "$settings_api"; then
