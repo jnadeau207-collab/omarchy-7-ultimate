@@ -186,7 +186,7 @@ run_node_test <<'JS'
 const fs = require('fs')
 const source = fs.readFileSync(root + '/shell/plugins/agents/Panel.qml', 'utf8')
 const start = source.indexOf('function windowIsLong')
-const end = source.indexOf('// The window that decides')
+const end = source.indexOf('function bindingWindow')
 assert(start > 0 && end > start, 'agents panel exposes its limit-window helpers')
 eval(source.slice(start, end))
 
