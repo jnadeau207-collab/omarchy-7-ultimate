@@ -9,6 +9,7 @@ Rectangle {
   id: root
 
   required property var record
+  property var semanticProfile: null
   property bool selected: false
 
   Layout.fillWidth: true
@@ -19,8 +20,11 @@ Rectangle {
     : Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
   border.width: selected || Tokens.accessibility.highContrast ? 2 : 1
   Accessible.role: Accessible.Pane
-  Accessible.name: String(record.label || record.id || "Provider resource")
-  Accessible.description: String(record.kind || "Provider resource") + ". Status " + String(record.status || "unknown") + "."
+  Accessible.name: String(record.label || record.id || "") !== ""
+    ? String(record.label || record.id)
+    : Semantics.text(semanticProfile, "Provider resource")
+  Accessible.description: String(record.kind || Semantics.text(semanticProfile, "Provider resource")) + ". " +
+    Semantics.text(semanticProfile, "Status") + " " + String(record.status || "unknown") + "."
 
   ColumnLayout {
     id: content
@@ -38,7 +42,7 @@ Rectangle {
 
         Text {
           textFormat: Text.PlainText
-          text: String(root.record.label || root.record.id || "Unnamed resource")
+          text: String(root.record.label || root.record.id || Semantics.text(root.semanticProfile, "Unnamed resource"))
           color: Tokens.text.primary
           font.family: Tokens.typography.family
           font.pixelSize: Style.font.title
@@ -51,7 +55,7 @@ Rectangle {
 
         Text {
           textFormat: Text.PlainText
-          text: String(root.record.subtitle || root.record.kind || "Provider resource")
+          text: String(root.record.subtitle || root.record.kind || Semantics.text(root.semanticProfile, "Provider resource"))
           color: Tokens.text.secondary
           font.family: Tokens.typography.family
           font.pixelSize: Style.font.bodySmall
@@ -90,7 +94,9 @@ Rectangle {
       border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
       border.width: Tokens.accessibility.highContrast ? 2 : 1
       Accessible.role: Accessible.StaticText
-      Accessible.name: "Current " + String(root.record.label || root.record.id || "resource") + " details"
+      Accessible.name: Semantics.text(root.semanticProfile, "Current") + " " +
+        String(root.record.label || root.record.id || Semantics.text(root.semanticProfile, "resource")) + " " +
+        Semantics.text(root.semanticProfile, "details")
 
       ColumnLayout {
         id: detailsColumn
