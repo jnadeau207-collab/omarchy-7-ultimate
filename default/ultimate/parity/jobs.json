@@ -12,6 +12,7 @@
         "desktop.icons.manage",
         "desktop.wallpaper.set",
         "desktop.context-menu.open",
+        "files.entry.trash",
         "files.trash.manage"
       ],
       "humanRoute": {
@@ -125,6 +126,7 @@
       "capabilityIds": [
         "files.this-pc.open",
         "files.directory.create",
+        "files.entry.trash",
         "files.entry.rename",
         "files.copy",
         "files.properties.read"
