@@ -164,4 +164,7 @@ grep -Fq 'This surface never invokes a package manager' "$ROOT/shell/apps/ultima
 grep -Fq 'File contents are never read' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files states its content-read boundary"
 grep -Fq 'New folder, Trash, and Restore run through files.provider' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live trash and restore writers"
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
+if grep -Eq 'maximumLineCount:[[:space:]]*2' "$ROOT/shell/apps/ultimate-files/ExplorerDetailsPane.qml"; then
+  fail "Files details boundary Text is limited to 2 lines and can clip the unavailable half"
+fi
 pass "Domain products explain trust, provenance, and unavailable mutation boundaries"
