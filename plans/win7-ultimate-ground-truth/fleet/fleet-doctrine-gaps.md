@@ -218,7 +218,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
 - Files banner still underclaims trash/restore while UI offers them; `HANDOFF_WRITERS` helper-only / next-piece schema-blocker narrative stale vs Files UI.
 - Catalog soft invent: `apps.defaults.set` provider.id `apps.provider` vs live `defaults.provider`.
 - `HANDOFF_STATE_DOMAIN_WRITES` still carries TASK-unwired / Wall-one “cannot be wired” paragraphs after TASK admission present.
-- End Task: consequential / `terminationAuthorized=false`; digest label scrape fragile; do not invent Task Manager LIVE kill.
+- End Task: consequential / `terminationAuthorized=false` kept; digest label scrape and missing confirm-before-preflight closed (typed `startDigest` + OperationDialog). Residual: no Task Manager product, no LIVE CONTROL, no polkit/LIVE kill. Do not invent Task Manager LIVE kill.
 - Semantics.text / authored English leftovers. DesktopIcons argv→execArgv landed in tree (PR #5). Metal leftover 2026-09-02T04:18:31-04:00 on omarchy: `test/shell.d/launch-argv-test.sh` EXIT 0; comma-join `uwsm-app -- /usr/bin/cursor,--password-store=...` still errors as expected; `uwsm-app -- /home/jesse/.local/bin/cursor-wayland --version` OK (3.16.29). Product REJECTED.
 - Settings/Files honesty scrub (PR #6 / work `e7eded14`): coverage badge PARTIAL LIVE CONTROL vs CHANGES UNAVAILABLE; authorityFooter names LIVE writers; Files banner names New folder/Trash/Restore and `files.trash.manage` unavailable; Phase5 blanket removed. Source-oracle leftover 2026-09-02: `ultimate-settings-product-test.sh` EXIT 0; `domain-product-static-test.sh` EXIT 0 on PR tree before merge. **Not** pixel leftover. Product REJECTED.
 - Product **REJECTED**; refuse merge as OS.
