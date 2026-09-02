@@ -1212,8 +1212,7 @@ Item {
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.WordWrap
-                  maximumLineCount: 6
-                  elide: Text.ElideRight
+                  maximumLineCount: 16
                   Layout.fillWidth: true
                 }
 
@@ -1227,8 +1226,7 @@ Item {
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.Wrap
-                  maximumLineCount: 5
-                  elide: Text.ElideRight
+                  maximumLineCount: 12
                   Layout.fillWidth: true
                 }
               }
