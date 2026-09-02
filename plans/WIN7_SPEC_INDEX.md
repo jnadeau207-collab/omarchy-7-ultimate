@@ -1,46 +1,31 @@
-# WIN7 Spec Index — Omarchy Project Ultimate
-
-**Authority:** PRODUCT_DOCTRINE.md (wins conflicts) → plans/project-ultimate.md → WINDOWS_7_ULTIMATE_PARITY.md → these ground-truth specs.  
-**Product status:** **REJECTED** as an OS. Do not merge `work`→`main` as the OS. Do not claim product GO.  
-**DPI baseline:** 96 DPI / 100%. **Caption BINDING LOCK:** visual top NC = **30**; `SM_CYCAPTION` = **22** (metric band only — never ship a 22 px title bar).
-
-Repo tree for commit: `plans/win7-ultimate-ground-truth/` + `plans/WIN7_SPEC_INDEX.md` (this file) + Phase bindings spliced into `plans/project-ultimate.md`.
-
+---
+authority: Windows 7 Ultimate ground truth (FULL CORPUS)
+sku: Windows 7 Ultimate
+dpi_baseline: 96 DPI / 100%
+product_status: REJECTED
+caption_binding_lock: "visual restored top NC = 30; SM_CYCAPTION=22 metric only — never ship a 22px title bar; buttons 29×20/27×20/49×20; cluster ~105"
 ---
 
-## Surface → research → phase → repo path
+# WIN7 Spec Index — FULL CORPUS
 
-| Surface | Ground-truth file | Research sources | Target phase(s) | Repo path |
-|---------|-------------------|------------------|-----------------|-----------|
-| Window chrome / Aero SSD | [01-window-chrome.md](ground-truth/01-window-chrome.md) | `01-WINDOW-CHROME.md/.json`, `fleet-aero-win7.md`, `fleet-chrome-win7.md` | 1, 3, 11 | `plans/win7-ultimate-ground-truth/01-window-chrome.md` |
-| Start menu | [02-start-menu.md](ground-truth/02-start-menu.md) | `02-START-SUPERBAR.md/.json` (Start), `fleet-shell-win7.md` §1 | 4, 11 | `plans/win7-ultimate-ground-truth/02-start-menu.md` |
-| Superbar / taskbar | [03-superbar-taskbar.md](ground-truth/03-superbar-taskbar.md) | `02-START-SUPERBAR.md/.json` (taskbar), `fleet-shell-win7.md` §2–5, Peek in aero | 4, 1, 11 | `plans/win7-ultimate-ground-truth/03-superbar-taskbar.md` |
-| Explorer / dialogs | [04-explorer-dialogs.md](ground-truth/04-explorer-dialogs.md) | `03-EXPLORER-DIALOGS.md/.json`, `fleet-shell-win7.md` §6 | 6, 4, 11 | `plans/win7-ultimate-ground-truth/04-explorer-dialogs.md` |
-| Control Panel | [05-control-panel.md](ground-truth/05-control-panel.md) | `04-CONTROL-PANEL.md/.json`, `fleet-catalog-controlpanel.md` | 5, 9 | `plans/win7-ultimate-ground-truth/05-control-panel.md` |
-| Settings / defaults / admin / media | [06-settings-defaults-admin-media.md](ground-truth/06-settings-defaults-admin-media.md) | `06-SETTINGS-ADMIN-MEDIA.md/.json`, catalog §3–4 | 5, 6, 7, 9 | `plans/win7-ultimate-ground-truth/06-settings-defaults-admin-media.md` |
-| Interaction grammar | [07-interaction-grammar.md](ground-truth/07-interaction-grammar.md) | `05-INTERACTION-POLISH.md/.json`, aero, `fleet-doctrine-gaps.md` | 11, all (hotkeys) | `plans/win7-ultimate-ground-truth/07-interaction-grammar.md` |
+**Authority:** PRODUCT_DOCTRINE.md (wins conflicts) → `plans/project-ultimate.md` → `WINDOWS_7_ULTIMATE_PARITY.md` → **`plans/win7-ultimate-ground-truth/` full packs**.
 
-**Companion plan splice:** [PHASE_BINDINGS.md](PHASE_BINDINGS.md) → each Phase 0–11 in `plans/project-ultimate.md`.  
-**Parity pointers:** [PARITY_ACCEPTANCE_POINTERS.md](PARITY_ACCEPTANCE_POINTERS.md) → `WINDOWS_7_ULTIMATE_PARITY.md` (honesty; do not mark present).  
-**Doctrine gaps:** `research/fleet-doctrine-gaps.md` — 82 jobs invent-risk + 18 vagueness flags + anti-invent checklist.
+Digests are gone. The numbered `0N-*.md` + `.json` twins and `fleet/` packs are the corpus.
 
----
+**Caption BINDING LOCK:** visual restored top NC = **30** = `SM_CYFRAME(4)+SM_CYCAPTION(22)+SM_CXPADDEDBORDER(4)`. `SM_CYCAPTION` **22** is metric band only.
 
-## Doctrine nuance (Rule 3 + Not Aero)
+| Surface | Full pack | JSON twin | Fleet / notes | Phases |
+|---------|-----------|-----------|---------------|--------|
+| Window chrome | [01-window-chrome.md](win7-ultimate-ground-truth/01-window-chrome.md) | [json](win7-ultimate-ground-truth/01-window-chrome.json) | [fleet-aero](win7-ultimate-ground-truth/fleet/fleet-aero-win7.md), [fleet-chrome](win7-ultimate-ground-truth/fleet/fleet-chrome-win7.md) | 1, 3, 11 |
+| Start + Superbar | [02-start-superbar.md](win7-ultimate-ground-truth/02-start-superbar.md) | [json](win7-ultimate-ground-truth/02-start-superbar.json) | [fleet-shell](win7-ultimate-ground-truth/fleet/fleet-shell-win7.md) | 4, 1, 11 |
+| Explorer / dialogs | [03-explorer-dialogs.md](win7-ultimate-ground-truth/03-explorer-dialogs.md) | [json](win7-ultimate-ground-truth/03-explorer-dialogs.json) | fleet-shell §Explorer | 6, 4, 11 |
+| Control Panel | [04-control-panel.md](win7-ultimate-ground-truth/04-control-panel.md) | [json](win7-ultimate-ground-truth/04-control-panel.json) | [fleet-catalog](win7-ultimate-ground-truth/fleet/fleet-catalog-controlpanel.md) | 5, 9 |
+| Interaction grammar | [05-interaction-polish.md](win7-ultimate-ground-truth/05-interaction-polish.md) | [json](win7-ultimate-ground-truth/05-interaction-polish.json) | [fleet-doctrine-gaps](win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md) | 11, all |
+| Settings / Admin / Media | [06-settings-admin-media.md](win7-ultimate-ground-truth/06-settings-admin-media.md) | [json](win7-ultimate-ground-truth/06-settings-admin-media.json) | fleet-catalog | 5, 6, 7, 9 |
 
-- **Rule 3:** Windows muscle memory is an API — Start, Superbar, captions, Alt+Tab, Win+*, clipboard.  
-- **“Not Aero” / “Not a clone”:** refuses ads, telemetry, forced accounts, shipping a Linux-dev box. It does **not** license vague phase blurbs. Match IA, hit targets, menus, sizes; glass texture may approximate.
+Also: [README](win7-ultimate-ground-truth/README.md) · [00-DOC-INVENTORY](win7-ultimate-ground-truth/00-DOC-INVENTORY.md) · [00-SURFACES-CHECKLIST](win7-ultimate-ground-truth/00-SURFACES-CHECKLIST.md) · [_PHASE_BINDINGS](win7-ultimate-ground-truth/_PHASE_BINDINGS.md) · [_PARITY_ACCEPTANCE_POINTERS](win7-ultimate-ground-truth/_PARITY_ACCEPTANCE_POINTERS.md)
 
----
+## Anti-invent checklist
+1. Job id + mouse behavior. 2. Typed verbs + principal. 3. Human UI route. 4. Banner matches controls. 5. Honest claim/proofStatus. 6. Hide undrivable controls. 7. No mutation on inspect-only. 8. `test/all` ≠ forty-task ≠ OS. 9. Product REJECTED; no `work`→`main` as OS.
 
-## Anti-invent checklist (must apply to every phase binding)
-
-1. Name job id (`parity.*` / `windows-native.*`) + observable mouse behavior.  
-2. Name typed verb(s) + principal; consequential ≠ standing shell grant.  
-3. Human route exists in UI.  
-4. Coverage text matches banner/controls.  
-5. jobs.json claim/proofStatus honest.  
-6. Hide undrivable controls.  
-7. No mutation UI on inspect-only; no claim walk without capability.  
-8. `test/all` green ≠ forty-task ≠ OS ship.  
-9. Product REJECTED; no `work`→`main` as OS.
+Omarchy deltas (barHeight 48, multi-mon bars, Start places, tokens) are labeled inside packs — they are not Win7 truth.
