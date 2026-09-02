@@ -31,6 +31,7 @@ Item {
   readonly property string createLocationId: FilesModel.createLocationForRoute(host ? host.currentRoute : "")
   readonly property bool createVisible: createLocationId !== ""
   readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady
+  readonly property bool trashAuthorized: false
 
   property var history: []
   property int historyIndex: -1
@@ -198,6 +199,7 @@ Item {
   }
 
   function trashEntry(record) {
+    if (!root.trashAuthorized) return
     if (!host || operationBusy || createLocationId === "") return
     if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return
     root.operationName = String(record.title || "this entry")
@@ -270,13 +272,32 @@ Item {
   function commandActions() {
     var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
     if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
-    if (root.createVisible) {
+    if (root.createVisible && root.trashAuthorized) {
       list.push({
         key: "delete", label: "Delete", dropdown: false,
         enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
       })
     }
     if (root.selectedRecord !== null) list.push({ key: "properties", label: "Properties", dropdown: false, enabled: true })
+    return list
+  }
+
+  function organizeMenuItems() {
+    var list = [{ key: "new-folder", label: "New folder", enabled: root.createEnabled }]
+    if (root.trashAuthorized) {
+      list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
+    }
+    list.push({ key: "refresh", label: "Refresh", enabled: true })
+    list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
+    return list
+  }
+
+  function contextMenuItems() {
+    var list = [{ key: "open", label: "Open", enabled: root.selectedRecord !== null }]
+    if (root.trashAuthorized) {
+      list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
+    }
+    list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
     return list
   }
 
@@ -538,7 +559,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder and Trash run through files.provider. Restore, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -563,12 +584,7 @@ Item {
       spacing: 0
 
       Repeater {
-        model: [
-          { key: "new-folder", label: "New folder", enabled: root.createEnabled },
-          { key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy },
-          { key: "refresh", label: "Refresh", enabled: true },
-          { key: "properties", label: "Properties", enabled: root.selectedRecord !== null }
-        ]
+        model: organizeMenuItems()
 
         delegate: Item {
           required property var modelData
@@ -630,11 +646,7 @@ Item {
       spacing: 0
 
       Repeater {
-        model: [
-          { key: "open", label: "Open", enabled: root.selectedRecord !== null },
-          { key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy },
-          { key: "properties", label: "Properties", enabled: root.selectedRecord !== null }
-        ]
+        model: contextMenuItems()
 
         delegate: Item {
           required property var modelData

@@ -1,6 +1,6 @@
 # Writers and the root executor — 2026-09-01
 
-SHA `6e01615d` on `work` (session that landed the root executor and write-plane expansion), rebased onto `upstream/quattro` at `b71dcad9`. Honesty addendum 2026-09-02 vs tip `c192afea`: `entry.trash` write-plane reachability after PR #8 v1 directory family widen is KEEP. The helper-only / schema-blocker paragraphs below are rewritten to residual. Do not invent Restore LIVE, `files.trash.manage`, Empty Recycle, or Recycle Bin product-complete. Product REJECTED.
+SHA `6e01615d` on `work` (session that landed the root executor and write-plane expansion), rebased onto `upstream/quattro` at `b71dcad9`. Honesty addendum 2026-09-02 vs tip `c192afea`: `entry.trash` write-plane reachability after PR #8 v1 directory family widen is KEEP. The helper-only / schema-blocker paragraphs below are rewritten to residual. Honesty addendum 2026-09-02 vs tip `c1490f82`: Files Trash controls stay gated `trashAuthorized=false` for the shell principal (same invent class as LIVE End Task). Write plane remains reachable at `consequential`; SHELL still refused at `grant.shell-consequential`. Do not invent Restore LIVE, `files.trash.manage`, Empty Recycle, Recycle Bin product-complete, or LIVE Trash under SHELL. Product REJECTED.
 
 ## Verified on metal
 
@@ -44,7 +44,7 @@ Local, `origin`, and metal hold the same commit and the same tree.
 | `display-brightness-set` | Settings › Display | new here |
 | `input-keyboard-layout-set` | Settings › Input | new here |
 | `network-wifi-enabled-set` | Settings › Network | new here |
-| `files-entry-trash` | Files › Trash | write plane LIVE (`entry.trash`, risk `consequential`; SHELL refused at `grant.shell-consequential`) |
+| `files-entry-trash` | Files › Trash | write plane reachable (`entry.trash`, risk `consequential`; SHELL refused at `grant.shell-consequential`; Files Trash controls gated `trashAuthorized=false`, not LIVE) |
 | `files-trash-restore` | none | honest-unavailable (no Restore UI; write plane `operation.definition-unavailable`; helper/lifecycle remain) |
 
 Each device-scoped writer resolves its opaque resource id by recomputing the provider's own digest over the live device list, so a payload can never name a monitor, keyboard or sink directly.
@@ -66,7 +66,10 @@ Each device-scoped writer resolves its opaque resource id by recomputing the pro
 **LIVE**
 
 - `directory.create` — Files › New folder. Risk `low`. SHELL may hold a standing grant.
-- `entry.trash` — Files › Trash through `files.provider`. Write plane reachable. Scope is the entry's parent directory, reusing `files.directory.<digest>`. Risk `consequential`. SHELL cannot hold a standing grant (`grant.shell-consequential`). Same grant rule as End Task. Do not invent a TASK workaround.
+
+**Write plane reachable, not LIVE under SHELL**
+
+- `entry.trash` — Files › Trash through `files.provider`. Write plane reachable. Scope is the entry's parent directory, reusing `files.directory.<digest>`. Risk `consequential`. SHELL cannot hold a standing grant (`grant.shell-consequential`). Same grant rule as End Task. Files Trash controls stay hidden while `trashAuthorized=false` so the shell principal cannot start a doomed preflight. Do not invent a TASK workaround or LIVE Trash under SHELL.
 
 **Unavailable (do not invent)**
 
@@ -76,7 +79,7 @@ Each device-scoped writer resolves its opaque resource id by recomputing the pro
 - Permanent delete
 - Recycle Bin as a product-complete place
 
-The Files banner matches: New folder and Trash run through `files.provider`; Restore, empty Recycle Bin, permanent delete, and `files.trash.manage` remain unavailable.
+The Files banner matches: New folder runs through `files.provider`; Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE); Restore, empty Recycle Bin, permanent delete, and `files.trash.manage` remain unavailable.
 
 The scope function and payload deriver shipped with the v1 widen (not left reverted). `_entry_trash_scope` resolves the entry, derives its parent, and proposes the listing minus that name. The payload deriver reads scoped `currentState.value` and refuses any plan that does not remove exactly one name.
 
