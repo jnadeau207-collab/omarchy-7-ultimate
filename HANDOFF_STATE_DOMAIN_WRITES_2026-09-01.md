@@ -1,6 +1,8 @@
 # State-domain writes — what landed and what blocks
 
-SHA `6ac3b401` on `work`. Shell gates: 13 of 247 files fail, the identical list that fails at `e3ec490b` before this work. No regression.
+SHA `6ac3b401` on `work` (session that landed files writes). Honesty addendum 2026-09-02 vs tip `891c2fea`: TASK admission and End Task scoped `{present}` are KEEP. The TASK-unwired / Wall-one “cannot be wired” paragraphs below are rewritten to residual. Do not invent End Task LIVE CONTROL or shell consequential authorize. Product REJECTED.
+
+Shell gates at the original SHA: 13 of 247 files fail, the identical list that fails at `e3ec490b` before this work. No regression.
 
 The audio write path is proven again on the live daemon this session: 40 → 55 → 40 through preflight, approve, start, and the durable coordinator.
 
@@ -103,15 +105,19 @@ Settings Sound renders the live control correctly. After an external operation m
 
 Rendering is right. The page reads once at load and never re-reads, so any change made outside it — by another client, or by hardware keys — leaves Settings stale.
 
-## Why the other domains cannot be closed
+## What still blocks other domains
 
-Two separate walls, and it is worth knowing which one you are hitting.
+Two separate walls, and it is worth knowing which one you are hitting. Wall one is closed for End Task as a contract. It does not say End Task “cannot be wired.”
 
-### Wall one: the proposed state is synthetic
+### Wall one: synthetic whole-state — closed for End Task (same answer as finding 3)
 
-The audio slice works because volume is a real readable property — `pactl` reports the new value, so the provider's `proposedState` and the re-probed state agree. That is the exception, not the rule.
+The audio slice works because volume is a real readable property — `pactl` reports the new value, so the provider's `proposedState` and the re-probed state agree. Leaf `_propose` for `process.termination.plan` still emits `lifecycle: "termination-planned"`. The live probe still emits `"running"`; `"stopped"` and `"termination-planned"` remain stored-state fake-backend values. That whole-state equality is the same defect as finding 3.
 
-`process.termination.plan` proposes `lifecycle: "termination-planned"`. The real probe only ever emits `"running"` (`providers/process/provider.py:149`); `"stopped"` and `"termination-planned"` exist solely for the stored-state fake backend. So Administration's End Task hits the identical wall as files: whole-state equality can never hold. This is the same defect as finding 3, not a separate one, and it means End Task cannot be wired without the same contract change.
+**KEEP now:** End Task already shipped the scoped-resource answer. The operation binds `process.termination.<sha256>` with `{present}` state (`current: true` → `proposed: false`). Validation is presence, not lifecycle equality. The helper re-derives identity from `/proc` so a stale plan cannot signal a reused PID. This wall is not an unwired-TASK or “cannot be wired” claim.
+
+**Admitted:** the End Task write plane is wired at helper, intent, scoped resource, and Administration control plus its state machine.
+
+**Unverified / must not claim LIVE:** End Task LIVE CONTROL; shell consequential authorize; a TASK principal completing End Task on metal. `terminationAuthorized` stays `false` so the product does not offer a button the shell principal cannot succeed.
 
 Of the leaf domains, `power`, `network`, `display`, and `input` all propose real readable properties and are structurally closable. `display` needs the user in the `i2c` group; `input` needs a second configured keyboard layout; `network` has no Wi-Fi device on this host.
 
@@ -150,26 +156,23 @@ Do not weaken `operation_available ⇒ available` to make a proof pass. Do not a
 
 That single rule explains exactly which write paths work. `audio.output-volume.set` and `files.directory.create` are declared `low`, so the shell may hold their grants; both are proven end to end. `process.termination.plan` is declared `consequential`, so `operation.approve` fails with `grant.shell-consequential` and Administration can never end a task, however completely it is wired.
 
-So the reachable write plane from Settings and Administration is, by design, the low-risk one.
+So the reachable write plane from Settings and Administration is, by design, the low-risk one. That shell ceiling is KEEP. It is not a claim that TASK is unwired.
 
-It is broader than the shell, too. `daemon.py:1883` admits exactly one endpoint:
+**What is admitted (KEEP on tip).** `hello` on `fabric.owner-rpc` still always issues `PrincipalKind.SHELL`. It does not read a caller `kind` or `taskId`. A connection becomes `PrincipalKind.TASK` only when `TaskAdmissionAuthority` already holds a daemon-registered sandbox binding for that peer: the task socket inode, `SO_PEERCRED` pid and uid, the sandbox cgroup and unit, and the digest of a grant token the daemon placed only in that sandbox. The task endpoint id is `fabric.task-rpc`. `grants.py` and `policy.py` still bind a task grant to its `task_id`. Same-UID code that merely reaches a socket, including the owner socket, is not a task principal.
 
-```
-EndpointAdmission(endpoint_id="fabric.owner-rpc", kind=PrincipalKind.SHELL)
-```
+**What remains unverified.** TASK admission is present. That is not a metal proof that a TASK principal approved and started `process.termination.plan`. Product Administration is still a SHELL caller with `terminationAuthorized` hardcoded `false`.
 
-`PrincipalKind` has `SHELL`, `PROVIDER`, and `TASK`, and the security model already carries `TASK`-specific rules — `grants.py:99` and `policy.py:46` bind a task grant to its `task_id`. No endpoint is admitted for either non-shell kind. So every RPC caller is `SHELL`, and **no consequential or high-risk operation is reachable over RPC by anyone today**, not merely from the product surfaces.
+**Must not be claimed LIVE.** End Task LIVE CONTROL. Shell consequential authorize. Task Manager as a present product. A polkit/LIVE kill from Administration. Packages and compatibility still need root (and compatibility still needs measured-host attestation) on top of a TASK principal; admission existing does not make those LIVE.
 
-The answer is designed and unwired rather than missing: admit a `TASK` endpoint and route consequential operations through a task-bound principal. That is a security-architecture decision — it creates a privileged RPC role — and it is the same answer packages and compatibility will need on top of root.
-
-End Task is wired and correct up to that line: scoped `process.termination.<sha256>` resource with `{present}` state, a helper that re-derives identity from `/proc` so a stale plan cannot signal a reused PID, and the Administration control plus its state machine. `terminationAuthorized` is `false` so the product does not offer a button that cannot succeed, and the page says why.
+End Task is wired and correct up to the shell grant line: scoped `process.termination.<sha256>` resource with `{present}` state, a helper that re-derives identity from `/proc` so a stale plan cannot signal a reused PID, and the Administration control plus its state machine. `terminationAuthorized` is `false` so the product does not offer a button that cannot succeed, and the page says why.
 
 Process inventory selection also changed. It took `sorted(users, key=(uid, pid))[:48]` — the 48 oldest user processes, which is session infrastructure and nothing a person launched. It now ranks by resident memory then CPU, so the bounded 64 shows what is actually consuming the machine.
 
 ## What is left, and why
 
-Three deliberate boundaries, none of them bugs:
+Deliberate residuals, none of them “TASK is unwired” or “End Task cannot be wired”:
 
 - **polkit cannot see an Omarchy session.** Blocks `power.profile.set`, which is otherwise complete.
-- **The shell cannot authorize consequential operations.** Blocks End Task.
-- **Root.** Blocks packages and compatibility; compatibility also needs measured-host attestation.
+- **The shell cannot authorize consequential operations.** Administration keeps `terminationAuthorized=false`. Do not invent End Task LIVE CONTROL or shell consequential authorize.
+- **TASK admission is present; End Task through TASK is unverified.** Do not claim a TASK-principal End Task LIVE path from admission alone.
+- **Root.** Blocks packages and compatibility LIVE mutation; compatibility also needs measured-host attestation.
