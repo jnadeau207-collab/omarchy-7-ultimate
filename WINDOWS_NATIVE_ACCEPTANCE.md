@@ -32,7 +32,7 @@ Status legend: `pending` (no automated coverage yet), `manual` (human-tested onl
 | 16 | Connect to an SMB share | pending |
 | 17 | Open a PDF | pending |
 | 18 | Edit a text file | pending |
-| 19 | Change the default browser | automated |
+| 19 | Change the default browser | pending |
 | 20 | Pin an app | automated |
 | 21 | Unpin an app | automated |
 | 22 | Minimize three windows | automated |
