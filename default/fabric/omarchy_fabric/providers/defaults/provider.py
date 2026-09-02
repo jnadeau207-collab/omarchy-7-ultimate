@@ -70,6 +70,9 @@ SCHEMA_FILES = (
     "defaults-protocol-query-arguments-v0.json",
     "defaults-mime-set-arguments-v0.json",
     "defaults-protocol-set-arguments-v0.json",
+    "defaults-association-preflight-v1.json",
+    "defaults-association-result-v1.json",
+    "defaults-association-state-v1.json",
     "defaults-clear-arguments-v0.json",
     "defaults-inventory-result-v0.json",
     "defaults-query-result-v0.json",
@@ -197,10 +200,13 @@ def canonicalize_database(state: Mapping[str, Any]) -> dict[str, Any]:
     validate_database(normalized)
     return normalized
 
+READ_COMPLETENESS_CODES = frozenset({"defaults.application-inventory-truncated"})
+
 class RealDefaultsBackend:
     """No-follow desktop inventory plus code-owned fixed-argv xdg-mime reads."""
 
-    def __init__(self, home: Path, config_path: Path, runner: ProbeRunner) -> None:
+    def __init__(self, home: Path, config_path: Path, runner: ProbeRunner, *, session_operable: bool = False) -> None:
+        self.session_operable = session_operable
         self.home = Path(home)
         config_path = Path(config_path)
         if not self.home.is_absolute() or not config_path.is_absolute():
@@ -328,13 +334,18 @@ class RealDefaultsBackend:
                 recovery=("defaults.query",),
             ))
         validate_database(state)
-        reasons.append(_reason(
-            "defaults.operation-read-only",
-            "Default application changes require durable integration",
-            "The real provider intentionally exposes inventory and change planning only.",
-            recovery=("operation.integration-required",),
-        ))
-        return StateSnapshot("degraded", False, freeze(state), tuple(reasons))
+        if not self.session_operable:
+            reasons.append(_reason(
+                "defaults.operation-read-only",
+                "Default application changes require durable integration",
+                "The real provider intentionally exposes inventory and change planning only.",
+                recovery=("operation.integration-required",),
+            ))
+            return StateSnapshot("degraded", False, freeze(state), tuple(reasons))
+        if not reasons:
+            return StateSnapshot("available", True, freeze(state), ())
+        operable = all(reason.code in READ_COMPLETENESS_CODES for reason in reasons)
+        return StateSnapshot("degraded", operable, freeze(state), tuple(reasons))
 
     async def compare_and_swap(self, expected_revision: str, proposed_state: Mapping[str, Any]) -> StateSnapshot:
         raise FabricError(
@@ -696,13 +707,48 @@ def _summary(label: str):
 
     return summarize
 
+
+def _association_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], _backend: Any) -> dict[str, Any]:
+    before, _ = _guard_target(current, arguments)
+    after = _association(proposed, association_id=before["id"])
+
+    def document(association: Mapping[str, Any]) -> dict[str, Any]:
+        return {
+            "kind": association["kind"],
+            "key": association["key"],
+            "defaultAppId": association["defaultAppId"],
+        }
+
+    return {
+        "kind": "defaults.association",
+        "id": _association_id(before["kind"], before["key"]),
+        "current": document(before),
+        "proposed": document(after),
+    }
+
+
+def _association_inspect(arguments: Mapping[str, Any], snapshot: StateSnapshot) -> dict[str, Any]:
+    kind = arguments["kind"]
+    key = arguments["key"]
+    state = None
+    if snapshot.state is not None:
+        association = next(
+            (thaw(item) for item in snapshot.state["associations"] if item["kind"] == kind and item["key"] == key),
+            None,
+        )
+        if association is not None:
+            state = {"kind": kind, "key": key, "defaultAppId": association["defaultAppId"]}
+    metadata = _metadata("association.inspect", snapshot)
+    metadata["revision"] = state_revision(state) if state is not None else None
+    return {**metadata, "state": state}
+
 OPERATIONS = {
-    "mime.set": OperationSpec("mime.set", _normalize_mime, _set("mime", "mimeType"), _summary("MIME"), _guards),
-    "protocol.set": OperationSpec("protocol.set", _normalize_protocol, _set("protocol", "scheme"), _summary("protocol"), _guards),
+    "mime.set": OperationSpec("mime.set", _normalize_mime, _set("mime", "mimeType"), _summary("MIME"), _guards, _association_scope),
+    "protocol.set": OperationSpec("protocol.set", _normalize_protocol, _set("protocol", "scheme"), _summary("protocol"), _guards, _association_scope),
     "association.clear": OperationSpec("association.clear", _normalize_clear, _clear, _summary("default"), _guards),
 }
 
-READ_HANDLERS = {"inspect": _inspect, "mime.query": _mime_query, "protocol.query": _protocol_query}
+READ_HANDLERS = {"inspect": _inspect, "mime.query": _mime_query, "protocol.query": _protocol_query, "association.inspect": _association_inspect}
 
 def _manifest() -> Mapping[str, Any]:
     return _load_json(Path(__file__).with_name("manifest-v0.json"), 128 * 1024)
@@ -720,12 +766,14 @@ def _provider(backend: Any) -> StateDomainProvider:
         state_validator=validate_database,
         read_handlers=READ_HANDLERS,
         operations=OPERATIONS,
+        scoped_resource_kind="defaults.association",
     )
 
 def build_provider(
     *,
     home: Path | None = None,
     config_path: Path | None = None,
+    session_operable: bool = False,
     runner: ProbeRunner = run_probe,
 ) -> StateDomainProvider:
     if home is None:
@@ -740,7 +788,7 @@ def build_provider(
                 recovery_actions=("session.restart",),
             )
         config_path = Path(omarchy_path) / "default" / "ultimate" / "files" / "default-associations-v0.json"
-    return _provider(RealDefaultsBackend(home, config_path, runner))
+    return _provider(RealDefaultsBackend(home, config_path, runner, session_operable=session_operable))
 
 def build_fake_provider(
     state: Mapping[str, Any],

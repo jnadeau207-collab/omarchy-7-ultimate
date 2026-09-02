@@ -722,6 +722,30 @@ class FabricDaemon:
             "locationId": current["locationId"],
             "entryRelativePath": added[0],
         }
+    def _operation_scheme(self, value: Any) -> str:
+        if value not in ("http", "https", "mailto"):
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The requested protocol is not a code-owned scheme.",
+            )
+        return value
+
+    @staticmethod
+    def _defaults_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        proposed = preflight["proposedState"]
+        app_id = proposed["defaultAppId"]
+        if not isinstance(app_id, str) or not app_id:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The default application plan names no application.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "scheme": proposed["key"],
+            "appId": app_id,
+        }
     @staticmethod
     def _trash_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
         current = preflight["currentState"]
@@ -763,6 +787,8 @@ class FabricDaemon:
             return await self._process_termination_state(resource_id)
         if resource_id.startswith("files.directory."):
             return await self._files_directory_state(resource_id)
+        if resource_id.startswith("defaults.association."):
+            return await self._defaults_association_state(resource_id)
         if resource_id.startswith("files.workspace."):
             return await self._files_state(resource_id)
         if resource_id.startswith("power.profile."):
@@ -771,6 +797,37 @@ class FabricDaemon:
             return await self._leaf_state("device.provider", resource_id)
         return await self._audio_state(resource_id)
 
+    async def _defaults_association_state(self, resource_id: str) -> Mapping[str, Any]:
+        inventory = await self.typed_providers.read("defaults.provider", "inspect", {})
+        payload = inventory.get("value") if isinstance(inventory.get("value"), Mapping) else inventory
+        state = payload.get("state") if isinstance(payload.get("state"), Mapping) else {}
+        for association in state.get("associations", ()):
+            kind = association.get("kind")
+            key = association.get("key")
+            if not isinstance(kind, str) or not isinstance(key, str):
+                continue
+            digest = hashlib.sha256(f"defaults\0{kind}\0{key}".encode("utf-8")).hexdigest()
+            if f"defaults.association.{digest}" != resource_id:
+                continue
+            read = await self.typed_providers.read(
+                "defaults.provider",
+                "association.inspect",
+                {"kind": kind, "key": key},
+            )
+            scoped = read.get("value") if isinstance(read.get("value"), Mapping) else read
+            value = scoped.get("state")
+            if not isinstance(value, Mapping):
+                break
+            return {
+                "resourceId": resource_id,
+                "revision": state_revision(value),
+                "value": value,
+            }
+        raise FabricError(
+            "operation.resource-unavailable",
+            "Fabric operation resource is unavailable",
+            "The named default association is not present in the current inventory.",
+        )
     async def _leaf_state(self, provider_id: str, resource_id: str) -> Mapping[str, Any]:
         result = await self.typed_providers.read(provider_id, "inspect", {})
         payload = result.get("value") if isinstance(result.get("value"), Mapping) else result
@@ -924,6 +981,15 @@ class FabricDaemon:
                         },
                     ),
                     IntentDefinition(
+                        "defaults.protocol.set",
+                        FixedArgvCommand(str(helper), ("defaults-protocol-set",)),
+                        required={
+                            "resourceId": stable_token,
+                            "scheme": self._operation_scheme,
+                            "appId": stable_token,
+                        },
+                    ),
+                    IntentDefinition(
                         "files.entry.trash",
                         FixedArgvCommand(str(helper), ("files-entry-trash",)),
                         required={
@@ -1008,6 +1074,12 @@ class FabricDaemon:
                     "trash.restore",
                     "files.trash.restore",
                     self._restore_payload,
+                ),
+                OperationDefinition(
+                    "defaults.provider",
+                    "protocol.set",
+                    "defaults.protocol.set",
+                    self._defaults_payload,
                 ),
                 OperationDefinition(
                     "files.provider",
