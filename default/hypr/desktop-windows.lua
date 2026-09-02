@@ -146,13 +146,30 @@ local function load_chrome_tokens()
   return tokens, nil
 end
 
-local function chrome_glass_rgba(tokens)
-  local r = tonumber(tokens.glassRed)
-  local g = tonumber(tokens.glassGreen)
-  local b = tonumber(tokens.glassBlue)
-  local pct = tonumber(tokens.glassAlphaPct)
-  local a = math.floor(pct * 255 / 100 + 0.5)
+local AERO_LIFT = 0.88
+local AERO_ALPHA_PCT = 94
+
+local function aero_channel(value)
+  return math.floor(value + (255 - value) * AERO_LIFT + 0.5)
+end
+
+local function chrome_aero_rgba(tokens)
+  local r = aero_channel(tonumber(tokens.glassRed))
+  local g = aero_channel(tonumber(tokens.glassGreen))
+  local b = aero_channel(tonumber(tokens.glassBlue))
+  local a = math.floor(AERO_ALPHA_PCT * 255 / 100 + 0.5)
   return string.format("rgba(%02x%02x%02x%02x)", r, g, b, a)
+end
+
+local function chrome_aero_text(tokens)
+  local r = aero_channel(tonumber(tokens.glassRed))
+  local g = aero_channel(tonumber(tokens.glassGreen))
+  local b = aero_channel(tonumber(tokens.glassBlue))
+  local luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+  if luminance >= 0.55 then
+    return "rgb(1a1a1c)"
+  end
+  return "rgb(f2f2f4)"
 end
 
 local function chrome_hex_rgb(tokens, key)
@@ -162,10 +179,6 @@ local function chrome_hex_rgb(tokens, key)
     error("resolved chrome token adapter has invalid " .. key)
   end
   return string.format("rgb(%s)", hex:sub(1, 6))
-end
-
-local function chrome_text_rgb(tokens)
-  return chrome_hex_rgb(tokens, "hyprbarsTextHex")
 end
 
 local function require_chrome_tokens()
@@ -245,13 +258,14 @@ local function apply_desktop_look()
         bar_button_padding = 8,
         bar_title_enabled = true,
         bar_text_size = 13,
-        bar_text_font = "sans-serif",
-        bar_text_align = "left",
+        bar_text_font = "Selawik",
+        bar_text_align = "center",
         bar_buttons_alignment = "right",
         icon_on_hover = false,
         bar_blur = true,
-        bar_color = chrome_glass_rgba(chrome),
-        ["col.text"] = chrome_text_rgb(chrome),
+        bar_aero = true,
+        bar_color = chrome_aero_rgba(chrome),
+        ["col.text"] = chrome_aero_text(chrome),
         on_double_click = "omarchy-shell window toggleMaximize 0x{:x}",
       },
     },
