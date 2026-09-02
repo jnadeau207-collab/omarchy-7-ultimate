@@ -170,7 +170,7 @@
     "trash.restore": {
       "capability": "files.trash.restore",
       "mode": "operation",
-      "risk": "low",
+      "risk": "consequential",
       "effects": [
         "mutating"
       ],

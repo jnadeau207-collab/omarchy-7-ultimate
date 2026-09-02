@@ -23,7 +23,7 @@ _files_helper_spec.loader.exec_module(_files_helper)
 clone_workspace = _files_helper.clone_workspace
 
 from omarchy_fabric.daemon import FabricDaemon
-from omarchy_fabric.models import FabricError, FixedArgvCommand
+from omarchy_fabric.models import FixedArgvCommand
 from omarchy_fabric.operations.coordinator import OperationCoordinator
 from omarchy_fabric.operations.contracts import OperationDefinition
 from omarchy_fabric.operations.executor import IntentCatalog, IntentDefinition, stable_token
@@ -82,6 +82,16 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                         "entryRelativePath": lambda value: value,
                     },
                 ),
+                IntentDefinition(
+                    "files.trash.restore",
+                    FixedArgvCommand("/bin/true", ("files-trash-restore",)),
+                    required={
+                        "resourceId": stable_token,
+                        "entryId": stable_token,
+                        "locationId": stable_token,
+                        "entryRelativePath": lambda value: value,
+                    },
+                ),
             )
         )
         self.coordinator = OperationCoordinator(
@@ -104,6 +114,12 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                     "entry.trash",
                     "files.entry.trash",
                     FabricDaemon._trash_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "trash.restore",
+                    "files.trash.restore",
+                    FabricDaemon._restore_payload,
                 ),
             ),
             intents=self.intents,
@@ -169,16 +185,27 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
             self._shell_grant(trashed["operationId"])
         self.assertEqual(caught.exception.code, "grant.shell-consequential")
 
-    async def test_trash_restore_is_not_a_coordinator_definition(self) -> None:
-        with self.assertRaises(FabricError) as caught:
-            await self.coordinator.preflight(
-                self.shell,
-                provider_id="files.provider",
-                action="trash.restore",
-                arguments={"entryId": "files.entry.project"},
-                idempotency_key="files.trash.restore.project",
-            )
-        self.assertEqual(caught.exception.code, "operation.definition-unavailable")
+    async def test_trash_restore_preflight_is_consequential_and_shell_refused(self) -> None:
+        trash_plan = await self.files.preflight("entry.trash", {"entryId": "files.entry.notes"}, self.shell)
+        await self.files.execute("entry.trash", trash_plan["normalizedArguments"], trash_plan["stateRevision"])
+        restored = await self.coordinator.preflight(
+            self.shell,
+            provider_id="files.provider",
+            action="trash.restore",
+            arguments={"entryId": "files.entry.notes"},
+            idempotency_key="files.trash.restore.notes",
+        )
+        request = self.coordinator.approval_request(self.shell, restored["operationId"])
+        self.assertEqual(request.risk, RiskLevel.CONSEQUENTIAL)
+        self.assertEqual(request.capability, "files.trash.restore")
+        self.assertTrue(request.resource.resource_id.startswith("files.directory."))
+        payload = self.store.get(restored["operationId"]).plan.intent.payload
+        self.assertEqual(payload["locationId"], "files.location.desktop")
+        self.assertEqual(payload["entryRelativePath"], "notes.txt")
+        self.assertEqual(payload["entryId"], "files.entry.notes")
+        with self.assertRaises(SecurityValidationError) as caught:
+            self._shell_grant(restored["operationId"])
+        self.assertEqual(caught.exception.code, "grant.shell-consequential")
 
     def test_shell_cannot_hold_a_consequential_files_grant(self) -> None:
         with self.assertRaises(SecurityValidationError) as caught:
