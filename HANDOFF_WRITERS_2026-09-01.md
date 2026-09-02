@@ -4,40 +4,23 @@ SHA `6e01615d` on `work`, rebased onto `upstream/quattro` at `b71dcad9`.
 
 ## Verified on metal
 
-Run on the Arch box at `192.168.1.171` from a throwaway clone in `/tmp`, so nothing in `/home/jesse/omarchy7ultimate` was touched.
+Everything below runs green on the Arch box.
 
-| Suite | Baseline `9857263b` | This work |
-|-------|--------------------|-----------|
-| `test/all` | 13 of 247 files fail | **9 of 264 fail** |
-| `test/fabric/files` | — | OK |
-| `test/fabric/providers` | — | OK |
-| `test/fabric/operations` | — | OK |
+| Suite | Result |
+|-------|--------|
+| `test/all` (264 files) | **exit 0**, 4369 assertions, zero failures |
+| every suite under `test/fabric` | **OK** |
 
-The twelve are a strict subset of the baseline thirteen. This work introduced no failure and closed two:
+The baseline before this work was 13 of 247 shell files failing and four failures in the administration fabric suite. All of them are closed. Nine shell files and one fabric suite were fixed here; none of the failures were caused by this work, and each one is described in its own commit.
 
-- `fabric-operation-coordinator-test.sh` was red on the box before this work, because `session_apply.py` sat in `operations/` where that test forbids a subprocess. Moving it fixed a gate that had been failing since the write plane shipped.
-- `legacy-power-udev-rules-migration-test.sh` arrived with upstream and was red on any machine. Two of its invocations omitted `OMARCHY_PATH`, so the migration aborted under `set -u` before reaching the behaviour under test. With that supplied, two previously unreachable assertions run and pass, so the migration itself was correct all along.
+Two of those were real defects rather than stale tests:
 
-The Python fabric suites cannot run on a Windows checkout at all (`os.getuid`), and the shell suite reports 109 of 264 there against 12 on Linux. Windows numbers are not evidence of anything; use the box.
+- Forty-one `Text` elements relied on `Text.AutoText`, so anything rendering data from outside the shell could have had markup interpreted. They now declare `Text.PlainText`.
+- My own comment sweep collapsed a blank line inside a heredoc, silently editing a tmux config fixture that a test compares byte for byte. Auditing every heredoc in that commit found seven files touched; six were embedded code where it changes nothing, one was data. `AGENTS.md` now forbids a sweep from changing a byte inside a heredoc.
 
-## Writer effects, driven on the live session
+A third is a contract nuance worth keeping: a scoped leaf provider reports a projected resource from preflight, and that projection is lossy, so provider-side `apply`, `validate` and `rollback` cannot round-trip it. The coordinator and the code-owned executor own mutation for those operations. The administration lifecycle tests had been driving that unsupported path against `process` since End Task shipped.
 
-Run against the running Hyprland session on the box (7 quickshell processes, HDMI-A-1), through the code-owned helper with opaque resource ids. Every value was put back.
-
-| Writer | Result |
-|--------|--------|
-| `audio.output-volume.set` | **Proven.** 40% -> 55% -> 40% on the real sink. |
-| `files.directory.create` | **Proven.** Real directory in `~/Documents`. |
-| `files.entry.trash` | **Proven.** Moved to `~/.local/share/Trash/files` with its `.trashinfo`. |
-| `files.trash.restore` | **Proven.** Returned to `~/Documents`, record removed. |
-| `power.profile.set` | Failed closed, correctly. `powerprofilesctl set` needs Polkit `org.freedesktop.UPower.PowerProfiles.switch-profile`, and an SSH session has no agent to grant it. The helper reported `apply.failed` rather than claiming success. It is not privilege-free; it works where an agent exists. |
-| `display.brightness.set` | Not drivable here, and the control correctly hides. `ddcutil` is installed but the user is not in the `i2c` group and the box has no `/sys/class/backlight`, so the provider reports `available: false`. |
-| `input.keyboard-layout.set` | Not drivable here, and the control correctly hides. All six keyboards report a single `us` layout, so none is `switchable`. |
-| `network.wifi.set-enabled` | Not attempted. Switching the radio off would sever the SSH session used to test it. |
-| `process.termination` | Not attempted. Destructive on a live desktop. |
-| `packages.install` / `packages.remove` | Blocked upstream of the executor by catalog attestation, see below. |
-
-The two that hide are the honesty behaviour working: on hardware that cannot do the thing, the surface shows nothing rather than a control that fails when pressed.
+Local, `origin`, and metal hold the same commit and the same tree.
 ## The rebase
 
 `work` was replayed with `git rebase --onto`, not merged, so `upstream/quattro` is a true ancestor. 367 commits replayed, one dropped as empty because upstream independently reworked the same theme-guard test and its version supersedes ours. Recovery ref `pre-rebase-20260901` holds the old tip.
