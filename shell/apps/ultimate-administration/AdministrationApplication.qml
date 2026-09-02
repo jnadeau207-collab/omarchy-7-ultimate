@@ -549,6 +549,7 @@ Item {
                   spacing: Style.space(8)
 
                   Text {
+                    textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Coverage")
                     color: Tokens.text.primary
                     font.family: Tokens.typography.family
@@ -656,6 +657,7 @@ Item {
 
             Text {
               visible: !root.queryBusy
+              textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, "Read-only Fabric provider state \u00b7 no direct commands, mutation, preflight, approval, or execution authority")
               color: Tokens.text.disabled
               font.family: Tokens.typography.family

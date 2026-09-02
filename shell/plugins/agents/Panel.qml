@@ -402,6 +402,7 @@ Panel {
             visible: root.providers.length === 0
             width: parent.width
             topPadding: Style.space(24)
+            textFormat: Text.PlainText
             text: root.chromeText("No AI coding subscriptions found.\nAgents show up here once you've used them.")
             color: root.dim
             font.family: root.fontFamily
@@ -507,6 +508,7 @@ Panel {
 
               Text {
                 id: balanceLabel
+                textFormat: Text.PlainText
                 text: root.chromeText("Prepaid credits")
                 color: root.foreground
                 font.family: root.fontFamily

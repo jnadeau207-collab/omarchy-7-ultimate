@@ -385,6 +385,7 @@ BarWidget {
       spacing: Style.space(8)
 
       Text {
+        textFormat: Text.PlainText
         text: root.chromeText("Tray icons")
         color: root.foreground
         font.family: root.fontFamily
@@ -393,6 +394,7 @@ BarWidget {
       }
 
       Text {
+        textFormat: Text.PlainText
         text: root.chromeText("Pinned icons stay visible. Hidden icons never show.")
         color: Qt.darker(root.foreground, 1.4)
         font.family: root.fontFamily
@@ -403,6 +405,7 @@ BarWidget {
 
       Text {
         visible: root.allItems.length === 0
+        textFormat: Text.PlainText
         text: root.chromeText("No tray items reporting.")
         color: Qt.darker(root.foreground, 1.5)
         font.family: root.fontFamily

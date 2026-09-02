@@ -107,6 +107,7 @@ Item {
 
         Text {
           width: parent.width
+          textFormat: Text.PlainText
           text: root.chromeText("Snap")
           color: Tokens.text.primary
           font.pixelSize: Style.font.body
