@@ -145,7 +145,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function isObject(value) {
@@ -683,7 +683,7 @@ function payloadAvailability(value) {
   }
   if (availability.read === true && availability.reason) {
     var degradedReason = isObject(availability.reason) ? availability.reason : null
-    return { state: "degraded", detail: clippedText(degradedReason && (degradedReason.explanation || degradedReason.title) || "Some changes are not available yet.") }
+    return { state: "degraded", detail: clippedText(degradedReason && (degradedReason.explanation || degradedReason.title) || "Some changes are unavailable.") }
   }
   return { state: availability.read === true ? "available" : "unknown", detail: "" }
 }
@@ -786,7 +786,7 @@ function acceptedReadState(previous, result) {
   } else if (entry.state === "degraded" || availability.state === "degraded") {
     next.phase = "degraded"
     if (availability.detail !== "") next.error = structuredError(
-      "provider.read-degraded", "Some changes are not available yet", availability.detail,
+      "provider.read-degraded", "Some changes are unavailable", availability.detail,
       previous.query.providerId, ["provider.refresh"]
     )
   } else if (normalized.records.length === 0) {
@@ -1077,7 +1077,7 @@ function stateTitle(state) {
   if (phase === "empty") return state && state.selectedMissing ? "Requested resource is absent" : "No resources reported"
   if (phase === "missing") return "Provider is not registered"
   if (phase === "unavailable") return "This information is not available right now"
-  if (phase === "degraded") return "Some changes are not available yet"
+  if (phase === "degraded") return "Some changes are unavailable"
   if (phase === "contract-mismatch") return "Provider contract does not match"
   if (phase === "denied") return "Settings read was denied"
   if (phase === "interrupted") return "Settings read was interrupted"

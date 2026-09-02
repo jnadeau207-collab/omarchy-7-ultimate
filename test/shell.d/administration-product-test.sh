@@ -137,6 +137,8 @@ const copy = Model.endTaskConfirmCopy()
 assertEqual(copy.title, 'End Task', 'confirm copy uses Win7 End Task title')
 assert(copy.message.includes('end this task'), 'confirm copy asks before ending the task')
 assertEqual(copy.cancel, 'Cancel', 'confirm copy has a cancel path')
+assertEqual(Model.stateTitle({ phase: 'degraded' }), 'Some changes are unavailable', 'degraded title is unavailable without future tense')
+assert(!Model.stateTitle({ phase: 'degraded' }).includes('yet'), 'degraded title does not invent forthcoming writers with yet')
 JS
 pass "Administration carries typed startDigest and refuses details-label scrape"
 
@@ -328,5 +330,11 @@ grep -Fq 'signal surfaceBecameActive()' "$ROOT/shell/apps/shared/ProductAppHost.
   || fail "Product host publishes surface activation instead of an Administration polling loop"
 if grep -Eq 'events[.](subscribe|unsubscribe)' "$application" "$model" "$entrypoint"; then
   fail "Administration does not invent an events.subscribe path"
+fi
+if grep -Fq 'not available yet' "$model"; then
+  fail "Administration product honesty no longer invents forthcoming writers with not available yet"
+fi
+if grep -Fq 'domain yet' "$model"; then
+  fail "Administration product honesty no longer invents forthcoming writers with domain yet"
 fi
 pass "Administration listens for surface activation without events.subscribe or a polling daemon"
