@@ -344,16 +344,25 @@ if termination.get("availability", {}).get("human") == "present":
 if termination.get("consent", {}).get("mode") != "high-risk":
     raise SystemExit(f"process.termination.plan consent is not consequential: {termination.get('consent')}")
 termination_route = termination["humanRoute"]
-if termination_route.get("status") != "planned" or termination_route.get("path"):
-    raise SystemExit(f"process.termination.plan invents an End Task destination: {termination_route}")
-if "Task Manager" in str(termination_route.get("surface") or ""):
+if termination_route.get("status") != "visible":
+    raise SystemExit(f"process.termination.plan underclaims a visible Administration End Task host: {termination_route}")
+if termination_route.get("surface") != "Administration" or termination_route.get("path") != "Administration > Processes":
+    raise SystemExit(f"process.termination.plan invents or underclaims an End Task destination: {termination_route}")
+if not str(termination_route.get("path") or "").strip():
+    raise SystemExit(f"process.termination.plan underclaims with an empty Administration path: {termination_route}")
+if "Task Manager" in str(termination_route.get("surface") or "") or "Task Manager" in str(termination_route.get("path") or ""):
     raise SystemExit(f"process.termination.plan invents a Task Manager surface: {termination_route}")
+if "Superbar" in str(termination_route.get("path") or "") or "Superbar" in str(termination_route.get("surface") or ""):
+    raise SystemExit(f"process.termination.plan invents a Superbar Task Manager: {termination_route}")
 if termination.get("source", {}).get("file") != "shell/apps/ultimate-administration/AdministrationApplication.qml":
     raise SystemExit(f"process.termination.plan source is {termination.get('source')}")
 if termination.get("source", {}).get("symbol") != "endTask":
     raise SystemExit(f"process.termination.plan source is {termination.get('source')}")
 if "process.termination.plan" not in (parity_task_manager.get("capabilityIds") or []):
     raise SystemExit("parity.task-manager does not name process.termination.plan")
+admin_coverage = (root / "shell/apps/ultimate-administration/AdministrationModel.js").read_text(encoding="utf-8")
+if "Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize." not in admin_coverage:
+    raise SystemExit("Administration Processes coverage must keep End Task unauthorized")
 startup = by_id["apps.startup.disable"]["humanRoute"]
 if startup.get("status") != "missing" or startup.get("path"):
     raise SystemExit(f"apps.startup.disable invents a Task Manager Startup page: {startup}")
@@ -650,6 +659,10 @@ if "Settings Power LIVE stays refused" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Settings Power LIVE refused")
 if "display.night-light.set" not in gaps or "Settings does not invent night-light LIVE" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep the QS night-light leftover visible without Settings LIVE")
+if "process.termination.plan" not in gaps or "Administration > Processes" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name the visible Administration End Task host without LIVE")
+if "shell principal cannot authorize" not in gaps or "UI stays unauthorized" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep End Task write plane unauthorized")
 if "METAL_HEAD OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep METAL_HEAD OPEN")
 

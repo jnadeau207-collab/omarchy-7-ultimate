@@ -2694,10 +2694,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "End a running task",
-        "path": ""
+        "path": "Administration > Processes"
       },
       "agentCenterLabel": "End a running task",
       "proofIds": {
