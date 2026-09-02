@@ -751,6 +751,16 @@ if "not a metal proof" not in gaps or "WINDOWS_7_ULTIMATE_PARITY.md" not in gaps
     raise SystemExit("fleet-doctrine-gaps must carry the PARITY Power Options not-a-metal-proof underclaim close")
 if "plans/project-ultimate.md" not in gaps or "PARITY / project-ultimate QS Power leftover after PR #43" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the project-ultimate QS Power unverified-without-FAIL underclaim close")
+if "cabc8e042cc1" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #44 tip parent for the product-docs QS Power metal FAIL honesty twin")
+if "HANDOFF_WRITERS_2026-09-01.md" not in gaps or "HANDOFF_STATE_DOMAIN_WRITES_2026-09-01.md" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the writers/state-domain handoff QS Power underclaim close")
+if "settings-service-api.md" not in gaps or "ultimate-settings-writers-test.sh" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the settings-api / writers-test QS Power underclaim close")
+if "Settings badge METAL_HEAD residual OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the Settings badge METAL_HEAD residual OPEN underclaim close")
+if "Product docs / handoffs QS Power leftover after PR #44" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the product-docs QS Power unverified-without-FAIL underclaim close")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -909,6 +919,86 @@ if "Product REJECTED" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep product REJECTED")
 if "/home/jesse/omarchy7ultimate-work-tip" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the tip worktree for Settings coverage-badge PIXEL leftover CLOSED")
+
+writers_handoff = (root / "HANDOFF_WRITERS_2026-09-01.md").read_text(encoding="utf-8")
+if "is unverified on metal" in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS still underclaims QS Power leftover as unverified without metal FAIL")
+if "do not claim METAL_HEAD" in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS still says do not claim METAL_HEAD after metal FAIL")
+if "was unverified on metal" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep leftover was unverified on metal")
+if "QS Power METAL_HEAD OPEN" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep QS Power METAL_HEAD OPEN")
+if "20484de6" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must cite metal FAIL tip 20484de6")
+if "Not authorized" not in writers_handoff or "session-5103" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must cite metal FAIL Not authorized / session-5103")
+if "batteryPresent" not in writers_handoff or "amd_pstate" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must cite metal FAIL batteryPresent / amd_pstate")
+if "Settings Power LIVE refused" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep Settings Power LIVE refused")
+if "heritage QS Power works on metal" in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS invented heritage QS Power works on metal")
+if "KEEP OPEN" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must KEEP OPEN the QS Power leftover")
+if "Product REJECTED" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep product REJECTED")
+
+state_handoff = (root / "HANDOFF_STATE_DOMAIN_WRITES_2026-09-01.md").read_text(encoding="utf-8")
+if "Settings badge METAL_HEAD residual stays OPEN" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES still carries Settings badge METAL_HEAD residual OPEN")
+if "No pixel leftover or METAL_HEAD claim" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES still underclaims Settings badge PIXEL leftover as unclosed")
+if "do not claim METAL_HEAD" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES still says do not claim METAL_HEAD after metal FAIL")
+if "no metal proof" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES still underclaims QS Power leftover as no metal proof")
+if "Settings coverage-badge PIXEL leftover CLOSED" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must name Settings coverage-badge PIXEL leftover CLOSED")
+if "d3f4841a" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must cite metal tip d3f4841a")
+if "focused out-of-band stale" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep focused out-of-band stale OPEN")
+if "events.subscribe" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep no events.subscribe residual OPEN")
+if "QS Power METAL_HEAD OPEN" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep QS Power METAL_HEAD OPEN")
+if "20484de6" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must cite metal FAIL tip 20484de6")
+if "Not authorized" not in state_handoff or "session-5103" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must cite metal FAIL Not authorized / session-5103")
+if "batteryPresent" not in state_handoff or "amd_pstate" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must cite metal FAIL batteryPresent / amd_pstate")
+if "Settings Power LIVE refused" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep Settings Power LIVE refused")
+if "heritage QS Power works on metal" in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES invented heritage QS Power works on metal")
+if "KEEP OPEN" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must KEEP OPEN the QS Power leftover")
+if "Product REJECTED" not in state_handoff:
+    raise SystemExit("HANDOFF_STATE_DOMAIN_WRITES must keep product REJECTED")
+
+settings_api = (root / "docs/settings-service-api.md").read_text(encoding="utf-8")
+if "remains unverified on metal" in settings_api:
+    raise SystemExit("settings-service-api still underclaims leftover as remains unverified without metal FAIL")
+if "do not claim METAL_HEAD" in settings_api:
+    raise SystemExit("settings-service-api still says do not claim METAL_HEAD after metal FAIL")
+if "was unverified on metal" not in settings_api:
+    raise SystemExit("settings-service-api must keep leftover was unverified on metal")
+if "QS Power METAL_HEAD OPEN" not in settings_api:
+    raise SystemExit("settings-service-api must keep QS Power METAL_HEAD OPEN")
+if "20484de6" not in settings_api:
+    raise SystemExit("settings-service-api must cite metal FAIL tip 20484de6")
+if "Not authorized" not in settings_api or "session-5103" not in settings_api:
+    raise SystemExit("settings-service-api must cite metal FAIL Not authorized / session-5103")
+if "batteryPresent" not in settings_api or "amd_pstate" not in settings_api:
+    raise SystemExit("settings-service-api must cite metal FAIL batteryPresent / amd_pstate")
+if "Settings Power LIVE refused" not in settings_api:
+    raise SystemExit("settings-service-api must keep Settings Power LIVE refused")
+if "heritage QS Power works on metal" in settings_api:
+    raise SystemExit("settings-service-api invented heritage QS Power works on metal")
+if "KEEP OPEN" not in settings_api:
+    raise SystemExit("settings-service-api must KEEP OPEN the QS Power leftover")
 
 gt06 = (root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.md").read_text(encoding="utf-8")
 gt06_json = json.loads((root / "plans/win7-ultimate-ground-truth/06-settings-admin-media.json").read_text(encoding="utf-8"))
