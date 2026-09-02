@@ -144,7 +144,7 @@
     "entry.trash": {
       "capability": "files.entry.trash",
       "mode": "operation",
-      "risk": "consequential",
+      "risk": "low",
       "effects": [
         "mutating"
       ],

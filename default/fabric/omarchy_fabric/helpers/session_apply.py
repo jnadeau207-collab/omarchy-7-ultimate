@@ -476,6 +476,9 @@ def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:
     resource_id = require_files_resource_id(payload)
     home = pathlib.Path.home()
     _, final, relative = resolve_entry_path(payload, home)
+    parent = "/".join(relative.split("/")[:-1])
+    if resource_id != stable_directory_id(payload["locationId"], parent):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
     root = trash_root(home)
     try:
         (root / "files").mkdir(parents=True, exist_ok=True)
