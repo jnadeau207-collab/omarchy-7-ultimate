@@ -2008,7 +2008,7 @@
         "display.night-light.set"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Quick Settings",
         "path": "Superbar > Quick Settings > Night light"
       },

@@ -223,6 +223,7 @@ writer_routes = {
     "audio.output.manage": ("Quick Settings", "Superbar > Quick Settings > Sound"),
     "bluetooth.audio.pair": ("Quick Settings", "Superbar > Quick Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
+    "display.night-light.set": ("Quick Settings", "Superbar > Quick Settings > Night light"),
     "network.wifi.connect": ("Quick Settings", "Superbar > Quick Settings > Wi-Fi"),
     "power.profile.set": ("Quick Settings", "Superbar > Quick Settings > Power"),
 }
@@ -579,6 +580,50 @@ if "display.brightness.set" not in (parity_display.get("capabilityIds") or []):
     raise SystemExit("parity.display does not name display.brightness.set")
 if "display.configure" not in (parity_display.get("capabilityIds") or []):
     raise SystemExit("parity.display dropped display.configure")
+if "display.night-light.set" not in (parity_display.get("capabilityIds") or []):
+    raise SystemExit("parity.display dropped display.night-light.set")
+
+night_light = by_id["display.night-light.set"]
+if night_light["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"display.night-light.set underclaims a visible QS tile: {night_light.get('humanRoute')}")
+if night_light["humanRoute"].get("surface") != "Quick Settings" or night_light["humanRoute"].get("path") != "Superbar > Quick Settings > Night light":
+    raise SystemExit(f"display.night-light.set invents a Settings night-light route: {night_light.get('humanRoute')}")
+if night_light.get("availability", {}).get("claim") == "present":
+    raise SystemExit("display.night-light.set must not claim present")
+if night_light.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"display.night-light.set was raised off leftover: {night_light.get('provider')}")
+if night_light.get("source", {}).get("file") != "shell/plugins/services/nightlight/Service.qml":
+    raise SystemExit(f"display.night-light.set source is {night_light.get('source')}")
+if night_light.get("source", {}).get("symbol") != "NightlightService":
+    raise SystemExit(f"display.night-light.set source is {night_light.get('source')}")
+if "Settings" in str(night_light["humanRoute"].get("path") or ""):
+    raise SystemExit(f"display.night-light.set invents Settings night-light LIVE: {night_light.get('humanRoute')}")
+settings_app = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
+if "nightlight" in settings_app.lower() or "night-light" in settings_app.lower() or "night light" in settings_app.lower():
+    raise SystemExit("Settings invents night-light LIVE")
+settings_coverage = (root / "shell/apps/ultimate-settings/SettingsModel.js").read_text(encoding="utf-8")
+if "Night light remains a Superbar leftover, not a Settings LIVE writer." not in settings_coverage:
+    raise SystemExit("Settings Display coverage must refuse night-light LIVE")
+native34 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.34")
+if native34.get("claim") == "present":
+    raise SystemExit(f"windows-native.34 was flipped to present: {native34}")
+if native34.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.34 sourceStatus is {native34.get('sourceStatus')}")
+if native34.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.34 proofStatus is {native34.get('proofStatus')}")
+if native34.get("capabilityIds") != ["display.night-light.set"]:
+    raise SystemExit(f"windows-native.34 capabilityIds are {native34.get('capabilityIds')}")
+if native34["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"windows-native.34 underclaims a visible QS tile: {native34.get('humanRoute')}")
+if native34["humanRoute"].get("path") != "Superbar > Quick Settings > Night light":
+    raise SystemExit(f"windows-native.34 invents Settings night-light LIVE: {native34['humanRoute']}")
+if "Settings" in str(native34["humanRoute"].get("path") or ""):
+    raise SystemExit(f"windows-native.34 invents Settings night-light LIVE: {native34['humanRoute']}")
+parity_modern = next(job for job in jobs["jobs"] if job["id"] == "parity.modern-display-scaling-hdr-night-light")
+if parity_modern.get("claim") == "present":
+    raise SystemExit(f"parity.modern-display-scaling-hdr-night-light was flipped to present: {parity_modern}")
+if "display.night-light.set" not in (parity_modern.get("capabilityIds") or []):
+    raise SystemExit("parity.modern-display-scaling-hdr-night-light dropped display.night-light.set")
 
 power_set = by_id["power.profile.set"]
 if power_set["humanRoute"].get("surface") != "Quick Settings" or power_set["humanRoute"].get("path") != "Superbar > Quick Settings > Power":
@@ -601,6 +646,10 @@ if "unverified on metal" not in gaps or "power.profile.set" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep power.profile.set as a Superbar leftover unverified on metal")
 if "Settings Power LIVE stays refused" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Settings Power LIVE refused")
+if "display.night-light.set" not in gaps or "Settings does not invent night-light LIVE" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep the QS night-light leftover visible without Settings LIVE")
+if "METAL_HEAD OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep METAL_HEAD OPEN")
 
 if "files.folder.create" in by_id:
     raise SystemExit("files.folder.create remains as a catalog invent")
@@ -719,6 +768,7 @@ inventory = {
     "network.wifi.connect": "partial",
     "power.profile.set": "partial",
     "display.configure": "partial",
+    "display.night-light.set": "partial",
     "display.brightness.set": "partial",
     "input.keyboard-layout.set": "partial",
     "defaults.protocol.set": "partial",
