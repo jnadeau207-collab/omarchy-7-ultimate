@@ -681,7 +681,17 @@ if "Settings" in str(native35["humanRoute"].get("path") or ""):
     raise SystemExit(f"windows-native.35 invents Settings Power LIVE: {native35['humanRoute']}")
 gaps = (root / "plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md").read_text(encoding="utf-8")
 if "unverified on metal" not in gaps or "power.profile.set" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep power.profile.set as a Superbar leftover unverified on metal")
+    raise SystemExit("fleet-doctrine-gaps must keep power.profile.set as a Superbar leftover that was unverified on metal")
+if "20484de6" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite METAL_HEAD tip 20484de6 for the QS Power leftover")
+if "Not authorized" not in gaps or "session-5103" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite QS Power metal FAIL pkcheck Not authorized / session-5103")
+if "batteryPresent" not in gaps or "amd_pstate" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite QS Power metal FAIL batteryPresent and amd_pstate")
+if "heritage QS Power works on metal" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented heritage QS Power works on metal")
+if "KEEP OPEN" not in gaps or "honesty-gated" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep QS Power leftover OPEN / honesty-gated")
 if "Settings Power LIVE stays refused" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Settings Power LIVE refused")
 if "display.night-light.set" not in gaps or "Settings does not invent night-light LIVE" not in gaps:
@@ -834,7 +844,17 @@ if "Settings badge METAL_HEAD residual stays OPEN" in gaps:
 if "QS Power METAL_HEAD OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep QS Power METAL_HEAD OPEN")
 if "unverified on metal" not in gaps or "power.profile.set" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep QS Power leftover unverified on metal")
+    raise SystemExit("fleet-doctrine-gaps must keep QS Power leftover that was unverified on metal")
+if "20484de6e7ce93f16273c030165ed3cbbbec6c66" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the QS Power METAL_HEAD SHA 20484de6e7ce93f16273c030165ed3cbbbec6c66")
+if "Not authorized" not in gaps or "session-5103" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite QS Power metal FAIL Not authorized / session-5103")
+if "batteryPresent" not in gaps or "amd_pstate" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite QS Power metal FAIL batteryPresent / amd_pstate")
+if "heritage QS Power works on metal" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented heritage QS Power works on metal")
+if "QS Power leftover CLOSED" in gaps or "QS Power METAL_HEAD CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the QS Power METAL_HEAD leftover")
 if "No `events.subscribe`" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep events.subscribe residual open")
 if "Product REJECTED" not in gaps:
@@ -1032,6 +1052,10 @@ if "METAL_HEAD closed" in cp:
     raise SystemExit("fleet-catalog-controlpanel invented METAL_HEAD closed")
 if "QS Power METAL_HEAD OPEN" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must keep QS Power METAL_HEAD OPEN")
+if "FAIL on this metal" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name QS Power leftover FAIL on this metal")
+if "heritage QS Power works on metal" in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented heritage QS Power works on metal")
 if "Settings coverage-badge PIXEL leftover CLOSED" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must retarget Settings coverage-badge PIXEL leftover CLOSED")
 if "d3f4841a" not in cp:
