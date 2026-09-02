@@ -600,8 +600,23 @@ if "ElideRight" in block:
 PY
 pass "Settings coverage badge, declared ops, and footer match live writers"
 
-if grep -Eiq 'typed (settings |domain )?writers remain phase 5' "$ROOT/plans/project-ultimate.md" "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
-  fail "plan and PARITY no longer blanket typed writers as remaining Phase 5"
+if grep -Eiq 'typed (settings |domain )?writers remain phase 5' "$ROOT/plans/project-ultimate.md" "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md" "$ROOT/docs/settings-service-api.md"; then
+  fail "plan, PARITY, and settings-service-api no longer blanket typed writers as remaining Phase 5"
+fi
+if grep -Fq 'remain Phase 5' "$ROOT/docs/settings-service-api.md"; then
+  fail "settings-service-api no longer blankets typed writers as remaining Phase 5"
+fi
+if grep -Fq 'Accessibility, Input, and System information have no hostable panel' "$ROOT/docs/settings-service-api.md"; then
+  fail "settings-service-api no longer underclaims Input as having no hostable panel"
+fi
+settings_api="$ROOT/docs/settings-service-api.md"
+for writer in "Sound volume" "Network Wi-Fi radio" "Power profile" "Display brightness" "Input layout" "Apps default browser"; do
+  grep -Fq "$writer" "$settings_api" || fail "settings-service-api names live writer: $writer"
+done
+grep -Fq 'keyboard-layout' "$settings_api" || fail "settings-service-api names the Input keyboard-layout writer"
+grep -Fq 'execDetached' "$settings_api" || fail "settings-service-api keeps Personalization Process/execDetached honesty"
+if grep -Eiq 'events[.]subscribe|MIME associations|Empty Bin|Task Manager LIVE|End Task LIVE' "$settings_api"; then
+  fail "settings-service-api does not invent MIME, Restore, Empty Bin, Task Manager LIVE, End Task LIVE, or events.subscribe"
 fi
 if grep -Eiq 'typed personalization service (is |remains )?phase 5|personalization service remains phase 5' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md" "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
   fail "PARITY and Settings Personalization no longer invent a Phase 5 fence"
