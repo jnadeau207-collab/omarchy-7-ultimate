@@ -1,5 +1,9 @@
 .pragma library
 
+var aeroColorization = "#4580c4"
+var aeroBalance = 0.10
+var aeroAlpha = 0.42
+
 var glassTop = "#eef3fa"
 var glassBottom = "#dde6f2"
 var glassEdge = "#c3d2e4"

@@ -146,30 +146,45 @@ local function load_chrome_tokens()
   return tokens, nil
 end
 
-local AERO_LIFT = 0.88
-local AERO_ALPHA_PCT = 94
+local AERO_ALPHA_PCT = 42
 
-local function aero_channel(value)
-  return math.floor(value + (255 - value) * AERO_LIFT + 0.5)
+local AERO_DEFAULT_GLASS = "4580c4"
+local AERO_COLOR_BALANCE = 0.10
+
+local function aero_balanced(hex)
+  local r = tonumber(hex:sub(1, 2), 16)
+  local g = tonumber(hex:sub(3, 4), 16)
+  local b = tonumber(hex:sub(5, 6), 16)
+  local function lift(value)
+    return math.floor(value + (255 - value) * AERO_COLOR_BALANCE + 0.5)
+  end
+  return string.format("%02x%02x%02x", lift(r), lift(g), lift(b))
+end
+
+local function aero_glass_hex(tokens)
+  local hex = tokens.captionGlassHex
+  if type(hex) == "string" then
+    hex = hex:gsub("^#", "")
+    if hex:match("^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]$") then
+      return hex:sub(1, 6)
+    end
+  end
+  return AERO_DEFAULT_GLASS
 end
 
 local function chrome_aero_rgba(tokens)
-  local r = aero_channel(tonumber(tokens.glassRed))
-  local g = aero_channel(tonumber(tokens.glassGreen))
-  local b = aero_channel(tonumber(tokens.glassBlue))
   local a = math.floor(AERO_ALPHA_PCT * 255 / 100 + 0.5)
-  return string.format("rgba(%02x%02x%02x%02x)", r, g, b, a)
+  return string.format("rgba(%s%02x)", aero_balanced(aero_glass_hex(tokens)), a)
+end
+
+local function chrome_aero_alpha_rgba(tokens, alpha_pct)
+  local a = math.floor(alpha_pct * 255 / 100 + 0.5)
+  return string.format("rgba(%s%02x)", aero_balanced(aero_glass_hex(tokens)), a)
 end
 
 local function chrome_aero_text(tokens)
-  local r = aero_channel(tonumber(tokens.glassRed))
-  local g = aero_channel(tonumber(tokens.glassGreen))
-  local b = aero_channel(tonumber(tokens.glassBlue))
-  local luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
-  if luminance >= 0.55 then
-    return "rgb(1a1a1c)"
-  end
-  return "rgb(f2f2f4)"
+  local _ = tokens
+  return "rgb(000000)"
 end
 
 local function chrome_hex_rgb(tokens, key)
@@ -208,10 +223,10 @@ local function apply_desktop_look()
       extend_border_grab_area = 4,
       gaps_in = 0,
       gaps_out = 0,
-      border_size = 1,
+      border_size = 4,
       col = {
-        active_border = chrome_hex_rgb(chrome, "borderActiveHex"),
-        inactive_border = chrome_hex_rgb(chrome, "borderInactiveHex"),
+        active_border = chrome_aero_alpha_rgba(chrome, 58),
+        inactive_border = chrome_aero_alpha_rgba(chrome, 34),
       },
     },
 
@@ -226,7 +241,7 @@ local function apply_desktop_look()
     },
     decoration = {
 
-      rounding = 0,
+      rounding = 6,
       rounding_power = 2,
       shadow = {
         enabled = true,
@@ -251,11 +266,11 @@ local function apply_desktop_look()
     plugin = {
       hyprbars = {
         enabled = true,
-        bar_height = 32,
+        bar_height = 30,
         bar_part_of_window = true,
         bar_precedence_over_border = true,
-        bar_padding = 12,
-        bar_button_padding = 8,
+        bar_padding = 2,
+        bar_button_padding = 1,
         bar_title_enabled = true,
         bar_text_size = 13,
         bar_text_font = "Selawik",
@@ -388,24 +403,27 @@ local function add_hyprbars_buttons()
     return
   end
   plugin.hyprbars.add_button({
-    bg_color = chrome_hex_rgb(chrome, "captionCloseBgHex"),
+    bg_color = "rgba(d54f36e0)",
     fg_color = chrome_hex_rgb(chrome, "captionCloseFgHex"),
-    size = 22,
+    size = 21,
+    width = 45,
     icon = "×",
     action = "omarchy-shell window close 0x{:x}",
   })
   plugin.hyprbars.add_button({
-    bg_color = chrome_hex_rgb(chrome, "captionMaxBgHex"),
-    fg_color = chrome_hex_rgb(chrome, "captionMaxFgHex"),
-    size = 22,
+    bg_color = "rgba(ffffff33)",
+    fg_color = chrome_aero_text(chrome),
+    size = 21,
+    width = 29,
     icon = "□",
     action = "omarchy-shell window toggleMaximize 0x{:x}",
     hover_action = "omarchy-shell window snapChooser 0x{:x}",
   })
   plugin.hyprbars.add_button({
-    bg_color = chrome_hex_rgb(chrome, "captionMinBgHex"),
-    fg_color = chrome_hex_rgb(chrome, "captionMinFgHex"),
-    size = 22,
+    bg_color = "rgba(ffffff33)",
+    fg_color = chrome_aero_text(chrome),
+    size = 21,
+    width = 29,
     icon = "–",
     action = "omarchy-shell window minimize 0x{:x}",
   })

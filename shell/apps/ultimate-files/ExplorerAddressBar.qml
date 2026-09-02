@@ -23,13 +23,20 @@ Item {
 
   implicitHeight: Aero.addressHeight
 
+  readonly property color glass: {
+    var base = Qt.color(Aero.aeroColorization)
+    return Qt.rgba(
+      base.r + (1 - base.r) * Aero.aeroBalance,
+      base.g + (1 - base.g) * Aero.aeroBalance,
+      base.b + (1 - base.b) * Aero.aeroBalance,
+      Aero.aeroAlpha)
+  }
+
   Rectangle {
     anchors.fill: parent
-    gradient: Gradient {
-      GradientStop { position: 0; color: Aero.glassTop }
-      GradientStop { position: 1; color: Aero.glassBottom }
-    }
+    color: root.glass
   }
+
 
   Files.ExplorerCircleButton {
     id: backButton

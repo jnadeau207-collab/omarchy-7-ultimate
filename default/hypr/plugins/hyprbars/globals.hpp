@@ -16,10 +16,15 @@ struct SHyprButton {
     CHyprColor           fgcol    = CHyprColor(0, 0, 0, 0);
     CHyprColor           bgcol    = CHyprColor(0, 0, 0, 0);
     float                size     = 10;
+    float                width    = 0;
     std::string          icon     = "";
     std::string          hoverCmd = "";
     SP<Render::ITexture> iconTex;
 };
+
+inline float buttonWidthOf(const SHyprButton& button) {
+    return button.width > 0 ? button.width : button.size;
+}
 
 class CHyprBar;
 

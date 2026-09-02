@@ -535,7 +535,8 @@ grep -Fq 'chrome-tokens-v0.json' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars caption chrome reads chrome-tokens-v0.json"
 grep -Fq 'bar_color = chrome_aero_rgba' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars bar_color comes from chrome tokens, not a private rgba"
-grep -Fq 'aero_channel(tonumber(tokens.glassRed))' "$ROOT/default/hypr/desktop-windows.lua" \n  || fail "the Aero caption lifts the chrome token glass channels rather than inventing a colour"
+grep -Fq 'tokens.captionGlassHex' "$ROOT/default/hypr/desktop-windows.lua" \n  || fail "the Aero caption reads its colourization from the chrome token adapter"
+grep -Fq 'local AERO_DEFAULT_GLASS = "4580c4"' "$ROOT/default/hypr/desktop-windows.lua" \n  || fail "the Aero caption falls back to the measured Windows 7 Sky colourization"
 grep -Fq 'captionCloseBgHex' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars close button color comes from chrome tokens"
 grep -Fq 'captionMaxBgHex' "$ROOT/default/hypr/desktop-windows.lua" \

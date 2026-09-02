@@ -80,6 +80,7 @@ class CHyprBar : public IHyprWindowDecoration {
     void                       renderPass(PHLMONITOR, float const& a);
     void                       renderAeroGlass(const CBox& barBox, const float rounding, const float a);
     void                       renderBarTitle(const Vector2D& bufferSize, const float scale);
+    void renderButtonGloss(const CBox& buttonBox, const float a, const bool first, const bool last);
     void renderBarButtons(CBox* barBox, const float scale, const float a);
     void renderBarButtonsText(CBox* barBox, const float scale, const float a);
     void damageOnButtonHover();

@@ -107,7 +107,7 @@ Hyprlang::CParseResult onNewButton(const char* K, const char* V) {
         return result;
     }
 
-    g_pGlobalState->buttons.push_back(SHyprButton{vars[3], userfg, *fgcolor, *bgcolor, size, vars[2]});
+    g_pGlobalState->buttons.push_back(SHyprButton{vars[3], userfg, *fgcolor, *bgcolor, size, 0, vars[2]});
 
     for (auto& b : g_pGlobalState->bars) {
         b->m_bButtonsDirty = true;
@@ -158,6 +158,15 @@ int newLuaButton(lua_State* L) {
             return Config::Lua::Bindings::Internal::configError(L, "add_button: size must be an integer");
 
         button.size = lua_tointeger(L, -1);
+    }
+
+    {
+        Hyprutils::Utils::CScopeGuard x([L] { lua_pop(L, 1); });
+
+        lua_getfield(L, 1, "width");
+
+        if (lua_isnumber(L, -1))
+            button.width = lua_tointeger(L, -1);
     }
 
     {

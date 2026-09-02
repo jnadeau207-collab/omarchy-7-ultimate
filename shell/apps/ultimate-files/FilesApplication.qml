@@ -359,11 +359,6 @@ Item {
     }
   }
 
-  Rectangle {
-    anchors.fill: parent
-    color: Aero.contentFill
-  }
-
   Files.ExplorerAddressBar {
     id: addressBar
     anchors.left: parent.left
@@ -383,6 +378,14 @@ Item {
     onCrumbActivated: function(path) { root.openPath(path) }
     onRefreshRequested: root.retryState()
     onSearchAccepted: function(text) { root.runSearch(text) }
+  }
+
+  Rectangle {
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: addressBar.bottom
+    anchors.bottom: parent.bottom
+    color: Aero.contentFill
   }
 
   Files.ExplorerCommandBar {

@@ -50,12 +50,11 @@ Item {
   readonly property int chromeEdgeWidth: highContrast ? 2 : 1
   property color background: chromeBar
 
-  function aeroShade(base, lift) {
-    return Qt.rgba(base.r + (1 - base.r) * lift, base.g + (1 - base.g) * lift, base.b + (1 - base.b) * lift, base.a)
-  }
+  readonly property real barOpacity: 0.86
 
-  function aeroSink(base, sink) {
-    return Qt.rgba(base.r * (1 - sink), base.g * (1 - sink), base.b * (1 - sink), base.a)
+  function barStop(hex) {
+    var stop = Qt.color(hex)
+    return Qt.rgba(stop.r, stop.g, stop.b, root.barOpacity)
   }
   property var moduleSlots: []
   readonly property var windowService: shell ? shell.windowService : null
@@ -304,10 +303,11 @@ Item {
           anchors.fill: parent
           z: -1
           gradient: Gradient {
-            GradientStop { position: 0.0; color: root.aeroShade(root.background, 0.20) }
-            GradientStop { position: 0.46; color: root.aeroShade(root.background, 0.07) }
-            GradientStop { position: 0.47; color: root.aeroSink(root.background, 0.10) }
-            GradientStop { position: 1.0; color: root.aeroSink(root.background, 0.02) }
+            GradientStop { position: 0.000; color: root.barStop("#000000") }
+            GradientStop { position: 0.186; color: root.barStop("#001520") }
+            GradientStop { position: 0.494; color: root.barStop("#001b29") }
+            GradientStop { position: 0.670; color: root.barStop("#001f2e") }
+            GradientStop { position: 1.000; color: root.barStop("#000000") }
           }
         }
 

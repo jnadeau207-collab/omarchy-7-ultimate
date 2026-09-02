@@ -331,12 +331,12 @@ void CHyprBar::handleButtonHover() {
     int   i        = 0;
     for (auto& b : g_pGlobalState->buttons) {
         const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, HEIGHT};
-        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - b.size - offset : offset), (BARBUF.y - b.size) / 2.0}.floor();
-        if (VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + b.size + BARBUTTONPADDING, currentPos.y + b.size)) {
+        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - buttonWidthOf(b) - offset : offset), g_pGlobalState->config.barAero->value() ? 0.0 : (BARBUF.y - b.size) / 2.0}.floor();
+        if (VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + buttonWidthOf(b) + BARBUTTONPADDING, currentPos.y + b.size)) {
             hoverIdx = i;
             break;
         }
-        offset += BARBUTTONPADDING + b.size;
+        offset += BARBUTTONPADDING + buttonWidthOf(b);
         ++i;
     }
 
@@ -369,61 +369,58 @@ bool CHyprBar::doButtonPress(Config::INTEGER barPadding, Config::INTEGER barButt
 
     for (auto& b : g_pGlobalState->buttons) {
         const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, barHeight};
-        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - barButtonPadding - b.size - offset : offset), (BARBUF.y - b.size) / 2.0}.floor();
+        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - barButtonPadding - buttonWidthOf(b) - offset : offset), g_pGlobalState->config.barAero->value() ? 0.0 : (BARBUF.y - b.size) / 2.0}.floor();
 
-        if (VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + b.size + barButtonPadding, currentPos.y + b.size)) {
+        if (VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + buttonWidthOf(b) + barButtonPadding, currentPos.y + b.size)) {
             g_pKeybindManager->m_dispatchers["exec"](formatWindowCmd(b.cmd, m_pWindow.lock()));
             return true;
         }
 
-        offset += barButtonPadding + b.size;
+        offset += barButtonPadding + buttonWidthOf(b);
     }
     return false;
 }
 
 void CHyprBar::renderAeroGlass(const CBox& barBox, const float rounding, const float a) {
-    static constexpr int BANDS = 18;
-
     const float height = barBox.h;
-    if (height < 2)
+    const float width  = barBox.w;
+    if (height < 4 || width < 4)
         return;
 
-    const float sheenStop = 0.58F;
+    // The defining Aero highlight: transparent at 20%, #ffffffb3 at 40%, cut at 41%.
+    static constexpr int RAMP  = 10;
+    const float          rampA = 0.20F;
+    const float          rampB = 0.40F;
+    for (int i = 0; i < RAMP; ++i) {
+        const float t0 = rampA + (rampB - rampA) * (static_cast<float>(i) / RAMP);
+        const float t1 = rampA + (rampB - rampA) * (static_cast<float>(i + 1) / RAMP);
+        const float k  = static_cast<float>(i + 1) / RAMP;
 
-    for (int i = 0; i < BANDS; ++i) {
-        const float top    = static_cast<float>(i) / BANDS;
-        const float bottom = static_cast<float>(i + 1) / BANDS;
-
-        float alpha = 0.F;
-        if (bottom <= sheenStop) {
-            const float t = top / sheenStop;
-            alpha = (0.26F - 0.20F * t * t) * a;
-        } else if (top >= sheenStop) {
-            const float t = (top - sheenStop) / (1.F - sheenStop);
-            alpha = (0.010F + 0.030F * t) * a;
-        } else {
-            alpha = 0.010F * a;
-        }
-
-        if (alpha <= 0.004F)
-            continue;
-
-        const bool  lit  = bottom <= sheenStop;
-        const float tint = lit ? 1.F : 0.F;
-
-        CBox band = {barBox.x, barBox.y + height * top, barBox.w, height * (bottom - top) + 1};
-        g_pHyprOpenGL->renderRect(band, CHyprColor(tint, tint, tint, alpha),
-                                  {.round = i == 0 ? (int)rounding : 0, .roundingPower = m_pWindow->roundingPower()});
+        CBox band = {barBox.x, barBox.y + height * t0, width, height * (t1 - t0) + 1};
+        g_pHyprOpenGL->renderRect(band, CHyprColor(1.F, 1.F, 1.F, 0.34F * k * k * a), {.round = 0, .roundingPower = 2.F});
     }
 
-    CBox highlight = {barBox.x + 1, barBox.y + 1, barBox.w - 2, 1};
-    g_pHyprOpenGL->renderRect(highlight, CHyprColor(1.F, 1.F, 1.F, 0.55F * a), {.round = 0, .roundingPower = 2.F});
+    // The highlight falls away over 40%-46% rather than being cut off, so the
+    // peak reads as a gradient instead of a drawn line.
+    static constexpr int FALL = 6;
+    for (int i = 0; i < FALL; ++i) {
+        const float t0 = 0.40F + 0.06F * (static_cast<float>(i) / FALL);
+        const float t1 = 0.40F + 0.06F * (static_cast<float>(i + 1) / FALL);
+        const float k  = 1.F - static_cast<float>(i + 1) / FALL;
 
-    CBox seam = {barBox.x, barBox.y + height * sheenStop, barBox.w, 1};
-    g_pHyprOpenGL->renderRect(seam, CHyprColor(1.F, 1.F, 1.F, 0.26F * a), {.round = 0, .roundingPower = 2.F});
+        CBox band = {barBox.x, barBox.y + height * t0, width, height * (t1 - t0) + 1};
+        g_pHyprOpenGL->renderRect(band, CHyprColor(1.F, 1.F, 1.F, 0.34F * k * a), {.round = 0, .roundingPower = 2.F});
+    }
 
-    CBox foot = {barBox.x, barBox.y + height - 1, barBox.w, 1};
-    g_pHyprOpenGL->renderRect(foot, CHyprColor(0.F, 0.F, 0.F, 0.12F * a), {.round = 0, .roundingPower = 2.F});
+    // 1px inner white edge, as box-shadow: inset 0 0 0 1px #fffd.
+    CBox top = {barBox.x, barBox.y, width, 1};
+    g_pHyprOpenGL->renderRect(top, CHyprColor(1.F, 1.F, 1.F, 0.62F * a), {.round = 0, .roundingPower = 2.F});
+
+    CBox left = {barBox.x, barBox.y, 1, height};
+    g_pHyprOpenGL->renderRect(left, CHyprColor(1.F, 1.F, 1.F, 0.62F * a), {.round = 0, .roundingPower = 2.F});
+
+    CBox right = {barBox.x + width - 1, barBox.y, 1, height};
+    g_pHyprOpenGL->renderRect(right, CHyprColor(1.F, 1.F, 1.F, 0.62F * a), {.round = 0, .roundingPower = 2.F});
 }
 
 void CHyprBar::renderBarTitle(const Vector2D& bufferSize, const float scale) {
@@ -437,7 +434,7 @@ void CHyprBar::renderBarTitle(const Vector2D& bufferSize, const float scale) {
 
     float      buttonSizes = BARBUTTONPADDING;
     for (auto& b : g_pGlobalState->buttons) {
-        buttonSizes += b.size + BARBUTTONPADDING;
+        buttonSizes += buttonWidthOf(b) + BARBUTTONPADDING;
     }
 
     const int  scaledSize        = std::round(SIZE * scale);
@@ -460,7 +457,7 @@ size_t CHyprBar::getVisibleButtonCount(Config::INTEGER barButtonPadding, Config:
     size_t count          = 0;
 
     for (const auto& button : g_pGlobalState->buttons) {
-        const float buttonSpace = (button.size + barButtonPadding) * scale;
+        const float buttonSpace = (buttonWidthOf(button) + barButtonPadding) * scale;
         if (availableSpace >= buttonSpace) {
             count++;
             availableSpace -= buttonSpace;
@@ -469,6 +466,55 @@ size_t CHyprBar::getVisibleButtonCount(Config::INTEGER barButtonPadding, Config:
     }
 
     return count;
+}
+
+void CHyprBar::renderButtonGloss(const CBox& buttonBox, const float a, const bool first, const bool last) {
+    if (buttonBox.h < 4 || buttonBox.w < 4)
+        return;
+
+    // Windows 7 caption button face:
+    // linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80)
+    struct SStop {
+        float position;
+        float tint;
+        float alpha;
+    };
+    static constexpr SStop STOPS[] = {
+        {0.00F, 1.F, 0.50F}, {0.45F, 1.F, 0.30F}, {0.50F, 0.F, 0.10F}, {0.75F, 0.F, 0.10F}, {1.00F, 1.F, 0.50F},
+    };
+
+    for (size_t i = 0; i + 1 < sizeof(STOPS) / sizeof(STOPS[0]); ++i) {
+        const float top    = STOPS[i].position;
+        const float bottom = STOPS[i + 1].position;
+        const float mid    = (top + bottom) / 2.F;
+        const float span   = bottom - top == 0.F ? 1.F : bottom - top;
+        const float k      = (mid - top) / span;
+        const float tint   = STOPS[i].tint;
+        const float alpha  = (STOPS[i].alpha + (STOPS[i + 1].alpha - STOPS[i].alpha) * k) * a;
+
+        if (alpha <= 0.004F)
+            continue;
+
+        CBox band = {buttonBox.x, buttonBox.y + buttonBox.h * top, buttonBox.w, buttonBox.h * (bottom - top) + 1};
+        g_pHyprOpenGL->renderRect(band, CHyprColor(tint, tint, tint, alpha), {.round = 0, .roundingPower = 2.F});
+    }
+
+    // The group hangs from the frame: no top border, a 1px rule between buttons.
+    CBox bottom = {buttonBox.x, buttonBox.y + buttonBox.h - 1, buttonBox.w, 1};
+    g_pHyprOpenGL->renderRect(bottom, CHyprColor(0.F, 0.F, 0.F, 0.30F * a), {.round = 0, .roundingPower = 2.F});
+
+    CBox inner = {buttonBox.x, buttonBox.y, buttonBox.w, 1};
+    g_pHyprOpenGL->renderRect(inner, CHyprColor(1.F, 1.F, 1.F, 0.66F * a), {.round = 0, .roundingPower = 2.F});
+
+    if (!first) {
+        CBox divider = {buttonBox.x + buttonBox.w - 1, buttonBox.y, 1, buttonBox.h};
+        g_pHyprOpenGL->renderRect(divider, CHyprColor(0.F, 0.F, 0.F, 0.30F * a), {.round = 0, .roundingPower = 2.F});
+    }
+
+    if (last) {
+        CBox edge = {buttonBox.x, buttonBox.y, 1, buttonBox.h};
+        g_pHyprOpenGL->renderRect(edge, CHyprColor(0.F, 0.F, 0.F, 0.30F * a), {.round = 0, .roundingPower = 2.F});
+    }
 }
 
 void CHyprBar::renderBarButtons(CBox* barBox, const float scale, const float a) {
@@ -497,15 +543,24 @@ void CHyprBar::renderBarButtons(CBox* barBox, const float scale, const float a) 
 
         color.a *= a;
 
-        CBox buttonBox = {barBox->x + (BUTTONSRIGHT ? barBox->w - offset - scaledButtonSize : offset), barBox->y + (barBox->h - scaledButtonSize) / 2.0, scaledButtonSize,
-                          scaledButtonSize};
+        const auto scaledButtonWidth = buttonWidthOf(button) * scale;
+
+        // Windows 7 hangs the caption group from the top edge of the frame.
+        const auto buttonTop = g_pGlobalState->config.barAero->value() ? barBox->y : barBox->y + (barBox->h - scaledButtonSize) / 2.0;
+
+        CBox buttonBox = {barBox->x + (BUTTONSRIGHT ? barBox->w - offset - scaledButtonWidth : offset), buttonTop, scaledButtonWidth, scaledButtonSize};
         buttonBox.round();
 
-        // Windows caption buttons are rectangles. round = size/2 made
-        // macOS traffic-light circles and hid the − □ × glyphs.
-        g_pHyprOpenGL->renderRect(buttonBox, color, {.round = 2, .roundingPower = 2.F});
+        const bool aero  = g_pGlobalState->config.barAero->value();
+        const bool first = i == 0;
+        const bool last  = i + 1 == visibleCount;
 
-        offset += scaledButtonsPad + scaledButtonSize;
+        g_pHyprOpenGL->renderRect(buttonBox, color, {.round = aero ? 0 : 2, .roundingPower = 2.F});
+
+        if (aero)
+            renderButtonGloss(buttonBox, color.a, first, last);
+
+        offset += scaledButtonsPad + scaledButtonWidth;
     }
 }
 
@@ -530,9 +585,9 @@ void CHyprBar::renderBarButtonsText(CBox* barBox, const float scale, const float
 
         // check if hovering here
         const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, HEIGHT};
-        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - button.size - noScaleOffset : noScaleOffset), (BARBUF.y - button.size) / 2.0}.floor();
-        bool       hovering   = VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + button.size + BARBUTTONPADDING, currentPos.y + button.size);
-        noScaleOffset += BARBUTTONPADDING + button.size;
+        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - buttonWidthOf(button) - noScaleOffset : noScaleOffset), g_pGlobalState->config.barAero->value() ? 0.0 : (BARBUF.y - button.size) / 2.0}.floor();
+        bool       hovering   = VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + buttonWidthOf(button) + BARBUTTONPADDING, currentPos.y + button.size);
+        noScaleOffset += BARBUTTONPADDING + buttonWidthOf(button);
 
         if ((!button.iconTex || button.iconTex->m_texID == 0) && !button.icon.empty()) {
             // render icon
@@ -544,13 +599,15 @@ void CHyprBar::renderBarButtonsText(CBox* barBox, const float scale, const float
         if (!button.iconTex || button.iconTex->m_texID == 0)
             continue;
 
-        const auto iconX = barBox->x + (BUTTONSRIGHT ? barBox->width - offset - scaledButtonSize / 2.0 : offset + scaledButtonSize / 2.0) - button.iconTex->m_size.x / 2.0;
-        const auto iconY = barBox->y + barBox->height / 2.0 - button.iconTex->m_size.y / 2.0;
+        const auto scaledButtonWidth = buttonWidthOf(button) * scale;
+        const auto iconX = barBox->x + (BUTTONSRIGHT ? barBox->width - offset - scaledButtonWidth / 2.0 : offset + scaledButtonWidth / 2.0) - button.iconTex->m_size.x / 2.0;
+        const auto iconCentre = g_pGlobalState->config.barAero->value() ? barBox->y + scaledButtonSize / 2.0 : barBox->y + barBox->height / 2.0;
+        const auto iconY      = iconCentre - button.iconTex->m_size.y / 2.0;
         CBox       pos   = {iconX, iconY, button.iconTex->m_size.x, button.iconTex->m_size.y};
 
         if (!ICONONHOVER || (ICONONHOVER && m_iButtonHoverState > 0))
             g_pHyprOpenGL->renderTexture(button.iconTex, pos, {.a = a});
-        offset += scaledButtonsPad + scaledButtonSize;
+        offset += scaledButtonsPad + scaledButtonWidth;
 
         bool currentBit = (m_iButtonHoverState & (1 << i)) != 0;
         if (hovering != currentBit) {
@@ -670,13 +727,24 @@ void CHyprBar::renderPass(PHLMONITOR pMonitor, const float& a) {
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     }
 
-    if (SHOULDBLUR)
+    const bool AERO = g_pGlobalState->config.barAero->value();
+
+    if (AERO) {
+        // DWM raises the blurred backdrop toward white (the glass balance) and
+        // then lays the colorization colour over it. That order is what keeps
+        // the hue when the wallpaper behind the window is dark.
+        if (SHOULDBLUR)
+            g_pHyprOpenGL->renderRect(titleBarBox, CHyprColor(1.F, 1.F, 1.F, 0.26F * a),
+                                      {.round = scaledRounding, .roundingPower = m_pWindow->roundingPower(), .blur = true, .blurA = a});
+        else
+            g_pHyprOpenGL->renderRect(titleBarBox, CHyprColor(1.F, 1.F, 1.F, 0.26F * a), {.round = scaledRounding, .roundingPower = m_pWindow->roundingPower()});
+
+        g_pHyprOpenGL->renderRect(titleBarBox, color, {.round = scaledRounding, .roundingPower = m_pWindow->roundingPower()});
+        renderAeroGlass(titleBarBox, scaledRounding, a);
+    } else if (SHOULDBLUR)
         g_pHyprOpenGL->renderRect(titleBarBox, color, {.round = scaledRounding, .roundingPower = m_pWindow->roundingPower(), .blur = true, .blurA = a});
     else
         g_pHyprOpenGL->renderRect(titleBarBox, color, {.round = scaledRounding, .roundingPower = m_pWindow->roundingPower()});
-
-    if (g_pGlobalState->config.barAero->value())
-        renderAeroGlass(titleBarBox, scaledRounding, a);
 
     // render title
     if (ENABLETITLE && (m_szLastTitle != PWINDOW->m_title || m_bWindowSizeChanged || !m_pTextTex || m_pTextTex->m_texID == 0 || m_bTitleColorChanged)) {
@@ -701,7 +769,7 @@ void CHyprBar::renderPass(PHLMONITOR pMonitor, const float& a) {
 
         float      buttonSizes = BARBUTTONPADDING;
         for (auto& b : g_pGlobalState->buttons) {
-            buttonSizes += b.size + BARBUTTONPADDING;
+            buttonSizes += buttonWidthOf(b) + BARBUTTONPADDING;
         }
 
         const auto scaledBorderSize  = PWINDOW->getRealBorderSize() * pMonitor->m_scale;
@@ -817,15 +885,15 @@ void CHyprBar::damageOnButtonHover() {
 
     for (auto& b : g_pGlobalState->buttons) {
         const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, HEIGHT};
-        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - b.size - offset : offset), (BARBUF.y - b.size) / 2.0}.floor();
+        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - buttonWidthOf(b) - offset : offset), g_pGlobalState->config.barAero->value() ? 0.0 : (BARBUF.y - b.size) / 2.0}.floor();
 
-        bool       hover = VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + b.size + BARBUTTONPADDING, currentPos.y + b.size);
+        bool       hover = VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + buttonWidthOf(b) + BARBUTTONPADDING, currentPos.y + b.size);
 
         if (hover != m_bButtonHovered) {
             m_bButtonHovered = hover;
             damageEntire();
         }
 
-        offset += BARBUTTONPADDING + b.size;
+        offset += BARBUTTONPADDING + buttonWidthOf(b);
     }
 }

@@ -9,6 +9,7 @@ matching guide before starting:
 - [`agents/skills/icon-font.md`](agents/skills/icon-font.md) - adding branded glyphs to `default/fonts/omarchy/omarchy.ttf`
 - [`agents/skills/acceptance-tests.md`](agents/skills/acceptance-tests.md) - writing or running graphical acceptance tests under `test/acceptance.d/`
 - [`agents/skills/visual-verification.md`](agents/skills/visual-verification.md) - verifying any change with a visual effect in the running UI
+- [`plans/windows-7-visual-reference.md`](plans/windows-7-visual-reference.md) - what each surface is supposed to look like, with measured Windows 7 metrics and colours; read before changing any chrome
 - [`agents/skills/migrations.md`](agents/skills/migrations.md) - creating or changing migrations under `migrations/`
 
 # Documentation Layout

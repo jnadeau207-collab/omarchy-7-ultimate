@@ -21,10 +21,6 @@ Item {
   readonly property var previewRows: WindowPreview.previewRows(windows, windowService ? windowService.activeDesktopId : null, windowService ? windowService.windows : [])
   readonly property bool peekPointerOver: mouse.containsMouse || hover.hovered || peekHover.hovered
   readonly property var jumpList: appLibrary ? appLibrary.jumpListFor(group && group.desktopId ? group.desktopId : "") : []
-  readonly property int badgeCount: {
-    var _rev = notificationService ? notificationService.centerRevision : 0
-    return notificationService ? notificationService.badgeCountForApp(group.desktopId, group.name) : 0
-  }
   readonly property bool running: windows.length > 0
   readonly property bool active: {
     if (!windowService) return false
@@ -112,6 +108,7 @@ Item {
   }
 
   Rectangle {
+    id: tile
     anchors.fill: parent
     anchors.margins: 3
     radius: Tokens.radius.medium
@@ -158,13 +155,6 @@ Item {
       font.family: Tokens.typography.family
     }
 
-    Badge {
-      visible: root.badgeCount > 0
-      count: root.badgeCount
-      tone: "danger"
-      anchors.right: parent.right
-      anchors.top: parent.top
-    }
   }
 
   MouseArea {

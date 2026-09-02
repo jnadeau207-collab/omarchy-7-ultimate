@@ -223,12 +223,12 @@ ShellRoot {
     minimumSize: Qt.size(760, 520)
     maximumSize: Qt.size(16384, 16384)
     screen: root.targetScreen || (Quickshell.screens.length > 0 ? Quickshell.screens[0] : null)
-    color: Tokens.surface.canvas
+    color: "transparent"
+    surfaceFormat.opaque: false
     onClosed: Qt.quit()
 
-    Rectangle {
+    Item {
       anchors.fill: parent
-      color: Tokens.surface.canvas
 
       Loader {
         id: applicationLoader
