@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as Controls
+import qs.Commons
 
 import "ExplorerTheme.js" as Aero
 import "." as Files
@@ -7,6 +8,7 @@ import "." as Files
 Item {
   id: root
 
+  property var productProfile: null
   property var crumbs: []
   property string locationIcon: "directory"
   property string searchPlaceholder: "Search"
@@ -35,6 +37,7 @@ Item {
     id: backButton
     direction: "back"
     enabled: root.canBack
+    productProfile: root.productProfile
     width: 24
     height: 24
     anchors.left: parent.left
@@ -47,6 +50,7 @@ Item {
     id: forwardButton
     direction: "forward"
     enabled: root.canForward
+    productProfile: root.productProfile
     width: 24
     height: 24
     anchors.left: backButton.right
@@ -114,7 +118,7 @@ Item {
             Text {
               id: crumbLabel
               anchors.centerIn: parent
-              text: modelData.label
+              text: index === 0 ? Semantics.text(root.productProfile, modelData.label) : modelData.label
               textFormat: Text.PlainText
               color: Aero.textPrimary
               font.family: Aero.fontFamily
@@ -125,7 +129,7 @@ Item {
             TapHandler { onSingleTapped: root.crumbActivated(String(modelData.relativePath)) }
 
             Accessible.role: Accessible.Button
-            Accessible.name: modelData.label
+            Accessible.name: index === 0 ? Semantics.text(root.productProfile, modelData.label) : modelData.label
           }
 
           Text {
@@ -190,7 +194,7 @@ Item {
       TapHandler { onSingleTapped: root.refreshRequested() }
 
       Accessible.role: Accessible.Button
-      Accessible.name: "Refresh"
+      Accessible.name: Semantics.text(root.productProfile, "Refresh")
     }
   }
 
@@ -214,7 +218,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       height: 18
       text: root.searchText
-      placeholderText: root.searchPlaceholder
+      placeholderText: Semantics.text(root.productProfile, root.searchPlaceholder)
       placeholderTextColor: Aero.textPlaceholder
       color: Aero.textPrimary
       font.family: Aero.fontFamily
@@ -225,7 +229,7 @@ Item {
       onAccepted: root.searchAccepted(searchInput.text)
 
       Accessible.role: Accessible.EditableText
-      Accessible.name: root.searchPlaceholder
+      Accessible.name: Semantics.text(root.productProfile, root.searchPlaceholder)
     }
 
     Files.ExplorerIcon {

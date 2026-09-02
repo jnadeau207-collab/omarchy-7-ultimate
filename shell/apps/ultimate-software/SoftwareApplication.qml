@@ -14,6 +14,7 @@ Item {
   property var controller: null
   property var queryState: SoftwareModel.baseState("software.catalog", {}, "offline")
 
+  readonly property var productProfile: host && host.productProfile ? host.productProfile : null
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
   readonly property var visibleRoutes: filteredRoutes(navigation.query)
   readonly property bool busy: queryState.phase === "catalog-loading" || queryState.phase === "loading"
@@ -121,7 +122,7 @@ Item {
         anchors.margins: root.width < 900 ? Style.space(12) : Style.space(20)
         spacing: Style.space(12)
 
-        Shared.FabricStatusBanner { host: root.host; Layout.fillWidth: true }
+        Shared.FabricStatusBanner { host: root.host; semanticProfile: root.productProfile; Layout.fillWidth: true }
 
         RowLayout {
           Layout.fillWidth: true
@@ -218,7 +219,14 @@ Item {
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                   }
-                  Ui.Button { visible: root.canRetry; text: root.queryState.phase === "offline" ? "Reconnect" : "Retry"; focusable: true; bordered: true; onClicked: root.retryState() }
+                  Ui.Button {
+                    visible: root.canRetry
+                    text: root.queryState.phase === "offline" ? "Reconnect" : "Retry"
+                    semanticProfile: root.productProfile
+                    focusable: true
+                    bordered: true
+                    onClicked: root.retryState()
+                  }
                 }
                 Text {
                   textFormat: Text.PlainText

@@ -158,6 +158,43 @@ grep -Fq 'contentScroll.availableWidth >= 1050' "$ROOT/shell/apps/ultimate-softw
 grep -Fq 'contentScroll.availableWidth >= 760 ? 2 : 1' "$ROOT/shell/apps/ultimate-compatibility/CompatibilityApplication.qml" || fail "Compatibility input form responds across narrow and normal widths"
 pass "All three applications define narrow, normal, and wide layout behavior"
 
+for spec in \
+  'Software shell/apps/ultimate-software/SoftwareApplication.qml' \
+  'Compatibility shell/apps/ultimate-compatibility/CompatibilityApplication.qml'; do
+  read -r label application <<<"$spec"
+  grep -Fq 'readonly property var productProfile: host && host.productProfile ? host.productProfile : null' "$ROOT/$application" \
+    || fail "$label reads the standalone host SemanticProfile"
+  grep -A6 'visible: root.canRetry' "$ROOT/$application" | grep -Fq 'semanticProfile: root.productProfile' \
+    || fail "$label Reconnect/Retry consumes Semantics.text through Ui.Button"
+  grep -Fq 'Shared.FabricStatusBanner { host: root.host; semanticProfile: root.productProfile; Layout.fillWidth: true }' "$ROOT/$application" \
+    || fail "$label Try again banner consumes the host SemanticProfile"
+done
+pass "Software and Compatibility Reconnect/Try again consume the host SemanticProfile"
+
+grep -Fq 'productProfile: root.productProfile' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files passes the host SemanticProfile into Explorer Aero chrome"
+grep -Fq 'Semantics.text(root.productProfile, modelData.label)' "$ROOT/shell/apps/ultimate-files/ExplorerCommandBar.qml" \
+  || fail "Files command bar verbs route through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Change your view")' "$ROOT/shell/apps/ultimate-files/ExplorerCommandBar.qml" \
+  || fail "Files view-menu affordance routes through Semantics.text"
+grep -Fq 'index === 0 ? Semantics.text(root.productProfile, modelData.label) : modelData.label' "$ROOT/shell/apps/ultimate-files/ExplorerAddressBar.qml" \
+  || fail "Files address-bar route crumb is chrome; path crumbs stay literal"
+grep -Fq 'Semantics.text(root.productProfile, "Refresh")' "$ROOT/shell/apps/ultimate-files/ExplorerAddressBar.qml" \
+  || fail "Files address-bar Refresh routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, root.searchPlaceholder)' "$ROOT/shell/apps/ultimate-files/ExplorerAddressBar.qml" \
+  || fail "Files address-bar Search placeholder routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, root.direction === "back" ? "Back" : "Forward")' "$ROOT/shell/apps/ultimate-files/ExplorerCircleButton.qml" \
+  || fail "Files address-bar Back/Forward names route through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, modelData.label)' "$ROOT/shell/apps/ultimate-files/ExplorerItemView.qml" \
+  || fail "Files details view labels route through Semantics.text"
+if grep -Fq 'Semantics.text(root.productProfile, detailRow.modelData.title)' "$ROOT/shell/apps/ultimate-files/ExplorerItemView.qml"; then
+  fail "Files entry titles are machine data and must not be pseudo-localized"
+fi
+if grep -Fq 'Semantics.text(root.productProfile, detailRow.modelData.typeLabel)' "$ROOT/shell/apps/ultimate-files/ExplorerItemView.qml"; then
+  fail "Files type cells are machine data and must not be pseudo-localized"
+fi
+pass "Files Explorer Aero chrome routes through Semantics.text; path and entry cells stay literal"
+
 grep -Fq 'USER-DECLARED INPUT' "$ROOT/shell/apps/ultimate-compatibility/CompatibilityApplication.qml" || fail "Compatibility labels unmeasured host input"
 grep -Fq 'Deployment remains unavailable' "$ROOT/shell/apps/ultimate-compatibility/CompatibilityModel.js" || fail "Compatibility preserves its plan-only boundary"
 grep -Fq 'This surface never invokes a package manager' "$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml" || fail "Software Center states its execution boundary"
