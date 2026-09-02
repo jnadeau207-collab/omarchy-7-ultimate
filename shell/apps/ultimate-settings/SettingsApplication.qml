@@ -1153,7 +1153,7 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Settings coverage and unavailable changes"
+              Accessible.name: "Settings coverage"
               Accessible.description: root.queryState.query ? root.queryState.query.coverage : ""
 
               ColumnLayout {
@@ -1177,8 +1177,8 @@ Item {
                   }
 
                   Ui.Badge {
-                    text: "CHANGES UNAVAILABLE"
-                    tone: "warning"
+                    text: SettingsModel.coverageBadge(root.currentRoute ? root.currentRoute.id : "")
+                    tone: SettingsModel.coverageTone(root.currentRoute ? root.currentRoute.id : "")
                     Layout.alignment: Qt.AlignTop
                   }
                 }
@@ -1200,9 +1200,7 @@ Item {
                   visible: root.queryState.operationActions.length > 0
                   text: Semantics.text(root.productProfile, "Declared provider operations") + ": " +
                     root.queryState.operationActions.join(", ") + ". " +
-                    Semantics.text(root.productProfile, root.currentRoute && root.currentRoute.id === "settings.audio.overview"
-                      ? "Settings runs this operation through preflight, approval, and the durable coordinator."
-                      : "Settings exposes no preflight, approval, or execution control for this domain yet.")
+                    Semantics.text(root.productProfile, SettingsModel.declaredOpsHonesty(root.currentRoute ? root.currentRoute.id : ""))
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
@@ -1273,7 +1271,7 @@ Item {
             Text {
               visible: !root.queryBusy
               textFormat: Text.PlainText
-              text: Semantics.text(root.productProfile, "Read-only Fabric provider state \u00b7 no direct commands, mutation, preflight, approval, or execution authority")
+              text: Semantics.text(root.productProfile, SettingsModel.authorityFooter())
               color: Tokens.text.disabled
               font.family: Tokens.typography.family
               font.pixelSize: Style.font.caption

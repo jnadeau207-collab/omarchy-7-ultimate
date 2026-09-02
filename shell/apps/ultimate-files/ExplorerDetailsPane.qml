@@ -117,12 +117,16 @@ Rectangle {
 
   Text {
     visible: root.record === null && root.boundary !== ""
+    anchors.left: identity.right
+    anchors.leftMargin: 24
     anchors.right: parent.right
     anchors.rightMargin: 10
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 6
+    anchors.bottomMargin: 4
     text: root.boundary
     textFormat: Text.PlainText
+    wrapMode: Text.WordWrap
+    maximumLineCount: 2
     elide: Text.ElideRight
     color: Aero.textDisabled
     font.family: Aero.fontFamily
@@ -131,4 +135,5 @@ Rectangle {
 
   Accessible.role: Accessible.StaticText
   Accessible.name: root.record ? root.record.title : root.locationLabel
+  Accessible.description: root.record === null ? root.boundary : ""
 }
