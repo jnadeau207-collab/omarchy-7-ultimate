@@ -110,6 +110,7 @@ reset_home
 cat >"$tmux_config" <<'EOF'
 set -g mouse on
 
+
 # Custom
 set-hook -g alert-bell 'display-message "mine"'
 set-hook -g client-focus-out[42] 'display-message "custom focus hook"'

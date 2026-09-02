@@ -19,6 +19,14 @@ Three documentation trees, split by genre and audience:
 - `docs/` - reference on how the system is shaped (file layout, update pipeline, theming, shell architecture), for anyone working on the codebase; skills link here for depth
 - `manual/` - end-user documentation for using Omarchy, published; never codebase internals
 
+# Comments
+
+Comments are banned. Lines that use comment syntax but are parsed by a machine are configuration, not commentary, and stay: shebangs, `# omarchy:` command metadata, Quickshell `//@` pragma headers, shellcheck directives, and coding declarations.
+
+A comment sweep must not change a single byte inside a heredoc, and that includes blank lines. Heredoc bodies are data: shell fixtures, embedded Python, JSON. A sweep that strips comments and then collapses blank runs across the whole file will silently edit that data. It has happened once already, to the tmux config fixture in `tmux-alert-removal-migration-test.sh`, and the test compared the result byte for byte and went red.
+
+Verify a sweep before trusting it: replay it against its own inputs and outputs, and diff heredoc regions separately.
+
 # Style
 
 - In markdown documents (`plans/`, `docs/`, `manual/`), write full lines — no hard wrapping at 80 columns; break only at structural boundaries like headings and list items
