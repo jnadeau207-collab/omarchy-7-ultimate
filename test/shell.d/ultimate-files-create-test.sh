@@ -78,3 +78,140 @@ const traversal = Model.createNameRefusal('../../etc/passwd')
 assert(traversal !== '', 'a traversal attempt is refused before it reaches the operation plane')
 JS
 pass "the create target map and name guard refuse traversal, separators, and control characters"
+
+run_node_test <<'JS'
+const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')
+
+function readAction(capability) {
+  return {
+    capability,
+    mode: 'read',
+    risk: 'read-only',
+    effects: [],
+    arguments: { id: 'contract.arguments', version: 'v0' },
+    result: { id: 'contract.result', version: 'v0' },
+    preflight: null,
+    state: null,
+    supportsRollback: false,
+    supportsCancellation: false
+  }
+}
+
+const fileActions = {
+  inspect: readAction('files.inspect'),
+  browse: readAction('files.browse'),
+  search: readAction('files.search'),
+  recent: readAction('files.recent.read')
+}
+
+function filesCatalog() {
+  return {
+    providers: [{
+      manifest: {
+        schemaVersion: 'v0',
+        provider: 'files.provider',
+        providerVersion: 'v0',
+        minFabricProtocol: 0,
+        maxFabricProtocol: 0,
+        capabilities: Object.values(fileActions).map(action => action.capability),
+        actions: fileActions
+      },
+      fingerprint: 'a'.repeat(64),
+      generation: 4,
+      registrationOrder: 1,
+      state: 'available',
+      detail: '',
+      registeredAt: 1,
+      changedAt: 2
+    }]
+  }
+}
+
+function desktopBrowse(observedAt) {
+  return {
+    provider: 'files.provider',
+    providerVersion: 'v0',
+    generation: 4,
+    action: 'browse',
+    capability: 'files.browse',
+    observedAt,
+    value: {
+      schemaVersion: 'v0',
+      provider: 'files.provider',
+      providerVersion: 'v0',
+      action: 'browse',
+      availability: { state: 'available', read: true, operation: false, reasons: [] },
+      revision: `sha256.${'a'.repeat(64)}`,
+      truncated: false,
+      entries: [{
+        id: 'files.entry.note',
+        locationId: 'files.location.desktop',
+        parentId: null,
+        name: 'note.txt',
+        relativePath: 'note.txt',
+        kind: 'file',
+        sizeBytes: 4,
+        modifiedMs: 1,
+        mimeType: 'text/plain',
+        hidden: false,
+        writable: true,
+        identity: `sha256.${'b'.repeat(64)}`,
+        symlinkTargetState: null,
+        trash: null
+      }]
+    }
+  }
+}
+
+let sent = []
+let serial = 0
+const controller = Model.createController({
+  send: (method, params) => {
+    const id = `request.${++serial}`
+    sent.push({ id, method, params })
+    return id
+  },
+  cancel: () => true
+})
+
+controller.activate('files.desktop', {})
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'an offline Files surface does not reread')
+assertEqual(sent.length, 0, 'offline surface-visible refresh issues no Fabric request')
+
+assert(controller.setConnected(true), 'connecting starts the current catalog read')
+assertEqual(controller.state.phase, 'catalog-loading', 'connect waits on the Files catalog')
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'a catalog-loading Files surface does not start a second reread')
+assertEqual(sent.length, 1, 'catalog-loading surface-visible refresh does not duplicate the catalog request')
+
+const catalogRequest = sent.at(-1)
+assert(controller.receiveResult(catalogRequest.id, filesCatalog()), 'current Files catalog response is accepted')
+assertEqual(controller.state.phase, 'loading', 'catalog selection advances to browse')
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'a loading Files surface does not start a second reread')
+assertEqual(sent.length, 2, 'in-flight browse is not duplicated by surface-visible refresh')
+
+const browseRequest = sent.at(-1)
+assertEqual(browseRequest.method, 'provider.read', 'catalog selection issues files.browse')
+assert(controller.receiveResult(browseRequest.id, desktopBrowse(21)), 'current desktop browse is accepted')
+assertEqual(controller.state.phase, 'available', 'non-empty desktop browse reaches current state')
+
+assert(controller.refreshWhenSurfaceVisible(), 'a ready Files surface rereads when it becomes visible')
+const visibleReread = sent.at(-1)
+assertEqual(visibleReread.method, 'provider.catalog', 'surface-visible refresh reuses controller.refresh catalog plus inspect')
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'a loading surface does not start a second reread')
+assertEqual(sent.at(-1).id, visibleReread.id, 'in-flight surface reread is not duplicated')
+JS
+pass "Files rereads inspect when the surface becomes visible and skips while loading"
+
+model="$ROOT/shell/apps/ultimate-files/FilesModel.js"
+grep -Fq 'refreshWhenSurfaceVisible()' "$application" \
+  || fail "Files rereads Fabric inspect when the product surface becomes visible"
+grep -Fq 'function onSurfaceBecameActive()' "$application" \
+  || fail "Files listens for host surface activation"
+grep -Fq 'if (!controller || !host || operationBusy) return' "$application" \
+  || fail "Files skips surface-visible reread while an operation is busy"
+grep -Fq 'signal surfaceBecameActive()' "$ROOT/shell/apps/shared/ProductAppHost.qml" \
+  || fail "Product host publishes surface activation instead of a Files polling loop"
+if grep -Eq 'events[.](subscribe|unsubscribe)' "$application" "$model" "$entrypoint"; then
+  fail "Files does not invent an events.subscribe path"
+fi
+pass "Files listens for surface activation without events.subscribe or a polling daemon"
