@@ -16,6 +16,8 @@ from typing import Any, Mapping
 PACTL = "/usr/bin/pactl"
 HYPRCTL = "/usr/bin/hyprctl"
 NMCLI = "/usr/bin/nmcli"
+XDG_MIME = "/usr/bin/xdg-mime"
+DEFAULTS_PROTOCOLS = frozenset({"http", "https", "mailto"})
 NETWORK_WIFI_ID = "network.radio.wifi"
 BRIGHTNESS = "/usr/bin/omarchy-brightness-display"
 POWERPROFILESCTL = "/usr/bin/powerprofilesctl"
@@ -220,6 +222,50 @@ def apply_wifi_radio(enabled: bool, run: Any = subprocess.run) -> None:
     )
     if completed.returncode != 0:
         raise ApplyError("apply.failed", "Switching the Wi-Fi radio reported a failure status.")
+
+def require_scheme(payload: Mapping[str, Any]) -> str:
+    scheme = payload.get("scheme")
+    if not isinstance(scheme, str) or scheme not in DEFAULTS_PROTOCOLS:
+        raise ApplyError("payload.invalid", "The apply payload names no code-owned protocol.")
+    return scheme
+
+def stable_application_id(desktop_id: str) -> str:
+    digest = hashlib.sha256(f"defaults\0{desktop_id}".encode("utf-8")).hexdigest()
+    return f"defaults.app.{digest}"
+
+def desktop_entry_roots() -> list[pathlib.Path]:
+    roots = [pathlib.Path.home() / ".local" / "share" / "applications"]
+    roots.extend(pathlib.Path(base) / "applications" for base in ("/usr/local/share", "/usr/share"))
+    return roots
+
+def resolve_application(payload: Mapping[str, Any]) -> str:
+    app_id = payload.get("appId")
+    if not isinstance(app_id, str) or not app_id.startswith("defaults.app."):
+        raise ApplyError("payload.invalid", "The apply payload names no application identity.")
+    matches = []
+    for root in desktop_entry_roots():
+        try:
+            entries = sorted(root.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if entry.suffix != ".desktop" or not entry.is_file():
+                continue
+            if stable_application_id(entry.name) == app_id and entry.name not in matches:
+                matches.append(entry.name)
+    if len(matches) != 1:
+        raise ApplyError("resource.unresolved", "The named application is not installed exactly once.")
+    return matches[0]
+
+def apply_default_protocol(scheme: str, desktop_id: str, run: Any = subprocess.run) -> None:
+    completed = run(
+        [XDG_MIME, "default", desktop_id, f"x-scheme-handler/{scheme}"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if completed.returncode != 0:
+        raise ApplyError("apply.failed", "Setting the default application reported a failure status.")
 
 FILES_XDG_KEYS = {
     "desktop": "XDG_DESKTOP_DIR",
@@ -518,6 +564,18 @@ def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+def apply_defaults_protocol_set(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = payload.get("resourceId")
+    if not isinstance(resource_id, str) or not resource_id.startswith("defaults.association."):
+        raise ApplyError("payload.invalid", "The apply payload names no default association.")
+    scheme = require_scheme(payload)
+    desktop_id = resolve_application(payload)
+    apply_default_protocol(scheme, desktop_id)
+    json.dump({"ok": True, "resourceId": resource_id, "scheme": scheme, "desktopId": desktop_id}, stdout)
+    stdout.write("\n")
+    return 0
+
 def apply_network_wifi_enabled(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
@@ -656,6 +714,7 @@ ACTIONS = {
     "display-brightness-set": apply_display_brightness,
     "input-keyboard-layout-set": apply_input_keyboard_layout,
     "network-wifi-enabled-set": apply_network_wifi_enabled,
+    "defaults-protocol-set": apply_defaults_protocol_set,
     "process-terminate": apply_process_terminate,
     "power-profile-set": apply_power_profile,
     "files-directory-create": apply_files_directory_create,

@@ -73,7 +73,7 @@ class DefaultsContractLifecycleTests(unittest.IsolatedAsyncioTestCase):
         await self.exercise(
             "mime.set",
             {"mimeType": "text/plain", "appId": alternate_id},
-            lambda value: self.assertEqual(next(item for item in value["associations"] if item["key"] == "text/plain")["defaultAppId"], alternate_id),
+            lambda value: self.assertEqual((value["kind"], value["key"], value["defaultAppId"]), ("mime", "text/plain", alternate_id)),
         )
         provider = defaults.build_fake_provider(clone_database())
         html = next(item for item in provider.backend._state["associations"] if item["key"] == "text/html")
@@ -86,12 +86,12 @@ class DefaultsContractLifecycleTests(unittest.IsolatedAsyncioTestCase):
         defaults.validate_database(provider.backend._state)
         plan = await provider.preflight("mime.set", {"mimeType": "text/html", "appId": editor_id}, principal())
         changed = await provider.execute("mime.set", plan["normalizedArguments"], plan["stateRevision"])
-        self.assertEqual(next(item for item in changed["state"]["value"]["associations"] if item["key"] == "text/html")["defaultAppId"], editor_id)
+        self.assertEqual((changed["state"]["value"]["key"], changed["state"]["value"]["defaultAppId"]), ("text/html", editor_id))
 
         await self.exercise(
             "protocol.set",
             {"scheme": "http", "appId": alternate_id},
-            lambda value: self.assertEqual(next(item for item in value["associations"] if item["key"] == "http")["defaultAppId"], alternate_id),
+            lambda value: self.assertEqual((value["kind"], value["key"], value["defaultAppId"]), ("protocol", "http", alternate_id)),
         )
         association_id = defaults._association_id("protocol", "mailto")
         await self.exercise(

@@ -1423,6 +1423,7 @@ def _provider(backend: Any) -> StateDomainProvider:
         read_handlers={**READ_HANDLERS, "directory.inspect": _directory_inspect_handler(backend)},
         read_completeness_codes=READ_COMPLETENESS_CODES,
         operations=OPERATIONS,
+        scoped_resource_kind="files.directory",
     )
 
 def build_provider(*, home: Path | None = None, config_path: Path | None = None, session_operable: bool = False) -> StateDomainProvider:

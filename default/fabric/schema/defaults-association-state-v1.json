@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:association-state:v1",
+  "x-omarchy-version": "v1",
+  "title": "Defaults association operation state",
+  "type": "object",
+  "required": [
+    "resourceId",
+    "revision",
+    "value"
+  ],
+  "properties": {
+    "resourceId": {
+      "type": "string",
+      "pattern": "^defaults\\.association\\.[0-9a-f]{64}$"
+    },
+    "revision": {
+      "$ref": "#/$defs/revision"
+    },
+    "value": {
+      "$ref": "#/$defs/association"
+    },
+    "recoveryFromRevision": {
+      "$ref": "#/$defs/revision"
+    },
+    "recoveryAction": {
+      "type": "string",
+      "enum": [
+        "mime.set",
+        "protocol.set"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "revision": {
+      "type": "string",
+      "pattern": "^sha256\\.[0-9a-f]{64}$"
+    },
+    "association": {
+      "type": "object",
+      "required": [
+        "kind",
+        "key",
+        "defaultAppId"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "mime",
+            "protocol"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "defaultAppId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 255
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

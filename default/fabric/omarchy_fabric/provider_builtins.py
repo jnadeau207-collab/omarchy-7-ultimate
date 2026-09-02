@@ -104,6 +104,7 @@ def _build_defaults_provider() -> TypedProvider:
     from .providers.defaults import build_provider
 
     return build_provider(
+        session_operable=True,
         home=_trusted_account_home(),
         config_path=_default_root() / "ultimate" / "files" / "default-associations-v0.json",
     )
