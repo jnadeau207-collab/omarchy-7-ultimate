@@ -1,0 +1,346 @@
+{
+  "$schema": "omarchy.w7-specs.window-chrome.v1",
+  "meta": {
+    "title": "Windows 7 Ultimate Aero Window Chrome",
+    "product": "Omarchy Project Ultimate",
+    "dpiBaseline": 96,
+    "themeBaseline": "AeroGlass",
+    "sku": "Windows7Ultimate",
+    "decorationModeProductDefault": "SSD_hyprbars",
+    "notes": "Win7 Ultimate ground truth only. Do not treat Omarchy chrome-tokens.json colors as Aero truth.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-nonclientmetricsw",
+      "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics",
+      "https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/nf-dwmapi-dwmgetcolorizationcolor",
+      "https://learn.microsoft.com/en-us/windows/win32/dwm/customframe",
+      "https://learn.microsoft.com/en-us/windows/win32/menurc/wm-syscommand",
+      "https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-nchittest",
+      "https://web.archive.org/web/20120424082851/msdn.microsoft.com/en-us/library/bb545461.aspx",
+      "https://devblogs.microsoft.com/oldnewthing/20120326-00/?p=8003",
+      "https://stackoverflow.com/questions/6032032/how-do-i-compute-the-non-client-window-size-in-wpf",
+      "https://groups.google.com/g/comp.lang.clipper.visual-objects/c/IakwBqOvJr4",
+      "https://petri.com/new-aero-features-in-windows-7/",
+      "https://github.com/ALTaleX531/OpenGlass/blob/2117abf4/OpenGlass/Architecture/MILComp/CaptionMetricsTweaker.cpp",
+      "https://github.com/Maplespe/DWMBlurGlass/blob/7262fcf7/DWMBlurGlassExt/Section/CustomButton.cpp",
+      "https://www.quppa.net/blog/2011/04/30/windows-theme-fonts/",
+      "https://serverfault.com/questions/612485/set-default-wallpaper-for-all-users-in-win7",
+      "https://stackoverflow.com/questions/5385605/how-to-correctly-detect-the-corner-radius-for-themed-window"
+    ]
+  },
+  "metricsApiTypical96dpiVistaPlus": {
+    "SM_CYCAPTION": 21,
+    "SM_CYSIZE": 21,
+    "SM_CXSIZE": 35,
+    "SM_CXSIZEFRAME": 4,
+    "SM_CYSIZEFRAME": 4,
+    "SM_CXPADDEDBORDER": 4,
+    "SM_CXSMICON": 16,
+    "SM_CYSMICON": 16,
+    "note": "SM_CXSIZE equal-width metric is overridden visually by Aero asymmetric buttons."
+  },
+  "captionHeightPx": {
+    "restoredVisual": 30,
+    "restoredFormula": "SM_CYCAPTION + SM_CYFRAME + SM_CXPADDEDBORDER",
+    "maximizedOnScreenApprox": 22,
+    "maximizedNote": "Top size border hangs off-screen; buttons flush to work-area top."
+  },
+  "borderWidthPx": {
+    "left": 8,
+    "top": 8,
+    "right": 8,
+    "bottom": 8,
+    "formula": "SM_CXSIZEFRAME + SM_CXPADDEDBORDER",
+    "maximizedVisible": false,
+    "maximizedOffscreenHangPxPerSide": 8
+  },
+  "cornerRadiusPx": {
+    "aeroDwmOn": 8,
+    "aeroBasicOrDwmOffTopApprox": 6,
+    "publicApi": null
+  },
+  "glass": {
+    "blur": true,
+    "tintFromUserColorization": true,
+    "queryApi": "DwmGetColorizationColor",
+    "colorFormat": "0xAARRGGBB",
+    "registryKey": "HKCU\\Software\\Microsoft\\Windows\\DWM",
+    "factorySampleColorizationColor": "0x6B74B8FC",
+    "factorySampleRgbHex": "#74B8FC",
+    "factorySampleAlpha": 107,
+    "registryDefaultsSample": {
+      "ColorizationColor": "0x6B74B8FC",
+      "ColorizationAfterglow": "0x6B74B8FC",
+      "ColorizationColorBalance": 8,
+      "ColorizationAfterglowBalance": 43,
+      "ColorizationBlurBalance": 49,
+      "ColorizationGlassReflectionIntensity": 0,
+      "ColorizationOpaqueBlend": 0
+    },
+    "activeVsInactive": {
+      "classicTitleBarColorsIgnoredWhenGlassOn": true,
+      "activeHasStrongerShadow": true,
+      "activeHasFullerColorization": true,
+      "inactiveDesaturatedDimmer": true
+    },
+    "reflection": {
+      "controlledBy": "ColorizationGlassReflectionIntensity",
+      "location": "topOfGlassFrame"
+    }
+  },
+  "shadow": {
+    "restoredActive": true,
+    "restoredInactive": true,
+    "inactiveWeaker": true,
+    "maximized": false,
+    "publicSizeApi": null,
+    "recreationHintPx": {
+      "blurExtentApprox": [15, 25],
+      "note": "Approximation for themers; match screenshots."
+    }
+  },
+  "buttonWidthPx": {
+    "minimize": 29,
+    "maximize": 27,
+    "restore": 27,
+    "close": 49,
+    "loneClose": 49
+  },
+  "buttonHeightPx": 20,
+  "buttonMetrics": {
+    "cySizeBase": 21,
+    "ratiosWin7": {
+      "height": 0.95238096,
+      "minimizeWidth": 1.3809524,
+      "maximizeWidth": 1.2857143,
+      "closeWidth": 2.3333333,
+      "loneCloseWidth": 2.3333333
+    },
+    "orderLtr": ["minimize", "maximizeOrRestore", "close"],
+    "gapBetweenButtonsPx": 0,
+    "spacingFromRightEdgePx": 8,
+    "flushTopWhenMaximized": true,
+    "hitTargetsEqualVisualRects": true,
+    "closeSpecialRedHover": true,
+    "maximizeHoverSnapLayouts": false,
+    "states": ["normal", "hover", "pressed", "disabled", "inactiveWindow"]
+  },
+  "titleText": {
+    "fontFamily": "Segoe UI",
+    "fontSizePt": 9,
+    "fontWeight": 400,
+    "colorActive": {
+      "fillApproxHex": "#000000",
+      "glow": true,
+      "drawThemeTextExGlowSize": 15,
+      "flags": ["DTT_COMPOSITED", "DTT_GLOWSIZE"]
+    },
+    "colorInactive": {
+      "fillApproxHex": "#000000",
+      "reducedGlowContrast": true
+    },
+    "ellipsis": "DT_WORD_ELLIPSIS",
+    "align": "DT_LEFT",
+    "iconSizePx": 16,
+    "paddingLeftPx": 8,
+    "gapIconToTextPx": 4,
+    "paddingTopSamplePx": 8,
+    "clipBeforeButtons": true
+  },
+  "resizeHitTargetPx": {
+    "edge": 8,
+    "corner": 8,
+    "topCaptionSplit": {
+      "resizeBandFromTopPx": "borderTopSubset",
+      "remainder": "HTCAPTION"
+    },
+    "enabledWhenMaximized": false,
+    "cursors": {
+      "HTLEFT": "IDC_SIZEWE",
+      "HTRIGHT": "IDC_SIZEWE",
+      "HTTOP": "IDC_SIZENS",
+      "HTBOTTOM": "IDC_SIZENS",
+      "HTTOPLEFT": "IDC_SIZENWSE",
+      "HTBOTTOMRIGHT": "IDC_SIZENWSE",
+      "HTTOPRIGHT": "IDC_SIZENESW",
+      "HTBOTTOMLEFT": "IDC_SIZENESW",
+      "HTCAPTION": "IDC_ARROW"
+    }
+  },
+  "interactions": [
+    {
+      "id": "caption-drag-move",
+      "input": "LeftDrag@HTCAPTION",
+      "action": "MoveWindow"
+    },
+    {
+      "id": "caption-dblclick-maximize-restore",
+      "input": "LeftDoubleClick@HTCAPTION",
+      "action": "ToggleMaximizeRestore"
+    },
+    {
+      "id": "alt-f4-close",
+      "input": "Alt+F4",
+      "action": "CloseWindow"
+    },
+    {
+      "id": "alt-space-system-menu",
+      "input": "Alt+Space",
+      "action": "OpenSystemMenu"
+    },
+    {
+      "id": "icon-click-system-menu",
+      "input": "LeftClick@CaptionIcon",
+      "action": "OpenSystemMenu"
+    },
+    {
+      "id": "icon-dblclick-close",
+      "input": "LeftDoubleClick@CaptionIcon",
+      "action": "CloseWindow"
+    },
+    {
+      "id": "titlebar-rightclick-system-menu",
+      "input": "RightClick@Caption",
+      "action": "OpenSystemMenu",
+      "menuOrder": [
+        {"label": "Restore", "sc": "SC_RESTORE", "code": "0xF120"},
+        {"label": "Move", "sc": "SC_MOVE", "code": "0xF010"},
+        {"label": "Size", "sc": "SC_SIZE", "code": "0xF000"},
+        {"label": "Minimize", "sc": "SC_MINIMIZE", "code": "0xF020"},
+        {"label": "Maximize", "sc": "SC_MAXIMIZE", "code": "0xF030"},
+        {"type": "separator"},
+        {"label": "Close", "sc": "SC_CLOSE", "code": "0xF060", "defaultWhenRestored": true}
+      ]
+    },
+    {
+      "id": "btn-minimize",
+      "input": "LeftClick@Minimize",
+      "action": "Minimize"
+    },
+    {
+      "id": "btn-maximize",
+      "input": "LeftClick@Maximize",
+      "action": "Maximize"
+    },
+    {
+      "id": "btn-restore",
+      "input": "LeftClick@Restore",
+      "action": "Restore"
+    },
+    {
+      "id": "btn-close",
+      "input": "LeftClick@Close",
+      "action": "Close"
+    },
+    {
+      "id": "aero-snap-drag-left",
+      "input": "DragCaptionToLeftEdge",
+      "action": "SnapLeftHalf"
+    },
+    {
+      "id": "aero-snap-drag-right",
+      "input": "DragCaptionToRightEdge",
+      "action": "SnapRightHalf"
+    },
+    {
+      "id": "aero-snap-drag-top",
+      "input": "DragCaptionToTopEdge",
+      "action": "Maximize"
+    },
+    {
+      "id": "win-left",
+      "input": "Win+Left",
+      "action": "SnapLeftHalf",
+      "cycle": "left|right|restore"
+    },
+    {
+      "id": "win-right",
+      "input": "Win+Right",
+      "action": "SnapRightHalf",
+      "cycle": "right|left|restore"
+    },
+    {
+      "id": "win-up",
+      "input": "Win+Up",
+      "action": "Maximize"
+    },
+    {
+      "id": "win-down",
+      "input": "Win+Down",
+      "action": "RestoreIfMaximizedElseMinimize"
+    },
+    {
+      "id": "win-shift-up",
+      "input": "Win+Shift+Up",
+      "action": "VerticalMaximizeKeepWidth"
+    },
+    {
+      "id": "win-shift-down",
+      "input": "Win+Shift+Down",
+      "action": "UndoVerticalMaximize"
+    },
+    {
+      "id": "win-home",
+      "input": "Win+Home",
+      "action": "MinimizeAllExceptActiveToggle"
+    },
+    {
+      "id": "aero-shake",
+      "input": "ShakeCaption",
+      "action": "MinimizeAllExceptActiveToggle"
+    },
+    {
+      "id": "win-shift-left",
+      "input": "Win+Shift+Left",
+      "action": "MoveToMonitorLeft"
+    },
+    {
+      "id": "win-shift-right",
+      "input": "Win+Shift+Right",
+      "action": "MoveToMonitorRight"
+    }
+  ],
+  "csdVsSsd": {
+    "productDefault": "SSD_hyprbars",
+    "ssd": {
+      "drawer": "DWM/system NC frame",
+      "examples": ["Notepad", "Explorer", "most Win32"]
+    },
+    "csd": {
+      "drawer": "application",
+      "apis": ["DwmExtendFrameIntoClientArea", "WM_NCCALCSIZE", "DwmDefWindowProc"],
+      "examples": ["Office2007+", "IE7+ frame extend", "later Chrome custom frame"]
+    },
+    "csdExclusionAppliesWhen": [
+      "client draws own caption",
+      "borderless or fullscreen",
+      "explicit app exception",
+      "toolkit requests client decorations"
+    ]
+  },
+  "maximizedVsRestored": {
+    "shadowVisibleWhenMaximized": false,
+    "bordersVisibleWhenMaximized": false,
+    "bordersStillInWindowRect": true,
+    "captionButtonsFlushTop": true,
+    "resizeEnabledWhenMaximized": false,
+    "dragDownFromMaximized": "RestoreThenMove"
+  },
+  "multiMonitor": {
+    "snapUsesCurrentMonitorWorkArea": true,
+    "maximizeUsesCurrentMonitorWorkArea": true,
+    "winShiftArrowsMoveBetweenMonitors": true,
+    "perMonitorDpiOnWin7": false,
+    "maximizedBorderSliverOnAdjacentMonitor": "possible (~8px)"
+  },
+  "omarchyTokensSeparation": {
+    "groundTruthFile": "01-WINDOW-CHROME.md",
+    "omarchyTokensFile": "/workspace/w7-specs/docs/chrome-tokens.json",
+    "warning": "Omarchy glass/text/close token hex values are product theme adapters, not Windows 7 Aero measurements.",
+    "examplesNotWin7Truth": {
+      "hyprbarsTextHex": "#eeeeee",
+      "glassRgb": [28, 28, 30],
+      "captionCloseBgHex": "#c42b1c",
+      "chromeGlowHex": "#e8943a"
+    }
+  }
+}
