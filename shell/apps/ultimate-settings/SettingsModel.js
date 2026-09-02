@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable. Startup and background application inventory has no registered read contract."
+    coverage: "Default applications and associations are readable, and the default browser applies through defaults.provider protocol.set. Other associations, startup, and background application inventory remain unavailable from Settings."
   },
   {
     routeId: "settings.accessibility.overview",
@@ -582,6 +582,31 @@ function normalizeLeafResource(resource, index) {
   }
 }
 
+var BROWSER_SCHEMES = ["http", "https"]
+
+function browserAssociation(records) {
+  if (!Array.isArray(records)) return null
+  for (var i = 0; i < records.length; i++) {
+    if (records[i].associationKind === "protocol" && records[i].associationKey === "https") return records[i]
+  }
+  return null
+}
+
+function browserCandidates(record, records) {
+  if (!record || !Array.isArray(record.candidateAppIds) || !Array.isArray(records)) return []
+  var out = []
+  for (var i = 0; i < record.candidateAppIds.length; i++) {
+    var id = record.candidateAppIds[i]
+    for (var j = 0; j < records.length; j++) {
+      if (records[j].id === id && records[j].kind === "application" && records[j].status === "available") {
+        out.push({ id: id, label: clippedText(records[j].label || id, 120) })
+        break
+      }
+    }
+  }
+  return out
+}
+
 function normalizeAssociation(association, index) {
   if (!isObject(association) || typeof association.id !== "string" || association.id.length > 160) return null
   return {
@@ -591,6 +616,11 @@ function normalizeAssociation(association, index) {
     status: clippedText(association.status || "unknown", 80),
     subtitle: clippedText(association.defaultAppId || "No default application", 240),
     details: detailFields(association, { id: true, key: true, kind: true, status: true, defaultAppId: true }),
+    associationKind: typeof association.kind === "string" ? association.kind : "",
+    associationKey: typeof association.key === "string" ? association.key : "",
+    defaultAppId: typeof association.defaultAppId === "string" ? association.defaultAppId : "",
+    writable: association.writable === true,
+    candidateAppIds: Array.isArray(association.candidateAppIds) ? association.candidateAppIds.slice(0, 32) : [],
     order: index
   }
 }
@@ -1104,6 +1134,11 @@ if (typeof module !== "undefined") {
     MAX_VISIBLE_RECORDS: MAX_VISIBLE_RECORDS,
     MAX_VISIBLE_FIELDS: MAX_VISIBLE_FIELDS,
     POWER_PROFILES: POWER_PROFILES,
+    BROWSER_SCHEMES: BROWSER_SCHEMES,
+    browserAssociation: browserAssociation,
+    browserCandidates: browserCandidates,
+    normalizeAssociation: normalizeAssociation,
+    normalizeApplication: normalizeApplication,
     MAX_DISPLAY_TEXT: MAX_DISPLAY_TEXT,
     queryForRoute: queryForRoute,
     normalizedSelection: normalizedSelection,
