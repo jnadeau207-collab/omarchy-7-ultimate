@@ -48,7 +48,7 @@ Scope not delivered by W0 and now owned by the current program:
 - hyprbars is still not an ISO-mirror pacman package.
 - Tokyo Night seed, nvim-as-txt, TTY first-boot, no product ISO.
 - Chrome install-as-product, games, and “install any Windows app” are later phases.
-- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Typed Settings services are Phase 5; the Settings window already hosts existing panels.
+- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Live Settings writers are Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser; other domains stay inspect-only or host the existing Personalization picker. The Settings window already hosts those existing panels.
 
 ## Preserved W0 outcome and packaging debt
 
