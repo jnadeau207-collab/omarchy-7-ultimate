@@ -411,10 +411,9 @@ def require_entry_id(payload: Mapping[str, Any]) -> str:
     return entry_id
 
 
-def resolve_entry_path(payload: Mapping[str, Any], home: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, str]:
+def resolve_entry_slot(payload: Mapping[str, Any], home: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, str]:
     key = files_location_key(payload.get("locationId"))
     segments = require_entry_relative(payload)
-    entry_id = require_entry_id(payload)
     base = resolve_location_path(key, home)
     try:
         root = base.resolve(strict=True)
@@ -427,12 +426,16 @@ def resolve_entry_path(payload: Mapping[str, Any], home: pathlib.Path) -> tuple[
         raise ApplyError("resource.unresolved", "The entry parent is not present.") from error
     if resolved_parent != root and root not in resolved_parent.parents:
         raise ApplyError("payload.invalid", "The entry escapes its files location.")
-    final = resolved_parent / target.name
+    return root, resolved_parent / target.name, "/".join(segments)
+
+
+def resolve_entry_path(payload: Mapping[str, Any], home: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, str]:
+    entry_id = require_entry_id(payload)
+    root, final, relative = resolve_entry_slot(payload, home)
     try:
         info = final.lstat()
     except OSError as error:
         raise ApplyError("resource.unresolved", "The entry is not present.") from error
-    relative = "/".join(segments)
     observed = stable_entry_id(payload["locationId"], info.st_dev, info.st_ino, relative)
     if observed != entry_id:
         raise ApplyError("resource.drifted", "The entry on disk is not the entry the plan approved.")
@@ -462,25 +465,6 @@ def parse_trash_info(text: str) -> str:
         return parse_trash_info_path(text)
     except ValueError as error:
         raise ApplyError("apply.failed", "The Trash record does not name an absolute original path.") from error
-
-
-def resolve_destination_path(payload: Mapping[str, Any], home: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, str]:
-    key = files_location_key(payload.get("locationId"))
-    segments = require_entry_relative(payload)
-    base = resolve_location_path(key, home)
-    try:
-        root = base.resolve(strict=True)
-    except OSError as error:
-        raise ApplyError("resource.unresolved", "The files location is not present.") from error
-    target = root.joinpath(*segments)
-    try:
-        resolved_parent = target.parent.resolve(strict=True)
-    except OSError as error:
-        raise ApplyError("resource.unresolved", "The original location is no longer present.") from error
-    if resolved_parent != root and root not in resolved_parent.parents:
-        raise ApplyError("payload.invalid", "The entry escapes its files location.")
-    destination = resolved_parent / target.name
-    return root, destination, "/".join(segments)
 
 
 def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:
@@ -523,43 +507,38 @@ def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
     resource_id = require_files_resource_id(payload)
     entry_id = require_entry_id(payload)
     home = pathlib.Path.home()
-    _, destination, relative = resolve_destination_path(payload, home)
+    _, destination, relative = resolve_entry_slot(payload, home)
     parent = "/".join(relative.split("/")[:-1])
     if resource_id != stable_directory_id(payload["locationId"], parent):
         raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
     root = trash_root(home)
     files_dir = root / "files"
-    info_dir = root / "info"
-    if not files_dir.is_dir() or not info_dir.is_dir():
-        raise ApplyError("resource.unresolved", "The Trash directory is not present.")
-    trash_file = None
     try:
-        names = sorted(os.listdir(files_dir))
+        names = os.listdir(files_dir)
     except OSError as error:
         raise ApplyError("resource.unresolved", "The Trash directory is not present.") from error
     if len(names) > 4096:
         raise ApplyError("apply.failed", "The Trash directory exceeds its scan bound.")
+    trash_file = None
     for name in names:
-        candidate = files_dir / name
         try:
-            info = candidate.lstat()
+            info = (files_dir / name).lstat()
         except OSError:
             continue
         if stable_entry_id("files.location.trash", info.st_dev, info.st_ino, name) == entry_id:
-            trash_file = candidate
+            trash_file = files_dir / name
             break
     if trash_file is None:
         raise ApplyError("resource.unresolved", "The Trash record for this entry is missing.")
-    info_path = info_dir / f"{trash_file.name}.trashinfo"
+    info_path = root / "info" / f"{trash_file.name}.trashinfo"
     try:
         record = info_path.read_text(encoding="utf-8")
     except OSError as error:
         raise ApplyError("resource.unresolved", "The Trash record for this entry is missing.") from error
     original = pathlib.Path(parse_trash_info(record))
-    home_resolved = home.resolve()
-    if original != home_resolved and home_resolved not in original.parents:
+    if home.resolve() not in original.parents:
         raise ApplyError("payload.invalid", "The Trash record points outside this account's home.")
-    if original != destination and (original.parent, original.name) != (destination.parent, destination.name):
+    if original != destination:
         raise ApplyError("payload.invalid", "The Trash record does not name this restore destination.")
     if destination.exists():
         raise ApplyError("apply.exists", "Something already occupies the original location.")

@@ -222,6 +222,51 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
             again = next(item for item in reread["state"]["entries"] if item["id"] == trash_entries[0]["id"])
             self.assertIsNone(again["trash"])
 
+    async def test_restore_preflight_refuses_unsafe_or_unresolvable_trash_records(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            documents = home / "Documents"
+            documents.mkdir()
+            trash_files = home / ".local" / "share" / "Trash" / "files"
+            trash_info = home / ".local" / "share" / "Trash" / "info"
+            (trash_files / "folder").mkdir(parents=True)
+            trash_info.mkdir(parents=True)
+            records = {
+                "report.txt": f"{documents}/report.txt",
+                "outside.txt": "/etc/outside.txt",
+                "dotdot.txt": f"{documents}/../Documents/dotdot.txt",
+                "orphan.txt": f"{documents}/Gone/orphan.txt",
+            }
+            for name, original in records.items():
+                (trash_files / name).write_text("x", encoding="utf-8")
+                (trash_info / f"{name}.trashinfo").write_text(
+                    f"[Trash Info]\nPath={original}\nDeletionDate=2026-09-02T12:00:00\n",
+                    encoding="utf-8",
+                )
+            (trash_files / "folder" / "report.txt").write_text("nested", encoding="utf-8")
+            config = ROOT / "default" / "ultimate" / "files" / "locations-v0.json"
+            provider = files.build_provider(home=home, config_path=config, session_operable=True)
+            inventory = await provider.read("inspect", {})
+            by_path = {
+                item["relativePath"]: item["id"]
+                for item in inventory["state"]["entries"]
+                if item["locationId"] == "files.location.trash"
+            }
+            expectations = {
+                "outside.txt": "The Trash record points outside this account's home.",
+                "dotdot.txt": "The Trash record does not name a writable Files location.",
+                "orphan.txt": "The original restore parent is unavailable.",
+                "folder/report.txt": "The Trash record for this entry is missing or unsafe.",
+                "folder": "The Trash record for this entry is missing or unsafe.",
+            }
+            for relative, explanation in expectations.items():
+                with self.assertRaises(FabricError) as caught:
+                    await provider.preflight("trash.restore", {"entryId": by_path[relative]}, principal())
+                self.assertEqual(caught.exception.code, "files.precondition-failed", relative)
+                self.assertEqual(caught.exception.explanation, explanation, relative)
+            plan = await provider.preflight("trash.restore", {"entryId": by_path["report.txt"]}, principal())
+            self.assertEqual(plan["currentState"]["value"]["locationId"], "files.location.documents")
+
     def test_provider_rejects_relative_or_symlinked_code_owned_config(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

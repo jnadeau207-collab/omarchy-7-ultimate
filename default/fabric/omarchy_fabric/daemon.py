@@ -802,6 +802,7 @@ class FabricDaemon:
             "locationId": current["locationId"],
             "entryRelativePath": f"{parent}/{added[0]}" if parent else added[0],
         }
+
     def _operation_pid(self, value: Any) -> int:
         if isinstance(value, bool) or not isinstance(value, int) or not 2 <= value <= 4194304:
             raise FabricError(

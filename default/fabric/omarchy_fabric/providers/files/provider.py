@@ -44,9 +44,8 @@ MAX_CONFIG_BYTES = 32 * 1024
 MAX_MOUNTINFO_BYTES = 256 * 1024
 MAX_RECENT_BYTES = 1024 * 1024
 MAX_REAL_STATE_BYTES = 36 * 1024
-MAX_TRASH_INFO_BYTES = 4 * 1024
 MAX_TRASHINFO_BYTES = 8 * 1024
-RESTORE_LOCATION_KEYS = ("pictures", "desktop", "documents", "downloads", "home")
+RESTORE_LOCATION_KEYS = ("desktop", "documents", "downloads", "pictures", "home")
 
 LOCATION_CATALOG = {
     "this-pc": ("this-pc", "virtual", True),
@@ -82,13 +81,6 @@ PLACE_LOCATION_IDS = frozenset({
     "files.location.videos",
 })
 LOCATION_ENTRY_FLOOR = 8
-RESTORE_LOCATION_SOURCES = (
-    ("files.location.desktop", "xdg-desktop"),
-    ("files.location.documents", "xdg-documents"),
-    ("files.location.downloads", "xdg-download"),
-    ("files.location.pictures", "xdg-pictures"),
-    (HOME_LOCATION_ID, "home"),
-)
 READ_COMPLETENESS_CODES = frozenset({
     "files.inventory-truncated",
     "files.mount-inventory-truncated",
@@ -610,41 +602,36 @@ class RealFilesBackend:
             return None
         return names
 
-    def restore_destination(self, trash_name: str, current: Mapping[str, Any]) -> dict[str, Any]:
-        name = normalize_name(trash_name)
-        info_path = self.home / ".local" / "share" / "Trash" / "info" / f"{name}.trashinfo"
+    def restore_destination(self, trash_relative: str, current: Mapping[str, Any]) -> RestoreDestination:
         try:
+            name = normalize_name(trash_relative)
+            info_path = self.home / ".local" / "share" / "Trash" / "info" / f"{name}.trashinfo"
             raw = read_regular_file_no_follow(info_path, MAX_TRASHINFO_BYTES)
             original = Path(parse_trash_info_path(raw.decode("utf-8", errors="strict")))
         except (OSError, UnicodeError, ValueError) as error:
-            raise _precondition("The Trash record for this entry is missing or unsafe.", name) from error
+            raise _precondition("The Trash record for this entry is missing or unsafe.", trash_relative) from error
         try:
             home_resolved = self.home.resolve()
         except OSError as error:
             raise _precondition("Home is unavailable for Trash recovery.", name) from error
-        if original != home_resolved and home_resolved not in original.parents:
+        if home_resolved not in original.parents:
             raise _precondition("The Trash record points outside this account's home.", name)
         reasons: list[FabricError] = []
         roots = self._root_paths(self._user_dirs(reasons))
+        original_text = os.fspath(original)
         matches: list[tuple[int, str, str]] = []
         for key in RESTORE_LOCATION_KEYS:
-            definition = LOCATION_CATALOG.get(key)
-            if definition is None:
-                continue
-            root = roots.get(definition[1])
+            root = roots.get(LOCATION_CATALOG[key][1])
             if root is None:
                 continue
             root_text = os.fspath(root)
-            original_text = os.fspath(original)
-            if original_text == root_text or original_text.startswith(f"{root_text}/"):
-                remainder = original_text[len(root_text):].lstrip("/")
-                if not remainder:
-                    continue
-                try:
-                    relative = normalize_relative_path(remainder, allow_empty=False)
-                except ValueError:
-                    continue
-                matches.append((len(root_text), f"files.location.{key}", relative))
+            if not original_text.startswith(f"{root_text}/"):
+                continue
+            try:
+                relative = normalize_relative_path(original_text[len(root_text) + 1:], allow_empty=False)
+            except ValueError:
+                continue
+            matches.append((len(root_text), f"files.location.{key}", relative))
         if not matches:
             raise _precondition("The Trash record does not name a writable Files location.", name)
         _length, location_id, relative = max(matches, key=lambda item: item[0])
@@ -659,11 +646,11 @@ class RealFilesBackend:
             if len(parents) != 1 or parents[0]["kind"] != "directory":
                 raise _precondition("The original restore parent is unavailable.", parent_relative)
             parent_id = parents[0]["id"]
-        return {
-            "originalLocationId": location_id,
-            "originalParentId": parent_id,
-            "originalRelativePath": relative,
-        }
+        return RestoreDestination(
+            originalLocationId=location_id,
+            originalParentId=parent_id,
+            originalRelativePath=relative,
+        )
 
     def _root_paths(self, user_dirs: Mapping[str, Path]) -> dict[str, Path]:
         return {
@@ -1507,38 +1494,32 @@ def _directory_inspect_handler(backend: Any):
 def _manifest() -> Mapping[str, Any]:
     return _load_json(Path(__file__).with_name("manifest-v0.json"), 128 * 1024)
 
-def _hydrate_restore(current: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+def _hydrate_restore(current: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> Mapping[str, Any]:
     selected = _entry(current, arguments["entryId"])
     if selected["trash"] is not None:
-        return dict(current)
-    if not hasattr(backend, "restore_destination"):
-        return dict(current)
-    location = _location(current, selected["locationId"], writable=False)
-    if location["kind"] != "trash":
+        return current
+    if _location(current, selected["locationId"])["kind"] != "trash":
         raise _precondition("The selected entry is not in Trash.", selected["id"])
-    record = backend.restore_destination(selected["name"], current)
+    record = backend.restore_destination(selected["relativePath"], current)
     state = deepcopy(dict(current))
     target = next(entry for entry in state["entries"] if entry["id"] == selected["id"])
     target["trash"] = record
     return state
 
+def _operations(backend: Any) -> Mapping[str, OperationSpec]:
+    if not hasattr(backend, "restore_destination"):
+        return OPERATIONS
+    spec = OPERATIONS["trash.restore"]
+    hydrated = replace(
+        spec,
+        propose=lambda current, arguments: spec.propose(_hydrate_restore(current, arguments, backend), arguments),
+        scope=lambda current, proposed, arguments, scoped_backend: spec.scope(
+            _hydrate_restore(current, arguments, backend), proposed, arguments, scoped_backend
+        ),
+    )
+    return {**OPERATIONS, "trash.restore": hydrated}
+
 def _provider(backend: Any) -> StateDomainProvider:
-    operations: dict[str, OperationSpec] = dict(OPERATIONS)
-    if hasattr(backend, "restore_destination"):
-        spec = OPERATIONS["trash.restore"]
-        operations["trash.restore"] = OperationSpec(
-            spec.action,
-            spec.normalize,
-            lambda current, arguments: spec.propose(_hydrate_restore(current, arguments, backend), arguments),
-            spec.summarize,
-            spec.guards,
-            lambda current, proposed, arguments, scoped_backend: spec.scope(
-                _hydrate_restore(current, arguments, backend),
-                proposed,
-                arguments,
-                scoped_backend,
-            ),
-        )
     return StateDomainProvider(
         domain=DOMAIN,
         provider_id=PROVIDER_ID,
@@ -1551,7 +1532,7 @@ def _provider(backend: Any) -> StateDomainProvider:
         state_validator=validate_workspace,
         read_handlers={**READ_HANDLERS, "directory.inspect": _directory_inspect_handler(backend)},
         read_completeness_codes=READ_COMPLETENESS_CODES,
-        operations=operations,
+        operations=_operations(backend),
         scoped_resource_kind="files.directory",
     )
 
