@@ -137,7 +137,7 @@ Settings and Files writer honesty — LIVE means a typed Settings/Files control 
 |--------|---------|-------------|-----------------------------|
 | Sound | `audio.inspect` | `output-volume.set` | mute, routing, ports; `parity.sound` prototype; `windows-native.6` pending |
 | Network | `network.inspect` | `wifi.set-enabled` | join / per-connection; `parity.network` prototype; `windows-native.2` pending |
-| Power | `power.inspect` | none (polkit / app.slice) | `profile.set` write plane kept, not Settings LIVE; sleep / lock / lid; `parity.power-options` prototype; `windows-native.35` pending |
+| Power | `power.inspect` | none (polkit / app.slice) | `profile.set` write plane kept, not Settings LIVE; Superbar QS Process leftover unverified on metal; sleep / lock / lid; `parity.power-options` prototype; `windows-native.35` pending |
 | Display | `display.inspect` | `brightness.set` | resolution / scale / arrangement; `parity.display` prototype; `windows-native.3` pending |
 | Input / Language | `input.inspect` | `keyboard-layout.set` (multi-layout) | pointer / repeat / locale; `parity.language-locale` prototype; `windows-native.33` pending |
 | Apps | `defaults.inspect` | `protocol.set` (default browser) | other associations / startup / Default Programs applet; `parity.default-programs` prototype; `windows-native.19` pending |
