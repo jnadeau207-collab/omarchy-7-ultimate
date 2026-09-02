@@ -285,7 +285,7 @@ Item {
               ? "The Wi-Fi change ended as " + String(result.status || "unknown") + "."
             : "The volume change ended as " + String(result.status || "unknown") + "."
       root.resetOperation(succeeded ? applied : refused)
-      if (root.controller) root.controller.refresh()
+      if (root.controller) root.controller.refreshAfterSuccessfulWriter(result.status)
     }
   }
 
@@ -335,6 +335,12 @@ Item {
     else host.retryFabric()
   }
 
+  function refreshVisibleSurface() {
+    if (!controller || !host || operationBusy) return
+    if (!host.fabricReady) return
+    controller.refreshWhenSurfaceVisible()
+  }
+
   function statusBorderColor() {
     if (queryState.phase === "failed" || queryState.phase === "denied" || queryState.phase === "contract-mismatch")
       return Tokens.state.danger
@@ -380,6 +386,10 @@ Item {
     function onRouteActivated(routeId, routeArguments, context) {
       root.ensureController()
       root.controller.activate(routeId, routeArguments || {})
+    }
+
+    function onSurfaceBecameActive() {
+      root.refreshVisibleSurface()
     }
 
     function onFabricResult(requestId, result) {

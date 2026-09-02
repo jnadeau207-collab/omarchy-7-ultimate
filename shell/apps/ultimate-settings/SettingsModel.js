@@ -979,6 +979,27 @@ Controller.prototype.refresh = function() {
   return this._refreshCatalog()
 }
 
+Controller.prototype.refreshCurrent = function() {
+  if (!this.connected) return false
+  if (!this.catalog) return this._refreshCatalog()
+  this.generation++
+  this._cancelId(this.activeReadRequestId)
+  this.activeReadRequestId = ""
+  return this._startRead()
+}
+
+Controller.prototype.refreshAfterSuccessfulWriter = function(status) {
+  if (String(status || "") !== "succeeded") return false
+  return this.refreshCurrent()
+}
+
+Controller.prototype.refreshWhenSurfaceVisible = function() {
+  if (!this.connected) return false
+  var phase = String(this.state && this.state.phase || "")
+  if (phase === "catalog-loading" || phase === "loading" || phase === "offline") return false
+  return this.refreshCurrent()
+}
+
 Controller.prototype.receiveResult = function(requestId, result) {
   var id = String(requestId || "")
   var ticket = this.pending[id]
