@@ -12,6 +12,7 @@ Item {
   property bool manageIpc: false
   property var bar: null
   property string omarchyPath: Quickshell.env("OMARCHY_PATH")
+  property var semanticProfile: null
   property string themeDirs: ""
   property string wallpaperDirs: ""
 
@@ -73,7 +74,7 @@ Item {
 
     Text {
       textFormat: Text.PlainText
-      text: "Theme packs"
+      text: Semantics.text(root.semanticProfile, "Theme packs")
       color: Tokens.text.secondary
       font.family: Tokens.typography.family
       font.pixelSize: Style.font.caption
@@ -95,7 +96,7 @@ Item {
 
     Text {
       textFormat: Text.PlainText
-      text: "Wallpaper"
+      text: Semantics.text(root.semanticProfile, "Wallpaper")
       color: Tokens.text.secondary
       font.family: Tokens.typography.family
       font.pixelSize: Style.font.caption

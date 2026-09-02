@@ -9,8 +9,8 @@ BorderSurface {
   property string iconText: ""
   property string tooltipText: ""
   property var semanticProfile: null
-  property string accessibleName: _displayText !== "" ? _displayText : tooltipText
-  property string accessibleDescription: tooltipText
+  property string accessibleName: _displayText !== "" ? _displayText : Semantics.text(semanticProfile, tooltipText)
+  property string accessibleDescription: Semantics.text(semanticProfile, tooltipText)
 
   property bool selected: false
   property bool active: false

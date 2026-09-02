@@ -180,6 +180,13 @@ grep -Fq 'readonly property bool terminationAuthorized: false' "$application" \
   || fail "terminationAuthorized stays false; shell principal cannot authorize End Task"
 grep -Fq 'text: root.terminationAuthorized ? "LIVE CONTROL" : "CHANGES UNAVAILABLE"' "$application" \
   || fail "unauthorized Administration coverage badge stays CHANGES UNAVAILABLE"
+grep -A4 'text: root.terminationAuthorized ? "LIVE CONTROL" : "CHANGES UNAVAILABLE"' "$application" \
+  | grep -Fq 'semanticProfile: root.productProfile' \
+  || fail "Administration coverage badge consumes Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Exact resource")' "$application" \
+  || fail "Administration Exact resource prefix consumes Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Display bound reached at")' "$application" \
+  || fail "Administration display-bound notice consumes Semantics.text"
 grep -Fq 'endTaskEnabled: root.terminationAuthorized && String(modelData.kind || "") === "process"' "$application" \
   || fail "End Task control stays hidden while terminationAuthorized is false"
 if grep -Eq 'terminationAuthorized:\s*true' "$application"; then

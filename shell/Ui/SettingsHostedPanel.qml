@@ -6,6 +6,7 @@ Item {
   id: root
 
   property string sourcePath: ""
+  property var semanticProfile: null
 
   QtObject {
     id: barStub
@@ -31,6 +32,7 @@ Item {
     if ("chromeVisible" in item) item.chromeVisible = false
     if ("manageIpc" in item) item.manageIpc = false
     if ("bar" in item) item.bar = barStub
+    if ("semanticProfile" in item) item.semanticProfile = root.semanticProfile
   }
 
   Text {
@@ -42,6 +44,6 @@ Item {
     color: Tokens.state.danger
     font.family: Tokens.typography.family
     font.pixelSize: Style.font.body
-    text: "This Settings page failed to load the live panel."
+    text: Semantics.text(root.semanticProfile, "This Settings page failed to load the live panel.")
   }
 }
