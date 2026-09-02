@@ -1,0 +1,661 @@
+{
+  "id": "02-START-SUPERBAR",
+  "title": "Windows 7 Ultimate Start Menu + Superbar (Taskbar)",
+  "sku": "Windows 7 Ultimate",
+  "dpiBaseline": 96,
+  "aeroAssumed": true,
+  "sp": "SP1 behavior unless noted",
+  "notInScope": [
+    "Windows 10/11 Start",
+    "Native multi-monitor taskbars",
+    "XP cascading All Programs",
+    "Programmatic app-initiated pinning",
+    "User-drag-resizable Start dimensions"
+  ],
+  "citations": [
+    {
+      "id": "MS-TB",
+      "title": "Taskbar Extensions (Win32)",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/shell/taskbar-extensions"
+    },
+    {
+      "id": "MS-API",
+      "title": "Windows 7 Taskbar APIs — MSDN Magazine July 2009",
+      "url": "https://learn.microsoft.com/en-us/archive/msdn-magazine/2009/july/windows-7-taskbar-apis"
+    },
+    {
+      "id": "MS-SRCH",
+      "title": "Windows Search Features (Windows 7)",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744686(v=ws.10)"
+    },
+    {
+      "id": "MS-NA",
+      "title": "Customize the notification area in Windows 7",
+      "url": "https://support.microsoft.com/en-us/topic/guided-help-customize-the-notification-area-in-windows-7-508f3b7d-435d-2aea-d189-0d4b2d6eca13"
+    },
+    {
+      "id": "MS-MM",
+      "title": "Extending Windows 7 task bar across multiple displays",
+      "url": "https://learn.microsoft.com/en-us/answers/questions/2409590/extending-windows-7-task-bar-across-multiple-displ"
+    },
+    {
+      "id": "SF-CUST",
+      "title": "Start Menu - Customize (Seven Forums)",
+      "url": "https://www.sevenforums.com/threads/start-menu-customize.265/"
+    },
+    {
+      "id": "SF-ORB",
+      "title": "Start Menu Button - Change (Seven Forums)",
+      "url": "https://www.sevenforums.com/threads/start-menu-button-change.23024/"
+    },
+    {
+      "id": "SF-PEEK",
+      "title": "Aero Peek - Change Delay Time to Preview Desktop",
+      "url": "https://www.sevenforums.com/threads/aero-peek-change-delay-time-to-preview-desktop.20337/"
+    },
+    {
+      "id": "MSFN-H",
+      "title": "Taskbar Height - Windows 7 (MSFN)",
+      "url": "https://msfn.org/board/topic/138900-taskbar-height/"
+    },
+    {
+      "id": "WDN",
+      "title": "Decrease size of icons in Windows 7 taskbar",
+      "url": "https://www.webdevelopersnotes.com/decrease-size-of-icons-in-windows-7-taskbar"
+    },
+    {
+      "id": "DUMMIES",
+      "title": "Getting to Know the Windows 7 Start Menu (Rathbone)",
+      "url": "https://www.dummies.com/article/getting-to-know-the-windows-7-start-menu-195481"
+    },
+    {
+      "id": "GAV",
+      "title": "Parts of the Windows 7 Start Menu (Gavilan)",
+      "url": "https://hhh.gavilan.edu/jmaringer/PDFFiles/Win7_StartMenu.pdf"
+    },
+    {
+      "id": "PETRI",
+      "title": "The New Windows 7 Start Menu",
+      "url": "https://petri.com/windows-7-start-menu/"
+    },
+    {
+      "id": "ITW",
+      "title": "What happens when you click a Windows 7 taskbar icon",
+      "url": "https://www.itwriting.com/blog/1157-what-happens-when-you-click-a-windows-7-taskbar-icon.html"
+    },
+    {
+      "id": "MDL",
+      "title": "Win7 taskbar button MinWidth",
+      "url": "https://www.mydigitallife.net/how-to-change-the-windows-7-taskbar-button-length-or-width-size/"
+    },
+    {
+      "id": "TWC",
+      "title": "W7 Taskbar Tweaker — default thumbnail ~96px",
+      "url": "https://www.thewindowsclub.com/tweak-taskbar-button-thumbnail-sizes-with-w7-taskbar-tweaker"
+    },
+    {
+      "id": "ASKVG-AP",
+      "title": "Cascading All Programs is not native Win7",
+      "url": "https://www.askvg.com/enable-windows-xp-style-cascading-all-programs-list-in-windows-vista-and-7-start-menu/"
+    },
+    {
+      "id": "SU-MM",
+      "title": "Win7 per-monitor taskbar not native",
+      "url": "https://superuser.com/questions/48617/can-windows-7-place-a-task-bar-on-each-monitor-which-only-shows-applications-ru"
+    },
+    {
+      "id": "SU-SD",
+      "title": "Show Desktop button width",
+      "url": "https://superuser.com/questions/638754/how-can-i-increase-the-width-of-the-show-desktop-button-in-windows-7-8-8-1-10"
+    },
+    {
+      "id": "VSB",
+      "title": "How To Create A Windows 7 Start Orb",
+      "url": "https://www.door2windows.com/how-to-create-a-windows-7-start-orb/"
+    }
+  ],
+  "startMenu": {
+    "layout": "two-pane",
+    "userResizableByDrag": false,
+    "heightControl": "Number of recent programs to display (Start_MinMFU); optional Jump List item count; large vs small MFU icons",
+    "defaultMfuCount": 10,
+    "maxMfuCountPractical": 30,
+    "aeroGlass": true,
+    "dimensionsPx96Dpi": {
+      "note": "Microsoft does not publish official Start pixel widths. Values are measured/community parity targets @ 96 DPI.",
+      "totalWidth": { "target": 400, "tolerance": 10, "citations": ["skinning-community"] },
+      "leftPaneWidth": { "target": 244, "tolerance": 8 },
+      "rightPaneWidth": { "target": 156, "tolerance": 8 },
+      "rowHeightLargeIcons": { "min": 36, "max": 40 },
+      "rowHeightSmallIcons": { "min": 22, "max": 24 },
+      "searchBoxHeight": { "min": 28, "max": 32 },
+      "userTileHeight": { "min": 48, "max": 56 },
+      "shutdownButtonHeight": { "min": 24, "max": 28 }
+    },
+    "leftPane": {
+      "orderTopToBottom": [
+        "pinnedPrograms",
+        "separator",
+        "mfuRecentPrograms",
+        "allPrograms",
+        "searchBox"
+      ],
+      "pinned": {
+        "position": "above separator",
+        "userReorderable": true,
+        "dragToPin": true,
+        "contextMenu": ["Pin to Taskbar", "Unpin from Start Menu", "Jump List destinations when supported"]
+      },
+      "mfu": {
+        "defaultSlots": 10,
+        "registry": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Start_MinMFU",
+        "highlightNewlyInstalled": true,
+        "largeIconsDefault": true,
+        "jumpListChevron": true
+      },
+      "allPrograms": {
+        "presentation": "in-place-replace-left-pane",
+        "cascadingFlyoutNative": false,
+        "backControl": true,
+        "folderExpand": "click-in-tree",
+        "hoverAutoExpand": false,
+        "sortByNameDefault": true,
+        "animation": "short-slide-fade",
+        "animationMsTarget": { "min": 150, "max": 250 },
+        "sources": [
+          "%AppData%\\Microsoft\\Windows\\Start Menu",
+          "%ProgramData%\\Microsoft\\Windows\\Start Menu"
+        ],
+        "citations": ["ASKVG-AP", "SF-CUST", "GAV"]
+      },
+      "search": {
+        "placeholder": "Search programs and files",
+        "placement": "bottom of left pane",
+        "focusOnOpen": true,
+        "instantFilter": true,
+        "enterActivatesTopResult": true,
+        "resultsReplaceLeftPane": true,
+        "resultsFillFullStartWidth": true,
+        "initialMatchesPerCategory": 3,
+        "categories": [
+          "Programs",
+          "Control Panel",
+          "Documents library / other libraries",
+          "Files (indexed)",
+          "E-mail (when applicable)",
+          "Internet (http: queries)"
+        ],
+        "seeMoreResultsLink": true,
+        "groupHeaderOpensExplorer": true,
+        "phase1GrepScopes": [
+          "Start Menu shortcuts (user + all users)",
+          "User-pinned taskbar shortcuts",
+          "Library display names",
+          "Known folder display names",
+          "PATH / command templates (Run semantics)"
+        ],
+        "phase2": "Full indexer query with MFU bias and relevance sort",
+        "citations": ["MS-SRCH"]
+      }
+    },
+    "rightPane": {
+      "orderUserReorderable": false,
+      "defaultItemsTopToBottom": [
+        {
+          "label": "<User display name>",
+          "kind": "userTile",
+          "opens": "userProfileFolder",
+          "path": "%UserProfile%",
+          "isControlPanel": false
+        },
+        {
+          "label": "Documents",
+          "kind": "library",
+          "opens": "Documents library",
+          "isControlPanel": false
+        },
+        {
+          "label": "Pictures",
+          "kind": "library",
+          "opens": "Pictures library",
+          "isControlPanel": false
+        },
+        {
+          "label": "Music",
+          "kind": "library",
+          "opens": "Music library",
+          "isControlPanel": false
+        },
+        {
+          "label": "Games",
+          "kind": "specialFolder",
+          "opens": "Games Explorer",
+          "isControlPanel": false
+        },
+        {
+          "label": "Computer",
+          "kind": "folder",
+          "opens": "Computer",
+          "isControlPanel": false
+        },
+        {
+          "label": "Control Panel",
+          "kind": "controlPanel",
+          "opens": "Control Panel home (Category view default)",
+          "isControlPanel": true
+        },
+        {
+          "label": "Devices and Printers",
+          "kind": "controlPanelShellFolder",
+          "opens": "Devices and Printers",
+          "isControlPanel": true
+        },
+        {
+          "label": "Default Programs",
+          "kind": "controlPanel",
+          "opens": "Default Programs",
+          "isControlPanel": true
+        },
+        {
+          "label": "Help and Support",
+          "kind": "help",
+          "opens": "Windows Help and Support",
+          "isControlPanel": false
+        }
+      ],
+      "optionalItems": [
+        { "label": "Downloads", "default": "off", "modes": ["dontDisplay", "link", "menu"] },
+        { "label": "Recorded TV", "default": "off", "modes": ["dontDisplay", "link", "menu"] },
+        { "label": "Videos", "default": "off", "modes": ["dontDisplay", "link", "menu"] },
+        { "label": "Homegroup", "default": "offUntilJoined", "modes": ["dontDisplay", "link"] },
+        { "label": "Network", "default": "off", "modes": ["dontDisplay", "link"] },
+        { "label": "Recent Items", "default": "off", "modes": ["dontDisplay", "link"] },
+        { "label": "Connect To", "default": "off", "modes": ["on", "off"] },
+        { "label": "Run command", "default": "off", "modes": ["on", "off"] },
+        { "label": "Favorites menu", "default": "off", "modes": ["on", "off"] },
+        { "label": "Administrative Tools", "default": "off", "modes": ["dontDisplay", "allPrograms", "allProgramsAndStart"] }
+      ],
+      "displayAsLinkVsMenu": {
+        "link": "Single click opens window",
+        "menu": "Hover/click expands flyout of children",
+        "registryValues": "0=hide, 1=link, 2=menu"
+      },
+      "citations": ["DUMMIES", "GAV", "SF-CUST"]
+    },
+    "power": {
+      "mainButtonDefaultLabel": "Shut down",
+      "mainButtonConfigurable": true,
+      "flyoutTrigger": "split-button chevron to the right of Shut down",
+      "flyoutOrder": [
+        "Switch user",
+        "Log off",
+        "Lock",
+        "Restart",
+        "Sleep",
+        "Hibernate"
+      ],
+      "skuVariance": {
+        "Sleep": "Shown when ACPI sleep supported and not disabled by policy/powercfg",
+        "Hibernate": "Shown when hibernation enabled (powercfg /hibernate on) and hiberfil.sys present; Ultimate supports; often OEM-disabled until enabled",
+        "Switch user": "Hidden if Fast User Switching disabled by policy"
+      },
+      "citations": ["DUMMIES"]
+    },
+    "orb": {
+      "bitmapStripPx": { "width": 54, "height": 162 },
+      "stateSizePx": { "width": 54, "height": 54 },
+      "states": ["normal", "hot", "pressed"],
+      "dpiVariants": {
+        "100": "54x162",
+        "125": "66x198",
+        "150": "81x243",
+        "200": "106x318"
+      },
+      "placement": "leftmost of taskbar; overlaps slightly above taskbar top edge",
+      "citations": ["SF-ORB", "VSB"]
+    },
+    "keyboard": [
+      { "key": "Win", "result": "Toggle Start" },
+      { "key": "Type", "result": "Search filter (instant)" },
+      { "key": "Enter", "result": "Launch selected / top result" },
+      { "key": "Esc", "result": "Close Start (or clear query)" },
+      { "key": "Up/Down", "result": "Move selection" },
+      { "key": "Right", "result": "Open Jump List / submenu when chevron present" },
+      { "key": "Left/Backspace", "result": "Back from All Programs / close submenu" },
+      { "key": "Ctrl+Esc", "result": "Open Start" },
+      { "key": "Win+X", "result": "Windows Mobility Center (Win7 — not Win10 Quick Link)" }
+    ],
+    "interactionTable": [
+      { "action": "Open Start", "gesture": "Left-click orb or Win", "result": "Start opens; focus in search" },
+      { "action": "Close Start", "gesture": "Win, Esc, outside click, orb, or launch", "result": "Start closes" },
+      { "action": "Launch item", "gesture": "Left-click pinned/MFU/result", "result": "App launches; Start closes" },
+      { "action": "Jump List from Start", "gesture": "Hover/click chevron or right-click item", "result": "App Jump List" },
+      { "action": "Pin to Start Menu", "gesture": "Right-click → Pin to Start Menu", "result": "Appears in pinned section" },
+      { "action": "Unpin from Start Menu", "gesture": "Right-click pinned → Unpin", "result": "Removed from pinned" },
+      { "action": "Pin to Taskbar", "gesture": "Right-click → Pin to Taskbar", "result": "Superbar pin" },
+      { "action": "Drag to pin", "gesture": "Drag shortcut onto pinned area", "result": "Pins (when drag-drop enabled)" },
+      { "action": "Reorder pins", "gesture": "Drag pinned items vertically", "result": "Order persisted" },
+      { "action": "All Programs", "gesture": "Click All Programs", "result": "Left pane becomes program tree" },
+      { "action": "Back", "gesture": "Click Back", "result": "Restore pinned+MFU" },
+      { "action": "Type to search", "gesture": "Type with Start open", "result": "Instant categorized filter" },
+      { "action": "Run top hit", "gesture": "Enter", "result": "Opens focused top result" },
+      { "action": "Open place", "gesture": "Left-click right-pane label", "result": "Opens destination" },
+      { "action": "Shut down", "gesture": "Left-click Shut down", "result": "Configured power action" },
+      { "action": "Power flyout", "gesture": "Left-click chevron", "result": "Switch user…Hibernate menu" },
+      { "action": "Orb context", "gesture": "Right-click orb", "result": "Properties / Explorer / Search — not app Jump List" }
+    ]
+  },
+  "taskbar": {
+    "name": "Superbar",
+    "heightPx96Dpi": {
+      "largeIcons": 40,
+      "smallIcons": 30,
+      "unlockedRowSnapLarge": 40,
+      "citations": ["MSFN-H", "WDN"]
+    },
+    "defaultPosition": "bottom",
+    "allowedPositions": ["bottom", "left", "right", "top"],
+    "lockPreventsMoveResize": true,
+    "autoHide": "optional",
+    "icons": {
+      "largePx": 32,
+      "smallPx": 16,
+      "combinedButtonWidthApproxLarge": { "min": 54, "max": 62 },
+      "labeledMinWidthApprox": { "large": 56, "small": 40 },
+      "citations": ["MDL", "WDN"]
+    },
+    "combineModes": [
+      {
+        "id": "alwaysCombineHideLabels",
+        "label": "Always combine, hide labels",
+        "default": true,
+        "behavior": "One button per AppUserModelID; no text; multi-window peeks"
+      },
+      {
+        "id": "combineWhenFull",
+        "label": "Combine when taskbar is full",
+        "default": false,
+        "behavior": "Separate labeled buttons until crowded"
+      },
+      {
+        "id": "neverCombine",
+        "label": "Never combine",
+        "default": false,
+        "behavior": "One button per window with labels"
+      }
+    ],
+    "groupingKey": "AppUserModelID",
+    "defaultPinsTypical": ["Internet Explorer", "Windows Explorer", "Windows Media Player"],
+    "livePreview": {
+      "hoverDelayMsDefault": 400,
+      "thumbnailDefaultPxApprox": 96,
+      "oneThumbnailPerWindow": true,
+      "livePeekOnThumbnailHover": true,
+      "closeViaX": true,
+      "middleClickThumbnailCloses": true,
+      "requiresAero": true,
+      "citations": ["MS-TB", "TWC"]
+    },
+    "jumpLists": {
+      "structureTopToBottom": [
+        "Pinned destinations",
+        "Recent or Frequent destinations",
+        "Custom categories (app-defined)",
+        "Tasks (app verbs)",
+        "Taskbar tasks: Open new / Pin-Unpin / Close window(s)"
+      ],
+      "destinationVsTask": {
+        "destination": "Noun — file/URL/shell item; user-pinnable",
+        "task": "Verb — IShellLink with args; preferably static"
+      },
+      "openGestures": [
+        { "gesture": "Right-click task button", "result": "Jump List" },
+        { "gesture": "Click-drag upward", "result": "Jump List" },
+        { "gesture": "Shift+Right-click", "result": "Classic window menu (not Jump List)" },
+        { "gesture": "Win+Alt+N", "result": "Jump List for pin slot N" }
+      ],
+      "programmaticPinningByApps": false,
+      "citations": ["MS-TB", "MS-API"]
+    },
+    "notificationArea": {
+      "orderTowardShowDesktop": [
+        "overflowChevron",
+        "userNotificationIcons",
+        "systemIcons",
+        "clockDate",
+        "showDesktop"
+      ],
+      "systemIcons": ["Action Center", "Power", "Network", "Volume"],
+      "systemIconsConfigurable": true,
+      "iconsHiddenByDefault": true,
+      "perIconModes": [
+        "Show icon and notifications",
+        "Only show notifications",
+        "Hide icon and notifications"
+      ],
+      "overflowChevron": true,
+      "dragPromoteDemote": true,
+      "clock": {
+        "leftClick": "Calendar flyout",
+        "rightClick": "Adjust date/time",
+        "twoLineWhenTallEnough": true
+      },
+      "actionCenter": {
+        "icon": "flag",
+        "opens": "Action Center"
+      },
+      "citations": ["MS-TB", "MS-NA"]
+    },
+    "showDesktop": {
+      "position": "far right of taskbar",
+      "widthPxApprox": { "min": 8, "max": 15, "typicalWithoutTablet": "8-10" },
+      "hoverPeekDelayMsDefault": 1000,
+      "hoverPeekRegistry": "DesktopLivePreviewHoverTime",
+      "hoverBehavior": "Windows become transparent; desktop visible with outlines",
+      "clickBehavior": "Show Desktop toggle (minimize/restore windows)",
+      "winSpace": "Peek while held",
+      "winD": "Show/restore desktop",
+      "citations": ["MS-TB", "SF-PEEK", "SU-SD"]
+    },
+    "interactionTable": [
+      { "action": "Activate/restore", "gesture": "Left-click inactive button", "result": "Activate last active window of group" },
+      { "action": "Minimize", "gesture": "Left-click active foreground button", "result": "Minimize that window" },
+      { "action": "New instance", "gesture": "Shift+Left-click or Middle-click", "result": "Start new instance" },
+      { "action": "Elevated new instance", "gesture": "Ctrl+Shift+Left-click", "result": "Run as administrator (UAC)" },
+      { "action": "Cycle group", "gesture": "Ctrl+Left-click combined button", "result": "Cycle windows in group" },
+      { "action": "Jump List", "gesture": "Right-click", "result": "Jump List" },
+      { "action": "Window menu", "gesture": "Shift+Right-click", "result": "Restore/Move/Size/Minimize/Maximize/Close" },
+      { "action": "Close from peek", "gesture": "Thumbnail × or middle-click thumbnail", "result": "Close that window" },
+      { "action": "Launch by index", "gesture": "Win+1..Win+0", "result": "Launch/switch pin slots 1-10" },
+      { "action": "New instance by index", "gesture": "Shift+Win+N", "result": "New instance of slot N" },
+      { "action": "Cycle by index", "gesture": "Ctrl+Win+N", "result": "Cycle windows of slot N" },
+      { "action": "Jump List by index", "gesture": "Win+Alt+N", "result": "Jump List for slot N" },
+      { "action": "Focus taskbar", "gesture": "Win+T", "result": "Focus first button; arrows cycle" },
+      { "action": "Focus tray", "gesture": "Win+B", "result": "Focus notification area" },
+      { "action": "Reorder", "gesture": "Drag buttons", "result": "Persist order" }
+    ],
+    "multiMonitor": {
+      "nativeSecondaryTaskbar": false,
+      "taskbarCount": 1,
+      "host": "primary display only (or whichever single monitor edge hosts the bar)",
+      "allWindowsAppearOnSingleTaskbar": true,
+      "thirdPartyRequiredForPerMonitorBars": true,
+      "citations": ["MS-MM", "SU-MM"],
+      "parityNote": "Omarchy multi-monitor Superbar is a product delta, not Win7 Ultimate shipping behavior."
+    },
+    "toolbars": {
+      "available": ["Address", "Links", "Desktop", "New toolbar…"],
+      "quickLaunchUi": false,
+      "quickLaunchFolderStillExists": true,
+      "deskbandsSupported": true,
+      "citations": ["MS-TB"]
+    }
+  },
+  "controlPanelFromStartRightPane": {
+    "directEntries": [
+      {
+        "startLabel": "Control Panel",
+        "destination": "Control Panel home",
+        "defaultView": "Category",
+        "shell": "shell:ControlPanelFolder / control.exe"
+      },
+      {
+        "startLabel": "Devices and Printers",
+        "destination": "Devices and Printers",
+        "shell": "control printers / shell:::{A8A91A66-3A7D-4424-8D24-04E180695C7A}"
+      },
+      {
+        "startLabel": "Default Programs",
+        "destination": "Default Programs",
+        "shell": "control /name Microsoft.DefaultPrograms"
+      },
+      {
+        "startLabel": "Help and Support",
+        "destination": "Windows Help and Support",
+        "isControlPanel": false
+      }
+    ],
+    "viaControlPanelHomeCategories": {
+      "System and Security": [
+        "Action Center",
+        "Windows Firewall",
+        "System",
+        "Windows Update",
+        "Power Options",
+        "Backup and Restore",
+        "BitLocker Drive Encryption",
+        "Administrative Tools"
+      ],
+      "Network and Internet": [
+        "Network and Sharing Center",
+        "Homegroup",
+        "Internet Options"
+      ],
+      "Hardware and Sound": [
+        "Devices and Printers",
+        "AutoPlay",
+        "Sound",
+        "Power Options",
+        "Display",
+        "Windows Mobility Center"
+      ],
+      "Programs": [
+        "Programs and Features",
+        "Default Programs",
+        "Desktop Gadgets"
+      ],
+      "User Accounts and Family Safety": [
+        "User Accounts",
+        "Parental Controls",
+        "Windows CardSpace",
+        "Credential Manager"
+      ],
+      "Appearance and Personalization": [
+        "Personalization",
+        "Display",
+        "Desktop Gadgets",
+        "Taskbar and Start Menu",
+        "Ease of Access Center",
+        "Folder Options",
+        "Fonts"
+      ],
+      "Clock Language and Region": [
+        "Date and Time",
+        "Region and Language"
+      ],
+      "Ease of Access": [
+        "Ease of Access Center",
+        "Speech Recognition"
+      ]
+    },
+    "allControlPanelItemsIconView": [
+      "Action Center",
+      "Administrative Tools",
+      "AutoPlay",
+      "Backup and Restore",
+      "BitLocker Drive Encryption",
+      "Color Management",
+      "Credential Manager",
+      "Date and Time",
+      "Default Programs",
+      "Desktop Gadgets",
+      "Device Manager",
+      "Devices and Printers",
+      "Display",
+      "Ease of Access Center",
+      "Folder Options",
+      "Fonts",
+      "Getting Started",
+      "HomeGroup",
+      "Indexing Options",
+      "Internet Options",
+      "Keyboard",
+      "Location and Other Sensors",
+      "Mouse",
+      "Network and Sharing Center",
+      "Notification Area Icons",
+      "Parental Controls",
+      "Pen and Touch",
+      "Personalization",
+      "Phone and Modem",
+      "Power Options",
+      "Programs and Features",
+      "Recovery",
+      "Region and Language",
+      "RemoteApp and Desktop Connections",
+      "Sound",
+      "Speech Recognition",
+      "Sync Center",
+      "System",
+      "Taskbar and Start Menu",
+      "Troubleshooting",
+      "User Accounts",
+      "Windows CardSpace",
+      "Windows Defender",
+      "Windows Firewall",
+      "Windows Update"
+    ],
+    "nonControlPanelRightPaneFolders": [
+      { "label": "User tile", "opens": "%UserProfile%" },
+      { "label": "Documents", "opens": "Documents library" },
+      { "label": "Pictures", "opens": "Pictures library" },
+      { "label": "Music", "opens": "Music library" },
+      { "label": "Games", "opens": "Games Explorer" },
+      { "label": "Computer", "opens": "Computer folder" }
+    ]
+  },
+  "registryReference": {
+    "root": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+    "values": {
+      "Start_MinMFU": "MFU/recent program count (default 10)",
+      "Start_JumpListItems": "Jump List destination count (default 10)",
+      "Start_ShowMyDocs": "0 hide / 1 link / 2 menu",
+      "Start_ShowMyPics": "0/1/2",
+      "Start_ShowMyMusic": "0/1/2",
+      "Start_ShowMyGames": "0/1/2",
+      "Start_ShowMyComputer": "0/1/2",
+      "Start_ShowControlPanel": "0/1/2",
+      "Start_ShowUser": "0/1/2",
+      "Start_ShowPrinters": "Devices and Printers on/off",
+      "Start_ShowSetProgramAccessAndDefaults": "Default Programs on/off",
+      "Start_ShowHelp": "Help on/off",
+      "Start_LargeMFUIcons": "Large MFU icons",
+      "TaskbarSmallIcons": "1 = small Superbar icons",
+      "DesktopLivePreviewHoverTime": "Show Desktop peek delay ms (default 1000)"
+    },
+    "citations": ["SF-CUST", "SF-PEEK"]
+  },
+  "implementerChecklist": [
+    "Two-pane Start; search bottom-left; Shut down bottom-right",
+    "Right-pane labels/order match defaultItemsTopToBottom",
+    "All Programs is in-pane with Back — not flyout",
+    "Search categories + top-3 + See more results",
+    "Power flyout order + Sleep/Hibernate variance",
+    "Superbar 40/30 height; orb 54x54 states",
+    "Jump List structure + Shift+Right-click window menu",
+    "Left-click minimize-active / activate-inactive; Shift/middle new instance; Ctrl cycle",
+    "Notification: Action Center, volume, network, power, clock, overflow",
+    "Show Desktop thin strip + hover peek + click toggle",
+    "Single taskbar on primary only for strict Win7 parity"
+  ]
+}
