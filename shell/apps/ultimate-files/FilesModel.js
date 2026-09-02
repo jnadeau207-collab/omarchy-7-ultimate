@@ -131,10 +131,28 @@ function phaseForError(error) {
   return "failed"
 }
 
+function browsesEntries(query) {
+  return !!query && query.kind === "entries" && query.action === "browse"
+}
+
+function normalizedRelativePath(value) {
+  var text = String(value === null || value === undefined ? "" : value)
+  if (text === "") return ""
+  if (text.length > 1024) throw new Error("The Files relative path is too long.")
+  if (/[\u0000-\u001f\u007f]/.test(text)) throw new Error("The Files relative path holds a control character.")
+  if (text.charAt(0) === "/" || text.charAt(text.length - 1) === "/") throw new Error("The Files relative path is not bounded to its location.")
+  var parts = text.split("/")
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i] === "" || parts[i] === "." || parts[i] === "..") throw new Error("The Files relative path is not bounded to its location.")
+  }
+  return text
+}
+
 function normalizedSelection(query, argumentsValue) {
   var args = isObject(argumentsValue) ? argumentsValue : {}
   var allowed = query && query.routeId === "files.search" ? { query: true, entityType: true, entityId: true }
     : query && (query.routeId === "files.overview" || query.routeId === "files.network") ? { entityType: true, entityId: true }
+    : browsesEntries(query) ? { relativePath: true }
     : {}
   var names = Object.keys(args)
   for (var i = 0; i < names.length; i++) if (!allowed[names[i]]) throw new Error("The Files route contains an unsupported argument.")
@@ -148,12 +166,13 @@ function normalizedSelection(query, argumentsValue) {
   if (entityType !== "" && entityType !== expected) throw new Error("The Files entity type does not match this route.")
   var search = hasOwn(args, "query") ? String(args.query) : ""
   if (search.length > 120 || /[\u0000-\u001f\u007f]/.test(search)) throw new Error("The Files search query is invalid.")
-  return { entityType: entityType, entityId: entityId, searchQuery: search }
+  var relative = hasOwn(args, "relativePath") ? normalizedRelativePath(args.relativePath) : ""
+  return { entityType: entityType, entityId: entityId, searchQuery: search, relativePath: relative }
 }
 
 function baseState(routeId, argumentsValue, phase) {
   var query = queryForRoute(routeId)
-  var selection = { entityType: "", entityId: "", searchQuery: "" }
+  var selection = { entityType: "", entityId: "", searchQuery: "", relativePath: "" }
   var error = null
   if (!query) error = responseError("The route is not in the closed Files map.")
   else {
@@ -163,6 +182,7 @@ function baseState(routeId, argumentsValue, phase) {
   return {
     routeId: String(routeId || ""), query: query,
     entityType: selection.entityType, entityId: selection.entityId, searchQuery: selection.searchQuery,
+    relativePath: selection.relativePath,
     phase: error ? "failed" : String(phase || "offline"), requestId: "", providerEntry: null,
     records: [], totalRecords: 0, clipped: false, truncated: false, selectedMissing: false,
     availability: "unknown", revision: "", observedAt: null, providerGeneration: 0,
@@ -173,6 +193,7 @@ function baseState(routeId, argumentsValue, phase) {
 function routeArguments(state) {
   var result = {}
   if (state.query && state.query.routeId === "files.search" && state.searchQuery !== "") result.query = state.searchQuery
+  if (browsesEntries(state.query) && state.relativePath !== "") result.relativePath = state.relativePath
   if (state.entityType !== "") { result.entityType = state.entityType; result.entityId = state.entityId }
   return result
 }
@@ -256,6 +277,7 @@ function requestArguments(state) {
   var result = {}
   var keys = Object.keys(source)
   for (var i = 0; i < keys.length; i++) result[keys[i]] = source[keys[i]]
+  if (browsesEntries(query) && state.relativePath !== "") result.relativePath = state.relativePath
   return result
 }
 
@@ -303,10 +325,10 @@ function validTrash(trash) {
 }
 
 function validEntry(entry) {
-  return exactKeys(entry, ["id", "locationId", "parentId", "name", "relativePath", "kind", "sizeBytes", "modifiedNs", "mimeType", "hidden", "writable", "identity", "symlinkTargetState", "trash"]) &&
+  return exactKeys(entry, ["id", "locationId", "parentId", "name", "relativePath", "kind", "sizeBytes", "modifiedMs", "mimeType", "hidden", "writable", "identity", "symlinkTargetState", "trash"]) &&
     stableId(entry.id) && stableId(entry.locationId) && (entry.parentId === null || stableId(entry.parentId)) && typeof entry.name === "string" && entry.name.length >= 1 && entry.name.length <= 255 &&
     typeof entry.relativePath === "string" && entry.relativePath.length >= 1 && entry.relativePath.length <= 1024 && ["file", "directory", "symlink"].indexOf(entry.kind) >= 0 &&
-    (entry.sizeBytes === null || (Number.isSafeInteger(entry.sizeBytes) && entry.sizeBytes >= 0)) && (entry.modifiedNs === null || (Number.isSafeInteger(entry.modifiedNs) && entry.modifiedNs >= 0)) &&
+    (entry.sizeBytes === null || (Number.isSafeInteger(entry.sizeBytes) && entry.sizeBytes >= 0)) && (entry.modifiedMs === null || (Number.isSafeInteger(entry.modifiedMs) && entry.modifiedMs >= 0)) &&
     (entry.mimeType === null || (typeof entry.mimeType === "string" && entry.mimeType.length <= 160 && /^[a-z0-9.+-]+\/[a-z0-9.+-]+$/.test(entry.mimeType))) &&
     typeof entry.hidden === "boolean" && typeof entry.writable === "boolean" && revision(entry.identity) &&
     (entry.symlinkTargetState === null || ["inside-root", "outside-root", "missing", "unknown"].indexOf(entry.symlinkTargetState) >= 0) && validTrash(entry.trash)
@@ -330,18 +352,170 @@ function validRecent(recent) {
   return exactKeys(recent, ["entryId", "rank"]) && stableId(recent.entryId) && Number.isInteger(recent.rank) && recent.rank >= 0 && recent.rank <= 127
 }
 
+var TYPE_LABELS = {
+  txt: "Text Document", log: "Text Document", ini: "Configuration Settings", cfg: "Configuration Settings",
+  conf: "Configuration Settings", toml: "TOML File", yml: "YAML File", yaml: "YAML File", json: "JSON File",
+  xml: "XML Document", html: "HTML Document", htm: "HTML Document", css: "Cascading Style Sheet Document",
+  js: "JavaScript File", qml: "QML File", py: "Python File", sh: "Shell Script", bash: "Shell Script",
+  md: "Markdown Document", pdf: "Adobe Acrobat Document", doc: "Microsoft Word Document",
+  docx: "Microsoft Word Document", xls: "Microsoft Excel Worksheet", xlsx: "Microsoft Excel Worksheet",
+  ppt: "Microsoft PowerPoint Presentation", pptx: "Microsoft PowerPoint Presentation",
+  png: "PNG Image", jpg: "JPEG Image", jpeg: "JPEG Image", gif: "GIF Image", bmp: "Bitmap Image",
+  svg: "SVG Document", webp: "WebP Image", ico: "Icon", mp3: "MP3 File", wav: "Wave Sound",
+  flac: "FLAC File", ogg: "OGG File", mp4: "MP4 Video", mkv: "Matroska Video", webm: "WebM Video",
+  avi: "Video Clip", mov: "QuickTime Movie", zip: "Compressed (zipped) Folder", gz: "GZ File",
+  xz: "XZ File", tar: "TAR File", bz2: "BZ2 File", "7z": "7Z File", rar: "RAR File",
+  iso: "Disc Image File", exe: "Application", dll: "Application Extension", desktop: "Shortcut",
+  ttf: "TrueType Font File", otf: "OpenType Font File", deb: "DEB File", rpm: "RPM File",
+  pkg: "PKG File", zst: "ZST File", sig: "SIG File", lock: "LOCK File"
+}
+
+var MONTH_DAY_CLOCK = 12
+
+function extensionOf(name) {
+  var text = String(name || "")
+  var dot = text.lastIndexOf(".")
+  if (dot <= 0 || dot === text.length - 1) return ""
+  return text.slice(dot + 1).toLowerCase()
+}
+
+function typeLabelFor(name, kind, mimeType) {
+  if (kind === "directory") return "File folder"
+  if (kind === "symlink") return "Shortcut"
+  var extension = extensionOf(name)
+  if (extension === "") return "File"
+  if (hasOwn(TYPE_LABELS, extension)) return TYPE_LABELS[extension]
+  if (typeof mimeType === "string" && mimeType.indexOf("text/") === 0) return extension.toUpperCase() + " File"
+  return extension.toUpperCase() + " File"
+}
+
+function groupedDigits(value) {
+  var text = String(value)
+  var out = ""
+  var count = 0
+  for (var i = text.length - 1; i >= 0; i--) {
+    out = text.charAt(i) + out
+    count++
+    if (count % 3 === 0 && i > 0) out = "," + out
+  }
+  return out
+}
+
+function formatSize(sizeBytes) {
+  if (sizeBytes === null || sizeBytes === undefined) return ""
+  var bytes = Number(sizeBytes)
+  if (!isFinite(bytes) || bytes < 0) return ""
+  return groupedDigits(Math.ceil(bytes / 1024)) + " KB"
+}
+
+function formatModified(modifiedMs) {
+  if (modifiedMs === null || modifiedMs === undefined) return ""
+  var milliseconds = Number(modifiedMs)
+  if (!isFinite(milliseconds) || milliseconds <= 0) return ""
+  var moment = new Date(milliseconds)
+  var hours = moment.getHours()
+  var suffix = hours >= MONTH_DAY_CLOCK ? "PM" : "AM"
+  var display = hours % MONTH_DAY_CLOCK
+  if (display === 0) display = MONTH_DAY_CLOCK
+  var minutes = moment.getMinutes()
+  var padded = minutes < 10 ? "0" + minutes : String(minutes)
+  return (moment.getMonth() + 1) + "/" + moment.getDate() + "/" + moment.getFullYear() + " " + display + ":" + padded + " " + suffix
+}
+
+function explorerEntries(records) {
+  var result = []
+  if (!Array.isArray(records)) return result
+  for (var i = 0; i < records.length; i++) if (records[i] && records[i].kind === "entry") result.push(records[i])
+  return result
+}
+
+function explorerLocations(records) {
+  var result = []
+  if (!Array.isArray(records)) return result
+  for (var i = 0; i < records.length; i++) if (records[i] && records[i].kind === "location") result.push(records[i])
+  return result
+}
+
+function explorerMounts(records) {
+  var result = []
+  if (!Array.isArray(records)) return result
+  for (var i = 0; i < records.length; i++) if (records[i] && records[i].kind === "mount") result.push(records[i])
+  return result
+}
+
+function compareText(left, right) {
+  var a = String(left || "").toLowerCase()
+  var b = String(right || "").toLowerCase()
+  if (a < b) return -1
+  if (a > b) return 1
+  return 0
+}
+
+function sortedEntries(records, column, ascending) {
+  var items = explorerEntries(records).slice()
+  var key = String(column || "name")
+  var direction = ascending === false ? -1 : 1
+  items.sort(function (left, right) {
+    var leftFolder = left.entryKind === "directory" ? 0 : 1
+    var rightFolder = right.entryKind === "directory" ? 0 : 1
+    if (leftFolder !== rightFolder) return leftFolder - rightFolder
+    var outcome = 0
+    if (key === "size") outcome = (Number(left.sizeBytes) || 0) - (Number(right.sizeBytes) || 0)
+    else if (key === "modified") outcome = (Number(left.modifiedMs) || 0) - (Number(right.modifiedMs) || 0)
+    else if (key === "type") outcome = compareText(left.typeLabel, right.typeLabel)
+    else outcome = compareText(left.title, right.title)
+    if (outcome === 0) outcome = compareText(left.title, right.title)
+    return outcome * direction
+  })
+  return items
+}
+
+function breadcrumbFor(routeTitle, relativePath) {
+  var crumbs = [{ label: String(routeTitle || "Files"), relativePath: "" }]
+  var text = String(relativePath || "")
+  if (text === "") return crumbs
+  var parts = text.split("/")
+  var walked = ""
+  for (var i = 0; i < parts.length; i++) {
+    walked = walked === "" ? parts[i] : walked + "/" + parts[i]
+    crumbs.push({ label: parts[i], relativePath: walked })
+  }
+  return crumbs
+}
+
+function childRelativePath(current, name) {
+  var base = String(current || "")
+  var leaf = String(name || "")
+  if (leaf === "") return base
+  return base === "" ? leaf : base + "/" + leaf
+}
+
+function parentRelativePath(current) {
+  var text = String(current || "")
+  if (text === "") return ""
+  var cut = text.lastIndexOf("/")
+  return cut < 0 ? "" : text.slice(0, cut)
+}
+
 function entryRecord(entry, index) {
   if (!isObject(entry) || !validEntry(entry)) return null
   var details = [detail("Location", entry.locationId), detail("Relative path", entry.relativePath), detail("Type", entry.mimeType || entry.kind)]
   if (entry.sizeBytes !== null && entry.sizeBytes !== undefined) details.push(detail("Size", entry.sizeBytes + " bytes"))
-  if (entry.modifiedNs !== null && entry.modifiedNs !== undefined) details.push(detail("Modified", entry.modifiedNs + " ns"))
+  if (entry.modifiedMs !== null && entry.modifiedMs !== undefined) details.push(detail("Modified", formatModified(entry.modifiedMs)))
   details.push(detail("Writable", entry.writable === true ? "Yes" : "No"))
   if (entry.symlinkTargetState) details.push(detail("Symlink target", entry.symlinkTargetState))
   if (isObject(entry.trash)) {
     details.push(detail("Original location", entry.trash.originalLocationId))
     details.push(detail("Original path", entry.trash.originalRelativePath))
   }
-  return { id: entry.id, kind: "entry", title: clippedText(entry.name, 240), subtitle: clippedText(entry.relativePath, 320), status: entry.kind, tone: entry.kind === "symlink" ? "warning" : "neutral", details: details, order: index }
+  return {
+    id: entry.id, kind: "entry", title: clippedText(entry.name, 240), subtitle: clippedText(entry.relativePath, 320),
+    status: entry.kind, tone: entry.kind === "symlink" ? "warning" : "neutral", details: details, order: index,
+    entryKind: entry.kind, locationId: entry.locationId, parentId: entry.parentId, relativePath: entry.relativePath,
+    sizeBytes: entry.sizeBytes, modifiedMs: entry.modifiedMs, mimeType: entry.mimeType, hidden: entry.hidden,
+    writable: entry.writable, typeLabel: typeLabelFor(entry.name, entry.kind, entry.mimeType),
+    sizeText: entry.kind === "file" ? formatSize(entry.sizeBytes) : "", modifiedText: formatModified(entry.modifiedMs)
+  }
 }
 
 function locationEntryCount(entries, locationId) {
@@ -371,7 +545,11 @@ function locationRecord(location, index) {
   if (!isObject(location) || !validLocation(location)) return null
   var details = [detail("Kind", location.kind), detail("Writable", location.writable === true ? "Yes" : "No"), detail("Root revision", location.rootDigest)]
   if (isObject(location.reason)) details.push(detail("Reason", location.reason.explanation || location.reason.title))
-  return { id: location.id, kind: "location", title: clippedText(location.label, 240), subtitle: clippedText(location.kind, 160), status: location.state, tone: location.state === "available" ? "success" : location.state === "degraded" ? "warning" : "danger", details: details, order: index }
+  return {
+    id: location.id, kind: "location", title: clippedText(location.label, 240), subtitle: clippedText(location.kind, 160),
+    status: location.state, tone: location.state === "available" ? "success" : location.state === "degraded" ? "warning" : "danger",
+    details: details, order: index, locationKind: location.kind, writable: location.writable === true, rootDigest: location.rootDigest
+  }
 }
 
 function mountRecord(mount, index) {
@@ -380,7 +558,12 @@ function mountRecord(mount, index) {
   var display = source.scheme === "smb" ? (source.host || "network") + "/" + (source.share || "share") : source.display
   var details = [detail("Kind", mount.kind), detail("Source", display), detail("Writable", mount.writable === true ? "Yes" : "No"), detail("Location", mount.locationId)]
   if (isObject(mount.reason)) details.push(detail("Reason", mount.reason.explanation || mount.reason.title))
-  return { id: mount.id, kind: "mount", title: clippedText(mount.label, 240), subtitle: clippedText(display, 320), status: clippedText(mount.state, 80), tone: mount.state === "mounted" ? "success" : mount.state === "degraded" ? "warning" : "danger", details: details, order: index }
+  return {
+    id: mount.id, kind: "mount", title: clippedText(mount.label, 240), subtitle: clippedText(display, 320),
+    status: clippedText(mount.state, 80), tone: mount.state === "mounted" ? "success" : mount.state === "degraded" ? "warning" : "danger",
+    details: details, order: index, mountKind: mount.kind, mountState: mount.state, locationId: mount.locationId,
+    writable: mount.writable === true, display: clippedText(display, 320)
+  }
 }
 
 function validateEnvelope(state, result) {
@@ -691,5 +874,9 @@ if (typeof module !== "undefined") module.exports = {
   baseState: baseState, createController: createController, isIdleSearch: isIdleSearch,
   stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone,
   CREATE_LOCATIONS: CREATE_LOCATIONS, createLocationForRoute: createLocationForRoute,
-  createNameRefusal: createNameRefusal, isTrashRoute: isTrashRoute
+  createNameRefusal: createNameRefusal, isTrashRoute: isTrashRoute,
+  typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
+  explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
+  sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,
+  parentRelativePath: parentRelativePath, normalizedRelativePath: normalizedRelativePath, extensionOf: extensionOf
 }
