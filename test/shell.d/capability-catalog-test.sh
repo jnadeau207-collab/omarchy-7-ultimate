@@ -370,6 +370,45 @@ for row in writers["capabilities"] + readers["capabilities"] + jobs["jobs"]:
 agent_center = next(job for job in jobs["jobs"] if job["id"] == "parity.agent-center")
 if agent_center.get("claim") == "present" or agent_center.get("agentAvailability") == "present":
     raise SystemExit(f"parity.agent-center was flipped to present: {agent_center}")
+
+if "apps.defaults.set" in by_id:
+    raise SystemExit("apps.defaults.set remains as a catalog invent")
+protocol_set = by_id["defaults.protocol.set"]
+if protocol_set.get("provider", {}).get("id") != "defaults.provider":
+    raise SystemExit(f"defaults.protocol.set provider is {protocol_set.get('provider')}")
+if protocol_set.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"defaults.protocol.set provider state is {protocol_set.get('provider')}")
+if protocol_set.get("availability", {}).get("claim") == "present":
+    raise SystemExit("defaults.protocol.set must not claim present")
+if protocol_set["humanRoute"].get("path") != "Settings > Apps":
+    raise SystemExit(f"defaults.protocol.set route is {protocol_set.get('humanRoute')}")
+if protocol_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
+    raise SystemExit(f"defaults.protocol.set source is {protocol_set.get('source')}")
+for row in writers["capabilities"]:
+    provider = row.get("provider") or {}
+    if provider.get("id") == "apps.provider" and provider.get("state") == "present":
+        raise SystemExit(f"{row.get('id')} invents apps.provider present")
+parity_defaults = next(job for job in jobs["jobs"] if job["id"] == "parity.default-programs")
+if parity_defaults.get("claim") == "present":
+    raise SystemExit(f"parity.default-programs was flipped to present: {parity_defaults}")
+if parity_defaults.get("sourceStatus") != "prototype":
+    raise SystemExit(f"parity.default-programs sourceStatus is {parity_defaults.get('sourceStatus')}")
+if "apps.defaults.set" in (parity_defaults.get("capabilityIds") or []):
+    raise SystemExit("parity.default-programs still names apps.defaults.set")
+if "defaults.protocol.set" not in (parity_defaults.get("capabilityIds") or []):
+    raise SystemExit("parity.default-programs does not name defaults.protocol.set")
+if by_id["files.associations.set"].get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.associations.set must not claim present")
+parity_file_associations = next(job for job in jobs["jobs"] if job["id"] == "parity.file-associations")
+if parity_file_associations.get("claim") == "present":
+    raise SystemExit(f"parity.file-associations was flipped to present: {parity_file_associations}")
+if "apps.defaults.set" in (parity_file_associations.get("capabilityIds") or []):
+    raise SystemExit("parity.file-associations still names apps.defaults.set")
+native19 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.19")
+if native19.get("claim") == "present":
+    raise SystemExit(f"windows-native.19 was flipped to present: {native19}")
+if native19.get("capabilityIds") != ["defaults.protocol.set"]:
+    raise SystemExit(f"windows-native.19 capabilityIds are {native19.get('capabilityIds')}")
 PY
 pass "leftover catalog routes stay honest after Settings inspect hosting"
 
