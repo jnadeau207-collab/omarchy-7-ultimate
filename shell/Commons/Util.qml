@@ -1,6 +1,7 @@
 pragma Singleton
 import Quickshell
 import QtQuick
+import "Launch.js" as Launch
 
 QtObject {
   id: root
@@ -39,12 +40,28 @@ QtObject {
     return "'" + String(value || "").replace(/'/g, "'\\''") + "'"
   }
 
+  function isArgvList(value) {
+    return Launch.isArgvList(value)
+  }
+
+  function argvFrom(command) {
+    return Launch.argvFrom(command)
+  }
+
+  function resolveLaunchArgv(command, omarchyPath) {
+    return Launch.resolveLaunchArgv(command, omarchyPath)
+  }
+
   function execDetached(command) {
+    if (Launch.isArgvList(command)) {
+      root.execArgv(command)
+      return
+    }
     Quickshell.execDetached(["bash", "-lc", command])
   }
 
   function execArgv(argv) {
-    Quickshell.execDetached(["bash", "-lc", 'exec "$@"', "bash"].concat(argv))
+    Quickshell.execDetached(["bash", "-lc", 'exec "$@"', "bash"].concat(Launch.copyArgv(argv)))
   }
 
   function isPlainObject(value) {
