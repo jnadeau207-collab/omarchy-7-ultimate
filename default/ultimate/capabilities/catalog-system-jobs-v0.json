@@ -726,10 +726,10 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Files",
-        "label": "Open This PC",
-        "path": "Start > Computer; Superbar > Files > This PC"
+        "label": "Open Computer",
+        "path": "Start > Computer; Superbar > Files > Computer"
       },
-      "agentCenterLabel": "Open This PC",
+      "agentCenterLabel": "Open Computer",
       "proofIds": {
         "acceptance": [
           "proof.capability.files-this-pc-open.tree-audit"

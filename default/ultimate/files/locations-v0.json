@@ -1,13 +1,15 @@
 {
   "schemaVersion": "v0",
   "locations": [
-    {"key": "this-pc", "kind": "this-pc", "label": "This PC", "source": "virtual", "required": true},
+    {"key": "this-pc", "kind": "this-pc", "label": "Computer", "source": "virtual", "required": true},
     {"key": "home", "kind": "home", "label": "Home", "source": "home", "required": true},
     {"key": "desktop", "kind": "desktop", "label": "Desktop", "source": "xdg-desktop", "required": false},
     {"key": "documents", "kind": "documents", "label": "Documents", "source": "xdg-documents", "required": false},
     {"key": "downloads", "kind": "downloads", "label": "Downloads", "source": "xdg-download", "required": false},
     {"key": "pictures", "kind": "pictures", "label": "Pictures", "source": "xdg-pictures", "required": false},
-    {"key": "trash", "kind": "trash", "label": "Trash", "source": "freedesktop-trash", "required": false}
+    {"key": "music", "kind": "music", "label": "Music", "source": "xdg-music", "required": false},
+    {"key": "videos", "kind": "videos", "label": "Videos", "source": "xdg-videos", "required": false},
+    {"key": "trash", "kind": "trash", "label": "Recycle Bin", "source": "freedesktop-trash", "required": false}
   ],
   "limits": {"entries": 256, "mounts": 64, "recent": 128, "depth": 3}
 }

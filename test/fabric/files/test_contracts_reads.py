@@ -111,7 +111,7 @@ class ContractAndReadTests(unittest.IsolatedAsyncioTestCase):
     def test_shipped_location_config_is_closed_code_owned_data(self) -> None:
         document = json.loads((ROOT / "default" / "ultimate" / "files" / "locations-v0.json").read_text())
         self.assertEqual(set(document), {"schemaVersion", "locations", "limits"})
-        self.assertEqual([item["kind"] for item in document["locations"]], ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "trash"])
+        self.assertEqual([item["kind"] for item in document["locations"]], ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "music", "videos", "trash"])
 
 if __name__ == "__main__":
     unittest.main()

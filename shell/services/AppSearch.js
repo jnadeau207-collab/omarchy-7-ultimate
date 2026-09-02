@@ -241,8 +241,8 @@ var START_DESTINATIONS = [
   {
     id: "omarchy.start.computer",
     name: "Computer",
-    genericName: "This PC",
-    comment: "Open This PC",
+    genericName: "Computer",
+    comment: "Open Computer",
     keywords: ["computer", "this pc", "thispc"],
     icon: "computer",
     desktopId: "org.omarchy.Files",
