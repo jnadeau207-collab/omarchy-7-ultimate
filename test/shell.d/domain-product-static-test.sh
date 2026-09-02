@@ -220,4 +220,40 @@ grep -Fq 'trashAuthorized=false' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "
 if grep -Eq 'maximumLineCount:[[:space:]]*2' "$ROOT/shell/apps/ultimate-files/ExplorerDetailsPane.qml"; then
   fail "Files details boundary Text is limited to 2 lines and can clip the unavailable half"
 fi
+python3 - "$ROOT" <<'PY' || fail "Settings and Administration Coverage honesty Texts still ElideRight-clip"
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+paths = (
+    root / "shell/apps/ultimate-settings/SettingsApplication.qml",
+    root / "shell/apps/ultimate-administration/AdministrationApplication.qml",
+)
+for path in paths:
+    text = path.read_text(encoding="utf-8")
+    start = text.find("id: coverageColumn")
+    if start < 0:
+        raise SystemExit(f"{path.name}: coverageColumn missing")
+    end = text.find("GridLayout", start)
+    block = text[start:end] if end > start else text[start : start + 4000]
+    if "ElideRight" in block:
+        raise SystemExit(f"{path.name}: coverageColumn still uses ElideRight on honesty text")
+    coverage = re.search(
+        r"query\.coverage[\s\S]{0,500}?maximumLineCount:\s*(\d+)",
+        block,
+    )
+    if coverage and int(coverage.group(1)) < 12:
+        raise SystemExit(
+            f"{path.name}: coverage Text maximumLineCount {coverage.group(1)} can clip PARTIAL LIVE CONTROL / CHANGES UNAVAILABLE"
+        )
+    declared = re.search(
+        r"Declared provider operations[\s\S]{0,700}?maximumLineCount:\s*(\d+)",
+        block,
+    )
+    if declared and int(declared.group(1)) < 8:
+        raise SystemExit(
+            f"{path.name}: declared-operations Text maximumLineCount {declared.group(1)} can clip honesty copy"
+        )
+PY
 pass "Domain products explain trust, provenance, and unavailable mutation boundaries"

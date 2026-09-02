@@ -192,6 +192,19 @@ grep -Fq 'endTaskEnabled: root.terminationAuthorized && String(modelData.kind ||
 if grep -Eq 'terminationAuthorized:\s*true' "$application"; then
   fail "Administration must not authorize shell consequential termination"
 fi
+python3 - "$application" <<'PY' || fail "Administration Coverage honesty Texts still ElideRight-clip"
+import pathlib
+import sys
+
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+start = text.find("id: coverageColumn")
+if start < 0:
+    raise SystemExit("coverageColumn missing")
+end = text.find("GridLayout", start)
+block = text[start:end] if end > start else text[start : start + 4000]
+if "ElideRight" in block:
+    raise SystemExit("coverageColumn still uses ElideRight on honesty text")
+PY
 pass "terminationAuthorized remains false; End Task stays hidden; no LIVE CONTROL claim"
 
 run_node_test <<'JS'
