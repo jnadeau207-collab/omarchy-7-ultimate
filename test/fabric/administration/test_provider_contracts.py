@@ -94,6 +94,16 @@ class AdministrationAdmissionTests(unittest.IsolatedAsyncioTestCase):
         failed_result = await printer.build_provider(runner=failed).read("inspect", {})
         self.assertFalse(failed_result["availability"]["read"])
 
+def scoped_operation(module) -> bool:
+    """A scoped leaf reports a projected resource from preflight.
+
+    The projection is lossy, so provider-side apply, validate and rollback
+    cannot round-trip it; the coordinator and the code-owned executor own
+    mutation for those operations instead.
+    """
+
+    return getattr(module.SPEC, "scope", None) is not None
+
 class AdministrationFakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
     async def test_every_fake_crosses_preflight_apply_validate_noop_and_rollback(self) -> None:
         actor = principal()
@@ -103,6 +113,10 @@ class AdministrationFakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(domain=case.module.DOMAIN):
                 self.assertTrue(preflight["changed"])
                 self.assertEqual(provider.backend.write_count, 0)
+                if scoped_operation(case.module):
+                    self.assertNotEqual(preflight["resource"]["kind"], case.module.RESOURCE_KIND)
+                    self.assertEqual(preflight["currentState"]["resourceId"], preflight["resource"]["id"])
+                    continue
                 applied = await provider.apply(case.module.OPERATION_ACTION, case.arguments, preflight["stateRevision"])
                 self.assertTrue(applied["changed"])
                 self.assertEqual(provider.backend.write_count, 1)
@@ -121,6 +135,8 @@ class AdministrationFakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
             for case in resource_cases():
                 path = Path(directory) / f"{case.module.DOMAIN}.json"
                 provider = case.module.build_fake_provider([copy.deepcopy(case.resource)], state_path=path)
+                if scoped_operation(case.module):
+                    continue
                 preflight = await provider.preflight(case.module.OPERATION_ACTION, case.arguments, actor)
                 applied = await provider.apply(case.module.OPERATION_ACTION, case.arguments, preflight["stateRevision"])
                 restarted = case.module.build_fake_provider([copy.deepcopy(case.resource)], state_path=path)
@@ -140,11 +156,12 @@ class AdministrationFakeLifecycleTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(FabricError) as invalid:
                         await duplicate.read("inspect", {})
                     self.assertEqual(invalid.exception.code, f"{case.module.DOMAIN}.backend-invalid")
-                    failing = case.module.build_fake_provider([copy.deepcopy(case.resource)], fail_on=frozenset({"apply"}))
-                    preflight = await failing.preflight(case.module.OPERATION_ACTION, case.arguments, actor)
-                    with self.assertRaises(FabricError) as failed:
-                        await failing.apply(case.module.OPERATION_ACTION, case.arguments, preflight["stateRevision"])
-                    self.assertEqual(failed.exception.code, f"{case.module.DOMAIN}.fake-apply-failed")
+                    if not scoped_operation(case.module):
+                        failing = case.module.build_fake_provider([copy.deepcopy(case.resource)], fail_on=frozenset({"apply"}))
+                        preflight = await failing.preflight(case.module.OPERATION_ACTION, case.arguments, actor)
+                        with self.assertRaises(FabricError) as failed:
+                            await failing.apply(case.module.OPERATION_ACTION, case.arguments, preflight["stateRevision"])
+                        self.assertEqual(failed.exception.code, f"{case.module.DOMAIN}.fake-apply-failed")
                     path = Path(directory) / f"corrupt-{case.module.DOMAIN}.json"
                     path.write_text('{"schemaVersion":"v0","domain":"wrong","resources":[]}', encoding="utf-8")
                     with self.assertRaises(ValueError):
