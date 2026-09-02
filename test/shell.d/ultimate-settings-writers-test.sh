@@ -6,16 +6,31 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
 application="$ROOT/shell/apps/ultimate-settings/SettingsApplication.qml"
 
-grep -Fq 'provider: "power.provider"' "$application" || fail "Settings sets the profile through power.provider"
-grep -Fq 'action: "profile.set"' "$application" || fail "Settings uses the typed profile.set action"
-grep -Fq 'if (!record || SettingsModel.POWER_PROFILES.indexOf(profile) < 0) return' "$application" ||
-  fail "Settings refuses a profile outside the code-owned set"
-grep -Fq 'if (record.profiles.indexOf(profile) < 0) return' "$application" ||
-  fail "Settings refuses a profile the host does not report as available"
+grep -Fq 'readonly property bool profileMutationAuthorized: false' "$application" ||
+  fail "Settings does not authorize LIVE power profile mutation"
+grep -Fq 'if (!root.profileMutationAuthorized || !host || operationBusy) return' "$application" ||
+  fail "Settings refuses power mutation when unauthorized"
+grep -Fq 'visible: root.profileMutationAuthorized' "$application" ||
+  fail "Settings hides power profile buttons while mutation is unauthorized"
+grep -Fq 'text: root.profileMutationAuthorized' "$application" ||
+  fail "Settings gates the Power pane LIVE CONTROL badge on profileMutationAuthorized"
+grep -Fq '"CHANGES UNAVAILABLE"' "$application" ||
+  fail "Settings names CHANGES UNAVAILABLE on the unauthorized Power pane"
+grep -Fq 'org.freedesktop.UPower.PowerProfiles.switch-profile' "$application" ||
+  fail "Settings Power honesty names the polkit action"
+grep -Fq 'app.slice' "$application" ||
+  fail "Settings Power honesty names the fabric daemon app.slice residual"
 if grep -Fq 'omarchy-powerprofiles-set' "$application"; then
   fail "Settings assembles a legacy shell string instead of the typed verb"
 fi
-pass "Settings drives profile.set through the typed operation plane only"
+grep -Fq 'session_operable=False' "$ROOT/default/fabric/omarchy_fabric/providers/power/provider.py" ||
+  fail "the real power provider stays session_operable=False"
+grep -Fq 'SESSION_OPERABLE_DOMAINS = frozenset({"audio", "display", "input", "network", "process"})' "$ROOT/test/fabric/providers/test_leaf_providers.py" ||
+  fail "leaf provider tests name the session-operable domains without power"
+if grep -Fq 'org.freedesktop.UPower.PowerProfiles' "$ROOT/default/polkit-1/actions/org.omarchy.fabric.policy"; then
+  fail "Omarchy polkit policy does not invent a PowerProfiles authorization"
+fi
+pass "Settings does not offer LIVE power profile mutation"
 
 grep -Fq 'provider: "display.provider"' "$application" || fail "Settings sets brightness through display.provider"
 grep -Fq 'action: "brightness.set"' "$application" || fail "Settings uses the typed brightness.set action"
@@ -89,7 +104,10 @@ assertDeepEqual(wrongTypes.profiles, [], 'a non-array profile list is refused')
 assertEqual(wrongTypes.activeProfile, '', 'a non-string active profile is refused')
 
 const powerQuery = Model.queryForRoute('settings.power.overview')
-assert(powerQuery.coverage.indexOf('profile.set') >= 0, 'the power coverage note names the settable verb')
+assert(powerQuery.coverage.indexOf('profile.set') >= 0, 'the power coverage note names the unavailable verb')
+assert(powerQuery.coverage.indexOf('does not offer LIVE profile mutation') >= 0, 'the power coverage note refuses LIVE profile mutation')
+assert(powerQuery.coverage.indexOf('polkit') >= 0, 'the power coverage note names the polkit residual')
+assert(powerQuery.coverage.indexOf('app.slice') >= 0, 'the power coverage note names the fabric daemon cgroup residual')
 assert(powerQuery.coverage.indexOf('Sleep, lock, and lid changes remain unavailable') >= 0, 'the power coverage note still refuses what Settings cannot do')
 
 function displayRecord(state) {

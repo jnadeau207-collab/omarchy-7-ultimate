@@ -42,7 +42,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "power.inspect",
     supportsResource: true,
-    coverage: "Power inventory is readable from power.inspect (AC/battery source, active profile, available profiles, battery percentage), and the active profile is settable through power.provider profile.set. Sleep, lock, and lid changes remain unavailable from Settings."
+    coverage: "Power inventory is readable from power.inspect (AC/battery source, active profile, available profiles, battery percentage). The profile.set write plane exists, but Settings does not offer LIVE profile mutation: the fabric daemon runs under app.slice without a login session scope, so polkit allow_active cannot authorize org.freedesktop.UPower.PowerProfiles.switch-profile. Sleep, lock, and lid changes remain unavailable from Settings."
   },
   {
     routeId: "settings.bluetooth.overview",
@@ -120,7 +120,6 @@ var ROUTE_QUERIES = [
 var LIVE_WRITER_ROUTES = [
   "settings.audio.overview",
   "settings.network.overview",
-  "settings.power.overview",
   "settings.display.overview",
   "settings.input.overview",
   "settings.apps.overview"
@@ -145,7 +144,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function isObject(value) {

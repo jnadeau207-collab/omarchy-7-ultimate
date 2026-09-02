@@ -2,6 +2,8 @@
 
 SHA `6ac3b401` on `work` (session that landed files writes). Honesty addendum 2026-09-02 vs tip `85e2924a9188`: TASK admission and End Task scoped `{present}` are KEEP. The TASK-unwired / Wall-one “cannot be wired” paragraphs below are rewritten to residual. Do not invent End Task LIVE CONTROL or shell consequential authorize. Settings `authorityFooter()` now names the focused out-of-band stale inspect residual. Residual stays OPEN. Product REJECTED.
 
+Honesty addendum 2026-09-02 vs tip after PR #29 (`aee1d78a8cf1`): Settings Power LIVE CONTROL + `session_operable=True` on that tip was a LIVE invent. Polkit `org.freedesktop.UPower.PowerProfiles.switch-profile` remains `allow_active`, and the fabric daemon still starts as a user service wanted by `graphical-session.target` (`app.slice`, no `session-N.scope`). No `default/polkit-1/` rule authorizes that action. KEEP: `session_operable=False`; Power is not in `LIVE_WRITER_ROUTES`; Settings shows CHANGES UNAVAILABLE and hides profile buttons. Write plane (helper, intent, operation definition) kept. Operator owns polkit/session-scope. Do not invent a broad polkit grant to green the button. Product REJECTED. METAL_HEAD OPEN.
+
 Shell gates at the original SHA: 13 of 247 files fail, the identical list that fails at `e3ec490b` before this work. No regression.
 
 The audio write path is proven again on the live daemon this session: 40 → 55 → 40 through preflight, approve, start, and the durable coordinator.

@@ -2,6 +2,8 @@
 
 SHA `6e01615d` on `work` (session that landed the root executor and write-plane expansion), rebased onto `upstream/quattro` at `b71dcad9`. Honesty addendum 2026-09-02 vs tip `c192afea`: `entry.trash` write-plane reachability after PR #8 v1 directory family widen is KEEP. The helper-only / schema-blocker paragraphs below are rewritten to residual. Honesty addendum 2026-09-02 vs tip `c1490f82`: Files Trash controls stay gated `trashAuthorized=false` for the shell principal (same invent class as LIVE End Task). Write plane remains reachable at `consequential`; SHELL still refused at `grant.shell-consequential`. Do not invent Restore LIVE, `files.trash.manage`, Empty Recycle, Recycle Bin product-complete, or LIVE Trash under SHELL. Product REJECTED.
 
+Honesty addendum 2026-09-02 vs tip after PR #29 (`aee1d78a8cf1`): opting power into `session_operable=True` without a session-scope or polkit authorization for `org.freedesktop.UPower.PowerProfiles.switch-profile` was a LIVE invent (Settings Power buttons that cannot succeed from `app.slice`). KEEP: `session_operable=False`; Power not in `LIVE_WRITER_ROUTES`; `profileMutationAuthorized=false`; CHANGES UNAVAILABLE honesty names polkit/session. Write plane kept. Operator owns polkit/session-scope. Product REJECTED. METAL_HEAD OPEN.
+
 ## Verified on metal
 
 Everything below runs green on the Arch box.
