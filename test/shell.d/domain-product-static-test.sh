@@ -324,10 +324,18 @@ if not scope:
     raise SystemExit("project-ultimate W0/current-program Settings bullet missing")
 if re.search(r"Phase 5", scope):
     raise SystemExit("Current position Settings bullet still invents a Phase 5 fence")
-needed = ["volume", "Wi-Fi", "power", "brightness", "layout", "default browser"]
+needed = ["volume", "Wi-Fi", "brightness", "layout", "default browser"]
 missing = [name for name in needed if name.lower() not in scope.lower()]
 if missing:
     raise SystemExit(f"Current position Settings bullet missing live-writer split: {missing}")
+live_clause = scope.split("Live Settings writers are", 1)
+if len(live_clause) < 2:
+    raise SystemExit("Current position Settings bullet missing Live Settings writers clause")
+live_list = live_clause[1].split(";", 1)[0]
+if "Power" in live_list:
+    raise SystemExit("Current position Settings bullet still lists Power as a live writer")
+if "power" not in scope.lower() or "polkit" not in scope.lower() or "inspect-only" not in scope.lower():
+    raise SystemExit("Current position Settings bullet must name Power as inspect-only polkit residual")
 if "inspect-only" not in scope.lower() and "hosted" not in scope.lower():
     raise SystemExit("Current position Settings bullet must keep inspect-only / hosted picker")
 api = (root / "docs/settings-service-api.md").read_text(encoding="utf-8")
@@ -335,10 +343,14 @@ if "Typed writers remain Phase 5" in api or "remain Phase 5" in api:
     raise SystemExit("settings-service-api still blankets typed writers as remaining Phase 5")
 if "not yet typed" in api:
     raise SystemExit("settings-service-api still invents that heritage panels mean Settings writers are not yet typed")
-needed_api = ["Sound volume", "Network Wi-Fi radio", "Power profile", "Display brightness", "Input layout", "Apps default browser"]
+needed_api = ["Sound volume", "Network Wi-Fi radio", "Display brightness", "Input layout", "Apps default browser"]
 missing_api = [name for name in needed_api if name not in api]
 if missing_api:
     raise SystemExit(f"settings-service-api missing live-writer split: {missing_api}")
+if "Power profile" not in api or "polkit" not in api:
+    raise SystemExit("settings-service-api must name Power profile as a polkit residual")
+if "Live typed writers are Sound volume, Network Wi-Fi radio, Power profile," in api:
+    raise SystemExit("settings-service-api still lists Power profile among live typed writers")
 if "inspect-only" not in api.lower() and "hosted" not in api.lower():
     raise SystemExit("settings-service-api must keep inspect-only / hosted picker")
 if "Accessibility, Input, and System information have no hostable panel" in api:

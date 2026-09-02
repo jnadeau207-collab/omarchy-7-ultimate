@@ -106,19 +106,19 @@ assertEqual(personalizationJob.sourceStatus, 'prototype', 'Personalization sourc
 const liveWriterRoutes = [
   'settings.audio.overview',
   'settings.network.overview',
-  'settings.power.overview',
   'settings.display.overview',
   'settings.input.overview',
   'settings.apps.overview'
 ]
-assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the six live writer routes')
+assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the five live writer routes')
+assertEqual(Model.LIVE_WRITER_ROUTES.indexOf('settings.power.overview'), -1, 'Power is not a live writer route')
 for (const routeId of liveWriterRoutes) {
   assertEqual(Model.routeHasLiveWriter(routeId), true, `${routeId} is a live writer`)
   assertEqual(Model.coverageBadge(routeId), 'PARTIAL LIVE CONTROL', `${routeId} coverage badge is partial live control`)
   assertEqual(Model.coverageTone(routeId), 'info', `${routeId} coverage tone is info`)
   assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
 }
-for (const routeId of ['settings.bluetooth.overview', 'settings.update.overview', 'settings.recovery.overview', 'settings.accessibility.overview', 'settings.system.overview', 'settings.personalization.overview', '']) {
+for (const routeId of ['settings.power.overview', 'settings.bluetooth.overview', 'settings.update.overview', 'settings.recovery.overview', 'settings.accessibility.overview', 'settings.system.overview', 'settings.personalization.overview', '']) {
   assertEqual(Model.routeHasLiveWriter(routeId), false, `${routeId || '(none)'} is not a live writer`)
   assertEqual(Model.coverageBadge(routeId), 'CHANGES UNAVAILABLE', `${routeId || '(none)'} coverage badge stays unavailable`)
   const declaredOps = Model.declaredOpsHonesty(routeId)
@@ -128,7 +128,9 @@ for (const routeId of ['settings.bluetooth.overview', 'settings.update.overview'
   assert(!/remain Phase/i.test(declaredOps), `${routeId || '(none)'} declared ops do not invent a remain-Phase fence`)
 }
 const footer = Model.authorityFooter()
-assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Power profile') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser'), 'authority footer names every live writer')
+assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser'), 'authority footer names every live writer')
+assert(footer.includes('Power profile') && footer.includes('inspect-only') && footer.includes('polkit') && footer.includes('app.slice'), 'authority footer names Power profile as inspect-only polkit residual')
+assert(!footer.includes('Power profile, Display brightness'), 'authority footer does not list Power profile among LIVE writers')
 assert(footer.includes('other domains stay inspect-only'), 'authority footer keeps remaining domains inspect-only')
 assert(!footer.includes('no direct commands, mutation, preflight, approval, or execution authority'), 'authority footer does not deny mutation on a mutating window')
 assert(footer.includes('re-read when shown') && footer.includes('after local writers'), 'authority footer names surface-visible and post-writer reread')
@@ -622,9 +624,14 @@ if grep -Fq 'Accessibility, Input, and System information have no hostable panel
   fail "settings-service-api no longer underclaims Input as having no hostable panel"
 fi
 settings_api="$ROOT/docs/settings-service-api.md"
-for writer in "Sound volume" "Network Wi-Fi radio" "Power profile" "Display brightness" "Input layout" "Apps default browser"; do
+for writer in "Sound volume" "Network Wi-Fi radio" "Display brightness" "Input layout" "Apps default browser"; do
   grep -Fq "$writer" "$settings_api" || fail "settings-service-api names live writer: $writer"
 done
+grep -Fq 'Power profile' "$settings_api" || fail "settings-service-api names Power profile"
+if grep -Fq 'Live typed writers are Sound volume, Network Wi-Fi radio, Power profile,' "$settings_api"; then
+  fail "settings-service-api does not list Power profile among live typed writers"
+fi
+grep -Fq 'polkit' "$settings_api" || fail "settings-service-api names the Power polkit residual"
 grep -Fq 'keyboard-layout' "$settings_api" || fail "settings-service-api names the Input keyboard-layout writer"
 grep -Fq 'execDetached' "$settings_api" || fail "settings-service-api keeps Personalization Process/execDetached honesty"
 if grep -Eiq 'events[.]subscribe|MIME associations|Empty Bin|Task Manager LIVE|End Task LIVE' "$settings_api"; then
