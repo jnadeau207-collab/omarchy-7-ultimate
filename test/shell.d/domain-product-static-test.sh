@@ -330,5 +330,24 @@ if missing:
     raise SystemExit(f"Current position Settings bullet missing live-writer split: {missing}")
 if "inspect-only" not in scope.lower() and "hosted" not in scope.lower():
     raise SystemExit("Current position Settings bullet must keep inspect-only / hosted picker")
+api = (root / "docs/settings-service-api.md").read_text(encoding="utf-8")
+if "Typed writers remain Phase 5" in api or "remain Phase 5" in api:
+    raise SystemExit("settings-service-api still blankets typed writers as remaining Phase 5")
+needed_api = ["Sound volume", "Network Wi-Fi radio", "Power profile", "Display brightness", "Input layout", "Apps default browser"]
+missing_api = [name for name in needed_api if name not in api]
+if missing_api:
+    raise SystemExit(f"settings-service-api missing live-writer split: {missing_api}")
+if "inspect-only" not in api.lower() and "hosted" not in api.lower():
+    raise SystemExit("settings-service-api must keep inspect-only / hosted picker")
+if "Accessibility, Input, and System information have no hostable panel" in api:
+    raise SystemExit("settings-service-api underclaims Input as having no hostable panel")
+if "keyboard-layout" not in api:
+    raise SystemExit("settings-service-api must name the Input keyboard-layout writer")
+if "Accessibility" not in api or "System information" not in api:
+    raise SystemExit("settings-service-api must keep Accessibility and System information honest missing")
+if "Process" not in api or "execDetached" not in api:
+    raise SystemExit("settings-service-api must keep Personalization Process/execDetached honesty")
+if re.search(r"events\.subscribe|MIME associations|Empty Bin|Task Manager LIVE|End Task LIVE", api):
+    raise SystemExit("settings-service-api invents MIME, Empty Bin, Task Manager LIVE, End Task LIVE, or events.subscribe")
 PY
 pass "Domain products explain trust, provenance, and unavailable mutation boundaries"
