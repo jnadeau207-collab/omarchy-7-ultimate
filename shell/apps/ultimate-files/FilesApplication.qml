@@ -182,7 +182,29 @@ Item {
     if (record.targetRoute) { host.navigate(record.targetRoute, {}); return }
     if (record.entryKind === "directory" && record.kind === "entry") {
       openPath(FilesModel.childRelativePath(root.relativePath, record.title))
+      return
     }
+    if (record.entryKind === "file" && record.kind === "entry") {
+      openEntry(record)
+    }
+  }
+
+  function openEntry(record) {
+    if (!host || operationBusy) return
+    if (!record || String(record.kind || "") !== "entry" || String(record.entryKind || "") !== "file") return
+    if (String(record.status || "") === "symlink") return
+    if (String(record.locationId || "") === "files.location.trash") return
+    root.operationName = String(record.title || "this entry")
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationKind = "open"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "files.provider",
+      action: "entry.open",
+      arguments: { entryId: String(record.id) },
+      idempotencyKey: "files.entry.open." + String(record.id)
+    })
+    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
   }
 
   function nextFolderName() {
@@ -259,8 +281,8 @@ Item {
     }
     if (root.operationStage === "start") {
       var succeeded = String(result.status || "") === "succeeded"
-      var verb = root.operationKind === "trash" ? "Moved " : "Created "
-      var gerund = root.operationKind === "trash" ? "Moving " : "Creating "
+      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "open" ? "Opened " : "Created "
+      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "open" ? "Opening " : "Creating "
       var tail = root.operationKind === "trash" ? " to the Recycle Bin." : "."
       root.resetOperation(succeeded
         ? verb + root.operationName + tail
@@ -562,7 +584,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))

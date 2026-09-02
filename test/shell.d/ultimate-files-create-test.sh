@@ -16,6 +16,9 @@ pass "Files carries the bounded operation allowlist and nothing wider"
 
 grep -Fq 'provider: "files.provider"' "$application" || fail "Files creates through its own provider"
 grep -Fq 'action: "directory.create"' "$application" || fail "Files uses the typed directory.create action"
+grep -Fq 'action: "entry.open"' "$application" || fail "Files uses the typed entry.open action"
+grep -Fq 'function openEntry(record)' "$application" || fail "Files names openEntry for the launch plane"
+grep -Fq 'arguments: { entryId: String(record.id) }' "$application" || fail "Files sends only the entry identity for Open"
 for stage in operation.preflight operation.approve operation.start; do
   grep -Fq "\"$stage\"" "$application" || fail "Files drives the $stage step"
 done
@@ -68,6 +71,18 @@ if grep -Eq 'key: "restore"' "$application"; then
   fail "Files does not show a Restore LIVE control under the shell principal"
 fi
 pass "Files keeps Restore UI honest-unavailable; Recycle Bin is not product-complete"
+
+grep -Fq 'root.operationKind = "open"' "$application" || fail "Files drives the open operation kind"
+grep -Fq 'String(record.entryKind || "") !== "file"' "$application" || fail "Files opens only regular file entries"
+grep -Fq 'files.location.trash' "$application" || fail "Files refuses Open from Trash"
+if grep -Eq 'Open With|Default Programs' "$application"; then
+  fail "Files invents Open With or Default Programs MIME UI"
+fi
+if grep -Eq 'readFile\(|XMLHttpRequest|FileReader' "$application"; then
+  fail "Files must not read file contents for thumbnails"
+fi
+grep -Fq 'File contents are never read' "$application" || fail "Files keeps the no-content-read boundary"
+pass "Files Open is LIVE for regular files without inventing MIME UI or thumbnails"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')

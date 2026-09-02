@@ -31,7 +31,8 @@
       "enum": [
         "directory.create",
         "entry.trash",
-        "trash.restore"
+        "trash.restore",
+        "entry.open"
       ]
     },
     "capability": {
@@ -41,6 +42,7 @@
         "files.entry.rename",
         "files.entry.trash",
         "files.trash.restore",
+        "files.entry.open",
         "files.mount.connect",
         "files.mount.disconnect"
       ]

@@ -28,7 +28,7 @@ Every factory returns an object with deeply immutable `manifest` and `schemas` m
 | `input.provider` | `input.inspect` / `inspect` | `input.keyboard-layout.set` / `keyboard-layout.set` | low / `mutating` | `/usr/bin/hyprctl -j devices` |
 | `power.provider` | `power.inspect` / `inspect` | `power.profile.set` / `profile.set` | low / `mutating` | fixed power-profile, UPower source, and battery-status queries |
 
-Read actions have `risk=read-only`, no effects, no preflight or state contract, and no rollback or cancellation. Operation actions require a non-null preflight and state contract, include `mutating`, support exact rollback, and do not claim cancellation because no leaf backend currently owns a cancellable process group.
+Read actions have `risk=read-only`, no effects, no preflight or state contract, and no rollback or cancellation. Operation actions require a non-null preflight and state contract plus a `mutating` or `launch` effect. Mutating leaves support exact rollback. Files `entry.open` is launch-plane (listing unchanged, no undo). Operations do not claim cancellation because no leaf backend currently owns a cancellable process group.
 
 ## Identity and state
 

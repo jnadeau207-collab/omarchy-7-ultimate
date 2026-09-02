@@ -231,6 +231,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
   | Settings Apps default browser (`protocol.set`) | `defaults.protocol.set` | partial |
   | Settings Apps MIME (`mime.set`) write plane, not Settings LIVE | `defaults.mime.set` | partial |
   | Files New folder (`directory.create`) | `files.directory.create` | partial |
+  | Files Open (`entry.open`) launch plane | `files.entry.open` | partial |
   | Files Trash (`entry.trash`) write plane | `files.entry.trash` | partial |
   | Files Trash restore (`trash.restore`) write plane, not Restore LIVE | `files.trash.restore` | partial |
   | Administration process inspect | `process.inspect` | missing |

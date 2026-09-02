@@ -36,7 +36,8 @@
       "enum": [
         "directory.create",
         "entry.trash",
-        "trash.restore"
+        "trash.restore",
+        "entry.open"
       ]
     },
     "capability": {
@@ -46,6 +47,7 @@
         "files.entry.rename",
         "files.entry.trash",
         "files.trash.restore",
+        "files.entry.open",
         "files.mount.connect",
         "files.mount.disconnect"
       ]
@@ -102,7 +104,8 @@
         "type": "string",
         "enum": [
           "mutating",
-          "network"
+          "network",
+          "launch"
         ]
       }
     },
@@ -174,6 +177,35 @@
           "items": {
             "$ref": "#/$defs/anchor"
           }
+        },
+        "selectedEntry": {
+          "$ref": "#/$defs/selectedEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "selectedEntry": {
+      "type": "object",
+      "required": [
+        "entryId",
+        "locationId",
+        "entryRelativePath"
+      ],
+      "properties": {
+        "entryId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+          "maxLength": 160
+        },
+        "locationId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+          "maxLength": 160
+        },
+        "entryRelativePath": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
         }
       },
       "additionalProperties": false

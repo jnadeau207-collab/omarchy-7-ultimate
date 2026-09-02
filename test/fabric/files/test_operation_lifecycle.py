@@ -95,6 +95,36 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
         undone = await provider.undo("trash.restore", restore_plan["recovery"]["priorState"], restored["stateRevision"])
         self.assertEqual(undone["state"]["value"], before_restore["state"])
 
+    async def test_entry_open_is_a_low_risk_launch_with_no_listing_change(self) -> None:
+        provider = files.build_fake_provider(clone_workspace())
+        before = await provider.read("inspect", {})
+        plan = await provider.preflight("entry.open", {"entryId": "files.entry.notes"}, principal())
+        self.assertEqual(plan["capability"], "files.entry.open")
+        self.assertEqual(plan["risk"], "low")
+        self.assertEqual(plan["effects"], ["launch"])
+        self.assertFalse(plan["changed"])
+        self.assertEqual(plan["guards"]["selectedEntry"], {
+            "entryId": "files.entry.notes",
+            "locationId": "files.location.desktop",
+            "entryRelativePath": "notes.txt",
+        })
+        self.assertEqual(plan["currentState"]["value"]["names"], plan["proposedState"]["value"]["names"])
+        self.assertEqual(provider.backend.write_count, 0)
+        result = await provider.execute("entry.open", plan["normalizedArguments"], plan["stateRevision"])
+        self.assertFalse(result["changed"])
+        self.assertEqual(provider.backend.write_count, 0)
+        after = await provider.read("inspect", {})
+        self.assertEqual(after["state"], before["state"])
+        with self.assertRaises(FabricError) as directory:
+            await provider.preflight("entry.open", {"entryId": "files.entry.project"}, principal())
+        self.assertEqual(directory.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as symlink:
+            await provider.preflight("entry.open", {"entryId": "files.entry.unsafe-link"}, principal())
+        self.assertEqual(symlink.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as undo:
+            await provider.undo("entry.open", plan["recovery"]["priorState"], plan["stateRevision"])
+        self.assertEqual(undo.exception.code, "files.undo-unavailable")
+
     async def test_compare_and_swap_contains_concurrent_execution_and_toctou_drift(self) -> None:
         provider = files.build_fake_provider(clone_workspace())
         arguments = {"entryId": "files.entry.notes", "newName": "memo.txt"}

@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"133 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"134 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -840,6 +840,8 @@ if "Recycle Bin leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the Recycle Bin leftover")
 if "Restore LIVE" in gaps and "Do not invent Restore LIVE" not in gaps and "Do not invent a LIVE Restore" not in gaps:
     raise SystemExit("fleet-doctrine-gaps invented Restore LIVE")
+if "`files.entry.open`" not in gaps and "files.entry.open" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the files.entry.open launch plane")
 if "`files.trash.restore` write plane is reachable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the reachable files.trash.restore write plane")
 if "humanRoute planned empty" not in gaps:
@@ -1407,6 +1409,41 @@ if "files.folder.create" in (parity_explorer.get("capabilityIds") or []):
     raise SystemExit("parity.explorer-this-pc still names files.folder.create")
 if "files.directory.create" not in (parity_explorer.get("capabilityIds") or []):
     raise SystemExit("parity.explorer-this-pc does not name files.directory.create")
+if "files.entry.open" not in by_id:
+    raise SystemExit("absent open writer invent: files.entry.open missing from catalog")
+entry_open = by_id["files.entry.open"]
+if entry_open.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.entry.open provider is {entry_open.get('provider')}")
+if entry_open.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.entry.open provider state is {entry_open.get('provider')}")
+if entry_open.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.entry.open claim is {entry_open.get('availability')}")
+if entry_open.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.entry.open invents Explorer product-complete")
+if entry_open.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"files.entry.open agent availability is {entry_open.get('availability')}")
+if entry_open.get("consent", {}).get("mode") != "implicit":
+    raise SystemExit(f"files.entry.open consent is not implicit: {entry_open.get('consent')}")
+if entry_open.get("effects") != ["launch"]:
+    raise SystemExit(f"files.entry.open effects are {entry_open.get('effects')}")
+if entry_open["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"files.entry.open route is {entry_open.get('humanRoute')}")
+if entry_open["humanRoute"].get("path") != "Files > Open":
+    raise SystemExit(f"files.entry.open path is {entry_open.get('humanRoute')}")
+if entry_open.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesApplication.qml":
+    raise SystemExit(f"files.entry.open source is {entry_open.get('source')}")
+if entry_open.get("source", {}).get("symbol") != "openEntry":
+    raise SystemExit(f"files.entry.open source is {entry_open.get('source')}")
+named_open = f"{entry_open.get('source', {}).get('file') or ''} {entry_open.get('source', {}).get('symbol') or ''}".lower()
+if "nautilus" in named_open:
+    raise SystemExit(f"files.entry.open still names Nautilus: {entry_open.get('source')}")
+if "files.entry.open" not in (parity_explorer.get("capabilityIds") or []):
+    raise SystemExit("parity.explorer-this-pc does not name files.entry.open")
+native17 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.17")
+if native17.get("claim") == "present":
+    raise SystemExit(f"windows-native.17 was flipped to present: {native17}")
+if "files.entry.open" not in (native17.get("capabilityIds") or []):
+    raise SystemExit("windows-native.17 does not name files.entry.open")
 native10 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.10")
 if native10.get("claim") == "present":
     raise SystemExit(f"windows-native.10 was flipped to present: {native10}")
@@ -1499,6 +1536,33 @@ if "files.trash.manage still missing" not in cp and "files.trash.manage` still m
     raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
 if "files.trash.restore" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS does not name files.trash.restore")
+if "files.entry.open" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS does not name files.entry.open")
+explorer_status, explorer_notes = parity_notes("Explorer / Computer")
+if explorer_status == "present":
+    raise SystemExit("PARITY Explorer row was flipped to present")
+if "files.entry.open" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row does not name files.entry.open")
+if "opening a file in its handler" in explorer_notes and "remain unavailable" in explorer_notes.split("opening a file in its handler", 1)[-1][:80]:
+    raise SystemExit("PARITY Explorer row still lists opening a file in its handler as unavailable")
+if "File contents are never read" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row dropped the no-content-read boundary")
+if "this row is not present" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row dropped the not-present close")
+if "files.trash.manage" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row closed Recycle residual")
+if "Recycle Bin is not product-complete" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row closed Recycle product-complete residual")
+if "Open With" in files_app or "Default Programs" in files_app:
+    raise SystemExit("Files invents MIME association UI")
+if "action: \"trash.restore\"" in files_app:
+    raise SystemExit("Files invents Restore LIVE")
+if "files.entry.open" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name files.entry.open")
+if "files.trash.manage still missing" not in cp and "files.trash.manage` still missing" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
+if "REJECTED" not in plan:
+    raise SystemExit("project-ultimate dropped product REJECTED")
 PY
 pass "leftover catalog routes stay honest after Settings inspect hosting"
 
@@ -1553,6 +1617,7 @@ inventory = {
     "defaults.protocol.set": "partial",
     "defaults.mime.set": "partial",
     "files.directory.create": "partial",
+    "files.entry.open": "partial",
     "files.entry.trash": "partial",
     "files.trash.restore": "partial",
     "account.inspect": "missing",

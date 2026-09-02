@@ -666,16 +666,17 @@ class ProviderRegistry:
                         detail=f"{manifest['provider']}.{action}",
                     )
             else:
+                effects = set(contract["effects"])
                 if (
                     contract["risk"] == "read-only"
-                    or "mutating" not in contract["effects"]
+                    or not ({"mutating", "launch"} & effects)
                     or contract["preflight"] is None
                     or contract["state"] is None
                 ):
                     raise FabricError(
                         "provider.invalid-manifest",
                         "Fabric provider manifest is invalid",
-                        "Operation actions require mutating risk, preflight, and state contracts.",
+                        "Operation actions require a non-read-only risk, a mutating or launch effect, and preflight and state contracts.",
                         detail=f"{manifest['provider']}.{action}",
                     )
                 if contract["risk"] == "destructive" and "destructive" not in contract["effects"]:
