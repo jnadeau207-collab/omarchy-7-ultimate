@@ -455,7 +455,9 @@ class StateDomainProvider:
         read_handlers: Mapping[str, ReadHandler],
         operations: Mapping[str, OperationSpec],
         read_completeness_codes: frozenset[str] = frozenset(),
+        scoped_resource_kind: str | None = None,
     ) -> None:
+        self.scoped_resource_kind = scoped_resource_kind
         self.domain = domain
         self.provider_id = provider_id
         self.resource_kind = resource_kind
@@ -1003,7 +1005,13 @@ class StateDomainProvider:
         operation_state = self._state(state) if plan_state is None else dict(plan_state)
         resource = {"kind": self.resource_kind, "id": self.resource_id}
         if plan_state is not None:
-            resource = {"kind": "files.directory", "id": operation_state["resourceId"]}
+            if self.scoped_resource_kind is None:
+                raise FabricError(
+                    f"{self.domain}.scope-unbound",
+                    f"{self.domain.title()} scoped operation has no resource kind",
+                    "A provider with scoped operations must declare the kind its scope reports.",
+                )
+            resource = {"kind": self.scoped_resource_kind, "id": operation_state["resourceId"]}
         result = {
             "schemaVersion": "v0",
             "provider": self.provider_id,

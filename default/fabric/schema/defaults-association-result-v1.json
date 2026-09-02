@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:association-result:v1",
+  "x-omarchy-version": "v1",
+  "title": "Default application operation result",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "provider",
+    "providerVersion",
+    "action",
+    "capability",
+    "resource",
+    "changed",
+    "changeState",
+    "stateRevision",
+    "state",
+    "error"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "v0"
+    },
+    "provider": {
+      "const": "defaults.provider"
+    },
+    "providerVersion": {
+      "const": "v0"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "mime.set",
+        "protocol.set"
+      ]
+    },
+    "capability": {
+      "type": "string",
+      "enum": [
+        "defaults.mime.set",
+        "defaults.protocol.set",
+        "defaults.association.clear"
+      ]
+    },
+    "resource": {
+      "$ref": "urn:omarchy:fabric:provider:defaults:association-preflight:v1#/$defs/resource"
+    },
+    "changed": {
+      "type": "boolean"
+    },
+    "changeState": {
+      "type": "string",
+      "enum": [
+        "none",
+        "complete"
+      ]
+    },
+    "stateRevision": {
+      "$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/revision"
+    },
+    "state": {
+      "$ref": "urn:omarchy:fabric:provider:defaults:association-state:v1"
+    },
+    "error": {
+      "type": "null"
+    }
+  },
+  "additionalProperties": false
+}

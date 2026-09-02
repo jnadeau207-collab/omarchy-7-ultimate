@@ -14,46 +14,136 @@
   ],
   "actions": {
     "inspect": {
-      "capability": "defaults.inspect", "mode": "read", "risk": "read-only", "effects": [],
-      "arguments": {"id": "urn:omarchy:fabric:provider:defaults:empty-arguments:v0", "version": "v0"},
-      "result": {"id": "urn:omarchy:fabric:provider:defaults:inventory-result:v0", "version": "v0"},
-      "preflight": null, "state": null, "supportsRollback": false, "supportsCancellation": false
+      "capability": "defaults.inspect",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:defaults:empty-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:defaults:inventory-result:v0",
+        "version": "v0"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
     },
     "mime.query": {
-      "capability": "defaults.mime.query", "mode": "read", "risk": "read-only", "effects": [],
-      "arguments": {"id": "urn:omarchy:fabric:provider:defaults:mime-query-arguments:v0", "version": "v0"},
-      "result": {"id": "urn:omarchy:fabric:provider:defaults:query-result:v0", "version": "v0"},
-      "preflight": null, "state": null, "supportsRollback": false, "supportsCancellation": false
+      "capability": "defaults.mime.query",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:defaults:mime-query-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:defaults:query-result:v0",
+        "version": "v0"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
     },
     "protocol.query": {
-      "capability": "defaults.protocol.query", "mode": "read", "risk": "read-only", "effects": [],
-      "arguments": {"id": "urn:omarchy:fabric:provider:defaults:protocol-query-arguments:v0", "version": "v0"},
-      "result": {"id": "urn:omarchy:fabric:provider:defaults:query-result:v0", "version": "v0"},
-      "preflight": null, "state": null, "supportsRollback": false, "supportsCancellation": false
+      "capability": "defaults.protocol.query",
+      "mode": "read",
+      "risk": "read-only",
+      "effects": [],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:defaults:protocol-query-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:defaults:query-result:v0",
+        "version": "v0"
+      },
+      "preflight": null,
+      "state": null,
+      "supportsRollback": false,
+      "supportsCancellation": false
     },
     "mime.set": {
-      "capability": "defaults.mime.set", "mode": "operation", "risk": "low", "effects": ["mutating"],
-      "arguments": {"id": "urn:omarchy:fabric:provider:defaults:mime-set-arguments:v0", "version": "v0"},
-      "result": {"id": "urn:omarchy:fabric:provider:defaults:operation-result:v0", "version": "v0"},
-      "preflight": {"id": "urn:omarchy:fabric:provider:defaults:operation-preflight:v0", "version": "v0"},
-      "state": {"id": "urn:omarchy:fabric:provider:defaults:operation-state:v0", "version": "v0"},
-      "supportsRollback": true, "supportsCancellation": false
+      "capability": "defaults.mime.set",
+      "mode": "operation",
+      "risk": "low",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:defaults:mime-set-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-result:v1",
+        "version": "v1"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-preflight:v1",
+        "version": "v1"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-state:v1",
+        "version": "v1"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
     },
     "protocol.set": {
-      "capability": "defaults.protocol.set", "mode": "operation", "risk": "low", "effects": ["mutating"],
-      "arguments": {"id": "urn:omarchy:fabric:provider:defaults:protocol-set-arguments:v0", "version": "v0"},
-      "result": {"id": "urn:omarchy:fabric:provider:defaults:operation-result:v0", "version": "v0"},
-      "preflight": {"id": "urn:omarchy:fabric:provider:defaults:operation-preflight:v0", "version": "v0"},
-      "state": {"id": "urn:omarchy:fabric:provider:defaults:operation-state:v0", "version": "v0"},
-      "supportsRollback": true, "supportsCancellation": false
+      "capability": "defaults.protocol.set",
+      "mode": "operation",
+      "risk": "low",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:defaults:protocol-set-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-result:v1",
+        "version": "v1"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-preflight:v1",
+        "version": "v1"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:defaults:association-state:v1",
+        "version": "v1"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
     },
     "association.clear": {
-      "capability": "defaults.association.clear", "mode": "operation", "risk": "low", "effects": ["mutating"],
-      "arguments": {"id": "urn:omarchy:fabric:provider:defaults:clear-arguments:v0", "version": "v0"},
-      "result": {"id": "urn:omarchy:fabric:provider:defaults:operation-result:v0", "version": "v0"},
-      "preflight": {"id": "urn:omarchy:fabric:provider:defaults:operation-preflight:v0", "version": "v0"},
-      "state": {"id": "urn:omarchy:fabric:provider:defaults:operation-state:v0", "version": "v0"},
-      "supportsRollback": true, "supportsCancellation": false
+      "capability": "defaults.association.clear",
+      "mode": "operation",
+      "risk": "low",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:defaults:clear-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:defaults:operation-result:v0",
+        "version": "v0"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:defaults:operation-preflight:v0",
+        "version": "v0"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:defaults:operation-state:v0",
+        "version": "v0"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
     }
   }
 }
