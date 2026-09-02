@@ -1,11 +1,13 @@
 import QtQuick
 import QtQuick.Controls as Controls
+import qs.Commons
 
 import "ExplorerTheme.js" as Aero
 
 Item {
   id: root
 
+  property var productProfile: null
   property var actions: []
   property string viewMode: "details"
 
@@ -69,7 +71,7 @@ Item {
           anchors.left: parent.left
           anchors.leftMargin: 8
           anchors.verticalCenter: parent.verticalCenter
-          text: modelData.label
+          text: Semantics.text(root.productProfile, modelData.label)
           textFormat: Text.PlainText
           color: commandItem.usable ? Aero.textPrimary : Aero.textDisabled
           font.family: Aero.fontFamily
@@ -94,7 +96,7 @@ Item {
         }
 
         Accessible.role: Accessible.Button
-        Accessible.name: modelData.label
+        Accessible.name: Semantics.text(root.productProfile, modelData.label)
         Accessible.onPressAction: if (commandItem.usable) root.actionTriggered(String(modelData.key))
       }
     }
@@ -173,7 +175,7 @@ Item {
     TapHandler { onSingleTapped: viewMenu.visible ? viewMenu.close() : viewMenu.open() }
 
     Accessible.role: Accessible.Button
-    Accessible.name: "Change your view"
+    Accessible.name: Semantics.text(root.productProfile, "Change your view")
 
     Controls.Popup {
       id: viewMenu
@@ -222,7 +224,7 @@ Item {
               anchors.left: parent.left
               anchors.leftMargin: 10
               anchors.verticalCenter: parent.verticalCenter
-              text: modelData.label
+              text: Semantics.text(root.productProfile, modelData.label)
               textFormat: Text.PlainText
               color: Aero.textPrimary
               font.family: Aero.fontFamily
@@ -239,7 +241,7 @@ Item {
             }
 
             Accessible.role: Accessible.MenuItem
-            Accessible.name: modelData.label
+            Accessible.name: Semantics.text(root.productProfile, modelData.label)
           }
         }
       }
