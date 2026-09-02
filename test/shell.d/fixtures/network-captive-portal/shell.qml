@@ -61,7 +61,7 @@ ShellRoot {
     check(panel.hasCaptivePortal && panel.restricted, "native portal activates restricted mode")
     check(panel.testButton.visible, "portal button visible")
     check(panel.testButton.text === "Open Captive Portal", "prominent action label")
-    check(panel.icon === "󰤩" && panel.testBarButton.active, "blocked bar icon and warning color")
+    check(panel.icon === "\u25B3" && panel.testBarButton.active, "blocked bar icon and warning color")
     check(panel.testMeta.text === "SIGN-IN REQUIRED", "status replaces cheerful connection phrase")
     check(panel.testTitle.text === "Guest Wi-Fi", "connected SSID survives missing route details")
     check(panel.testPoll.running && panel.testPoll.interval === 10000, "restricted recheck runs while closed")
@@ -94,7 +94,7 @@ ShellRoot {
     check(!panel.testPoll.running, "recovery stops extra checks")
     check(!panel.testButton.visible && !panel.testBarButton.active, "recovery hides button and warning color")
     check(panel.focusSection === "header", "disappearing button leaves valid cursor")
-    check(panel.icon !== "󰤩", "signal icon returns")
+    check(panel.icon !== "\u25B3", "signal icon returns")
     // No browser launch when the portal is gone (runner asserts one launch).
     panel.openCaptivePortal()
     NetworkMock.connectivity = NetworkConnectivity.Limited
@@ -123,7 +123,7 @@ ShellRoot {
 
   function disconnectedChecks() {
     check(panel.kind === "disconnected" && !panel.hasCaptivePortal, "disconnect clears stale portal")
-    check(!panel.testButton.visible && panel.icon === "󰤮", "disconnected icon not portal icon")
+    check(!panel.testButton.visible && panel.icon === "\u25A1", "disconnected icon not portal icon")
     if (failed) { Qt.quit(); return }
     console.log("RESULT pass")
     var preview = Quickshell.env("NETWORK_TEST_PREVIEW")
