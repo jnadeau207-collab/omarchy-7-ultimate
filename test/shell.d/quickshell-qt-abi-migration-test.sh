@@ -16,8 +16,14 @@ if grep -Eq 'pacman -S .*quickshell-git' "$qs_swap"; then
   fail "1787399318 must not be rewritten to install quickshell-git"
 fi
 
-grep -Fq 'Do not undo 1787399318' "$qt_align" \
-  || fail "companion says it will not undo the packaged quickshell swap"
+if grep -Eq 'quickshell-git' "$qt_align"; then
+  fail "the Qt companion must not reach for quickshell-git"
+fi
+if grep -Eq 'pacman -(R|S)[^|]*[^-]quickshell' "$qt_align"; then
+  fail "the Qt companion must not install, remove, or downgrade quickshell and undo 1787399318"
+fi
+grep -Fq 'sudo pacman -S --noconfirm --needed qt6-base qt6-declarative qt6-svg qt6-5compat' "$qt_align" ||
+  fail "the Qt companion aligns Qt and nothing else"
 if grep -Eq 'pacman -S .*quickshell-git' "$qt_align"; then
   fail "companion must not reinstall quickshell-git"
 fi
