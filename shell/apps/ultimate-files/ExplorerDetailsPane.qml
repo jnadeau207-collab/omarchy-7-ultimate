@@ -14,7 +14,7 @@ Rectangle {
   property string folderPath: ""
   property bool truncated: false
 
-  implicitHeight: Aero.detailsHeight
+  implicitHeight: Math.max(Aero.detailsHeight, boundaryBanner.visible ? boundaryBanner.implicitHeight + 8 : 0)
 
   gradient: Gradient {
     GradientStop { position: 0; color: Aero.detailsTop }
@@ -116,6 +116,7 @@ Rectangle {
   }
 
   Text {
+    id: boundaryBanner
     visible: root.record === null && root.boundary !== ""
     anchors.left: identity.right
     anchors.leftMargin: 24
@@ -126,8 +127,7 @@ Rectangle {
     text: root.boundary
     textFormat: Text.PlainText
     wrapMode: Text.WordWrap
-    maximumLineCount: 2
-    elide: Text.ElideRight
+    maximumLineCount: 4
     color: Aero.textDisabled
     font.family: Aero.fontFamily
     font.pixelSize: 11
