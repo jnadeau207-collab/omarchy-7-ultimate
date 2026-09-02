@@ -615,9 +615,52 @@ fi
 if grep -Fq 'Recycle is Phase 6' "$ROOT/plans/project-ultimate.md"; then
   fail "Current position no longer frames Recycle as Phase-6-only while Files trash/restore UI exists"
 fi
+if grep -Fq 'Typed Settings services are Phase 5' "$ROOT/plans/project-ultimate.md"; then
+  fail "Current position no longer blankets typed Settings as Phase 5"
+fi
 if grep -Fq 'and cannot set one' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
   fail "PARITY Default Programs notes no longer deny the live browser writer"
 fi
+python3 - "$ROOT" <<'PY' || fail "PARITY Desktop/Context-menus rows still invent a Phase 6 fence"
+import json
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+parity = (root / "WINDOWS_7_ULTIMATE_PARITY.md").read_text(encoding="utf-8")
+jobs = json.loads((root / "default/ultimate/parity/jobs.json").read_text(encoding="utf-8"))
+
+def table_row(md, job):
+    for line in md.splitlines():
+        if line.startswith("| ") and line[2:].startswith(job):
+            return line
+    raise SystemExit(f"PARITY row missing: {job}")
+
+desktop = table_row(parity, "Desktop (icons")
+context = table_row(parity, "Context menus")
+for label, row in (("Desktop", desktop), ("Context menus", context)):
+    if re.search(r"remain Phase 6|stay Phase 6|Phase 6", row):
+        raise SystemExit(f"{label} row still invents a Phase 6 fence")
+    if not re.search(r"unavailable|not product-complete", row, re.I):
+        raise SystemExit(f"{label} row must name unavailable / not product-complete")
+if "honest-unavailable" not in desktop:
+    raise SystemExit("Desktop row dropped Restore honest-unavailable")
+if "files.trash.manage" not in desktop:
+    raise SystemExit("Desktop row dropped files.trash.manage missing")
+if "not product-complete" not in desktop:
+    raise SystemExit("Desktop row dropped Recycle not product-complete")
+catalog = {job["id"]: job for job in jobs.get("jobs", [])}
+for job_id in (
+    "parity.desktop-icons-wallpaper-context-menu-recycle",
+    "parity.context-menus",
+):
+    job = catalog.get(job_id)
+    if not job:
+        raise SystemExit(f"{job_id} missing from jobs catalog")
+    if job.get("claim") != "prototype" or job.get("sourceStatus") != "prototype":
+        raise SystemExit(f"{job_id} claim/sourceStatus must stay prototype")
+PY
 pass "Plan and PARITY writer fences match the live Settings and Files surfaces"
 
 grep -Fq 'Ui.SettingsHostedPanel' "$application" \
