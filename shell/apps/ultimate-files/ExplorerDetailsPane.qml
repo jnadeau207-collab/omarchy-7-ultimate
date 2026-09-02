@@ -127,7 +127,7 @@ Rectangle {
     text: root.boundary
     textFormat: Text.PlainText
     wrapMode: Text.WordWrap
-    maximumLineCount: 4
+    maximumLineCount: 5
     color: Aero.textDisabled
     font.family: Aero.fontFamily
     font.pixelSize: 11
