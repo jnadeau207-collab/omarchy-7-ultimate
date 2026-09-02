@@ -4190,10 +4190,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Quick Settings",
         "label": "Turn night light on or off",
-        "path": "Superbar > Quick Settings"
+        "path": "Superbar > Quick Settings > Night light"
       },
       "agentCenterLabel": "Turn night light on or off",
       "proofIds": {
