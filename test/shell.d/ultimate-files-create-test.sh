@@ -47,9 +47,11 @@ grep -Fq 'trashable: false' "$application" || fail "the properties card does not
 if grep -Eq 'rm |unlink|shutil' "$application"; then
   fail "Files deletes directly instead of routing through the operation plane"
 fi
-if grep -Fq 'files.trash.manage' "$application"; then
-  fail "Files does not invent files.trash.manage"
+if grep -Eq 'action: "(files\.)?trash\.manage"|key: "trash.manage"' "$application"; then
+  fail "Files does not invent a files.trash.manage action or control"
 fi
+grep -Fq 'files.trash.manage remain unavailable' "$application" \
+  || fail "Files names files.trash.manage only as unavailable"
 if grep -Fq 'LIVE CONTROL' "$application"; then
   fail "Files must not claim LIVE CONTROL for Trash under the shell principal"
 fi
