@@ -1114,7 +1114,7 @@
       "kind": "parity-job",
       "sourceLabel": "Agent Center",
       "sourceStatus": "prototype",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "agents.center.manage"
       ],
