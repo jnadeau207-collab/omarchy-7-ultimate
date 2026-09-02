@@ -1,0 +1,743 @@
+{
+  "$schema": "omarchy.w7-specs.interaction-polish.v1",
+  "meta": {
+    "id": "05-INTERACTION-POLISH",
+    "title": "Windows 7 Ultimate Interaction Grammar + Brutal Polish",
+    "product": "Omarchy Project Ultimate",
+    "phase": 11,
+    "sku": "Windows7Ultimate",
+    "edition": "Windows 7 Ultimate",
+    "generated": "2026-09-02",
+    "purpose": "Normative interaction bible for Omarchy Desktop Mode Rule 3 muscle memory and Phase 11 polish. No guessing hover timing or button order.",
+    "companionMd": "05-INTERACTION-POLISH.md",
+    "sources": [
+      "https://learn.microsoft.com/en-us/windows/win32/uxguide/inter-mouse",
+      "https://learn.microsoft.com/en-us/windows/win32/uxguide/win-dialog-box",
+      "https://learn.microsoft.com/en-us/windows/win32/uxguide/progress-bars",
+      "https://learn.microsoft.com/en-us/windows/win32/uxguide/mess-notif",
+      "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-messageboxw",
+      "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics",
+      "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-trackmouseevent",
+      "https://learn.microsoft.com/en-us/windows/win32/menurc/using-menus",
+      "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/dnacc/guidelines-for-keyboard-user-interface-design",
+      "https://learn.microsoft.com/en-us/windows/win32/shell/notification-area",
+      "https://devblogs.microsoft.com/oldnewthing/20100304-00/?p=14733",
+      "https://learn.microsoft.com/en-us/archive/technet-wiki/2783.windows-7-aero-peek-feature",
+      "https://petri.com/new-aero-features-in-windows-7/",
+      "https://en.wikipedia.org/wiki/Windows_Aero",
+      "https://4sysops.com/archives/windows-7-keyboard-shortcuts-the-complete-list/",
+      "https://web.archive.org/web/20120424082851/msdn.microsoft.com/en-us/library/bb545461.aspx",
+      "https://github.com/ALTaleX531/dwm_colorization_calculator"
+    ],
+    "citations": [
+      {
+        "id": "ux-mouse",
+        "title": "Windows 7 Mouse and Pointers",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/uxguide/inter-mouse"
+      },
+      {
+        "id": "ux-dialog",
+        "title": "Windows 7 Dialog Boxes",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/uxguide/win-dialog-box"
+      },
+      {
+        "id": "ux-progress",
+        "title": "Progress Bars",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/uxguide/progress-bars"
+      },
+      {
+        "id": "ux-notif",
+        "title": "Notifications",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/uxguide/mess-notif"
+      },
+      {
+        "id": "api-msgbox",
+        "title": "MessageBoxW",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-messageboxw"
+      },
+      {
+        "id": "api-gsm",
+        "title": "GetSystemMetrics",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics"
+      },
+      {
+        "id": "api-tme",
+        "title": "TRACKMOUSEEVENT",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-trackmouseevent"
+      },
+      {
+        "id": "api-menus",
+        "title": "Using Menus",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/menurc/using-menus"
+      },
+      {
+        "id": "kb-ui",
+        "title": "Guidelines for Keyboard User Interface Design",
+        "url": "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/dnacc/guidelines-for-keyboard-user-interface-design"
+      },
+      {
+        "id": "shell-notif",
+        "title": "Notifications and the Notification Area",
+        "url": "https://learn.microsoft.com/en-us/windows/win32/shell/notification-area"
+      },
+      {
+        "id": "chen-drag",
+        "title": "What happens if I drag by exactly SM_CXDRAG",
+        "url": "https://devblogs.microsoft.com/oldnewthing/20100304-00/?p=14733"
+      },
+      {
+        "id": "technet-peek",
+        "title": "Windows 7 Aero Peek Feature",
+        "url": "https://learn.microsoft.com/en-us/archive/technet-wiki/2783.windows-7-aero-peek-feature"
+      },
+      {
+        "id": "petri-aero",
+        "title": "Using Aero Peek, Aero Shake & Aero Snap in Windows 7",
+        "url": "https://petri.com/new-aero-features-in-windows-7/"
+      },
+      {
+        "id": "wiki-aero",
+        "title": "Windows Aero",
+        "url": "https://en.wikipedia.org/wiki/Windows_Aero"
+      },
+      {
+        "id": "4sysops-hotkeys",
+        "title": "Windows 7 keyboard shortcuts – the complete list",
+        "url": "https://4sysops.com/archives/windows-7-keyboard-shortcuts-the-complete-list/"
+      },
+      {
+        "id": "msdn-hotkeys-archive",
+        "title": "Windows Keyboard Shortcut Keys (archive)",
+        "url": "https://web.archive.org/web/20120424082851/msdn.microsoft.com/en-us/library/bb545461.aspx"
+      },
+      {
+        "id": "dwm-color",
+        "title": "DWM colorization calculator / CPL intensity mapping",
+        "url": "https://github.com/ALTaleX531/dwm_colorization_calculator"
+      }
+    ]
+  },
+  "mouse": {
+    "clicks": {
+      "singleLeft": "Activate non-selectable; select selectable; set caret in text; effect on button-up",
+      "doubleLeft": "Select + default command; text selects word; third click sentence/paragraph",
+      "singleRight": "Select + context menu",
+      "doubleRight": "Same as single right",
+      "middle": "App-defined; not required for core chrome",
+      "shiftLeft": "Contiguous selection extend",
+      "ctrlLeft": "Toggle discontinuous selection"
+    },
+    "metricsDefaults": {
+      "SM_CXDRAG": 4,
+      "SM_CYDRAG": 4,
+      "SM_CXDOUBLECLK": 4,
+      "SM_CYDOUBLECLK": 4,
+      "SPI_GETMOUSEHOVERTIME_ms": 400,
+      "hoverRect": "Same as double-click rectangle by default",
+      "clickReleaseSlop_px": 3,
+      "notes": "Drag starts only when pointer leaves InflateRect(start, SM_CXDRAG, SM_CYDRAG); equality does not start drag (Chen)."
+    },
+    "tooltip": {
+      "initialDelayMsDefault": 400,
+      "uxProseHoverHint": "UX guide text says ~1s for human hovering; implement SPI default 400ms",
+      "autopopTypicalMs": 5000,
+      "primaryUiMustNotRequireHover": true
+    },
+    "focusRectangle": {
+      "api": [
+        "DrawFocusRect",
+        "SPI_GETFOCUSBORDERWIDTH",
+        "SPI_GETFOCUSBORDERHEIGHT",
+        "SM_CXFOCUSBORDER",
+        "SM_CYFOCUSBORDER"
+      ],
+      "keyboardCuesHiddenUntilAltByDefault": true,
+      "spi": [
+        "SPI_GETKEYBOARDCUES",
+        "SPI_GETMENUUNDERLINES"
+      ]
+    },
+    "marquee": "Empty-area left-drag past drag threshold → rubber-band selection; Esc cancels compound ops"
+  },
+  "menus": {
+    "surfaces": [
+      "menuBar",
+      "dropDown",
+      "contextMenu",
+      "systemMenu",
+      "jumpList"
+    ],
+    "cascade": {
+      "open": "Hover delay or click; keyboard Right opens / Left closes (LTR)",
+      "flipIfNoSpace": true,
+      "disabledParentNoCascade": true
+    },
+    "separators": {
+      "rules": [
+        "Group logical commands",
+        "Never leading/trailing",
+        "Never doubled",
+        "Non-focusable"
+      ]
+    },
+    "items": {
+      "check": "Independent toggle with checkmark column",
+      "radio": "Exclusive within separator-bounded group",
+      "disabled": "Gray; visible; non-activating",
+      "defaultCommand": "Bold; double-click target"
+    },
+    "mnemonics": {
+      "marker": "& before character",
+      "underlineRespectsKeyboardCues": true,
+      "noMnemonicOn": [
+        "OK",
+        "Cancel",
+        "Close"
+      ],
+      "ownerDraw": [
+        "honor ODS_NOACCEL",
+        "handle WM_MENUCHAR"
+      ]
+    }
+  },
+  "dialogs": {
+    "commitButtonAlignment": "right",
+    "commitButtonOrderLTR": [
+      "OK|DoIt|Yes",
+      "DontDoIt|No",
+      "Cancel",
+      "Apply?",
+      "Help?"
+    ],
+    "defaultButton": "Enter activates single default; prefer safest/most secure",
+    "escape": "Always Cancel or Close; never OK",
+    "modality": {
+      "modal": "Delayed commit; blocks owner; center on owner",
+      "modeless": "Immediate commit; Close not Cancel; optional Minimize",
+      "propertySheet": "OK/Cancel/Apply; Apply commits without close"
+    },
+    "titleBarCloseEquals": "Cancel or Close — never OK",
+    "messageBoxIcons": [
+      {
+        "name": "Error",
+        "flags": [
+          "MB_ICONERROR",
+          "MB_ICONSTOP",
+          "MB_ICONHAND"
+        ],
+        "use": "Failures"
+      },
+      {
+        "name": "Warning",
+        "flags": [
+          "MB_ICONWARNING",
+          "MB_ICONEXCLAMATION"
+        ],
+        "use": "Caution/risk"
+      },
+      {
+        "name": "Information",
+        "flags": [
+          "MB_ICONINFORMATION",
+          "MB_ICONASTERISK"
+        ],
+        "use": "FYI"
+      },
+      {
+        "name": "Question",
+        "flags": [
+          "MB_ICONQUESTION"
+        ],
+        "use": "Deprecated; legacy parity only"
+      }
+    ],
+    "messageBoxButtonSets": [
+      "MB_OK",
+      "MB_OKCANCEL",
+      "MB_YESNO",
+      "MB_YESNOCANCEL",
+      "MB_RETRYCANCEL",
+      "MB_ABORTRETRYIGNORE",
+      "MB_CANCELTRYCONTINUE"
+    ]
+  },
+  "progress": {
+    "gates": {
+      "feedbackAfterMs": 2000,
+      "progressUiAfterMs": 5000,
+      "considerModelessAfterMs": 30000,
+      "completionSoundIfLongerThanMs": 120000
+    },
+    "determinate": "Bounded ops; monotonic fill; 100% only when complete; never restart/back up",
+    "marqueeIndeterminate": "PBS_MARQUEE when bound unknown; convert to determinate when known",
+    "colors": {
+      "red": "Recoverable block",
+      "yellow": "Paused or impeded",
+      "normal": "Running"
+    },
+    "cancelVsStop": "Cancel if reversible to prior state; Stop if partial results remain",
+    "copyDialogWin7": {
+      "features": [
+        "Overall determinate progress",
+        "Current filename/path",
+        "Time remaining when estimable",
+        "Pause",
+        "Cancel",
+        "Per-file conflict UI",
+        "Recoverable error continue/skip"
+      ],
+      "ownerCloseMayLeaveCopyRunning": true
+    },
+    "doNotCombineWithBusyPointer": true
+  },
+  "notifications": {
+    "balloonTips": {
+      "api": "Shell_NotifyIcon NIF_INFO",
+      "criticality": "Useful not critical; asynchronous",
+      "timeoutClampSeconds": {
+        "minTypical": 10,
+        "maxTypical": 30
+      },
+      "idleTimeDoesNotCount": true,
+      "oneAtATime": true
+    },
+    "actionCenterWin7": {
+      "description": "Flag tray icon → Security and Maintenance messages pane",
+      "notWin10NotificationCenter": true
+    },
+    "hotkeys": {
+      "Win+B": "Focus notification area",
+      "Ctrl+Win+B": "Switch to app that raised message"
+    }
+  },
+  "windowSwitching": {
+    "altTab": {
+      "ui": "Windows Flip thumbnails (Aero) or icons (Basic)",
+      "sticky": "Ctrl+Alt+Tab"
+    },
+    "winTabFlip3D": {
+      "requiresAero": true,
+      "sticky": "Ctrl+Win+Tab",
+      "notTaskView": true
+    },
+    "altEsc": "Cycle in open order without Flip UI"
+  },
+  "aeroEnhancements": [
+    {
+      "id": "snap-side",
+      "gesture": "Drag title to L/R edge or Win+Left/Right",
+      "result": "Half work area"
+    },
+    {
+      "id": "snap-max",
+      "gesture": "Drag title to top or Win+Up",
+      "result": "Maximize"
+    },
+    {
+      "id": "snap-restore-min",
+      "gesture": "Win+Down",
+      "result": "Restore then minimize"
+    },
+    {
+      "id": "snap-vertical",
+      "gesture": "Edge to top/bottom or Win+Shift+Up",
+      "result": "Full height keep width"
+    },
+    {
+      "id": "snap-monitor",
+      "gesture": "Win+Shift+Left/Right",
+      "result": "Move to adjacent monitor"
+    },
+    {
+      "id": "shake",
+      "gesture": "Shake title bar or Win+Home",
+      "result": "Minimize all others; repeat restores"
+    },
+    {
+      "id": "peek-desktop",
+      "gesture": "Hover show-desktop scrubber or hold Win+Space",
+      "result": "Transparent windows / desktop peek"
+    },
+    {
+      "id": "peek-window",
+      "gesture": "Hover taskbar thumbnail",
+      "result": "That window opaque; others glass"
+    },
+    {
+      "id": "flip3d",
+      "gesture": "Win+Tab",
+      "result": "3D carousel"
+    },
+    {
+      "id": "live-thumbs",
+      "gesture": "Hover taskbar button",
+      "result": "Live thumbnails"
+    },
+    {
+      "id": "jump-lists",
+      "gesture": "Right-click taskbar button",
+      "result": "Tasks + destinations"
+    },
+    {
+      "id": "show-desktop",
+      "gesture": "Click scrubber or Win+D",
+      "result": "Show/toggle desktop"
+    }
+  ],
+  "dpi": {
+    "presets": [
+      {
+        "label": "Smaller",
+        "percent": 100,
+        "dpi": 96
+      },
+      {
+        "label": "Medium",
+        "percent": 125,
+        "dpi": 120
+      },
+      {
+        "label": "Larger",
+        "percent": 150,
+        "dpi": 144
+      }
+    ],
+    "customPercentRange": [
+      100,
+      500
+    ],
+    "systemWideNotPerMonitor": true,
+    "xpStyleScalingCheckbox": "Use Windows XP style DPI scaling — reduces blur virtualization for unaware apps",
+    "chromeEffects": "Non-client, menus, dialogs, 75x23 button baseline scale with DPI; unaware apps bitmap-stretched"
+  },
+  "themes": {
+    "ultimateDefault": "Windows 7 Aero (when DWM capable)",
+    "families": [
+      "Aero",
+      "Windows 7 Basic",
+      "Windows Classic",
+      "High Contrast"
+    ],
+    "colorizationIntensity": {
+      "control": "Personalize → Window Color → Color intensity slider",
+      "right": "Bolder / less transparent tint",
+      "left": "Softer / more transparent",
+      "cplClampApprox": {
+        "min": 13,
+        "max": 217
+      },
+      "mapsTo": "DWM colorization alpha / CColorizationColor ARGB via DwmSetColorizationParameters",
+      "mixer": [
+        "Hue",
+        "Saturation",
+        "Brightness"
+      ]
+    }
+  },
+  "sounds": {
+    "standardSchemes": [
+      "Windows Default",
+      "No Sounds"
+    ],
+    "themedSchemes": [
+      "Afternoon",
+      "Calligraphy",
+      "Characters",
+      "Cityscape",
+      "Delta",
+      "Festival",
+      "Garden",
+      "Heritage",
+      "Landscape",
+      "Quirky",
+      "Raga",
+      "Savanna",
+      "Sonata"
+    ]
+  },
+  "cursors": {
+    "schemeName": "Windows Aero",
+    "directory": "%SystemRoot%\\Cursors\\",
+    "map": {
+      "Arrow": "aero_arrow.cur",
+      "Help": "aero_helpsel.cur",
+      "AppStarting": "aero_working.ani",
+      "Wait": "aero_busy.ani",
+      "Crosshair": "aero_prec.cur",
+      "IBeam": "aero_select.cur",
+      "NWPen": "aero_pen.cur",
+      "No": "aero_unavail.cur",
+      "SizeNS": "aero_ns.cur",
+      "SizeWE": "aero_ew.cur",
+      "SizeNWSE": "aero_nwse.cur",
+      "SizeNESW": "aero_nesw.cur",
+      "SizeAll": "aero_move.cur",
+      "UpArrow": "aero_up.cur",
+      "Hand": "aero_link.cur",
+      "DefaultValue": "Windows Aero"
+    },
+    "rules": [
+      "Hand pointer only for links",
+      "Busy pointer has no hotspot",
+      "Show busy if wait >1s without other progress UI"
+    ],
+    "note": "Theme .theme [Control Panel\\Cursors] mapping; Crosshair/IBeam files present in Aero cursor pack (aero_prec / aero_select)."
+  },
+  "winHotkeys": {
+    "rule3Core": {
+      "Win": "Toggle Start",
+      "Win+D": "Show/hide desktop toggle",
+      "Win+E": "Explorer → Computer",
+      "Win+R": "Run dialog",
+      "Win+L": "Lock workstation / switch user",
+      "Win+Up": "Maximize",
+      "Win+Down": "Restore / minimize",
+      "Win+Left": "Snap left",
+      "Win+Right": "Snap right",
+      "Win+Home": "Minimize all but active",
+      "Win+P": "Presentation display mode",
+      "Win+X": "Windows Mobility Center (NOT Win10 Quick Link)",
+      "Win+Tab": "Aero Flip 3D (NOT Task View)",
+      "Win+Space": "Aero Peek desktop hold (NOT language switch)"
+    },
+    "full": {
+      "Win": "Start menu",
+      "Win+Pause": "System Properties",
+      "Win+D": "Show desktop toggle",
+      "Win+M": "Minimize all",
+      "Win+Shift+M": "Restore after Win+M",
+      "Win+E": "Open Computer",
+      "Win+F": "Search files/folders",
+      "Ctrl+Win+F": "Search computers",
+      "Win+L": "Lock",
+      "Win+R": "Run",
+      "Win+T": "Cycle taskbar",
+      "Win+1..0": "Pinned taskbar launch/switch by index",
+      "Shift+Win+1..0": "New instance pinned",
+      "Ctrl+Win+1..0": "Last active window of pinned",
+      "Alt+Win+1..0": "Jump List for pinned",
+      "Win+Tab": "Flip 3D",
+      "Shift+Win+Tab": "Flip 3D reverse",
+      "Ctrl+Win+Tab": "Sticky Flip 3D",
+      "Ctrl+Win+B": "App that showed notification",
+      "Win+Space": "Peek desktop",
+      "Win+Up": "Maximize",
+      "Win+Down": "Restore/minimize",
+      "Win+Left": "Snap left",
+      "Win+Right": "Snap right",
+      "Win+Home": "Minimize others",
+      "Win+Shift+Up": "Vertical stretch",
+      "Win+Shift+Left/Right": "Move window across monitors",
+      "Win+P": "Project",
+      "Win+G": "Cycle gadgets",
+      "Win+U": "Ease of Access Center",
+      "Win+X": "Mobility Center",
+      "Win++": "Magnifier zoom in",
+      "Win+-": "Magnifier zoom out"
+    },
+    "doNotImplementAsWin7": [
+      "Win+A (Win10 Action Center)",
+      "Win+I (Settings)",
+      "Win+K (Connect)",
+      "Win+Ctrl+D (virtual desktop)",
+      "Win+. (emoji)",
+      "Win+Tab as Task View"
+    ]
+  },
+  "masterInteractionTable": [
+    {
+      "surface": "Desktop",
+      "control": "Icon",
+      "gesture": "Double left-click",
+      "result": "Open default command",
+      "notes": "Bold in context menu",
+      "source": "ux-mouse"
+    },
+    {
+      "surface": "Desktop",
+      "control": "Empty",
+      "gesture": "Left-drag",
+      "result": "Marquee select",
+      "notes": "After SM_CX/YDRAG",
+      "source": "chen-drag"
+    },
+    {
+      "surface": "Any",
+      "control": "Object",
+      "gesture": "Hover 400ms",
+      "result": "Tooltip",
+      "notes": "SPI_GETMOUSEHOVERTIME",
+      "source": "api-tme"
+    },
+    {
+      "surface": "Window",
+      "control": "Title bar",
+      "gesture": "Drag to edge / Win+Arrows",
+      "result": "Aero Snap",
+      "notes": "Half/max/restore",
+      "source": "petri-aero"
+    },
+    {
+      "surface": "Window",
+      "control": "Title bar",
+      "gesture": "Shake / Win+Home",
+      "result": "Minimize others",
+      "notes": "Aero Shake",
+      "source": "petri-aero"
+    },
+    {
+      "surface": "Taskbar",
+      "control": "Show desktop scrubber",
+      "gesture": "Hover",
+      "result": "Peek desktop",
+      "notes": "Aero Peek",
+      "source": "technet-peek"
+    },
+    {
+      "surface": "Taskbar",
+      "control": "App button",
+      "gesture": "Hover",
+      "result": "Live thumbnail + peek",
+      "notes": "Grouped multi-thumb",
+      "source": "wiki-aero"
+    },
+    {
+      "surface": "Taskbar",
+      "control": "App button",
+      "gesture": "Right-click",
+      "result": "Jump List",
+      "notes": "Win7",
+      "source": "4sysops-hotkeys"
+    },
+    {
+      "surface": "Taskbar",
+      "control": "Notification",
+      "gesture": "Balloon",
+      "result": "Async tip",
+      "notes": "10–30s clamp; one at a time",
+      "source": "shell-notif"
+    },
+    {
+      "surface": "Dialog",
+      "control": "Commit buttons",
+      "gesture": "Layout",
+      "result": "OK→No→Cancel→Apply→Help right-aligned",
+      "notes": "Normative",
+      "source": "ux-dialog"
+    },
+    {
+      "surface": "Dialog",
+      "control": "Any",
+      "gesture": "Esc",
+      "result": "Cancel/Close",
+      "notes": "Always",
+      "source": "ux-dialog"
+    },
+    {
+      "surface": "Dialog",
+      "control": "Default button",
+      "gesture": "Enter",
+      "result": "Invoke default",
+      "notes": "Safest preferred",
+      "source": "ux-dialog"
+    },
+    {
+      "surface": "MessageBox",
+      "control": "Icon",
+      "gesture": "Display",
+      "result": "Error/Warning/Info/Question glyphs",
+      "notes": "Question deprecated",
+      "source": "api-msgbox"
+    },
+    {
+      "surface": "Progress",
+      "control": "Bar",
+      "gesture": "Operation",
+      "result": "Determinate or marquee",
+      "notes": "No busy+bar combo",
+      "source": "ux-progress"
+    },
+    {
+      "surface": "Progress",
+      "control": "Copy dialog",
+      "gesture": "Copy/move files",
+      "result": "Win7 copy UI",
+      "notes": "Pause/Cancel/conflicts",
+      "source": "ux-progress"
+    },
+    {
+      "surface": "Switcher",
+      "control": "Alt+Tab",
+      "gesture": "Hold Alt+Tab",
+      "result": "Flip thumbnails",
+      "notes": "Ctrl+Alt+Tab sticky",
+      "source": "4sysops-hotkeys"
+    },
+    {
+      "surface": "Switcher",
+      "control": "Win+Tab",
+      "gesture": "Hold Win+Tab",
+      "result": "Flip 3D",
+      "notes": "Aero only; not Task View",
+      "source": "4sysops-hotkeys"
+    },
+    {
+      "surface": "System",
+      "control": "Win+X",
+      "gesture": "Key",
+      "result": "Mobility Center",
+      "notes": "NOT Win10 Quick Link",
+      "source": "4sysops-hotkeys"
+    },
+    {
+      "surface": "System",
+      "control": "Win+D/E/R/L/Arrows/Home/P/Space",
+      "gesture": "Key",
+      "result": "See winHotkeys.rule3Core",
+      "notes": "Rule 3",
+      "source": "4sysops-hotkeys"
+    },
+    {
+      "surface": "Personalize",
+      "control": "Color intensity",
+      "gesture": "Slider",
+      "result": "Glass tint alpha/boldness",
+      "notes": "CPL clamp ~13–217",
+      "source": "dwm-color"
+    },
+    {
+      "surface": "Display",
+      "control": "DPI",
+      "gesture": "100/125/150%",
+      "result": "96/120/144 DPI chrome scale",
+      "notes": "System-wide",
+      "source": "ux-dialog"
+    },
+    {
+      "surface": "Sound",
+      "control": "Scheme",
+      "gesture": "Select",
+      "result": "Windows Default / No Sounds / 13 themes",
+      "notes": "Afternoon…Sonata",
+      "source": "ux-notif"
+    },
+    {
+      "surface": "Cursor",
+      "control": "Scheme Windows Aero",
+      "gesture": "Role map",
+      "result": "aero_*.cur/.ani",
+      "notes": "Hand=links only",
+      "source": "ux-mouse"
+    }
+  ],
+  "nonNegotiables": [
+    "Use SPI/SM at runtime; fallback to 400ms hover and 4px drag/double-click",
+    "Dialog commit order OK → No → Cancel → Apply → Help, right-aligned",
+    "Esc cancels; Enter fires default",
+    "Win+X / Win+Tab / Win+Space are Win7 meanings",
+    "Balloons ≠ Win7 Action Center ≠ Win10 notification center",
+    "Hover never required for primary commands",
+    "Hand cursor only for hyperlinks",
+    "Prefer determinate progress; marquee only if unbound"
+  ]
+}
