@@ -23,6 +23,13 @@ grep -Fq 'app.slice' "$application" ||
 if grep -Fq 'omarchy-powerprofiles-set' "$application"; then
   fail "Settings assembles a legacy shell string instead of the typed verb"
 fi
+grep -Fq 'session_operable=False' "$ROOT/default/fabric/omarchy_fabric/providers/power/provider.py" ||
+  fail "the real power provider stays session_operable=False"
+grep -Fq 'SESSION_OPERABLE_DOMAINS = frozenset({"audio", "display", "input", "network", "process"})' "$ROOT/test/fabric/providers/test_leaf_providers.py" ||
+  fail "leaf provider tests name the session-operable domains without power"
+if grep -Fq 'org.freedesktop.UPower.PowerProfiles' "$ROOT/default/polkit-1/actions/org.omarchy.fabric.policy"; then
+  fail "Omarchy polkit policy does not invent a PowerProfiles authorization"
+fi
 pass "Settings does not offer LIVE power profile mutation"
 
 grep -Fq 'provider: "display.provider"' "$application" || fail "Settings sets brightness through display.provider"
