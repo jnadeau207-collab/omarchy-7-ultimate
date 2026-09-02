@@ -745,6 +745,12 @@ if "Agent Center claim present" in gaps and "no Agent Center claim present" not 
     raise SystemExit("fleet-doctrine-gaps invented Agent Center claim present")
 if "d3f4841a496ea5fd9618b269ca268d922516434a" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the metal tip SHA for Settings coverage-badge PIXEL leftover CLOSED")
+if "254e23636ef3" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #43 tip parent for the PARITY QS Power metal FAIL honesty twin")
+if "not a metal proof" not in gaps or "WINDOWS_7_ULTIMATE_PARITY.md" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the PARITY Power Options not-a-metal-proof underclaim close")
+if "plans/project-ultimate.md" not in gaps or "PARITY / project-ultimate QS Power leftover after PR #43" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the project-ultimate QS Power unverified-without-FAIL underclaim close")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -792,6 +798,48 @@ if "Not Event Viewer" not in event_notes:
     raise SystemExit("PARITY Event / history must stay Not Event Viewer")
 if "Administration > Troubleshooting" in event_notes:
     raise SystemExit("PARITY Event / history invented Administration Troubleshooting as Event Viewer")
+
+power_status, power_notes = parity_notes("Power Options")
+if power_status == "present":
+    raise SystemExit("PARITY Power Options was flipped to present")
+if "not a metal proof" in power_notes:
+    raise SystemExit("PARITY Power Options still underclaims leftover as not a metal proof")
+if "QS Power METAL_HEAD OPEN" not in power_notes:
+    raise SystemExit("PARITY Power Options must keep QS Power METAL_HEAD OPEN")
+if "20484de6" not in power_notes:
+    raise SystemExit("PARITY Power Options must cite metal FAIL tip 20484de6")
+if "Not authorized" not in power_notes or "session-5103" not in power_notes:
+    raise SystemExit("PARITY Power Options must cite metal FAIL pkcheck Not authorized / session-5103")
+if "batteryPresent" not in power_notes or "amd_pstate" not in power_notes:
+    raise SystemExit("PARITY Power Options must cite metal FAIL batteryPresent / amd_pstate")
+if "Settings Power LIVE refused" not in power_notes:
+    raise SystemExit("PARITY Power Options must keep Settings Power LIVE refused")
+if "heritage QS Power works on metal" in power_notes:
+    raise SystemExit("PARITY Power Options invented heritage QS Power works on metal")
+if "unverified on metal" not in power_notes:
+    raise SystemExit("PARITY Power Options must keep leftover was unverified on metal")
+if "KEEP OPEN" not in power_notes:
+    raise SystemExit("PARITY Power Options must KEEP OPEN the QS Power leftover")
+
+fabric_status, fabric_notes = parity_notes("Agent Fabric")
+if fabric_status == "present":
+    raise SystemExit("PARITY Agent Fabric was flipped to present")
+if "remains unverified on metal" in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric still underclaims Superbar Power leftover as unverified without metal FAIL")
+if "QS Power METAL_HEAD OPEN" not in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric must keep QS Power METAL_HEAD OPEN")
+if "20484de6" not in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric must cite metal FAIL tip 20484de6")
+if "Not authorized" not in fabric_notes or "session-5103" not in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric must cite metal FAIL pkcheck Not authorized / session-5103")
+if "batteryPresent" not in fabric_notes or "amd_pstate" not in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric must cite metal FAIL batteryPresent / amd_pstate")
+if "KEEP OPEN" not in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric must KEEP OPEN the Superbar Power leftover")
+if "Settings Power LIVE refused" not in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric must keep Settings Power LIVE refused")
+if "heritage QS Power works on metal" in fabric_notes:
+    raise SystemExit("PARITY Agent Fabric invented heritage QS Power works on metal")
 
 job_claims = {
     "parity.firewall": "plumbing",
@@ -987,6 +1035,22 @@ if "METAL_HEAD closed" in plan:
     raise SystemExit("project-ultimate invented METAL_HEAD closed")
 if "events.subscribe" in plan:
     raise SystemExit("project-ultimate invented events.subscribe")
+if "Superbar QS Process leftover unverified on metal" in plan:
+    raise SystemExit("project-ultimate still underclaims QS/Superbar Power leftover as unverified without metal FAIL")
+if "QS Power METAL_HEAD OPEN" not in plan:
+    raise SystemExit("project-ultimate must keep QS Power METAL_HEAD OPEN")
+if "20484de6" not in plan:
+    raise SystemExit("project-ultimate must cite metal FAIL tip 20484de6")
+if "Not authorized" not in plan or "session-5103" not in plan:
+    raise SystemExit("project-ultimate must cite metal FAIL pkcheck Not authorized / session-5103")
+if "batteryPresent" not in plan or "amd_pstate" not in plan:
+    raise SystemExit("project-ultimate must cite metal FAIL batteryPresent / amd_pstate")
+if "Settings Power LIVE refused" not in plan:
+    raise SystemExit("project-ultimate must keep Settings Power LIVE refused")
+if "heritage QS Power works on metal" in plan:
+    raise SystemExit("project-ultimate invented heritage QS Power works on metal")
+if "KEEP OPEN" not in plan:
+    raise SystemExit("project-ultimate must KEEP OPEN the QS Power leftover")
 
 cp = (root / "plans/win7-ultimate-ground-truth/fleet/fleet-catalog-controlpanel.md").read_text(encoding="utf-8")
 if "planned empty path" in cp:
