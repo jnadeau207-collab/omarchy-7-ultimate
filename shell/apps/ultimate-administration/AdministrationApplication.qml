@@ -36,26 +36,29 @@ Item {
     && String(queryState.query.providerId || "") === "process.provider"
     && queryState.operationAvailable === true
   readonly property bool terminationAuthorized: false
+  property var pendingEndTaskRecord: null
+  readonly property var endTaskConfirm: AdministrationModel.endTaskConfirmCopy()
 
   function endTask(record) {
     if (!host || operationBusy || !record) return
-    var digest = ""
-    for (var i = 0; i < (record.details || []).length; i++) {
-      if (String(record.details[i].label || "").toLowerCase().indexOf("start digest") >= 0) {
-        digest = String(record.details[i].value)
-        break
-      }
-    }
-    if (digest === "") return
-    root.operationTargetId = String(record.id)
+    if (!AdministrationModel.endTaskPreflightArguments(record)) return
+    root.pendingEndTaskRecord = record
+  }
+
+  function cancelEndTaskConfirm() {
+    root.pendingEndTaskRecord = null
+  }
+
+  function confirmEndTask() {
+    var record = root.pendingEndTaskRecord
+    root.pendingEndTaskRecord = null
+    if (!host || operationBusy || !record) return
+    var request = AdministrationModel.endTaskPreflightRequest(record, Date.now())
+    if (!request) return
+    root.operationTargetId = String(request.arguments.resourceId)
     root.operationMessage = ""
     root.operationStage = "preflight"
-    root.operationRequestId = host.requestFabric("operation.preflight", {
-      provider: "process.provider",
-      action: "termination.plan",
-      arguments: { resourceId: root.operationTargetId, expectedStartDigest: digest, signal: "term" },
-      idempotencyKey: "administration.endtask." + root.operationTargetId + "." + Date.now()
-    })
+    root.operationRequestId = host.requestFabric("operation.preflight", request)
     if (root.operationRequestId === "") root.resetOperation("Administration could not reach the operation service.")
   }
 
@@ -672,5 +675,23 @@ Item {
         }
       }
     }
+  }
+
+  Ui.OperationDialog {
+    id: endTaskConfirmDialog
+    anchors.fill: parent
+    z: 20
+    opened: root.pendingEndTaskRecord !== null
+    semanticProfile: root.productProfile
+    stateId: "failure"
+    toneOverride: "danger"
+    destructive: true
+    title: root.endTaskConfirm.title
+    message: root.endTaskConfirm.message
+    recoveryText: root.endTaskConfirm.recovery
+    primaryText: root.endTaskConfirm.confirm
+    cancelText: root.endTaskConfirm.cancel
+    onCanceled: root.cancelEndTaskConfirm()
+    onConfirmed: root.confirmEndTask()
   }
 }
