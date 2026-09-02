@@ -48,16 +48,44 @@ grep -Fq 'onClicked: root.setProfile(modelData)' "$ROOT/shell/plugins/panels/pow
 if grep -Fq 'profileMutationAuthorized' "$ROOT/shell/plugins/panels/power/Panel.qml"; then
   fail "heritage QS Power is not honesty-gated without a metal leftover"
 fi
-grep -Fq 'unverified on metal' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
-  fail "fleet-doctrine-gaps names the Superbar QS Power leftover unverified on metal"
-grep -Fq 'unverified on metal' "$ROOT/docs/settings-service-api.md" ||
-  fail "settings-service-api names the Superbar QS Power leftover unverified on metal"
-grep -Fq 'unverified on metal' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md" ||
-  fail "PARITY names the Superbar QS Power leftover unverified on metal"
-grep -Fq 'METAL_HEAD OPEN' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
-  fail "fleet-doctrine-gaps keeps METAL_HEAD OPEN for the Superbar QS Power leftover"
+grep -Fq 'was unverified on metal' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps names the Superbar QS Power leftover was unverified on metal"
+grep -Fq 'was unverified on metal' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api names the Superbar QS Power leftover was unverified on metal"
+grep -Fq 'was unverified on metal' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md" ||
+  fail "PARITY names the Superbar QS Power leftover was unverified on metal"
+grep -Fq 'QS Power METAL_HEAD OPEN' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps keeps QS Power METAL_HEAD OPEN"
+grep -Fq 'QS Power METAL_HEAD OPEN' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api keeps QS Power METAL_HEAD OPEN"
+grep -Fq 'QS Power METAL_HEAD OPEN' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md" ||
+  fail "PARITY keeps QS Power METAL_HEAD OPEN"
+grep -Fq '20484de6' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api cites metal FAIL tip 20484de6"
+grep -Fq 'Not authorized' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api cites metal FAIL Not authorized"
+grep -Fq 'session-5103' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api cites metal FAIL session-5103"
+grep -Fq 'batteryPresent' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api cites metal FAIL batteryPresent"
+grep -Fq 'amd_pstate' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api cites metal FAIL amd_pstate"
+if grep -Fq 'remains unverified on metal' "$ROOT/docs/settings-service-api.md"; then
+  fail "settings-service-api still underclaims leftover as remains unverified without metal FAIL"
+fi
+if grep -Fq 'heritage QS Power works on metal' "$ROOT/docs/settings-service-api.md"; then
+  fail "settings-service-api invented heritage QS Power works on metal"
+fi
+if grep -Fq 'heritage QS Power works on metal' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md"; then
+  fail "fleet-doctrine-gaps invented heritage QS Power works on metal"
+fi
+if grep -Fq 'heritage QS Power works on metal' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
+  fail "PARITY invented heritage QS Power works on metal"
+fi
+grep -Fq 'Settings Power LIVE refused' "$ROOT/docs/settings-service-api.md" ||
+  fail "settings-service-api keeps Settings Power LIVE refused"
 pass "Settings does not offer LIVE power profile mutation"
-pass "heritage QS Power leftover stays cataloged and unverified on metal"
+pass "heritage QS Power leftover stays cataloged, was unverified on metal, and QS Power METAL_HEAD OPEN after metal FAIL"
 
 if grep -Eiq 'nightlight|night-light|night light' "$application"; then
   fail "Settings invents night-light LIVE"
