@@ -1147,7 +1147,7 @@ def _directory_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], ar
         "proposed": document(proposed_names),
     }
 
-def _entry_trash_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+def _entry_directory_scope(current: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any, *, restoring: bool) -> dict[str, Any]:
     selected = _entry(current, arguments["entryId"])
     record = selected["trash"] if selected["trash"] is not None else None
     location_id = record["originalLocationId"] if record else selected["locationId"]
@@ -1158,7 +1158,10 @@ def _entry_trash_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], 
     if backend is not None and hasattr(backend, "directory_listing"):
         listing = backend.directory_listing(location_id, parent)
     current_names = sorted(listing) if listing is not None else _directory_names_from_state(current, location_id, parent)
-    proposed_names = sorted(candidate for candidate in current_names if candidate != name)
+    if restoring:
+        proposed_names = sorted(set(current_names) | {name})
+    else:
+        proposed_names = sorted(candidate for candidate in current_names if candidate != name)
     digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
 
     def document(names: list[str]) -> dict[str, Any]:
@@ -1170,6 +1173,13 @@ def _entry_trash_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], 
         "current": document(current_names),
         "proposed": document(proposed_names),
     }
+
+def _entry_trash_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+    return _entry_directory_scope(current, arguments, backend, restoring=False)
+
+
+def _trash_restore_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+    return _entry_directory_scope(current, arguments, backend, restoring=True)
 
 def _create_directory(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
@@ -1371,7 +1381,7 @@ OPERATIONS = {
     "directory.create": OperationSpec("directory.create", _normalize_create, _create_directory, _summary("directory"), _anchors, _directory_scope),
     "entry.rename": OperationSpec("entry.rename", _normalize_rename, _rename_entry, _summary("rename"), _anchors),
     "entry.trash": OperationSpec("entry.trash", _normalize_entry, _trash_entry, _summary("Trash"), _anchors, _entry_trash_scope),
-    "trash.restore": OperationSpec("trash.restore", _normalize_entry, _restore_entry, _summary("restore"), _anchors),
+    "trash.restore": OperationSpec("trash.restore", _normalize_entry, _restore_entry, _summary("restore"), _anchors, _trash_restore_scope),
     "mount.connect": OperationSpec("mount.connect", _normalize_mount, _connect, _summary("mount connection"), _anchors),
     "mount.disconnect": OperationSpec("mount.disconnect", _normalize_mount, _disconnect, _summary("mount disconnection"), _anchors),
 }
