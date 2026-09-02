@@ -342,6 +342,7 @@ Item {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
+    productProfile: root.productProfile
     crumbs: root.crumbs
     locationIcon: root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"
       : root.currentRoute && root.currentRoute.id === "files.network" ? "network"
@@ -371,6 +372,7 @@ Item {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: addressBar.bottom
+    productProfile: root.productProfile
     actions: root.commandActions()
     viewMode: root.viewMode
     onActionTriggered: function(key) { root.invoke(key) }
@@ -485,6 +487,7 @@ Item {
     anchors.right: parent.right
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
+    productProfile: root.productProfile
     items: root.viewItems()
     focus: true
     mode: root.viewMode

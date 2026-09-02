@@ -1,10 +1,12 @@
 import QtQuick
+import qs.Commons
 
 import "ExplorerTheme.js" as Aero
 
 Item {
   id: root
 
+  property var productProfile: null
   property string direction: "back"
   property bool enabled: true
 
@@ -106,6 +108,6 @@ Item {
   }
 
   Accessible.role: Accessible.Button
-  Accessible.name: root.direction === "back" ? "Back" : "Forward"
+  Accessible.name: Semantics.text(root.productProfile, root.direction === "back" ? "Back" : "Forward")
   Accessible.onPressAction: if (root.enabled) root.triggered()
 }
