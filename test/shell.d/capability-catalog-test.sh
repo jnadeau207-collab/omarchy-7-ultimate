@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"131 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"130 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -278,24 +278,59 @@ if native9["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > D
 native38 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.38")
 if native38["humanRoute"].get("path") != "Settings jump list > System information":
     raise SystemExit(f"windows-native.38 invents a Start System page: {native38['humanRoute']}")
-processes = by_id["processes.inspect"]["humanRoute"]
-if processes.get("status") != "planned" or processes.get("path"):
-    raise SystemExit(f"processes.inspect invents a Task Manager destination: {processes}")
+if "processes.inspect" in by_id:
+    raise SystemExit("processes.inspect remains as a catalog invent")
+for row in readers["capabilities"] + writers["capabilities"]:
+    provider = row.get("provider") or {}
+    if provider.get("id") == "processes.provider":
+        raise SystemExit(f"{row.get('id')} invents processes.provider: {provider}")
+    if provider.get("id") == "process.provider" and row.get("id") not in {"process.inspect", "process.termination.plan"}:
+        raise SystemExit(f"{row.get('id')} invents a process.provider leftover: {row}")
 parity_task_manager = next(job for job in jobs_lock["jobs"] if job["id"] == "parity.task-manager")
 if parity_task_manager.get("claim") == "present" or parity_task_manager["humanRoute"].get("path"):
     raise SystemExit(f"parity.task-manager invents a Superbar Task Manager: {parity_task_manager}")
+if "processes.inspect" in (parity_task_manager.get("capabilityIds") or []):
+    raise SystemExit("parity.task-manager still names processes.inspect")
+if "process.inspect" not in (parity_task_manager.get("capabilityIds") or []):
+    raise SystemExit("parity.task-manager does not name process.inspect")
 native26 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.26")
 if native26["humanRoute"].get("path"):
     raise SystemExit(f"windows-native.26 invents a Superbar Task Manager: {native26['humanRoute']}")
+if native26.get("claim") == "present":
+    raise SystemExit(f"windows-native.26 was flipped to present: {native26}")
+if native26.get("capabilityIds") != ["process.inspect"]:
+    raise SystemExit(f"windows-native.26 capabilityIds are {native26.get('capabilityIds')}")
 desktop_icons = by_id["desktop.icons.manage"]["humanRoute"]
 if desktop_icons.get("status") != "missing" or desktop_icons.get("path"):
     raise SystemExit(f"desktop.icons.manage invents a desktop destination: {desktop_icons}")
 desktop_menu = by_id["desktop.context-menu.open"]["humanRoute"]
 if desktop_menu.get("status") != "missing" or desktop_menu.get("path"):
     raise SystemExit(f"desktop.context-menu.open invents a desktop context-menu API: {desktop_menu}")
-process_inspect = by_id["process.inspect"]["humanRoute"]
-if process_inspect.get("status") != "planned" or process_inspect.get("path"):
-    raise SystemExit(f"process.inspect invents an Administration Task Manager: {process_inspect}")
+if "process.inspect" not in by_id:
+    raise SystemExit("absent honest process reader invent: process.inspect missing from catalog")
+process_inspect = by_id["process.inspect"]
+if process_inspect.get("provider", {}).get("id") != "process.provider":
+    raise SystemExit(f"process.inspect provider is {process_inspect.get('provider')}")
+if process_inspect.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"process.inspect provider state is {process_inspect.get('provider')}")
+if process_inspect.get("availability", {}).get("claim") == "present":
+    raise SystemExit("process.inspect must not claim present")
+if process_inspect.get("availability", {}).get("human") == "present":
+    raise SystemExit("process.inspect must not claim human present / Task Manager present")
+if process_inspect.get("provider", {}).get("state") == "legacy-direct":
+    raise SystemExit("process.inspect leftover legacy-direct invent")
+process_inspect_route = process_inspect["humanRoute"]
+if process_inspect_route.get("status") != "planned" or process_inspect_route.get("path"):
+    raise SystemExit(f"process.inspect invents an Administration Task Manager: {process_inspect_route}")
+if "Task Manager" in str(process_inspect_route.get("surface") or ""):
+    raise SystemExit(f"process.inspect invents a Task Manager surface: {process_inspect_route}")
+if process_inspect.get("source", {}).get("file") != "default/fabric/omarchy_fabric/providers/process/provider.py":
+    raise SystemExit(f"process.inspect source is {process_inspect.get('source')}")
+if process_inspect.get("source", {}).get("symbol") != "build_provider":
+    raise SystemExit(f"process.inspect source is {process_inspect.get('source')}")
+named_process = f"{process_inspect.get('source', {}).get('file') or ''} {process_inspect.get('source', {}).get('symbol') or ''}".lower()
+if "btop" in named_process:
+    raise SystemExit(f"process.inspect still names btop: {process_inspect.get('source')}")
 if "process.termination.plan" not in by_id:
     raise SystemExit("absent live End Task writer invent: process.termination.plan missing from catalog")
 termination = by_id["process.termination.plan"]
@@ -320,10 +355,6 @@ if termination.get("source", {}).get("symbol") != "endTask":
     raise SystemExit(f"process.termination.plan source is {termination.get('source')}")
 if "process.termination.plan" not in (parity_task_manager.get("capabilityIds") or []):
     raise SystemExit("parity.task-manager does not name process.termination.plan")
-if "processes.inspect" not in (parity_task_manager.get("capabilityIds") or []):
-    raise SystemExit("parity.task-manager dropped processes.inspect")
-if native26.get("claim") == "present":
-    raise SystemExit(f"windows-native.26 was flipped to present: {native26}")
 startup = by_id["apps.startup.disable"]["humanRoute"]
 if startup.get("status") != "missing" or startup.get("path"):
     raise SystemExit(f"apps.startup.disable invents a Task Manager Startup page: {startup}")
