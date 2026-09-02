@@ -1,0 +1,904 @@
+{
+  "id": "06-SETTINGS-ADMIN-MEDIA",
+  "title": "Windows 7 Ultimate — Settings analogs, Default Programs, Administration, Media",
+  "edition": "Windows 7 Ultimate",
+  "contamination_ban": [
+    "Windows 10 Settings",
+    "Windows 11 Default apps",
+    "Win8/10 Task Manager redesign",
+    "Win11 volume flyout as primary"
+  ],
+  "phase_mapping": [
+    {
+      "area": "Personalization / Window Color / Wallpaper / Screensaver / Pointers / Theme packs",
+      "phase": 5,
+      "phase_name": "Settings",
+      "parity_jobs": [
+        "Personalization",
+        "Desktop",
+        "Sound"
+      ]
+    },
+    {
+      "area": "Sound applet + Volume Mixer",
+      "phase": 5,
+      "phase_name": "Settings",
+      "parity_jobs": [
+        "Sound"
+      ]
+    },
+    {
+      "area": "Default Programs (four links) + SPAD",
+      "phase": 5,
+      "phase_name": "Settings (Apps/defaults)",
+      "parity_jobs": [
+        "Default Programs"
+      ]
+    },
+    {
+      "area": "File/protocol associations + AutoPlay",
+      "phase": 6,
+      "phase_name": "Files and defaults",
+      "parity_jobs": [
+        "File associations",
+        "Default Programs"
+      ]
+    },
+    {
+      "area": "Administration MMC / Task Manager / Device Manager / Disk / Services / Scheduler / Event Viewer / Local Users",
+      "phase": 9,
+      "phase_name": "Administration",
+      "parity_jobs": [
+        "Task Manager",
+        "Device Manager",
+        "Disk Management",
+        "Services",
+        "Task Scheduler",
+        "Event / history",
+        "User Accounts",
+        "Resource Monitor"
+      ]
+    },
+    {
+      "area": "Windows Media Player 12 chrome (reference behaviors)",
+      "phases": [
+        5,
+        7
+      ],
+      "phase_names": [
+        "Settings defaults",
+        "Software"
+      ],
+      "parity_jobs": [
+        "Default Programs"
+      ]
+    }
+  ],
+  "personalization": {
+    "entry": [
+      "Desktop context menu → Personalize",
+      "Control Panel → Appearance and Personalization → Personalization"
+    ],
+    "bottom_links": [
+      "Desktop Background",
+      "Window Color",
+      "Sounds",
+      "Screen Saver"
+    ],
+    "window_color_aero": {
+      "controls": [
+        "color swatches",
+        "Show color mixer (Hue/Saturation/Brightness)",
+        "Enable transparency",
+        "Color intensity slider",
+        "Advanced appearance settings"
+      ]
+    },
+    "advanced_appearance_items": [
+      {
+        "item": "3D Objects",
+        "fields": [
+          "Color"
+        ]
+      },
+      {
+        "item": "Active Title Bar",
+        "fields": [
+          "Size",
+          "Color1",
+          "Color2",
+          "Font",
+          "FontSize",
+          "FontColor",
+          "Bold",
+          "Italic"
+        ]
+      },
+      {
+        "item": "Active Window Border",
+        "fields": [
+          "Size",
+          "Color"
+        ]
+      },
+      {
+        "item": "Application Background",
+        "fields": [
+          "Color"
+        ]
+      },
+      {
+        "item": "Border Padding",
+        "fields": [
+          "Size"
+        ]
+      },
+      {
+        "item": "Caption Buttons",
+        "fields": [
+          "Size"
+        ]
+      },
+      {
+        "item": "Desktop",
+        "fields": [
+          "Color"
+        ]
+      },
+      {
+        "item": "Disabled Item",
+        "fields": [
+          "FontColor"
+        ]
+      },
+      {
+        "item": "Hyperlink",
+        "fields": [
+          "Color"
+        ]
+      },
+      {
+        "item": "Icon",
+        "fields": [
+          "Size",
+          "Font",
+          "FontSize",
+          "FontColor"
+        ]
+      },
+      {
+        "item": "Icon Spacing (Horizontal)",
+        "fields": [
+          "Size"
+        ]
+      },
+      {
+        "item": "Icon Spacing (Vertical)",
+        "fields": [
+          "Size"
+        ]
+      },
+      {
+        "item": "Inactive Title Bar",
+        "fields": [
+          "Size",
+          "Color1",
+          "Color2",
+          "Font",
+          "FontSize",
+          "FontColor"
+        ]
+      },
+      {
+        "item": "Inactive Window Border",
+        "fields": [
+          "Size",
+          "Color"
+        ]
+      },
+      {
+        "item": "Menu",
+        "fields": [
+          "Size",
+          "Color",
+          "Font",
+          "FontSize",
+          "FontColor"
+        ]
+      },
+      {
+        "item": "Message Box",
+        "fields": [
+          "Font",
+          "FontSize",
+          "FontColor"
+        ]
+      },
+      {
+        "item": "Palette Title",
+        "fields": [
+          "Size",
+          "Font",
+          "FontSize"
+        ]
+      },
+      {
+        "item": "Scrollbar",
+        "fields": [
+          "Size"
+        ]
+      },
+      {
+        "item": "Selected Items",
+        "fields": [
+          "Size",
+          "Color",
+          "Font",
+          "FontSize",
+          "FontColor"
+        ]
+      },
+      {
+        "item": "ToolTip",
+        "fields": [
+          "Color",
+          "Font",
+          "FontSize",
+          "FontColor"
+        ]
+      },
+      {
+        "item": "Window",
+        "fields": [
+          "Color",
+          "FontColor"
+        ]
+      }
+    ],
+    "desktop_background": {
+      "picture_location": [
+        "Windows Desktop Backgrounds",
+        "Pictures Library",
+        "Top Rated Photos",
+        "Solid Colors",
+        "Browse"
+      ],
+      "picture_position": [
+        "Fill",
+        "Fit",
+        "Stretch",
+        "Tile",
+        "Center"
+      ],
+      "wallpaper_style_map": {
+        "Center": {
+          "TileWallpaper": 0,
+          "WallpaperStyle": 0
+        },
+        "Tile": {
+          "TileWallpaper": 1,
+          "WallpaperStyle": 0
+        },
+        "Stretch": {
+          "TileWallpaper": 0,
+          "WallpaperStyle": 2
+        },
+        "Fit": {
+          "TileWallpaper": 0,
+          "WallpaperStyle": 6
+        },
+        "Fill": {
+          "TileWallpaper": 0,
+          "WallpaperStyle": 10
+        }
+      },
+      "slideshow": {
+        "change_picture_every": "10 seconds to 1 day",
+        "shuffle": true,
+        "requires_multiple_images": true,
+        "available_on_ultimate": true
+      }
+    },
+    "screen_saver": {
+      "controls": [
+        "Screen saver dropdown",
+        "Settings",
+        "Preview",
+        "Wait minutes",
+        "On resume, display logon screen",
+        "Power management link"
+      ]
+    },
+    "mouse_pointers": {
+      "entry": "Personalization → Change mouse pointers → Mouse Properties Pointers tab",
+      "scheme": true,
+      "customize_list": true,
+      "file_types": [
+        ".cur",
+        ".ani"
+      ]
+    },
+    "theme_file": {
+      "extension": ".theme",
+      "required_sections": [
+        "Control Panel\\Desktop",
+        "VisualStyles",
+        "MasterThemeSelector"
+      ],
+      "master_theme_selector": {
+        "MTSM": "DABJDKT"
+      },
+      "sections": [
+        "Theme",
+        "Control Panel\\Colors",
+        "Control Panel\\Cursors",
+        "Control Panel\\Desktop",
+        "Slideshow",
+        "Metrics",
+        "VisualStyles",
+        "Sounds",
+        "AppEvents",
+        "boot",
+        "MasterThemeSelector"
+      ],
+      "themepack": {
+        "format": "CAB",
+        "wallpaper_subdir": "DesktopBackground/",
+        "supported_assets": [
+          ".theme",
+          ".jpg",
+          ".jpeg",
+          ".bmp",
+          ".dib",
+          ".tif",
+          ".png",
+          ".wav",
+          ".cur",
+          ".ani",
+          ".ico"
+        ]
+      },
+      "desktop_icon_clsids": {
+        "Computer": "{20D04FE0-3AEA-1069-A2D8-08002B30309D}",
+        "Documents": "{59031A47-3F72-44A7-89C5-5595FE6B30EE}",
+        "Network": "{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}",
+        "RecycleBin": "{645FF040-5081-101B-9F08-00AA002F954E}"
+      }
+    }
+  },
+  "default_programs": {
+    "critical_for_omarchy": true,
+    "four_links": [
+      {
+        "label": "Set your default programs",
+        "description": "Make a program the default for all file types and protocols it can open."
+      },
+      {
+        "label": "Associate a file type or protocol with a program",
+        "description": "Make a file type or protocol (such as .mp3 or http://) always open in a specific program."
+      },
+      {
+        "label": "Change AutoPlay settings",
+        "description": "Play CDs or other media automatically."
+      },
+      {
+        "label": "Set program access and computer defaults",
+        "description": "Control access to certain programs and set defaults for this computer."
+      }
+    ],
+    "set_your_default_programs": {
+      "left_list": "Programs (registered applications)",
+      "status_all": "This program has all its defaults",
+      "status_partial": "This program has {n} out of {m} defaults",
+      "actions": [
+        "Set this program as default",
+        "Choose defaults for this program"
+      ],
+      "choose_defaults_window": "Set associations for a program",
+      "registry": "HKLM\\SOFTWARE\\RegisteredApplications → Capabilities (FileAssociations, UrlAssociations)"
+    },
+    "set_associations": {
+      "window_title": "Set Associations",
+      "columns": [
+        "Name",
+        "Description",
+        "Current Default"
+      ],
+      "sections": [
+        "Extensions",
+        "Protocols"
+      ],
+      "change_program_button": "Change program...",
+      "cannot_clear_to_none": true
+    },
+    "change_program_dialog": {
+      "sections": [
+        "Recommended Programs",
+        "Other Programs"
+      ],
+      "browse": true,
+      "always_use_checkbox": "Always use the selected program to open this kind of file"
+    },
+    "autoplay": {
+      "master_checkbox": "Use AutoPlay for all media and devices",
+      "media_categories": [
+        "Audio CD",
+        "Enhanced audio CD",
+        "DVD movie",
+        "Enhanced DVD movie",
+        "DVD audio",
+        "Video CD movie",
+        "Super video CD movie",
+        "Blank CD",
+        "Blank DVD",
+        "Software and games",
+        "Pictures",
+        "Video files",
+        "Audio files",
+        "Mixed content"
+      ],
+      "common_actions": [
+        "Ask me every time",
+        "Take no action",
+        "Open folder to view files using Windows Explorer"
+      ],
+      "devices": "Connected cameras/phones/removable drives appear after connection"
+    },
+    "spad": {
+      "full_name": "Set program access and computer defaults",
+      "configurations": [
+        "Microsoft Windows",
+        "Non-Microsoft",
+        "Custom"
+      ],
+      "categories": [
+        "Web browser",
+        "E-mail",
+        "Media player",
+        "Instant messaging",
+        "Virtual machine for Java"
+      ],
+      "scope": "computer-wide",
+      "requires_admin": true
+    }
+  },
+  "administration": {
+    "administrative_tools_path": "%ProgramData%\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools",
+    "administrative_tools_contents_ultimate_typical": [
+      {
+        "name": "Component Services",
+        "launch": "dcomcnfg / comexp.msc"
+      },
+      {
+        "name": "Computer Management",
+        "launch": "compmgmt.msc"
+      },
+      {
+        "name": "Data Sources (ODBC)",
+        "launch": "odbcad32.exe"
+      },
+      {
+        "name": "Event Viewer",
+        "launch": "eventvwr.msc"
+      },
+      {
+        "name": "iSCSI Initiator",
+        "launch": "iscsicpl.exe"
+      },
+      {
+        "name": "Local Security Policy",
+        "launch": "secpol.msc"
+      },
+      {
+        "name": "Performance Monitor",
+        "launch": "perfmon.msc"
+      },
+      {
+        "name": "Print Management",
+        "launch": "printmanagement.msc"
+      },
+      {
+        "name": "Services",
+        "launch": "services.msc"
+      },
+      {
+        "name": "System Configuration",
+        "launch": "msconfig.exe"
+      },
+      {
+        "name": "Task Scheduler",
+        "launch": "taskschd.msc"
+      },
+      {
+        "name": "Windows Firewall with Advanced Security",
+        "launch": "wf.msc"
+      },
+      {
+        "name": "Windows Memory Diagnostic",
+        "launch": "mdsched.exe"
+      },
+      {
+        "name": "Windows PowerShell Modules",
+        "launch": "PowerShell Modules"
+      }
+    ],
+    "computer_management_tree": {
+      "System Tools": [
+        "Task Scheduler",
+        "Event Viewer",
+        "Shared Folders",
+        "Local Users and Groups",
+        "Performance",
+        "Device Manager"
+      ],
+      "Storage": [
+        "Disk Management"
+      ],
+      "Services and Applications": [
+        "Services",
+        "WMI Control"
+      ]
+    },
+    "services_msc": {
+      "columns": [
+        "Name",
+        "Description",
+        "Status",
+        "Startup Type",
+        "Log On As"
+      ],
+      "startup_types": [
+        "Automatic (Delayed Start)",
+        "Automatic",
+        "Manual",
+        "Disabled"
+      ],
+      "properties_tabs": [
+        "General",
+        "Log On",
+        "Recovery",
+        "Dependencies"
+      ]
+    },
+    "event_viewer": {
+      "windows_logs": [
+        "Application",
+        "Security",
+        "Setup",
+        "System",
+        "Forwarded Events"
+      ]
+    },
+    "task_scheduler": {
+      "task_property_tabs": [
+        "General",
+        "Triggers",
+        "Actions",
+        "Conditions",
+        "Settings",
+        "History"
+      ]
+    },
+    "disk_management": {
+      "views": [
+        "volume list",
+        "graphical disk map"
+      ]
+    },
+    "local_users_and_groups": {
+      "available_on_ultimate": true,
+      "absent_on_home": true,
+      "launch": "lusrmgr.msc"
+    },
+    "device_manager": {
+      "launch": "devmgmt.msc"
+    },
+    "task_manager": {
+      "note": "Win7 six tabs — NOT Win10 redesign",
+      "tabs": [
+        {
+          "name": "Applications",
+          "actions": [
+            "End Task",
+            "Switch To",
+            "New Task"
+          ]
+        },
+        {
+          "name": "Processes",
+          "actions": [
+            "End Process",
+            "End Process Tree",
+            "Set Priority",
+            "Set Affinity",
+            "Show processes from all users"
+          ]
+        },
+        {
+          "name": "Services",
+          "actions": [
+            "Start",
+            "Stop",
+            "Services… → services.msc"
+          ]
+        },
+        {
+          "name": "Performance",
+          "actions": [
+            "Resource Monitor"
+          ],
+          "shows": [
+            "CPU Usage",
+            "CPU history",
+            "Memory"
+          ]
+        },
+        {
+          "name": "Networking",
+          "shows": [
+            "utilization graphs",
+            "Link Speed",
+            "State"
+          ]
+        },
+        {
+          "name": "Users",
+          "actions": [
+            "Disconnect",
+            "Logoff",
+            "Send Message"
+          ]
+        }
+      ]
+    }
+  },
+  "media": {
+    "sound_applet": {
+      "cpl": "mmsys.cpl",
+      "tabs": [
+        "Playback",
+        "Recording",
+        "Sounds",
+        "Communications"
+      ],
+      "communications_options": [
+        "Mute all other sounds",
+        "Reduce the volume of other sounds by 80%",
+        "Reduce the volume of other sounds by 50%",
+        "Do nothing"
+      ],
+      "tray_right_click": [
+        "Open Volume Mixer",
+        "Playback devices",
+        "Recording devices",
+        "Sounds"
+      ]
+    },
+    "volume_mixer": {
+      "groups": [
+        "Device",
+        "Applications"
+      ],
+      "behaviors": [
+        "Device slider is master ceiling",
+        "App sliders independent below ceiling",
+        "Raising app above device raises device",
+        "System Sounds always listed",
+        "Per-app sessions appear while playing"
+      ]
+    },
+    "wmp12": {
+      "modes": [
+        "Player Library",
+        "Now Playing"
+      ],
+      "taskbar": [
+        "thumbnail toolbar prev/play-pause/next",
+        "Jump List"
+      ],
+      "library_areas": [
+        "Music",
+        "Videos",
+        "Pictures",
+        "Recorded TV",
+        "Playlists"
+      ],
+      "parity_note": "Reference chrome/behaviors for default media player — not a clone mandate"
+    }
+  },
+  "interaction_tables": {
+    "default_programs": [
+      {
+        "job": "Change default browser",
+        "win7": "Default Programs → Set your default programs → Set this program as default",
+        "omarchy": "Phase 5 apps.defaults.set"
+      },
+      {
+        "job": "Associate one extension",
+        "win7": "Associate a file type… → Change program",
+        "omarchy": "Phase 6 files.associations.set"
+      },
+      {
+        "job": "Configure AutoPlay",
+        "win7": "Change AutoPlay settings",
+        "omarchy": "Phase 6 removable media"
+      },
+      {
+        "job": "Computer-wide defaults",
+        "win7": "SPAD Microsoft/Non-Microsoft/Custom",
+        "omarchy": "Phase 5 admin defaults"
+      }
+    ],
+    "administration": [
+      {
+        "job": "End hung app",
+        "win7": "Task Manager → Applications → End Task",
+        "omarchy": "Phase 9 Task Manager"
+      },
+      {
+        "job": "Inspect CPU/RAM",
+        "win7": "Task Manager → Performance → Resource Monitor",
+        "omarchy": "Phase 9"
+      },
+      {
+        "job": "Manage service",
+        "win7": "services.msc",
+        "omarchy": "Phase 9 Services"
+      },
+      {
+        "job": "View system events",
+        "win7": "eventvwr.msc → Windows Logs → System",
+        "omarchy": "Phase 9 Event Viewer"
+      },
+      {
+        "job": "Schedule task",
+        "win7": "taskschd.msc",
+        "omarchy": "Phase 9 Task Scheduler"
+      },
+      {
+        "job": "Manage disks",
+        "win7": "diskmgmt.msc",
+        "omarchy": "Phase 9 Storage"
+      },
+      {
+        "job": "Device drivers",
+        "win7": "devmgmt.msc",
+        "omarchy": "Phase 9 Device Manager"
+      },
+      {
+        "job": "Local users",
+        "win7": "lusrmgr.msc",
+        "omarchy": "Phase 9 Accounts"
+      }
+    ],
+    "media": [
+      {
+        "job": "Per-app volume",
+        "win7": "Tray → Open Volume Mixer",
+        "omarchy": "Phase 5 Sound + tray"
+      },
+      {
+        "job": "Default playback device",
+        "win7": "Tray → Playback devices → Set Default",
+        "omarchy": "Phase 5 audio writers"
+      },
+      {
+        "job": "Sound scheme",
+        "win7": "Personalization → Sounds / mmsys Sounds tab",
+        "omarchy": "Phase 5 Personalization/Sound"
+      }
+    ]
+  },
+  "citations": [
+    {
+      "id": 1,
+      "title": "Theme File Format",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/controls/themesfileformat-overview"
+    },
+    {
+      "id": 2,
+      "title": "Default Programs (Win32)",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/shell/default-programs"
+    },
+    {
+      "id": 3,
+      "title": "Win7 sud.dll Default Programs strings",
+      "url": "https://win7dll.nirsoft.net/sud_dll.html"
+    },
+    {
+      "id": 4,
+      "title": "How-To Geek — default applications and associations",
+      "url": "https://www.howtogeek.com/137483/beginner-geek-7-ways-you-can-change-default-applications-and-file-associations-in-windows/"
+    },
+    {
+      "id": 5,
+      "title": "FileInfo — Windows 7 Default Programs",
+      "url": "https://fileinfo.com/help/windows_7_default_programs"
+    },
+    {
+      "id": 6,
+      "title": "Microsoft Support — Win7 desktop background slideshow",
+      "url": "https://support.microsoft.com/en-gb/topic/guided-help-shuffle-your-desktop-backgrounds-in-windows-7-4f9cbcb6-62c4-6d2f-24b9-683da11af11a"
+    },
+    {
+      "id": 7,
+      "title": "TechRepublic — Appearance and Personalization walkthrough",
+      "url": "https://www.techrepublic.com/pictures/windows-7-walkthrough-appearance-and-personalization-control-panel/"
+    },
+    {
+      "id": 8,
+      "title": "Advanced appearance Item lists",
+      "url": "http://softwareok.com/?faq=118&seite=faq-Windows-7"
+    },
+    {
+      "id": 9,
+      "title": "TechTarget — Computer Management MMC",
+      "url": "https://www.techtarget.com/searchitchannel/feature/MMC-console-management-Adding-Windows-7-snap-ins"
+    },
+    {
+      "id": 10,
+      "title": "TechTarget — Win7 Task Manager tabs",
+      "url": "https://www.techtarget.com/searchitchannel/feature/Windows-task-manager-Viewing-Windows-7-processes-and-applications"
+    },
+    {
+      "id": 11,
+      "title": "Tips.Net — Task Manager six tabs",
+      "url": "https://windows.tips.net/T012208_Understanding_the_Task_Manager.html"
+    },
+    {
+      "id": 12,
+      "title": "How-To Geek — Task Manager Win7",
+      "url": "https://www.howtogeek.com/169823/beginner-geek-what-every-windows-user-needs-to-know-about-using-the-windows-task-manager/"
+    },
+    {
+      "id": 13,
+      "title": "AskWoody — Administrative Tools",
+      "url": "https://www.askwoody.com/newsletter/exploring-windows-administrative-tools-part-1/"
+    },
+    {
+      "id": 14,
+      "title": "Utilize Windows — services.msc",
+      "url": "https://utilizewindows.com/managing-services-in-windows-7/"
+    },
+    {
+      "id": 15,
+      "title": "How-To Geek — Volume Mixer",
+      "url": "https://www.howtogeek.com/5228/simple-tips-windows-7-volume-mixer-enables-quick-access-to-sound-settings/"
+    },
+    {
+      "id": 16,
+      "title": "Tips.Net — Volume Mixer Device/Applications",
+      "url": "https://windows.tips.net/T012207_Adjusting_Speaker_Volume.html"
+    },
+    {
+      "id": 17,
+      "title": "FlexRadio — Sound tray + tabs",
+      "url": "https://helpdesk.flexradio.com/hc/en-us/articles/203731345-How-To-Set-The-Windows-Default-Playback-Recording-Audio-Device"
+    },
+    {
+      "id": 18,
+      "title": "How-To Geek — Sounds tab",
+      "url": "https://www.howtogeek.com/22437/beginner-geek-customize-logon-other-sound-events-in-windows-7/"
+    },
+    {
+      "id": 19,
+      "title": "Ars Technica — WMP 12",
+      "url": "https://arstechnica.com/information-technology/2008/10/hands-on-windows-media-player-12s-surprising-new-features/"
+    },
+    {
+      "id": 20,
+      "title": "Microsoft Learn — Taskbar extensions",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/shell/taskbar-extensions"
+    },
+    {
+      "id": 21,
+      "title": "gHacks — AutoPlay Win7",
+      "url": "https://www.ghacks.net/2010/02/07/configure-media-and-device-autoplay-in-windows-7/"
+    },
+    {
+      "id": 22,
+      "title": "Omarchy project-ultimate.md + WINDOWS_7_ULTIMATE_PARITY.md",
+      "url": "local://workspace/w7-specs/docs/"
+    }
+  ]
+}
