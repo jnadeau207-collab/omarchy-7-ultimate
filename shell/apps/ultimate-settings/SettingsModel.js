@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable, and the default browser applies through defaults.provider protocol.set. Other associations, startup, and background application inventory remain unavailable from Settings."
+    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set. The mime.set write plane exists. Settings does not offer MIME LIVE CONTROL. Other associations, startup, and background application inventory remain unavailable from Settings."
   },
   {
     routeId: "settings.accessibility.overview",

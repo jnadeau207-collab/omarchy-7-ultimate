@@ -845,7 +845,8 @@
       "sourceStatus": "missing as product",
       "claim": "missing",
       "capabilityIds": [
-        "files.associations.set"
+        "files.associations.set",
+        "defaults.mime.set"
       ],
       "humanRoute": {
         "status": "planned",
