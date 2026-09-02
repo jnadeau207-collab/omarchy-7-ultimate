@@ -127,6 +127,7 @@ class BuiltinProviderTests(unittest.TestCase):
             config_path=builtins._default_root() / "ultimate" / "files" / "locations-v0.json",
         )
         defaults_builder.assert_called_once_with(
+            session_operable=True,
             home=Path("/home/trusted-account"),
             config_path=builtins._default_root() / "ultimate" / "files" / "default-associations-v0.json",
         )
