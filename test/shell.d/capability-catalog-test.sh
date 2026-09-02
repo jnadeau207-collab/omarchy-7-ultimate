@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"130 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"131 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -296,6 +296,34 @@ if desktop_menu.get("status") != "missing" or desktop_menu.get("path"):
 process_inspect = by_id["process.inspect"]["humanRoute"]
 if process_inspect.get("status") != "planned" or process_inspect.get("path"):
     raise SystemExit(f"process.inspect invents an Administration Task Manager: {process_inspect}")
+if "process.termination.plan" not in by_id:
+    raise SystemExit("absent live End Task writer invent: process.termination.plan missing from catalog")
+termination = by_id["process.termination.plan"]
+if termination.get("provider", {}).get("id") != "process.provider":
+    raise SystemExit(f"process.termination.plan provider is {termination.get('provider')}")
+if termination.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"process.termination.plan provider state is {termination.get('provider')}")
+if termination.get("availability", {}).get("claim") == "present":
+    raise SystemExit("process.termination.plan must not claim present")
+if termination.get("availability", {}).get("human") == "present":
+    raise SystemExit("process.termination.plan must not claim human present / LIVE CONTROL")
+if termination.get("consent", {}).get("mode") != "high-risk":
+    raise SystemExit(f"process.termination.plan consent is not consequential: {termination.get('consent')}")
+termination_route = termination["humanRoute"]
+if termination_route.get("status") != "planned" or termination_route.get("path"):
+    raise SystemExit(f"process.termination.plan invents an End Task destination: {termination_route}")
+if "Task Manager" in str(termination_route.get("surface") or ""):
+    raise SystemExit(f"process.termination.plan invents a Task Manager surface: {termination_route}")
+if termination.get("source", {}).get("file") != "shell/apps/ultimate-administration/AdministrationApplication.qml":
+    raise SystemExit(f"process.termination.plan source is {termination.get('source')}")
+if termination.get("source", {}).get("symbol") != "endTask":
+    raise SystemExit(f"process.termination.plan source is {termination.get('source')}")
+if "process.termination.plan" not in (parity_task_manager.get("capabilityIds") or []):
+    raise SystemExit("parity.task-manager does not name process.termination.plan")
+if "processes.inspect" not in (parity_task_manager.get("capabilityIds") or []):
+    raise SystemExit("parity.task-manager dropped processes.inspect")
+if native26.get("claim") == "present":
+    raise SystemExit(f"windows-native.26 was flipped to present: {native26}")
 startup = by_id["apps.startup.disable"]["humanRoute"]
 if startup.get("status") != "missing" or startup.get("path"):
     raise SystemExit(f"apps.startup.disable invents a Task Manager Startup page: {startup}")
