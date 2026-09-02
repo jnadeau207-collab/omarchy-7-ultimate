@@ -12,8 +12,6 @@ import subprocess
 import sys
 from typing import Any, Mapping
 
-from omarchy_fabric.providers.files._trashinfo import parse_trash_info_path
-
 from .trash_info import parse_trash_info_path, trash_info_document
 
 PACTL = "/usr/bin/pactl"
@@ -464,6 +462,27 @@ def parse_trash_info(text: str) -> str:
         return parse_trash_info_path(text)
     except ValueError as error:
         raise ApplyError("apply.failed", "The Trash record does not name an absolute original path.") from error
+
+
+def resolve_destination_path(payload: Mapping[str, Any], home: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, str]:
+    key = files_location_key(payload.get("locationId"))
+    segments = require_entry_relative(payload)
+    base = resolve_location_path(key, home)
+    try:
+        root = base.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The files location is not present.") from error
+    target = root.joinpath(*segments)
+    try:
+        resolved_parent = target.parent.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The original location is no longer present.") from error
+    if resolved_parent != root and root not in resolved_parent.parents:
+        raise ApplyError("payload.invalid", "The entry escapes its files location.")
+    destination = resolved_parent / target.name
+    if destination.exists():
+        raise ApplyError("apply.exists", "Something already occupies the original location.")
+    return root, destination, "/".join(segments)
 
 
 def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:

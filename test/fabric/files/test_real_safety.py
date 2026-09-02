@@ -184,6 +184,44 @@ class RealFilesSafetyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(files.normalize_relative_path("Folder/Child", allow_empty=False), "Folder/Child")
         self.assertEqual(files.normalize_relative_path("", allow_empty=True), "")
 
+    async def test_restore_preflight_reads_real_trashinfo_and_keeps_inspect_honest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            documents = home / "Documents"
+            documents.mkdir()
+            trash_files = home / ".local" / "share" / "Trash" / "files"
+            trash_info = home / ".local" / "share" / "Trash" / "info"
+            trash_files.mkdir(parents=True)
+            trash_info.mkdir(parents=True)
+            original = documents / "report.txt"
+            (trash_files / "report.txt").write_text("restore-me\n", encoding="utf-8")
+            (trash_info / "report.txt.trashinfo").write_text(
+                "[Trash Info]\n"
+                f"Path={original.as_posix()}\n"
+                "DeletionDate=2026-09-02T12:00:00\n",
+                encoding="utf-8",
+            )
+            config = ROOT / "default" / "ultimate" / "files" / "locations-v0.json"
+            provider = files.build_provider(home=home, config_path=config, session_operable=True)
+            inventory = await provider.read("inspect", {})
+            trash_entries = [
+                item
+                for item in inventory["state"]["entries"]
+                if item["locationId"] == "files.location.trash" and item["name"] == "report.txt"
+            ]
+            self.assertEqual(len(trash_entries), 1)
+            self.assertIsNone(trash_entries[0]["trash"])
+            plan = await provider.preflight("trash.restore", {"entryId": trash_entries[0]["id"]}, principal())
+            self.assertEqual(plan["risk"], "consequential")
+            current = plan["currentState"]["value"]
+            proposed = plan["proposedState"]["value"]
+            self.assertEqual(current["locationId"], "files.location.documents")
+            self.assertNotIn("report.txt", current["names"])
+            self.assertIn("report.txt", proposed["names"])
+            reread = await provider.read("inspect", {})
+            again = next(item for item in reread["state"]["entries"] if item["id"] == trash_entries[0]["id"])
+            self.assertIsNone(again["trash"])
+
     def test_provider_rejects_relative_or_symlinked_code_owned_config(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
