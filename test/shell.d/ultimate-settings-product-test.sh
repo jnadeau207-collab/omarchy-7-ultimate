@@ -131,6 +131,8 @@ const footer = Model.authorityFooter()
 assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Power profile') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser'), 'authority footer names every live writer')
 assert(footer.includes('other domains stay inspect-only'), 'authority footer keeps remaining domains inspect-only')
 assert(!footer.includes('no direct commands, mutation, preflight, approval, or execution authority'), 'authority footer does not deny mutation on a mutating window')
+assertEqual(Model.stateTitle({ phase: 'degraded' }), 'Some changes are unavailable', 'degraded title is unavailable without future tense')
+assert(!Model.stateTitle({ phase: 'degraded' }).includes('yet'), 'degraded title does not invent forthcoming writers with yet')
 
 assertEqual(Model.hostedPanel('settings.accessibility.overview'), null, 'Accessibility stays an honest Fabric page; no accessibility panel exists')
 assertEqual(Model.hostedPanel('settings.system.overview'), null, 'System stays an honest Fabric page; no system-information panel exists')
@@ -633,6 +635,12 @@ if grep -Fq 'Ease of Access engine remains Phase 5' "$ROOT/WINDOWS_7_ULTIMATE_PA
 fi
 if grep -Fq 'not represented as live state' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
   fail "Personalization coverage no longer underclaims the hosted picker as non-live"
+fi
+if grep -Fq 'not available yet' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
+  fail "SettingsModel.js product honesty no longer invents forthcoming writers with not available yet"
+fi
+if grep -Fq ' yet.' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
+  fail "SettingsModel.js product honesty no longer invents forthcoming writers with yet."
 fi
 if grep -Fq 'Recycle is Phase 6' "$ROOT/plans/project-ultimate.md"; then
   fail "Current position no longer frames Recycle as Phase-6-only while Files trash/restore UI exists"

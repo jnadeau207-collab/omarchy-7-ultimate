@@ -588,7 +588,7 @@ function payloadAvailability(value) {
   }
   if (availability.read === true && availability.reason) {
     var degradedReason = isObject(availability.reason) ? availability.reason : null
-    return { state: "degraded", detail: clippedText(degradedReason && (degradedReason.explanation || degradedReason.title) || "Some changes are not available yet.") }
+    return { state: "degraded", detail: clippedText(degradedReason && (degradedReason.explanation || degradedReason.title) || "Some changes are unavailable.") }
   }
   return { state: availability.read === true ? "available" : "unknown", detail: "" }
 }
@@ -692,7 +692,7 @@ function acceptedReadState(previous, result) {
   } else if (entry.state === "degraded" || availability.state === "degraded") {
     next.phase = "degraded"
     if (availability.detail !== "") next.error = structuredError(
-      "provider.read-degraded", "Some changes are not available yet", availability.detail,
+      "provider.read-degraded", "Some changes are unavailable", availability.detail,
       previous.query.providerId, ["provider.refresh"]
     )
   } else if (normalized.records.length === 0) {
@@ -969,7 +969,7 @@ function stateTitle(state) {
   if (phase === "empty") return state && state.selectedMissing ? "Requested resource is absent" : "No resources reported"
   if (phase === "missing") return "Provider is not registered"
   if (phase === "unavailable") return "This information is not available right now"
-  if (phase === "degraded") return "Some changes are not available yet"
+  if (phase === "degraded") return "Some changes are unavailable"
   if (phase === "contract-mismatch") return "Provider contract does not match"
   if (phase === "denied") return "Administration read was denied"
   if (phase === "interrupted") return "Administration read was interrupted"
