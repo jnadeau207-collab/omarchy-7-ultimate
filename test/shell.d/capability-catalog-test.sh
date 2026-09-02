@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"131 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"132 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
