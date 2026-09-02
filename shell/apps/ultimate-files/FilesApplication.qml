@@ -97,6 +97,12 @@ Item {
     else host.retryFabric()
   }
 
+  function refreshVisibleSurface() {
+    if (!controller || !host || operationBusy) return
+    if (!host.fabricReady) return
+    controller.refreshWhenSurfaceVisible()
+  }
+
   function recordHistory(routeId, path) {
     if (root.traversing) return
     var entry = { routeId: String(routeId), relativePath: String(path || "") }
@@ -321,6 +327,7 @@ Item {
       root.recordHistory(routeId, routeArguments && routeArguments.relativePath ? String(routeArguments.relativePath) : "")
       focusTimer.restart()
     }
+    function onSurfaceBecameActive() { root.refreshVisibleSurface() }
     function onFabricResult(requestId, result) {
       if (root.operationBusy && requestId === root.operationRequestId) {
         root.advanceOperation(result)
