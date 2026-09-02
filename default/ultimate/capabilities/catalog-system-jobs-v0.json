@@ -1310,7 +1310,7 @@
       "provider": {
         "id": "apps.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "present"
       },
       "kind": "writer",
       "effects": [
@@ -1340,9 +1340,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "apps.resource"
@@ -1377,10 +1377,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "missing",
+        "status": "visible",
         "surface": "Settings",
         "label": "Default apps",
-        "path": ""
+        "path": "Settings > Apps"
       },
       "agentCenterLabel": "Default apps",
       "proofIds": {

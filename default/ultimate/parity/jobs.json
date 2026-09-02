@@ -284,15 +284,15 @@
       "kind": "parity-job",
       "sourceLabel": "Default Programs",
       "sourceStatus": "missing",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "apps.defaults.set",
         "files.associations.set"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings Apps",
-        "path": ""
+        "path": "Settings > Apps"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior associations and offer guarded undo.",
@@ -1606,18 +1606,18 @@
       "kind": "windows-native-task",
       "sourceLabel": "Change the default browser",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "present",
       "capabilityIds": [
         "apps.defaults.set"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": ""
+        "path": "Settings > Apps"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous default handler.",
-      "proofStatus": "pending",
+      "proofStatus": "automated",
       "proofIds": [
         "windows-native.pending.19"
       ],
