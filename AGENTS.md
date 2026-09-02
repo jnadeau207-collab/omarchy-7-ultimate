@@ -71,6 +71,46 @@ guidance does not drift from the router.
 
 # Git
 
+These rules are absolute. They are not defaults to weigh against something else, and no plan, doctrine, or handoff overrides them.
+
+## Two branches, total
+
+This repository has exactly two branches: `main` and `work`. Nothing else exists, anywhere, ever -- no slice branches, no `cursor/*`, no `ultimate/*`, no rebase backups, no tool checkpoint refs under `refs/cline/`, `refs/codex/` or anything like them. Delete on sight:
+
+```bash
+git for-each-ref --format="%(refname)" |
+  grep -vE "^refs/heads/(main|work)$|^refs/remotes/|^refs/tags/v[0-9]" |
+  while read -r ref; do git update-ref -d "$ref"; done
+```
+
+Upstream version tags stay: they are part of Omarchy and removing them would put `main` out of parity.
+
+Saving a pre-rebase branch or tag is not caution, it is an admission that the rebase was not trusted. Do the rebase correctly and verify it, then there is nothing to keep. `origin` retains the old SHAs long enough to recover from a genuine mistake.
+
+## `main` is Omarchy, byte for byte
+
+`main` is a clone of `upstream/quattro` with zero diff of any kind -- zero ahead, zero behind, an identical tree hash. It carries no Ultimate work. Not one commit. Restore it with `git branch -f main upstream/quattro`.
+
+## `work` is every Ultimate commit, rebased onto current Omarchy
+
+All work lands on `work`. From every machine, every agent, every worktree. `work` is strictly ahead of `upstream/quattro` and never behind it; rebase, never merge, so current Omarchy always sits directly beneath our commits.
+
+When reporting divergence, always name what the comparison is against. "Behind" against `origin` after a rebase is expected and means only that the remote holds pre-rebase SHAs. "Behind" against `upstream/quattro` is a defect.
+
+## Local, GitHub, and metal are identical
+
+The checkout here, `origin`, and the box at `/home/jesse/omarchy7ultimate` hold the same commit and the same tree hash. Metal tracks `work` at its most recent tip and nothing else. Verify all three, not two:
+
+```bash
+git rev-parse HEAD
+git ls-remote origin refs/heads/work | cut -f1
+ssh jesse@192.168.1.171 "cd /home/jesse/omarchy7ultimate && git rev-parse HEAD"
+```
+
+A rebase makes `origin` diverge by construction, so publishing it requires `git push --force-with-lease`. That is the normal way to publish a rebase, not a violation of anything. Push both branches and re-verify.
+
+## Commits
+
 - Commits should be atomic: include only one coherent change or fix, and do not mix unrelated work.
 - Commit messages should be succinct and describe the change being made.
 

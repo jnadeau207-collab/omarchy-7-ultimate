@@ -104,7 +104,7 @@ main                       Clean tracking of upstream (default)
 work                       All Ultimate product work
 ```
 
-Do not create `cursor/*`, `ultimate/*`, or any other slice branches. Do not turn `main` into the experimental line. Phase work happens as commits on `work`. Do not merge `work` into `main` as the OS.
+Do not create `cursor/*`, `ultimate/*`, or any other slice branches. Do not turn `main` into the experimental line. Phase work happens as commits on `work`. Do not merge `work` into `main` as the OS. `AGENTS.md` holds the absolute branch rules and overrides anything here that disagrees with it.
 
 ## Historical branch reconciliation evidence (2026-08-22)
 
@@ -127,7 +127,7 @@ Do **not** claim mathematical zero unique Jesse *commits*. Claim zero unique Jes
 
 ## Current position
 
-After the Quattro rebase, `main` tracks live `upstream/quattro` and `work` is Ultimate rebased onto it. Recovery refs retain the pre-rebase tips. Do not merge `work` into `main` as the OS.
+After the Quattro rebase, `main` is `upstream/quattro` byte for byte and `work` is Ultimate rebased onto it. No recovery refs are kept; the rebase is verified instead. Local, `origin`, and metal hold the same commit. Do not merge `work` into `main` as the OS.
 
 The product remains **REJECTED**. Windowing Gate W0 is Phase 1 only (`W0_GATE.md`). The shell contains real windowing, tray, notification, lock, panel, wallpaper, usage, and update/recovery machinery. Desktop Mode now ships two-pane Start, desktop icons on the real XDG Desktop directory, Quick Settings, Notification Center, calendar, lock, and Agent Center as a Superbar pin and Start destination. Superbar presentation is an orb, stacked clock, drawn Quick Settings and Notification Center marks, live peeks, jump lists, and badges over the plugin cluster. Settings is a snappable window that hosts the existing Personalization picker; Display, Sound, Network, Bluetooth, Power, Apps, Update, and Recovery read Fabric `display.inspect` / `audio.inspect` / `network.inspect` / `bluetooth.inspect` / `power.inspect` / `defaults.inspect` / `update.inspect` / `recovery.inspect` instead of Process panels. Typed Settings writers remain Phase 5. Files/This PC exist as a product window prototype (location availability is honest; workspace inspect stays degraded; Recycle is Phase 6). Software Center, Compatibility Center, consumer administration, graphical OOBE, and product ISO are incomplete or absent.
 
@@ -135,7 +135,7 @@ The named phases below are the live program. After W0: Phase 2 leftover fabric (
 
 The first execution fleet builds three independent foundations in parallel: Fabric Core, the machine-readable capability/parity graph, and the trust/sandbox plane. Subsequent fleets perform WindowService reference cutover, context/runtime/tasks, semantic UI and provider engines, then whole product surfaces and packaged certification.
 
-Locked invariants remain: keep the accepted W0 history, do not restore disabled Wayland decorations or overlay chrome, do not put the AUR hyprbars package in the install list, preserve Desktop Mode's non-mutating `shell.json` overlay, never hot-unload/reload hyprbars, stay on `work`, never force-push, and never merge `work` into `main` as the OS.
+Locked invariants remain: keep the accepted W0 history, do not restore disabled Wayland decorations or overlay chrome, do not put the AUR hyprbars package in the install list, preserve Desktop Mode's non-mutating `shell.json` overlay, never hot-unload/reload hyprbars, stay on `work`, and never merge `work` into `main` as the OS. Publishing a rebase requires a force-push; that is expected, not a violation.
 
 ## Audit vs tree (do not rubber-stamp)
 
@@ -225,7 +225,7 @@ Keep `4ea1dcf3` through `c1ae994f`. Do not amend them. Do not restore `--disable
 3. Product surfaces consume frozen typed services and operation state. Consumer QML does not gain new process invocation, shell strings, raw `hyprctl`, or privileged logic.
 4. Keep LTRB snap, typed compositor dispatch, `/usr/lib/hyprland-plugins` hyprbars, `omarchy-minimize` hidden state, JSON CSD exclusion, addressed captions, three-button SSD, maximize-hover snap, and the measured Chromium frame transforms.
 5. Never hot-unload/reload the native plugin. Every native/chrome change gets a fresh compositor restart and the complete right-edge regression campaign.
-6. Keep unimplemented profile flags false, preserve Power User Mode, do not teach terminal/hotkey ownership in Desktop Mode, stay on `work`, never create slice branches, never push `main`, and never force-push.
+6. Keep unimplemented profile flags false, preserve Power User Mode, do not teach terminal/hotkey ownership in Desktop Mode, stay on `work`, and never create slice branches. `main` is pushed only to keep it identical to `upstream/quattro`, and publishing a rebase of `work` requires a force-push.
 
 ## Acceptance
 
