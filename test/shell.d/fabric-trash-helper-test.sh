@@ -37,10 +37,15 @@ def run(action, payload):
     return status, json.loads(stream.getvalue())
 
 
-def entry_payload(location_id, relative, path, resource="files.workspace.primary"):
+def directory_resource(location_id, relative):
+    parent = relative.rsplit("/", 1)[0] if "/" in relative else ""
+    return sa.stable_directory_id(location_id, parent)
+
+
+def entry_payload(location_id, relative, path, resource=None):
     info = path.lstat()
     return {
-        "resourceId": resource,
+        "resourceId": resource if resource is not None else directory_resource(location_id, relative),
         "locationId": location_id,
         "entryRelativePath": relative,
         "entryId": sa.stable_entry_id(location_id, info.st_dev, info.st_ino, relative),
@@ -110,6 +115,12 @@ wrong_resource = entry_payload("files.location.documents", "drift.txt", second)
 wrong_resource["resourceId"] = "audio.sink." + "a" * 64
 status, result = run("files-entry-trash", wrong_resource)
 check("a foreign resource kind refuses", result.get("code") == "payload.invalid", json.dumps(result))
+
+workspace_resource = entry_payload("files.location.documents", "drift.txt", second)
+workspace_resource["resourceId"] = "files.workspace.primary"
+status, result = run("files-entry-trash", workspace_resource)
+check("a workspace resource refuses", result.get("code") == "payload.invalid", json.dumps(result))
+check("the workspace-scoped entry is untouched", second.is_file())
 
 status, result = run("files-trash-restore", entry_payload("files.location.documents", "drift.txt", second))
 check("restoring an entry that is not in Trash refuses", result.get("code") == "payload.invalid", json.dumps(result))
