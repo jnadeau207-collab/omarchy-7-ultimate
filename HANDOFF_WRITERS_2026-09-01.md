@@ -80,6 +80,13 @@ The scope function and payload deriver were reverted rather than left half-appli
 
 `trash.restore` is harder and was not attempted. Its natural scope is the destination directory, which is only known from the `.trashinfo` record the provider does not read at preflight.
 
+## Why entry.rename is not scoped
+
+Scoping `entry.rename` to its parent directory looks identical to the other three and is wrong. The directory scope derives its revision from the listing, which is names only. Renaming changes a name, so the scope tracks the effect correctly, but it stops seeing anything else about the entry.
+
+`test_compare_and_swap_contains_concurrent_execution_and_toctou_drift` proves it: it drifts the target entry's `identity` between preflight and execute and requires `files.state-stale`. Against the whole-workspace revision that fires. Against a directory listing it does not, because the names did not move. Scoping rename would silently drop the provider-level TOCTOU check on the exact operation that resolves an entry by id and then moves it.
+
+Create, trash and restore are safe under this scope because their observable effect *is* a name appearing or disappearing, and an entry that drifted underneath still fails the helper's inode check. Rename needs a scope carrying the entry identity as well as the listing. That is a different document shape and a different schema family; it was attempted, caught by that test, and reverted rather than shipped weakened.
 ## What still blocks Software Center
 
 Not the executor. The shipped catalog carries `assurance: contract-seed`, and `PackageProvider` deliberately refuses live mutation for an unattested seed. That gate is correct and was left closed. Opening it is a release-attestation decision.
