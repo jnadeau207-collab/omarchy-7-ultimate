@@ -8,9 +8,11 @@ Rectangle {
   required property var record
   property bool selected: false
   property bool trashable: false
+  property bool restorable: false
   property bool trashBusy: false
 
   signal trashRequested()
+  signal restoreRequested()
 
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Style.space(28)
@@ -68,6 +70,16 @@ Rectangle {
         Layout.alignment: Qt.AlignTop
       }
 
+      Ui.Button {
+        visible: root.restorable
+        text: "Restore"
+        focusable: true
+        bordered: true
+        enabled: !root.trashBusy
+        accessibleDescription: "Return " + String(root.record.title || "this entry") + " to where it came from through files.provider trash.restore"
+        Layout.alignment: Qt.AlignTop
+        onClicked: root.restoreRequested()
+      }
       Ui.Button {
         visible: root.trashable
         text: "Move to Trash"

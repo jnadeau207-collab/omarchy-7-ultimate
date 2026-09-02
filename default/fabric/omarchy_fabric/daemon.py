@@ -706,6 +706,23 @@ class FabricDaemon:
         return value
 
     @staticmethod
+    def _restore_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        current = preflight["currentState"]
+        proposed = preflight["proposedState"]
+        added = [name for name in proposed["names"] if name not in set(current["names"])]
+        if len(added) != 1:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The restore plan does not return exactly one entry to its directory.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "entryId": preflight["normalizedArguments"]["entryId"],
+            "locationId": current["locationId"],
+            "entryRelativePath": added[0],
+        }
+    @staticmethod
     def _trash_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
         current = preflight["currentState"]
         proposed = preflight["proposedState"]
@@ -897,6 +914,16 @@ class FabricDaemon:
                         required={"resourceId": stable_token, "profile": self._operation_profile},
                     ),
                     IntentDefinition(
+                        "files.trash.restore",
+                        FixedArgvCommand(str(helper), ("files-trash-restore",)),
+                        required={
+                            "resourceId": stable_token,
+                            "entryId": stable_token,
+                            "locationId": stable_token,
+                            "entryRelativePath": self._operation_entry_relative,
+                        },
+                    ),
+                    IntentDefinition(
                         "files.entry.trash",
                         FixedArgvCommand(str(helper), ("files-entry-trash",)),
                         required={
@@ -975,6 +1002,12 @@ class FabricDaemon:
                         "resourceId": preflight["resource"]["id"],
                         "profile": preflight["normalizedArguments"]["profile"],
                     },
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "trash.restore",
+                    "files.trash.restore",
+                    self._restore_payload,
                 ),
                 OperationDefinition(
                     "files.provider",
