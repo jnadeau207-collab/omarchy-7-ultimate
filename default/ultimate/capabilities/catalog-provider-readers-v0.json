@@ -1778,10 +1778,10 @@
         "policy": "Persist only opaque process identities; never record command lines in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View processes",
-        "path": ""
+        "path": "Administration > Processes"
       },
       "agentCenterLabel": "Inspect processes",
       "proofIds": {

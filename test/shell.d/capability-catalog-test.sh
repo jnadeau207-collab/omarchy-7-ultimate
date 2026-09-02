@@ -319,10 +319,16 @@ if process_inspect.get("availability", {}).get("human") == "present":
 if process_inspect.get("provider", {}).get("state") == "legacy-direct":
     raise SystemExit("process.inspect leftover legacy-direct invent")
 process_inspect_route = process_inspect["humanRoute"]
-if process_inspect_route.get("status") != "planned" or process_inspect_route.get("path"):
-    raise SystemExit(f"process.inspect invents an Administration Task Manager: {process_inspect_route}")
-if "Task Manager" in str(process_inspect_route.get("surface") or ""):
+if process_inspect_route.get("status") != "visible":
+    raise SystemExit(f"process.inspect underclaims a visible Administration Processes host: {process_inspect_route}")
+if process_inspect_route.get("surface") != "Administration" or process_inspect_route.get("path") != "Administration > Processes":
+    raise SystemExit(f"process.inspect invents or underclaims a Task Manager destination: {process_inspect_route}")
+if not str(process_inspect_route.get("path") or "").strip():
+    raise SystemExit(f"process.inspect underclaims with an empty Administration path: {process_inspect_route}")
+if "Task Manager" in str(process_inspect_route.get("surface") or "") or "Task Manager" in str(process_inspect_route.get("path") or ""):
     raise SystemExit(f"process.inspect invents a Task Manager surface: {process_inspect_route}")
+if "Superbar" in str(process_inspect_route.get("path") or "") or "Superbar" in str(process_inspect_route.get("surface") or ""):
+    raise SystemExit(f"process.inspect invents a Superbar Task Manager: {process_inspect_route}")
 if process_inspect.get("source", {}).get("file") != "default/fabric/omarchy_fabric/providers/process/provider.py":
     raise SystemExit(f"process.inspect source is {process_inspect.get('source')}")
 if process_inspect.get("source", {}).get("symbol") != "build_provider":
@@ -663,6 +669,13 @@ if "process.termination.plan" not in gaps or "Administration > Processes" not in
     raise SystemExit("fleet-doctrine-gaps must name the visible Administration End Task host without LIVE")
 if "shell principal cannot authorize" not in gaps or "UI stays unauthorized" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep End Task write plane unauthorized")
+if "process.inspect" not in gaps or "administration.processes.overview" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name the visible Administration process.inspect host")
+if "honest-unavailable as Task Manager product" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep process.inspect honest-unavailable as Task Manager product")
+parity_md = (root / "WINDOWS_7_ULTIMATE_PARITY.md").read_text(encoding="utf-8")
+if "planned Administration empty path" in parity_md:
+    raise SystemExit("PARITY Task Manager row still underclaims process.inspect as planned empty path")
 if "METAL_HEAD OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep METAL_HEAD OPEN")
 
