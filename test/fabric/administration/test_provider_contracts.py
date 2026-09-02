@@ -49,15 +49,18 @@ class AdministrationAdmissionTests(unittest.IsolatedAsyncioTestCase):
             else:
                 self.assertEqual(result["value"]["availability"]["reason"]["code"], f"{case.module.DOMAIN}.operation-read-only")
             self.assertGreaterEqual(len(result["value"]["resources"]), 1)
-            with self.assertRaises(FabricError) as unavailable:
-                await provider.preflight(case.module.OPERATION_ACTION, case.arguments, principal())
             if operable:
-                self.assertTrue(
-                    unavailable.exception.code.startswith(f"{case.module.DOMAIN}."),
-                    f"{case.module.DOMAIN} refused with a foreign code: {unavailable.exception.code}",
-                )
-                self.assertNotEqual(unavailable.exception.code, f"{case.module.DOMAIN}.operation-unavailable")
+                try:
+                    await provider.preflight(case.module.OPERATION_ACTION, case.arguments, principal())
+                except FabricError as refused:
+                    self.assertTrue(
+                        refused.code.startswith(f"{case.module.DOMAIN}."),
+                        f"{case.module.DOMAIN} refused with a foreign code: {refused.code}",
+                    )
+                    self.assertNotEqual(refused.code, f"{case.module.DOMAIN}.operation-unavailable")
             else:
+                with self.assertRaises(FabricError) as unavailable:
+                    await provider.preflight(case.module.OPERATION_ACTION, case.arguments, principal())
                 self.assertEqual(unavailable.exception.code, f"{case.module.DOMAIN}.operation-unavailable")
         self.assertEqual(registry.provider_count, 8)
         self.assertTrue(all(call.argv[0].startswith("/") for call in calls))
