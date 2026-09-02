@@ -1,11 +1,9 @@
 import QtQuick
 import QtQuick.Controls as Controls
-import QtQuick.Layouts
 import qs.Commons
-import qs.Ui as Ui
-import qs.apps.shared as Shared
 
 import "FilesModel.js" as FilesModel
+import "ExplorerTheme.js" as Aero
 import "." as Files
 
 Item {
@@ -15,11 +13,10 @@ Item {
   property var queryState: FilesModel.baseState("files.overview", {}, "offline")
 
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
-  readonly property var visibleRoutes: filteredRoutes(navigation.query)
   readonly property bool busy: queryState.phase === "catalog-loading" || queryState.phase === "loading"
   readonly property bool canRetry: !busy && ["offline", "missing", "unavailable", "denied", "interrupted", "stale", "failed"].indexOf(queryState.phase) >= 0
   readonly property bool showRecords: ["ready", "available", "degraded", "partial", "empty"].indexOf(queryState.phase) >= 0
-  readonly property int recordColumns: contentScroll.availableWidth >= 1050 ? 2 : 1
+  readonly property bool healthy: ["ready", "available", "empty"].indexOf(queryState.phase) >= 0
 
   property string operationStage: ""
   property string operationRequestId: ""
@@ -33,16 +30,37 @@ Item {
   readonly property bool restoreVisible: FilesModel.isTrashRoute(host ? host.currentRoute : "")
   readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady
 
-  focus: true
+  property var history: []
+  property int historyIndex: -1
+  property bool traversing: false
+  property string viewMode: "details"
+  property string sortColumn: "name"
+  property bool sortAscending: true
+  property string selectedId: ""
+  property var selectedRecord: null
 
-  function filteredRoutes(query) {
-    if (!host || !host.routeCatalog || !Array.isArray(host.routeCatalog.routes)) return []
-    var needle = String(query || "").toLowerCase().trim()
-    if (needle === "") return host.routeCatalog.routes
-    return host.routeCatalog.routes.filter(function(route) {
-      return [route.title, route.description, route.section].concat(route.keywords || []).join(" ").toLowerCase().indexOf(needle) >= 0
-    })
+  readonly property string accountName: {
+    var home = String(Tokens.home || "")
+    var cut = home.lastIndexOf("/")
+    var leaf = cut >= 0 ? home.slice(cut + 1) : home
+    return leaf === "" ? "Home" : leaf
   }
+
+  readonly property string relativePath: String(queryState.relativePath || "")
+  readonly property string routeTitle: currentRoute ? String(currentRoute.title) : "Files"
+  readonly property var crumbs: FilesModel.breadcrumbFor(routeTitle, relativePath)
+  readonly property bool canBack: historyIndex > 0
+  readonly property bool canForward: historyIndex >= 0 && historyIndex < history.length - 1
+
+  readonly property var locationRoutes: ({
+    "files.location.desktop": "files.desktop",
+    "files.location.documents": "files.documents",
+    "files.location.downloads": "files.downloads",
+    "files.location.pictures": "files.pictures",
+    "files.location.trash": "files.trash"
+  })
+
+  focus: true
 
   function ensureController() {
     if (controller) return
@@ -51,6 +69,8 @@ Item {
       cancel: function(requestId) { return root.host ? root.host.cancelFabric(requestId) : false },
       onState: function(state) {
         root.queryState = state
+        root.selectedId = ""
+        root.selectedRecord = null
         if (state.requestId !== "" && (state.phase === "catalog-loading" || state.phase === "loading")) staleTimer.restart()
         else staleTimer.stop()
       }
@@ -70,9 +90,95 @@ Item {
     else host.retryFabric()
   }
 
-  function runSearch() {
+  function recordHistory(routeId, path) {
+    if (root.traversing) return
+    var entry = { routeId: String(routeId), relativePath: String(path || "") }
+    var top = root.historyIndex >= 0 ? root.history[root.historyIndex] : null
+    if (top && top.routeId === entry.routeId && top.relativePath === entry.relativePath) return
+    var trimmed = root.history.slice(0, root.historyIndex + 1)
+    trimmed.push(entry)
+    root.history = trimmed
+    root.historyIndex = trimmed.length - 1
+  }
+
+  function travel(index) {
+    if (index < 0 || index >= root.history.length || !root.host) return
+    var entry = root.history[index]
+    root.traversing = true
+    root.historyIndex = index
+    root.host.navigate(entry.routeId, entry.relativePath === "" ? {} : { relativePath: entry.relativePath })
+    root.traversing = false
+  }
+
+  function goBack() { if (root.canBack) travel(root.historyIndex - 1) }
+  function goForward() { if (root.canForward) travel(root.historyIndex + 1) }
+
+  function goUp() {
     if (!host) return
-    host.navigate("files.search", searchInput.text === "" ? {} : { query: searchInput.text })
+    if (root.relativePath === "") return
+    openPath(FilesModel.parentRelativePath(root.relativePath))
+  }
+
+  function openPath(path) {
+    if (!host) return
+    var target = String(path || "")
+    host.navigate(host.currentRoute, target === "" ? {} : { relativePath: target })
+  }
+
+  function runSearch(text) {
+    if (!host) return
+    var query = String(text || "")
+    host.navigate("files.search", query === "" ? {} : { query: query })
+  }
+
+  function viewItems() {
+    if (!root.showRecords) return []
+    var kind = root.currentRoute ? String(root.queryState.query ? root.queryState.query.kind : "") : ""
+    if (kind === "entries") return FilesModel.sortedEntries(root.queryState.records, root.sortColumn, root.sortAscending)
+
+    var shaped = []
+    var locations = FilesModel.explorerLocations(root.queryState.records)
+    for (var i = 0; i < locations.length; i++) {
+      var location = locations[i]
+      shaped.push({
+        id: location.id, title: location.title, entryKind: location.locationKind === "trash" ? "trash" : "directory",
+        typeLabel: "File folder", sizeText: "", modifiedText: "", hidden: false, writable: location.writable,
+        targetRoute: root.locationRoutes[location.id] || "", relativePath: "", details: location.details, kind: "location",
+        status: location.status, subtitle: location.subtitle, tone: location.tone
+      })
+    }
+    var mounts = FilesModel.explorerMounts(root.queryState.records)
+    for (var m = 0; m < mounts.length; m++) {
+      var mount = mounts[m]
+      shaped.push({
+        id: mount.id, title: mount.title, entryKind: mount.mountKind === "smb" ? "network" : "drive",
+        typeLabel: mount.mountKind === "smb" ? "Network Location" : mount.mountKind === "removable" ? "Removable Disk" : "Local Disk",
+        sizeText: "", modifiedText: "", hidden: false, writable: mount.writable, targetRoute: "", relativePath: "",
+        details: mount.details, kind: "mount", status: mount.status, subtitle: mount.subtitle, tone: mount.tone
+      })
+    }
+    return shaped
+  }
+
+  function openRecord(record) {
+    if (!record || !host) return
+    if (record.targetRoute) { host.navigate(record.targetRoute, {}); return }
+    if (record.entryKind === "directory" && record.kind === "entry") {
+      openPath(FilesModel.childRelativePath(root.relativePath, record.title))
+    }
+  }
+
+  function nextFolderName() {
+    var taken = {}
+    var existing = FilesModel.explorerEntries(root.queryState.records)
+    for (var i = 0; i < existing.length; i++) taken[String(existing[i].title).toLowerCase()] = true
+    var base = "New folder"
+    if (!taken[base.toLowerCase()]) return base
+    for (var n = 2; n < 512; n++) {
+      var candidate = base + " (" + n + ")"
+      if (!taken[candidate.toLowerCase()]) return candidate
+    }
+    return base
   }
 
   function restoreEntry(record) {
@@ -90,6 +196,7 @@ Item {
     })
     if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
   }
+
   function trashEntry(record) {
     if (!host || operationBusy || createLocationId === "") return
     if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return
@@ -120,7 +227,7 @@ Item {
     root.operationRequestId = host.requestFabric("operation.preflight", {
       provider: "files.provider",
       action: "directory.create",
-      arguments: { locationId: root.createLocationId, parentRelativePath: "", name: root.operationName },
+      arguments: { locationId: root.createLocationId, parentRelativePath: root.relativePath, name: root.operationName },
       idempotencyKey: "files.directory.create." + root.createLocationId + "." + root.operationName
     })
     if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
@@ -152,27 +259,60 @@ Item {
       var succeeded = String(result.status || "") === "succeeded"
       var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "restore" ? "Restored " : "Created "
       var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "restore" ? "Restoring " : "Creating "
-      var tail = root.operationKind === "trash" ? " to Trash." : "."
+      var tail = root.operationKind === "trash" ? " to the Recycle Bin." : "."
       root.resetOperation(succeeded
         ? verb + root.operationName + tail
         : gerund + root.operationName + " ended as " + String(result.status || "unknown") + ".")
-      if (succeeded && root.operationKind === "create") createInput.text = ""
       if (root.controller) root.controller.refresh()
     }
   }
 
-  function statusBorder() {
-    if (["failed", "denied", "unavailable"].indexOf(queryState.phase) >= 0) return Tokens.state.danger
-    if (["ready", "available", "empty"].indexOf(queryState.phase) >= 0) return Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
-    return Tokens.state.warning
+  function commandActions() {
+    var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
+    if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
+    if (root.restoreVisible) {
+      list.push({
+        key: "restore", label: "Restore this item", dropdown: false,
+        enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry"
+      })
+    } else if (root.createVisible) {
+      list.push({
+        key: "delete", label: "Delete", dropdown: false,
+        enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
+      })
+    }
+    if (root.selectedRecord !== null) list.push({ key: "properties", label: "Properties", dropdown: false, enabled: true })
+    return list
+  }
+
+  function invoke(key) {
+    if (key === "organize") { organizeMenu.visible ? organizeMenu.close() : organizeMenu.open(); return }
+    if (key === "new-folder") { root.createFolder(root.nextFolderName()); return }
+    if (key === "delete") { root.trashEntry(root.selectedRecord); return }
+    if (key === "restore") { root.restoreEntry(root.selectedRecord); return }
+    if (key === "properties") { propertiesDialog.open(); return }
+    if (key === "refresh") { root.retryState(); return }
+    if (key === "open") { root.openRecord(root.selectedRecord); return }
   }
 
   onHostChanged: synchronizeHost()
-  Component.onCompleted: ensureController()
+  Component.onCompleted: { ensureController(); focusTimer.restart() }
 
   Keys.onPressed: function(event) {
     if (event.key === Qt.Key_F5 || ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_R)) { root.retryState(); event.accepted = true }
-    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_F) { searchInput.forceActiveFocus(); event.accepted = true }
+    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_F) { addressBar.forceActiveFocus(); event.accepted = true }
+    else if (event.key === Qt.Key_Backspace) { root.goUp(); event.accepted = true }
+    else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Left) { root.goBack(); event.accepted = true }
+    else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Right) { root.goForward(); event.accepted = true }
+    else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Up) { root.goUp(); event.accepted = true }
+    else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }
+  }
+
+  Timer {
+    id: focusTimer
+    interval: 60
+    repeat: false
+    onTriggered: itemView.forceActiveFocus()
   }
 
   Timer {
@@ -190,7 +330,8 @@ Item {
     function onRouteActivated(routeId, routeArguments, context) {
       root.ensureController()
       root.controller.activate(routeId, routeArguments || {})
-      if (routeId === "files.search") searchInput.text = routeArguments && routeArguments.query ? String(routeArguments.query) : ""
+      root.recordHistory(routeId, routeArguments && routeArguments.relativePath ? String(routeArguments.relativePath) : "")
+      focusTimer.restart()
     }
     function onFabricResult(requestId, result) {
       if (root.operationBusy && requestId === root.operationRequestId) {
@@ -208,253 +349,349 @@ Item {
     }
   }
 
-  RowLayout {
+  Rectangle {
     anchors.fill: parent
-    spacing: 0
+    color: Aero.contentFill
+  }
 
-    Shared.ApplicationNavigation {
-      id: navigation
-      title: "Files"
-      routes: root.visibleRoutes
-      currentRoute: root.host ? root.host.currentRoute : ""
-      Layout.preferredWidth: root.width < 860 ? 188 : root.width > 1450 ? 300 : 252
-      Layout.minimumWidth: 176
-      Layout.maximumWidth: 320
-      Layout.fillHeight: true
-      onRouteActivated: function(routeId) { root.host.navigate(routeId, {}) }
+  Files.ExplorerAddressBar {
+    id: addressBar
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    crumbs: root.crumbs
+    locationIcon: root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"
+      : root.currentRoute && root.currentRoute.id === "files.network" ? "network"
+      : root.currentRoute && root.currentRoute.id === "files.trash" ? "trash" : "directory"
+    searchPlaceholder: "Search " + root.routeTitle
+    searchText: String(root.queryState.searchQuery || "")
+    canBack: root.canBack
+    canForward: root.canForward
+    busy: root.busy
+    onBackRequested: root.goBack()
+    onForwardRequested: root.goForward()
+    onCrumbActivated: function(path) { root.openPath(path) }
+    onRefreshRequested: root.retryState()
+    onSearchAccepted: function(text) { root.runSearch(text) }
+  }
+
+  Files.ExplorerCommandBar {
+    id: commandBar
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: addressBar.bottom
+    actions: root.commandActions()
+    viewMode: root.viewMode
+    onActionTriggered: function(key) { root.invoke(key) }
+    onViewModeRequested: function(mode) { root.viewMode = mode }
+  }
+
+  Rectangle {
+    id: notice
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: commandBar.bottom
+    height: visible ? 26 : 0
+    visible: !root.healthy || root.operationMessage !== ""
+    color: root.healthy ? Aero.warningFill : (["failed", "denied", "unavailable"].indexOf(root.queryState.phase) >= 0 ? Aero.errorFill : Aero.warningFill)
+
+    Rectangle {
+      width: parent.width
+      height: 1
+      y: parent.height - 1
+      color: root.healthy ? Aero.warningBorder : Aero.errorBorder
     }
 
-    Item {
-      Layout.fillWidth: true
-      Layout.fillHeight: true
+    Text {
+      anchors.left: parent.left
+      anchors.leftMargin: 10
+      anchors.right: retryLink.left
+      anchors.rightMargin: 10
+      anchors.verticalCenter: parent.verticalCenter
+      text: root.operationMessage !== "" ? root.operationMessage : FilesModel.stateExplanation(root.queryState)
+      textFormat: Text.PlainText
+      elide: Text.ElideRight
+      color: Aero.textPrimary
+      font.family: Aero.fontFamily
+      font.pixelSize: 12
+    }
 
-      ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: root.width < 900 ? Style.space(12) : Style.space(20)
-        spacing: Style.space(12)
+    Text {
+      id: retryLink
+      anchors.right: parent.right
+      anchors.rightMargin: 10
+      anchors.verticalCenter: parent.verticalCenter
+      visible: root.canRetry
+      text: root.queryState.phase === "offline" ? "Reconnect" : "Try again"
+      color: Aero.linkText
+      font.family: Aero.fontFamily
+      font.pixelSize: 12
+      font.underline: retryHover.hovered
 
-        Shared.FabricStatusBanner { host: root.host; Layout.fillWidth: true }
+      HoverHandler { id: retryHover }
+      TapHandler { onSingleTapped: root.retryState() }
 
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Style.space(10)
-          ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.space(3)
-            Text {
-              textFormat: Text.PlainText
-              text: root.currentRoute ? root.currentRoute.title : "Files"
-              color: Tokens.text.primary
-              font.family: Tokens.typography.family
-              font.pixelSize: Style.font.heading
-              font.bold: true
-              wrapMode: Text.WrapAnywhere
-              maximumLineCount: 3
-              elide: Text.ElideRight
-              Layout.fillWidth: true
-            }
-            Text {
-              textFormat: Text.PlainText
-              text: root.currentRoute ? root.currentRoute.description : "The requested Files route is unavailable."
-              color: Tokens.text.secondary
-              font.family: Tokens.typography.family
-              font.pixelSize: Style.font.body
-              wrapMode: Text.WordWrap
-              maximumLineCount: 4
-              elide: Text.ElideRight
-              Layout.fillWidth: true
+      Accessible.role: Accessible.Button
+      Accessible.name: retryLink.text
+    }
+
+    Accessible.role: Accessible.AlertMessage
+    Accessible.name: notice.visible ? FilesModel.stateTitle(root.queryState) : ""
+  }
+
+  Files.ExplorerNavigationPane {
+    id: navigationPane
+    anchors.left: parent.left
+    anchors.top: notice.bottom
+    anchors.bottom: detailsPane.top
+    width: root.width < 900 ? 150 : 190
+    accountName: root.accountName
+    currentRoute: root.host ? root.host.currentRoute : ""
+    mounts: FilesModel.explorerMounts(root.queryState.records)
+    onRouteActivated: function(routeId) { if (root.host) root.host.navigate(routeId, {}) }
+  }
+
+  Rectangle {
+    id: splitter
+    anchors.left: navigationPane.right
+    anchors.top: navigationPane.top
+    anchors.bottom: navigationPane.bottom
+    width: 1
+    color: Aero.navBorder
+  }
+
+  Files.ExplorerItemView {
+    id: itemView
+    anchors.left: splitter.right
+    anchors.right: parent.right
+    anchors.top: notice.bottom
+    anchors.bottom: detailsPane.top
+    items: root.viewItems()
+    focus: true
+    mode: root.viewMode
+    sortColumn: root.sortColumn
+    sortAscending: root.sortAscending
+    selectedId: root.selectedId
+
+    onSelectionChanged: function(record) {
+      root.selectedId = record ? String(record.id) : ""
+      root.selectedRecord = record
+    }
+    onActivated: function(record) { root.openRecord(record) }
+    onSortRequested: function(column) {
+      if (root.sortColumn === column) root.sortAscending = !root.sortAscending
+      else { root.sortColumn = column; root.sortAscending = true }
+    }
+    onContextRequested: function(record, windowX, windowY) {
+      root.selectedRecord = record
+      root.selectedId = record ? String(record.id) : ""
+      contextMenu.x = windowX
+      contextMenu.y = windowY
+      contextMenu.open()
+    }
+  }
+
+  Text {
+    anchors.centerIn: itemView
+    visible: root.showRecords && itemView.count === 0
+    text: FilesModel.isIdleSearch(root.queryState) ? "Type in the search box to begin."
+      : root.queryState.selectedMissing ? "That item is no longer in this folder."
+      : "This folder is empty."
+    color: Aero.textSecondary
+    font.family: Aero.fontFamily
+    font.pixelSize: 12
+  }
+
+  Files.ExplorerDetailsPane {
+    id: detailsPane
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    record: root.selectedRecord
+    itemCount: itemView.count
+    locationLabel: root.routeTitle
+    boundary: "File contents are never read by this surface."
+    folderPath: {
+      if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
+      var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
+      return parent === "" ? root.routeTitle : root.routeTitle + " › " + parent.split("/").join(" › ")
+    }
+  }
+
+  Controls.Popup {
+    id: organizeMenu
+    x: 6
+    y: addressBar.height + commandBar.height
+    width: 168
+    padding: 1
+
+    background: Rectangle {
+      color: "#ffffff"
+      border.width: 1
+      border.color: "#a0a0a0"
+    }
+
+    contentItem: Column {
+      spacing: 0
+
+      Repeater {
+        model: [
+          { key: "new-folder", label: "New folder", enabled: root.createEnabled },
+          { key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy },
+          { key: "restore", label: "Restore this item", enabled: root.restoreVisible && root.selectedRecord !== null && !root.operationBusy },
+          { key: "refresh", label: "Refresh", enabled: true },
+          { key: "properties", label: "Properties", enabled: root.selectedRecord !== null }
+        ]
+
+        delegate: Item {
+          required property var modelData
+          width: 166
+          height: 22
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: 2
+            visible: organizeHover.hovered && modelData.enabled
+            border.width: 1
+            border.color: Aero.hoverBorder
+            gradient: Gradient {
+              GradientStop { position: 0; color: Aero.hoverTop }
+              GradientStop { position: 1; color: Aero.hoverBottom }
             }
           }
-          Ui.Badge { text: String(root.queryState.phase || "offline").toUpperCase(); tone: FilesModel.phaseTone(root.queryState); Layout.alignment: Qt.AlignTop }
+
+          Text {
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            text: modelData.label
+            textFormat: Text.PlainText
+            color: modelData.enabled ? Aero.textPrimary : Aero.textDisabled
+            font.family: Aero.fontFamily
+            font.pixelSize: 12
+          }
+
+          HoverHandler { id: organizeHover; enabled: modelData.enabled }
+          TapHandler {
+            enabled: modelData.enabled
+            onSingleTapped: {
+              organizeMenu.close()
+              root.invoke(String(modelData.key))
+            }
+          }
+
+          Accessible.role: Accessible.MenuItem
+          Accessible.name: modelData.label
         }
+      }
+    }
+  }
 
-        RowLayout {
-          visible: root.host && root.host.currentRoute === "files.search"
-          Layout.fillWidth: true
-          spacing: Style.space(8)
-          Ui.SearchBox {
-            id: searchInput
-            Layout.fillWidth: true
-            semanticPlaceholderText: "Search trusted file metadata"
-            accessibleName: "Files search query"
-            onAccepted: root.runSearch()
-            onCleared: root.host.navigate("files.search", {})
+  Controls.Popup {
+    id: contextMenu
+    width: 168
+    padding: 1
+
+    background: Rectangle {
+      color: "#ffffff"
+      border.width: 1
+      border.color: "#a0a0a0"
+    }
+
+    contentItem: Column {
+      spacing: 0
+
+      Repeater {
+        model: [
+          { key: "open", label: "Open", enabled: root.selectedRecord !== null },
+          { key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy },
+          { key: "restore", label: "Restore", enabled: root.restoreVisible && root.selectedRecord !== null && !root.operationBusy },
+          { key: "properties", label: "Properties", enabled: root.selectedRecord !== null }
+        ]
+
+        delegate: Item {
+          required property var modelData
+          width: 166
+          height: 22
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: 2
+            visible: contextHover.hovered && modelData.enabled
+            border.width: 1
+            border.color: Aero.hoverBorder
+            gradient: Gradient {
+              GradientStop { position: 0; color: Aero.hoverTop }
+              GradientStop { position: 1; color: Aero.hoverBottom }
+            }
           }
-          Ui.Button {
-            text: "Search"
-            focusable: true
-            bordered: true
-            accessibleDescription: "Run a bounded files.provider metadata search"
-            onClicked: root.runSearch()
+
+          Text {
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            text: modelData.label
+            textFormat: Text.PlainText
+            color: modelData.enabled ? Aero.textPrimary : Aero.textDisabled
+            font.family: Aero.fontFamily
+            font.pixelSize: 12
           }
+
+          HoverHandler { id: contextHover; enabled: modelData.enabled }
+          TapHandler {
+            enabled: modelData.enabled
+            onSingleTapped: {
+              contextMenu.close()
+              root.invoke(String(modelData.key))
+            }
+          }
+
+          Accessible.role: Accessible.MenuItem
+          Accessible.name: modelData.label
         }
+      }
+    }
+  }
 
-        RowLayout {
-          visible: root.createVisible
-          Layout.fillWidth: true
-          spacing: Style.space(8)
-          Ui.TextField {
-            id: createInput
-            Layout.fillWidth: true
-            enabled: root.createEnabled
-            semanticPlaceholderText: "New folder name"
-            accessibleName: "New folder name"
-            accessibleDescription: "Name for a folder created in this location through the Fabric operation plane"
-            onAccepted: root.createFolder(createInput.text)
-          }
-          Ui.Button {
-            text: root.operationBusy ? "Creating…" : "New folder"
-            focusable: true
-            bordered: true
-            enabled: root.createEnabled
-            accessibleDescription: "Create a folder in this location through files.directory.create"
-            onClicked: root.createFolder(createInput.text)
-          }
-        }
+  Controls.Popup {
+    id: propertiesDialog
+    anchors.centerIn: Controls.Overlay.overlay
+    width: Math.min(420, root.width - 40)
+    height: Math.min(360, root.height - 40)
+    modal: true
+    padding: 10
 
-        Text {
-          visible: root.operationMessage !== ""
-          Layout.fillWidth: true
-          textFormat: Text.PlainText
-          text: root.operationMessage
-          color: Tokens.text.secondary
-          font.family: Tokens.typography.family
-          font.pixelSize: Style.font.body
-          wrapMode: Text.WordWrap
-          maximumLineCount: 3
-          elide: Text.ElideRight
-          Accessible.role: Accessible.StaticText
-          Accessible.name: root.operationMessage
-        }
+    background: Rectangle {
+      color: "#f0f4f8"
+      border.width: 1
+      border.color: "#8ea0b2"
+    }
 
-        Controls.ScrollView {
-          id: contentScroll
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          contentWidth: availableWidth
-          clip: true
-          Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
+    contentItem: Column {
+      spacing: 8
 
-          ColumnLayout {
-            width: contentScroll.availableWidth
-            spacing: Style.space(12)
+      Text {
+        text: root.selectedRecord ? root.selectedRecord.title + " Properties" : "Properties"
+        textFormat: Text.PlainText
+        color: Aero.textPrimary
+        font.family: Aero.fontFamily
+        font.pixelSize: 13
+        font.bold: true
+      }
 
-            Rectangle {
-              Layout.fillWidth: true
-              implicitHeight: statusColumn.implicitHeight + Style.space(28)
-              radius: Tokens.radius.large
-              color: Tokens.surface.base
-              border.color: root.statusBorder()
-              border.width: Tokens.accessibility.highContrast ? 2 : 1
-              Accessible.role: ["failed", "denied", "unavailable"].indexOf(root.queryState.phase) >= 0 ? Accessible.AlertMessage : Accessible.Pane
-              Accessible.name: FilesModel.stateTitle(root.queryState)
-              Accessible.description: FilesModel.stateExplanation(root.queryState)
+      Loader {
+        width: propertiesDialog.availableWidth
+        active: propertiesDialog.visible && root.selectedRecord !== null
 
-              ColumnLayout {
-                id: statusColumn
-                anchors.fill: parent
-                anchors.margins: Style.space(14)
-                spacing: Style.space(8)
-                RowLayout {
-                  Layout.fillWidth: true
-                  spacing: Style.space(10)
-                  Text {
-                    textFormat: Text.PlainText
-                    text: FilesModel.stateTitle(root.queryState)
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
-                    font.pixelSize: Style.font.title
-                    font.bold: true
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 3
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                  }
-                  Ui.Button {
-                    visible: root.canRetry
-                    text: root.queryState.phase === "offline" ? "Reconnect" : "Retry"
-                    focusable: true
-                    bordered: true
-                    onClicked: root.retryState()
-                  }
-                }
-                Text {
-                  textFormat: Text.PlainText
-                  text: FilesModel.stateExplanation(root.queryState)
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
-                  font.pixelSize: Style.font.body
-                  wrapMode: Text.WordWrap
-                  maximumLineCount: 8
-                  elide: Text.ElideRight
-                  Layout.fillWidth: true
-                }
-                Text {
-                  textFormat: Text.PlainText
-                  visible: root.queryState.revision !== ""
-                  text: "Revision " + root.queryState.revision + " \u00b7 generation " + root.queryState.providerGeneration + " \u00b7 " + root.queryState.totalRecords + " source record" + (root.queryState.totalRecords === 1 ? "" : "s")
-                  color: Tokens.text.disabled
-                  font.family: Tokens.typography.family
-                  font.pixelSize: Style.font.caption
-                  wrapMode: Text.WrapAnywhere
-                  maximumLineCount: 3
-                  elide: Text.ElideRight
-                  Layout.fillWidth: true
-                }
-              }
-            }
-
-            GridLayout {
-              visible: root.showRecords && root.queryState.records.length > 0
-              Layout.fillWidth: true
-              columns: root.recordColumns
-              columnSpacing: Style.space(12)
-              rowSpacing: Style.space(12)
-              Repeater {
-                model: root.queryState.records
-                delegate: Files.FilesRecordCard {
-                  required property var modelData
-                  record: modelData
-                  selected: root.queryState.entityId !== "" && modelData.id === root.queryState.entityId
-                  trashable: root.createLocationId !== "" && String(modelData.kind || "") === "entry" && String(modelData.status || "") !== "symlink"
-                  trashBusy: root.operationBusy
-                  restorable: root.restoreVisible && String(modelData.kind || "") === "entry"
-                  onTrashRequested: root.trashEntry(modelData)
-                  onRestoreRequested: root.restoreEntry(modelData)
-                  Layout.fillWidth: true
-                  Layout.columnSpan: 1
-                }
-              }
-            }
-
-            Ui.EmptyState {
-              visible: root.showRecords && root.queryState.records.length === 0
-              Layout.fillWidth: true
-              title: FilesModel.isIdleSearch(root.queryState) ? "Type a search query" : root.queryState.selectedMissing ? "Deep-linked item not found" : "No records in this route"
-              message: FilesModel.isIdleSearch(root.queryState) ? "Enter a query to search trusted file names and relative paths. File contents are never read." : root.queryState.selectedMissing ? "This exact identity is absent from the displayed provider revision." : "The provider returned a valid empty result."
-            }
-
-            Rectangle {
-              Layout.fillWidth: true
-              implicitHeight: boundaryText.implicitHeight + Style.space(20)
-              radius: Tokens.radius.medium
-              color: Qt.rgba(Tokens.state.warning.r, Tokens.state.warning.g, Tokens.state.warning.b, 0.08)
-              border.color: Tokens.state.warning
-              border.width: 1
-              Accessible.role: Accessible.Pane
-              Accessible.name: "Files mutation boundary"
-              Text {
-                id: boundaryText
-                anchors.fill: parent
-                anchors.margins: Style.space(10)
-                text: "Files v0 \u00b7 directory creation runs through the durable operation service as this user. Rename, trash, restore, mount, and disconnect remain unavailable. File contents are never read by this surface."
-                color: Tokens.text.secondary
-                font.family: Tokens.typography.family
-                font.pixelSize: Style.font.bodySmall
-                wrapMode: Text.WordWrap
-              }
-            }
-          }
+        sourceComponent: Files.FilesRecordCard {
+          width: propertiesDialog.availableWidth
+          record: root.selectedRecord
+          selected: false
+          trashable: false
+          trashBusy: root.operationBusy
+          restorable: false
         }
       }
     }
