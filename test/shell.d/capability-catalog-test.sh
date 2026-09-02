@@ -799,6 +799,26 @@ if "End Task LIVE residual CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the End Task LIVE residual")
 if "End Task LIVE CONTROL" in gaps and "no End Task LIVE CONTROL" not in gaps:
     raise SystemExit("fleet-doctrine-gaps invented End Task LIVE CONTROL")
+if "0352cd3087ec" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #48 tip parent for the Recycle Bin / files.trash.manage residual")
+if "Recycle Bin / files.trash.manage residual OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry Recycle Bin / files.trash.manage residual OPEN")
+if "Recycle Bin / files.trash.manage residual OPEN after PR #48" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the Recycle leftover after PR #48")
+if "Empty Bin LIVE" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented Empty Bin LIVE")
+if "files.trash.manage present" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented files.trash.manage present")
+if "Recycle product-complete" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented Recycle product-complete")
+if "Recycle leftover CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the Recycle Bin / files.trash.manage residual")
+if "files.trash.manage residual CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the files.trash.manage residual")
+if "Recycle Bin leftover CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the Recycle Bin leftover")
+if "Restore LIVE" in gaps and "Do not invent Restore LIVE" not in gaps and "Do not invent a LIVE Restore" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented Restore LIVE")
 
 def parity_notes(label):
     prefix = f"| {label} |"
