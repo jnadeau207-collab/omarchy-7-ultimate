@@ -117,6 +117,37 @@ var ROUTE_QUERIES = [
     coverage: "No code-owned aggregate system-information provider is registered. Settings does not assemble an unofficial substitute from direct commands."
   }]
 
+var LIVE_WRITER_ROUTES = [
+  "settings.audio.overview",
+  "settings.network.overview",
+  "settings.power.overview",
+  "settings.display.overview",
+  "settings.input.overview",
+  "settings.apps.overview"
+]
+
+function routeHasLiveWriter(routeId) {
+  return LIVE_WRITER_ROUTES.indexOf(String(routeId || "")) >= 0
+}
+
+function coverageBadge(routeId) {
+  return routeHasLiveWriter(routeId) ? "PARTIAL LIVE CONTROL" : "CHANGES UNAVAILABLE"
+}
+
+function coverageTone(routeId) {
+  return routeHasLiveWriter(routeId) ? "info" : "warning"
+}
+
+function declaredOpsHonesty(routeId) {
+  return routeHasLiveWriter(routeId)
+    ? "Settings runs this operation through preflight, approval, and the durable coordinator."
+    : "Settings exposes no preflight, approval, or execution control for this domain yet."
+}
+
+function authorityFooter() {
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Power profile, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege"
+}
+
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)
 }
@@ -1164,6 +1195,12 @@ if (typeof module !== "undefined") {
     toneForRecord: toneForRecord,
     observedText: observedText,
     provenance: provenance,
-    hostedPanel: hostedPanel
+    hostedPanel: hostedPanel,
+    LIVE_WRITER_ROUTES: LIVE_WRITER_ROUTES,
+    routeHasLiveWriter: routeHasLiveWriter,
+    coverageBadge: coverageBadge,
+    coverageTone: coverageTone,
+    declaredOpsHonesty: declaredOpsHonesty,
+    authorityFooter: authorityFooter
   }
 }

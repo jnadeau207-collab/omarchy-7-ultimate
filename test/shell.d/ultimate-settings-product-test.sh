@@ -86,6 +86,31 @@ for (const [routeId, source, pluginId] of hosted) {
   assertEqual(spec.pluginId, pluginId, `${routeId} names ${pluginId}`)
   assert(String(spec.honesty).includes('Phase 5'), `${routeId} labels typed services as Phase 5`)
 }
+const liveWriterRoutes = [
+  'settings.audio.overview',
+  'settings.network.overview',
+  'settings.power.overview',
+  'settings.display.overview',
+  'settings.input.overview',
+  'settings.apps.overview'
+]
+assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the six live writer routes')
+for (const routeId of liveWriterRoutes) {
+  assertEqual(Model.routeHasLiveWriter(routeId), true, `${routeId} is a live writer`)
+  assertEqual(Model.coverageBadge(routeId), 'PARTIAL LIVE CONTROL', `${routeId} coverage badge is partial live control`)
+  assertEqual(Model.coverageTone(routeId), 'info', `${routeId} coverage tone is info`)
+  assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
+}
+for (const routeId of ['settings.bluetooth.overview', 'settings.update.overview', 'settings.recovery.overview', 'settings.accessibility.overview', 'settings.system.overview', 'settings.personalization.overview', '']) {
+  assertEqual(Model.routeHasLiveWriter(routeId), false, `${routeId || '(none)'} is not a live writer`)
+  assertEqual(Model.coverageBadge(routeId), 'CHANGES UNAVAILABLE', `${routeId || '(none)'} coverage badge stays unavailable`)
+  assert(Model.declaredOpsHonesty(routeId).includes('no preflight, approval, or execution control'), `${routeId || '(none)'} declared ops stay unavailable`)
+}
+const footer = Model.authorityFooter()
+assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Power profile') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser'), 'authority footer names every live writer')
+assert(footer.includes('other domains stay inspect-only'), 'authority footer keeps remaining domains inspect-only')
+assert(!footer.includes('no direct commands, mutation, preflight, approval, or execution authority'), 'authority footer does not deny mutation on a mutating window')
+
 assertEqual(Model.hostedPanel('settings.accessibility.overview'), null, 'Accessibility stays an honest Fabric page; no accessibility panel exists')
 assertEqual(Model.hostedPanel('settings.system.overview'), null, 'System stays an honest Fabric page; no system-information panel exists')
 const displayResource = Model.normalizeLeafResource({
@@ -482,11 +507,30 @@ grep -Fq 'maximumLineCount:' "$application" || fail "Settings bounds long route 
 grep -Fq 'maximumLineCount:' "$card" || fail "Settings bounds long resource text"
 pass "Settings is responsive, keyboard reachable, accessible, and string bounded"
 
-grep -Fq 'text: "CHANGES UNAVAILABLE"' "$application" \
-  || fail "Settings represents mutation controls as unavailable"
-grep -Fq 'no direct commands, mutation, preflight, approval, or execution authority' "$application" \
-  || fail "Settings states its read-only authority boundary"
-pass "Settings exposes no false operation or preflight affordance"
+grep -Fq 'SettingsModel.coverageBadge' "$application" \
+  || fail "Settings coverage badge is route-honest rather than always CHANGES UNAVAILABLE"
+grep -Fq 'SettingsModel.declaredOpsHonesty' "$application" \
+  || fail "Settings declared-ops copy covers every live writer route"
+grep -Fq 'SettingsModel.authorityFooter' "$application" \
+  || fail "Settings footer states the window mutation authority"
+if grep -A3 'Declared provider operations' "$application" | grep -q 'settings.audio.overview'; then
+  fail "Settings declared-ops honesty is no longer an audio-only ternary"
+fi
+if grep -Fq 'no direct commands, mutation, preflight, approval, or execution authority' "$application"; then
+  fail "Settings footer no longer claims the mutating window has no mutation authority"
+fi
+pass "Settings coverage badge, declared ops, and footer match live writers"
+
+if grep -Eiq 'typed (settings |domain )?writers remain phase 5' "$ROOT/plans/project-ultimate.md" "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
+  fail "plan and PARITY no longer blanket typed writers as remaining Phase 5"
+fi
+if grep -Fq 'Recycle is Phase 6' "$ROOT/plans/project-ultimate.md"; then
+  fail "Current position no longer frames Recycle as Phase-6-only while Files trash/restore UI exists"
+fi
+if grep -Fq 'and cannot set one' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
+  fail "PARITY Default Programs notes no longer deny the live browser writer"
+fi
+pass "Plan and PARITY writer fences match the live Settings and Files surfaces"
 
 grep -Fq 'Ui.SettingsHostedPanel' "$application" \
   || fail "Settings hosts existing panel pages inside its chrome"
