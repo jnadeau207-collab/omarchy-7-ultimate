@@ -221,6 +221,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
 - End Task: consequential / `terminationAuthorized=false`; digest label scrape fragile; do not invent Task Manager LIVE kill.
 - Semantics.text / authored English leftovers. DesktopIcons argv→execArgv landed in tree (PR #5). Metal leftover 2026-09-02T04:18:31-04:00 on omarchy: `test/shell.d/launch-argv-test.sh` EXIT 0; comma-join `uwsm-app -- /usr/bin/cursor,--password-store=...` still errors as expected; `uwsm-app -- /home/jesse/.local/bin/cursor-wayland --version` OK (3.16.29). Product REJECTED.
 - Settings/Files honesty scrub (PR #6 / work `e7eded14`): coverage badge PARTIAL LIVE CONTROL vs CHANGES UNAVAILABLE; authorityFooter names LIVE writers; Files banner names New folder/Trash/Restore and `files.trash.manage` unavailable; Phase5 blanket removed. Source-oracle leftover 2026-09-02: `ultimate-settings-product-test.sh` EXIT 0; `domain-product-static-test.sh` EXIT 0 on PR tree before merge. **Not** pixel leftover. Product REJECTED.
+- Files `entry.trash` write plane (PR #8): widen v1 directory family, not a parallel Trash family; deriver reads scoped `currentState.value`; risk `low`. Restore stays honest-unavailable. Source-oracle leftover 2026-09-02: failing `operation.intent-build-failed`/`KeyError` then passing `entry.trash` SHELL preflight+grant; `test/fabric/operations` 84 tests EXIT 0; `test/fabric/files` 32 tests EXIT 0; `fabric-trash-helper-test.sh` EXIT 0. **Not** metal leftover. Product REJECTED.
 - Product **REJECTED**; refuse merge as OS.
 
 ---
