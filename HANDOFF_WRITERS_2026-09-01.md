@@ -8,7 +8,7 @@ Run on the Arch box at `192.168.1.171` from a throwaway clone in `/tmp`, so noth
 
 | Suite | Baseline `9857263b` | This work |
 |-------|--------------------|-----------|
-| `test/all` | 13 of 247 files fail | **12 of 264 fail** |
+| `test/all` | 13 of 247 files fail | **9 of 264 fail** |
 | `test/fabric/files` | — | OK |
 | `test/fabric/providers` | — | OK |
 | `test/fabric/operations` | — | OK |
@@ -20,7 +20,24 @@ The twelve are a strict subset of the baseline thirteen. This work introduced no
 
 The Python fabric suites cannot run on a Windows checkout at all (`os.getuid`), and the shell suite reports 109 of 264 there against 12 on Linux. Windows numbers are not evidence of anything; use the box.
 
-Still unproven on metal: every writer's **effect**. The suites above prove contracts, refusals and helper logic against real filesystems and real inodes. Nothing has driven `pactl`, `hyprctl`, `nmcli`, `pacman` or `pkexec` through a running daemon on a live session.
+## Writer effects, driven on the live session
+
+Run against the running Hyprland session on the box (7 quickshell processes, HDMI-A-1), through the code-owned helper with opaque resource ids. Every value was put back.
+
+| Writer | Result |
+|--------|--------|
+| `audio.output-volume.set` | **Proven.** 40% -> 55% -> 40% on the real sink. |
+| `files.directory.create` | **Proven.** Real directory in `~/Documents`. |
+| `files.entry.trash` | **Proven.** Moved to `~/.local/share/Trash/files` with its `.trashinfo`. |
+| `files.trash.restore` | **Proven.** Returned to `~/Documents`, record removed. |
+| `power.profile.set` | Failed closed, correctly. `powerprofilesctl set` needs Polkit `org.freedesktop.UPower.PowerProfiles.switch-profile`, and an SSH session has no agent to grant it. The helper reported `apply.failed` rather than claiming success. It is not privilege-free; it works where an agent exists. |
+| `display.brightness.set` | Not drivable here, and the control correctly hides. `ddcutil` is installed but the user is not in the `i2c` group and the box has no `/sys/class/backlight`, so the provider reports `available: false`. |
+| `input.keyboard-layout.set` | Not drivable here, and the control correctly hides. All six keyboards report a single `us` layout, so none is `switchable`. |
+| `network.wifi.set-enabled` | Not attempted. Switching the radio off would sever the SSH session used to test it. |
+| `process.termination` | Not attempted. Destructive on a live desktop. |
+| `packages.install` / `packages.remove` | Blocked upstream of the executor by catalog attestation, see below. |
+
+The two that hide are the honesty behaviour working: on hardware that cannot do the thing, the surface shows nothing rather than a control that fails when pressed.
 ## The rebase
 
 `work` was replayed with `git rebase --onto`, not merged, so `upstream/quattro` is a true ancestor. 367 commits replayed, one dropped as empty because upstream independently reworked the same theme-guard test and its version supersedes ours. Recovery ref `pre-rebase-20260901` holds the old tip.
