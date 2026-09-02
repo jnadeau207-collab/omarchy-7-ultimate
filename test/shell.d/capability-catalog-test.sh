@@ -541,6 +541,69 @@ if restore and restore.get("availability", {}).get("claim") == "present":
 PY
 pass "leftover catalog routes stay honest after Settings inspect hosting"
 
+python3 - "$ROOT" <<'PY' || fail "Settings/Admin/Files catalog soft invents stay locked closed"
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+readers = json.loads((root / "default/ultimate/capabilities/catalog-provider-readers-v0.json").read_text(encoding="utf-8"))
+writers = json.loads((root / "default/ultimate/capabilities/catalog-system-jobs-v0.json").read_text(encoding="utf-8"))
+jobs = json.loads((root / "default/ultimate/parity/jobs.json").read_text(encoding="utf-8"))
+catalog_rows = readers["capabilities"] + writers["capabilities"]
+by_id = {row["id"]: row for row in catalog_rows}
+
+leftover_invent_ids = (
+    "processes.inspect",
+    "files.folder.create",
+    "apps.defaults.set",
+)
+for leftover_id in leftover_invent_ids:
+    if leftover_id in by_id:
+        raise SystemExit(f"{leftover_id} remains as a catalog invent")
+    for job in jobs["jobs"]:
+        if leftover_id in (job.get("capabilityIds") or []):
+            raise SystemExit(f"{job.get('id')} still names leftover invent {leftover_id}")
+
+for row in writers["capabilities"]:
+    provider = row.get("provider") or {}
+    if provider.get("id") == "apps.provider" and provider.get("state") == "present":
+        raise SystemExit(f"{row.get('id')} invents apps.provider present")
+
+for row in catalog_rows:
+    provider = row.get("provider") or {}
+    capability_id = row.get("id") or ""
+    if not (capability_id.startswith("process.") or provider.get("id") == "process.provider"):
+        continue
+    route = row.get("humanRoute") or {}
+    named = f"{route.get('surface') or ''} {route.get('path') or ''}"
+    if "Task Manager" in named:
+        raise SystemExit(f"{capability_id} invents a Task Manager surface on a process.* route: {route}")
+
+inventory = {
+    "audio.volume.set": "partial",
+    "network.manage": "partial",
+    "power.profile.set": "partial",
+    "display.configure": "partial",
+    "input.keyboard-layout.set": "partial",
+    "defaults.protocol.set": "partial",
+    "files.directory.create": "partial",
+    "files.entry.trash": "partial",
+    "process.inspect": "missing",
+    "process.termination.plan": "missing",
+}
+for capability_id, claim in inventory.items():
+    row = by_id.get(capability_id)
+    if row is None:
+        raise SystemExit(f"locked inventory id missing from catalog: {capability_id}")
+    actual = (row.get("availability") or {}).get("claim")
+    if actual != claim:
+        raise SystemExit(f"{capability_id} availability.claim is {actual!r}, expected locked {claim!r}")
+    if actual == "present":
+        raise SystemExit(f"{capability_id} walked claim to present")
+PY
+pass "Settings/Admin/Files catalog soft invents stay locked closed"
+
 if find "$ROOT/default/ultimate/capabilities" "$ROOT/default/ultimate/capability-schema" "$ROOT/default/ultimate/parity" "$ROOT/test/shell.d" -type d -name __pycache__ -print -quit | grep -q .; then
   fail "capability graph checks leave no Python bytecode caches"
 fi
