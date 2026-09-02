@@ -34,7 +34,9 @@ Rectangle {
     list.push({ key: "libraries", depth: 0, label: "Libraries", icon: "libraries", routeId: "", group: true })
     if (root.expanded.libraries) {
       list.push({ key: "libraries.documents", depth: 1, label: "Documents", icon: "directory", routeId: "files.documents", group: false })
+      list.push({ key: "libraries.music", depth: 1, label: "Music", icon: "directory", routeId: "files.music", group: false })
       list.push({ key: "libraries.pictures", depth: 1, label: "Pictures", icon: "directory", routeId: "files.pictures", group: false })
+      list.push({ key: "libraries.videos", depth: 1, label: "Videos", icon: "directory", routeId: "files.videos", group: false })
     }
     list.push({ key: "home", depth: 0, label: root.accountName, icon: "directory", routeId: "files.overview", group: false })
     list.push({ key: "computer", depth: 0, label: "Computer", icon: "computer", routeId: "files.this-pc", group: true })
