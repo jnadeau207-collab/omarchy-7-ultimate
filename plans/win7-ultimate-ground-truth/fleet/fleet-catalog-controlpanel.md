@@ -38,7 +38,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Control Panel icon applets | Settings routes, Superbar/QS panels, Administration, Files, Start places |
 | Administrative Tools folder | `org.omarchy.Administration` (+ MMC-class tools still missing as product; inspect hosts visible, claim missing) |
 | Default Programs | Settings → Apps (`defaults.provider`); `defaults.protocol.set` browser LIVE only; `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; MIME associations still missing/planned |
-| Recycle Bin | Files Trash routes / `files.trash.*` plane (catalog `files.trash.manage` still missing) |
+| Recycle Bin | Files Trash routes / `files.trash.*` plane; `files.trash.restore` write plane is reachable (claim=partial; humanRoute planned empty); catalog `files.trash.manage` still missing |
 
 ---
 
@@ -219,7 +219,7 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 
 | Destination | Omarchy | Catalog |
 | --- | --- | --- |
-| Recycle Bin | Files Trash | `files.trash.manage` **MUST_FIX** missing vs product |
+| Recycle Bin | Files Trash | `files.trash.restore` write plane is reachable (claim=partial; humanRoute planned empty); `files.trash.manage` **MUST_FIX** missing vs product; do not invent Restore LIVE |
 | Task Manager | Administration > Processes | `process.inspect` visible; claim missing; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`); do not invent Task Manager present / End Task LIVE |
 | Resource Monitor | — | missing |
 | Explorer Folder Options | — | Gap |
@@ -270,7 +270,7 @@ Catalog humanRoutes already published **visible**. Residual = product MMC / muta
 
 Do not mark claim=`present` to “close” these. Residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty.
 
-1. **Recycle Bin product vs `files.trash.manage` missing / provider-missing.**  
+1. **Recycle Bin product vs `files.trash.manage` missing / provider-missing.** `files.trash.restore` write plane is reachable (claim=partial; humanRoute planned empty). Residual stays OPEN. Do not invent Restore LIVE.  
 2. **Task Manager present / End Task LIVE / product MMC still missing.** Catalog `process.inspect` is visible on `Administration > Processes`; claim missing; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`). Do not invent Task Manager present / End Task LIVE.  
 3. **Closed: `parity.agent-center` claim=`prototype` matches `sourceStatus=prototype` / PARITY prototype.** Residual = do not invent claim=`present`; consent/provider ops stay outside Agent Center.
 4. **Do not invent MIME Default Programs LIVE** — `files.associations.set` stays missing/planned MIME until Settings + catalog + PARITY agree. Browser writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present.  
@@ -286,7 +286,7 @@ Do not mark claim=`present` to “close” these. Residual = product MMC / mutat
 | Visible Administration inspect hosts (claim missing) | ~10 | Processes, Services, Device Manager, Storage, Printers and scanners, Backup, Scheduled tasks, Troubleshooting, Firewall, User accounts — Phase 9 exit still open; inspect ≠ MMC product present |
 | Honest missing | Accessibility page, System information jump cleared | Catalog empty paths; Accessibility panel missing as product |
 | Hard gaps (no product + missing jobs) | BitLocker, Credential Manager, HomeGroup, Internet Options, AutoPlay, Fonts, Folder Options, Speech, Defender, Mobility Center, Remote Desktop, Parental Controls, … | Ultimate SKU still incomplete |
-| Residual honesty (product MMC / mutation still missing) | Recycle Bin vs `files.trash.manage`; Task Manager present / End Task LIVE; MIME Default Programs; writers planned/unavailable; Agent Center claim stays prototype (do not invent claim=`present`) | Catalog caught up for Admin inspect visibility (#35–#36); Default Programs writer is `defaults.protocol.set` (browser LIVE only); `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; `parity.agent-center` claim matches sourceStatus/PARITY prototype |
+| Residual honesty (product MMC / mutation still missing) | Recycle Bin vs `files.trash.manage`; Task Manager present / End Task LIVE; MIME Default Programs; writers planned/unavailable; Agent Center claim stays prototype (do not invent claim=`present`) | Catalog caught up for Admin inspect visibility (#35–#36); Default Programs writer is `defaults.protocol.set` (browser LIVE only); `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; `files.trash.restore` write plane is reachable (claim=partial; humanRoute planned empty); Recycle residual stays OPEN; `parity.agent-center` claim matches sourceStatus/PARITY prototype |
 
 ---
 

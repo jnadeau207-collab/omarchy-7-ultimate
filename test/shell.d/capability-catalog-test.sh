@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"132 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"133 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -840,6 +840,10 @@ if "Recycle Bin leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the Recycle Bin leftover")
 if "Restore LIVE" in gaps and "Do not invent Restore LIVE" not in gaps and "Do not invent a LIVE Restore" not in gaps:
     raise SystemExit("fleet-doctrine-gaps invented Restore LIVE")
+if "`files.trash.restore` write plane is reachable" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the reachable files.trash.restore write plane")
+if "humanRoute planned empty" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep files.trash.restore humanRoute planned empty")
 if "13ca963b08f74a" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #49 tip parent for the MIME / Default Programs association UI residual")
 if "MIME / Default Programs association UI residual OPEN" not in gaps:
@@ -1444,9 +1448,57 @@ if trash_manage.get("availability", {}).get("claim") == "present":
     raise SystemExit("files.trash.manage must not claim present")
 if trash_manage.get("provider", {}).get("state") != "provider-missing":
     raise SystemExit(f"files.trash.manage was raised off missing: {trash_manage.get('provider')}")
-restore = by_id.get("files.trash.restore")
-if restore and restore.get("availability", {}).get("claim") == "present":
+if "files.trash.restore" not in by_id:
+    raise SystemExit("absent restore writer invent: files.trash.restore missing from catalog")
+restore = by_id["files.trash.restore"]
+if restore.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.trash.restore provider is {restore.get('provider')}")
+if restore.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.trash.restore provider state is {restore.get('provider')}")
+if restore.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.trash.restore claim is {restore.get('availability')}")
+if restore.get("availability", {}).get("claim") == "present":
     raise SystemExit("files.trash.restore invents Restore LIVE")
+if restore.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"files.trash.restore agent availability is {restore.get('availability')}")
+if restore.get("consent", {}).get("mode") != "high-risk":
+    raise SystemExit(f"files.trash.restore consent is not consequential: {restore.get('consent')}")
+if restore["humanRoute"].get("status") != "planned":
+    raise SystemExit(f"files.trash.restore invents a Restore LIVE route: {restore.get('humanRoute')}")
+if restore["humanRoute"].get("path"):
+    raise SystemExit(f"files.trash.restore invents a Restore LIVE path: {restore.get('humanRoute')}")
+if restore.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+    raise SystemExit(f"files.trash.restore source is {restore.get('source')}")
+if restore.get("source", {}).get("symbol") != "apply_files_trash_restore":
+    raise SystemExit(f"files.trash.restore source is {restore.get('source')}")
+if "files.trash.restore" not in (parity_recycle.get("capabilityIds") or []):
+    raise SystemExit("parity.desktop-icons-wallpaper-context-menu-recycle does not name files.trash.restore")
+files_app = (root / "shell/apps/ultimate-files/FilesApplication.qml").read_text(encoding="utf-8")
+if "readonly property bool trashAuthorized: false" not in files_app:
+    raise SystemExit("Files must keep trashAuthorized=false")
+if "trashAuthorized: true" in files_app:
+    raise SystemExit("Files invents trashAuthorized=true")
+if 'action: "trash.restore"' in files_app:
+    raise SystemExit("Files invents Restore LIVE")
+desktop_status, desktop_notes = parity_notes("Desktop (icons, wallpaper, context menu, Recycle)")
+if desktop_status == "present":
+    raise SystemExit("PARITY Recycle row was flipped to present")
+if "files.trash.restore" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row does not name files.trash.restore")
+if "Restore UI stays honest-unavailable" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row dropped Restore UI honest-unavailable")
+if "files.trash.manage" not in desktop_notes or "stays missing" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row dropped files.trash.manage missing")
+if "Recycle Bin is not product-complete" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row closed Recycle residual")
+if "this row is not present" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row dropped the not-present close")
+if "files.trash.restore" not in cp or "write plane is reachable" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name the reachable files.trash.restore write plane")
+if "files.trash.manage still missing" not in cp and "files.trash.manage` still missing" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
+if "files.trash.restore" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS does not name files.trash.restore")
 PY
 pass "leftover catalog routes stay honest after Settings inspect hosting"
 
@@ -1502,6 +1554,7 @@ inventory = {
     "defaults.mime.set": "partial",
     "files.directory.create": "partial",
     "files.entry.trash": "partial",
+    "files.trash.restore": "partial",
     "account.inspect": "missing",
     "backup.inspect": "missing",
     "device.inspect": "missing",
