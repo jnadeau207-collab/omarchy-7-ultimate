@@ -551,7 +551,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read by this surface."
+    boundary: "File contents are never read. New folder, Trash, and Restore run through files.provider. Empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
