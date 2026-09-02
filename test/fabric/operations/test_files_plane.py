@@ -131,7 +131,7 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
             persistence=GrantPersistence.SESSION,
         )
 
-    async def test_directory_create_and_entry_trash_are_the_same_shell_write_class(self) -> None:
+    async def test_directory_create_and_entry_trash_share_the_scoped_directory_family(self) -> None:
         created = await self.coordinator.preflight(
             self.shell,
             provider_id="files.provider",
@@ -157,7 +157,7 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
             idempotency_key="files.entry.trash.notes",
         )
         trash_request = self.coordinator.approval_request(self.shell, trashed["operationId"])
-        self.assertEqual(trash_request.risk, RiskLevel.LOW)
+        self.assertEqual(trash_request.risk, RiskLevel.CONSEQUENTIAL)
         self.assertEqual(trash_request.capability, "files.entry.trash")
         self.assertTrue(trash_request.resource.resource_id.startswith("files.directory."))
         self.assertNotEqual(trash_request.resource.resource_id, create_request.resource.resource_id)
@@ -165,7 +165,9 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["locationId"], "files.location.desktop")
         self.assertEqual(payload["entryRelativePath"], "notes.txt")
         self.assertEqual(payload["entryId"], "files.entry.notes")
-        self._shell_grant(trashed["operationId"])
+        with self.assertRaises(SecurityValidationError) as caught:
+            self._shell_grant(trashed["operationId"])
+        self.assertEqual(caught.exception.code, "grant.shell-consequential")
 
     async def test_trash_restore_is_not_a_coordinator_definition(self) -> None:
         with self.assertRaises(FabricError) as caught:
