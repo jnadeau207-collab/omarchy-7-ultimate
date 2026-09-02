@@ -581,6 +581,7 @@
       "claim": "missing",
       "capabilityIds": [
         "processes.inspect",
+        "process.termination.plan",
         "apps.startup.disable"
       ],
       "humanRoute": {
