@@ -1241,10 +1241,10 @@
         "policy": "Persist only opaque account identities; do not record home directories in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View accounts",
-        "path": "Administration > Accounts"
+        "path": "Administration > User accounts"
       },
       "agentCenterLabel": "Inspect accounts",
       "proofIds": {
@@ -1331,10 +1331,10 @@
         "policy": "Persist only opaque snapshot identities; never record repository or home paths in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
-        "surface": "Recovery",
+        "status": "visible",
+        "surface": "Administration",
         "label": "View home backups",
-        "path": "Recovery > Backup"
+        "path": "Administration > Backup"
       },
       "agentCenterLabel": "Inspect home backups",
       "proofIds": {
@@ -1421,10 +1421,10 @@
         "policy": "Persist only opaque device identities; never record device paths or serial numbers in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View devices",
-        "path": "Administration > Devices"
+        "path": "Administration > Device Manager"
       },
       "agentCenterLabel": "Inspect devices",
       "proofIds": {
@@ -1511,10 +1511,10 @@
         "policy": "Persist only structured check identities and statuses; never retain raw probe output or excerpts in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
-        "surface": "Troubleshooting",
+        "status": "visible",
+        "surface": "Administration",
         "label": "View diagnostics",
-        "path": "Troubleshooting > Diagnostics"
+        "path": "Administration > Troubleshooting"
       },
       "agentCenterLabel": "Inspect diagnostics",
       "proofIds": {
@@ -1600,10 +1600,10 @@
         "policy": "Persist only opaque zone identities; never record source networks in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View firewall",
-        "path": "Administration > Firewall and Sharing"
+        "path": "Administration > Firewall"
       },
       "agentCenterLabel": "Inspect firewall zones",
       "proofIds": {
@@ -1689,10 +1689,10 @@
         "policy": "Persist only opaque printer identities and classified connection types; never record endpoints in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View printers",
-        "path": "Administration > Devices and Printers"
+        "path": "Administration > Printers and scanners"
       },
       "agentCenterLabel": "Inspect printers",
       "proofIds": {
@@ -1956,10 +1956,10 @@
         "policy": "Persist only opaque timer identities; do not record native unit names in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View schedules",
-        "path": "Administration > Services and Schedules"
+        "path": "Administration > Scheduled tasks"
       },
       "agentCenterLabel": "Inspect schedules",
       "proofIds": {
@@ -2045,10 +2045,10 @@
         "policy": "Persist only opaque service identities; do not record native unit names in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View services",
-        "path": "Administration > Services and Schedules"
+        "path": "Administration > Services"
       },
       "agentCenterLabel": "Inspect services",
       "proofIds": {
@@ -2134,7 +2134,7 @@
         "policy": "Persist only opaque storage identities; never record device paths in ordinary read evidence."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Administration",
         "label": "View storage",
         "path": "Administration > Storage"
