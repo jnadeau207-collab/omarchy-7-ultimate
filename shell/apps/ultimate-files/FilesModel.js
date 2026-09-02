@@ -88,6 +88,10 @@ function createLocationForRoute(routeId) {
   return CREATE_LOCATIONS.indexOf(query.arguments.locationId) >= 0 ? query.arguments.locationId : ""
 }
 
+function isTrashRoute(routeId) {
+  return String(routeId || "") === "files.trash"
+}
+
 function createNameRefusal(name) {
   var value = String(name === null || name === undefined ? "" : name)
   if (value.length === 0) return "Enter a folder name."
@@ -687,5 +691,5 @@ if (typeof module !== "undefined") module.exports = {
   baseState: baseState, createController: createController, isIdleSearch: isIdleSearch,
   stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone,
   CREATE_LOCATIONS: CREATE_LOCATIONS, createLocationForRoute: createLocationForRoute,
-  createNameRefusal: createNameRefusal
+  createNameRefusal: createNameRefusal, isTrashRoute: isTrashRoute
 }
