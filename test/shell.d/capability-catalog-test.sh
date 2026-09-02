@@ -382,21 +382,33 @@ parity_resources = next(job for job in jobs_lock["jobs"] if job["id"] == "parity
 if parity_resources.get("claim") == "present" or parity_resources["humanRoute"].get("path"):
     raise SystemExit(f"parity.resource-monitor invents a Task Manager Resource Monitor: {parity_resources}")
 admin_readers = {
-    "account.inspect": "Administration > Accounts",
-    "device.inspect": "Administration > Devices",
-    "firewall.inspect": "Administration > Firewall and Sharing",
-    "printer.inspect": "Administration > Devices and Printers",
-    "schedule.inspect": "Administration > Services and Schedules",
-    "service.inspect": "Administration > Services and Schedules",
+    "account.inspect": "Administration > User accounts",
+    "backup.inspect": "Administration > Backup",
+    "device.inspect": "Administration > Device Manager",
+    "diagnostics.inspect": "Administration > Troubleshooting",
+    "firewall.inspect": "Administration > Firewall",
+    "printer.inspect": "Administration > Printers and scanners",
+    "schedule.inspect": "Administration > Scheduled tasks",
+    "service.inspect": "Administration > Services",
     "storage.inspect": "Administration > Storage",
 }
 for capability_id, path in admin_readers.items():
     row = by_id[capability_id]
     route = row["humanRoute"]
-    if row.get("availability", {}).get("claim") == "present":
+    if row.get("availability", {}).get("claim") != "missing":
+        raise SystemExit(f"{capability_id} availability.claim is {row.get('availability')}, expected missing")
+    if row.get("availability", {}).get("human") == "present":
         raise SystemExit(f"{capability_id} invents a present Administration page: {row.get('availability')}")
-    if route.get("status") != "planned" or route.get("path") != path:
-        raise SystemExit(f"{capability_id} Administration route is {route}")
+    if route.get("status") != "visible":
+        raise SystemExit(f"{capability_id} underclaims a visible Administration host: {route}")
+    if route.get("surface") != "Administration" or route.get("path") != path:
+        raise SystemExit(f"{capability_id} invents or underclaims an Administration destination: {route}")
+    if not str(route.get("path") or "").strip():
+        raise SystemExit(f"{capability_id} underclaims with an empty Administration path: {route}")
+    if "Task Manager" in str(route.get("surface") or "") or "Task Manager" in str(route.get("path") or ""):
+        raise SystemExit(f"{capability_id} invents a Superbar Task Manager: {route}")
+    if "Superbar" in str(route.get("path") or "") or "Superbar" in str(route.get("surface") or ""):
+        raise SystemExit(f"{capability_id} invents a Superbar Task Manager: {route}")
     if path.startswith(("Settings", "Start", "Superbar")):
         raise SystemExit(f"{capability_id} invents a Settings/Start/Superbar Administration page: {route}")
 
@@ -676,6 +688,12 @@ if "honest-unavailable as Task Manager product" not in gaps:
 parity_md = (root / "WINDOWS_7_ULTIMATE_PARITY.md").read_text(encoding="utf-8")
 if "planned Administration empty path" in parity_md:
     raise SystemExit("PARITY Task Manager row still underclaims process.inspect as planned empty path")
+if "service.inspect" not in gaps or "Administration > Services" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name the visible Administration inspect leftover batch")
+if "honest-unavailable as Device Manager / Services / product" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Administration inspect readers honest-unavailable as product")
+if "planned as Administration > Devices" in parity_md or "planned as Administration > Accounts" in parity_md:
+    raise SystemExit("PARITY still underclaims Administration inspect readers as planned Admin paths")
 if "METAL_HEAD OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep METAL_HEAD OPEN")
 
@@ -802,8 +820,17 @@ inventory = {
     "defaults.protocol.set": "partial",
     "files.directory.create": "partial",
     "files.entry.trash": "partial",
+    "account.inspect": "missing",
+    "backup.inspect": "missing",
+    "device.inspect": "missing",
+    "diagnostics.inspect": "missing",
+    "firewall.inspect": "missing",
+    "printer.inspect": "missing",
     "process.inspect": "missing",
     "process.termination.plan": "missing",
+    "schedule.inspect": "missing",
+    "service.inspect": "missing",
+    "storage.inspect": "missing",
 }
 for capability_id, claim in inventory.items():
     row = by_id.get(capability_id)
