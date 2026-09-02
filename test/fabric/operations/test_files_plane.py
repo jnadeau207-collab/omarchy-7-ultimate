@@ -6,14 +6,21 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import importlib.util
+
 ROOT = Path(__file__).resolve().parents[3]
 FABRIC_ROOT = ROOT / "default" / "fabric"
 if str(FABRIC_ROOT) not in sys.path:
     sys.path.insert(0, str(FABRIC_ROOT))
-if str(ROOT / "test" / "fabric" / "files") not in sys.path:
-    sys.path.insert(0, str(ROOT / "test" / "fabric" / "files"))
 
-from helper import clone_workspace
+_files_helper_spec = importlib.util.spec_from_file_location(
+    "files_operation_plane_helper",
+    ROOT / "test" / "fabric" / "files" / "helper.py",
+)
+_files_helper = importlib.util.module_from_spec(_files_helper_spec)
+assert _files_helper_spec.loader is not None
+_files_helper_spec.loader.exec_module(_files_helper)
+clone_workspace = _files_helper.clone_workspace
 
 from omarchy_fabric.daemon import FabricDaemon
 from omarchy_fabric.models import FabricError, FixedArgvCommand
