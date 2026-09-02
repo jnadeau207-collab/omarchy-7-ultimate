@@ -272,7 +272,7 @@ Do not mark claim=`present` to “close” these. Residual = product MMC / mutat
 
 1. **Recycle Bin product vs `files.trash.manage` missing / provider-missing.**  
 2. **Task Manager present / End Task LIVE / product MMC still missing.** Catalog `process.inspect` is visible on `Administration > Processes`; claim missing; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`). Do not invent Task Manager present / End Task LIVE.  
-3. **`parity.agent-center` claim=`missing` vs `sourceStatus=prototype` / PARITY prototype.**  
+3. **Closed: `parity.agent-center` claim=`prototype` matches `sourceStatus=prototype` / PARITY prototype.** Residual = do not invent claim=`present`; consent/provider ops stay outside Agent Center.
 4. **Do not invent MIME Default Programs LIVE** — `files.associations.set` stays missing/planned MIME until Settings + catalog + PARITY agree. Browser writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present.  
 5. **Writers stay planned/unavailable** — `firewall.manage`, `backup.manage`, start/stop, printer add, schedule create/disable, format/mount/eject. Inspect visibility is not mutation LIVE.
 
@@ -286,7 +286,7 @@ Do not mark claim=`present` to “close” these. Residual = product MMC / mutat
 | Visible Administration inspect hosts (claim missing) | ~10 | Processes, Services, Device Manager, Storage, Printers and scanners, Backup, Scheduled tasks, Troubleshooting, Firewall, User accounts — Phase 9 exit still open; inspect ≠ MMC product present |
 | Honest missing | Accessibility page, System information jump cleared | Catalog empty paths; Accessibility panel missing as product |
 | Hard gaps (no product + missing jobs) | BitLocker, Credential Manager, HomeGroup, Internet Options, AutoPlay, Fonts, Folder Options, Speech, Defender, Mobility Center, Remote Desktop, Parental Controls, … | Ultimate SKU still incomplete |
-| Residual honesty (product MMC / mutation still missing) | Recycle Bin vs `files.trash.manage`; Task Manager present / End Task LIVE; MIME Default Programs; writers planned/unavailable | Catalog caught up for Admin inspect visibility (#35–#36); Default Programs writer is `defaults.protocol.set` (browser LIVE only) |
+| Residual honesty (product MMC / mutation still missing) | Recycle Bin vs `files.trash.manage`; Task Manager present / End Task LIVE; MIME Default Programs; writers planned/unavailable; Agent Center claim stays prototype (do not invent claim=`present`) | Catalog caught up for Admin inspect visibility (#35–#36); Default Programs writer is `defaults.protocol.set` (browser LIVE only); `parity.agent-center` claim matches sourceStatus/PARITY prototype |
 
 ---
 

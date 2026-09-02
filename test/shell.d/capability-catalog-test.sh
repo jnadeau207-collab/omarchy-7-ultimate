@@ -453,6 +453,15 @@ for row in writers["capabilities"] + readers["capabilities"] + jobs["jobs"]:
         raise SystemExit(f"{row.get('id')} invents a Task Manager destination: {route}")
 
 agent_center = next(job for job in jobs["jobs"] if job["id"] == "parity.agent-center")
+if agent_center.get("claim") != "prototype":
+    raise SystemExit(f"parity.agent-center.claim is {agent_center.get('claim')!r}, expected prototype")
+if agent_center.get("sourceStatus") != "prototype":
+    raise SystemExit(f"parity.agent-center sourceStatus is {agent_center.get('sourceStatus')}")
+agent_center_route = agent_center.get("humanRoute") or {}
+if agent_center_route.get("status") != "visible":
+    raise SystemExit(f"parity.agent-center underclaims a visible Superbar host: {agent_center_route}")
+if agent_center_route.get("path") != "Superbar > Agent Center":
+    raise SystemExit(f"parity.agent-center invents or underclaims Agent Center route: {agent_center_route}")
 if agent_center.get("claim") == "present" or agent_center.get("agentAvailability") == "present":
     raise SystemExit(f"parity.agent-center was flipped to present: {agent_center}")
 
@@ -718,6 +727,12 @@ if "23b7f41be69c" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #39 tip parent for the fleet-catalog-controlpanel honesty scrub")
 if "fleet-catalog-controlpanel.md" not in gaps or "planned empty path" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the fleet-catalog-controlpanel process.inspect underclaim close")
+if "a1b0e5029997" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #40 tip parent for the agent-center claim honesty scrub")
+if "consent/provider ops stay outside Agent Center" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the agent-center claim=prototype honesty close")
+if "Agent Center claim present" in gaps and "no Agent Center claim present" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented Agent Center claim present")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -993,6 +1008,14 @@ if "METAL_HEAD OPEN" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must keep METAL_HEAD OPEN")
 if "firewall.manage" not in cp or "backup.manage" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must keep firewall.manage / backup.manage planned/unavailable")
+if "claim=`missing` vs `sourceStatus=prototype`" in cp:
+    raise SystemExit("fleet-catalog-controlpanel still lists parity.agent-center claim=missing as open MUST_FIX")
+if "Closed: `parity.agent-center`" not in cp or "claim=`prototype`" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must close parity.agent-center claim=prototype vs sourceStatus")
+if "consent/provider ops stay outside Agent Center" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep consent/provider ops outside Agent Center")
+if "do not invent claim=`present`" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must refuse Agent Center claim=present")
 
 if "files.folder.create" in by_id:
     raise SystemExit("files.folder.create remains as a catalog invent")
