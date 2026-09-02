@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"130 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"131 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -221,10 +221,8 @@ for capability_id, (surface, path) in inspect_routes.items():
 
 writer_routes = {
     "audio.output.manage": ("Quick Settings", "Superbar > Quick Settings > Sound"),
-    "audio.volume.set": ("Quick Settings", "Superbar > Quick Settings > Sound"),
     "bluetooth.audio.pair": ("Quick Settings", "Superbar > Quick Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
-    "network.manage": ("Quick Settings", "Superbar > Quick Settings > Network"),
     "network.wifi.connect": ("Quick Settings", "Superbar > Quick Settings > Wi-Fi"),
     "power.profile.set": ("Quick Settings", "Superbar > Quick Settings > Power"),
 }
@@ -469,6 +467,136 @@ if native19.get("claim") == "present":
 if native19.get("capabilityIds") != ["defaults.protocol.set"]:
     raise SystemExit(f"windows-native.19 capabilityIds are {native19.get('capabilityIds')}")
 
+volume_set = by_id["audio.volume.set"]
+if volume_set.get("provider", {}).get("id") != "audio.provider":
+    raise SystemExit(f"audio.volume.set provider is {volume_set.get('provider')}")
+if volume_set.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"audio.volume.set provider state is {volume_set.get('provider')}")
+if volume_set.get("availability", {}).get("claim") == "present":
+    raise SystemExit("audio.volume.set must not claim present")
+if volume_set["humanRoute"].get("path") != "Settings > Sound":
+    raise SystemExit(f"audio.volume.set route is {volume_set.get('humanRoute')}")
+if volume_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
+    raise SystemExit(f"audio.volume.set source is {volume_set.get('source')}")
+if volume_set.get("source", {}).get("symbol") != "applyAudioVolume":
+    raise SystemExit(f"audio.volume.set source is {volume_set.get('source')}")
+named_volume = f"{volume_set.get('source', {}).get('file') or ''} {volume_set.get('source', {}).get('symbol') or ''}".lower()
+if "omarchy-audio-output-volume" in named_volume:
+    raise SystemExit(f"audio.volume.set still names the leftover volume command: {volume_set.get('source')}")
+native6 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.6")
+if native6.get("claim") == "present":
+    raise SystemExit(f"windows-native.6 was flipped to present: {native6}")
+if native6.get("capabilityIds") != ["audio.volume.set"]:
+    raise SystemExit(f"windows-native.6 capabilityIds are {native6.get('capabilityIds')}")
+if native6["humanRoute"].get("path") != "Settings > Sound":
+    raise SystemExit(f"windows-native.6 still names Superbar Sound: {native6['humanRoute']}")
+
+layout_set = by_id["input.keyboard-layout.set"]
+if layout_set.get("provider", {}).get("id") != "input.provider":
+    raise SystemExit(f"input.keyboard-layout.set provider is {layout_set.get('provider')}")
+if layout_set.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"input.keyboard-layout.set provider state is {layout_set.get('provider')}")
+if layout_set.get("availability", {}).get("claim") == "present":
+    raise SystemExit("input.keyboard-layout.set must not claim present")
+if layout_set["humanRoute"].get("path") != "Settings > Input":
+    raise SystemExit(f"input.keyboard-layout.set route is {layout_set.get('humanRoute')}")
+if layout_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
+    raise SystemExit(f"input.keyboard-layout.set source is {layout_set.get('source')}")
+if layout_set.get("source", {}).get("symbol") != "applyKeyboardLayout":
+    raise SystemExit(f"input.keyboard-layout.set source is {layout_set.get('source')}")
+named_layout = f"{layout_set.get('source', {}).get('file') or ''} {layout_set.get('source', {}).get('symbol') or ''}".lower()
+if "keyboardlayout.qml" in named_layout:
+    raise SystemExit(f"input.keyboard-layout.set still names the bar widget: {layout_set.get('source')}")
+
+wifi_radio = by_id["network.manage"]
+if wifi_radio.get("provider", {}).get("id") != "network.provider":
+    raise SystemExit(f"network.manage provider is {wifi_radio.get('provider')}")
+if wifi_radio.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"network.manage provider state is {wifi_radio.get('provider')}")
+if wifi_radio.get("availability", {}).get("claim") == "present":
+    raise SystemExit("network.manage must not claim present")
+if wifi_radio["humanRoute"].get("path") != "Settings > Network":
+    raise SystemExit(f"network.manage route is {wifi_radio.get('humanRoute')}")
+if wifi_radio.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
+    raise SystemExit(f"network.manage source is {wifi_radio.get('source')}")
+if wifi_radio.get("source", {}).get("symbol") != "applyWifiEnabled":
+    raise SystemExit(f"network.manage source is {wifi_radio.get('source')}")
+if "connect" in str(wifi_radio.get("humanRoute", {}).get("label") or "").lower():
+    raise SystemExit(f"network.manage invents join-network as Settings LIVE: {wifi_radio.get('humanRoute')}")
+named_wifi = f"{wifi_radio.get('source', {}).get('file') or ''} {wifi_radio.get('source', {}).get('symbol') or ''}".lower()
+if "panel.qml" in named_wifi:
+    raise SystemExit(f"network.manage still names the QS network panel: {wifi_radio.get('source')}")
+wifi_connect = by_id["network.wifi.connect"]
+if wifi_connect["humanRoute"].get("surface") != "Quick Settings" or wifi_connect["humanRoute"].get("path") != "Superbar > Quick Settings > Wi-Fi":
+    raise SystemExit(f"network.wifi.connect invents a Settings join-network route: {wifi_connect.get('humanRoute')}")
+if wifi_connect.get("availability", {}).get("claim") == "present":
+    raise SystemExit("network.wifi.connect must not claim present")
+if wifi_connect.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"network.wifi.connect was raised off leftover: {wifi_connect.get('provider')}")
+native2 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.2")
+if native2.get("claim") == "present":
+    raise SystemExit(f"windows-native.2 was flipped to present: {native2}")
+if native2.get("capabilityIds") != ["network.wifi.connect"]:
+    raise SystemExit(f"windows-native.2 capabilityIds are {native2.get('capabilityIds')}")
+if "Settings" in str(native2["humanRoute"].get("path") or ""):
+    raise SystemExit(f"windows-native.2 invents Settings Connect Wi-Fi: {native2['humanRoute']}")
+
+if "display.brightness.set" not in by_id:
+    raise SystemExit("absent live brightness writer invent: display.brightness.set missing from catalog")
+brightness_set = by_id["display.brightness.set"]
+if brightness_set.get("provider", {}).get("id") != "display.provider":
+    raise SystemExit(f"display.brightness.set provider is {brightness_set.get('provider')}")
+if brightness_set.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"display.brightness.set provider state is {brightness_set.get('provider')}")
+if brightness_set.get("availability", {}).get("claim") == "present":
+    raise SystemExit("display.brightness.set must not claim present")
+if brightness_set["humanRoute"].get("path") != "Settings > Display":
+    raise SystemExit(f"display.brightness.set route is {brightness_set.get('humanRoute')}")
+if brightness_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
+    raise SystemExit(f"display.brightness.set source is {brightness_set.get('source')}")
+if brightness_set.get("source", {}).get("symbol") != "applyBrightness":
+    raise SystemExit(f"display.brightness.set source is {brightness_set.get('source')}")
+display_configure = by_id["display.configure"]
+if display_configure["humanRoute"].get("surface") != "Quick Settings" or display_configure["humanRoute"].get("path") != "Superbar > Quick Settings > Display":
+    raise SystemExit(f"display.configure invents a Settings full-configure route: {display_configure.get('humanRoute')}")
+if display_configure.get("availability", {}).get("claim") == "present":
+    raise SystemExit("display.configure must not claim present")
+if display_configure.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"display.configure was raised off leftover: {display_configure.get('provider')}")
+if display_configure.get("source", {}).get("file") != "shell/plugins/panels/monitor/Panel.qml":
+    raise SystemExit(f"display.configure source is {display_configure.get('source')}")
+native3 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.3")
+if native3.get("claim") == "present":
+    raise SystemExit(f"windows-native.3 was flipped to present: {native3}")
+if native3.get("capabilityIds") != ["display.configure"]:
+    raise SystemExit(f"windows-native.3 capabilityIds are {native3.get('capabilityIds')}")
+if "Settings" in str(native3["humanRoute"].get("path") or ""):
+    raise SystemExit(f"windows-native.3 invents Settings display scaling: {native3['humanRoute']}")
+parity_display = next(job for job in jobs["jobs"] if job["id"] == "parity.display")
+if parity_display.get("claim") == "present":
+    raise SystemExit(f"parity.display was flipped to present: {parity_display}")
+if "display.brightness.set" not in (parity_display.get("capabilityIds") or []):
+    raise SystemExit("parity.display does not name display.brightness.set")
+if "display.configure" not in (parity_display.get("capabilityIds") or []):
+    raise SystemExit("parity.display dropped display.configure")
+
+power_set = by_id["power.profile.set"]
+if power_set["humanRoute"].get("surface") != "Quick Settings" or power_set["humanRoute"].get("path") != "Superbar > Quick Settings > Power":
+    raise SystemExit(f"power.profile.set invents Settings Power LIVE: {power_set.get('humanRoute')}")
+if power_set.get("availability", {}).get("claim") == "present":
+    raise SystemExit("power.profile.set must not claim present")
+if power_set.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"power.profile.set was raised off leftover: {power_set.get('provider')}")
+if power_set.get("source", {}).get("file") != "shell/plugins/panels/power/Panel.qml":
+    raise SystemExit(f"power.profile.set source is {power_set.get('source')}")
+native35 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.35")
+if native35.get("claim") == "present":
+    raise SystemExit(f"windows-native.35 was flipped to present: {native35}")
+if native35.get("capabilityIds") != ["power.profile.set"]:
+    raise SystemExit(f"windows-native.35 capabilityIds are {native35.get('capabilityIds')}")
+if "Settings" in str(native35["humanRoute"].get("path") or ""):
+    raise SystemExit(f"windows-native.35 invents Settings Power LIVE: {native35['humanRoute']}")
+
 if "files.folder.create" in by_id:
     raise SystemExit("files.folder.create remains as a catalog invent")
 directory_create = by_id["files.directory.create"]
@@ -583,8 +711,10 @@ for row in catalog_rows:
 inventory = {
     "audio.volume.set": "partial",
     "network.manage": "partial",
+    "network.wifi.connect": "partial",
     "power.profile.set": "partial",
     "display.configure": "partial",
+    "display.brightness.set": "partial",
     "input.keyboard-layout.set": "partial",
     "defaults.protocol.set": "partial",
     "files.directory.create": "partial",

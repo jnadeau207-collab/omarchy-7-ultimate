@@ -71,7 +71,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
-| Network and Sharing Center | Settings → Network; Superbar/QS Network | `parity.network` prototype; `network.inspect` / `network.manage` / `network.wifi.connect` | `network.provider` |
+| Network and Sharing Center | Settings → Network; Superbar/QS Network | `parity.network` prototype; `network.inspect`; Settings Wi-Fi radio `network.manage`; join leftover `network.wifi.connect` | `network.provider` |
 | HomeGroup | **Missing** (no Homegroup product) | No dedicated job; sharing SMB missing | — |
 | Internet Options | **Missing** as Control Panel; browser-owned | No `internet.options.*` | — |
 
@@ -82,8 +82,8 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Devices and Printers | Administration → Printers; Bluetooth in Settings | `parity.devices-printers` missing/prototype; `printer.inspect` planned Admin; `printers.manage` missing | `printer.provider` / `bluetooth.provider` |
 | Device Manager | Administration → Device Manager | `parity.device-manager` missing; `device.inspect` planned Admin | `device.provider` |
 | AutoPlay | **Missing** | No catalog row | — |
-| Sound | Settings → Sound; Superbar/QS | `parity.sound` prototype; `audio.inspect` / volume writers | `audio.provider` |
-| Display | Settings → Display | `parity.display` + modern display prototype; `display.inspect` / configure / night-light | `display.provider` |
+| Sound | Settings → Sound; Superbar/QS | `parity.sound` prototype; `audio.inspect`; Settings volume `audio.volume.set` | `audio.provider` |
+| Display | Settings → Display | `parity.display` + modern display prototype; `display.inspect`; Settings brightness `display.brightness.set`; QS leftover `display.configure` / night-light | `display.provider` |
 | Windows Mobility Center | **Missing** (laptop hub) | No row | — |
 | Biometric Devices | Hardware-gated; **Missing** | No row | — |
 | Mouse / Keyboard (main.cpl) | Settings → Input (keyboard layout writer); mouse **Missing** as applet | `parity.language-locale` / `input.keyboard-layout.set` prototype; mouse not catalogued | `input.provider` |

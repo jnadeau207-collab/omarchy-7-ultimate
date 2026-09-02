@@ -421,6 +421,7 @@
       "sourceStatus": "prototype",
       "claim": "prototype",
       "capabilityIds": [
+        "display.brightness.set",
         "display.configure",
         "display.night-light.set"
       ],
@@ -1275,8 +1276,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Sound panel",
-        "path": "Superbar > Sound"
+        "surface": "Settings",
+        "path": "Settings > Sound"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous volume.",
