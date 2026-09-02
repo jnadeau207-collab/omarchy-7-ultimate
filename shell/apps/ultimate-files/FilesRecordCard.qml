@@ -3,6 +3,8 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Ui as Ui
 
+import "ExplorerTheme.js" as Aero
+
 Rectangle {
   id: root
   required property var record
@@ -16,10 +18,10 @@ Rectangle {
 
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Style.space(28)
-  radius: Tokens.radius.medium
-  color: Tokens.surface.raised
-  border.color: selected ? Tokens.accent.primary : Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
-  border.width: selected || Tokens.accessibility.highContrast ? 2 : 1
+  radius: 3
+  color: Aero.contentFill
+  border.color: selected ? Aero.selectionBorder : Aero.headerBorder
+  border.width: 1
   Accessible.role: Accessible.Pane
   Accessible.name: String(record.title || record.id || "File record")
   Accessible.description: String(record.subtitle || "") + ". Status " + String(record.status || "unknown") + "."
@@ -41,8 +43,8 @@ Rectangle {
         Text {
           textFormat: Text.PlainText
           text: String(root.record.title || root.record.id || "Unnamed file record")
-          color: Tokens.text.primary
-          font.family: Tokens.typography.family
+          color: Aero.textPrimary
+          font.family: Aero.fontFamily
           font.pixelSize: Style.font.title
           font.bold: true
           wrapMode: Text.WrapAnywhere
@@ -54,8 +56,8 @@ Rectangle {
         Text {
           textFormat: Text.PlainText
           text: String(root.record.subtitle || root.record.kind || "File metadata")
-          color: Tokens.text.secondary
-          font.family: Tokens.typography.family
+          color: Aero.textPrimary
+          font.family: Aero.fontFamily
           font.pixelSize: Style.font.bodySmall
           wrapMode: Text.WrapAnywhere
           maximumLineCount: 4
@@ -95,8 +97,8 @@ Rectangle {
     Text {
       textFormat: Text.PlainText
       text: String(root.record.kind || "record") + " \u00b7 " + String(root.record.id || "")
-      color: Tokens.text.disabled
-      font.family: Tokens.typography.family
+      color: Aero.textSecondary
+      font.family: Aero.fontFamily
       font.pixelSize: Style.font.caption
       wrapMode: Text.WrapAnywhere
       maximumLineCount: 3
@@ -108,10 +110,10 @@ Rectangle {
       visible: root.record.details && root.record.details.length > 0
       Layout.fillWidth: true
       implicitHeight: details.implicitHeight + Style.space(16)
-      radius: Tokens.radius.small
-      color: Tokens.surface.base
-      border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
-      border.width: Tokens.accessibility.highContrast ? 2 : 1
+      radius: 2
+      color: Aero.headerTop
+      border.color: Aero.headerBorder
+      border.width: 1
       Accessible.role: Accessible.StaticText
       Accessible.name: "Trusted metadata for " + String(root.record.title || root.record.id || "record")
 
@@ -131,8 +133,8 @@ Rectangle {
             Text {
               textFormat: Text.PlainText
               text: modelData.label
-              color: Tokens.text.disabled
-              font.family: Tokens.typography.family
+              color: Aero.textSecondary
+              font.family: Aero.fontFamily
               font.pixelSize: Style.font.caption
               font.bold: true
               wrapMode: Text.WordWrap
@@ -144,8 +146,8 @@ Rectangle {
             Text {
               textFormat: Text.PlainText
               text: modelData.value
-              color: Tokens.text.secondary
-              font.family: Tokens.typography.family
+              color: Aero.textPrimary
+              font.family: Aero.fontFamily
               font.pixelSize: Style.font.bodySmall
               wrapMode: Text.WrapAnywhere
               maximumLineCount: 6

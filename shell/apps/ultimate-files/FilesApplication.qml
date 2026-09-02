@@ -17,6 +17,8 @@ Item {
   readonly property bool canRetry: !busy && ["offline", "missing", "unavailable", "denied", "interrupted", "stale", "failed"].indexOf(queryState.phase) >= 0
   readonly property bool showRecords: ["ready", "available", "degraded", "partial", "empty"].indexOf(queryState.phase) >= 0
   readonly property bool healthy: ["ready", "available", "empty"].indexOf(queryState.phase) >= 0
+  readonly property bool computerRoute: host !== null && host.currentRoute === "files.this-pc"
+  readonly property bool faulted: ["offline", "missing", "unavailable", "denied", "interrupted", "stale", "failed"].indexOf(queryState.phase) >= 0
 
   property string operationStage: ""
   property string operationRequestId: ""
@@ -38,6 +40,7 @@ Item {
   property bool sortAscending: true
   property string selectedId: ""
   property var selectedRecord: null
+  property var knownMounts: []
 
   readonly property string accountName: {
     var home = String(Tokens.home || "")
@@ -57,6 +60,8 @@ Item {
     "files.location.documents": "files.documents",
     "files.location.downloads": "files.downloads",
     "files.location.pictures": "files.pictures",
+    "files.location.music": "files.music",
+    "files.location.videos": "files.videos",
     "files.location.trash": "files.trash"
   })
 
@@ -69,6 +74,8 @@ Item {
       cancel: function(requestId) { return root.host ? root.host.cancelFabric(requestId) : false },
       onState: function(state) {
         root.queryState = state
+        var seen = FilesModel.explorerMounts(state.records)
+        if (seen.length > 0) root.knownMounts = seen
         root.selectedId = ""
         root.selectedRecord = null
         if (state.requestId !== "" && (state.phase === "catalog-loading" || state.phase === "loading")) staleTimer.restart()
@@ -154,7 +161,10 @@ Item {
         id: mount.id, title: mount.title, entryKind: mount.mountKind === "smb" ? "network" : "drive",
         typeLabel: mount.mountKind === "smb" ? "Network Location" : mount.mountKind === "removable" ? "Removable Disk" : "Local Disk",
         sizeText: "", modifiedText: "", hidden: false, writable: mount.writable, targetRoute: "", relativePath: "",
-        details: mount.details, kind: "mount", status: mount.status, subtitle: mount.subtitle, tone: mount.tone
+        details: mount.details, kind: "mount", status: mount.status, subtitle: mount.subtitle, tone: mount.tone,
+        mountKind: mount.mountKind, mountState: mount.mountState, display: mount.display,
+        capacityText: mount.capacityText, usedFraction: mount.usedFraction,
+        totalBytes: mount.totalBytes, freeBytes: mount.freeBytes
       })
     }
     return shaped
@@ -312,7 +322,7 @@ Item {
     id: focusTimer
     interval: 60
     repeat: false
-    onTriggered: itemView.forceActiveFocus()
+    onTriggered: root.computerRoute ? computerView.forceActiveFocus() : itemView.forceActiveFocus()
   }
 
   Timer {
@@ -392,14 +402,14 @@ Item {
     anchors.right: parent.right
     anchors.top: commandBar.bottom
     height: visible ? 26 : 0
-    visible: !root.healthy || root.operationMessage !== ""
-    color: root.healthy ? Aero.warningFill : (["failed", "denied", "unavailable"].indexOf(root.queryState.phase) >= 0 ? Aero.errorFill : Aero.warningFill)
+    visible: root.faulted || root.operationMessage !== ""
+    color: ["failed", "denied", "unavailable"].indexOf(root.queryState.phase) >= 0 ? Aero.errorFill : Aero.warningFill
 
     Rectangle {
       width: parent.width
       height: 1
       y: parent.height - 1
-      color: root.healthy ? Aero.warningBorder : Aero.errorBorder
+      color: ["failed", "denied", "unavailable"].indexOf(root.queryState.phase) >= 0 ? Aero.errorBorder : Aero.warningBorder
     }
 
     Text {
@@ -423,6 +433,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       visible: root.canRetry
       text: root.queryState.phase === "offline" ? "Reconnect" : "Try again"
+      textFormat: Text.PlainText
       color: Aero.linkText
       font.family: Aero.fontFamily
       font.pixelSize: 12
@@ -447,7 +458,7 @@ Item {
     width: root.width < 900 ? 150 : 190
     accountName: root.accountName
     currentRoute: root.host ? root.host.currentRoute : ""
-    mounts: FilesModel.explorerMounts(root.queryState.records)
+    mounts: root.knownMounts
     onRouteActivated: function(routeId) { if (root.host) root.host.navigate(routeId, {}) }
   }
 
@@ -460,8 +471,33 @@ Item {
     color: Aero.navBorder
   }
 
+  Files.ExplorerComputerView {
+    id: computerView
+    visible: root.computerRoute
+    anchors.left: splitter.right
+    anchors.right: parent.right
+    anchors.top: notice.bottom
+    anchors.bottom: detailsPane.top
+    items: root.viewItems()
+    selectedId: root.selectedId
+
+    onSelectionChanged: function(record) {
+      root.selectedId = record ? String(record.id) : ""
+      root.selectedRecord = record
+    }
+    onActivated: function(record) { root.openRecord(record) }
+    onContextRequested: function(record, windowX, windowY) {
+      root.selectedRecord = record
+      root.selectedId = record ? String(record.id) : ""
+      contextMenu.x = windowX
+      contextMenu.y = windowY
+      contextMenu.open()
+    }
+  }
+
   Files.ExplorerItemView {
     id: itemView
+    visible: !root.computerRoute
     anchors.left: splitter.right
     anchors.right: parent.right
     anchors.top: notice.bottom
@@ -493,10 +529,11 @@ Item {
 
   Text {
     anchors.centerIn: itemView
-    visible: root.showRecords && itemView.count === 0
+    visible: root.showRecords && itemView.count === 0 && !root.computerRoute
     text: FilesModel.isIdleSearch(root.queryState) ? "Type in the search box to begin."
       : root.queryState.selectedMissing ? "That item is no longer in this folder."
       : "This folder is empty."
+    textFormat: Text.PlainText
     color: Aero.textSecondary
     font.family: Aero.fontFamily
     font.pixelSize: 12
@@ -508,8 +545,9 @@ Item {
     anchors.right: parent.right
     anchors.bottom: parent.bottom
     record: root.selectedRecord
-    itemCount: itemView.count
+    itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
+    truncated: root.queryState.truncated === true || root.queryState.clipped === true
     boundary: "File contents are never read by this surface."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
@@ -658,40 +696,112 @@ Item {
   Controls.Popup {
     id: propertiesDialog
     anchors.centerIn: Controls.Overlay.overlay
-    width: Math.min(420, root.width - 40)
-    height: Math.min(360, root.height - 40)
+    width: Math.min(400, root.width - 40)
+    height: Math.min(420, root.height - 40)
     modal: true
-    padding: 10
+    padding: 0
 
     background: Rectangle {
-      color: "#f0f4f8"
+      color: "#f0f0f0"
       border.width: 1
-      border.color: "#8ea0b2"
+      border.color: "#8b97a3"
     }
 
-    contentItem: Column {
-      spacing: 8
+    contentItem: Item {
 
-      Text {
-        text: root.selectedRecord ? root.selectedRecord.title + " Properties" : "Properties"
-        textFormat: Text.PlainText
-        color: Aero.textPrimary
-        font.family: Aero.fontFamily
-        font.pixelSize: 13
-        font.bold: true
+      Rectangle {
+        id: propertiesTabs
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: 26
+        gradient: Gradient {
+          GradientStop { position: 0; color: Aero.commandTop }
+          GradientStop { position: 1; color: Aero.commandBottom }
+        }
+
+        Rectangle {
+          anchors.left: parent.left
+          anchors.leftMargin: 8
+          anchors.top: parent.top
+          anchors.topMargin: 4
+          width: generalTab.implicitWidth + 22
+          height: parent.height - 4
+          color: Aero.contentFill
+          border.width: 1
+          border.color: Aero.headerBorder
+
+          Text {
+            id: generalTab
+            anchors.centerIn: parent
+            text: "General"
+            textFormat: Text.PlainText
+            color: Aero.textPrimary
+            font.family: Aero.fontFamily
+            font.pixelSize: 12
+          }
+        }
+
+        Rectangle {
+          width: parent.width
+          height: 1
+          anchors.bottom: parent.bottom
+          color: Aero.headerBorder
+        }
       }
 
       Loader {
-        width: propertiesDialog.availableWidth
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: propertiesTabs.bottom
+        anchors.margins: 10
         active: propertiesDialog.visible && root.selectedRecord !== null
 
         sourceComponent: Files.FilesRecordCard {
-          width: propertiesDialog.availableWidth
           record: root.selectedRecord
           selected: false
           trashable: false
           trashBusy: root.operationBusy
           restorable: false
+        }
+      }
+
+      Row {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 10
+        spacing: 6
+
+        Repeater {
+          model: ["OK", "Cancel"]
+
+          delegate: Rectangle {
+            required property var modelData
+            width: 74
+            height: 23
+            radius: 3
+            border.width: 1
+            border.color: dialogHover.hovered ? Aero.hoverSelectedBorder : "#a0a6ac"
+            gradient: Gradient {
+              GradientStop { position: 0; color: dialogHover.hovered ? Aero.hoverTop : "#fdfdfd" }
+              GradientStop { position: 1; color: dialogHover.hovered ? Aero.hoverBottom : "#e6e8ea" }
+            }
+
+            Text {
+              anchors.centerIn: parent
+              text: modelData
+              textFormat: Text.PlainText
+              color: Aero.textPrimary
+              font.family: Aero.fontFamily
+              font.pixelSize: 12
+            }
+
+            HoverHandler { id: dialogHover }
+            TapHandler { onSingleTapped: propertiesDialog.close() }
+
+            Accessible.role: Accessible.Button
+            Accessible.name: modelData
+          }
         }
       }
     }

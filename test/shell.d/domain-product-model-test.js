@@ -107,7 +107,8 @@ const fileResult = {
 }
 const normalizedFiles = Files.normalizeResult(fileReadState, fileResult)
 assert(!normalizedFiles.error && normalizedFiles.records.length === 1, 'Files accepts exact current-generation query results')
-assert(normalizedFiles.records[0].details.some(field => field.label === 'Relative path' && field.value === 'README.md'), 'Files preserves bounded file provenance fields')
+assert(normalizedFiles.records[0].details.some(field => field.label === 'Location' && field.value === 'Desktop'), 'Files preserves bounded file provenance fields')
+assert(normalizedFiles.records[0].relativePath === 'README.md', 'Files keeps the bounded relative path on the record')
 assert(Files.normalizeResult(fileReadState, { ...fileResult, generation: 3 }).error, 'Files rejects obsolete provider generations')
 
 let idleSearchRequest = 0

@@ -1,5 +1,6 @@
 import QtQuick
 
+import "FilesModel.js" as FilesModel
 import "ExplorerTheme.js" as Aero
 import "." as Files
 
@@ -11,6 +12,7 @@ Rectangle {
   property string locationLabel: ""
   property string boundary: ""
   property string folderPath: ""
+  property bool truncated: false
 
   implicitHeight: Aero.detailsHeight
 
@@ -40,6 +42,7 @@ Rectangle {
     width: 32
     height: 32
     kind: root.record ? (root.record.entryKind || "file") : "directory"
+    extension: root.record ? FilesModel.extensionOf(root.record.title) : ""
     dimmed: root.record ? root.record.hidden === true : false
     anchors.left: parent.left
     anchors.leftMargin: 10
@@ -67,7 +70,8 @@ Rectangle {
 
     Text {
       width: parent.width
-      text: root.record ? (root.record.typeLabel || "") : (root.itemCount + " item" + (root.itemCount === 1 ? "" : "s"))
+      text: root.record ? (root.record.typeLabel || "")
+        : (root.itemCount + " item" + (root.itemCount === 1 ? "" : "s") + (root.truncated ? " shown" : ""))
       textFormat: Text.PlainText
       elide: Text.ElideRight
       color: Aero.textSecondary

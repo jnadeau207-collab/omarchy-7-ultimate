@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 
+import "FilesModel.js" as FilesModel
 import "ExplorerTheme.js" as Aero
 import "." as Files
 
@@ -240,6 +241,7 @@ FocusScope {
                 width: 16
                 height: 16
                 kind: detailRow.modelData.entryKind || "file"
+                extension: FilesModel.extensionOf(detailRow.modelData.title)
                 dimmed: detailRow.modelData.hidden === true
                 anchors.verticalCenter: parent.verticalCenter
               }
@@ -374,6 +376,7 @@ FocusScope {
           width: tile.iconMode ? Aero.largeIcon : Aero.smallIcon
           height: width
           kind: tile.modelData.entryKind || "file"
+          extension: FilesModel.extensionOf(tile.modelData.title)
           dimmed: tile.modelData.hidden === true
           x: tile.iconMode ? (tile.width - width) / 2 : 5
           y: tile.iconMode ? 8 : (tile.height - height) / 2

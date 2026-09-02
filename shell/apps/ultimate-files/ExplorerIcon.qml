@@ -110,7 +110,10 @@ Canvas {
     ctx.strokeStyle = Aero.sheetOutline
     ctx.stroke()
 
-    if (w >= 32) {
+    var category = categoryOf(root.extension)
+    if (w >= 28 && category !== "document") {
+      paintEmblem(ctx, w, h, category)
+    } else if (w >= 32) {
       ctx.strokeStyle = "#c3cad1"
       ctx.lineWidth = Math.max(1, w / 48)
       for (var line = 0; line < 4; line++) {
@@ -147,28 +150,137 @@ Canvas {
   }
 
   function paintDrive(ctx, w, h) {
-    var x = w * 0.08
-    var y = h * 0.20
-    var dw = w * 0.84
-    var dh = h * 0.58
-    roundedPath(ctx, x, y, dw, dh, Math.max(1, w * 0.06))
-    ctx.fillStyle = vertical(ctx, x, y, dw, dh, Aero.driveTop, Aero.driveBottom)
-    ctx.fill()
-    ctx.strokeStyle = Aero.driveOutline
-    ctx.lineWidth = Math.max(1, w / 32)
-    ctx.stroke()
+    var x = w * 0.06
+    var top = h * 0.20
+    var dw = w * 0.88
+    var faceTop = h * 0.40
+    var bottom = h * 0.84
+    var lean = dw * 0.16
+    var radius = Math.max(1, w * 0.05)
 
     ctx.beginPath()
-    ctx.moveTo(x + dw * 0.08, y + dh * 0.42)
-    ctx.lineTo(x + dw * 0.92, y + dh * 0.42)
+    ctx.moveTo(x + lean, top)
+    ctx.lineTo(x + dw, top)
+    ctx.lineTo(x + dw - lean, faceTop)
+    ctx.lineTo(x, faceTop)
+    ctx.closePath()
+    ctx.fillStyle = vertical(ctx, x, top, dw, faceTop - top, "#fdfefe", "#d4dce4")
+    ctx.fill()
+    ctx.strokeStyle = Aero.driveOutline
+    ctx.lineWidth = Math.max(1, w / 34)
+    ctx.stroke()
+
+    roundedPath(ctx, x, faceTop, dw - lean, bottom - faceTop, radius)
+    ctx.fillStyle = vertical(ctx, x, faceTop, dw - lean, bottom - faceTop, Aero.driveTop, Aero.driveBottom)
+    ctx.fill()
+    ctx.strokeStyle = Aero.driveOutline
+    ctx.stroke()
+
+    var faceW = dw - lean
+    ctx.beginPath()
+    ctx.moveTo(x + faceW * 0.10, faceTop + (bottom - faceTop) * 0.30)
+    ctx.lineTo(x + faceW * 0.90, faceTop + (bottom - faceTop) * 0.30)
     ctx.strokeStyle = "#ffffff"
     ctx.lineWidth = Math.max(1, w / 40)
     ctx.stroke()
 
+    if (w >= 24) {
+      ctx.beginPath()
+      ctx.rect(x + faceW * 0.12, faceTop + (bottom - faceTop) * 0.52, faceW * 0.46, Math.max(1, h * 0.05))
+      ctx.fillStyle = "#93a2b0"
+      ctx.fill()
+    }
+
     ctx.beginPath()
-    ctx.arc(x + dw * 0.84, y + dh * 0.74, Math.max(1, w * 0.035), 0, Math.PI * 2)
-    ctx.fillStyle = "#5bb75b"
+    ctx.arc(x + faceW * 0.82, faceTop + (bottom - faceTop) * 0.60, Math.max(1.2, w * 0.045), 0, Math.PI * 2)
+    ctx.fillStyle = "#4fb04f"
     ctx.fill()
+    ctx.strokeStyle = "#2f7a2f"
+    ctx.lineWidth = Math.max(1, w / 48)
+    ctx.stroke()
+  }
+
+  function categoryOf(extension) {
+    var value = String(extension || "").toLowerCase()
+    if (["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "ico", "tif", "tiff"].indexOf(value) >= 0) return "image"
+    if (["mp3", "wav", "flac", "ogg", "m4a", "opus", "aac"].indexOf(value) >= 0) return "audio"
+    if (["mp4", "mkv", "webm", "avi", "mov", "m4v", "wmv"].indexOf(value) >= 0) return "video"
+    if (["zip", "gz", "xz", "tar", "bz2", "7z", "rar", "zst", "iso"].indexOf(value) >= 0) return "archive"
+    return "document"
+  }
+
+  function paintEmblem(ctx, w, h, category) {
+    var x = w * 0.18
+    var y = h * 0.06
+    var sw = w * 0.64
+    var sh = h * 0.88
+    var cx = x + sw / 2
+    var cy = y + sh * 0.62
+    var size = sw * 0.62
+
+    if (category === "image") {
+      ctx.beginPath()
+      ctx.rect(cx - size / 2, cy - size * 0.36, size, size * 0.72)
+      ctx.fillStyle = "#cfe6f7"
+      ctx.fill()
+      ctx.strokeStyle = "#5b8ab0"
+      ctx.lineWidth = Math.max(1, w / 44)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(cx - size * 0.42, cy + size * 0.30)
+      ctx.lineTo(cx - size * 0.08, cy - size * 0.12)
+      ctx.lineTo(cx + size * 0.14, cy + size * 0.12)
+      ctx.lineTo(cx + size * 0.30, cy - size * 0.02)
+      ctx.lineTo(cx + size * 0.44, cy + size * 0.30)
+      ctx.closePath()
+      ctx.fillStyle = "#6aa96a"
+      ctx.fill()
+      ctx.beginPath()
+      ctx.arc(cx + size * 0.24, cy - size * 0.20, size * 0.10, 0, Math.PI * 2)
+      ctx.fillStyle = "#f2c14b"
+      ctx.fill()
+    } else if (category === "audio") {
+      ctx.beginPath()
+      ctx.ellipse(cx - size * 0.42, cy + size * 0.10, size * 0.34, size * 0.26)
+      ctx.fillStyle = "#5b7fb5"
+      ctx.fill()
+      ctx.beginPath()
+      ctx.rect(cx - size * 0.12, cy - size * 0.42, Math.max(1, size * 0.10), size * 0.56)
+      ctx.fillStyle = "#5b7fb5"
+      ctx.fill()
+      ctx.beginPath()
+      ctx.moveTo(cx - size * 0.02, cy - size * 0.42)
+      ctx.lineTo(cx + size * 0.36, cy - size * 0.30)
+      ctx.lineTo(cx + size * 0.36, cy - size * 0.14)
+      ctx.lineTo(cx - size * 0.02, cy - size * 0.26)
+      ctx.closePath()
+      ctx.fillStyle = "#5b7fb5"
+      ctx.fill()
+    } else if (category === "video") {
+      ctx.beginPath()
+      ctx.rect(cx - size * 0.46, cy - size * 0.32, size * 0.92, size * 0.64)
+      ctx.fillStyle = "#3d4a57"
+      ctx.fill()
+      ctx.beginPath()
+      ctx.moveTo(cx - size * 0.10, cy - size * 0.18)
+      ctx.lineTo(cx + size * 0.22, cy)
+      ctx.lineTo(cx - size * 0.10, cy + size * 0.18)
+      ctx.closePath()
+      ctx.fillStyle = "#ffffff"
+      ctx.fill()
+    } else if (category === "archive") {
+      ctx.beginPath()
+      ctx.rect(cx - size * 0.34, cy - size * 0.34, size * 0.68, size * 0.68)
+      ctx.fillStyle = "#e6d3a8"
+      ctx.fill()
+      ctx.strokeStyle = "#a8894b"
+      ctx.lineWidth = Math.max(1, w / 44)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(cx, cy - size * 0.34)
+      ctx.lineTo(cx, cy + size * 0.34)
+      ctx.stroke()
+    }
   }
 
   function paintGlobe(ctx, w, h) {
