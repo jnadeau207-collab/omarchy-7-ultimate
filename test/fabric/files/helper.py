@@ -114,6 +114,8 @@ def workspace() -> dict[str, object]:
                 "writable": True,
                 "locationId": removable,
                 "source": {"scheme": "device", "display": "USB", "host": None, "share": None},
+                "totalBytes": 16000000000,
+                "freeBytes": 9000000000,
                 "reason": None,
             },
             {
@@ -124,6 +126,8 @@ def workspace() -> dict[str, object]:
                 "writable": True,
                 "locationId": network,
                 "source": {"scheme": "smb", "display": "//files/team", "host": "files", "share": "team"},
+                "totalBytes": None,
+                "freeBytes": None,
                 "reason": None,
             },
         ],

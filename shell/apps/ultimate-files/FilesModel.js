@@ -10,7 +10,9 @@ var PLACE_LOCATION_ORDER = {
   "files.location.desktop": 1,
   "files.location.documents": 2,
   "files.location.downloads": 3,
-  "files.location.pictures": 4
+  "files.location.pictures": 4,
+  "files.location.music": 5,
+  "files.location.videos": 6
 }
 
 var ROUTES = [
@@ -20,6 +22,8 @@ var ROUTES = [
   { routeId: "files.documents", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.documents", relativePath: "", includeHidden: false, limit: 96 } },
   { routeId: "files.downloads", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.downloads", relativePath: "", includeHidden: false, limit: 96 } },
   { routeId: "files.pictures", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.pictures", relativePath: "", includeHidden: false, limit: 96 } },
+  { routeId: "files.music", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.music", relativePath: "", includeHidden: false, limit: 96 } },
+  { routeId: "files.videos", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.videos", relativePath: "", includeHidden: false, limit: 96 } },
   { routeId: "files.recent", action: "recent", capability: "files.recent.read", kind: "entries", arguments: { limit: 96 } },
   { routeId: "files.search", action: "search", capability: "files.search", kind: "entries", arguments: null },
   { routeId: "files.trash", action: "browse", capability: "files.browse", kind: "entries", arguments: { locationId: "files.location.trash", relativePath: "", includeHidden: false, limit: 96 } },
@@ -27,7 +31,8 @@ var ROUTES = [
 ]
 
 var CREATE_LOCATIONS = [
-  "files.location.desktop", "files.location.documents", "files.location.downloads", "files.location.pictures"
+  "files.location.desktop", "files.location.documents", "files.location.downloads", "files.location.pictures",
+  "files.location.music", "files.location.videos"
 ]
 
 function isObject(value) {
@@ -138,7 +143,7 @@ function browsesEntries(query) {
 function normalizedRelativePath(value) {
   var text = String(value === null || value === undefined ? "" : value)
   if (text === "") return ""
-  if (text.length > 1024) throw new Error("The Files relative path is too long.")
+  if (text.length > 512) throw new Error("The Files relative path is too long.")
   if (/[\u0000-\u001f\u007f]/.test(text)) throw new Error("The Files relative path holds a control character.")
   if (text.charAt(0) === "/" || text.charAt(text.length - 1) === "/") throw new Error("The Files relative path is not bounded to its location.")
   var parts = text.split("/")
@@ -312,7 +317,7 @@ function detail(label, value) {
 
 function validLocation(location) {
   return exactKeys(location, ["id", "kind", "label", "state", "writable", "rootDigest", "reason"]) && stableId(location.id) &&
-    ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "trash", "mount", "network"].indexOf(location.kind) >= 0 &&
+    ["this-pc", "home", "desktop", "documents", "downloads", "pictures", "music", "videos", "trash", "mount", "network"].indexOf(location.kind) >= 0 &&
     typeof location.label === "string" && location.label.length >= 1 && location.label.length <= 160 &&
     ["available", "degraded", "unavailable"].indexOf(location.state) >= 0 && typeof location.writable === "boolean" && revision(location.rootDigest) &&
     (location.reason === null || validReason(location.reason))
@@ -342,10 +347,13 @@ function validMountSource(source) {
 }
 
 function validMount(mount) {
-  return exactKeys(mount, ["id", "kind", "label", "state", "writable", "locationId", "source", "reason"]) && stableId(mount.id) &&
+  return exactKeys(mount, ["id", "kind", "label", "state", "writable", "locationId", "source", "totalBytes", "freeBytes", "reason"]) && stableId(mount.id) &&
     ["system", "removable", "smb"].indexOf(mount.kind) >= 0 && typeof mount.label === "string" && mount.label.length >= 1 && mount.label.length <= 160 &&
     ["mounted", "unmounted", "degraded", "unavailable"].indexOf(mount.state) >= 0 && typeof mount.writable === "boolean" &&
-    (mount.locationId === null || stableId(mount.locationId)) && isObject(mount.source) && validMountSource(mount.source) && (mount.reason === null || validReason(mount.reason))
+    (mount.locationId === null || stableId(mount.locationId)) && isObject(mount.source) && validMountSource(mount.source) &&
+    (mount.totalBytes === null || (Number.isSafeInteger(mount.totalBytes) && mount.totalBytes >= 0)) &&
+    (mount.freeBytes === null || (Number.isSafeInteger(mount.freeBytes) && mount.freeBytes >= 0)) &&
+    (mount.reason === null || validReason(mount.reason))
 }
 
 function validRecent(recent) {
@@ -497,12 +505,30 @@ function parentRelativePath(current) {
   return cut < 0 ? "" : text.slice(0, cut)
 }
 
+var LOCATION_LABELS = {
+  "files.location.home": "Home",
+  "files.location.desktop": "Desktop",
+  "files.location.documents": "Documents",
+  "files.location.downloads": "Downloads",
+  "files.location.pictures": "Pictures",
+  "files.location.music": "Music",
+  "files.location.videos": "Videos",
+  "files.location.trash": "Recycle Bin"
+}
+
+function locationLabelFor(locationId, relativePath) {
+  var base = hasOwn(LOCATION_LABELS, locationId) ? LOCATION_LABELS[locationId] : "This computer"
+  var parent = parentRelativePath(relativePath)
+  if (parent === "") return base
+  return base + " › " + parent.split("/").join(" › ")
+}
+
 function entryRecord(entry, index) {
   if (!isObject(entry) || !validEntry(entry)) return null
-  var details = [detail("Location", entry.locationId), detail("Relative path", entry.relativePath), detail("Type", entry.mimeType || entry.kind)]
-  if (entry.sizeBytes !== null && entry.sizeBytes !== undefined) details.push(detail("Size", entry.sizeBytes + " bytes"))
+  var details = [detail("Type of file", typeLabelFor(entry.name, entry.kind, entry.mimeType)), detail("Location", locationLabelFor(entry.locationId, entry.relativePath))]
+  if (entry.sizeBytes !== null && entry.sizeBytes !== undefined) details.push(detail("Size", formatCapacity(entry.sizeBytes) + " (" + groupedDigits(entry.sizeBytes) + " bytes)"))
   if (entry.modifiedMs !== null && entry.modifiedMs !== undefined) details.push(detail("Modified", formatModified(entry.modifiedMs)))
-  details.push(detail("Writable", entry.writable === true ? "Yes" : "No"))
+  details.push(detail("Read-only", entry.writable === true ? "No" : "Yes"))
   if (entry.symlinkTargetState) details.push(detail("Symlink target", entry.symlinkTargetState))
   if (isObject(entry.trash)) {
     details.push(detail("Original location", entry.trash.originalLocationId))
@@ -552,6 +578,34 @@ function locationRecord(location, index) {
   }
 }
 
+function formatCapacity(bytes) {
+  if (bytes === null || bytes === undefined) return ""
+  var value = Number(bytes)
+  if (!isFinite(value) || value < 0) return ""
+  var units = ["bytes", "KB", "MB", "GB", "TB", "PB"]
+  var index = 0
+  while (value >= 1024 && index < units.length - 1) {
+    value = value / 1024
+    index++
+  }
+  var rounded = index === 0 ? String(Math.round(value)) : value.toFixed(value < 10 ? 2 : 1)
+  return rounded + " " + units[index]
+}
+
+function capacityText(totalBytes, freeBytes) {
+  if (totalBytes === null || totalBytes === undefined || freeBytes === null || freeBytes === undefined) return ""
+  return formatCapacity(freeBytes) + " free of " + formatCapacity(totalBytes)
+}
+
+function usedFraction(totalBytes, freeBytes) {
+  if (totalBytes === null || totalBytes === undefined || freeBytes === null || freeBytes === undefined) return -1
+  var total = Number(totalBytes)
+  if (!isFinite(total) || total <= 0) return -1
+  var used = total - Number(freeBytes)
+  if (!isFinite(used) || used < 0) return -1
+  return Math.max(0, Math.min(1, used / total))
+}
+
 function mountRecord(mount, index) {
   if (!isObject(mount) || !validMount(mount)) return null
   var source = mount.source
@@ -562,7 +616,10 @@ function mountRecord(mount, index) {
     id: mount.id, kind: "mount", title: clippedText(mount.label, 240), subtitle: clippedText(display, 320),
     status: clippedText(mount.state, 80), tone: mount.state === "mounted" ? "success" : mount.state === "degraded" ? "warning" : "danger",
     details: details, order: index, mountKind: mount.kind, mountState: mount.state, locationId: mount.locationId,
-    writable: mount.writable === true, display: clippedText(display, 320)
+    writable: mount.writable === true, display: clippedText(display, 320),
+    totalBytes: mount.totalBytes, freeBytes: mount.freeBytes,
+    capacityText: capacityText(mount.totalBytes, mount.freeBytes),
+    usedFraction: usedFraction(mount.totalBytes, mount.freeBytes)
   }
 }
 
@@ -878,5 +935,6 @@ if (typeof module !== "undefined") module.exports = {
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,
+  formatCapacity: formatCapacity, capacityText: capacityText, usedFraction: usedFraction,
   parentRelativePath: parentRelativePath, normalizedRelativePath: normalizedRelativePath, extensionOf: extensionOf
 }
