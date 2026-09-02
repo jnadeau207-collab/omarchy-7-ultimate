@@ -714,6 +714,10 @@ if "3b0b8b39b35e" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #38 tip parent for the project-ultimate honesty scrub")
 if "plans/project-ultimate.md" not in gaps or "planned with an empty path" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the project-ultimate Superbar process.inspect underclaim close")
+if "23b7f41be69c" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #39 tip parent for the fleet-catalog-controlpanel honesty scrub")
+if "fleet-catalog-controlpanel.md" not in gaps or "planned empty path" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the fleet-catalog-controlpanel process.inspect underclaim close")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -922,6 +926,73 @@ if "METAL_HEAD closed" in plan:
     raise SystemExit("project-ultimate invented METAL_HEAD closed")
 if "events.subscribe" in plan:
     raise SystemExit("project-ultimate invented events.subscribe")
+
+cp = (root / "plans/win7-ultimate-ground-truth/fleet/fleet-catalog-controlpanel.md").read_text(encoding="utf-8")
+if "planned empty path" in cp:
+    raise SystemExit("fleet-catalog-controlpanel still underclaims process.inspect as planned empty path")
+if "planned host" in cp or "planned Admin" in cp:
+    raise SystemExit("fleet-catalog-controlpanel still keeps Admin inspect rows as planned hosts after #36")
+if "apps.defaults.set" in cp:
+    raise SystemExit("fleet-catalog-controlpanel still names leftover apps.defaults.set as the live Apps writer")
+if "defaults.protocol.set" not in cp or "browser LIVE only" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel does not name defaults.protocol.set as browser LIVE only")
+if "files.associations.set" not in cp or "missing/planned MIME" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped files.associations.set missing/planned MIME")
+if "publish honest" in cp and "humanRoutes" in cp:
+    raise SystemExit("fleet-catalog-controlpanel still says publish Administration humanRoutes")
+if "product ahead of catalog" in cp:
+    raise SystemExit("fleet-catalog-controlpanel still names product-ahead-of-catalog debt closed by #35–#36")
+if "residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must rank residual as product MMC / mutation / Task Manager present, not catalog planned-empty")
+if "Administration > Processes" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name Administration > Processes visible host")
+if "process.inspect" not in cp or "terminationAuthorized=false" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name process.inspect + unauthorized End Task path")
+if "claim missing" not in cp and "claim **missing**" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep process.inspect / Administration reader claim missing")
+if "honest-unavailable as Task Manager product" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep process.inspect honest-unavailable as Task Manager product")
+if "Phase 9 exit still open" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep Phase 9 exit still open")
+if "inspect ≠ MMC product present" not in cp and "inspect inventory ≠ product MMC present" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep inspect ≠ MMC product present")
+cp_admin_hosts = (
+    "Administration > Processes",
+    "Administration > Services",
+    "Administration > Device Manager",
+    "Administration > Storage",
+    "Administration > Printers and scanners",
+    "Administration > Backup",
+    "Administration > Scheduled tasks",
+    "Administration > Troubleshooting",
+    "Administration > Firewall",
+    "Administration > User accounts",
+)
+for host in cp_admin_hosts:
+    if host not in cp:
+        raise SystemExit(f"fleet-catalog-controlpanel does not name live host {host}")
+if "do not invent Task Manager present" not in cp and "no Task Manager present" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must refuse Task Manager present")
+if "task manager present" in cp.lower() and "do not invent task manager present" not in cp.lower() and "no task manager present" not in cp.lower() and "not task manager present" not in cp.lower() and "honest-unavailable as task manager product" not in cp.lower():
+    raise SystemExit("fleet-catalog-controlpanel invented Task Manager present")
+if "End Task LIVE" in cp and "do not invent" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented End Task LIVE")
+if "Accessibility panel" in cp and "do not invent Accessibility panel" not in cp and "Accessibility panel missing as product" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented Accessibility panel")
+if "Software Center present" in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented Software Center present")
+if "Restore LIVE" in cp and "do not invent Restore LIVE" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented Restore LIVE")
+if "Settings Power LIVE" in cp and "Settings Power LIVE refused" not in cp and "not Settings LIVE" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented Settings Power LIVE")
+if "events.subscribe" in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented events.subscribe")
+if "METAL_HEAD closed" in cp:
+    raise SystemExit("fleet-catalog-controlpanel invented METAL_HEAD closed")
+if "METAL_HEAD OPEN" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep METAL_HEAD OPEN")
+if "firewall.manage" not in cp or "backup.manage" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep firewall.manage / backup.manage planned/unavailable")
 
 if "files.folder.create" in by_id:
     raise SystemExit("files.folder.create remains as a catalog invent")
