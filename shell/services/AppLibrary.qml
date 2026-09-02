@@ -142,7 +142,12 @@ Item {
   }
 
   function launchCommand(command) {
-    var raw = String(command || "").trim().replace(/\s+%[A-Za-z@]/g, "")
+    var raw
+    if (Util.isArgvList(command)) {
+      raw = Util.argvFrom(command).join(" ")
+    } else {
+      raw = String(command || "").trim().replace(/\s+%[A-Za-z@]/g, "")
+    }
     if (!raw) return ""
     var space = raw.indexOf(" ")
     var bin = space < 0 ? raw : raw.slice(0, space)
