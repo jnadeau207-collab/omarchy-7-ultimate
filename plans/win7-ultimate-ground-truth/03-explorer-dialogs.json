@@ -1,0 +1,1187 @@
+{
+  "id": "03-EXPLORER-DIALOGS",
+  "title": "Windows 7 Ultimate Explorer + Common Dialogs",
+  "os": "Windows 7 Ultimate",
+  "theme": "Aero",
+  "not": [
+    "Windows 8 ribbon",
+    "Windows 10/11 Quick Access",
+    "This PC rename"
+  ],
+  "successCriterion": "Files app implementer can match Win7 Explorer without guessing",
+  "chrome": {
+    "bandsTopToBottom": [
+      {
+        "id": "caption",
+        "defaultVisible": true,
+        "notes": "Aero glass; optional full path in title via Folder Options"
+      },
+      {
+        "id": "navigationRow",
+        "defaultVisible": true,
+        "parts": [
+          "back",
+          "forward",
+          "addressBar",
+          "searchBox"
+        ]
+      },
+      {
+        "id": "commandBar",
+        "defaultVisible": true,
+        "alias": [
+          "Folder Band"
+        ],
+        "notRibbon": true
+      },
+      {
+        "id": "menuBar",
+        "defaultVisible": false,
+        "reveal": [
+          "Alt temporary",
+          "Organize>Layout>Menu bar sticky"
+        ],
+        "items": [
+          "File",
+          "Edit",
+          "View",
+          "Tools",
+          "Help"
+        ]
+      },
+      {
+        "id": "body",
+        "parts": [
+          "navigationPane",
+          "itemsView",
+          "previewPane"
+        ]
+      },
+      {
+        "id": "detailsPane",
+        "defaultVisible": true,
+        "position": "bottom"
+      },
+      {
+        "id": "statusBar",
+        "defaultVisible": false
+      }
+    ],
+    "trailingCommandBarConstants": [
+      "Views",
+      "Show the preview pane",
+      "Help"
+    ]
+  },
+  "commandBar": {
+    "organizeMenu": {
+      "items": [
+        "Cut",
+        "Copy",
+        "Paste",
+        "Undo",
+        "Redo",
+        "|",
+        "Select all",
+        "|",
+        {
+          "label": "Layout",
+          "children": [
+            "Menu bar",
+            "Details pane",
+            "Preview pane",
+            "Navigation pane"
+          ]
+        },
+        "Folder and search options…",
+        "|",
+        "Delete",
+        "Rename",
+        "Remove properties",
+        "Properties",
+        "|",
+        "Close"
+      ]
+    },
+    "byLocation": {
+      "genericFolder": {
+        "noSelection": [
+          "Organize",
+          "Include in library",
+          "Share with",
+          "Burn",
+          "New folder",
+          "Views",
+          "Preview",
+          "Help"
+        ],
+        "withSelection": [
+          "Organize",
+          "Open",
+          "Include in library",
+          "Share with",
+          "Burn",
+          "New folder",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      },
+      "documentsLibrary": {
+        "noSelection": [
+          "Organize",
+          "Include in library",
+          "Share with",
+          "Burn",
+          "New folder",
+          "Arrange by",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      },
+      "musicLibrary": {
+        "noSelection": [
+          "Organize",
+          "Include in library",
+          "Share with",
+          "Play all",
+          "Burn",
+          "New folder",
+          "Arrange by",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      },
+      "picturesLibrary": {
+        "noSelection": [
+          "Organize",
+          "Include in library",
+          "Share with",
+          "Slide show",
+          "Burn",
+          "New folder",
+          "Arrange by",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      },
+      "videosLibrary": {
+        "noSelection": [
+          "Organize",
+          "Include in library",
+          "Share with",
+          "Play all",
+          "Burn",
+          "New folder",
+          "Arrange by",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      },
+      "librariesRoot": {
+        "noSelection": [
+          "Organize",
+          "New library",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      },
+      "computer": {
+        "noSelection": [
+          "Organize",
+          "System properties",
+          "Uninstall or change a program",
+          "Map network drive",
+          "Open Control Panel",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      },
+      "searchResults": {
+        "noSelection": [
+          "Organize",
+          "Save search",
+          "Views",
+          "Preview",
+          "Help"
+        ],
+        "defaultView": "Content"
+      },
+      "recycleBin": {
+        "noSelection": [
+          "Organize",
+          "Empty the Recycle Bin",
+          "Restore all items",
+          "Views",
+          "Preview",
+          "Help"
+        ],
+        "withSelection": [
+          "Organize",
+          "Restore this item",
+          "Empty the Recycle Bin",
+          "Views",
+          "Preview",
+          "Help"
+        ]
+      }
+    },
+    "folderTypeGuids": {
+      "generic": "{5c4f28b5-f869-4e84-8e60-f11db97c5cc7}",
+      "genericLibrary": "{5f4eab9a-6833-4f61-899d-31cf46979d49}",
+      "documentsLibrary": "{fbb3477e-c9e4-4b3b-a2ba-d3f5d3cd46f9}",
+      "musicLibrary": "{3f2a72a7-99fa-4ddb-a5a8-c604edf61d6b}",
+      "picturesLibrary": "{0b2baaeb-0042-4dca-aa4d-3ee8648d03e5}",
+      "videosLibrary": "{631958a6-ad0f-4035-a745-28ac066dc6ed}"
+    }
+  },
+  "navigationPane": {
+    "defaultVisible": true,
+    "defaultWidthPxApprox": 200,
+    "topLevelOrder": [
+      "Favorites",
+      "Libraries",
+      "Homegroup",
+      "Computer",
+      "Network"
+    ],
+    "clsids": {
+      "Favorites": "{323CA680-C24D-4099-B94D-446DD2D7249E}",
+      "Libraries": "{031E4825-7B94-4dc3-B131-E946B44C8DD5}",
+      "Homegroup": "{B4FB3F98-C1EA-428d-A78A-D1F5659CBA93}",
+      "Computer": "{20D04FE0-3AEA-1069-A2D8-08002B30309D}",
+      "Network": "{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}"
+    },
+    "favorites": {
+      "store": "%USERPROFILE%\\Links",
+      "defaults": [
+        "Desktop",
+        "Downloads",
+        "Recent Places"
+      ],
+      "add": [
+        "drag onto Favorites",
+        "right-click Favorites > Add current location to Favorites"
+      ],
+      "remove": "right-click link > Remove",
+      "headerContextMenu": [
+        "Open in new window",
+        "Expand",
+        "Collapse",
+        "Sort by Name",
+        "Restore favorite links",
+        "Add current location to Favorites"
+      ]
+    },
+    "expandCollapse": {
+      "chevronOrDoubleClickExpands": true,
+      "singleClickLabelNavigatesWithoutForcedExpand": true
+    },
+    "rightClickByNode": {
+      "FavoritesHeader": [
+        "Open in new window",
+        "Expand/Collapse",
+        "Sort by Name",
+        "Restore favorite links",
+        "Add current location to Favorites"
+      ],
+      "FavoriteLink": [
+        "Open",
+        "Open in new window",
+        "Remove",
+        "Cut",
+        "Copy",
+        "Rename",
+        "Properties"
+      ],
+      "LibrariesHeader": [
+        "Open",
+        "Open in new window",
+        "Expand/Collapse",
+        "New > Library"
+      ],
+      "Library": [
+        "Open",
+        "Open in new window",
+        "Share with",
+        "Delete",
+        "Rename",
+        "Properties"
+      ],
+      "Computer": [
+        "Open",
+        "Open in new window",
+        "Manage",
+        "Map network drive",
+        "Disconnect network drive",
+        "Rename",
+        "Properties"
+      ],
+      "Drive": [
+        "Open",
+        "Open in new window",
+        "Share with",
+        "Include in library",
+        "Format…",
+        "Rename",
+        "Properties",
+        "Eject(if removable)",
+        "BitLocker(if Ultimate+enabled)"
+      ],
+      "Network": [
+        "Open",
+        "Open in new window",
+        "Properties"
+      ],
+      "Homegroup": [
+        "Open",
+        "Open in new window",
+        "Homegroup settings",
+        "Properties"
+      ]
+    }
+  },
+  "libraries": {
+    "description": "Virtual aggregators (.library-ms); ops act on real files",
+    "maxIncludeFolders": 50,
+    "defaults": [
+      {
+        "name": "Documents",
+        "includes": [
+          "%USERPROFILE%\\Documents",
+          "%PUBLIC%\\Documents"
+        ],
+        "defaultSaveLocation": "%USERPROFILE%\\Documents",
+        "optimizeFor": "Documents"
+      },
+      {
+        "name": "Music",
+        "includes": [
+          "%USERPROFILE%\\Music",
+          "%PUBLIC%\\Music"
+        ],
+        "defaultSaveLocation": "%USERPROFILE%\\Music",
+        "optimizeFor": "Music"
+      },
+      {
+        "name": "Pictures",
+        "includes": [
+          "%USERPROFILE%\\Pictures",
+          "%PUBLIC%\\Pictures"
+        ],
+        "defaultSaveLocation": "%USERPROFILE%\\Pictures",
+        "optimizeFor": "Pictures"
+      },
+      {
+        "name": "Videos",
+        "includes": [
+          "%USERPROFILE%\\Videos",
+          "%PUBLIC%\\Videos"
+        ],
+        "defaultSaveLocation": "%USERPROFILE%\\Videos",
+        "optimizeFor": "Videos"
+      }
+    ],
+    "saveIntoLibraryGoesToDefaultSaveLocation": true,
+    "indexingRequiredForFullFeatures": true
+  },
+  "addressBar": {
+    "modes": {
+      "breadcrumb": {
+        "default": true,
+        "clickNode": "navigate to ancestor",
+        "clickChevron": "sibling folder dropdown"
+      },
+      "edit": {
+        "enter": [
+          "click empty area right of crumbs",
+          "Alt+D",
+          "Ctrl+L",
+          "right-click > Edit address"
+        ],
+        "accepts": [
+          "filesystem path",
+          "UNC",
+          "shell: verbs"
+        ]
+      }
+    },
+    "backForward": "circular buttons left of address bar",
+    "noDedicatedUpButton": true,
+    "upKeys": [
+      "Alt+Up",
+      "Backspace"
+    ]
+  },
+  "searchBox": {
+    "position": "right of address bar",
+    "focusKeys": [
+      "Ctrl+E",
+      "Ctrl+F",
+      "F3"
+    ],
+    "asYouType": true,
+    "indexed": {
+      "matches": [
+        "filename",
+        "properties",
+        "contents"
+      ],
+      "ranking": "Search ranking then Date modified",
+      "rankScale": [
+        0,
+        1000
+      ]
+    },
+    "nonIndexed": {
+      "matches": [
+        "filename primarily"
+      ],
+      "filtersLimited": [
+        "Date modified",
+        "Size"
+      ]
+    },
+    "defaultResultsView": "Content",
+    "searchBuilderFiltersByLocation": {
+      "computerOrGeneric": [
+        "Date modified",
+        "Size",
+        "Name",
+        "Type",
+        "Folder path"
+      ],
+      "documents": [
+        "Authors",
+        "Type",
+        "Date modified",
+        "Size",
+        "Name",
+        "Folder path",
+        "Tags"
+      ],
+      "music": [
+        "Artists",
+        "Album",
+        "Genre",
+        "Length",
+        "Year",
+        "Rating"
+      ],
+      "pictures": [
+        "Date taken",
+        "Tags",
+        "Rating",
+        "Dimensions"
+      ]
+    },
+    "searchAgainLinks": [
+      "Computer",
+      "Custom…",
+      "Internet"
+    ]
+  },
+  "views": {
+    "modes": [
+      {
+        "name": "Extra Large Icons",
+        "iconPx": 256,
+        "layout": "grid"
+      },
+      {
+        "name": "Large Icons",
+        "iconPx": 128,
+        "layout": "grid"
+      },
+      {
+        "name": "Medium Icons",
+        "iconPx": 64,
+        "layout": "grid"
+      },
+      {
+        "name": "Small Icons",
+        "iconPx": 16,
+        "layout": "wrappingGrid"
+      },
+      {
+        "name": "List",
+        "iconPx": 16,
+        "layout": "multiColumnNames"
+      },
+      {
+        "name": "Details",
+        "iconPx": 16,
+        "layout": "columnsWithHeaders"
+      },
+      {
+        "name": "Tiles",
+        "iconPx": 48,
+        "layout": "iconPlusProperties"
+      },
+      {
+        "name": "Content",
+        "iconPx": 32,
+        "layout": "fullWidthTypeSpecific",
+        "defaultForSearch": true
+      }
+    ],
+    "access": [
+      "commandBar Views",
+      "Views chevron + slider",
+      "right-click empty > View",
+      "Ctrl+mouse wheel",
+      "classic View menu"
+    ],
+    "viewsButtonCycleOmitsExtraLarge": true,
+    "detailsColumns": {
+      "sortOnHeaderClick": true,
+      "headerContextMenu": true,
+      "moreColumnChooser": true,
+      "reorderByDrag": true,
+      "resizeByDrag": true
+    },
+    "sortBy": [
+      "Name",
+      "Date modified",
+      "Type",
+      "Size",
+      "typeSpecific…",
+      "Ascending",
+      "Descending",
+      "More…"
+    ],
+    "groupBy": [
+      "(None)",
+      "same properties as sort",
+      "Ascending",
+      "Descending"
+    ],
+    "arrangeByLibraries": true,
+    "viewPersistence": true,
+    "capacityBarsRequireView": [
+      "Tiles",
+      "Content"
+    ]
+  },
+  "panes": {
+    "navigationPane": {
+      "defaultVisible": true,
+      "position": "left",
+      "approxDefaultWidthPx": 200
+    },
+    "detailsPane": {
+      "defaultVisible": true,
+      "position": "bottom",
+      "approxDefaultHeightPx": [
+        54,
+        72
+      ],
+      "shows": [
+        "thumbnail",
+        "name",
+        "keyProperties",
+        "tags",
+        "multiSelectAggregate"
+      ]
+    },
+    "previewPane": {
+      "defaultVisible": false,
+      "position": "right",
+      "approxDefaultWidthPx": 256,
+      "toggleKey": "Alt+P",
+      "also": "commandBar Preview button"
+    },
+    "statusBar": {
+      "defaultVisible": false
+    },
+    "sizesPersist": true
+  },
+  "computer": {
+    "shellName": "Computer",
+    "open": [
+      "Start > Computer",
+      "Win+E",
+      "nav pane"
+    ],
+    "groups": [
+      "Hard Disk Drives",
+      "Devices with Removable Storage",
+      "Network Location"
+    ],
+    "capacityBar": {
+      "visibleIn": [
+        "Tiles",
+        "Content"
+      ],
+      "textFormat": "{free} free of {total}",
+      "meter": "horizontal under label; blue to red when low"
+    },
+    "driveContextMenuCore": [
+      "Open",
+      "Open in new window",
+      "Share with",
+      "Include in library",
+      "Format…",
+      "Create shortcut",
+      "Rename",
+      "Properties",
+      "Eject(if removable)",
+      "Disconnect(if mapped)",
+      "BitLocker(if applicable)"
+    ]
+  },
+  "recycleBin": {
+    "desktopIconDefault": true,
+    "explorerPaths": [
+      "shell:RecycleBinFolder",
+      "::{645FF040-5081-101B-9F08-00AA002F954E}"
+    ],
+    "perVolumeStore": "X:\\$Recycle.Bin\\",
+    "desktopContextMenu": [
+      "Open",
+      "Empty Recycle Bin",
+      "Properties"
+    ],
+    "itemContextMenu": [
+      "Restore",
+      "Cut",
+      "Delete",
+      "Properties"
+    ],
+    "propertiesOptions": [
+      "custom size per drive",
+      "Don't move files to the Recycle Bin. Remove files immediately when deleted."
+    ]
+  },
+  "desktopContextMenu": {
+    "skuNotes": "Gadgets present on Windows 7 Ultimate / Home Premium era",
+    "order": [
+      {
+        "label": "View",
+        "submenu": [
+          "Large icons",
+          "Medium icons",
+          "Small icons",
+          "Auto arrange icons",
+          "Align icons to grid",
+          "Show desktop icons",
+          "Show desktop gadgets"
+        ]
+      },
+      {
+        "label": "Sort by",
+        "submenu": [
+          "Name",
+          "Size",
+          "Item type",
+          "Date modified"
+        ]
+      },
+      "Refresh",
+      "|",
+      "Paste",
+      "Paste shortcut",
+      "|",
+      {
+        "label": "New",
+        "submenu": [
+          "Folder",
+          "Shortcut",
+          "ShellNew types…"
+        ]
+      },
+      "|",
+      "Screen resolution",
+      "Gadgets",
+      "Personalize"
+    ],
+    "notStock": [
+      "Storage properties",
+      "Display settings (Win10+)"
+    ],
+    "registryBottomItems": "HKCR\\DesktopBackground\\Shell\\{Display,Gadgets,Personalize} Position=Bottom"
+  },
+  "fileContextMenu": {
+    "typicalOrder": [
+      "Open",
+      "Open with",
+      "appSpecificVerbs…",
+      "Share with",
+      "|",
+      "Send to",
+      "Cut",
+      "Copy",
+      "|",
+      "Create shortcut",
+      "Delete",
+      "Rename",
+      "|",
+      "Properties"
+    ],
+    "folderExtras": [
+      "Open in new window",
+      "Include in library",
+      "Pin to Start Menu"
+    ],
+    "backgroundInFolder": [
+      "View",
+      "Sort by",
+      "Group by",
+      "Refresh",
+      "Paste",
+      "Paste shortcut",
+      "New",
+      "Properties"
+    ],
+    "newSubmenu": [
+      "Folder",
+      "Shortcut",
+      "ShellNew-registered types"
+    ],
+    "extendedShiftRightClickExamples": [
+      "Open command window here",
+      "Copy as path"
+    ]
+  },
+  "interactionMatrices": {
+    "selection": [
+      {
+        "input": "single left-click",
+        "result": "select item"
+      },
+      {
+        "input": "double left-click",
+        "result": "default verb Open"
+      },
+      {
+        "input": "click empty",
+        "result": "clear selection"
+      },
+      {
+        "input": "marquee drag",
+        "result": "select intersecting"
+      },
+      {
+        "input": "Ctrl+click",
+        "result": "toggle in selection"
+      },
+      {
+        "input": "Shift+click",
+        "result": "range from anchor"
+      },
+      {
+        "input": "Ctrl+A",
+        "result": "select all"
+      }
+    ],
+    "dragDrop": [
+      {
+        "when": "same volume",
+        "effect": "move",
+        "cue": "arrow"
+      },
+      {
+        "when": "different volume or UNC or optical",
+        "effect": "copy",
+        "cue": "+"
+      },
+      {
+        "when": "drop on Recycle Bin",
+        "effect": "move to bin"
+      },
+      {
+        "when": "hold Ctrl",
+        "effect": "force copy"
+      },
+      {
+        "when": "hold Shift",
+        "effect": "force move"
+      },
+      {
+        "when": "hold Alt or Ctrl+Shift",
+        "effect": "create shortcut"
+      },
+      {
+        "when": "right-drag release",
+        "effect": "menu Copy/Move/Create shortcuts/Cancel"
+      },
+      {
+        "when": "Esc while drag",
+        "effect": "cancel"
+      },
+      {
+        "when": "drop on library",
+        "effect": "copy/move into default save location"
+      }
+    ],
+    "delete": [
+      {
+        "input": "Delete/Del",
+        "result": "to Recycle Bin if enabled"
+      },
+      {
+        "input": "Shift+Delete",
+        "result": "permanent bypass Bin"
+      },
+      {
+        "input": "Bin property Don't move files…",
+        "result": "always permanent"
+      }
+    ]
+  },
+  "keyboard": [
+    {
+      "key": "F2",
+      "action": "Rename"
+    },
+    {
+      "key": "Delete",
+      "action": "Delete to Bin"
+    },
+    {
+      "key": "Shift+Delete",
+      "action": "Permanent delete"
+    },
+    {
+      "key": "Ctrl+C",
+      "action": "Copy"
+    },
+    {
+      "key": "Ctrl+X",
+      "action": "Cut"
+    },
+    {
+      "key": "Ctrl+V",
+      "action": "Paste"
+    },
+    {
+      "key": "Ctrl+A",
+      "action": "Select all"
+    },
+    {
+      "key": "Ctrl+Z",
+      "action": "Undo"
+    },
+    {
+      "key": "Ctrl+Y",
+      "action": "Redo"
+    },
+    {
+      "key": "Alt+Up",
+      "action": "Parent folder"
+    },
+    {
+      "key": "Backspace",
+      "action": "Parent folder"
+    },
+    {
+      "key": "Alt+Left",
+      "action": "Back"
+    },
+    {
+      "key": "Alt+Right",
+      "action": "Forward"
+    },
+    {
+      "key": "F5",
+      "action": "Refresh"
+    },
+    {
+      "key": "Alt+Enter",
+      "action": "Properties"
+    },
+    {
+      "key": "Alt+D",
+      "action": "Address bar edit"
+    },
+    {
+      "key": "Ctrl+L",
+      "action": "Address bar edit"
+    },
+    {
+      "key": "Ctrl+E",
+      "action": "Search box"
+    },
+    {
+      "key": "Ctrl+F",
+      "action": "Search box"
+    },
+    {
+      "key": "F3",
+      "action": "Search"
+    },
+    {
+      "key": "Ctrl+Shift+N",
+      "action": "New folder"
+    },
+    {
+      "key": "Alt+P",
+      "action": "Toggle Preview pane"
+    },
+    {
+      "key": "Alt",
+      "action": "Show Menu bar temporarily"
+    },
+    {
+      "key": "F1",
+      "action": "Help"
+    },
+    {
+      "key": "Win+E",
+      "action": "Open Explorer at Computer"
+    },
+    {
+      "key": "Enter",
+      "action": "Open selected"
+    },
+    {
+      "key": "Shift+F10",
+      "action": "Context menu"
+    }
+  ],
+  "propertiesGeneralTab": {
+    "file": [
+      {
+        "field": "Type of file",
+        "editable": false
+      },
+      {
+        "field": "Opens with + Change…",
+        "editable": true
+      },
+      {
+        "field": "Location",
+        "editable": false
+      },
+      {
+        "field": "Size",
+        "editable": false
+      },
+      {
+        "field": "Size on disk",
+        "editable": false
+      },
+      {
+        "field": "Created",
+        "editable": false
+      },
+      {
+        "field": "Modified",
+        "editable": false
+      },
+      {
+        "field": "Accessed",
+        "editable": false
+      },
+      {
+        "field": "Attributes Read-only Hidden",
+        "editable": true
+      },
+      {
+        "field": "Advanced Archive Index Compress Encrypt",
+        "editable": true,
+        "encryptRequires": "EFS/Ultimate"
+      },
+      {
+        "field": "Unblock",
+        "editable": true,
+        "when": "Mark-of-the-Web"
+      }
+    ],
+    "folder": [
+      {
+        "field": "Type",
+        "value": "File folder"
+      },
+      {
+        "field": "Location",
+        "editable": false
+      },
+      {
+        "field": "Size / Size on disk",
+        "editable": false
+      },
+      {
+        "field": "Contains N files M folders",
+        "editable": false
+      },
+      {
+        "field": "Created",
+        "editable": false
+      },
+      {
+        "field": "Attributes Read-only",
+        "notes": "tri-state applies to contents; folder R/O semantics special"
+      }
+    ]
+  },
+  "commonDialogs": {
+    "modern": {
+      "interfaces": [
+        "IFileOpenDialog",
+        "IFileSaveDialog"
+      ],
+      "structure": [
+        "caption Open/Save As",
+        "Back/Forward",
+        "address breadcrumbs",
+        "search box",
+        "navigation pane Favorites/Libraries/Computer/Network",
+        "items view",
+        "File name edit",
+        "filetype filter combo",
+        "Open|Save (+optional split) and Cancel"
+      ],
+      "libraryAware": true,
+      "saveToLibraryUsesDefaultSaveLocation": true
+    },
+    "legacyPlacesBar": {
+      "api": "GetOpenFileName/GetSaveFileName",
+      "placesExamples": [
+        "Recent Places",
+        "Desktop",
+        "Documents/Libraries",
+        "Computer",
+        "Network"
+      ],
+      "customize": "GPO ComDlg32\\PlacesBar"
+    }
+  },
+  "pixelCheatSheet96Dpi": {
+    "commandBarHeightPx": [
+      36,
+      40
+    ],
+    "backForwardDiameterPx": [
+      22,
+      24
+    ],
+    "navPaneDefaultWidthPx": 200,
+    "detailsPaneDefaultHeightPx": [
+      54,
+      72
+    ],
+    "previewPaneDefaultWidthPx": 256,
+    "iconExtraLarge": 256,
+    "iconLarge": 128,
+    "iconMedium": 64,
+    "iconSmall": 16,
+    "capacityBarApprox": {
+      "widthPx": [
+        60,
+        120
+      ],
+      "heightPx": [
+        6,
+        8
+      ]
+    },
+    "note": "Prefer persisted splitter ratios; DPI/theme varies"
+  },
+  "ultimateSpecifics": {
+    "gadgetsDesktopMenu": true,
+    "bitLockerVerbs": true,
+    "homegroupNode": true,
+    "aeroGlass": true,
+    "commandBarNotRibbon": true,
+    "efsEncryptAttribute": true
+  },
+  "citations": [
+    {
+      "id": 1,
+      "title": "Windows Browse and Organize Features",
+      "publisher": "Microsoft TechNet",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744693(v=ws.10)"
+    },
+    {
+      "id": 2,
+      "title": "Windows Search Features",
+      "publisher": "Microsoft TechNet",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd744686(v=ws.10)"
+    },
+    {
+      "id": 3,
+      "title": "Windows 7 Libraries: Walkthrough",
+      "publisher": "Microsoft TechNet",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/ee449433(v=ws.10)"
+    },
+    {
+      "id": 4,
+      "title": "Windows 7 Feature Focus: Windows Explorer",
+      "publisher": "Paul Thurrott / SuperSite",
+      "url": "https://web.archive.org/web/20130107055320/http:/winsupersite.com/article/windows-7/windows-7-feature-focus-windows-explorer"
+    },
+    {
+      "id": 5,
+      "title": "Common Item Dialog",
+      "publisher": "Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/shell/common-file-dialog"
+    },
+    {
+      "id": 6,
+      "title": "Creating Shortcut Menu Handlers",
+      "publisher": "Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/shell/context-menu-handlers"
+    },
+    {
+      "id": 7,
+      "title": "AskVG Command Bar / Organize-Layout / DesktopBackground / HDD meter",
+      "publisher": "AskVG",
+      "url": "https://www.askvg.com/"
+    },
+    {
+      "id": 8,
+      "title": "Remove Gadgets and Screen Resolution; library default save",
+      "publisher": "How-To Geek",
+      "url": "https://www.howtogeek.com/"
+    },
+    {
+      "id": 9,
+      "title": "Favorites - Links - Add or Remove in Navigation Pane",
+      "publisher": "Seven Forums",
+      "url": "https://www.sevenforums.com/threads/favorites-links-add-or-remove-in-navigation-pane.176331/"
+    },
+    {
+      "id": 10,
+      "title": "Hide Navigation Pane Items In Windows 7",
+      "publisher": "gHacks",
+      "url": "https://www.ghacks.net/2010/05/10/hide-navigation-pane-items-in-windows-7/"
+    },
+    {
+      "id": 11,
+      "title": "Windows Explorer Explained: Changing the Layout",
+      "publisher": "PCWorld",
+      "url": "https://www.pcworld.com/article/499018/windows_explorer_explained_changing_the_layout.html"
+    },
+    {
+      "id": 12,
+      "title": "Windows Explorer (7) Guide",
+      "publisher": "JAWS / chowo",
+      "url": "https://vip.chowo.co.uk/wp-content/uploads/jaws/Windows-Explorer-7-Guide.html"
+    },
+    {
+      "id": 13,
+      "title": "CustomExplorerToolbar / FolderTypes",
+      "publisher": "NirSoft",
+      "url": "https://www.nirsoft.net/utils/custom_explorer_toolbar.html"
+    },
+    {
+      "id": 14,
+      "title": "Recycle Bin shell:RecycleBinFolder; capacity bars; Places Bar",
+      "publisher": "SuperUser",
+      "url": "https://superuser.com/"
+    },
+    {
+      "id": 15,
+      "title": "Some changes since beta for the RC (icons vs gadgets)",
+      "publisher": "Microsoft E7 blog",
+      "url": "https://learn.microsoft.com/en-us/archive/blogs/e7/some-changes-since-beta-for-the-rc"
+    }
+  ]
+}
