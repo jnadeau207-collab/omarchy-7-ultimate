@@ -596,6 +596,11 @@ if native35.get("capabilityIds") != ["power.profile.set"]:
     raise SystemExit(f"windows-native.35 capabilityIds are {native35.get('capabilityIds')}")
 if "Settings" in str(native35["humanRoute"].get("path") or ""):
     raise SystemExit(f"windows-native.35 invents Settings Power LIVE: {native35['humanRoute']}")
+gaps = (root / "plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md").read_text(encoding="utf-8")
+if "unverified on metal" not in gaps or "power.profile.set" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep power.profile.set as a Superbar leftover unverified on metal")
+if "Settings Power LIVE stays refused" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Settings Power LIVE refused")
 
 if "files.folder.create" in by_id:
     raise SystemExit("files.folder.create remains as a catalog invent")
