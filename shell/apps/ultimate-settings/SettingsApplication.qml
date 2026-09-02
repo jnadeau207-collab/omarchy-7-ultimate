@@ -472,6 +472,7 @@ Item {
           Ui.Badge {
             text: root.hostedPage ? "LIVE PANEL" : SettingsModel.phaseBadge(root.queryState)
             tone: root.hostedPage ? "info" : SettingsModel.phaseTone(root.queryState)
+            semanticProfile: root.productProfile
             Layout.alignment: Qt.AlignTop
           }
         }
@@ -479,6 +480,7 @@ Item {
         Ui.SettingsHostedPanel {
           visible: root.hostedPage
           sourcePath: root.hostedSpec ? root.hostedSpec.source : ""
+          semanticProfile: root.productProfile
           Layout.fillWidth: true
           Layout.fillHeight: true
         }
@@ -505,8 +507,8 @@ Item {
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: root.queryState.phase === "failed" || root.queryState.phase === "denied" ||
                 root.queryState.phase === "contract-mismatch" ? Accessible.AlertMessage : Accessible.Pane
-              Accessible.name: SettingsModel.stateTitle(root.queryState)
-              Accessible.description: SettingsModel.stateExplanation(root.queryState)
+              Accessible.name: Semantics.text(root.productProfile, SettingsModel.stateTitle(root.queryState))
+              Accessible.description: Semantics.text(root.productProfile, SettingsModel.stateExplanation(root.queryState))
 
               ColumnLayout {
                 id: statusColumn
@@ -581,7 +583,7 @@ Item {
                 Text {
                   textFormat: Text.PlainText
                   visible: root.queryState.selectedResourceId !== ""
-                  text: "Exact resource: " + SettingsModel.clippedText(root.queryState.selectedResourceId, 180)
+                  text: Semantics.text(root.productProfile, "Exact resource") + ": " + SettingsModel.clippedText(root.queryState.selectedResourceId, 180)
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
@@ -660,8 +662,8 @@ Item {
                   border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
                   border.width: Tokens.accessibility.highContrast ? 2 : 1
                   Accessible.role: Accessible.Pane
-                  Accessible.name: modelData.title + ". " + modelData.status
-                  Accessible.description: modelData.detail
+                  Accessible.name: Semantics.text(root.productProfile, modelData.title) + ". " + Semantics.text(root.productProfile, modelData.status)
+                  Accessible.description: Semantics.text(root.productProfile, modelData.detail)
 
                   ColumnLayout {
                     id: overviewCardColumn
@@ -689,6 +691,7 @@ Item {
                       Ui.Badge {
                         text: String(modelData.status).toUpperCase()
                         tone: modelData.tone
+                        semanticProfile: root.productProfile
                         Layout.alignment: Qt.AlignTop
                       }
                     }
@@ -721,7 +724,7 @@ Item {
                       text: Semantics.text(root.productProfile, "Open") + " " + Semantics.text(root.productProfile, modelData.title)
                       tooltipText: "Open the read-only " + modelData.title + " Settings route"
                       semanticProfile: root.productProfile
-                      accessibleDescription: modelData.status + ". " + modelData.detail
+                      accessibleDescription: Semantics.text(root.productProfile, modelData.status) + ". " + Semantics.text(root.productProfile, modelData.detail)
                       focusable: true
                       bordered: true
                       leftAlign: true
@@ -742,7 +745,7 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Output volume"
+              Accessible.name: Semantics.text(root.productProfile, "Output volume")
 
               ColumnLayout {
                 id: volumeColumn
@@ -769,6 +772,7 @@ Item {
                   Ui.Badge {
                     text: root.operationBusy ? "APPLYING" : "LIVE CONTROL"
                     tone: root.operationBusy ? "info" : "success"
+                    semanticProfile: root.productProfile
                   }
                 }
 
@@ -806,7 +810,7 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Default browser"
+              Accessible.name: Semantics.text(root.productProfile, "Default browser")
 
               ColumnLayout {
                 id: browserColumn
@@ -833,6 +837,7 @@ Item {
                   Ui.Badge {
                     text: root.operationBusy && root.operationKind === "browser" ? "APPLYING" : "LIVE CONTROL"
                     tone: root.operationBusy && root.operationKind === "browser" ? "info" : "success"
+                    semanticProfile: root.productProfile
                   }
                 }
 
@@ -848,7 +853,7 @@ Item {
                       focusable: true
                       bordered: true
                       enabled: !root.operationBusy && modelData.id !== root.activeBrowserId
-                      accessibleDescription: "Set the default browser through defaults.provider protocol.set"
+                      accessibleDescription: Semantics.text(root.productProfile, "Set the default browser through") + " defaults.provider protocol.set"
                       onClicked: root.applyDefaultBrowser(modelData.id)
                     }
                   }
@@ -877,7 +882,7 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Wi-Fi"
+              Accessible.name: Semantics.text(root.productProfile, "Wi-Fi")
 
               ColumnLayout {
                 id: radioColumn
@@ -906,12 +911,14 @@ Item {
                       : root.radioBlocked ? "BLOCKED BY HARDWARE" : "LIVE CONTROL"
                     tone: root.operationBusy && root.operationKind === "network" ? "info"
                       : root.radioBlocked ? "warning" : "success"
+                    semanticProfile: root.productProfile
                   }
                 }
 
                 Ui.Toggle {
                   id: radioToggle
                   Layout.fillWidth: true
+                  semanticProfile: root.productProfile
                   label: root.radioEnabled ? "Wi-Fi is on" : "Wi-Fi is off"
                   checked: root.operationBusy && root.operationKind === "network" ? root.operationRadioTarget : root.radioEnabled
                   enabled: !root.operationBusy && !(root.radioBlocked && !root.radioEnabled)
@@ -942,7 +949,7 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Keyboard layout"
+              Accessible.name: Semantics.text(root.productProfile, "Keyboard layout")
 
               ColumnLayout {
                 id: layoutColumn
@@ -970,6 +977,7 @@ Item {
                   Ui.Badge {
                     text: root.operationBusy && root.operationKind === "input" ? "APPLYING" : "LIVE CONTROL"
                     tone: root.operationBusy && root.operationKind === "input" ? "info" : "success"
+                    semanticProfile: root.productProfile
                   }
                 }
 
@@ -986,7 +994,7 @@ Item {
                       focusable: true
                       bordered: true
                       enabled: !root.operationBusy && index !== root.activeLayoutIndex
-                      accessibleDescription: "Set the active keyboard layout through input.provider keyboard-layout.set"
+                      accessibleDescription: Semantics.text(root.productProfile, "Set the active keyboard layout through") + " input.provider keyboard-layout.set"
                       onClicked: root.applyKeyboardLayout(index)
                     }
                   }
@@ -1015,7 +1023,7 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Display brightness"
+              Accessible.name: Semantics.text(root.productProfile, "Display brightness")
 
               ColumnLayout {
                 id: brightnessColumn
@@ -1043,6 +1051,7 @@ Item {
                   Ui.Badge {
                     text: root.operationBusy && root.operationKind === "display" ? "APPLYING" : "LIVE CONTROL"
                     tone: root.operationBusy && root.operationKind === "display" ? "info" : "success"
+                    semanticProfile: root.productProfile
                   }
                 }
 
@@ -1080,7 +1089,7 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Power profile"
+              Accessible.name: Semantics.text(root.productProfile, "Power profile")
 
               ColumnLayout {
                 id: profileColumn
@@ -1107,6 +1116,7 @@ Item {
                   Ui.Badge {
                     text: root.operationBusy && root.operationKind === "power" ? "APPLYING" : "LIVE CONTROL"
                     tone: root.operationBusy && root.operationKind === "power" ? "info" : "success"
+                    semanticProfile: root.productProfile
                   }
                 }
 
@@ -1119,10 +1129,11 @@ Item {
                     delegate: Ui.Button {
                       required property string modelData
                       text: root.profileLabel(modelData)
+                      semanticProfile: root.productProfile
                       focusable: true
                       bordered: true
                       enabled: !root.operationBusy && modelData !== root.activePowerProfile
-                      accessibleDescription: "Set the active power profile through power.provider profile.set"
+                      accessibleDescription: Semantics.text(root.productProfile, "Set the active power profile through") + " power.provider profile.set"
                       onClicked: root.applyPowerProfile(modelData)
                     }
                   }
@@ -1153,8 +1164,8 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Settings coverage"
-              Accessible.description: root.queryState.query ? root.queryState.query.coverage : ""
+              Accessible.name: Semantics.text(root.productProfile, "Settings coverage")
+              Accessible.description: root.queryState.query ? Semantics.text(root.productProfile, root.queryState.query.coverage) : ""
 
               ColumnLayout {
                 id: coverageColumn
@@ -1179,6 +1190,7 @@ Item {
                   Ui.Badge {
                     text: SettingsModel.coverageBadge(root.currentRoute ? root.currentRoute.id : "")
                     tone: SettingsModel.coverageTone(root.currentRoute ? root.currentRoute.id : "")
+                    semanticProfile: root.productProfile
                     Layout.alignment: Qt.AlignTop
                   }
                 }
@@ -1226,6 +1238,7 @@ Item {
                   required property var modelData
 
                   record: modelData
+                  semanticProfile: root.productProfile
                   selected: root.queryState.selectedResourceId !== "" &&
                     root.queryState.selectedResourceId === modelData.id
                 }
@@ -1259,8 +1272,10 @@ Item {
                 id: clippedNotice
                 anchors.fill: parent
                 anchors.margins: Style.space(10)
-                text: "Display bound reached at " + SettingsModel.MAX_VISIBLE_RECORDS + " records. " +
-                  root.queryState.totalRecords + " records were reported; use an exact resource deep link for a narrower view."
+                text: Semantics.text(root.productProfile, "Display bound reached at") + " " + SettingsModel.MAX_VISIBLE_RECORDS +
+                  Semantics.text(root.productProfile, " records. ") +
+                  root.queryState.totalRecords +
+                  Semantics.text(root.productProfile, " records were reported; use an exact resource deep link for a narrower view.")
                 color: Tokens.text.secondary
                 font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
