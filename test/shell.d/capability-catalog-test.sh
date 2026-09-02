@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"129 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"130 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -442,8 +442,43 @@ if native10.get("capabilityIds") != ["files.directory.create"]:
     raise SystemExit(f"windows-native.10 capabilityIds are {native10.get('capabilityIds')}")
 if by_id["files.entry.rename"].get("availability", {}).get("claim") == "present":
     raise SystemExit("files.entry.rename must not claim present")
-if by_id["files.trash.manage"].get("availability", {}).get("claim") == "present":
+if "files.entry.trash" not in by_id:
+    raise SystemExit("absent live trash writer invent: files.entry.trash missing from catalog")
+entry_trash = by_id["files.entry.trash"]
+if entry_trash.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.entry.trash provider is {entry_trash.get('provider')}")
+if entry_trash.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.entry.trash provider state is {entry_trash.get('provider')}")
+if entry_trash.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.entry.trash must not claim present")
+if entry_trash.get("consent", {}).get("mode") != "high-risk":
+    raise SystemExit(f"files.entry.trash consent is not consequential: {entry_trash.get('consent')}")
+if entry_trash["humanRoute"].get("path") != "Files > Delete":
+    raise SystemExit(f"files.entry.trash route is {entry_trash.get('humanRoute')}")
+if entry_trash.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesApplication.qml":
+    raise SystemExit(f"files.entry.trash source is {entry_trash.get('source')}")
+if entry_trash.get("source", {}).get("symbol") != "trashEntry":
+    raise SystemExit(f"files.entry.trash source is {entry_trash.get('source')}")
+named_trash = f"{entry_trash.get('source', {}).get('file') or ''} {entry_trash.get('source', {}).get('symbol') or ''}".lower()
+if "nautilus" in named_trash:
+    raise SystemExit(f"files.entry.trash still names Nautilus: {entry_trash.get('source')}")
+if "files.entry.trash" not in (parity_explorer.get("capabilityIds") or []):
+    raise SystemExit("parity.explorer-this-pc does not name files.entry.trash")
+parity_recycle = next(job for job in jobs["jobs"] if job["id"] == "parity.desktop-icons-wallpaper-context-menu-recycle")
+if parity_recycle.get("claim") == "present":
+    raise SystemExit(f"parity.desktop-icons-wallpaper-context-menu-recycle was flipped to present: {parity_recycle}")
+if "files.entry.trash" not in (parity_recycle.get("capabilityIds") or []):
+    raise SystemExit("parity.desktop-icons-wallpaper-context-menu-recycle does not name files.entry.trash")
+if "files.trash.manage" not in (parity_recycle.get("capabilityIds") or []):
+    raise SystemExit("parity.desktop-icons-wallpaper-context-menu-recycle dropped files.trash.manage")
+trash_manage = by_id["files.trash.manage"]
+if trash_manage.get("availability", {}).get("claim") == "present":
     raise SystemExit("files.trash.manage must not claim present")
+if trash_manage.get("provider", {}).get("state") != "provider-missing":
+    raise SystemExit(f"files.trash.manage was raised off missing: {trash_manage.get('provider')}")
+restore = by_id.get("files.trash.restore")
+if restore and restore.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.trash.restore invents Restore LIVE")
 PY
 pass "leftover catalog routes stay honest after Settings inspect hosting"
 
