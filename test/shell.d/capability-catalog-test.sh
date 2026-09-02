@@ -409,6 +409,41 @@ if native19.get("claim") == "present":
     raise SystemExit(f"windows-native.19 was flipped to present: {native19}")
 if native19.get("capabilityIds") != ["defaults.protocol.set"]:
     raise SystemExit(f"windows-native.19 capabilityIds are {native19.get('capabilityIds')}")
+
+if "files.folder.create" in by_id:
+    raise SystemExit("files.folder.create remains as a catalog invent")
+directory_create = by_id["files.directory.create"]
+if directory_create.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.directory.create provider is {directory_create.get('provider')}")
+if directory_create.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.directory.create provider state is {directory_create.get('provider')}")
+if directory_create.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.directory.create must not claim present")
+if directory_create["humanRoute"].get("path") != "Files > New Folder":
+    raise SystemExit(f"files.directory.create route is {directory_create.get('humanRoute')}")
+if directory_create.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesApplication.qml":
+    raise SystemExit(f"files.directory.create source is {directory_create.get('source')}")
+if directory_create.get("source", {}).get("symbol") != "createFolder":
+    raise SystemExit(f"files.directory.create source is {directory_create.get('source')}")
+named_create = f"{directory_create.get('source', {}).get('file') or ''} {directory_create.get('source', {}).get('symbol') or ''}".lower()
+if "nautilus" in named_create:
+    raise SystemExit(f"files.directory.create still names Nautilus: {directory_create.get('source')}")
+parity_explorer = next(job for job in jobs["jobs"] if job["id"] == "parity.explorer-this-pc")
+if parity_explorer.get("claim") == "present":
+    raise SystemExit(f"parity.explorer-this-pc was flipped to present: {parity_explorer}")
+if "files.folder.create" in (parity_explorer.get("capabilityIds") or []):
+    raise SystemExit("parity.explorer-this-pc still names files.folder.create")
+if "files.directory.create" not in (parity_explorer.get("capabilityIds") or []):
+    raise SystemExit("parity.explorer-this-pc does not name files.directory.create")
+native10 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.10")
+if native10.get("claim") == "present":
+    raise SystemExit(f"windows-native.10 was flipped to present: {native10}")
+if native10.get("capabilityIds") != ["files.directory.create"]:
+    raise SystemExit(f"windows-native.10 capabilityIds are {native10.get('capabilityIds')}")
+if by_id["files.entry.rename"].get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.entry.rename must not claim present")
+if by_id["files.trash.manage"].get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.trash.manage must not claim present")
 PY
 pass "leftover catalog routes stay honest after Settings inspect hosting"
 
