@@ -127,6 +127,7 @@
       "capabilityIds": [
         "files.this-pc.open",
         "files.directory.create",
+        "files.entry.open",
         "files.entry.trash",
         "files.entry.rename",
         "files.copy",
@@ -1561,6 +1562,7 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
+        "files.entry.open",
         "files.document.open"
       ],
       "humanRoute": {

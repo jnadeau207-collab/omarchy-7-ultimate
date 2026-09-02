@@ -90,6 +90,7 @@
         "download",
         "compile",
         "network",
+        "launch",
         "logout",
         "restart",
         "reboot"

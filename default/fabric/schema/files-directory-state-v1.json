@@ -28,7 +28,8 @@
       "enum": [
         "directory.create",
         "entry.trash",
-        "trash.restore"
+        "trash.restore",
+        "entry.open"
       ]
     }
   },

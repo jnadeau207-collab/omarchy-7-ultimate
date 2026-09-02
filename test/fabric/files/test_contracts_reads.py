@@ -35,7 +35,7 @@ class ContractAndReadTests(unittest.IsolatedAsyncioTestCase):
             if (reference := action[phase]) is not None
         }
         self.assertEqual(set(self.provider.schemas), references)
-        self.assertEqual(len(self.provider.manifest["actions"]), 11)
+        self.assertEqual(len(self.provider.manifest["actions"]), 12)
 
     async def test_central_registry_dispatches_read_and_preflight_contracts(self) -> None:
         registry = ProviderRegistry(clock=lambda: 42.0)

@@ -92,6 +92,16 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                         "entryRelativePath": lambda value: value,
                     },
                 ),
+                IntentDefinition(
+                    "files.entry.open",
+                    FixedArgvCommand("/bin/true", ("files-entry-open",)),
+                    required={
+                        "resourceId": stable_token,
+                        "entryId": stable_token,
+                        "locationId": stable_token,
+                        "entryRelativePath": lambda value: value,
+                    },
+                ),
             )
         )
         self.coordinator = OperationCoordinator(
@@ -120,6 +130,12 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                     "trash.restore",
                     "files.trash.restore",
                     FabricDaemon._restore_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.open",
+                    "files.entry.open",
+                    FabricDaemon._open_payload,
                 ),
             ),
             intents=self.intents,
@@ -206,6 +222,25 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(SecurityValidationError) as caught:
             self._shell_grant(restored["operationId"])
         self.assertEqual(caught.exception.code, "grant.shell-consequential")
+
+    async def test_entry_open_preflight_is_low_and_shell_grantable(self) -> None:
+        opened = await self.coordinator.preflight(
+            self.shell,
+            provider_id="files.provider",
+            action="entry.open",
+            arguments={"entryId": "files.entry.notes"},
+            idempotency_key="files.entry.open.notes",
+        )
+        request = self.coordinator.approval_request(self.shell, opened["operationId"])
+        self.assertEqual(request.risk, RiskLevel.LOW)
+        self.assertEqual(request.capability, "files.entry.open")
+        self.assertTrue(request.resource.resource_id.startswith("files.directory."))
+        payload = self.store.get(opened["operationId"]).plan.intent.payload
+        self.assertEqual(payload["locationId"], "files.location.desktop")
+        self.assertEqual(payload["entryRelativePath"], "notes.txt")
+        self.assertEqual(payload["entryId"], "files.entry.notes")
+        grant = self._shell_grant(opened["operationId"])
+        self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
 
     def test_shell_cannot_hold_a_consequential_files_grant(self) -> None:
         with self.assertRaises(SecurityValidationError) as caught:

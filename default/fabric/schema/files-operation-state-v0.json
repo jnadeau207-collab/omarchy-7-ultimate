@@ -10,7 +10,7 @@
     "revision": {"$ref": "#/$defs/revision"},
     "value": {"$ref": "#/$defs/workspace"},
     "recoveryFromRevision": {"$ref": "#/$defs/revision"},
-    "recoveryAction": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.trash", "trash.restore", "mount.connect", "mount.disconnect"]}
+    "recoveryAction": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.trash", "trash.restore", "entry.open", "mount.connect", "mount.disconnect"]}
   },
   "additionalProperties": false,
   "$defs": {
