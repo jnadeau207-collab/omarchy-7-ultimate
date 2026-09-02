@@ -63,6 +63,7 @@ ShellRoot {
   readonly property var window: appWindow
 
   signal routeActivated(string routeId, var arguments, var context)
+  signal surfaceBecameActive()
   signal fabricConnectionReady(var hello)
   signal fabricResult(string requestId, var result)
   signal fabricFailure(string requestId, var error)
@@ -110,6 +111,7 @@ ShellRoot {
     appWindow.visible = true
     appWindow.minimized = false
     root.routeActivated(root.currentRoute, root.currentArguments, root.invocationContext)
+    root.surfaceBecameActive()
     return "ok"
   }
 
@@ -225,6 +227,8 @@ ShellRoot {
     screen: root.targetScreen || (Quickshell.screens.length > 0 ? Quickshell.screens[0] : null)
     color: Tokens.surface.canvas
     onClosed: Qt.quit()
+    onVisibleChanged: if (visible) root.surfaceBecameActive()
+    onMinimizedChanged: if (!minimized && visible) root.surfaceBecameActive()
 
     Rectangle {
       anchors.fill: parent
