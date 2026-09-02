@@ -341,6 +341,41 @@ assertEqual(controller.state.phase, 'ready', 'non-empty typed inventory reaches 
 assertDeepEqual(controller.state.records.map(record => record.id), [selectedDisplay], 'resource deep links select one exact identity')
 assertEqual(controller.state.records[0].details.length, 4, 'real typed resource fields become a bounded presentation')
 
+const readyObserved = controller.state.observedAt
+const sentBeforeWriter = sent.length
+assertEqual(controller.refreshAfterSuccessfulWriter('failed'), false, 'a failed writer does not reread')
+assertEqual(controller.refreshAfterSuccessfulWriter('running'), false, 'a running writer does not reread')
+assertEqual(controller.refreshAfterSuccessfulWriter(''), false, 'an empty writer status does not reread')
+assertEqual(sent.length, sentBeforeWriter, 'unsuccessful writers issue no Fabric request')
+assertEqual(controller.state.phase, 'ready', 'unsuccessful writers leave current state in place')
+assertEqual(controller.state.observedAt, readyObserved, 'unsuccessful writers keep the observed timestamp')
+
+assert(controller.refreshAfterSuccessfulWriter('succeeded'), 'a successful writer rereads the open route')
+const writerReread = sent.at(-1)
+assertEqual(writerReread.method, 'provider.read', 'successful writer refresh is provider.read of the open route')
+assertDeepEqual(
+  writerReread.params,
+  { provider: 'display.provider', action: 'inspect', arguments: {} },
+  'successful writer refresh keeps the closed display inspect arguments'
+)
+assertEqual(controller.state.phase, 'loading', 'successful writer refresh shows loading while rereading')
+const writerResult = leafResult(displayQuery, displayEntry, [
+  { id: selectedDisplay, label: 'Internal display', kind: 'display-output', state: { width: 1920, height: 1080, scale: 1, enabled: true } }
+])
+writerResult.observedAt = 55
+assert(controller.receiveResult(writerReread.id, writerResult), 'writer reread result is accepted')
+assertEqual(controller.state.phase, 'ready', 'writer reread returns current state')
+assertEqual(controller.state.observedAt, 55, 'writer reread replaces the observed timestamp')
+
+assert(controller.refreshWhenSurfaceVisible(), 'a ready surface rereads when it becomes visible')
+const visibleReread = sent.at(-1)
+assertEqual(visibleReread.method, 'provider.read', 'surface-visible refresh is provider.read')
+assertEqual(controller.refreshWhenSurfaceVisible(), false, 'a loading surface does not start a second reread')
+assertEqual(sent.at(-1).id, visibleReread.id, 'in-flight surface reread is not duplicated')
+assert(controller.receiveResult(visibleReread.id, leafResult(displayQuery, displayEntry, [
+  { id: selectedDisplay, label: 'Internal display', kind: 'display-output', state: { width: 1920, height: 1080, scale: 1, enabled: true } }
+])), 'surface-visible reread result is accepted')
+
 controller.activate('settings.display.overview', { resourceId: `display.output.${'c'.repeat(64)}` })
 const absentRequest = sent.at(-1)
 controller.receiveResult(absentRequest.id, leafResult(displayQuery, displayEntry, [
@@ -490,7 +525,19 @@ grep -Fq 'root.host.cancelFabric(requestId)' "$application" \
   || fail "Settings releases superseded correlations when the host exposes cancellation"
 grep -Fq 'markStale(root.queryState.requestId)' "$application" \
   || fail "Settings enforces a bounded stale-read deadline"
+grep -Fq 'refreshAfterSuccessfulWriter(result.status)' "$application" \
+  || fail "Settings rereads Fabric inspect after a successful local writer"
+grep -Fq 'refreshWhenSurfaceVisible()' "$application" \
+  || fail "Settings rereads Fabric inspect when the product surface becomes visible"
+grep -Fq 'function onSurfaceBecameActive()' "$application" \
+  || fail "Settings listens for host surface activation"
+grep -Fq 'signal surfaceBecameActive()' "$ROOT/shell/apps/shared/ProductAppHost.qml" \
+  || fail "Product host publishes surface activation instead of a Settings polling loop"
+if grep -Eq 'events[.](subscribe|unsubscribe)' "$application" "$model" "$entrypoint"; then
+  fail "Settings does not invent an events.subscribe path"
+fi
 pass "Settings isolates superseded and stale request generations"
+pass "Settings rereads after a successful writer and when the surface becomes visible"
 
 grep -Fq 'readonly property var productProfile: host && host.productProfile ? host.productProfile : null' "$application" \
   || fail "Settings reads the standalone host SemanticProfile"
