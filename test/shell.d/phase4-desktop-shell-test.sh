@@ -313,7 +313,7 @@ with tempfile.TemporaryDirectory() as tmp:
     by_name = {item["name"]: item for item in data["items"]}
     assert by_name["notes.txt"]["kind"] == "file"
     assert by_name["Computer"]["kind"] == "application"
-    assert by_name["Computer"]["command"] == "omarchy-launch-files --source desktop files.this-pc"
+    assert by_name["Computer"]["command"] == ["omarchy-launch-files", "--source", "desktop", "files.this-pc"]
     env["XDG_DESKTOP_DIR"] = tmp
     out = subprocess.check_output(["python3", str(root / "shell/plugins/desktop-icons/list-desktop.py")], env=env, text=True)
     data = json.loads(out)

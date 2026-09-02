@@ -44,13 +44,13 @@ def desktop_fields(path: pathlib.Path) -> dict[str, str]:
         return {}
     return fields
 
-def desktop_command(exec_line: str) -> str:
+def desktop_command(exec_line: str) -> list[str]:
     command = []
     for part in exec_line.split():
         if part.startswith("%"):
             continue
         command.append(part)
-    return " ".join(command)
+    return command
 
 def desktop_icon(path: pathlib.Path) -> str:
     icon = desktop_fields(path).get("Icon", "")
@@ -78,7 +78,7 @@ def main() -> None:
             if path.name.startswith("."):
                 continue
             fields = desktop_fields(path)
-            command = desktop_command(fields.get("Exec", "")) if fields.get("Exec") else ""
+            command = desktop_command(fields.get("Exec", "")) if fields.get("Exec") else []
             items.append({
                 "name": desktop_name(path),
                 "path": str(path),

@@ -92,6 +92,47 @@ assert(
   !desktopQml.includes('Util.execDetached("uwsm-app -- "'),
   'DesktopIcons does not string-concat Exec into bash -lc'
 )
+
+const fromExec = Launch.resolveLaunchArgv(cursorArgv, '')
+const desktopLaunch = ['uwsm-app', '--'].concat(fromExec)
+assertDeepEqual(
+  desktopLaunch,
+  ['uwsm-app', '--', '/usr/bin/cursor', '--password-store=gnome-libsecret'],
+  'DesktopIcons uwsm execArgv keeps cursor tokens separate'
+)
+assertEqual(
+  String(desktopLaunch),
+  'uwsm-app,--,/usr/bin/cursor,--password-store=gnome-libsecret',
+  'stringifying that execArgv is the comma-join path DesktopIcons must not take'
+)
 JS
+
+python3 - "$ROOT" <<'PY' || fail "desktop icon lister emits Exec as argv, not a joined string"
+from pathlib import Path
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+root = Path(sys.argv[1])
+with tempfile.TemporaryDirectory() as tmp:
+    desktop = Path(tmp) / "Desktop"
+    desktop.mkdir()
+    (desktop / "Cursor.desktop").write_text(
+        "[Desktop Entry]\nName=Cursor\nExec=/usr/bin/cursor --password-store=gnome-libsecret %F\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["HOME"] = tmp
+    env["XDG_DESKTOP_DIR"] = str(desktop)
+    out = subprocess.check_output(["python3", str(root / "shell/plugins/desktop-icons/list-desktop.py")], env=env, text=True)
+    data = json.loads(out)
+    item = next(row for row in data["items"] if row["name"] == "Cursor")
+    assert item["command"] == ["/usr/bin/cursor", "--password-store=gnome-libsecret"], item
+    joined = ",".join(item["command"])
+    assert joined == "/usr/bin/cursor,--password-store=gnome-libsecret"
+    assert " " not in joined
+PY
 
 pass "launch argv helpers reject comma-joined uwsm paths"
