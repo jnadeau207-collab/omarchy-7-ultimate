@@ -819,6 +819,28 @@ if "Recycle Bin leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the Recycle Bin leftover")
 if "Restore LIVE" in gaps and "Do not invent Restore LIVE" not in gaps and "Do not invent a LIVE Restore" not in gaps:
     raise SystemExit("fleet-doctrine-gaps invented Restore LIVE")
+if "13ca963b08f74a" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #49 tip parent for the MIME / Default Programs association UI residual")
+if "MIME / Default Programs association UI residual OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry MIME / Default Programs association UI residual OPEN")
+if "MIME / Default Programs association UI residual OPEN after PR #49" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the MIME leftover after PR #49")
+if "MIME UI present" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented MIME UI present")
+if "MIME association UI present" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented MIME association UI present")
+if "full Default Programs LIVE" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented full Default Programs LIVE")
+if "association manager LIVE" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented association manager LIVE")
+if "Default Programs product-complete" in gaps:
+    raise SystemExit("fleet-doctrine-gaps invented Default Programs product-complete")
+if "MIME leftover CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the MIME / Default Programs association UI residual")
+if "MIME association UI residual CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the MIME association UI residual")
+if "Default Programs leftover CLOSED" in gaps:
+    raise SystemExit("fleet-doctrine-gaps closed the Default Programs leftover")
 
 def parity_notes(label):
     prefix = f"| {label} |"
