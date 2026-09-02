@@ -509,6 +509,8 @@ pass "Settings is responsive, keyboard reachable, accessible, and string bounded
 
 grep -Fq 'SettingsModel.coverageBadge' "$application" \
   || fail "Settings coverage badge is route-honest rather than always CHANGES UNAVAILABLE"
+grep -A4 'SettingsModel.coverageBadge' "$application" | grep -Fq 'semanticProfile: root.productProfile' \
+  || fail "Settings coverage badge localizes PARTIAL LIVE CONTROL / CHANGES UNAVAILABLE through Semantics.text"
 grep -Fq 'SettingsModel.declaredOpsHonesty' "$application" \
   || fail "Settings declared-ops copy covers every live writer route"
 grep -Fq 'SettingsModel.authorityFooter' "$application" \
@@ -536,6 +538,12 @@ grep -Fq 'Ui.SettingsHostedPanel' "$application" \
   || fail "Settings hosts existing panel pages inside its chrome"
 grep -Fq 'LIVE PANEL' "$application" \
   || fail "Settings labels hosted pages as live panels"
+grep -A4 'LIVE PANEL' "$application" | grep -Fq 'semanticProfile: root.productProfile' \
+  || fail "Settings LIVE PANEL badge consumes Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Exact resource")' "$application" \
+  || fail "Settings Exact resource prefix consumes Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Display bound reached at")' "$application" \
+  || fail "Settings display-bound notice consumes Semantics.text"
 grep -Fq 'hostedPanel(' "$model" \
   || fail "Settings owns a closed hosted-panel map"
 if grep -Fq 'plugins/' "$application"; then

@@ -276,6 +276,7 @@ Item {
           Ui.Badge {
             text: AdministrationModel.phaseBadge(root.queryState)
             tone: AdministrationModel.phaseTone(root.queryState)
+            semanticProfile: root.productProfile
             Layout.alignment: Qt.AlignTop
           }
         }
@@ -301,8 +302,8 @@ Item {
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: root.queryState.phase === "failed" || root.queryState.phase === "denied" ||
                 root.queryState.phase === "contract-mismatch" ? Accessible.AlertMessage : Accessible.Pane
-              Accessible.name: AdministrationModel.stateTitle(root.queryState)
-              Accessible.description: AdministrationModel.stateExplanation(root.queryState)
+              Accessible.name: Semantics.text(root.productProfile, AdministrationModel.stateTitle(root.queryState))
+              Accessible.description: Semantics.text(root.productProfile, AdministrationModel.stateExplanation(root.queryState))
 
               ColumnLayout {
                 id: statusColumn
@@ -377,7 +378,7 @@ Item {
                 Text {
                   textFormat: Text.PlainText
                   visible: root.queryState.selectedResourceId !== ""
-                  text: "Exact resource: " + AdministrationModel.clippedText(root.queryState.selectedResourceId, 180)
+                  text: Semantics.text(root.productProfile, "Exact resource") + ": " + AdministrationModel.clippedText(root.queryState.selectedResourceId, 180)
                   color: Tokens.text.disabled
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.caption
@@ -456,8 +457,8 @@ Item {
                   border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
                   border.width: Tokens.accessibility.highContrast ? 2 : 1
                   Accessible.role: Accessible.Pane
-                  Accessible.name: modelData.title + ". " + modelData.status
-                  Accessible.description: modelData.detail
+                  Accessible.name: Semantics.text(root.productProfile, modelData.title) + ". " + Semantics.text(root.productProfile, modelData.status)
+                  Accessible.description: Semantics.text(root.productProfile, modelData.detail)
 
                   ColumnLayout {
                     id: overviewCardColumn
@@ -485,6 +486,7 @@ Item {
                       Ui.Badge {
                         text: String(modelData.status).toUpperCase()
                         tone: modelData.tone
+                        semanticProfile: root.productProfile
                         Layout.alignment: Qt.AlignTop
                       }
                     }
@@ -517,7 +519,7 @@ Item {
                       text: Semantics.text(root.productProfile, "Open") + " " + Semantics.text(root.productProfile, modelData.title)
                       tooltipText: "Open the read-only " + modelData.title + " Administration route"
                       semanticProfile: root.productProfile
-                      accessibleDescription: modelData.status + ". " + modelData.detail
+                      accessibleDescription: Semantics.text(root.productProfile, modelData.status) + ". " + Semantics.text(root.productProfile, modelData.detail)
                       focusable: true
                       bordered: true
                       leftAlign: true
@@ -538,8 +540,8 @@ Item {
               border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
-              Accessible.name: "Administration coverage and unavailable changes"
-              Accessible.description: root.queryState.query ? root.queryState.query.coverage : ""
+              Accessible.name: Semantics.text(root.productProfile, "Administration coverage and unavailable changes")
+              Accessible.description: root.queryState.query ? Semantics.text(root.productProfile, root.queryState.query.coverage) : ""
 
               ColumnLayout {
                 id: coverageColumn
@@ -564,6 +566,7 @@ Item {
                   Ui.Badge {
                     text: root.terminationAuthorized ? "LIVE CONTROL" : "CHANGES UNAVAILABLE"
                     tone: root.terminationAuthorized ? "info" : "warning"
+                    semanticProfile: root.productProfile
                     Layout.alignment: Qt.AlignTop
                   }
                 }
@@ -613,6 +616,7 @@ Item {
                   required property var modelData
 
                   record: modelData
+                  semanticProfile: root.productProfile
                   selected: root.queryState.selectedResourceId !== "" &&
                     root.queryState.selectedResourceId === modelData.id
                   endTaskEnabled: root.terminationAuthorized && String(modelData.kind || "") === "process"
@@ -649,8 +653,10 @@ Item {
                 id: clippedNotice
                 anchors.fill: parent
                 anchors.margins: Style.space(10)
-                text: "Display bound reached at " + AdministrationModel.MAX_VISIBLE_RECORDS + " records. " +
-                  root.queryState.totalRecords + " records were reported; use an exact resource deep link for a narrower view."
+                text: Semantics.text(root.productProfile, "Display bound reached at") + " " + AdministrationModel.MAX_VISIBLE_RECORDS +
+                  Semantics.text(root.productProfile, " records. ") +
+                  root.queryState.totalRecords +
+                  Semantics.text(root.productProfile, " records were reported; use an exact resource deep link for a narrower view.")
                 color: Tokens.text.secondary
                 font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall

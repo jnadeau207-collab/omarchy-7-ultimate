@@ -12,6 +12,7 @@ Item {
   property var controller: null
   property var queryState: FilesModel.baseState("files.overview", {}, "offline")
 
+  readonly property var productProfile: host && host.productProfile ? host.productProfile : null
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
   readonly property bool busy: queryState.phase === "catalog-loading" || queryState.phase === "loading"
   readonly property bool canRetry: !busy && ["offline", "missing", "unavailable", "denied", "interrupted", "stale", "failed"].indexOf(queryState.phase) >= 0
@@ -395,7 +396,9 @@ Item {
       anchors.right: retryLink.left
       anchors.rightMargin: 10
       anchors.verticalCenter: parent.verticalCenter
-      text: root.operationMessage !== "" ? root.operationMessage : FilesModel.stateExplanation(root.queryState)
+      text: root.operationMessage !== ""
+        ? root.operationMessage
+        : Semantics.text(root.productProfile, FilesModel.stateExplanation(root.queryState))
       textFormat: Text.PlainText
       elide: Text.ElideRight
       color: Aero.textPrimary
@@ -409,7 +412,7 @@ Item {
       anchors.rightMargin: 10
       anchors.verticalCenter: parent.verticalCenter
       visible: root.canRetry
-      text: root.queryState.phase === "offline" ? "Reconnect" : "Try again"
+      text: Semantics.text(root.productProfile, root.queryState.phase === "offline" ? "Reconnect" : "Try again")
       textFormat: Text.PlainText
       color: Aero.linkText
       font.family: Aero.fontFamily
@@ -424,7 +427,7 @@ Item {
     }
 
     Accessible.role: Accessible.AlertMessage
-    Accessible.name: notice.visible ? FilesModel.stateTitle(root.queryState) : ""
+    Accessible.name: notice.visible ? Semantics.text(root.productProfile, FilesModel.stateTitle(root.queryState)) : ""
   }
 
   Files.ExplorerNavigationPane {

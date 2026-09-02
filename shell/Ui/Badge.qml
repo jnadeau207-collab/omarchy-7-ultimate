@@ -6,6 +6,7 @@ Rectangle {
 
   property int count: -1
   property string text: ""
+  property var semanticProfile: null
 
   property string tone: "accent"
 
@@ -24,7 +25,7 @@ Rectangle {
     textFormat: Text.PlainText
     id: label
     anchors.centerIn: parent
-    text: root.count >= 0 ? (root.count > 99 ? "99+" : String(root.count)) : root.text
+    text: root.count >= 0 ? (root.count > 99 ? "99+" : String(root.count)) : Semantics.text(root.semanticProfile, root.text)
     color: Tokens.surface.base
     font.family: Tokens.typography.family
     font.pixelSize: Style.font.bodySmall
