@@ -283,10 +283,10 @@
       "id": "parity.default-programs",
       "kind": "parity-job",
       "sourceLabel": "Default Programs",
-      "sourceStatus": "missing",
+      "sourceStatus": "prototype",
       "claim": "prototype",
       "capabilityIds": [
-        "apps.defaults.set",
+        "defaults.protocol.set",
         "files.associations.set"
       ],
       "humanRoute": {
@@ -841,8 +841,7 @@
       "sourceStatus": "missing as product",
       "claim": "missing",
       "capabilityIds": [
-        "files.associations.set",
-        "apps.defaults.set"
+        "files.associations.set"
       ],
       "humanRoute": {
         "status": "planned",
@@ -1608,7 +1607,7 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
-        "apps.defaults.set"
+        "defaults.protocol.set"
       ],
       "humanRoute": {
         "status": "visible",
