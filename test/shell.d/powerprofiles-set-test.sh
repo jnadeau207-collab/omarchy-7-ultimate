@@ -80,3 +80,13 @@ pass "battery service applies profiles through Omarchy command"
 rg -F 'omarchy-powerprofiles-set autodetect' "$ROOT/shell/plugins/menu/Menu.qml" >/dev/null ||
   fail "power profile menu persists selections through Omarchy command"
 pass "power profile menu persists selections through Omarchy command"
+
+rg -F 'actionProc.command = ["omarchy-powerprofiles-set", root.discharging ? "battery" : "ac", profile]' "$ROOT/shell/plugins/panels/power/Panel.qml" >/dev/null ||
+  fail "heritage Power panel applies profiles through Omarchy command"
+rg -F 'onClicked: root.setProfile(modelData)' "$ROOT/shell/plugins/panels/power/Panel.qml" >/dev/null ||
+  fail "heritage Power panel still offers profile buttons"
+rg -F 'hl.exec_cmd("omarchy-launch-shell")' "$ROOT/default/hypr/autostart.lua" >/dev/null ||
+  fail "heritage Power panel process inherits the Hyprland-launched shell"
+rg -F 'Hyprland runs in session.slice, as wayland-wm@hyprland.desktop.service' "$ROOT/default/systemd/user/app.slice.d/10-oomd.conf" >/dev/null ||
+  fail "heritage Power panel is not claimed to run in session-N.scope"
+pass "heritage QS Power leftover stays Process-backed and metal-unverified"

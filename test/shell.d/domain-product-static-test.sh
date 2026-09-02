@@ -349,6 +349,8 @@ if missing_api:
     raise SystemExit(f"settings-service-api missing live-writer split: {missing_api}")
 if "Power profile" not in api or "polkit" not in api:
     raise SystemExit("settings-service-api must name Power profile as a polkit residual")
+if "unverified on metal" not in api:
+    raise SystemExit("settings-service-api must name the Superbar QS Power leftover unverified on metal")
 if "Live typed writers are Sound volume, Network Wi-Fi radio, Power profile," in api:
     raise SystemExit("settings-service-api still lists Power profile among live typed writers")
 if "inspect-only" not in api.lower() and "hosted" not in api.lower():
