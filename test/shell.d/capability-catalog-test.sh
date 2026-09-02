@@ -710,6 +710,10 @@ if "Phase 5/9 exit criteria still open" not in gaps or "inspect inventory ≠ pr
     raise SystemExit("fleet-doctrine-gaps must keep Phase 5/9 exit open and inspect inventory not product MMC")
 if "apps.defaults.set" not in gaps or "leftover `apps.defaults.set`" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name leftover apps.defaults.set as closed invent")
+if "3b0b8b39b35e" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #38 tip parent for the project-ultimate honesty scrub")
+if "plans/project-ultimate.md" not in gaps or "planned with an empty path" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the project-ultimate Superbar process.inspect underclaim close")
 
 def parity_notes(label):
     prefix = f"| {label} |"
@@ -896,6 +900,28 @@ for row in (gt06_json.get("interaction_tables") or {}).get("administration") or 
     mapped = str(row.get("omarchy") or "")
     if mapped.startswith("Phase 9") and "Administration >" not in mapped:
         raise SystemExit(f"06 JSON administration still treats Phase 9 as an empty MMC noun: {row}")
+
+plan = (root / "plans/project-ultimate.md").read_text(encoding="utf-8")
+if "planned with an empty path" in plan:
+    raise SystemExit("project-ultimate still underclaims process.inspect as planned with an empty path")
+if "stay planned Phase 9 destinations" in plan:
+    raise SystemExit("project-ultimate still underclaims Administration readers as planned Phase 9 destinations")
+if "Administration > Processes" not in plan:
+    raise SystemExit("project-ultimate must name Administration > Processes visible host")
+if "claim stays missing" not in plan:
+    raise SystemExit("project-ultimate must keep process.inspect / Administration reader claim missing")
+if "honest-unavailable as Task Manager" not in plan:
+    raise SystemExit("project-ultimate must keep process.inspect honest-unavailable as Task Manager")
+if "Phase 9 exit criteria still open" not in plan:
+    raise SystemExit("project-ultimate must keep Phase 9 exit still open")
+if "task manager present" in plan.lower() and "no task manager present" not in plan.lower():
+    raise SystemExit("project-ultimate invented Task Manager present")
+if "End Task LIVE" in plan and "no End Task LIVE" not in plan:
+    raise SystemExit("project-ultimate invented End Task LIVE")
+if "METAL_HEAD closed" in plan:
+    raise SystemExit("project-ultimate invented METAL_HEAD closed")
+if "events.subscribe" in plan:
+    raise SystemExit("project-ultimate invented events.subscribe")
 
 if "files.folder.create" in by_id:
     raise SystemExit("files.folder.create remains as a catalog invent")
