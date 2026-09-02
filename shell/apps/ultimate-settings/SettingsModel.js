@@ -69,7 +69,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "personalization.inspect",
     supportsResource: false,
-    coverage: "No code-owned personalization provider is registered. Theme, wallpaper, density, cursor, and motion controls are not represented as live state."
+    coverage: "Settings hosts the existing image picker for theme packs and wallpapers. No code-owned personalization.provider is registered. Density, cursor, motion, and a typed full theme service remain unavailable from Settings."
   },
   {
     routeId: "settings.apps.overview",
@@ -1161,7 +1161,7 @@ function hostedPanel(routeId) {
     source: "Ui/SettingsPersonalizationHost.qml",
     pluginId: "omarchy.image-picker",
     label: "Live Personalization picker",
-    honesty: "This page hosts the existing image picker for theme packs and wallpapers. Typed Personalization service remains Phase 5."
+    honesty: "This page hosts the existing image picker for theme packs and wallpapers. Typed personalization.provider writers for density, cursor, motion, and a full theme service remain unavailable."
   }
   return null
 }

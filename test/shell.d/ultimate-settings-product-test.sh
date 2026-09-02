@@ -84,8 +84,25 @@ for (const [routeId, source, pluginId] of hosted) {
   assert(spec !== null, `${routeId} hosts an existing panel`)
   assertEqual(spec.source, source, `${routeId} hosts ${source}`)
   assertEqual(spec.pluginId, pluginId, `${routeId} names ${pluginId}`)
-  assert(String(spec.honesty).includes('Phase 5'), `${routeId} labels typed services as Phase 5`)
+  assert(!/phase 5/i.test(String(spec.honesty)), `${routeId} honesty does not invent a Phase 5 fence`)
+  assert(!/remains phase 5/i.test(String(spec.honesty)), `${routeId} honesty does not invent a remains-Phase-5 fence`)
+  assert(String(spec.honesty).includes('image picker'), `${routeId} honesty names the hosted picker`)
+  assert(String(spec.honesty).includes('remain unavailable'), `${routeId} honesty still refuses typed personalization writers`)
+  assert(!/LIVE CONTROL|present invent|typed writer inventory/i.test(String(spec.honesty)), `${routeId} honesty does not invent typed writer LIVE CONTROL`)
 }
+const personalizationQuery = Model.queryForRoute('settings.personalization.overview')
+assert(!/phase 5/i.test(String(personalizationQuery.coverage)), 'Personalization coverage does not invent a Phase 5 fence')
+assert(!/remains phase 5/i.test(String(personalizationQuery.coverage)), 'Personalization coverage does not invent a remains-Phase-5 fence')
+assert(!String(personalizationQuery.coverage).includes('not represented as live state'), 'Personalization coverage does not underclaim the hosted picker as non-live')
+assert(String(personalizationQuery.coverage).includes('image picker'), 'Personalization coverage names the hosted picker')
+assert(String(personalizationQuery.coverage).includes('No code-owned personalization.provider is registered'), 'Personalization coverage does not invent a registered typed writer inventory')
+assert(String(personalizationQuery.coverage).includes('remain unavailable'), 'Personalization coverage still refuses density, cursor, motion, and full theme writers')
+assertEqual(Model.coverageBadge('settings.personalization.overview'), 'CHANGES UNAVAILABLE', 'Personalization coverage badge stays CHANGES UNAVAILABLE; hosted picker is not typed LIVE CONTROL')
+const parityJobs = JSON.parse(fs.readFileSync(path.join(root, 'default/ultimate/parity/jobs.json'), 'utf8'))
+const personalizationJob = (parityJobs.jobs || []).find(job => job.id === 'parity.personalization')
+assert(personalizationJob, 'parity.personalization stays in the job catalog')
+assertEqual(personalizationJob.claim, 'prototype', 'Personalization job claim stays prototype')
+assertEqual(personalizationJob.sourceStatus, 'prototype', 'Personalization sourceStatus stays prototype')
 const liveWriterRoutes = [
   'settings.audio.overview',
   'settings.network.overview',
@@ -585,6 +602,15 @@ pass "Settings coverage badge, declared ops, and footer match live writers"
 
 if grep -Eiq 'typed (settings |domain )?writers remain phase 5' "$ROOT/plans/project-ultimate.md" "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
   fail "plan and PARITY no longer blanket typed writers as remaining Phase 5"
+fi
+if grep -Eiq 'typed personalization service (is |remains )?phase 5|personalization service remains phase 5' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md" "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
+  fail "PARITY and Settings Personalization no longer invent a Phase 5 fence"
+fi
+if grep -Fq 'Ease of Access engine remains Phase 5' "$ROOT/WINDOWS_7_ULTIMATE_PARITY.md"; then
+  fail "PARITY Accessibility no longer invents a Phase 5 fence"
+fi
+if grep -Fq 'not represented as live state' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js"; then
+  fail "Personalization coverage no longer underclaims the hosted picker as non-live"
 fi
 if grep -Fq 'Recycle is Phase 6' "$ROOT/plans/project-ultimate.md"; then
   fail "Current position no longer frames Recycle as Phase-6-only while Files trash/restore UI exists"
