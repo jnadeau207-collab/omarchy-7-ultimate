@@ -29,7 +29,6 @@ Item {
   readonly property bool operationBusy: operationStage !== ""
   readonly property string createLocationId: FilesModel.createLocationForRoute(host ? host.currentRoute : "")
   readonly property bool createVisible: createLocationId !== ""
-  readonly property bool restoreVisible: FilesModel.isTrashRoute(host ? host.currentRoute : "")
   readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady
 
   property var history: []
@@ -191,22 +190,6 @@ Item {
     return base
   }
 
-  function restoreEntry(record) {
-    if (!host || operationBusy || !restoreVisible) return
-    if (!record || String(record.kind || "") !== "entry") return
-    root.operationName = String(record.title || "this entry")
-    root.operationMessage = ""
-    root.operationStage = "preflight"
-    root.operationKind = "restore"
-    root.operationRequestId = host.requestFabric("operation.preflight", {
-      provider: "files.provider",
-      action: "trash.restore",
-      arguments: { entryId: String(record.id) },
-      idempotencyKey: "files.trash.restore." + String(record.id)
-    })
-    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
-  }
-
   function trashEntry(record) {
     if (!host || operationBusy || createLocationId === "") return
     if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return
@@ -267,8 +250,8 @@ Item {
     }
     if (root.operationStage === "start") {
       var succeeded = String(result.status || "") === "succeeded"
-      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "restore" ? "Restored " : "Created "
-      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "restore" ? "Restoring " : "Creating "
+      var verb = root.operationKind === "trash" ? "Moved " : "Created "
+      var gerund = root.operationKind === "trash" ? "Moving " : "Creating "
       var tail = root.operationKind === "trash" ? " to the Recycle Bin." : "."
       root.resetOperation(succeeded
         ? verb + root.operationName + tail
@@ -280,12 +263,7 @@ Item {
   function commandActions() {
     var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
     if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
-    if (root.restoreVisible) {
-      list.push({
-        key: "restore", label: "Restore this item", dropdown: false,
-        enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry"
-      })
-    } else if (root.createVisible) {
+    if (root.createVisible) {
       list.push({
         key: "delete", label: "Delete", dropdown: false,
         enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
@@ -299,7 +277,6 @@ Item {
     if (key === "organize") { organizeMenu.visible ? organizeMenu.close() : organizeMenu.open(); return }
     if (key === "new-folder") { root.createFolder(root.nextFolderName()); return }
     if (key === "delete") { root.trashEntry(root.selectedRecord); return }
-    if (key === "restore") { root.restoreEntry(root.selectedRecord); return }
     if (key === "properties") { propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
@@ -548,7 +525,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder, Trash, and Restore run through files.provider. Empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder and Trash run through files.provider. Restore, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -576,7 +553,6 @@ Item {
         model: [
           { key: "new-folder", label: "New folder", enabled: root.createEnabled },
           { key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy },
-          { key: "restore", label: "Restore this item", enabled: root.restoreVisible && root.selectedRecord !== null && !root.operationBusy },
           { key: "refresh", label: "Refresh", enabled: true },
           { key: "properties", label: "Properties", enabled: root.selectedRecord !== null }
         ]
@@ -644,7 +620,6 @@ Item {
         model: [
           { key: "open", label: "Open", enabled: root.selectedRecord !== null },
           { key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy },
-          { key: "restore", label: "Restore", enabled: root.restoreVisible && root.selectedRecord !== null && !root.operationBusy },
           { key: "properties", label: "Properties", enabled: root.selectedRecord !== null }
         ]
 
@@ -762,7 +737,6 @@ Item {
           selected: false
           trashable: false
           trashBusy: root.operationBusy
-          restorable: false
         }
       }
 

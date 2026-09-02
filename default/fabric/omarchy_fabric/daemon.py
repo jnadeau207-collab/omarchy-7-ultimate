@@ -706,22 +706,18 @@ class FabricDaemon:
         return value
 
     @staticmethod
-    def _restore_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
-        current = preflight["currentState"]
-        proposed = preflight["proposedState"]
-        added = [name for name in proposed["names"] if name not in set(current["names"])]
-        if len(added) != 1:
+    def _directory_listing(state: Mapping[str, Any]) -> Mapping[str, Any]:
+        value = state.get("value") if isinstance(state.get("value"), Mapping) else state
+        names = value.get("names") if isinstance(value, Mapping) else None
+        location_id = value.get("locationId") if isinstance(value, Mapping) else None
+        parent = value.get("parentRelativePath") if isinstance(value, Mapping) else None
+        if not isinstance(names, list) or not isinstance(location_id, str) or not isinstance(parent, str):
             raise FabricError(
                 "operation.invalid-arguments",
                 "Fabric operation arguments are invalid",
-                "The restore plan does not return exactly one entry to its directory.",
+                "The directory plan does not carry a scoped listing.",
             )
-        return {
-            "resourceId": preflight["resource"]["id"],
-            "entryId": preflight["normalizedArguments"]["entryId"],
-            "locationId": current["locationId"],
-            "entryRelativePath": added[0],
-        }
+        return value
     def _operation_mime(self, value: Any) -> str:
         if not isinstance(value, str) or not 3 <= len(value) <= 160 or value.count("/") != 1:
             raise FabricError(
@@ -771,8 +767,8 @@ class FabricDaemon:
         }
     @staticmethod
     def _trash_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
-        current = preflight["currentState"]
-        proposed = preflight["proposedState"]
+        current = FabricDaemon._directory_listing(preflight["currentState"])
+        proposed = FabricDaemon._directory_listing(preflight["proposedState"])
         removed = [name for name in current["names"] if name not in set(proposed["names"])]
         if len(removed) != 1:
             raise FabricError(
@@ -994,16 +990,6 @@ class FabricDaemon:
                         required={"resourceId": stable_token, "profile": self._operation_profile},
                     ),
                     IntentDefinition(
-                        "files.trash.restore",
-                        FixedArgvCommand(str(helper), ("files-trash-restore",)),
-                        required={
-                            "resourceId": stable_token,
-                            "entryId": stable_token,
-                            "locationId": stable_token,
-                            "entryRelativePath": self._operation_entry_relative,
-                        },
-                    ),
-                    IntentDefinition(
                         "defaults.mime.set",
                         FixedArgvCommand(str(helper), ("defaults-mime-set",)),
                         required={
@@ -1100,12 +1086,6 @@ class FabricDaemon:
                         "resourceId": preflight["resource"]["id"],
                         "profile": preflight["normalizedArguments"]["profile"],
                     },
-                ),
-                OperationDefinition(
-                    "files.provider",
-                    "trash.restore",
-                    "files.trash.restore",
-                    self._restore_payload,
                 ),
                 OperationDefinition(
                     "defaults.provider",
