@@ -88,6 +88,7 @@ Item {
         spacing: Style.space(14)
 
         Text {
+          textFormat: Text.PlainText
           text: Semantics.text(root.productProfile, "Set up this computer")
           color: Tokens.text.primary
           font.family: Tokens.typography.family
@@ -98,6 +99,7 @@ Item {
         }
 
         Text {
+          textFormat: Text.PlainText
           text: Semantics.text(root.productProfile, "Step") + " " + (root.stepIndex + 1) + " " +
             Semantics.text(root.productProfile, "of") + " " + root.steps.length
           color: Tokens.text.secondary
@@ -135,6 +137,7 @@ Item {
                 anchors.right: parent.right
                 anchors.leftMargin: Style.space(10)
                 anchors.rightMargin: Style.space(10)
+                textFormat: Text.PlainText
                 text: Semantics.text(root.productProfile, modelData.title)
                 color: active ? Tokens.text.primary : done ? Tokens.text.secondary : Tokens.text.disabled
                 font.family: Tokens.typography.family
@@ -157,6 +160,7 @@ Item {
       spacing: Style.space(16)
 
       Text {
+        textFormat: Text.PlainText
         text: Semantics.text(root.productProfile, root.currentRoute ? root.currentRoute.title : "Setup")
         color: Tokens.text.primary
         font.family: Tokens.typography.family
@@ -167,6 +171,7 @@ Item {
       }
 
       Text {
+        textFormat: Text.PlainText
         text: Semantics.text(root.productProfile, root.currentRoute ? root.currentRoute.description : "")
         color: Tokens.text.secondary
         font.family: Tokens.typography.family
@@ -193,6 +198,7 @@ Item {
             spacing: Style.space(8)
 
             Text {
+              textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, "What this computer reports")
               color: Tokens.text.primary
               font.family: Tokens.typography.family

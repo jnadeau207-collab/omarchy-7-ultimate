@@ -107,6 +107,7 @@ Panel {
         Text {
           visible: root.rows.length === 0
           width: parent.width
+          textFormat: Text.PlainText
           text: Semantics.text(root.productProfile, "No recent notifications")
           color: Tokens.text.secondary
           font.family: root.contentFontFamily

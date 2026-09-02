@@ -207,6 +207,7 @@ Item {
         spacing: 12
 
         Text {
+          textFormat: Text.PlainText
           text: root.chromeText("Task View")
           color: Tokens.text.primary
           font.pixelSize: Style.font.title
@@ -252,6 +253,7 @@ Item {
             border.width: 1
             Text {
               anchors.centerIn: parent
+              textFormat: Text.PlainText
               text: root.chromeText("New")
               color: Tokens.text.primary
               font.pixelSize: Style.font.bodySmall
@@ -310,6 +312,7 @@ Item {
                 color: Tokens.surface.base
                 Text {
                   anchors.centerIn: parent
+                  textFormat: Text.PlainText
                   text: root.chromeText(modelData.minimized ? "Minimized" : "No preview")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
