@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:association-inspect-arguments:v1",
+  "x-omarchy-version": "v1",
+  "title": "Defaults association inspect arguments",
+  "type": "object",
+  "required": [
+    "kind",
+    "key"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": [
+        "mime",
+        "protocol"
+      ]
+    },
+    "key": {
+      "oneOf": [
+        {
+          "$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/mimeType"
+        },
+        {
+          "$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/scheme"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

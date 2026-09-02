@@ -724,6 +724,7 @@
     ],
     "defaults_writer": "defaults.protocol.set",
     "defaults_scope": "browser LIVE only",
+    "defaults_mime_plane": "defaults.mime.set write-plane, no Settings LIVE",
     "files_associations": "missing/planned MIME",
     "settings_power_live": "refused",
     "accessibility_panel": "missing",

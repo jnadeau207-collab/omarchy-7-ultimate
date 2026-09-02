@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:defaults:association-inspect-result:v1",
+  "x-omarchy-version": "v1",
+  "title": "Defaults association inspect result",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "provider",
+    "providerVersion",
+    "action",
+    "availability",
+    "revision",
+    "state"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "v0"
+    },
+    "provider": {
+      "const": "defaults.provider"
+    },
+    "providerVersion": {
+      "const": "v0"
+    },
+    "action": {
+      "const": "association.inspect"
+    },
+    "availability": {
+      "$ref": "urn:omarchy:fabric:provider:defaults:inventory-result:v0#/$defs/availability"
+    },
+    "revision": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "urn:omarchy:fabric:provider:defaults:operation-state:v0#/$defs/revision"
+        }
+      ]
+    },
+    "state": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "urn:omarchy:fabric:provider:defaults:association-state:v1#/$defs/association"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

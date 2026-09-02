@@ -16,7 +16,7 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 
 Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Administrator’s Reference Control Panel categories, Omarchy `WINDOWS_7_ULTIMATE_PARITY.md`, `default/ultimate/parity/jobs.json`, `catalog-provider-readers-v0.json`, `catalog-system-jobs-v0.json`, Settings/Administration `routes-v1.json`.
 
-**Product honesty after #35–#39:** Administration inspect readers are **visible** on live Administration titles after #36; `availability.claim` stays **missing**; Phase 9 exit still open; inspect ≠ MMC product present. `process.inspect` is **visible** on `Administration > Processes`; claim **missing**; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`); do not invent Task Manager present / End Task LIVE. Writers (`firewall.manage`, `backup.manage`, start/stop, …) stay planned/unavailable. Default Programs writer is `defaults.protocol.set` (browser LIVE only); `files.associations.set` stays missing/planned MIME. Catalog humanRoutes already published visible; residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty. Catalog caught up for Admin inspect visibility (#35–#36). Product remains **REJECTED**. Do not invent Accessibility panel. Software Center missing as product. Settings Power LIVE refused. Settings coverage-badge PIXEL leftover CLOSED on `d3f4841a`. QS Power METAL_HEAD OPEN (metal FAIL on tip `20484de6`; leftover was unverified on metal after PR #31). Do not claim the heritage QS Power panel works on this metal.
+**Product honesty after #35–#39:** Administration inspect readers are **visible** on live Administration titles after #36; `availability.claim` stays **missing**; Phase 9 exit still open; inspect ≠ MMC product present. `process.inspect` is **visible** on `Administration > Processes`; claim **missing**; honest-unavailable as Task Manager product; End Task unauthorized (`terminationAuthorized=false`); do not invent Task Manager present / End Task LIVE. Writers (`firewall.manage`, `backup.manage`, start/stop, …) stay planned/unavailable. Default Programs writer is `defaults.protocol.set` (browser LIVE only); `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; `files.associations.set` stays missing/planned MIME. Catalog humanRoutes already published visible; residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty. Catalog caught up for Admin inspect visibility (#35–#36). Product remains **REJECTED**. Do not invent Accessibility panel. Software Center missing as product. Settings Power LIVE refused. Settings coverage-badge PIXEL leftover CLOSED on `d3f4841a`. QS Power METAL_HEAD OPEN (metal FAIL on tip `20484de6`; leftover was unverified on metal after PR #31). Do not claim the heritage QS Power panel works on this metal.
 
 ---
 
@@ -37,7 +37,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Control Panel home | `org.omarchy.Settings` home + Start search Settings hits |
 | Control Panel icon applets | Settings routes, Superbar/QS panels, Administration, Files, Start places |
 | Administrative Tools folder | `org.omarchy.Administration` (+ MMC-class tools still missing as product; inspect hosts visible, claim missing) |
-| Default Programs | Settings → Apps (`defaults.provider`); `defaults.protocol.set` browser LIVE only; MIME associations still missing/planned |
+| Default Programs | Settings → Apps (`defaults.provider`); `defaults.protocol.set` browser LIVE only; `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; MIME associations still missing/planned |
 | Recycle Bin | Files Trash routes / `files.trash.*` plane (catalog `files.trash.manage` still missing) |
 
 ---
@@ -149,7 +149,7 @@ Win7 **Default Programs** (`Microsoft.DefaultPrograms`) exposes:
 | Win7 sub-job | Omarchy today | Catalog / jobs honesty |
 | --- | --- | --- |
 | Change default browser (protocol http/https) | Settings → Apps drives `defaults.provider` `protocol.set` (typed plane) | `windows-native.19` claim **prototype** (not present); `parity.default-programs` claim **prototype** but `sourceStatus` still **missing**; writer is `defaults.protocol.set` (browser LIVE only) |
-| MIME / file associations | Plane: `defaults.mime.set` exists; Settings MIME UI not a full Default Programs | `files.associations.set` stays missing/planned MIME; File associations parity **missing as product** — do **not** invent MIME Default Programs LIVE |
+| MIME / file associations | Plane: `defaults.mime.set` write plane is reachable (`defaults-mime-set` helper; preflight OK; risk low); `association.inspect` is published for durable apply re-read; Settings MIME UI not a full Default Programs | `files.associations.set` stays missing/planned MIME; File associations parity **missing as product** — Settings does not offer MIME LIVE CONTROL — do **not** invent MIME Default Programs LIVE |
 | AutoPlay | **Missing** | No catalog |
 | SPAD / program access | **Missing** | No catalog |
 | Catalog ID used by jobs | Settings → Apps `defaults.protocol.set` | Writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present. MIME stays missing/planned. |
@@ -286,13 +286,13 @@ Do not mark claim=`present` to “close” these. Residual = product MMC / mutat
 | Visible Administration inspect hosts (claim missing) | ~10 | Processes, Services, Device Manager, Storage, Printers and scanners, Backup, Scheduled tasks, Troubleshooting, Firewall, User accounts — Phase 9 exit still open; inspect ≠ MMC product present |
 | Honest missing | Accessibility page, System information jump cleared | Catalog empty paths; Accessibility panel missing as product |
 | Hard gaps (no product + missing jobs) | BitLocker, Credential Manager, HomeGroup, Internet Options, AutoPlay, Fonts, Folder Options, Speech, Defender, Mobility Center, Remote Desktop, Parental Controls, … | Ultimate SKU still incomplete |
-| Residual honesty (product MMC / mutation still missing) | Recycle Bin vs `files.trash.manage`; Task Manager present / End Task LIVE; MIME Default Programs; writers planned/unavailable; Agent Center claim stays prototype (do not invent claim=`present`) | Catalog caught up for Admin inspect visibility (#35–#36); Default Programs writer is `defaults.protocol.set` (browser LIVE only); `parity.agent-center` claim matches sourceStatus/PARITY prototype |
+| Residual honesty (product MMC / mutation still missing) | Recycle Bin vs `files.trash.manage`; Task Manager present / End Task LIVE; MIME Default Programs; writers planned/unavailable; Agent Center claim stays prototype (do not invent claim=`present`) | Catalog caught up for Admin inspect visibility (#35–#36); Default Programs writer is `defaults.protocol.set` (browser LIVE only); `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; `parity.agent-center` claim matches sourceStatus/PARITY prototype |
 
 ---
 
 ## 9. Suggested next catalog work (for Lead / Doctrine, not auto-executed)
 
-1. Keep **Default Programs** MIME withheld. Writer is `defaults.protocol.set` (browser LIVE only). Do not invent `apps.provider` present or MIME LIVE.  
+1. Keep **Default Programs** MIME withheld. Writer is `defaults.protocol.set` (browser LIVE only). `defaults.mime.set` write plane is reachable. Do not invent `apps.provider` present or MIME LIVE.  
 2. Sync **PARITY.md** Default Programs / Language / Recycle / Update writer prose to jobs.  
 3. Administration humanRoutes already published visible. Residual = product MMC / mutation / Task Manager present still missing, not catalog planned-empty. Do not invent Task Manager present / End Task LIVE / MMC product from inspect hosts.  
 4. Raise or withhold **Recycle** catalog claim to match Files Trash.  

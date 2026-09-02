@@ -70,6 +70,8 @@ SCHEMA_FILES = (
     "defaults-protocol-query-arguments-v0.json",
     "defaults-mime-set-arguments-v0.json",
     "defaults-protocol-set-arguments-v0.json",
+    "defaults-association-inspect-arguments-v1.json",
+    "defaults-association-inspect-result-v1.json",
     "defaults-association-preflight-v1.json",
     "defaults-association-result-v1.json",
     "defaults-association-state-v1.json",
@@ -766,6 +768,7 @@ def _provider(backend: Any) -> StateDomainProvider:
         state_validator=validate_database,
         read_handlers=READ_HANDLERS,
         operations=OPERATIONS,
+        read_completeness_codes=READ_COMPLETENESS_CODES,
         scoped_resource_kind="defaults.association",
     )
 

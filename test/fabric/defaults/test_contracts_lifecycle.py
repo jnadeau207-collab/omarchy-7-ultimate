@@ -29,6 +29,17 @@ class DefaultsContractLifecycleTests(unittest.IsolatedAsyncioTestCase):
         registry.register(provider)
         query = await registry.read("defaults.provider", "mime.query", {"mimeType": "text/plain"})
         self.assertEqual(query["capability"], "defaults.mime.query")
+        scoped = await registry.read("defaults.provider", "association.inspect", {"kind": "mime", "key": "text/plain"})
+        self.assertEqual(scoped["capability"], "defaults.inspect")
+        self.assertEqual(scoped["value"]["action"], "association.inspect")
+        self.assertEqual(scoped["value"]["state"]["kind"], "mime")
+        self.assertEqual(scoped["value"]["state"]["key"], "text/plain")
+        self.assertEqual(scoped["value"]["state"]["defaultAppId"], query["value"]["application"]["id"])
+        missing = await registry.read("defaults.provider", "association.inspect", {"kind": "mime", "key": "image/gif"})
+        self.assertIsNone(missing["value"]["state"])
+        with self.assertRaises(FabricError) as unpublished:
+            await registry.read("defaults.provider", "association.missing", {"kind": "mime", "key": "text/plain"})
+        self.assertEqual(unpublished.exception.code, "provider.action-unavailable")
         alternate = next(app for app in provider.backend._state["applications"] if app["desktopId"] == "alternate.desktop")
         plan = await registry.preflight(
             "defaults.provider",
@@ -48,9 +59,18 @@ class DefaultsContractLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(mime["application"]["desktopId"], "editor.desktop")
         protocol = await provider.read("protocol.query", {"scheme": "https"})
         self.assertEqual(protocol["application"]["desktopId"], "browser.desktop")
+        scoped = await provider.read("association.inspect", {"kind": "protocol", "key": "https"})
+        self.assertEqual(scoped["action"], "association.inspect")
+        self.assertEqual(scoped["state"], {
+            "kind": "protocol",
+            "key": "https",
+            "defaultAppId": protocol["application"]["id"],
+        })
         absent = await provider.read("protocol.query", {"scheme": "gemini"})
         self.assertIsNone(absent["association"])
         self.assertIsNone(absent["application"])
+        missing = await provider.read("association.inspect", {"kind": "protocol", "key": "gemini"})
+        self.assertIsNone(missing["state"])
 
     async def exercise(self, action: str, arguments: dict[str, object], assertion) -> None:
         provider = defaults.build_fake_provider(clone_database())
