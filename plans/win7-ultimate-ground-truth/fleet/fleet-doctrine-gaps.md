@@ -224,7 +224,8 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
   | Settings Network Wi-Fi radio (`wifi.set-enabled`) | `network.manage` | partial |
   | Settings Power inspect | `power.inspect` | partial |
   | Settings Power profile (`profile.set`) write plane, not Settings LIVE | `power.profile.set` | partial |
-  | Settings Display brightness (`brightness.set`) | `display.configure` | partial |
+  | Settings Display brightness (`brightness.set`) | `display.brightness.set` | partial |
+  | Superbar display configure leftover (scale / arrangement) | `display.configure` | partial |
   | Settings Input layout (`keyboard-layout.set`) | `input.keyboard-layout.set` | partial |
   | Settings Apps default browser (`protocol.set`) | `defaults.protocol.set` | partial |
   | Files New folder (`directory.create`) | `files.directory.create` | partial |
