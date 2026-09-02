@@ -89,4 +89,4 @@ rg -F 'hl.exec_cmd("omarchy-launch-shell")' "$ROOT/default/hypr/autostart.lua" >
   fail "heritage Power panel process inherits the Hyprland-launched shell"
 rg -F 'Hyprland runs in session.slice, as wayland-wm@hyprland.desktop.service' "$ROOT/default/systemd/user/app.slice.d/10-oomd.conf" >/dev/null ||
   fail "heritage Power panel is not claimed to run in session-N.scope"
-pass "heritage QS Power leftover stays Process-backed and metal-unverified"
+pass "heritage QS Power leftover stays Process-backed; leftover was unverified on metal after PR #31; QS Power METAL_HEAD OPEN after metal FAIL on tip 20484de6; Settings Power LIVE refused"

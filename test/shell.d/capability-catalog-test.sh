@@ -761,6 +761,10 @@ if "Settings badge METAL_HEAD residual OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the Settings badge METAL_HEAD residual OPEN underclaim close")
 if "Product docs / handoffs QS Power leftover after PR #44" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the product-docs QS Power unverified-without-FAIL underclaim close")
+if "62c95ebae058" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #45 tip parent for the powerprofiles-set-test QS Power honesty twin")
+if "Process-test QS Power leftover after PR #45" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the powerprofiles-set-test QS Power underclaim close")
 
 def parity_notes(label):
     prefix = f"| {label} |"
