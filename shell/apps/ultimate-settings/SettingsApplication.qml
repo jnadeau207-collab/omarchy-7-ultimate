@@ -46,6 +46,40 @@ Item {
   readonly property var powerProfiles: powerResource && powerResource.profiles ? powerResource.profiles : []
   readonly property string activePowerProfile: powerResource ? String(powerResource.activeProfile || "") : ""
 
+  readonly property var browserResource: firstBrowserResource()
+  readonly property var browserOptions: browserResource ? SettingsModel.browserCandidates(browserResource, queryState.records) : []
+  readonly property string activeBrowserId: browserResource ? String(browserResource.defaultAppId || "") : ""
+  property string operationBrowserId: ""
+
+  function firstBrowserResource() {
+    if (!currentRoute || currentRoute.id !== "settings.apps.overview") return null
+    var record = SettingsModel.browserAssociation(queryState.records)
+    return record && record.writable ? record : null
+  }
+
+  function applyDefaultBrowser(appId) {
+    if (!host || operationBusy) return
+    var record = firstBrowserResource()
+    if (!record || record.candidateAppIds.indexOf(appId) < 0) return
+    root.operationKind = "browser"
+    root.operationBrowserId = String(appId)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "defaults.provider",
+      action: "protocol.set",
+      arguments: { scheme: record.associationKey, appId: root.operationBrowserId },
+      idempotencyKey: "settings.default-browser." + root.operationBrowserId + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
+  }
+
+  function browserLabel(appId) {
+    for (var i = 0; i < browserOptions.length; i++) {
+      if (browserOptions[i].id === appId) return browserOptions[i].label
+    }
+    return "this application"
+  }
   readonly property var radioResource: firstRadioResource()
   readonly property bool radioEnabled: radioResource ? radioResource.radioEnabled === true : false
   readonly property bool radioBlocked: radioResource ? radioResource.radioBlocked === true : false
@@ -234,6 +268,8 @@ Item {
           ? "Brightness set to " + root.operationTarget + " percent."
           : root.operationKind === "input"
             ? "Keyboard layout set to " + root.keyboardLayouts[root.operationLayoutIndex] + "."
+            : root.operationKind === "browser"
+              ? "Default browser set to " + root.browserLabel(root.operationBrowserId) + "."
             : root.operationKind === "network"
               ? "Wi-Fi turned " + (root.operationRadioTarget ? "on" : "off") + "."
             : "Output volume set to " + root.operationTarget + " percent."
@@ -243,6 +279,8 @@ Item {
           ? "The brightness change ended as " + String(result.status || "unknown") + "."
           : root.operationKind === "input"
             ? "The keyboard layout change ended as " + String(result.status || "unknown") + "."
+            : root.operationKind === "browser"
+              ? "The default browser change ended as " + String(result.status || "unknown") + "."
             : root.operationKind === "network"
               ? "The Wi-Fi change ended as " + String(result.status || "unknown") + "."
             : "The volume change ended as " + String(result.status || "unknown") + "."
@@ -759,6 +797,77 @@ Item {
               }
             }
 
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.apps.overview" && root.browserOptions.length > 1
+              Layout.fillWidth: true
+              implicitHeight: browserColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: "Default browser"
+
+              ColumnLayout {
+                id: browserColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    textFormat: Text.PlainText
+                    text: Semantics.text(root.productProfile, "Default browser")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: root.operationBusy && root.operationKind === "browser" ? "APPLYING" : "LIVE CONTROL"
+                    tone: root.operationBusy && root.operationKind === "browser" ? "info" : "success"
+                  }
+                }
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Repeater {
+                    model: root.browserOptions
+                    delegate: Ui.Button {
+                      required property var modelData
+                      text: modelData.label
+                      focusable: true
+                      bordered: true
+                      enabled: !root.operationBusy && modelData.id !== root.activeBrowserId
+                      accessibleDescription: "Set the default browser through defaults.provider protocol.set"
+                      onClicked: root.applyDefaultBrowser(modelData.id)
+                    }
+                  }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: root.operationMessage !== "" && root.operationKind === "browser"
+                    ? root.operationMessage
+                    : Semantics.text(root.productProfile,
+                        "Only applications that declare they handle web links are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.network.overview" && root.radioResource !== null
               Layout.fillWidth: true

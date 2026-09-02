@@ -41,6 +41,17 @@ if grep -Eq 'nmcli|rfkill' "$application"; then
 fi
 pass "Settings drives wifi.set-enabled through the typed operation plane only"
 
+grep -Fq 'provider: "defaults.provider"' "$application" || fail "Settings sets the browser through defaults.provider"
+grep -Fq 'action: "protocol.set"' "$application" || fail "Settings uses the typed protocol.set action"
+grep -Fq 'if (!record || record.candidateAppIds.indexOf(appId) < 0) return' "$application" ||
+  fail "Settings refuses an application the association does not list as a candidate"
+grep -Fq 'return record && record.writable ? record : null' "$application" ||
+  fail "Settings offers the browser control only for a writable association"
+if grep -Eq 'xdg-mime|xdg-settings' "$application"; then
+  fail "Settings assembles a defaults shell string instead of the typed verb"
+fi
+pass "Settings drives protocol.set through the typed operation plane only"
+
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-settings/SettingsModel.js')
 
@@ -92,6 +103,25 @@ assertEqual(displayRecord({ available: false, percent: 40 }).brightnessAvailable
 assertEqual(displayRecord({ available: true, percent: 900 }).brightnessAvailable, false, 'an out-of-range percent is refused')
 assertEqual(displayRecord({ available: true, percent: '40' }).brightnessAvailable, false, 'a non-numeric percent is refused')
 assertEqual(displayRecord({}).brightnessPercent, -1, 'a host reporting no brightness claims none')
+
+const browserAssoc = Model.normalizeAssociation({ id: 'defaults.association.a', kind: 'protocol', key: 'https', status: 'configured', defaultAppId: 'defaults.app.x', writable: true, candidateAppIds: ['defaults.app.x', 'defaults.app.y'] }, 0)
+const browserApps = [
+  Model.normalizeApplication({ id: 'defaults.app.x', name: 'Firefox', state: 'available', desktopId: 'firefox.desktop' }, 1),
+  Model.normalizeApplication({ id: 'defaults.app.y', name: 'Uninstalled', state: 'missing', desktopId: 'gone.desktop' }, 2)
+]
+const browserRecords = [browserAssoc].concat(browserApps)
+
+assertEqual(Model.browserAssociation(browserRecords), browserAssoc, 'the https protocol association is the browser row')
+assertDeepEqual(Model.browserCandidates(browserAssoc, browserRecords), [{ id: 'defaults.app.x', label: 'Firefox' }], 'only an installed candidate is offered as a browser')
+assertDeepEqual(Model.browserCandidates(browserAssoc, []), [], 'no records means no browser candidates')
+
+const mimeAssoc = Model.normalizeAssociation({ id: 'defaults.association.b', kind: 'mime', key: 'text/html', status: 'configured', defaultAppId: null, writable: true, candidateAppIds: [] }, 0)
+assertEqual(Model.browserAssociation([mimeAssoc]), null, 'a MIME association is not the browser row')
+assertEqual(Model.normalizeAssociation({ id: 'defaults.association.c', kind: 'protocol', key: 'https', status: 'configured', defaultAppId: null, writable: false, candidateAppIds: [] }, 0).writable, false, 'a read-only association reports itself read-only')
+
+const appsQuery = Model.queryForRoute('settings.apps.overview')
+assert(appsQuery.coverage.indexOf('protocol.set') >= 0, 'the apps coverage note names the settable verb')
+assert(appsQuery.coverage.indexOf('startup, and background application inventory remain unavailable') >= 0, 'the apps coverage note still refuses what Settings cannot do')
 
 function radioRecord(state) {
   return Model.normalizeLeafResource({ id: 'network.radio.wifi', label: 'Wi-Fi', kind: 'radio', state: state }, 0)
