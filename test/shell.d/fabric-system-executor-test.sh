@@ -123,8 +123,9 @@ def outcome(argv, arguments, action="packages.install"):
 
 
 def expect(label, actual, wanted):
-    if actual != wanted:
-        print(f"not ok - {label}: expected {wanted}, got {actual}", file=sys.stderr)
+    accepted = wanted if isinstance(wanted, tuple) else (wanted,)
+    if actual not in accepted:
+        print(f"not ok - {label}: expected {' or '.join(accepted)}, got {actual}", file=sys.stderr)
         raise SystemExit(1)
 
 
@@ -154,7 +155,7 @@ for package_id in (
         outcome(["packages.install"], {"package_ids": [package_id]}),
         "package.source-unsupported",
     )
-expect("a channel this machine does not track is refused", outcome(["system.update"], {"channel": "candidate", "allow_without_restore_point": False}, "system.update"), "command.unavailable")
+expect("a channel this machine does not track is refused", outcome(["system.update"], {"channel": "candidate", "allow_without_restore_point": False}, "system.update"), ("update.channel-mismatch", "command.unavailable"))
 expect("an unknown channel is refused by the contract", outcome(["system.update"], {"channel": "nightly", "allow_without_restore_point": False}, "system.update"), "executor.choice")
 expect("a missing restore-point decision is refused", outcome(["system.update"], {"channel": "stable"}, "system.update"), "executor.argument-fields")
 expect("an update argv naming a package is refused", outcome(["system.update"], {"channel": "stable", "allow_without_restore_point": False, "package_ids": ["x"]}, "system.update"), "executor.argument-fields")

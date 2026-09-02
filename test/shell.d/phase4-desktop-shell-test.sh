@@ -419,12 +419,12 @@ assertEqual(empty[0].name, 'Open new window', 'default jump list label is Open n
 const withActions = JumpList.jumpListFor({
   id: 'org.omarchy.Files',
   actions: [
-    { id: 'Trash', name: 'Trash', exec: 'omarchy-launch-files --source desktop files.trash' },
+    { id: 'Trash', name: 'Recycle Bin', exec: 'omarchy-launch-files --source desktop files.trash' },
     { id: 'Dead', name: 'Dead' }
   ]
 }, 'org.omarchy.Files')
 assertEqual(withActions.length, 2, 'jump list drops actions that cannot launch')
-assertEqual(withActions[1].name, 'Trash', 'launchable desktop actions stay on the jump list')
+assertEqual(withActions[1].name, 'Recycle Bin', 'launchable desktop actions stay on the jump list')
 
 const qvectorCommand = { length: 3, 0: 'omarchy-launch-agent-center', 1: '--source', 2: 'desktop' }
 const fromQuickshell = JumpList.jumpListFor({
@@ -575,13 +575,15 @@ idx = json.load(sys.stdin)
 files = idx.get("org.omarchy.Files") or []
 names = [row.get("name") for row in files]
 assert "Home" in names, names
-assert "This PC" in names, names
+assert "Computer" in names, names
 assert "Desktop" in names, names
 assert "Documents" in names, names
 assert "Downloads" in names, names
 assert "Pictures" in names, names
+assert "Music" in names, names
+assert "Videos" in names, names
 assert "Recent" in names, names
-assert "Trash" in names, names
+assert "Recycle Bin" in names, names
 assert "Search" in names, names
 settings = idx.get("org.omarchy.Settings") or []
 assert any(row.get("name") == "Settings home" for row in settings), settings
@@ -625,9 +627,9 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
   || fail "Files launcher stays executable after the Superbar pin repair"
 [[ -f $HOME/.local/share/applications/org.omarchy.Files.desktop ]] \
   || fail "Files launcher is published into the user applications dir"
-grep -Fq 'Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Recent;Trash;Search;' \
+grep -Fq 'Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Music;Videos;Recent;Trash;Search;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
-  || fail "published Files launcher keeps Home plus This PC, Desktop, Documents, Downloads, Pictures, Recent, Trash, and Search"
+  || fail "published Files launcher keeps Home plus Computer, Desktop, Documents, Downloads, Pictures, Music, Videos, Recent, Recycle Bin, and Search"
 grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
   || fail "published Settings launcher keeps Settings home plus the inspect-backed pages and publishes no provider-less action"

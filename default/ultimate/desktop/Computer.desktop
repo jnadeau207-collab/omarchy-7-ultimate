@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 Name=Computer
-Comment=Open This PC
+Comment=Open Computer
 Exec=omarchy-launch-files --source desktop files.this-pc
 Icon=computer
 Terminal=false
