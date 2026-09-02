@@ -37,11 +37,13 @@ if grep -Eq 'rm |unlink|shutil' "$application"; then
 fi
 pass "Files moves an entry to Trash through entry.trash and never deletes directly"
 
-grep -Fq 'action: "trash.restore"' "$application" || fail "Files restores through the typed trash.restore action"
-grep -Fq 'if (!host || operationBusy || !restoreVisible) return' "$application" ||
-  fail "Files offers Restore only on the Trash route"
-grep -Fq "signal restoreRequested()" "$card" || fail "the record card raises a Restore request rather than acting itself"
-pass "Files restores an entry through trash.restore and only from Trash"
+if grep -Fq 'action: "trash.restore"' "$application"; then
+  fail "Files does not offer trash.restore while the write plane cannot derive a Trash path"
+fi
+if grep -Eq 'key: "restore"' "$application"; then
+  fail "Files does not show a Restore control that the write plane cannot complete"
+fi
+pass "Files keeps Restore honest-unavailable; Recycle Bin is not product-complete"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')
@@ -55,9 +57,9 @@ for (const routeId of ['files.overview', 'files.this-pc', 'files.recent', 'files
   assertEqual(Model.createLocationForRoute(routeId), '', `${routeId} offers no create target`)
 }
 
-assertEqual(Model.isTrashRoute('files.trash'), true, 'Trash is the restore route')
+assertEqual(Model.isTrashRoute('files.trash'), true, 'Trash is the Recycle Bin browse route')
 for (const routeId of ['files.documents', 'files.desktop', 'files.overview', 'files.recent', 'files.search', 'files.network', '']) {
-  assertEqual(Model.isTrashRoute(routeId), false, `${routeId || '(none)'} offers no restore`)
+  assertEqual(Model.isTrashRoute(routeId), false, `${routeId || '(none)'} is not the Recycle Bin browse route`)
 }
 
 assertEqual(Model.createNameRefusal('Reports'), '', 'an ordinary folder name is accepted')

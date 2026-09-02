@@ -215,12 +215,13 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
 
 ## 5. Open doctrine MUST_FIX carry (context)
 
-- Files banner still underclaims trash/restore while UI offers them; `HANDOFF_WRITERS` helper-only / next-piece schema-blocker narrative stale vs Files UI.
+- Files banner names New folder and Trash as live writers; Restore stays honest-unavailable (no `.trashinfo` at real preflight). `HANDOFF_WRITERS` helper-only / schema-blocker narrative is stale for `entry.trash` after the v1 directory family widen.
 - Catalog soft invent: `apps.defaults.set` provider.id `apps.provider` vs live `defaults.provider`.
 - `HANDOFF_STATE_DOMAIN_WRITES` still carries TASK-unwired / Wall-one “cannot be wired” paragraphs after TASK admission present.
 - End Task: consequential / `terminationAuthorized=false`; digest label scrape fragile; do not invent Task Manager LIVE kill.
 - Semantics.text / authored English leftovers. DesktopIcons argv→execArgv landed in tree (PR #5). Metal leftover 2026-09-02T04:18:31-04:00 on omarchy: `test/shell.d/launch-argv-test.sh` EXIT 0; comma-join `uwsm-app -- /usr/bin/cursor,--password-store=...` still errors as expected; `uwsm-app -- /home/jesse/.local/bin/cursor-wayland --version` OK (3.16.29). Product REJECTED.
 - Settings/Files honesty scrub (PR #6 / work `e7eded14`): coverage badge PARTIAL LIVE CONTROL vs CHANGES UNAVAILABLE; authorityFooter names LIVE writers; Files banner names New folder/Trash/Restore and `files.trash.manage` unavailable; Phase5 blanket removed. Source-oracle leftover 2026-09-02: `ultimate-settings-product-test.sh` EXIT 0; `domain-product-static-test.sh` EXIT 0 on PR tree before merge. **Not** pixel leftover. Product REJECTED.
+- Files `entry.trash` write plane (PR #8): widen v1 directory family, not a parallel Trash family; deriver reads scoped `currentState.value`; risk stays `consequential` (not the same class as `directory.create` `low`; SHELL cannot hold a standing grant). Restore stays honest-unavailable. No `files.trash.manage`. Recycle Bin not product-complete. Source-oracle leftover 2026-09-02: failing `operation.intent-build-failed`/`KeyError`; after unwrap, leftover stdout is `entry.trash preflight: OK` / `entry.trash risk: consequential` / `entry.trash SHELL grant: FAIL grant.shell-consequential` / `trash.restore preflight: operation.definition-unavailable`. Commands actually run (command + EXIT) are cited in PR #8. **Not** metal leftover. Product REJECTED.
 - Product **REJECTED**; refuse merge as OS.
 
 ---
