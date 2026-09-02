@@ -107,7 +107,9 @@ Rendering is right. The original defect was that the page read once at load and 
 
 **Closed (this tranche).** An open Settings route re-reads its closed `provider.read` inspect after its own writer returns `succeeded` (`refreshAfterSuccessfulWriter`) and when the product host publishes `surfaceBecameActive` (window shown, unminimized, or a later IPC activate). That matches the Files/Admin post-writer `controller.refresh()` pattern without a second polling daemon. Settings still does not hold `events.*`: Fabric's existing bus publishes `provider.lifecycle` and operation topics, not hardware-key resource mutations, and the Settings allowlist still forbids `events.subscribe`.
 
-**Residual.** A hardware-key or other out-of-band mutation while Settings stays focused and already visible still leaves the open page stale until the next surface-visible or local-writer reread (or F5). No pixel leftover or METAL_HEAD claim. Product REJECTED.
+**Closed (Admin/Files follow-on).** Administration and Files now listen for the same host `surfaceBecameActive` signal. A thin `refreshWhenSurfaceVisible` wraps the existing `controller.refresh()` they already use after writers, and skips while offline, catalog-loading, loading, or QML `operationBusy`. No `events.subscribe`. No polling daemon.
+
+**Residual.** A hardware-key or other out-of-band mutation while Settings, Administration, or Files stays focused and already visible still leaves the open page stale until the next surface-visible or local-writer reread (or F5). No pixel leftover or METAL_HEAD claim. Settings badge METAL_HEAD residual stays OPEN. Product REJECTED.
 
 ## What still blocks other domains
 
