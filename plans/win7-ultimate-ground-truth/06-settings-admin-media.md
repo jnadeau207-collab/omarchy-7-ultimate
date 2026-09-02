@@ -22,15 +22,17 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 
 | Win7 area | Plan phase | Parity jobs | Fabric / product notes |
 |-----------|------------|-------------|------------------------|
-| Personalization (theme, wallpaper, color, sounds, screensaver, pointers) | **Phase 5 — Settings** | Personalization, Sound (scheme), Desktop (wallpaper) | Typed Personalization writers; Settings → Personalization already hosts image picker prototype |
-| Display / Sound / Power / Input / Accessibility / System | **Phase 5 — Settings** | Display, Sound, Power Options, Language/locale, Accessibility, System | Inspect readers exist; writers Phase 5 |
-| Default Programs + file/protocol associations | **Phase 5** Apps/defaults + **Phase 6** MIME defaults | Default Programs, File associations | `defaults.inspect` present; `apps.defaults.set` / `files.associations.set` planned |
+| Personalization (theme, wallpaper, color, sounds, screensaver, pointers) | **Phase 5 — Settings** | Personalization, Sound (scheme), Desktop (wallpaper) | Phase 5 exit criteria still open. Live host today: Settings → Personalization image picker prototype. Typed Personalization writers remain unavailable. |
+| Display / Sound / Power / Input / Accessibility / System | **Phase 5 — Settings** | Display, Sound, Power Options, Language/locale, Accessibility, System | Phase 5 exit criteria still open. Live Settings writers today: volume (`audio.volume.set`), Wi-Fi radio (`network.manage`), brightness (`display.brightness.set`), input layout (`input.keyboard-layout.set`). Settings Power LIVE refused (inspect only). Accessibility panel missing as product. System information aggregate missing. |
+| Default Programs + file/protocol associations | **Phase 5** Apps/defaults + **Phase 6** MIME defaults | Default Programs, File associations | Phase 5/6 exit criteria still open. Live host today: Settings → Apps `defaults.inspect` + `defaults.protocol.set` (browser LIVE only). `files.associations.set` stays missing/planned MIME. Do not invent MIME UI. |
 | AutoPlay / removable media handlers | **Phase 6** Files and defaults | Removable media (Files phase); Default Programs | AutoPlay is a Default Programs child in Win7 |
-| Administration MMC / Task Manager / Device Manager / Disk / Services / Scheduler / Event Viewer | **Phase 9 — Administration** | Task Manager, Device Manager, Disk Management, Services, Task Scheduler, Event/history, User Accounts | Catalog keeps Administration destinations; do not invent Settings pages for these |
-| Volume Mixer + Sound applet | **Phase 5 — Settings** (Sound) + Superbar tray | Sound | `audio.inspect` present; per-app mixer is tray muscle memory |
-| Windows Media Player 12 chrome (parity behaviors) | **Phase 5** defaults + **Phase 7** Software surface (media player as product app) | Default Programs (media player), Context menus / Superbar peeks | WMP is the Win7 default media chrome reference — not a clone mandate |
+| Administration MMC / Task Manager / Device Manager / Disk / Services / Scheduler / Event Viewer | **Phase 9 — Administration** | Task Manager, Device Manager, Disk Management, Services, Task Scheduler, Event/history, User Accounts | Phase 9 exit criteria still open. Live Administration inspect hosts today: Processes (`process.inspect` + unauthorized End Task path), Services, Device Manager, Storage, Printers and scanners, Backup, Scheduled tasks, Troubleshooting, Firewall, User accounts. Inspect inventory ≠ product MMC present. No start/stop service LIVE, no Device Manager present, no Task Manager present, no Event Viewer present, no `firewall.manage` / `backup.manage` LIVE. Win7 MMC tables below stay reference. Do not invent Settings pages for these. |
+| Volume Mixer + Sound applet | **Phase 5 — Settings** (Sound) + Superbar tray | Sound | Phase 5 exit criteria still open. Live host today: Settings → Sound `audio.inspect` + `audio.volume.set`. Per-app mixer remains tray muscle memory, not a product mixer present. |
+| Windows Media Player 12 chrome (parity behaviors) | **Phase 5** defaults + **Phase 7** Software surface (media player as product app) | Default Programs (media player), Context menus / Superbar peeks | WMP is the Win7 default media chrome reference — not a clone mandate. Software Center missing as product. |
 
 User brief cited phases 5/7/8/9; plan ownership above is authoritative. Phase 8 (Compatibility Center) is out of scope except that Default Programs / AutoPlay must remain the human path for “which program opens this,” not Wine framing.
+
+**Product honesty (not Win7 reference):** Phase 5 and Phase 9 exit criteria still open. Live hosts today are the Settings writers and Administration inspect routes named in the table. Inspect inventory ≠ product MMC present. Do not treat Win7 MMC / Default Programs / Task Manager tables below as product-present. Product remains REJECTED.
 
 ---
 
@@ -330,8 +332,8 @@ Antitrust-era surface — still part of Win7 Default Programs muscle memory.
 
 | User job | Win7 route | Omarchy phase / verb |
 |----------|------------|----------------------|
-| Make Chrome default browser | Default Programs → Set your default programs → Chrome → Set this program as default | Phase 5 `apps.defaults.set` / browser capability |
-| Open .pdf with Okular only | Associate… → `.pdf` → Change program | Phase 6 `files.associations.set` |
+| Make Chrome default browser | Default Programs → Set your default programs → Chrome → Set this program as default | Phase 5 exit still open; live host today is Settings → Apps `defaults.protocol.set` (browser LIVE only) |
+| Open .pdf with Okular only | Associate… → `.pdf` → Change program | Phase 6 exit still open; `files.associations.set` stays missing/planned MIME. Do not invent MIME UI. |
 | Stop USB AutoPlay | Change AutoPlay → Take no action / uncheck Use AutoPlay | Phase 6 removable media |
 | Computer-wide media player | SPAD → Custom → Media player | Phase 5 computer defaults (admin) |
 
@@ -461,20 +463,25 @@ Actions: Update Driver, Disable, Uninstall, Scan for hardware changes, Show hidd
 
 Menus: File (New Task), Options (Always on Top, Minimize on Use, Hide When Minimized), View (Refresh Now, Update Speed, columns, CPU History).
 
-**Omarchy:** Product Task Manager must match this six-tab IA. `btop` is not Task Manager.
+**Omarchy:** Win7 six-tab IA is the reference when a product Task Manager exists. `btop` is not Task Manager. Phase 9 exit criteria still open: Administration > Processes hosts bounded `process.inspect` + unauthorized End Task path. Inspect inventory ≠ Task Manager present.
 
 ### 3.10 Omarchy interaction table — Administration
 
-| User job | Win7 route | Omarchy phase |
-|----------|------------|---------------|
-| Kill hung app | Task Manager → Applications → End Task | Phase 9 Task Manager |
-| See CPU/RAM | Task Manager → Performance → Resource Monitor | Phase 9 + Resource Monitor job |
-| Disable service | services.msc or Computer Management → Services | Phase 9 Services |
-| View System log | eventvwr → Windows Logs → System | Phase 9 Event Viewer |
-| Schedule weekly task | taskschd.msc | Phase 9 Task Scheduler |
-| New partition | diskmgmt.msc | Phase 9 Disk / Storage |
-| Update GPU driver | Device Manager | Phase 9 Device Manager |
-| Create local user | lusrmgr.msc | Phase 9 Accounts |
+Win7 MMC / Task Manager tables above stay **reference**. Phase 9 exit criteria still open. Live Administration product routes already host bounded Fabric inspect. Inspect inventory ≠ product MMC present: no start/stop service LIVE, no Device Manager present, no Task Manager present, no Event Viewer present, no `firewall.manage` / `backup.manage` LIVE.
+
+| User job | Win7 route | Omarchy live host today |
+|----------|------------|-------------------------|
+| Inspect running processes / unauthorized End Task path | Task Manager → Applications → End Task | Administration > Processes (`process.inspect` + `process.termination.plan`; End Task unauthorized; not Task Manager present) |
+| See CPU/RAM | Task Manager → Performance → Resource Monitor | `resources.inspect` stays honest-missing; not Task Manager Performance; not btop |
+| Inspect services (no start/stop LIVE) | services.msc or Computer Management → Services | Administration > Services (`service.inspect`; not Services product) |
+| View System log | eventvwr → Windows Logs → System | No Event Viewer present. Administration > Troubleshooting hosts `diagnostics.inspect` only — not Event Viewer. Toast ledger is Event / history, not this MMC. |
+| Inspect scheduled tasks (no create/disable LIVE) | taskschd.msc | Administration > Scheduled tasks (`schedule.inspect`; not Task Scheduler product) |
+| Inspect disks (no format/mount/eject LIVE) | diskmgmt.msc | Administration > Storage (`storage.inspect`; not Disk Management product) |
+| Inspect devices (no driver mutation) | Device Manager | Administration > Device Manager (`device.inspect`; not Device Manager present) |
+| Inspect printers (no add LIVE) | Devices and Printers / Print Management | Administration > Printers and scanners (`printer.inspect`; not Devices and Printers product) |
+| Inspect backup inventory (no backup.manage LIVE) | Backup and Restore | Administration > Backup (`backup.inspect`; not Backup and Restore product) |
+| Inspect firewall (no firewall.manage LIVE) | wf.msc | Administration > Firewall (`firewall.inspect`; not Firewall Settings product) |
+| Inspect local users (no create/password LIVE) | lusrmgr.msc | Administration > User accounts (`account.inspect`; not User Accounts product) |
 
 ---
 
@@ -537,8 +544,8 @@ Enhancements (Now Playing → right-click): Graphic Equalizer, Video Settings, e
 
 | User job | Win7 route | Omarchy |
 |----------|------------|---------|
-| Mute one app, keep others | Tray → Mixer → app slider | Phase 5 audio + tray Quick Settings honesty |
-| Change default speakers | Tray → Playback devices → Set Default | Phase 5 `audio` writers |
+| Mute one app, keep others | Tray → Mixer → app slider | Phase 5 exit still open; live host today is Settings → Sound `audio.volume.set` + tray Quick Settings honesty. Per-app mixer not product-present. |
+| Change default speakers | Tray → Playback devices → Set Default | Phase 5 exit still open; mute/routing remain unavailable |
 | Silence balloon sounds | Sounds tab → scheme / event → (None) | Phase 5 Personalization/Sound |
 | Play DVD insert | AutoPlay → Play DVD movie using WMP | Phase 6 AutoPlay + Phase 7 player |
 | Per-app default for .mp3 | Default Programs | Phase 5/6 defaults |
@@ -555,12 +562,12 @@ Win7 did **not** use a single modern Settings app. Muscle memory maps as:
 | Display (Control Panel) | Display |
 | Sound / Volume Mixer | Sound (+ tray mixer) |
 | Mouse / Pointers | Input (pointers subsection) |
-| Power Options | Power |
-| Default Programs | Apps (defaults) — must expose the **four-job** IA, not a single dropdown |
-| Ease of Access | Accessibility |
-| Region and Language | Region and Language |
-| System → Advanced / Performance | System Information (+ Advanced later) |
-| Administrative Tools | **Not** Settings — Phase 9 Administration center / Start / Computer Manage |
+| Power Options | Power — Settings Power inspect only; Settings Power LIVE refused |
+| Default Programs | Apps (defaults) — must expose the **four-job** IA, not a single dropdown. Live host today is `defaults.protocol.set` (browser LIVE only). |
+| Ease of Access | Accessibility — Phase 5 exit still open; no Accessibility panel as product (honest missing Fabric page) |
+| Region and Language | Input (layout writer when switchable); full locale remains missing |
+| System → Advanced / Performance | System Information remains missing as product (no aggregate provider) |
+| Administrative Tools | **Not** Settings. Phase 9 exit criteria still open. Live Administration inspect hosts today: Processes, Services, Device Manager, Storage, Printers and scanners, Backup, Scheduled tasks, Troubleshooting, Firewall, User accounts. Inspect inventory ≠ product MMC present. |
 
 Progressive disclosure doctrine: Settings → Display → Resolution is normal; generated Hyprland config is Advanced.
 
