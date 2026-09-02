@@ -914,7 +914,7 @@ if "honest-unavailable as Task Manager" not in plan:
     raise SystemExit("project-ultimate must keep process.inspect honest-unavailable as Task Manager")
 if "Phase 9 exit criteria still open" not in plan:
     raise SystemExit("project-ultimate must keep Phase 9 exit still open")
-if "Task Manager present" in plan and "no Task Manager present" not in plan.lower():
+if "task manager present" in plan.lower() and "no task manager present" not in plan.lower():
     raise SystemExit("project-ultimate invented Task Manager present")
 if "End Task LIVE" in plan and "no End Task LIVE" not in plan:
     raise SystemExit("project-ultimate invented End Task LIVE")
