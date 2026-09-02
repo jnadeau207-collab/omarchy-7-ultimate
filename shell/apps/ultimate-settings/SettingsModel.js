@@ -141,7 +141,7 @@ function coverageTone(routeId) {
 function declaredOpsHonesty(routeId) {
   return routeHasLiveWriter(routeId)
     ? "Settings runs this operation through preflight, approval, and the durable coordinator."
-    : "Settings exposes no preflight, approval, or execution control for this domain yet."
+    : "Settings exposes no preflight, approval, or execution control for this domain."
 }
 
 function authorityFooter() {
