@@ -12,6 +12,8 @@ from omarchy_fabric.models import FabricError, FixedArgvCommand
 from omarchy_fabric.provider_registry import ProviderRegistry, ensure_async_provider_hooks
 from omarchy_fabric.providers._probe import ProbeOutput
 
+SESSION_OPERABLE_DOMAINS = frozenset({"process"})
+
 class AdministrationAdmissionTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_administration_leaves_admit_and_read_through_central_registry(self) -> None:
         registry = ProviderRegistry(clock=lambda: 42.0)
@@ -40,12 +42,23 @@ class AdministrationAdmissionTests(unittest.IsolatedAsyncioTestCase):
             result = await registry.read(case.module.PROVIDER_ID, "inspect", {})
             self.assertEqual(result["observedAt"], 42.0)
             self.assertEqual(result["value"]["availability"]["read"], True)
-            self.assertEqual(result["value"]["availability"]["operation"], False)
-            self.assertEqual(result["value"]["availability"]["reason"]["code"], f"{case.module.DOMAIN}.operation-read-only")
+            operable = case.module.DOMAIN in SESSION_OPERABLE_DOMAINS
+            self.assertEqual(result["value"]["availability"]["operation"], operable)
+            if operable:
+                self.assertIsNone(result["value"]["availability"]["reason"])
+            else:
+                self.assertEqual(result["value"]["availability"]["reason"]["code"], f"{case.module.DOMAIN}.operation-read-only")
             self.assertGreaterEqual(len(result["value"]["resources"]), 1)
             with self.assertRaises(FabricError) as unavailable:
                 await provider.preflight(case.module.OPERATION_ACTION, case.arguments, principal())
-            self.assertEqual(unavailable.exception.code, f"{case.module.DOMAIN}.operation-unavailable")
+            if operable:
+                self.assertTrue(
+                    unavailable.exception.code.startswith(f"{case.module.DOMAIN}."),
+                    f"{case.module.DOMAIN} refused with a foreign code: {unavailable.exception.code}",
+                )
+                self.assertNotEqual(unavailable.exception.code, f"{case.module.DOMAIN}.operation-unavailable")
+            else:
+                self.assertEqual(unavailable.exception.code, f"{case.module.DOMAIN}.operation-unavailable")
         self.assertEqual(registry.provider_count, 8)
         self.assertTrue(all(call.argv[0].startswith("/") for call in calls))
 
