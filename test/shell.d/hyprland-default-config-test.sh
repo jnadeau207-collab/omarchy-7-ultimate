@@ -4,6 +4,16 @@ source "$(dirname "${BASH_SOURCE[0]}")/base-test.sh"
 
 require_command lua
 
+seed_chrome_tokens() {
+  local home="$1"
+
+  mkdir -p "$home/.local/state/omarchy/current"
+  python3 "$ROOT/default/ultimate/design-system/resolve_tokens.py" \
+    --colors "$ROOT/themes/ultimate-dark/colors.toml" \
+    --chrome-output "$home/.local/state/omarchy/current/chrome-tokens-v0.json" \
+    --output "$home/.local/state/omarchy/current/design-tokens-v0.json" >/dev/null ||
+    fail "the test could not seed a resolved chrome token adapter"
+}
 write_mode() {
   local home="$1"
   local mode="$2"
@@ -15,6 +25,7 @@ run_application_bindings() {
   local home="$1"
   local prelude="${2:-}"
 
+  seed_chrome_tokens "$home"
   HOME="$home" XDG_CONFIG_HOME="$home/.config" XDG_STATE_HOME="$home/.local/state" OMARCHY_PATH="$ROOT" OMARCHY_BINDING_PRELUDE="$prelude" lua <<'LUA'
 package.path = os.getenv("HOME") .. "/.config/?.lua;" .. os.getenv("OMARCHY_PATH") .. "/?.lua;" .. package.path
 
@@ -46,6 +57,7 @@ run_omarchy_bindings() {
   local home="$1"
   local prelude="${2:-}"
 
+  seed_chrome_tokens "$home"
   HOME="$home" XDG_CONFIG_HOME="$home/.config" XDG_STATE_HOME="$home/.local/state" OMARCHY_PATH="$ROOT" OMARCHY_BINDING_PRELUDE="$prelude" lua <<'LUA'
 package.path = os.getenv("HOME") .. "/.config/?.lua;" .. os.getenv("OMARCHY_PATH") .. "/?.lua;" .. package.path
 
