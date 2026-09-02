@@ -78,6 +78,11 @@ for (const relative of requiredFiles) {
   assert(qml.includes('Accessible.'), `${relative} declares assistive semantics`)
 }
 
+const badge = fs.readFileSync(path.join(root, 'shell/Ui/Badge.qml'), 'utf8')
+assert(badge.includes('property var semanticProfile: null')
+  && badge.includes('Semantics.text(root.semanticProfile, root.text)'),
+  'Badge localizes authored chrome through the opt-in semantic profile seam')
+
 const dialog = fs.readFileSync(path.join(root, 'shell/Ui/OperationDialog.qml'), 'utf8')
 assert(/property int selectedIndex:\s*0/.test(dialog), 'operation dialogs default to the cancel action')
 assert(dialog.includes('Qt.Key_Escape') && dialog.includes('root.canceled()'), 'operation dialogs provide deterministic Escape cancellation')

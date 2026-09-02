@@ -258,4 +258,42 @@ grep -Fq 'Semantics.text(root.productProfile, root.queryState.query.coverage)' "
 if grep -Fq 'Semantics.text(root.productProfile, SettingsModel.provenance(root.queryState))' "$settings_app"; then
   fail "provider provenance is machine data and must not be pseudo-localized"
 fi
+grep -Fq 'Semantics.text(root.semanticProfile, root.text)' "$ROOT/shell/Ui/Badge.qml" \
+  || fail "Badge chrome routes authored text through Semantics.text"
+grep -Fq 'property var semanticProfile: null' "$ROOT/shell/Ui/Badge.qml" \
+  || fail "Badge exposes the opt-in semantic profile seam"
+grep -A4 'SettingsModel.coverageBadge' "$settings_app" | grep -Fq 'semanticProfile: root.productProfile' \
+  || fail "Settings coverage badge consumes the host SemanticProfile"
+grep -A4 'LIVE PANEL' "$settings_app" | grep -Fq 'semanticProfile: root.productProfile' \
+  || fail "Settings LIVE PANEL badge consumes the host SemanticProfile"
+grep -Fq 'Semantics.text(root.productProfile, "Exact resource")' "$settings_app" \
+  || fail "Settings Exact resource prefix routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Display bound reached at")' "$settings_app" \
+  || fail "Settings display-bound notice routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Output volume")' "$settings_app" \
+  || fail "Settings writer pane Accessible.name routes through Semantics.text"
+if grep -Eq 'Accessible.name: "(Output volume|Default browser|Wi-Fi|Keyboard layout|Display brightness|Power profile|Settings coverage)"' "$settings_app"; then
+  fail "Settings writer and coverage Accessible.name must not stay raw authored English"
+fi
+admin_app="$ROOT/shell/apps/ultimate-administration/AdministrationApplication.qml"
+grep -Fq 'Semantics.text(root.productProfile, "Exact resource")' "$admin_app" \
+  || fail "Administration Exact resource prefix routes through Semantics.text"
+grep -Fq 'Semantics.text(root.productProfile, "Display bound reached at")' "$admin_app" \
+  || fail "Administration display-bound notice routes through Semantics.text"
+grep -A4 'CHANGES UNAVAILABLE' "$admin_app" | grep -Fq 'semanticProfile: root.productProfile' \
+  || fail "Administration CHANGES UNAVAILABLE badge consumes the host SemanticProfile"
+files_app="$ROOT/shell/apps/ultimate-files/FilesApplication.qml"
+grep -Fq 'readonly property var productProfile: host && host.productProfile ? host.productProfile : null' "$files_app" \
+  || fail "Files reads the standalone host SemanticProfile"
+grep -Fq 'Semantics.text(root.productProfile, root.queryState.phase === "offline" ? "Reconnect" : "Try again")' "$files_app" \
+  || fail "Files Reconnect/Try again routes through Semantics.text"
+grep -Fq 'Semantics.text(root.semanticProfile, root.tooltipText)' "$ROOT/shell/Ui/Button.qml" \
+  || fail "Button tooltips consume Semantics.text"
+grep -Fq 'accessibleDescription: Semantics.text(semanticProfile, tooltipText)' "$ROOT/shell/Ui/Button.qml" \
+  || fail "Button accessible descriptions consume Semantics.text"
+grep -Fq 'Semantics.text(root.semanticProfile, "Theme packs")' "$ROOT/shell/Ui/SettingsPersonalizationHost.qml" \
+  || fail "Personalization Theme packs label routes through Semantics.text"
+grep -Fq 'Semantics.text(root.semanticProfile, "This Settings page failed to load the live panel.")' "$ROOT/shell/Ui/SettingsHostedPanel.qml" \
+  || fail "hosted panel load failure routes through Semantics.text"
 pass "Settings authored copy localizes and machine provenance does not"
+pass "Phase 3 leftover chrome (badges, Exact resource, display-bound, Open tooltip, Reconnect) routes through Semantics.text"
