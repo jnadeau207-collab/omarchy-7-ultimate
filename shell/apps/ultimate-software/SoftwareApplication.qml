@@ -59,6 +59,12 @@ Item {
     else host.retryFabric()
   }
 
+  function refreshVisibleSurface() {
+    if (!controller || !host || busy) return
+    if (!host.fabricReady) return
+    controller.refreshWhenSurfaceVisible()
+  }
+
   function runSearch() {
     if (!host) return
     host.navigate("software.catalog", searchInput.text === "" ? {} : { query: searchInput.text })
@@ -95,6 +101,7 @@ Item {
       root.controller.activate(routeId, routeArguments || {})
       if (routeId === "software.catalog") searchInput.text = routeArguments && routeArguments.query ? String(routeArguments.query) : ""
     }
+    function onSurfaceBecameActive() { root.refreshVisibleSurface() }
     function onFabricResult(requestId, result) { if (root.controller) root.controller.receiveResult(requestId, result) }
     function onFabricFailure(requestId, error) { if (root.controller) root.controller.receiveFailure(requestId, error) }
   }

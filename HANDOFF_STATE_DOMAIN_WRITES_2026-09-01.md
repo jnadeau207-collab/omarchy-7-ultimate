@@ -109,7 +109,9 @@ Rendering is right. The original defect was that the page read once at load and 
 
 **Closed (Admin/Files follow-on).** Administration and Files now listen for the same host `surfaceBecameActive` signal. A thin `refreshWhenSurfaceVisible` wraps the existing `controller.refresh()` they already use after writers, and skips while offline, catalog-loading, loading, or QML `operationBusy`. No `events.subscribe`. No polling daemon.
 
-**Residual.** A hardware-key or other out-of-band mutation while Settings, Administration, or Files stays focused and already visible still leaves the open page stale until the next surface-visible or local-writer reread (or F5). No pixel leftover or METAL_HEAD claim. Settings badge METAL_HEAD residual stays OPEN. Product REJECTED.
+**Closed (Software/Compatibility follow-on).** Software Center and Compatibility Center now listen for the same host `surfaceBecameActive` signal. A thin `refreshWhenSurfaceVisible` wraps the existing `controller.refresh()` they already use for F5/Retry, and skips while offline, catalog-loading, loading, or QML `busy`. No writers, so no `operationBusy`. No `events.subscribe`. No polling daemon. Package LIVE mutation stays uninvented.
+
+**Residual.** A hardware-key or other out-of-band mutation while Settings, Administration, Files, Software, or Compatibility stays focused and already visible still leaves the open page stale until the next surface-visible or local-writer reread (or F5). No pixel leftover or METAL_HEAD claim. Settings badge METAL_HEAD residual stays OPEN. Product REJECTED.
 
 ## What still blocks other domains
 
