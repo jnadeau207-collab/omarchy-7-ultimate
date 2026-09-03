@@ -110,6 +110,25 @@ function createNameRefusal(name) {
   return ""
 }
 
+function nextCopyName(taken, sourceName) {
+  var names = taken && typeof taken === "object" ? taken : {}
+  var base = String(sourceName === null || sourceName === undefined ? "" : sourceName)
+  if (createNameRefusal(base) !== "") return ""
+  if (!names[base.toLowerCase()]) return base
+  var ext = ""
+  var stem = base
+  var dot = base.lastIndexOf(".")
+  if (dot > 0) {
+    ext = base.slice(dot)
+    stem = base.slice(0, dot)
+  }
+  for (var n = 2; n < 512; n++) {
+    var candidate = stem + " (" + n + ")" + ext
+    if (!names[candidate.toLowerCase()] && createNameRefusal(candidate) === "") return candidate
+  }
+  return ""
+}
+
 function structuredError(code, title, explanation, detail) {
   return {
     code: clippedText(code || "files.failed", 160),
@@ -937,7 +956,7 @@ if (typeof module !== "undefined") module.exports = {
   baseState: baseState, createController: createController, isIdleSearch: isIdleSearch,
   stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone,
   CREATE_LOCATIONS: CREATE_LOCATIONS, createLocationForRoute: createLocationForRoute,
-  createNameRefusal: createNameRefusal, isTrashRoute: isTrashRoute,
+  createNameRefusal: createNameRefusal, nextCopyName: nextCopyName, isTrashRoute: isTrashRoute,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,

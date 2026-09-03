@@ -40,7 +40,8 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Default Programs | Settings → Apps (`defaults.provider`); `defaults.protocol.set` browser LIVE only; `defaults.mime.set` write plane is reachable; Settings does not offer MIME LIVE CONTROL; MIME associations still missing/planned |
 | Recycle Bin | Files Trash routes / `files.trash.*` plane; `files.trash.restore` write plane is reachable (claim=partial; humanRoute planned empty); catalog `files.trash.manage` still missing |
 | Explorer Open | Files Open / `files.entry.open` launch plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Open`); no Open With / MIME association UI |
-| Explorer Rename | Files Rename / `files.entry.rename` write plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Rename`; `renameAuthorized=true`); same-directory only; no cut/copy/paste |
+| Explorer Rename | Files Rename / `files.entry.rename` write plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Rename`; `renameAuthorized=true`); same-directory only; no cut/move |
+| Explorer Copy and Paste | Files Copy and Paste / `files.entry.copy` write plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Copy and Paste`; `copyAuthorized=true`); regular files; in-app staging; no OS clipboard or cut/move |
 
 ---
 
