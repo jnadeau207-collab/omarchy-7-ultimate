@@ -134,6 +134,10 @@ fi
 if grep -Fq 'action: "mime.set"' "$application"; then
   fail "Settings does not offer mime.set LIVE CONTROL"
 fi
+grep -Fq 'MIME / Default Programs association UI residual OPEN after PR #62' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps MIME leftover OPEN after PR #62"
+grep -Fq 'Settings does not offer MIME LIVE CONTROL' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps Settings MIME LIVE CONTROL refused"
 pass "Settings drives protocol.set through the typed operation plane only"
 
 run_node_test <<'JS'

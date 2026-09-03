@@ -49,7 +49,7 @@ The real Defaults adapter reads `.desktop` files through no-follow directory fil
 
 Default queries are a code-owned catalog of immutable `FixedArgvCommand` values for `/usr/bin/xdg-mime query default`. No caller value is appended to argv, no command is interpreted by a shell, and the shipped association catalog must match the code-owned MIME and protocol tuple exactly. Empty, missing, malformed, or dangling query results remain explicit unconfigured, degraded, or dangling association states.
 
-The real adapter deliberately does not call `xdg-mime default`. Its `compare_and_swap` stays mutation-unavailable. Production builtins set `session_operable=True`, so `mime.set` and `protocol.set` preflight are reachable. Durable apply re-reads scoped state through published `association.inspect`, then the coordinator runs the typed `defaults-mime-set` and `defaults-protocol-set` helpers. Settings offers LIVE CONTROL only for the default browser (`protocol.set`). It does not offer MIME LIVE CONTROL.
+The real adapter deliberately does not call `xdg-mime default`. Its `compare_and_swap` stays mutation-unavailable. Production builtins set `session_operable=True`, so `mime.set` and `protocol.set` preflight are reachable. Durable apply re-reads scoped state through published `association.inspect`, then the coordinator runs the typed `defaults-mime-set` and `defaults-protocol-set` helpers. Settings offers LIVE CONTROL only for the default browser (`protocol.set`). It does not offer MIME LIVE CONTROL. MIME / Default Programs association UI residual OPEN after PR #62. `files.associations.set` stays missing/planned MIME.
 
 ## Availability
 
