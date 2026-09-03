@@ -743,7 +743,6 @@ def copy_regular_file(source: pathlib.Path, destination: pathlib.Path) -> None:
 def copy_entry_tree(
     source: pathlib.Path,
     destination: pathlib.Path,
-    source_dev: int,
     seen: set[tuple[int, int]],
     remaining_depth: int,
     remaining_entries: list[int],
@@ -757,8 +756,6 @@ def copy_entry_tree(
         raise ApplyError("resource.unresolved", "The entry is not present.") from error
     if stat.S_ISLNK(info.st_mode):
         raise ApplyError("payload.invalid", "Symlink entries cannot be copied.")
-    if info.st_dev != source_dev:
-        raise ApplyError("apply.failed", "The copy cannot cross devices.")
     identity = (info.st_dev, info.st_ino)
     if identity in seen:
         raise ApplyError("payload.invalid", "A cyclic directory cannot be copied.")
@@ -789,7 +786,6 @@ def copy_entry_tree(
         copy_entry_tree(
             child,
             destination / child.name,
-            source_dev,
             seen,
             remaining_depth - 1,
             remaining_entries,
@@ -866,7 +862,6 @@ def apply_files_entry_copy(stdin: Any, stdout: Any) -> int:
         copy_entry_tree(
             source,
             destination,
-            info.st_dev,
             set(),
             MAX_RELATIVE_DEPTH - len(dest_segments),
             [MAX_COPY_ENTRIES],
