@@ -16,9 +16,11 @@ Item {
   property bool canBack: false
   property bool canForward: false
   property bool busy: false
+  property var historyMenu: []
 
   signal backRequested()
   signal forwardRequested()
+  signal travelRequested(int index)
   signal crumbActivated(string relativePath)
   signal refreshRequested()
   signal searchAccepted(string text)
@@ -66,12 +68,113 @@ Item {
     onTriggered: root.forwardRequested()
   }
 
+  Item {
+    id: historyChevron
+    width: 14
+    height: 24
+    anchors.left: forwardButton.right
+    anchors.leftMargin: 2
+    anchors.verticalCenter: parent.verticalCenter
+    enabled: root.historyMenu.length > 0
+
+    Rectangle {
+      anchors.fill: parent
+      radius: 2
+      visible: chevronHover.hovered && historyChevron.enabled
+      color: Aero.crumbHoverTop
+      border.width: 1
+      border.color: Aero.crumbHoverBorder
+    }
+
+    Text {
+      anchors.centerIn: parent
+      text: "▾"
+      color: historyChevron.enabled ? Aero.textPrimary : Aero.textDisabled
+      font.family: Aero.fontFamily
+      font.pixelSize: 10
+    }
+
+    HoverHandler { id: chevronHover }
+    TapHandler {
+      onSingleTapped: historyPopup.open()
+    }
+
+    Accessible.role: Accessible.Button
+    Accessible.name: Semantics.text(root.productProfile, "Recent locations")
+  }
+
+  Controls.Popup {
+    id: historyPopup
+    x: historyChevron.x
+    y: historyChevron.y + historyChevron.height + 2
+    width: 230
+    padding: 1
+    focus: true
+    closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
+
+    background: Rectangle {
+      color: "#ffffff"
+      border.width: 1
+      border.color: "#a0a0a0"
+    }
+
+    contentItem: Column {
+      spacing: 0
+
+      Repeater {
+        model: root.historyMenu
+
+        delegate: Item {
+          required property var modelData
+          width: 228
+          height: 22
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: 2
+            visible: historyHover.hovered
+            color: Aero.crumbHoverTop
+            border.width: 1
+            border.color: Aero.crumbHoverBorder
+          }
+
+          Text {
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 8
+            anchors.verticalCenter: parent.verticalCenter
+            elide: Text.ElideRight
+            text: (modelData.current ? "• " : "") + modelData.label
+            textFormat: Text.PlainText
+            color: Aero.textPrimary
+            font.family: Aero.fontFamily
+            font.pixelSize: 12
+            font.bold: modelData.current === true
+          }
+
+          HoverHandler { id: historyHover }
+          TapHandler {
+            onSingleTapped: {
+              historyPopup.close()
+              root.travelRequested(modelData.index)
+            }
+          }
+
+          Accessible.role: Accessible.MenuItem
+          Accessible.name: modelData.label
+        }
+      }
+    }
+  }
+
   Rectangle {
     id: addressField
-    anchors.left: forwardButton.right
+    anchors.left: historyChevron.right
     anchors.leftMargin: 10
     anchors.verticalCenter: parent.verticalCenter
-    width: Math.max(160, parent.width - forwardButton.width - backButton.width - searchField.width - 48)
+    width: Math.max(160, parent.width - forwardButton.width - backButton.width - historyChevron.width - searchField.width - 64)
     height: 22
     color: Aero.fieldFill
     border.width: 1

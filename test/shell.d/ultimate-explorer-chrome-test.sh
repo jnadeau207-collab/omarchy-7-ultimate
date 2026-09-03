@@ -119,3 +119,13 @@ pass "Explorer search field is the measured box with an italic placeholder"
 grep -Fq 'var crumbSeparator = "#000000"' "$ROOT/shell/apps/ultimate-files/ExplorerTheme.js" \
   || fail "Explorer breadcrumb wedges are filled black"
 pass "Explorer breadcrumb wedges are filled black"
+
+app="$ROOT/shell/apps/ultimate-files/FilesApplication.qml"
+
+grep -Fq 'historyMenu' "$app" || fail "Explorer publishes its navigation history as a menu model"
+grep -Fq 'onTravelRequested' "$app" || fail "Explorer routes recent-location picks through history travel"
+grep -Fq 'id: historyChevron' "$bar" || fail "Explorer address bar carries the recent-locations chevron"
+grep -Fq 'id: historyPopup' "$bar" || fail "Explorer chevron opens the recent-locations popup"
+grep -Fq 'travelRequested(modelData.index)' "$bar" \
+  || fail "Explorer recent-location picks travel by history index"
+pass "Explorer address bar offers its real navigation history as a recent-locations menu"

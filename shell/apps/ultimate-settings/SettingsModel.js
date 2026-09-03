@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set for the https scheme. The default email application applies through defaults.provider protocol.set for the mailto scheme. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings."
+    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set for the http and https schemes. The default email application applies through defaults.provider protocol.set for the mailto scheme. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings."
   },
   {
     routeId: "settings.accessibility.overview",
@@ -614,12 +614,16 @@ function normalizeLeafResource(resource, index) {
 
 var BROWSER_SCHEMES = ["http", "https"]
 
-function browserAssociation(records) {
-  if (!Array.isArray(records)) return null
+function protocolAssociation(records, scheme) {
+  if (!Array.isArray(records) || typeof scheme !== "string" || scheme === "") return null
   for (var i = 0; i < records.length; i++) {
-    if (records[i].associationKind === "protocol" && records[i].associationKey === "https") return records[i]
+    if (records[i].associationKind === "protocol" && records[i].associationKey === scheme) return records[i]
   }
   return null
+}
+
+function browserAssociation(records) {
+  return protocolAssociation(records, "https")
 }
 
 function mailerAssociation(records) {
@@ -1249,6 +1253,7 @@ if (typeof module !== "undefined") {
     MAX_VISIBLE_FIELDS: MAX_VISIBLE_FIELDS,
     POWER_PROFILES: POWER_PROFILES,
     BROWSER_SCHEMES: BROWSER_SCHEMES,
+    protocolAssociation: protocolAssociation,
     browserAssociation: browserAssociation,
     mailerAssociation: mailerAssociation,
     browserCandidates: browserCandidates,

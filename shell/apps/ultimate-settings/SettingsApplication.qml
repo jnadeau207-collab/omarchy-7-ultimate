@@ -51,6 +51,8 @@ Item {
   readonly property var browserOptions: browserResource ? SettingsModel.browserCandidates(browserResource, queryState.records) : []
   readonly property string activeBrowserId: browserResource ? String(browserResource.defaultAppId || "") : ""
   property string operationBrowserId: ""
+  property var operationSchemes: []
+  property string operationScheme: ""
 
   readonly property var mimeRows: SettingsModel.mimeAssociations(queryState.records)
   property string operationMimeKey: ""
@@ -58,27 +60,59 @@ Item {
 
   readonly property var startupRows: SettingsModel.startupEntries(queryState.records)
 
-  function firstBrowserResource() {
+  function firstProtocolResource(scheme) {
     if (!currentRoute || currentRoute.id !== "settings.apps.overview") return null
-    var record = SettingsModel.browserAssociation(queryState.records)
+    var record = SettingsModel.protocolAssociation(queryState.records, scheme)
     return record && record.writable ? record : null
+  }
+
+  function firstBrowserResource() {
+    return firstProtocolResource("https")
   }
 
   function applyDefaultBrowser(appId) {
     if (!host || operationBusy) return
-    var record = firstBrowserResource()
-    if (!record || record.candidateAppIds.indexOf(appId) < 0) return
+    var queue = []
+    var schemes = SettingsModel.BROWSER_SCHEMES
+    for (var i = 0; i < schemes.length; i++) {
+      var candidate = firstProtocolResource(schemes[i])
+      if (!candidate) continue
+      if (candidate.candidateAppIds.indexOf(appId) < 0) continue
+      if (String(candidate.defaultAppId || "") === String(appId)) continue
+      queue.push(schemes[i])
+    }
+    if (queue.length === 0) {
+      var fallback = firstBrowserResource()
+      if (!fallback || fallback.candidateAppIds.indexOf(appId) < 0) return
+      queue.push("https")
+    }
     root.operationKind = "browser"
     root.operationBrowserId = String(appId)
     root.operationMessage = ""
+    root.operationSchemes = queue
+    startNextBrowserScheme()
+  }
+
+  function startNextBrowserScheme() {
+    var scheme = root.operationSchemes.length > 0 ? String(root.operationSchemes[0]) : ""
+    var record = firstProtocolResource(scheme)
+    if (scheme === "" || !record) {
+      root.operationSchemes = []
+      root.resetOperation("Settings could not reach the browser association.")
+      return
+    }
+    root.operationScheme = scheme
     root.operationStage = "preflight"
     root.operationRequestId = host.requestFabric("operation.preflight", {
       provider: "defaults.provider",
       action: "protocol.set",
-      arguments: { scheme: record.associationKey, appId: root.operationBrowserId },
-      idempotencyKey: "settings.default-browser." + root.operationBrowserId + "." + Date.now()
+      arguments: { scheme: scheme, appId: root.operationBrowserId },
+      idempotencyKey: "settings.default-browser." + scheme + "." + root.operationBrowserId + "." + Date.now()
     })
-    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
+    if (root.operationRequestId === "") {
+      root.operationSchemes = []
+      root.resetOperation("Settings could not reach the operation service.")
+    }
   }
 
   function browserLabel(appId) {
@@ -374,6 +408,13 @@ Item {
             : root.operationKind === "network"
               ? "The Wi-Fi change ended as " + String(result.status || "unknown") + "."
             : "The volume change ended as " + String(result.status || "unknown") + "."
+      if (succeeded && root.operationKind === "browser" && root.operationSchemes.length > 1) {
+        root.operationSchemes = root.operationSchemes.slice(1)
+        if (root.controller) root.controller.refreshAfterSuccessfulWriter(result.status)
+        startNextBrowserScheme()
+        return
+      }
+      root.operationSchemes = []
       root.resetOperation(succeeded ? applied : refused)
       if (root.controller) root.controller.refreshAfterSuccessfulWriter(result.status)
     }

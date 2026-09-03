@@ -126,6 +126,12 @@ grep -Fq 'provider: "defaults.provider"' "$application" || fail "Settings sets t
 grep -Fq 'action: "protocol.set"' "$application" || fail "Settings uses the typed protocol.set action"
 grep -Fq 'if (!record || record.candidateAppIds.indexOf(appId) < 0) return' "$application" ||
   fail "Settings refuses an application the association does not list as a candidate"
+grep -Fq 'var schemes = SettingsModel.BROWSER_SCHEMES' "$application" ||
+  fail "Settings walks every browser scheme when applying the default browser"
+grep -Fq 'function startNextBrowserScheme()' "$application" ||
+  fail "Settings applies the default browser scheme by scheme through the single-flight plane"
+grep -Fq 'root.operationSchemes.slice(1)' "$application" ||
+  fail "Settings advances the browser scheme queue only after a scheme succeeds"
 grep -Fq 'return record && record.writable ? record : null' "$application" ||
   fail "Settings offers the browser control only for a writable association"
 if grep -Eq 'xdg-mime|xdg-settings' "$application"; then
@@ -220,6 +226,12 @@ assertDeepEqual(Model.browserCandidates(browserAssoc, []), [], 'no records means
 
 const mimeAssoc = Model.normalizeAssociation({ id: 'defaults.association.b', kind: 'mime', key: 'text/html', status: 'configured', defaultAppId: null, writable: true, candidateAppIds: [] }, 0)
 assertEqual(Model.browserAssociation([mimeAssoc]), null, 'a MIME association is not the browser row')
+const httpAssoc = Model.normalizeAssociation({ id: 'defaults.association.h', kind: 'protocol', key: 'http', status: 'configured', defaultAppId: 'defaults.app.x', writable: true, candidateAppIds: ['defaults.app.x'] }, 7)
+assertEqual(Model.protocolAssociation(browserRecords.concat([httpAssoc]), 'http'), httpAssoc, 'the http protocol association resolves by scheme')
+assertEqual(Model.protocolAssociation(browserRecords, 'https'), browserAssoc, 'the https protocol association resolves by scheme')
+assertEqual(Model.protocolAssociation(browserRecords, 'gopher'), null, 'an unknown scheme offers no protocol row')
+assertEqual(Model.protocolAssociation('nope', 'https'), null, 'non-array records offer no protocol row')
+assertEqual(Model.protocolAssociation(browserRecords, ''), null, 'an empty scheme offers no protocol row')
 const mailtoAssoc = Model.normalizeAssociation({ id: 'defaults.association.g', kind: 'protocol', key: 'mailto', status: 'configured', defaultAppId: 'defaults.app.x', writable: true, candidateAppIds: ['defaults.app.x'] }, 6)
 assertEqual(Model.mailerAssociation(browserRecords.concat([mimeAssoc, mailtoAssoc])), mailtoAssoc, 'the mailto protocol association is the mailer row')
 assertEqual(Model.mailerAssociation(browserRecords), null, 'no mailer row without a mailto association')

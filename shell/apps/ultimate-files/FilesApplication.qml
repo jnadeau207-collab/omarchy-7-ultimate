@@ -63,6 +63,20 @@ Item {
   readonly property var crumbs: FilesModel.breadcrumbFor(routeTitle, relativePath)
   readonly property bool canBack: historyIndex > 0
   readonly property bool canForward: historyIndex >= 0 && historyIndex < history.length - 1
+  readonly property var historyMenu: {
+    var menu = []
+    var start = Math.max(0, root.history.length - 9)
+    for (var i = root.history.length - 1; i >= start; i--) {
+      var entry = root.history[i]
+      var tail = String(entry.relativePath || "").split("/").filter(function(part) { return part !== "" })
+      menu.push({
+        index: i,
+        current: i === root.historyIndex,
+        label: tail.length > 0 ? tail[tail.length - 1] : String(entry.title || "Files")
+      })
+    }
+    return menu
+  }
 
   readonly property var locationRoutes: ({
     "files.location.desktop": "files.desktop",
@@ -114,7 +128,7 @@ Item {
 
   function recordHistory(routeId, path) {
     if (root.traversing) return
-    var entry = { routeId: String(routeId), relativePath: String(path || "") }
+    var entry = { routeId: String(routeId), relativePath: String(path || ""), title: root.routeTitle }
     var top = root.historyIndex >= 0 ? root.history[root.historyIndex] : null
     if (top && top.routeId === entry.routeId && top.relativePath === entry.relativePath) return
     var trimmed = root.history.slice(0, root.historyIndex + 1)
@@ -535,8 +549,10 @@ Item {
     canBack: root.canBack
     canForward: root.canForward
     busy: root.busy
+    historyMenu: root.historyMenu
     onBackRequested: root.goBack()
     onForwardRequested: root.goForward()
+    onTravelRequested: function(index) { root.travel(index) }
     onCrumbActivated: function(path) { root.openPath(path) }
     onRefreshRequested: root.retryState()
     onSearchAccepted: function(text) { root.runSearch(text) }
