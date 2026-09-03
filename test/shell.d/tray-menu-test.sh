@@ -30,9 +30,9 @@ if ! command -v quickshell >/dev/null 2>&1; then
 fi
 
 require_command jq
-require_command python
+require_command python3
 
-python - <<'PY' || {
+python3 - <<'PY' || {
 import dbus
 import gi
 PY
@@ -61,7 +61,7 @@ QS_PID=$!
 
 OMARCHY_TRAY_MENU_EVENT_RESULT="$event_result" \
 OMARCHY_TRAY_MENU_READY="$ready" \
-  python "$SHELL_TEST_DIR/fixtures/tray-menu-activation/mock-sni.py" >"$mock_log" 2>&1 &
+  python3 "$SHELL_TEST_DIR/fixtures/tray-menu-activation/mock-sni.py" >"$mock_log" 2>&1 &
 MOCK_PID=$!
 
 for _ in {1..80}; do

@@ -7,7 +7,7 @@ source "$(dirname "$0")/base-test.sh"
 test_tmp=$(mktemp -d)
 trap 'rm -rf "$test_tmp"' EXIT
 if ! command -v python3 >/dev/null; then
-  require_command python
+  require_command python3
   mkdir -p "$test_tmp/bin"
   ln -s "$(command -v python)" "$test_tmp/bin/python3"
   PATH="$test_tmp/bin:$PATH"
@@ -37,7 +37,7 @@ JSON
 
 bash -euo pipefail "$ROOT/migrations/1788032400.sh"
 
-python - <<'PY'
+python3 - <<'PY'
 import json, os, pathlib
 path = pathlib.Path(os.environ["HOME"]) / ".local/state/omarchy/ultimate/taskbar-pins.json"
 pins = json.loads(path.read_text())["pins"]
@@ -54,7 +54,7 @@ mkdir -p "$HOME/.local/state/omarchy/ultimate"
 printf '%s\n' '{"pins":[{"id":"steam","desktopId":"steam","name":"Steam","icon":"steam"}]}' \
   >"$HOME/.local/state/omarchy/ultimate/taskbar-pins.json"
 bash -euo pipefail "$ROOT/migrations/1788032400.sh"
-python - <<'PY'
+python3 - <<'PY'
 import json, os, pathlib
 pins = json.loads((pathlib.Path(os.environ["HOME"]) / ".local/state/omarchy/ultimate/taskbar-pins.json").read_text())["pins"]
 assert pins[0]["desktopId"] == "steam"

@@ -39,12 +39,12 @@ if [[ -z $contracts_dir ]]; then
   contracts_dir=$contract_root/default/ultimate/product-contracts
 fi
 
-if ! python -c 'import jsonschema' >/dev/null 2>&1; then
+if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
   echo "error: python-jsonschema is required for product-contract validation; install the python-jsonschema package" >&2
   exit 2
 fi
 
-python - "$contract_root" "$contracts_dir" <<'PY'
+python3 - "$contract_root" "$contracts_dir" <<'PY'
 import configparser
 import json
 import re

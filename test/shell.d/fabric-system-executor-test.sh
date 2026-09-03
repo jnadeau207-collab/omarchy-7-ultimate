@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-require_command python
+require_command python3
 
 dispatcher="$ROOT/default/fabric/libexec/omarchy-fabric-system-executor"
 policy="$ROOT/default/polkit-1/actions/org.omarchy.fabric.policy"
@@ -24,7 +24,7 @@ pass "privileged execution stays out of the operation coordinator"
 
 cd "$ROOT/default/fabric"
 OMARCHY_POLICY_PATH="$policy" OMARCHY_DISPATCHER_PATH="$dispatcher" \
-  PYTHONDONTWRITEBYTECODE=1 python - <<'PY'
+  PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
 import os
 import pathlib
 import re
@@ -64,7 +64,7 @@ for program in "$ROOT/default/fabric/libexec/omarchy-fabric"/*; do
 done
 pass "each Polkit-declared program is executable"
 
-OMARCHY_DISPATCHER_PATH="$dispatcher" PYTHONDONTWRITEBYTECODE=1 python - <<'PY'
+OMARCHY_DISPATCHER_PATH="$dispatcher" PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
 import os
 import pathlib
 import re
@@ -94,7 +94,7 @@ PY
 pass "request data cannot select or build the privileged program path"
 
 cd "$ROOT/default/fabric"
-PYTHONDONTWRITEBYTECODE=1 python - <<'PY'
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
 import io
 import json
 import sys
@@ -168,7 +168,7 @@ expect(
 PY
 pass "the root executor refuses unknown actions, argv drift, arbitrary execution, and uncatalogued packages"
 
-PYTHONDONTWRITEBYTECODE=1 python - <<'PY'
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
 import sys
 
 from omarchy_fabric.helpers import system_apply

@@ -10,12 +10,12 @@ checker="$ROOT/bin/omarchy-dev-product-contract-check"
 scratch=$(mktemp -d)
 trap 'rm -rf -- "$scratch"' EXIT
 
-require_command python
+require_command python3
 
 fake_bin="$scratch/missing-dependency-bin"
 mkdir -p "$fake_bin"
-printf '#!/bin/bash\nexit 1\n' >"$fake_bin/python"
-chmod +x "$fake_bin/python"
+printf '#!/bin/bash\nexit 1\n' >"$fake_bin/python3"
+chmod +x "$fake_bin/python3"
 
 set +e
 dependency_output=$(PATH="$fake_bin:$PATH" OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT" 2>&1)
@@ -26,7 +26,7 @@ set -e
 [[ $dependency_output == *"python-jsonschema is required"* ]] || fail "product-contract checker names the missing python-jsonschema dependency" "$dependency_output"
 pass "product-contract checker fails clearly without python-jsonschema"
 
-if ! python -c 'import jsonschema' >/dev/null 2>&1; then
+if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
   fail "python-jsonschema is required to certify product-contract inventory"
 fi
 
@@ -51,7 +51,7 @@ mutate_fixture() {
   local fixture="$1"
   local mutation="$2"
 
-  python - "$fixture" "$mutation" <<'PY'
+  python3 - "$fixture" "$mutation" <<'PY'
 import copy
 import json
 import sys

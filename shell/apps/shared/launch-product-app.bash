@@ -232,7 +232,7 @@ launch_product_app() {
     return 1
   fi
 
-  if envelope=$(python "$normalizer" "$application" "$@"); then
+  if envelope=$(python3 "$normalizer" "$application" "$@"); then
     :
   else
     return $?

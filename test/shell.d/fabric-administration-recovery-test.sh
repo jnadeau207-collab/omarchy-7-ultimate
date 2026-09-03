@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-require_command python
+require_command python3
 require_command rg
 
 domains=(process device storage printer account firewall service schedule update recovery backup diagnostics)
@@ -20,7 +20,7 @@ for schema in "${schemas[@]}"; do
 done
 pass "all public administration and recovery schemas exist"
 
-python - "$ROOT" <<'PY'
+python3 - "$ROOT" <<'PY'
 import json
 import sys
 from pathlib import Path

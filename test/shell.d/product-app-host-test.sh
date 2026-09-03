@@ -9,7 +9,7 @@ settings_catalog="$ROOT/shell/apps/ultimate-settings/routes-v1.json"
 agent_catalog="$ROOT/shell/apps/ultimate-agent-center/routes-v1.json"
 
 normalize() {
-  python "$normalizer" "$@"
+  python3 "$normalizer" "$@"
 }
 
 expect_normalized() {
@@ -24,7 +24,7 @@ expect_normalized() {
   else
     fail "$description" "normalizer rejected a valid launch"
   fi
-  python - "$expected_route" "$envelope" <<'PY' || fail "$description" "$envelope"
+  python3 - "$expected_route" "$envelope" <<'PY' || fail "$description" "$envelope"
 import json
 import sys
 
@@ -145,7 +145,7 @@ rejectsCatalogMutation(settings, 'settings', 'org.omarchy.Settings', candidate =
 }, 'QML-side catalog rejects non-scalar deep-link paths')
 JS
 
-python - "$normalizer" "$settings_catalog" "$agent_catalog" <<'PY' || fail "Python catalog validator rejects closed-schema corruption"
+python3 - "$normalizer" "$settings_catalog" "$agent_catalog" <<'PY' || fail "Python catalog validator rejects closed-schema corruption"
 import copy
 import importlib.util
 import json
@@ -215,7 +215,7 @@ else:
 PY
 pass "Python catalog validator rejects closed-schema corruption"
 
-python - "$settings_catalog" <<'PY' || fail "Settings Apps route binds to defaults.provider"
+python3 - "$settings_catalog" <<'PY' || fail "Settings Apps route binds to defaults.provider"
 import json
 import sys
 
@@ -228,7 +228,7 @@ PY
 pass "Settings Apps route binds to the registered defaults provider"
 
 for domain in display audio network bluetooth input personalization apps power accessibility update recovery system; do
-  python - "$settings_catalog" "$domain" <<'PY' || fail "Settings catalog registers $domain"
+  python3 - "$settings_catalog" "$domain" <<'PY' || fail "Settings catalog registers $domain"
 import json
 import sys
 
@@ -239,7 +239,7 @@ PY
   pass "Settings catalog registers $domain"
 done
 
-python - "$agent_catalog" <<'PY' || fail "Agent Center entity links cover task, run, operation, and provider"
+python3 - "$agent_catalog" <<'PY' || fail "Agent Center entity links cover task, run, operation, and provider"
 import json
 import sys
 

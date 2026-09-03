@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 
-require_command python
+require_command python3
 require_command rg
 
 for path in \
@@ -27,7 +27,7 @@ if rg -n 'subprocess\.(run|Popen)|os\.system|shell\s*=\s*True|/usr/bin/(sudo|pke
 fi
 pass "operation coordinator has no process or generic privilege escape"
 
-python -c 'import jsonschema' >/dev/null 2>&1 || fail "python-jsonschema is installed for Fabric contract tests"
+python3 -c 'import jsonschema' >/dev/null 2>&1 || fail "python-jsonschema is installed for Fabric contract tests"
 
-PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s "$ROOT/test/fabric/operations" -p 'test_*.py' -v
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s "$ROOT/test/fabric/operations" -p 'test_*.py' -v
 pass "operation coordinator lifecycle, security, recovery, storage, and schema tests pass"

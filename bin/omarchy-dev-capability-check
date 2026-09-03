@@ -41,12 +41,12 @@ if [[ -z $graph_data_root ]]; then
   graph_data_root=$graph_root
 fi
 
-if ! python -c 'import jsonschema' >/dev/null 2>&1; then
+if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
   echo "error: python-jsonschema is required for capability validation; install the python-jsonschema package" >&2
   exit 2
 fi
 
-python - "$graph_root" "$graph_data_root" <<'PY'
+python3 - "$graph_root" "$graph_data_root" <<'PY'
 import importlib
 import json
 import re
