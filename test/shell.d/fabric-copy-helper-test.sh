@@ -179,3 +179,12 @@ if failures:
     raise SystemExit(1)
 PY
 pass "the Copy helper writes scoped file and directory replicas and refuses drift, traversal, collision, parent-only scope, symlinks, nest-inside-source, and Trash"
+
+helper="$ROOT/default/fabric/omarchy_fabric/helpers/session_apply.py"
+if grep -Fq 'info.st_dev != source_dev' "$helper"; then
+  fail "copy_entry_tree must not treat overlay st_dev skew as EXDEV"
+fi
+grep -Fq 'shutil.copyfileobj(incoming, outgoing)' "$helper" \
+  || fail "copy_regular_file copies bytes with copyfileobj"
+grep -Fq 'if error.errno == errno.EXDEV:' "$helper" \
+  || fail "copy maps EXDEV from errno only"
