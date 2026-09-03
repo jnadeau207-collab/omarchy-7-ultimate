@@ -131,13 +131,13 @@ grep -Fq 'return record && record.writable ? record : null' "$application" ||
 if grep -Eq 'xdg-mime|xdg-settings' "$application"; then
   fail "Settings assembles a defaults shell string instead of the typed verb"
 fi
-if grep -Fq 'action: "mime.set"' "$application"; then
-  fail "Settings does not offer mime.set LIVE CONTROL"
-fi
-grep -Fq 'MIME / Default Programs association UI residual OPEN after PR #62' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
-  || fail "HANDOFF_WRITERS keeps MIME leftover OPEN after PR #62"
-grep -Fq 'Settings does not offer MIME LIVE CONTROL' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
-  || fail "HANDOFF_WRITERS keeps Settings MIME LIVE CONTROL refused"
+grep -Fq 'action: "mime.set"' "$application" || fail "Settings uses the typed mime.set action"
+grep -Fq 'if (!row || row.defaultAppId === appId) return' "$application" ||
+  fail "Settings refuses a MIME default that is already set"
+grep -Fq 'if (!supported) return' "$application" ||
+  fail "Settings refuses a MIME application the row does not list as a candidate"
+grep -Fq 'MIME defaults apply through defaults.provider mime.set' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS records MIME LIVE CONTROL in Settings Apps"
 pass "Settings drives protocol.set through the typed operation plane only"
 
 run_node_test <<'JS'
@@ -213,9 +213,22 @@ assertEqual(Model.normalizeAssociation({ id: 'defaults.association.c', kind: 'pr
 const appsQuery = Model.queryForRoute('settings.apps.overview')
 assert(appsQuery.coverage.indexOf('protocol.set') >= 0, 'the apps coverage note names the settable verb')
 assert(appsQuery.coverage.indexOf('defaults.inspect') >= 0, 'the apps coverage note names MIME inspect inventory')
-assert(appsQuery.coverage.indexOf('mime.set') >= 0, 'the apps coverage note names the MIME write plane')
-assert(appsQuery.coverage.indexOf('does not offer MIME LIVE CONTROL') >= 0, 'the apps coverage note refuses MIME LIVE CONTROL')
-assert(appsQuery.coverage.indexOf('startup, and background application inventory remain unavailable') >= 0, 'the apps coverage note still refuses what Settings cannot do')
+assert(appsQuery.coverage.indexOf('MIME defaults apply through defaults.provider mime.set') >= 0, 'the apps coverage note names the live MIME verb')
+assert(appsQuery.coverage.indexOf('Startup and background application inventory remain unavailable') >= 0, 'the apps coverage note still refuses what Settings cannot do')
+
+const mimeAppZ = Model.normalizeApplication({ id: 'defaults.app.z', name: 'TextPro', state: 'available', desktopId: 'textpro.desktop' }, 3)
+const mimeRows = Model.mimeAssociations([
+  Model.normalizeAssociation({ id: 'defaults.association.d', kind: 'mime', key: 'text/plain', status: 'configured', defaultAppId: 'defaults.app.x', writable: true, candidateAppIds: ['defaults.app.x', 'defaults.app.y', 'defaults.app.z'] }, 0),
+  Model.normalizeAssociation({ id: 'defaults.association.e', kind: 'mime', key: 'image/png', status: 'configured', defaultAppId: 'defaults.app.x', writable: false, candidateAppIds: ['defaults.app.x', 'defaults.app.z'] }, 1),
+  Model.normalizeAssociation({ id: 'defaults.association.f', kind: 'mime', key: 'application/pdf', status: 'configured', defaultAppId: 'defaults.app.x', writable: true, candidateAppIds: ['defaults.app.x'] }, 2),
+  browserApps[0],
+  browserApps[1],
+  mimeAppZ
+])
+assertEqual(mimeRows.length, 1, 'only a writable MIME row with a real choice is offered')
+assertEqual(mimeRows[0].key, 'text/plain', 'the offered MIME row keeps its key')
+assertDeepEqual(mimeRows[0].candidates, [{ id: 'defaults.app.x', label: 'Firefox' }, { id: 'defaults.app.z', label: 'TextPro' }], 'only installed candidates are offered for a MIME row')
+assertDeepEqual(Model.mimeAssociations('nope'), [], 'non-array records offer no MIME rows')
 
 function radioRecord(state) {
   return Model.normalizeLeafResource({ id: 'network.radio.wifi', label: 'Wi-Fi', kind: 'radio', state: state }, 0)

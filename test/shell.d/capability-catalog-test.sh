@@ -492,13 +492,13 @@ if mime_set.get("availability", {}).get("claim") != "partial":
     raise SystemExit(f"defaults.mime.set claim is {mime_set.get('availability')}")
 if mime_set.get("availability", {}).get("claim") == "present":
     raise SystemExit("defaults.mime.set must not claim present")
-if mime_set["humanRoute"].get("status") != "planned":
-    raise SystemExit(f"defaults.mime.set invents a Settings MIME setter route: {mime_set.get('humanRoute')}")
-if mime_set["humanRoute"].get("path"):
-    raise SystemExit(f"defaults.mime.set invents a Settings MIME setter path: {mime_set.get('humanRoute')}")
-if mime_set.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if mime_set["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"defaults.mime.set underclaims a visible Settings MIME setter route: {mime_set.get('humanRoute')}")
+if mime_set["humanRoute"].get("path") != "Settings > Apps":
+    raise SystemExit(f"defaults.mime.set route is {mime_set.get('humanRoute')}")
+if mime_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
     raise SystemExit(f"defaults.mime.set source is {mime_set.get('source')}")
-if mime_set.get("source", {}).get("symbol") != "apply_defaults_mime_set":
+if mime_set.get("source", {}).get("symbol") != "applyMimeDefault":
     raise SystemExit(f"defaults.mime.set source is {mime_set.get('source')}")
 for row in writers["capabilities"]:
     provider = row.get("provider") or {}
@@ -988,21 +988,17 @@ if "defaults.inspect" not in file_assoc_notes:
     raise SystemExit("PARITY File associations does not name defaults.inspect MIME inventory")
 if "defaults.mime.set" not in file_assoc_notes:
     raise SystemExit("PARITY File associations does not name defaults.mime.set")
-if "Settings does not offer MIME LIVE CONTROL" not in file_assoc_notes:
-    raise SystemExit("PARITY File associations invented or dropped MIME LIVE CONTROL honesty")
+if "applies per-MIME defaults" not in file_assoc_notes:
+    raise SystemExit("PARITY File associations underclaims the live MIME setter")
 if "files.associations.set" not in file_assoc_notes or "missing/planned MIME" not in file_assoc_notes:
     raise SystemExit("PARITY File associations dropped files.associations.set missing/planned MIME")
-if "MIME / Default Programs association UI residual OPEN after PR #62" not in file_assoc_notes:
-    raise SystemExit("PARITY File associations dropped MIME leftover after PR #62")
 if "this row is not present" not in file_assoc_notes:
     raise SystemExit("PARITY File associations dropped the not-present close")
 defaults_status, defaults_notes = parity_notes("Default Programs")
 if defaults_status == "present":
     raise SystemExit("PARITY Default Programs was flipped to present")
-if "MIME / Default Programs association UI residual OPEN after PR #62" not in defaults_notes:
-    raise SystemExit("PARITY Default Programs dropped MIME leftover after PR #62")
-if "Settings does not offer MIME LIVE CONTROL" not in defaults_notes:
-    raise SystemExit("PARITY Default Programs invented or dropped MIME LIVE CONTROL honesty")
+if "applies per-MIME defaults" not in defaults_notes:
+    raise SystemExit("PARITY Default Programs underclaims the live MIME setter")
 
 event_status, event_notes = parity_notes("Event / history")
 if event_status == "present":

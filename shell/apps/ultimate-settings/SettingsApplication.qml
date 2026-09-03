@@ -52,6 +52,10 @@ Item {
   readonly property string activeBrowserId: browserResource ? String(browserResource.defaultAppId || "") : ""
   property string operationBrowserId: ""
 
+  readonly property var mimeRows: SettingsModel.mimeAssociations(queryState.records)
+  property string operationMimeKey: ""
+  property string operationMimeAppId: ""
+
   function firstBrowserResource() {
     if (!currentRoute || currentRoute.id !== "settings.apps.overview") return null
     var record = SettingsModel.browserAssociation(queryState.records)
@@ -80,6 +84,45 @@ Item {
       if (browserOptions[i].id === appId) return browserOptions[i].label
     }
     return "this application"
+  }
+
+  function mimeRowFor(key) {
+    for (var i = 0; i < mimeRows.length; i++) {
+      if (mimeRows[i].key === key) return mimeRows[i]
+    }
+    return null
+  }
+
+  function mimeLabel(key, appId) {
+    var row = mimeRowFor(key)
+    var candidates = row ? row.candidates : []
+    for (var i = 0; i < candidates.length; i++) {
+      if (candidates[i].id === appId) return candidates[i].label
+    }
+    return "this application"
+  }
+
+  function applyMimeDefault(key, appId) {
+    if (!host || operationBusy) return
+    var row = mimeRowFor(key)
+    if (!row || row.defaultAppId === appId) return
+    var supported = false
+    for (var i = 0; i < row.candidates.length; i++) {
+      if (row.candidates[i].id === appId) { supported = true; break }
+    }
+    if (!supported) return
+    root.operationKind = "mime"
+    root.operationMimeKey = String(key)
+    root.operationMimeAppId = String(appId)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "defaults.provider",
+      action: "mime.set",
+      arguments: { mimeType: root.operationMimeKey, appId: root.operationMimeAppId },
+      idempotencyKey: "settings.mime-default." + root.operationMimeKey + "." + root.operationMimeAppId + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
   }
   readonly property var radioResource: firstRadioResource()
   readonly property bool radioEnabled: radioResource ? radioResource.radioEnabled === true : false
@@ -271,6 +314,8 @@ Item {
             ? "Keyboard layout set to " + root.keyboardLayouts[root.operationLayoutIndex] + "."
             : root.operationKind === "browser"
               ? "Default browser set to " + root.browserLabel(root.operationBrowserId) + "."
+            : root.operationKind === "mime"
+              ? "Default application for " + root.operationMimeKey + " set to " + root.mimeLabel(root.operationMimeKey, root.operationMimeAppId) + "."
             : root.operationKind === "network"
               ? "Wi-Fi turned " + (root.operationRadioTarget ? "on" : "off") + "."
             : "Output volume set to " + root.operationTarget + " percent."
@@ -282,6 +327,8 @@ Item {
             ? "The keyboard layout change ended as " + String(result.status || "unknown") + "."
             : root.operationKind === "browser"
               ? "The default browser change ended as " + String(result.status || "unknown") + "."
+            : root.operationKind === "mime"
+              ? "The default application change ended as " + String(result.status || "unknown") + "."
             : root.operationKind === "network"
               ? "The Wi-Fi change ended as " + String(result.status || "unknown") + "."
             : "The volume change ended as " + String(result.status || "unknown") + "."
@@ -876,6 +923,99 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Only applications that declare they handle web links are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.apps.overview" && root.mimeRows.length > 0
+              Layout.fillWidth: true
+              implicitHeight: mimeColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: Semantics.text(root.productProfile, "Default applications")
+
+              ColumnLayout {
+                id: mimeColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    textFormat: Text.PlainText
+                    text: Semantics.text(root.productProfile, "Default applications")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: root.operationBusy && root.operationKind === "mime" ? "APPLYING" : "LIVE CONTROL"
+                    tone: root.operationBusy && root.operationKind === "mime" ? "info" : "success"
+                    semanticProfile: root.productProfile
+                  }
+                }
+
+                Repeater {
+                  model: root.mimeRows
+                  delegate: ColumnLayout {
+                    required property var modelData
+                    readonly property var row: modelData
+                    Layout.fillWidth: true
+                    spacing: Style.space(4)
+
+                    Text {
+                      textFormat: Text.PlainText
+                      text: row.defaultAppId !== ""
+                        ? row.key + " opens with " + root.mimeLabel(row.key, row.defaultAppId)
+                        : row.key + " has no default application"
+                      color: Tokens.text.primary
+                      font.family: Tokens.typography.family
+                      font.pixelSize: Style.font.body
+                      Layout.fillWidth: true
+                    }
+
+                    Flow {
+                      Layout.fillWidth: true
+                      spacing: Style.space(8)
+
+                      Repeater {
+                        model: row.candidates
+                        delegate: Ui.Button {
+                          required property var modelData
+                          text: modelData.label
+                          focusable: true
+                          bordered: true
+                          enabled: !root.operationBusy && modelData.id !== row.defaultAppId
+                          accessibleDescription: Semantics.text(root.productProfile, "Set the default application through") + " defaults.provider mime.set"
+                          onClicked: root.applyMimeDefault(row.key, modelData.id)
+                        }
+                      }
+                    }
+                  }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: root.operationMessage !== "" && root.operationKind === "mime"
+                    ? root.operationMessage
+                    : Semantics.text(root.productProfile,
+                        "Only applications that declare they handle each type are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall

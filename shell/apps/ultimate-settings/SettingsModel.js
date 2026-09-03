@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set. The mime.set write plane exists. Settings does not offer MIME LIVE CONTROL. Other associations, startup, and background application inventory remain unavailable from Settings."
+    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup and background application inventory remain unavailable from Settings."
   },
   {
     routeId: "settings.accessibility.overview",
@@ -637,6 +637,25 @@ function browserCandidates(record, records) {
   return out
 }
 
+function mimeAssociations(records) {
+  if (!Array.isArray(records)) return []
+  var out = []
+  for (var i = 0; i < records.length; i++) {
+    var record = records[i]
+    if (!record || record.associationKind !== "mime" || record.writable !== true) continue
+    if (typeof record.associationKey !== "string" || record.associationKey === "") continue
+    var candidates = browserCandidates(record, records)
+    if (candidates.length < 2) continue
+    out.push({
+      key: record.associationKey,
+      label: record.label,
+      defaultAppId: typeof record.defaultAppId === "string" ? record.defaultAppId : "",
+      candidates: candidates
+    })
+  }
+  return out
+}
+
 function normalizeAssociation(association, index) {
   if (!isObject(association) || typeof association.id !== "string" || association.id.length > 160) return null
   return {
@@ -1188,6 +1207,7 @@ if (typeof module !== "undefined") {
     BROWSER_SCHEMES: BROWSER_SCHEMES,
     browserAssociation: browserAssociation,
     browserCandidates: browserCandidates,
+    mimeAssociations: mimeAssociations,
     normalizeAssociation: normalizeAssociation,
     normalizeApplication: normalizeApplication,
     MAX_DISPLAY_TEXT: MAX_DISPLAY_TEXT,
