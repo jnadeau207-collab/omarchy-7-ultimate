@@ -126,6 +126,19 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                         "destinationName": lambda value: value,
                     },
                 ),
+                IntentDefinition(
+                    "files.entry.move",
+                    FixedArgvCommand("/bin/true", ("files-entry-move",)),
+                    required={
+                        "resourceId": stable_token,
+                        "entryId": stable_token,
+                        "locationId": stable_token,
+                        "entryRelativePath": lambda value: value,
+                        "destinationLocationId": stable_token,
+                        "destinationParentRelativePath": lambda value: value,
+                        "destinationName": lambda value: value,
+                    },
+                ),
             )
         )
         self.coordinator = OperationCoordinator(
@@ -172,6 +185,12 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                     "entry.copy",
                     "files.entry.copy",
                     FabricDaemon._copy_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.move",
+                    "files.entry.move",
+                    FabricDaemon._move_payload,
                 ),
             ),
             intents=self.intents,
@@ -330,6 +349,37 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("identity", listing["selectedEntry"])
         grant = self._shell_grant(copied["operationId"])
         self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
+
+    async def test_entry_move_preflight_is_consequential_and_shell_refused(self) -> None:
+        moved = await self.coordinator.preflight(
+            self.shell,
+            provider_id="files.provider",
+            action="entry.move",
+            arguments={
+                "entryId": "files.entry.notes",
+                "destinationLocationId": "files.location.desktop",
+                "destinationParentRelativePath": "",
+                "destinationName": "memo.txt",
+            },
+            idempotency_key="files.entry.move.notes",
+        )
+        request = self.coordinator.approval_request(self.shell, moved["operationId"])
+        self.assertEqual(request.risk, RiskLevel.CONSEQUENTIAL)
+        self.assertEqual(request.capability, "files.entry.move")
+        self.assertTrue(request.resource.resource_id.startswith("files.directory."))
+        payload = self.store.get(moved["operationId"]).plan.intent.payload
+        self.assertEqual(payload["locationId"], "files.location.desktop")
+        self.assertEqual(payload["entryRelativePath"], "notes.txt")
+        self.assertEqual(payload["entryId"], "files.entry.notes")
+        self.assertEqual(payload["destinationLocationId"], "files.location.desktop")
+        self.assertEqual(payload["destinationParentRelativePath"], "")
+        self.assertEqual(payload["destinationName"], "memo.txt")
+        listing = self.store.get(moved["operationId"]).plan.preflight["currentState"]["value"]
+        self.assertEqual(listing["selectedEntry"]["entryId"], "files.entry.notes")
+        self.assertIn("identity", listing["selectedEntry"])
+        with self.assertRaises(SecurityValidationError) as caught:
+            self._shell_grant(moved["operationId"])
+        self.assertEqual(caught.exception.code, "grant.shell-consequential")
 
     def test_shell_cannot_hold_a_consequential_files_grant(self) -> None:
         with self.assertRaises(SecurityValidationError) as caught:

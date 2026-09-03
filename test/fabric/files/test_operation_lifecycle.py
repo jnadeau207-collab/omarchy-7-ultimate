@@ -79,6 +79,25 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
         await self.exercise(
+            "entry.move",
+            {
+                "entryId": "files.entry.notes",
+                "destinationLocationId": "files.location.desktop",
+                "destinationParentRelativePath": "",
+                "destinationName": "memo.txt",
+            },
+            lambda state: self.assertEqual(
+                (
+                    state["locationId"],
+                    state["parentRelativePath"],
+                    "notes.txt" in state["names"],
+                    "memo.txt" in state["names"],
+                    state["selectedEntry"]["entryId"],
+                ),
+                ("files.location.desktop", "", False, True, "files.entry.notes"),
+            ),
+        )
+        await self.exercise(
             "entry.trash",
             {"entryId": "files.entry.project"},
             lambda state: self.assertEqual(
@@ -216,6 +235,42 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 principal(),
             )
         self.assertEqual(copy_collision.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as move_symlink:
+            await provider.preflight(
+                "entry.move",
+                {
+                    "entryId": "files.entry.unsafe-link",
+                    "destinationLocationId": "files.location.desktop",
+                    "destinationParentRelativePath": "",
+                    "destinationName": "safe.txt",
+                },
+                principal(),
+            )
+        self.assertEqual(move_symlink.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as move_directory:
+            await provider.preflight(
+                "entry.move",
+                {
+                    "entryId": "files.entry.project",
+                    "destinationLocationId": "files.location.desktop",
+                    "destinationParentRelativePath": "",
+                    "destinationName": "Project-moved",
+                },
+                principal(),
+            )
+        self.assertEqual(move_directory.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as move_collision:
+            await provider.preflight(
+                "entry.move",
+                {
+                    "entryId": "files.entry.notes",
+                    "destinationLocationId": "files.location.desktop",
+                    "destinationParentRelativePath": "",
+                    "destinationName": "Project",
+                },
+                principal(),
+            )
+        self.assertEqual(move_collision.exception.code, "files.precondition-failed")
         for path in ("../escape", "/absolute", "Project//child", "Project\\child", "Project/./child"):
             with self.subTest(path=path), self.assertRaises(FabricError):
                 await provider.preflight(

@@ -34,9 +34,11 @@ Item {
   readonly property bool trashAuthorized: false
   readonly property bool renameAuthorized: true
   readonly property bool copyAuthorized: true
+  readonly property bool cutAuthorized: false
   property string renameDraft: ""
   property var renameRecord: null
   property var stagedCopyRecord: null
+  property var stagedMoveRecord: null
 
   property var history: []
   property int historyIndex: -1
@@ -311,6 +313,43 @@ Item {
     if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
   }
 
+  function stageCut(record) {
+    if (!root.cutAuthorized) return
+    if (!host || operationBusy) return
+    if (!root.copyableRecord(record)) return
+    root.stagedMoveRecord = record
+    root.operationMessage = "Cut " + String(record.title || "this entry") + " in Files. Paste Move stays inside this window."
+  }
+
+  function pasteStagedMove() {
+    if (!root.cutAuthorized) return
+    if (!host || operationBusy || createLocationId === "") return
+    if (!root.stagedMoveRecord) return
+    if (!root.copyableRecord(root.stagedMoveRecord)) return
+    var destName = root.nextDestinationName(String(root.stagedMoveRecord.title || ""))
+    var refusal = FilesModel.createNameRefusal(destName)
+    if (refusal !== "") {
+      root.operationMessage = refusal
+      return
+    }
+    root.operationName = String(destName)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationKind = "move"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "files.provider",
+      action: "entry.move",
+      arguments: {
+        entryId: String(root.stagedMoveRecord.id),
+        destinationLocationId: root.createLocationId,
+        destinationParentRelativePath: root.relativePath,
+        destinationName: destName
+      },
+      idempotencyKey: "files.entry.move." + String(root.stagedMoveRecord.id) + "." + root.createLocationId + "." + destName
+    })
+    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
+  }
+
   function trashEntry(record) {
     if (!root.trashAuthorized) return
     if (!host || operationBusy || createLocationId === "") return
@@ -372,8 +411,8 @@ Item {
     }
     if (root.operationStage === "start") {
       var succeeded = String(result.status || "") === "succeeded"
-      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "open" ? "Opened " : root.operationKind === "rename" ? "Renamed " : root.operationKind === "copy" ? "Copied " : "Created "
-      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "open" ? "Opening " : root.operationKind === "rename" ? "Renaming " : root.operationKind === "copy" ? "Copying " : "Creating "
+      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "move" ? "Moved " : root.operationKind === "open" ? "Opened " : root.operationKind === "rename" ? "Renamed " : root.operationKind === "copy" ? "Copied " : "Created "
+      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "move" ? "Moving " : root.operationKind === "open" ? "Opening " : root.operationKind === "rename" ? "Renaming " : root.operationKind === "copy" ? "Copying " : "Creating "
       var tail = root.operationKind === "trash" ? " to the Recycle Bin." : "."
       root.resetOperation(succeeded
         ? verb + root.operationName + tail
@@ -403,6 +442,18 @@ Item {
         enabled: !root.operationBusy && root.stagedCopyRecord !== null && root.copyableRecord(root.stagedCopyRecord)
       })
     }
+    if (root.cutAuthorized) {
+      list.push({
+        key: "cut", label: "Cut", dropdown: false,
+        enabled: !root.operationBusy && root.copyableRecord(root.selectedRecord)
+      })
+    }
+    if (root.createVisible && root.cutAuthorized) {
+      list.push({
+        key: "paste-move", label: "Paste Move", dropdown: false,
+        enabled: !root.operationBusy && root.stagedMoveRecord !== null && root.copyableRecord(root.stagedMoveRecord)
+      })
+    }
     if (root.createVisible && root.trashAuthorized) {
       list.push({
         key: "delete", label: "Delete", dropdown: false,
@@ -422,6 +473,10 @@ Item {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
       list.push({ key: "paste", label: "Paste", enabled: root.createVisible && root.stagedCopyRecord !== null && !root.operationBusy })
     }
+    if (root.cutAuthorized) {
+      list.push({ key: "cut", label: "Cut", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
+      list.push({ key: "paste-move", label: "Paste Move", enabled: root.createVisible && root.stagedMoveRecord !== null && !root.operationBusy })
+    }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
@@ -439,6 +494,10 @@ Item {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
       list.push({ key: "paste", label: "Paste", enabled: root.createVisible && root.stagedCopyRecord !== null && !root.operationBusy })
     }
+    if (root.cutAuthorized) {
+      list.push({ key: "cut", label: "Cut", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
+      list.push({ key: "paste-move", label: "Paste Move", enabled: root.createVisible && root.stagedMoveRecord !== null && !root.operationBusy })
+    }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
@@ -452,6 +511,8 @@ Item {
     if (key === "rename") { root.beginRename(root.selectedRecord); return }
     if (key === "copy") { root.stageCopy(root.selectedRecord); return }
     if (key === "paste") { root.pasteStagedCopy(); return }
+    if (key === "cut") { root.stageCut(root.selectedRecord); return }
+    if (key === "paste-move") { root.pasteStagedMove(); return }
     if (key === "delete") { root.trashEntry(root.selectedRecord); return }
     if (key === "properties") { propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
@@ -470,6 +531,7 @@ Item {
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Up) { root.goUp(); event.accepted = true }
     else if (event.key === Qt.Key_F2) { root.beginRename(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_C) { root.stageCopy(root.selectedRecord); event.accepted = true }
+    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_X) { root.stageCut(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { root.pasteStagedCopy(); event.accepted = true }
     else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }
   }
@@ -710,7 +772,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy with in-app staging. The OS clipboard and cut/move stay unavailable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy with in-app staging. The Cut/Move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The OS clipboard and folder copy stay unavailable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))

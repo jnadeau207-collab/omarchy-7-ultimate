@@ -19,9 +19,11 @@ grep -Fq 'action: "directory.create"' "$application" || fail "Files uses the typ
 grep -Fq 'action: "entry.open"' "$application" || fail "Files uses the typed entry.open action"
 grep -Fq 'action: "entry.rename"' "$application" || fail "Files uses the typed entry.rename action"
 grep -Fq 'action: "entry.copy"' "$application" || fail "Files uses the typed entry.copy action"
+grep -Fq 'action: "entry.move"' "$application" || fail "Files keeps the typed entry.move action"
 grep -Fq 'function openEntry(record)' "$application" || fail "Files names openEntry for the launch plane"
 grep -Fq 'function renameEntry(record, name)' "$application" || fail "Files names renameEntry for the rename plane"
 grep -Fq 'function pasteStagedCopy()' "$application" || fail "Files names pasteStagedCopy for the copy plane"
+grep -Fq 'function pasteStagedMove()' "$application" || fail "Files names pasteStagedMove for the move plane"
 grep -Fq 'arguments: { entryId: String(record.id) }' "$application" || fail "Files sends only the entry identity for Open"
 for stage in operation.preflight operation.approve operation.start; do
   grep -Fq "\"$stage\"" "$application" || fail "Files drives the $stage step"
@@ -110,15 +112,25 @@ grep -Fq 'key: "copy", label: "Copy"' "$application" \
   || fail "Copy stays a gated command-bar control"
 grep -Fq 'key: "paste", label: "Paste"' "$application" \
   || fail "Paste stays a gated command-bar control"
-if grep -Eq 'key: "cut"' "$application"; then
-  fail "Files invents cut/move"
+grep -Fq 'readonly property bool cutAuthorized: false' "$application" \
+  || fail "cutAuthorized stays false; shell principal cannot authorize Cut"
+if grep -Eq 'cutAuthorized:\s*true' "$application"; then
+  fail "Files must not authorize shell consequential cut"
 fi
+grep -Fq 'if (!root.cutAuthorized) return' "$application" \
+  || fail "stageCut and pasteStagedMove refuse to start a doomed shell preflight"
+grep -Fq 'if (root.createVisible && root.cutAuthorized)' "$application" \
+  || fail "Paste Move stays hidden while cutAuthorized is false"
+grep -Fq 'if (root.cutAuthorized)' "$application" \
+  || fail "Organize and context Cut stay hidden while cutAuthorized is false"
 if grep -Eq 'wl-copy|wl-paste|Qt\.application\.clipboard' "$application"; then
   fail "Files invents an OS clipboard product"
 fi
-grep -Fq 'The OS clipboard and cut/move stay unavailable' "$application" \
+grep -Fq 'The OS clipboard and folder copy stay unavailable' "$application" \
   || fail "Files names the OS clipboard leftover instead of inventing one"
-pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing cut or an OS clipboard"
+grep -Fq 'The Cut/Move write plane exists but is not shell-authorizable' "$application" \
+  || fail "Files names the Cut/Move write plane as not shell-authorizable"
+pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing LIVE Cut or an OS clipboard"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')

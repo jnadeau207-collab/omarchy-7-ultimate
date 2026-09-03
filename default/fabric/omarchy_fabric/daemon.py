@@ -918,6 +918,84 @@ class FabricDaemon:
         }
 
     @staticmethod
+    def _move_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        selected = preflight.get("guards", {}).get("selectedEntry") if isinstance(preflight.get("guards"), Mapping) else None
+        if not isinstance(selected, Mapping):
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The move plan does not name a scoped entry.",
+            )
+        entry_id = selected.get("entryId")
+        location_id = selected.get("locationId")
+        relative = selected.get("entryRelativePath")
+        arguments = preflight.get("normalizedArguments") if isinstance(preflight.get("normalizedArguments"), Mapping) else None
+        dest_location = arguments.get("destinationLocationId") if isinstance(arguments, Mapping) else None
+        dest_parent = arguments.get("destinationParentRelativePath") if isinstance(arguments, Mapping) else None
+        dest_name = arguments.get("destinationName") if isinstance(arguments, Mapping) else None
+        if not isinstance(entry_id, str) or not isinstance(location_id, str) or not isinstance(relative, str) or not relative:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The move plan does not name a scoped entry.",
+            )
+        if not isinstance(dest_location, str) or not isinstance(dest_parent, str) or not isinstance(dest_name, str) or not dest_name:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The move plan does not name a destination.",
+            )
+        current = FabricDaemon._directory_listing(preflight["currentState"])
+        proposed = FabricDaemon._directory_listing(preflight["proposedState"])
+        listing_selected = current.get("selectedEntry") if isinstance(current, Mapping) else None
+        if not isinstance(listing_selected, Mapping) or listing_selected.get("entryId") != entry_id:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The move plan listing does not carry the selected entry identity.",
+            )
+        if current.get("locationId") != dest_location or current.get("parentRelativePath") != dest_parent:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The move plan listing is not the destination directory.",
+            )
+        source_parent = relative.rsplit("/", 1)[0] if "/" in relative else ""
+        source_name = relative.rsplit("/", 1)[-1]
+        same_directory = location_id == dest_location and source_parent == dest_parent
+        added = [name for name in proposed["names"] if name not in set(current["names"])]
+        removed = [name for name in current["names"] if name not in set(proposed["names"])]
+        if same_directory and source_name == dest_name:
+            if added or removed:
+                raise FabricError(
+                    "operation.invalid-arguments",
+                    "Fabric operation arguments are invalid",
+                    "The move plan changes names without leaving the selected entry in place.",
+                )
+        elif same_directory:
+            if removed != [source_name] or added != [dest_name]:
+                raise FabricError(
+                    "operation.invalid-arguments",
+                    "Fabric operation arguments are invalid",
+                    "The move plan does not relocate exactly one entry inside its directory.",
+                )
+        elif added != [dest_name]:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The move plan does not add exactly one destination name.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "entryId": entry_id,
+            "locationId": location_id,
+            "entryRelativePath": relative,
+            "destinationLocationId": dest_location,
+            "destinationParentRelativePath": dest_parent,
+            "destinationName": dest_name,
+        }
+
+    @staticmethod
     def _open_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
         selected = preflight.get("guards", {}).get("selectedEntry") if isinstance(preflight.get("guards"), Mapping) else None
         if not isinstance(selected, Mapping):
@@ -1295,6 +1373,19 @@ class FabricDaemon:
                             "destinationName": self._operation_new_name,
                         },
                     ),
+                    IntentDefinition(
+                        "files.entry.move",
+                        FixedArgvCommand(str(helper), ("files-entry-move",)),
+                        required={
+                            "resourceId": stable_token,
+                            "entryId": stable_token,
+                            "locationId": stable_token,
+                            "entryRelativePath": self._operation_entry_relative,
+                            "destinationLocationId": stable_token,
+                            "destinationParentRelativePath": self._operation_relative,
+                            "destinationName": self._operation_new_name,
+                        },
+                    ),
                     *package_intents(),
                     *compatibility_intents(),
                     *device_intents(),
@@ -1407,6 +1498,12 @@ class FabricDaemon:
                     "entry.copy",
                     "files.entry.copy",
                     self._copy_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.move",
+                    "files.entry.move",
+                    self._move_payload,
                 ),
                 *package_definitions(),
                 *compatibility_definitions(),

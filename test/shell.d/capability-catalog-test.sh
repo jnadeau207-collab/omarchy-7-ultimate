@@ -31,7 +31,7 @@ if ! python -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"135 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+[[ $valid_output == *"136 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -846,6 +846,12 @@ if "`files.entry.rename`" not in gaps and "files.entry.rename" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the files.entry.rename write plane")
 if "`files.entry.copy`" not in gaps and "files.entry.copy" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the files.entry.copy write plane")
+if "`files.entry.move`" not in gaps and "files.entry.move" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the files.entry.move write plane")
+if "grant.shell-consequential" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name the SHELL consequential refuse for entry.move")
+if "cutAuthorized=false" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep LIVE Cut unauthorized")
 if "`files.trash.restore` write plane is reachable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the reachable files.trash.restore write plane")
 if "humanRoute planned empty" not in gaps:
@@ -1518,6 +1524,36 @@ if native12.get("claim") == "present":
     raise SystemExit(f"windows-native.12 was flipped to present: {native12}")
 if "files.entry.copy" not in (native12.get("capabilityIds") or []):
     raise SystemExit("windows-native.12 does not name files.entry.copy")
+if "files.entry.move" not in by_id:
+    raise SystemExit("absent move writer invent: files.entry.move missing from catalog")
+entry_move = by_id["files.entry.move"]
+if entry_move.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.entry.move provider is {entry_move.get('provider')}")
+if entry_move.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.entry.move provider state is {entry_move.get('provider')}")
+if entry_move.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.entry.move claim is {entry_move.get('availability')}")
+if entry_move.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.entry.move must not claim present")
+if entry_move.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"files.entry.move agent availability is {entry_move.get('availability')}")
+if entry_move.get("consent", {}).get("mode") != "high-risk":
+    raise SystemExit(f"files.entry.move consent is not consequential: {entry_move.get('consent')}")
+if entry_move.get("effects") != ["mutating"]:
+    raise SystemExit(f"files.entry.move effects are {entry_move.get('effects')}")
+if entry_move["humanRoute"].get("status") != "planned":
+    raise SystemExit(f"files.entry.move invents a LIVE Cut route: {entry_move.get('humanRoute')}")
+if entry_move["humanRoute"].get("path"):
+    raise SystemExit(f"files.entry.move invents a LIVE Cut path: {entry_move.get('humanRoute')}")
+if entry_move.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+    raise SystemExit(f"files.entry.move source is {entry_move.get('source')}")
+if entry_move.get("source", {}).get("symbol") != "apply_files_entry_move":
+    raise SystemExit(f"files.entry.move source is {entry_move.get('source')}")
+named_move = f"{entry_move.get('source', {}).get('file') or ''} {entry_move.get('source', {}).get('symbol') or ''}".lower()
+if "nautilus" in named_move:
+    raise SystemExit(f"files.entry.move still names Nautilus: {entry_move.get('source')}")
+if "files.entry.move" not in (parity_explorer.get("capabilityIds") or []):
+    raise SystemExit("parity.explorer-this-pc does not name files.entry.move")
 files_copy = by_id["files.copy"]
 if files_copy.get("provider", {}).get("state") != "present":
     raise SystemExit(f"files.copy leftover was not retargeted: {files_copy.get('provider')}")
@@ -1600,6 +1636,12 @@ if "copyAuthorized: false" in files_app:
     raise SystemExit("Files hides Copy while the SHELL grant is allowed")
 if 'action: "entry.copy"' not in files_app:
     raise SystemExit("Files must drive the typed entry.copy action")
+if "readonly property bool cutAuthorized: false" not in files_app:
+    raise SystemExit("Files must keep cutAuthorized=false")
+if "cutAuthorized: true" in files_app:
+    raise SystemExit("Files invents cutAuthorized=true")
+if 'action: "entry.move"' not in files_app:
+    raise SystemExit("Files must keep the typed entry.move action")
 if 'action: "trash.restore"' in files_app:
     raise SystemExit("Files invents Restore LIVE")
 desktop_status, desktop_notes = parity_notes("Desktop (icons, wallpaper, context menu, Recycle)")
@@ -1629,6 +1671,12 @@ if "files.entry.copy" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS does not name files.entry.copy")
 if "copyAuthorized=true" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS residual names Files Copy UI gated copyAuthorized=true")
+if "files.entry.move" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS does not name files.entry.move")
+if "cutAuthorized=false" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS residual names Files Cut UI gated cutAuthorized=false")
+if "grant.shell-consequential" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name the SHELL consequential refuse for entry.move")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")
@@ -1640,6 +1688,10 @@ if "files.entry.copy" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name files.entry.copy")
 if "copyAuthorized=true" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name copyAuthorized=true")
+if "files.entry.move" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row does not name files.entry.move")
+if "cutAuthorized=false" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row does not name cutAuthorized=false")
 if "opening a file in its handler" in explorer_notes and "remain unavailable" in explorer_notes.split("opening a file in its handler", 1)[-1][:80]:
     raise SystemExit("PARITY Explorer row still lists opening a file in its handler as unavailable")
 if "File contents are never read" not in explorer_notes:
@@ -1660,6 +1712,8 @@ if "files.entry.rename" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.rename")
 if "files.entry.copy" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.copy")
+if "files.entry.move" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name files.entry.move")
 if "files.trash.manage still missing" not in cp and "files.trash.manage` still missing" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
 if "REJECTED" not in plan:
@@ -1721,6 +1775,7 @@ inventory = {
     "files.entry.open": "partial",
     "files.entry.rename": "partial",
     "files.entry.copy": "partial",
+    "files.entry.move": "partial",
     "files.entry.trash": "partial",
     "files.trash.restore": "partial",
     "account.inspect": "missing",

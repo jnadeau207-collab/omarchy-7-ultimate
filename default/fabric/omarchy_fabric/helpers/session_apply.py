@@ -611,6 +611,10 @@ def stable_copy_directory_id(location_id: str, parent: str, entry_id: str) -> st
     return stable_rename_directory_id(location_id, parent, entry_id)
 
 
+def stable_move_directory_id(location_id: str, parent: str, entry_id: str) -> str:
+    return stable_rename_directory_id(location_id, parent, entry_id)
+
+
 def require_destination_name(payload: Mapping[str, Any]) -> str:
     name = payload.get("destinationName")
     if not isinstance(name, str) or not name:
@@ -763,6 +767,78 @@ def apply_files_entry_copy(stdin: Any, stdout: Any) -> int:
     except OSError as error:
         raise ApplyError("apply.failed", "Copying the entry reported a failure status.") from error
     json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "copied": True}, stdout)
+    stdout.write("\n")
+    return 0
+
+def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_files_resource_id(payload)
+    entry_id = require_entry_id(payload)
+    dest_name = require_destination_name(payload)
+    dest_location = payload.get("destinationLocationId")
+    dest_parent = payload.get("destinationParentRelativePath")
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot be moved.")
+    if dest_location == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash is not a move destination.")
+    if not isinstance(dest_location, str) or not isinstance(dest_parent, str):
+        raise ApplyError("payload.invalid", "The apply payload names no move destination.")
+    if resource_id != stable_move_directory_id(dest_location, dest_parent, entry_id):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    _, source, relative = resolve_entry_path(payload, pathlib.Path.home())
+    try:
+        info = source.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be moved.")
+    if not stat.S_ISREG(info.st_mode):
+        raise ApplyError("payload.invalid", "Only regular files can be moved.")
+    dest_payload = {
+        "locationId": dest_location,
+        "parentRelativePath": dest_parent,
+        "name": dest_name,
+    }
+    dest_key = files_location_key(dest_location)
+    dest_segments = require_relative(dest_payload)
+    dest_base = resolve_location_path(dest_key, pathlib.Path.home())
+    try:
+        dest_root = dest_base.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination files location is not present.") from error
+    dest_target = dest_root.joinpath(*dest_segments, dest_name)
+    try:
+        dest_parent_path = dest_target.parent.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination parent is not present.") from error
+    if dest_parent_path != dest_root and dest_root not in dest_parent_path.parents:
+        raise ApplyError("payload.invalid", "The destination escapes its files location.")
+    if not dest_parent_path.is_dir():
+        raise ApplyError("resource.unresolved", "The destination parent is not a directory.")
+    destination = dest_parent_path / dest_name
+    if "desired" in payload:
+        if destination.exists() and not source.exists():
+            try:
+                os.rename(destination, source)
+            except OSError as error:
+                raise ApplyError("apply.failed", "Restoring the moved entry reported a failure status.") from error
+            json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "moved": False}, stdout)
+            stdout.write("\n")
+            return 0
+        json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "moved": False}, stdout)
+        stdout.write("\n")
+        return 0
+    if destination == source:
+        json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "moved": False}, stdout)
+        stdout.write("\n")
+        return 0
+    if destination.exists():
+        raise ApplyError("apply.exists", "Something already occupies the destination name.")
+    try:
+        os.rename(source, destination)
+    except OSError as error:
+        raise ApplyError("apply.failed", "Moving the entry reported a failure status.") from error
+    json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "moved": True}, stdout)
     stdout.write("\n")
     return 0
 
@@ -977,6 +1053,7 @@ ACTIONS = {
     "files-entry-open": apply_files_entry_open,
     "files-entry-rename": apply_files_entry_rename,
     "files-entry-copy": apply_files_entry_copy,
+    "files-entry-move": apply_files_entry_move,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
