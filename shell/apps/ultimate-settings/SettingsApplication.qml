@@ -104,6 +104,7 @@ Item {
 
   function applyMimeDefault(key, appId) {
     if (!host || operationBusy) return
+    if (!currentRoute || currentRoute.id !== "settings.apps.overview") return
     var row = mimeRowFor(key)
     if (!row || row.defaultAppId === appId) return
     var supported = false

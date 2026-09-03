@@ -136,6 +136,8 @@ grep -Fq 'if (!row || row.defaultAppId === appId) return' "$application" ||
   fail "Settings refuses a MIME default that is already set"
 grep -Fq 'if (!supported) return' "$application" ||
   fail "Settings refuses a MIME application the row does not list as a candidate"
+grep -Eq 'currentRoute\.id !== "settings\.apps\.overview"\) return$' "$application" ||
+  fail "Settings offers MIME defaults only on the Apps overview route"
 grep -Fq 'MIME defaults apply through defaults.provider mime.set' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS records MIME LIVE CONTROL in Settings Apps"
 pass "Settings drives protocol.set through the typed operation plane only"
