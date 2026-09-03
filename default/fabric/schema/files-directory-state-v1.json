@@ -29,6 +29,7 @@
         "directory.create",
         "entry.rename",
         "entry.copy",
+        "entry.move",
         "entry.trash",
         "trash.restore",
         "entry.open"

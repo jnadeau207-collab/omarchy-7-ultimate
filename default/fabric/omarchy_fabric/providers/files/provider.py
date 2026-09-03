@@ -94,6 +94,7 @@ SCHEMA_FILES = (
     "files-create-directory-arguments-v0.json",
     "files-rename-arguments-v0.json",
     "files-copy-arguments-v0.json",
+    "files-move-arguments-v0.json",
     "files-entry-arguments-v0.json",
     "files-mount-arguments-v0.json",
     "files-inventory-result-v0.json",
@@ -1197,6 +1198,10 @@ def _normalize_copy(arguments: Mapping[str, Any]) -> dict[str, Any]:
         "destinationName": normalize_name(arguments["destinationName"]),
     }
 
+
+def _normalize_move(arguments: Mapping[str, Any]) -> dict[str, Any]:
+    return _normalize_copy(arguments)
+
 def _normalize_entry(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"entryId": arguments["entryId"]}
 
@@ -1350,6 +1355,50 @@ def _entry_copy_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], a
         return {
             "locationId": location_id,
             "parentRelativePath": parent,
+            "names": names,
+            "selectedEntry": {"entryId": selected["id"], "identity": identity},
+        }
+
+    return {
+        "kind": "files.directory",
+        "id": f"files.directory.{digest}",
+        "current": document(current_names, selected["identity"]),
+        "proposed": document(proposed_names, selected["identity"]),
+    }
+
+
+def _source_parent(relative: str) -> str:
+    return relative.rsplit("/", 1)[0] if "/" in relative else ""
+
+
+def _entry_move_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+    selected = _entry(current, arguments["entryId"])
+    source_location = _location(current, selected["locationId"])
+    if source_location["kind"] == "trash":
+        raise _precondition("Trash entries cannot be moved.", selected["id"])
+    dest_location = _location(current, arguments["destinationLocationId"], writable=True)
+    if dest_location["kind"] == "trash":
+        raise _precondition("Trash is not a move destination.", dest_location["id"])
+    source_parent = _source_parent(selected["relativePath"])
+    dest_location_id = dest_location["id"]
+    dest_parent = arguments["destinationParentRelativePath"]
+    dest_name = arguments["destinationName"]
+    if dest_location_id == selected["locationId"] and dest_parent == source_parent and dest_name != selected["name"]:
+        raise _precondition("Same-directory name changes use rename.", selected["id"])
+    listing = None
+    if backend is not None and hasattr(backend, "directory_listing"):
+        listing = backend.directory_listing(dest_location_id, dest_parent)
+    current_names = sorted(listing) if listing is not None else _directory_names_from_state(current, dest_location_id, dest_parent)
+    if dest_name in current_names:
+        proposed_names = list(current_names)
+    else:
+        proposed_names = sorted([*current_names, dest_name])
+    digest = hashlib.sha256(f"files.directory\0{dest_location_id}\0{dest_parent}\0{selected['id']}".encode("utf-8")).hexdigest()
+
+    def document(names: list[str], identity: str) -> dict[str, Any]:
+        return {
+            "locationId": dest_location_id,
+            "parentRelativePath": dest_parent,
             "names": names,
             "selectedEntry": {"entryId": selected["id"], "identity": identity},
         }
@@ -1537,6 +1586,41 @@ def _copy_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dic
     state["entries"].sort(key=lambda item: item["id"])
     return state
 
+def _move_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
+    state = deepcopy(dict(current))
+    selected = _entry(state, arguments["entryId"])
+    source_location = _location(state, selected["locationId"], writable=True)
+    if source_location["kind"] == "trash":
+        raise _precondition("Trash entries cannot be moved.", selected["id"])
+    if selected["kind"] != "file":
+        raise _precondition("The selected entry is not a regular file.", selected["id"])
+    dest_location = _location(state, arguments["destinationLocationId"], writable=True)
+    if dest_location["kind"] == "trash":
+        raise _precondition("Trash is not a move destination.", dest_location["id"])
+    source_parent = _source_parent(selected["relativePath"])
+    parent_id = None
+    parent_path = arguments["destinationParentRelativePath"]
+    dest_name = arguments["destinationName"]
+    if dest_location["id"] == selected["locationId"] and parent_path == source_parent and dest_name != selected["name"]:
+        raise _precondition("Same-directory name changes use rename.", selected["id"])
+    dest_relative = dest_name if not parent_path else f"{parent_path}/{dest_name}"
+    if dest_location["id"] == selected["locationId"] and dest_relative == selected["relativePath"]:
+        return state
+    if parent_path:
+        parents = [entry for entry in state["entries"] if entry["locationId"] == dest_location["id"] and entry["relativePath"] == parent_path]
+        if len(parents) != 1 or parents[0]["kind"] != "directory":
+            raise _precondition("The destination parent is not a real directory.", parent_path)
+        parent = _entry(state, parents[0]["id"])
+        parent_id = parent["id"]
+    if any(entry["id"] != selected["id"] and entry["locationId"] == dest_location["id"] and entry["relativePath"] == dest_relative for entry in state["entries"]):
+        raise _precondition("An entry already exists at the move destination.", dest_relative)
+    selected["locationId"] = dest_location["id"]
+    selected["parentId"] = parent_id
+    selected["name"] = dest_name
+    selected["relativePath"] = dest_relative
+    selected["hidden"] = dest_name.startswith(".")
+    return state
+
 def _trash_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     selected = _entry(state, arguments["entryId"])
@@ -1679,6 +1763,7 @@ OPERATIONS = {
     "directory.create": OperationSpec("directory.create", _normalize_create, _create_directory, _summary("directory"), _anchors, _directory_scope),
     "entry.rename": OperationSpec("entry.rename", _normalize_rename, _rename_entry, _summary("rename"), _rename_guards, _entry_rename_scope),
     "entry.copy": OperationSpec("entry.copy", _normalize_copy, _copy_entry, _summary("copy"), _copy_guards, _entry_copy_scope),
+    "entry.move": OperationSpec("entry.move", _normalize_move, _move_entry, _summary("move"), _copy_guards, _entry_move_scope),
     "entry.trash": OperationSpec("entry.trash", _normalize_entry, _trash_entry, _summary("Trash"), _anchors, _entry_trash_scope),
     "trash.restore": OperationSpec("trash.restore", _normalize_entry, _restore_entry, _summary("restore"), _anchors, _trash_restore_scope),
     "entry.open": OperationSpec("entry.open", _normalize_entry, _open_entry, _open_summary, _open_guards, _entry_open_scope),
