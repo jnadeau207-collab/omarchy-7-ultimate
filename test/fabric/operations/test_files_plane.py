@@ -486,7 +486,7 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(listing["locationId"], "files.location.trash")
         self.assertIn("notes.txt", listing["names"])
         proposed = self.store.get(managed["operationId"]).plan.preflight["proposedState"]["value"]
-        self.assertEqual(proposed["names"], [])
+        self.assertFalse(proposed["names"])
         with self.assertRaises(SecurityValidationError) as caught:
             self._shell_grant(managed["operationId"])
         self.assertEqual(caught.exception.code, "grant.shell-consequential")
