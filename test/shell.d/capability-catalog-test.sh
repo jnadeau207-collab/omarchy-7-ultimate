@@ -32,6 +32,11 @@ fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
 [[ $valid_output == *"137 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+grep -Fq 'The checked inventory contains 137 capability descriptors.' "$ROOT/docs/capability-graph.md" \
+  || fail "capability-graph.md locks the same 137 capability count"
+if grep -Fq 'contains 129 capability descriptors' "$ROOT/docs/capability-graph.md"; then
+  fail "capability-graph.md still locks the stale 129 capability count"
+fi
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
