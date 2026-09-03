@@ -310,8 +310,8 @@ grep -Fq 'Recycle / Empty Bin LIVE residual OPEN after PR #63' "$ROOT/docs/files
   || fail "files-defaults-provider keeps Recycle residual OPEN after PR #63"
 grep -Fq '`files.trash.manage` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the trash.manage write plane"
-grep -Fq 'MIME / Default Programs association UI residual OPEN after PR #62' "$ROOT/docs/files-defaults-provider.md" \
-  || fail "files-defaults-provider keeps MIME leftover OPEN after PR #62"
+grep -Fq 'for per-MIME defaults (`mime.set`, writable associations with more than one installed candidate)' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names the live MIME setter"
 if grep -Fq 'No permanent-delete capability exists in this tranche' "$ROOT/docs/files-defaults-provider.md"; then
   fail "files-defaults-provider still underclaims permanent delete after PR #60"
 fi
