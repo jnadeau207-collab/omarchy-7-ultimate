@@ -844,6 +844,8 @@ if "`files.entry.open`" not in gaps and "files.entry.open" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the files.entry.open launch plane")
 if "`files.entry.rename`" not in gaps and "files.entry.rename" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the files.entry.rename write plane")
+if "`files.entry.copy`" not in gaps and "files.entry.copy" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the files.entry.copy write plane")
 if "`files.trash.restore` write plane is reachable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the reachable files.trash.restore write plane")
 if "humanRoute planned empty" not in gaps:
@@ -1481,6 +1483,47 @@ if "nautilus" in named_rename:
     raise SystemExit(f"files.entry.rename still names Nautilus: {entry_rename.get('source')}")
 if "files.entry.rename" not in (parity_explorer.get("capabilityIds") or []):
     raise SystemExit("parity.explorer-this-pc does not name files.entry.rename")
+if "files.entry.copy" not in by_id:
+    raise SystemExit("absent copy writer invent: files.entry.copy missing from catalog")
+entry_copy = by_id["files.entry.copy"]
+if entry_copy.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.entry.copy provider is {entry_copy.get('provider')}")
+if entry_copy.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.entry.copy provider state is {entry_copy.get('provider')}")
+if entry_copy.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.entry.copy claim is {entry_copy.get('availability')}")
+if entry_copy.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.entry.copy must not claim present")
+if entry_copy.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"files.entry.copy agent availability is {entry_copy.get('availability')}")
+if entry_copy.get("consent", {}).get("mode") != "implicit":
+    raise SystemExit(f"files.entry.copy consent is not implicit: {entry_copy.get('consent')}")
+if entry_copy.get("effects") != ["mutating"]:
+    raise SystemExit(f"files.entry.copy effects are {entry_copy.get('effects')}")
+if entry_copy["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"files.entry.copy route is {entry_copy.get('humanRoute')}")
+if entry_copy["humanRoute"].get("path") != "Files > Copy and Paste":
+    raise SystemExit(f"files.entry.copy path is {entry_copy.get('humanRoute')}")
+if entry_copy.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesApplication.qml":
+    raise SystemExit(f"files.entry.copy source is {entry_copy.get('source')}")
+if entry_copy.get("source", {}).get("symbol") != "pasteStagedCopy":
+    raise SystemExit(f"files.entry.copy source is {entry_copy.get('source')}")
+named_copy = f"{entry_copy.get('source', {}).get('file') or ''} {entry_copy.get('source', {}).get('symbol') or ''}".lower()
+if "nautilus" in named_copy:
+    raise SystemExit(f"files.entry.copy still names Nautilus: {entry_copy.get('source')}")
+if "files.entry.copy" not in (parity_explorer.get("capabilityIds") or []):
+    raise SystemExit("parity.explorer-this-pc does not name files.entry.copy")
+native12 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.12")
+if native12.get("claim") == "present":
+    raise SystemExit(f"windows-native.12 was flipped to present: {native12}")
+if "files.entry.copy" not in (native12.get("capabilityIds") or []):
+    raise SystemExit("windows-native.12 does not name files.entry.copy")
+files_copy = by_id["files.copy"]
+if files_copy.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.copy leftover was not retargeted: {files_copy.get('provider')}")
+named_files_copy = f"{files_copy.get('source', {}).get('file') or ''} {files_copy.get('source', {}).get('symbol') or ''}".lower()
+if "nautilus" in named_files_copy:
+    raise SystemExit(f"files.copy still names Nautilus: {files_copy.get('source')}")
 if "files.entry.trash" not in by_id:
     raise SystemExit("absent live trash writer invent: files.entry.trash missing from catalog")
 entry_trash = by_id["files.entry.trash"]
@@ -1551,6 +1594,12 @@ if "renameAuthorized: false" in files_app:
     raise SystemExit("Files hides Rename while the SHELL grant is allowed")
 if 'action: "entry.rename"' not in files_app:
     raise SystemExit("Files must drive the typed entry.rename action")
+if "readonly property bool copyAuthorized: true" not in files_app:
+    raise SystemExit("Files must pin copyAuthorized=true for the low-risk SHELL-grantable copy plane")
+if "copyAuthorized: false" in files_app:
+    raise SystemExit("Files hides Copy while the SHELL grant is allowed")
+if 'action: "entry.copy"' not in files_app:
+    raise SystemExit("Files must drive the typed entry.copy action")
 if 'action: "trash.restore"' in files_app:
     raise SystemExit("Files invents Restore LIVE")
 desktop_status, desktop_notes = parity_notes("Desktop (icons, wallpaper, context menu, Recycle)")
@@ -1576,6 +1625,10 @@ if "files.entry.open" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS does not name files.entry.open")
 if "files.entry.rename" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS does not name files.entry.rename")
+if "files.entry.copy" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS does not name files.entry.copy")
+if "copyAuthorized=true" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS residual names Files Copy UI gated copyAuthorized=true")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")
@@ -1583,6 +1636,10 @@ if "files.entry.open" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name files.entry.open")
 if "files.entry.rename" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name files.entry.rename")
+if "files.entry.copy" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row does not name files.entry.copy")
+if "copyAuthorized=true" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row does not name copyAuthorized=true")
 if "opening a file in its handler" in explorer_notes and "remain unavailable" in explorer_notes.split("opening a file in its handler", 1)[-1][:80]:
     raise SystemExit("PARITY Explorer row still lists opening a file in its handler as unavailable")
 if "File contents are never read" not in explorer_notes:
@@ -1601,6 +1658,8 @@ if "files.entry.open" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.open")
 if "files.entry.rename" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.rename")
+if "files.entry.copy" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name files.entry.copy")
 if "files.trash.manage still missing" not in cp and "files.trash.manage` still missing" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
 if "REJECTED" not in plan:
@@ -1661,6 +1720,7 @@ inventory = {
     "files.directory.create": "partial",
     "files.entry.open": "partial",
     "files.entry.rename": "partial",
+    "files.entry.copy": "partial",
     "files.entry.trash": "partial",
     "files.trash.restore": "partial",
     "account.inspect": "missing",

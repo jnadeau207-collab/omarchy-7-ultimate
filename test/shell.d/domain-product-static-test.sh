@@ -201,6 +201,8 @@ grep -Fq 'This surface never invokes a package manager' "$ROOT/shell/apps/ultima
 grep -Fq 'File contents are never read' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files states its content-read boundary"
 grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live New folder writer"
 grep -Fq 'Rename runs through files.provider entry.rename' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Rename writer"
+grep -Fq 'Copy and Paste run through files.provider entry.copy' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Copy writer"
+grep -Fq 'The OS clipboard and cut/move stay unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps OS clipboard and cut/move unavailable"
 grep -Fq 'Trash write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner states Trash is not shell-authorizable"
 grep -Fq 'CHANGES UNAVAILABLE' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names CHANGES UNAVAILABLE for Trash"
 grep -Fq 'Restore write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the Restore write plane as not shell-authorizable"
@@ -212,6 +214,8 @@ grep -Fq 'readonly property bool createEnabled: createVisible && !operationBusy 
   || fail "Files keeps New folder createEnabled LIVE"
 grep -Fq 'readonly property bool renameAuthorized: true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins renameAuthorized true; Rename is SHELL-grantable"
+grep -Fq 'readonly property bool copyAuthorized: true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files pins copyAuthorized true; Copy is SHELL-grantable"
 if grep -Eq 'trashAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
   fail "Files must not authorize shell consequential trash"
 fi
@@ -223,6 +227,8 @@ grep -Fq 'files.trash.manage' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HAN
 grep -Fq 'trashAuthorized=false' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Trash UI gated trashAuthorized=false"
 grep -Fq 'files.entry.rename' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names files.entry.rename"
 grep -Fq 'renameAuthorized=true' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Rename UI gated renameAuthorized=true"
+grep -Fq 'files.entry.copy' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names files.entry.copy"
+grep -Fq 'copyAuthorized=true' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Copy UI gated copyAuthorized=true"
 if grep -Eq 'maximumLineCount:[[:space:]]*2' "$ROOT/shell/apps/ultimate-files/ExplorerDetailsPane.qml"; then
   fail "Files details boundary Text is limited to 2 lines and can clip the unavailable half"
 fi

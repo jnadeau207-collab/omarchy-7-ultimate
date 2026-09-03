@@ -11,6 +11,7 @@
     "files.recent.read",
     "files.directory.create",
     "files.entry.rename",
+    "files.entry.copy",
     "files.entry.trash",
     "files.trash.restore",
     "files.entry.open",
@@ -125,6 +126,32 @@
       ],
       "arguments": {
         "id": "urn:omarchy:fabric:provider:files:rename-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:files:directory-result:v1",
+        "version": "v1"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:files:directory-preflight:v1",
+        "version": "v1"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:files:directory-state:v1",
+        "version": "v1"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
+    },
+    "entry.copy": {
+      "capability": "files.entry.copy",
+      "mode": "operation",
+      "risk": "low",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:files:copy-arguments:v0",
         "version": "v0"
       },
       "result": {

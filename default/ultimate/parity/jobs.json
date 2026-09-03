@@ -130,6 +130,7 @@
         "files.entry.open",
         "files.entry.trash",
         "files.entry.rename",
+        "files.entry.copy",
         "files.copy",
         "files.properties.read"
       ],
@@ -1432,6 +1433,7 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
+        "files.entry.copy",
         "files.copy"
       ],
       "humanRoute": {

@@ -33,8 +33,10 @@ Item {
   readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady
   readonly property bool trashAuthorized: false
   readonly property bool renameAuthorized: true
+  readonly property bool copyAuthorized: true
   property string renameDraft: ""
   property var renameRecord: null
+  property var stagedCopyRecord: null
 
   property var history: []
   property int historyIndex: -1
@@ -257,6 +259,58 @@ Item {
     if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
   }
 
+  function copyableRecord(record) {
+    return record
+      && String(record.kind || "") === "entry"
+      && String(record.entryKind || "") === "file"
+      && String(record.status || "") !== "symlink"
+      && String(record.locationId || "") !== "files.location.trash"
+  }
+
+  function stageCopy(record) {
+    if (!root.copyAuthorized) return
+    if (!host || operationBusy) return
+    if (!root.copyableRecord(record)) return
+    root.stagedCopyRecord = record
+    root.operationMessage = "Copied " + String(record.title || "this entry") + " in Files. Paste stays inside this window."
+  }
+
+  function nextDestinationName(sourceTitle) {
+    var taken = {}
+    var existing = FilesModel.explorerEntries(root.queryState.records)
+    for (var i = 0; i < existing.length; i++) taken[String(existing[i].title).toLowerCase()] = true
+    return FilesModel.nextCopyName(taken, sourceTitle)
+  }
+
+  function pasteStagedCopy() {
+    if (!root.copyAuthorized) return
+    if (!host || operationBusy || createLocationId === "") return
+    if (!root.stagedCopyRecord) return
+    if (!root.copyableRecord(root.stagedCopyRecord)) return
+    var destName = root.nextDestinationName(String(root.stagedCopyRecord.title || ""))
+    var refusal = FilesModel.createNameRefusal(destName)
+    if (refusal !== "") {
+      root.operationMessage = refusal
+      return
+    }
+    root.operationName = String(destName)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationKind = "copy"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "files.provider",
+      action: "entry.copy",
+      arguments: {
+        entryId: String(root.stagedCopyRecord.id),
+        destinationLocationId: root.createLocationId,
+        destinationParentRelativePath: root.relativePath,
+        destinationName: destName
+      },
+      idempotencyKey: "files.entry.copy." + String(root.stagedCopyRecord.id) + "." + root.createLocationId + "." + destName
+    })
+    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
+  }
+
   function trashEntry(record) {
     if (!root.trashAuthorized) return
     if (!host || operationBusy || createLocationId === "") return
@@ -318,8 +372,8 @@ Item {
     }
     if (root.operationStage === "start") {
       var succeeded = String(result.status || "") === "succeeded"
-      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "open" ? "Opened " : root.operationKind === "rename" ? "Renamed " : "Created "
-      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "open" ? "Opening " : root.operationKind === "rename" ? "Renaming " : "Creating "
+      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "open" ? "Opened " : root.operationKind === "rename" ? "Renamed " : root.operationKind === "copy" ? "Copied " : "Created "
+      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "open" ? "Opening " : root.operationKind === "rename" ? "Renaming " : root.operationKind === "copy" ? "Copying " : "Creating "
       var tail = root.operationKind === "trash" ? " to the Recycle Bin." : "."
       root.resetOperation(succeeded
         ? verb + root.operationName + tail
@@ -337,6 +391,18 @@ Item {
         enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
       })
     }
+    if (root.copyAuthorized) {
+      list.push({
+        key: "copy", label: "Copy", dropdown: false,
+        enabled: !root.operationBusy && root.copyableRecord(root.selectedRecord)
+      })
+    }
+    if (root.createVisible && root.copyAuthorized) {
+      list.push({
+        key: "paste", label: "Paste", dropdown: false,
+        enabled: !root.operationBusy && root.stagedCopyRecord !== null && root.copyableRecord(root.stagedCopyRecord)
+      })
+    }
     if (root.createVisible && root.trashAuthorized) {
       list.push({
         key: "delete", label: "Delete", dropdown: false,
@@ -352,6 +418,10 @@ Item {
     if (root.renameAuthorized) {
       list.push({ key: "rename", label: "Rename", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
+    if (root.copyAuthorized) {
+      list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
+      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && root.stagedCopyRecord !== null && !root.operationBusy })
+    }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
@@ -365,6 +435,10 @@ Item {
     if (root.renameAuthorized) {
       list.push({ key: "rename", label: "Rename", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
+    if (root.copyAuthorized) {
+      list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
+      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && root.stagedCopyRecord !== null && !root.operationBusy })
+    }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
@@ -376,6 +450,8 @@ Item {
     if (key === "organize") { organizeMenu.visible ? organizeMenu.close() : organizeMenu.open(); return }
     if (key === "new-folder") { root.createFolder(root.nextFolderName()); return }
     if (key === "rename") { root.beginRename(root.selectedRecord); return }
+    if (key === "copy") { root.stageCopy(root.selectedRecord); return }
+    if (key === "paste") { root.pasteStagedCopy(); return }
     if (key === "delete") { root.trashEntry(root.selectedRecord); return }
     if (key === "properties") { propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
@@ -393,6 +469,8 @@ Item {
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Right) { root.goForward(); event.accepted = true }
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Up) { root.goUp(); event.accepted = true }
     else if (event.key === Qt.Key_F2) { root.beginRename(root.selectedRecord); event.accepted = true }
+    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_C) { root.stageCopy(root.selectedRecord); event.accepted = true }
+    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { root.pasteStagedCopy(); event.accepted = true }
     else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }
   }
 
@@ -632,7 +710,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy with in-app staging. The OS clipboard and cut/move stay unavailable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
