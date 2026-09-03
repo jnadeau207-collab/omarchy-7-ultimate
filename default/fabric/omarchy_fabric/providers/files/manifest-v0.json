@@ -16,6 +16,7 @@
     "files.entry.delete",
     "files.entry.trash",
     "files.trash.restore",
+    "files.trash.manage",
     "files.entry.open",
     "files.mount.connect",
     "files.mount.disconnect"
@@ -258,6 +259,32 @@
       ],
       "arguments": {
         "id": "urn:omarchy:fabric:provider:files:entry-arguments:v0",
+        "version": "v0"
+      },
+      "result": {
+        "id": "urn:omarchy:fabric:provider:files:directory-result:v1",
+        "version": "v1"
+      },
+      "preflight": {
+        "id": "urn:omarchy:fabric:provider:files:directory-preflight:v1",
+        "version": "v1"
+      },
+      "state": {
+        "id": "urn:omarchy:fabric:provider:files:directory-state:v1",
+        "version": "v1"
+      },
+      "supportsRollback": true,
+      "supportsCancellation": false
+    },
+    "trash.manage": {
+      "capability": "files.trash.manage",
+      "mode": "operation",
+      "risk": "consequential",
+      "effects": [
+        "mutating"
+      ],
+      "arguments": {
+        "id": "urn:omarchy:fabric:provider:files:trash-manage-arguments:v0",
         "version": "v0"
       },
       "result": {

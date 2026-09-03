@@ -1073,6 +1073,35 @@ class FabricDaemon:
             "entryRelativePath": f"{parent}/{added[0]}" if parent else added[0],
         }
 
+    @staticmethod
+    def _manage_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        current = FabricDaemon._directory_listing(preflight["currentState"])
+        proposed = FabricDaemon._directory_listing(preflight["proposedState"])
+        if current["locationId"] != "files.location.trash":
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The Empty Bin plan does not target Trash.",
+            )
+        if current["parentRelativePath"]:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The Empty Bin plan does not target the Trash root.",
+            )
+        added = [name for name in proposed["names"] if name not in set(current["names"])]
+        if added or proposed["names"]:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The Empty Bin plan does not empty the Trash listing.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "locationId": current["locationId"],
+            "parentRelativePath": current["parentRelativePath"],
+        }
+
     def _operation_pid(self, value: Any) -> int:
         if isinstance(value, bool) or not isinstance(value, int) or not 2 <= value <= 4194304:
             raise FabricError(
@@ -1364,6 +1393,15 @@ class FabricDaemon:
                         },
                     ),
                     IntentDefinition(
+                        "files.trash.manage",
+                        FixedArgvCommand(str(helper), ("files-trash-manage",)),
+                        required={
+                            "resourceId": stable_token,
+                            "locationId": stable_token,
+                            "parentRelativePath": self._operation_relative,
+                        },
+                    ),
+                    IntentDefinition(
                         "files.directory.create",
                         FixedArgvCommand(str(helper), ("files-directory-create",)),
                         required={
@@ -1513,6 +1551,12 @@ class FabricDaemon:
                     "trash.restore",
                     "files.trash.restore",
                     self._restore_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "trash.manage",
+                    "files.trash.manage",
+                    self._manage_payload,
                 ),
                 OperationDefinition(
                     "files.provider",

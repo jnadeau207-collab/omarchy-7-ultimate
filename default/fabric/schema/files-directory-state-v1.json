@@ -33,6 +33,7 @@
         "entry.delete",
         "entry.trash",
         "trash.restore",
+        "trash.manage",
         "entry.open"
       ]
     }

@@ -915,8 +915,14 @@ if "permanent delete write plane exists but is not shell-authorizable" not in ga
     raise SystemExit("fleet-doctrine-gaps must keep permanent delete not shell-authorizable")
 if "Copy/Paste stay in-app only" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Copy/Paste in-app only")
-if "availability.claim=missing" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep files.trash.manage claim=missing")
+if "`files.trash.manage` write plane is reachable" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the reachable files.trash.manage write plane")
+if "emptyBinAuthorized=false" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must pin emptyBinAuthorized=false after PR #63")
+if "Recycle Bin / files.trash.manage residual OPEN after PR #63" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry Recycle leftover after PR #63")
+if "73ec97959174" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #63 tip parent for the Recycle leftover residual")
 if "OS clipboard leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the OS clipboard leftover")
 if "OS clipboard residual CLOSED" in gaps:
@@ -1684,8 +1690,24 @@ if "files.trash.manage" not in (parity_recycle.get("capabilityIds") or []):
 trash_manage = by_id["files.trash.manage"]
 if trash_manage.get("availability", {}).get("claim") == "present":
     raise SystemExit("files.trash.manage must not claim present")
-if trash_manage.get("provider", {}).get("state") != "provider-missing":
-    raise SystemExit(f"files.trash.manage was raised off missing: {trash_manage.get('provider')}")
+if trash_manage.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.trash.manage provider is {trash_manage.get('provider')}")
+if trash_manage.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.trash.manage provider state is {trash_manage.get('provider')}")
+if trash_manage.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.trash.manage claim is {trash_manage.get('availability')}")
+if trash_manage.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"files.trash.manage agent availability is {trash_manage.get('availability')}")
+if trash_manage.get("consent", {}).get("mode") != "high-risk":
+    raise SystemExit(f"files.trash.manage consent is not consequential: {trash_manage.get('consent')}")
+if trash_manage["humanRoute"].get("status") != "planned":
+    raise SystemExit(f"files.trash.manage invents an Empty Bin LIVE route: {trash_manage.get('humanRoute')}")
+if trash_manage["humanRoute"].get("path"):
+    raise SystemExit(f"files.trash.manage invents an Empty Bin LIVE path: {trash_manage.get('humanRoute')}")
+if trash_manage.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+    raise SystemExit(f"files.trash.manage source is {trash_manage.get('source')}")
+if trash_manage.get("source", {}).get("symbol") != "apply_files_trash_manage":
+    raise SystemExit(f"files.trash.manage source is {trash_manage.get('source')}")
 if "files.trash.restore" not in by_id:
     raise SystemExit("absent restore writer invent: files.trash.restore missing from catalog")
 restore = by_id["files.trash.restore"]
@@ -1740,6 +1762,12 @@ if "deleteAuthorized: true" in files_app:
     raise SystemExit("Files invents deleteAuthorized=true")
 if 'action: "entry.delete"' in files_app:
     raise SystemExit("Files invents LIVE permanent delete under SHELL")
+if "readonly property bool emptyBinAuthorized: false" not in files_app:
+    raise SystemExit("Files must keep emptyBinAuthorized=false")
+if "emptyBinAuthorized: true" in files_app:
+    raise SystemExit("Files invents emptyBinAuthorized=true")
+if 'action: "trash.manage"' in files_app:
+    raise SystemExit("Files invents Empty Bin LIVE")
 if 'action: "trash.restore"' in files_app:
     raise SystemExit("Files invents Restore LIVE")
 desktop_status, desktop_notes = parity_notes("Desktop (icons, wallpaper, context menu, Recycle)")
@@ -1753,18 +1781,18 @@ if "files.trash.restore" not in desktop_notes:
     raise SystemExit("PARITY Recycle row does not name files.trash.restore")
 if "Restore UI stays honest-unavailable" not in desktop_notes:
     raise SystemExit("PARITY Recycle row dropped Restore UI honest-unavailable")
-if "files.trash.manage" not in desktop_notes or "stays missing" not in desktop_notes:
-    raise SystemExit("PARITY Recycle row dropped files.trash.manage missing")
-if "Recycle Bin / files.trash.manage residual OPEN after PR #60" not in desktop_notes:
-    raise SystemExit("PARITY Recycle row dropped Recycle leftover after PR #60")
+if "files.trash.manage" not in desktop_notes or "write plane is reachable" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row dropped files.trash.manage write plane")
+if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row dropped Recycle leftover after PR #63")
 if "Recycle Bin is not product-complete" not in desktop_notes:
     raise SystemExit("PARITY Recycle row closed Recycle residual")
 if "this row is not present" not in desktop_notes:
     raise SystemExit("PARITY Recycle row dropped the not-present close")
 if "files.trash.restore" not in cp or "write plane is reachable" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name the reachable files.trash.restore write plane")
-if "files.trash.manage still missing" not in cp and "files.trash.manage` still missing" not in cp:
-    raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
+if "files.trash.manage" not in cp or "write plane is reachable" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage write plane")
 if "files.trash.restore" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS does not name files.trash.restore")
 if "files.entry.open" not in writers_handoff:
@@ -1789,8 +1817,12 @@ if "folder copy CLOSED" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name folder copy CLOSED")
 if "permanent delete write plane exists but is not shell-authorizable" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep permanent delete not shell-authorizable")
-if "availability.claim=missing" not in writers_handoff:
-    raise SystemExit("HANDOFF_WRITERS must keep files.trash.manage claim=missing after PR #60")
+if "files.trash.manage" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS does not name files.trash.manage")
+if "emptyBinAuthorized=false" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS residual names Files Empty Bin UI gated emptyBinAuthorized=false")
+if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep Recycle leftover OPEN after PR #63")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")
@@ -1829,8 +1861,8 @@ if "Folder copy CLOSED" not in explorer_notes and "folder copy CLOSED" not in ex
     raise SystemExit("PARITY Explorer row dropped folder copy CLOSED")
 if "permanent delete write plane exists but is not shell-authorizable" not in explorer_notes:
     raise SystemExit("PARITY Explorer row dropped permanent delete not shell-authorizable")
-if "Recycle Bin / files.trash.manage residual OPEN after PR #60" not in explorer_notes:
-    raise SystemExit("PARITY Explorer row dropped Recycle leftover after PR #60")
+if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row dropped Recycle leftover after PR #63")
 if "opening a file in its handler" in explorer_notes and "remain unavailable" in explorer_notes.split("opening a file in its handler", 1)[-1][:80]:
     raise SystemExit("PARITY Explorer row still lists opening a file in its handler as unavailable")
 if "File contents are never read" not in explorer_notes:
@@ -1855,22 +1887,22 @@ if "files.entry.move" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.move")
 if "files.entry.delete" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.delete")
-if "files.trash.manage still missing" not in cp and "files.trash.manage` still missing" not in cp:
-    raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
+if "files.trash.manage" not in cp or "write plane is reachable" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage write plane")
 if "OS clipboard residual OPEN after PR #60" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped OS clipboard residual OPEN after PR #60")
 if "folder copy CLOSED" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped folder copy CLOSED")
-if "Recycle Bin / `files.trash.manage` residual OPEN after PR #60" not in cp and "Recycle Bin / files.trash.manage residual OPEN after PR #60" not in cp:
-    raise SystemExit("fleet-catalog-controlpanel dropped Recycle leftover after PR #60")
+if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped Recycle leftover after PR #63")
 if "permanent delete write plane exists but is not shell-authorizable" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped permanent delete not shell-authorizable")
 if "OS clipboard residual OPEN after PR #60" not in plan:
     raise SystemExit("project-ultimate dropped OS clipboard residual OPEN after PR #60")
 if "folder copy CLOSED" not in plan:
     raise SystemExit("project-ultimate dropped folder copy CLOSED")
-if "Recycle Bin / `files.trash.manage` residual OPEN after PR #60" not in plan and "Recycle Bin / files.trash.manage residual OPEN after PR #60" not in plan:
-    raise SystemExit("project-ultimate dropped Recycle leftover after PR #60")
+if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in plan:
+    raise SystemExit("project-ultimate dropped Recycle leftover after PR #63")
 if "permanent delete write plane exists but is not shell-authorizable" not in plan:
     raise SystemExit("project-ultimate dropped permanent delete not shell-authorizable")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in plan:
@@ -1944,6 +1976,7 @@ inventory = {
     "files.entry.delete": "partial",
     "files.entry.trash": "partial",
     "files.trash.restore": "partial",
+    "files.trash.manage": "partial",
     "account.inspect": "missing",
     "backup.inspect": "missing",
     "device.inspect": "missing",

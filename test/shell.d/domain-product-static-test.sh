@@ -217,7 +217,8 @@ grep -Fq 'Trash write plane exists but is not shell-authorizable' "$ROOT/shell/a
 grep -Fq 'CHANGES UNAVAILABLE' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names CHANGES UNAVAILABLE for Trash"
 grep -Fq 'Restore write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the Restore write plane as not shell-authorizable"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the permanent delete write plane as not shell-authorizable"
-grep -Fq 'Restore UI, empty Recycle Bin, and files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore UI and files.trash.manage unavailable"
+grep -Fq 'The empty Recycle Bin write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the empty Recycle Bin write plane as not shell-authorizable"
+grep -Fq 'Restore UI, Empty Bin LIVE, and Recycle product remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore UI and Empty Bin LIVE unavailable"
 grep -Fq 'readonly property bool deleteAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins deleteAuthorized false; permanent Delete is not LIVE under the shell principal"
 if grep -Eq 'deleteAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
@@ -240,7 +241,14 @@ grep -Fq 'defaults-mime-set' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS names the reachable defaults-mime-set write plane"
 grep -Fq '`files.entry.delete` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the entry.delete write plane"
-grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
+grep -Fq 'readonly property bool emptyBinAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files pins emptyBinAuthorized false; Empty Bin is not LIVE under the shell principal"
+if grep -Eq 'emptyBinAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files invents emptyBinAuthorized=true"
+fi
+if grep -Eq 'action: "(files\.)?trash\.manage"|key: "trash.manage"' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files invents LIVE Empty Bin under SHELL"
+fi
 grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins trashAuthorized false; Trash is not LIVE under the shell principal"
 grep -Fq 'if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
@@ -292,8 +300,10 @@ grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/docs/files-defaults-pr
   || fail "files-defaults-provider keeps OS clipboard residual OPEN after PR #60"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps permanent delete not shell-authorizable"
-grep -Fq 'Recycle / Empty Bin / `files.trash.manage` residual OPEN' "$ROOT/docs/files-defaults-provider.md" \
-  || fail "files-defaults-provider keeps Recycle residual OPEN"
+grep -Fq 'Recycle / Empty Bin LIVE residual OPEN after PR #63' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider keeps Recycle residual OPEN after PR #63"
+grep -Fq '`files.trash.manage` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names the trash.manage write plane"
 grep -Fq 'MIME / Default Programs association UI residual OPEN after PR #62' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps MIME leftover OPEN after PR #62"
 if grep -Fq 'No permanent-delete capability exists in this tranche' "$ROOT/docs/files-defaults-provider.md"; then
@@ -408,9 +418,11 @@ if "trashAuthorized=false" not in explorer:
 if "honest-unavailable" not in desktop:
     raise SystemExit("Desktop row dropped Restore honest-unavailable")
 if "files.trash.manage" not in desktop:
-    raise SystemExit("Desktop row dropped files.trash.manage missing")
-if "Recycle Bin / files.trash.manage residual OPEN after PR #60" not in desktop:
-    raise SystemExit("Desktop row dropped Recycle leftover after PR #60")
+    raise SystemExit("Desktop row dropped files.trash.manage")
+if "write plane is reachable" not in desktop:
+    raise SystemExit("Desktop row dropped files.trash.manage write plane")
+if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in desktop:
+    raise SystemExit("Desktop row dropped Recycle leftover after PR #63")
 if "not product-complete" not in desktop:
     raise SystemExit("Desktop row dropped Recycle not product-complete")
 if "prototype" not in desktop:

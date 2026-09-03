@@ -41,6 +41,7 @@
         "entry.delete",
         "entry.trash",
         "trash.restore",
+        "trash.manage",
         "entry.open"
       ]
     },
@@ -54,6 +55,7 @@
         "files.entry.delete",
         "files.entry.trash",
         "files.trash.restore",
+        "files.trash.manage",
         "files.entry.open",
         "files.mount.connect",
         "files.mount.disconnect"
@@ -75,6 +77,9 @@
         },
         {
           "$ref": "urn:omarchy:fabric:provider:files:entry-arguments:v0"
+        },
+        {
+          "$ref": "urn:omarchy:fabric:provider:files:trash-manage-arguments:v0"
         },
         {
           "$ref": "urn:omarchy:fabric:provider:files:mount-arguments:v0"

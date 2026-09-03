@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:omarchy:fabric:provider:files:trash-manage-arguments:v0",
+  "x-omarchy-version": "v0",
+  "title": "Files Trash manage arguments",
+  "type": "object",
+  "required": [
+    "locationId"
+  ],
+  "properties": {
+    "locationId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "maxLength": 160
+    }
+  },
+  "additionalProperties": false
+}
