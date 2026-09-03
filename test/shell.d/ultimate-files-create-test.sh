@@ -124,8 +124,18 @@ grep -Fq 'readonly property bool cutAuthorized: false' "$application" \
 if grep -Eq 'cutAuthorized:\s*true' "$application"; then
   fail "Files invents cutAuthorized=true"
 fi
+grep -Fq 'readonly property bool deleteAuthorized: false' "$application" \
+  || fail "deleteAuthorized stays false; shell principal cannot authorize permanent delete"
+if grep -Eq 'deleteAuthorized:\s*true' "$application"; then
+  fail "Files invents deleteAuthorized=true"
+fi
+if grep -Eq 'action: "entry.delete"' "$application"; then
+  fail "Files invents LIVE permanent delete under SHELL"
+fi
 grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$application" \
   || fail "Files names the cut/move write plane as not shell-authorizable"
+grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$application" \
+  || fail "Files names the permanent delete write plane as not shell-authorizable"
 grep -Fq 'The OS clipboard stays unavailable' "$application" \
   || fail "Files names the OS clipboard leftover instead of inventing one"
 grep -Fq 'kind === "file" || kind === "directory"' "$application" \

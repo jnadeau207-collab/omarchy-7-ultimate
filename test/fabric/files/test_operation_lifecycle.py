@@ -117,6 +117,19 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
         await self.exercise(
+            "entry.delete",
+            {"entryId": "files.entry.notes"},
+            lambda state: self.assertEqual(
+                (
+                    state["locationId"],
+                    state["parentRelativePath"],
+                    "notes.txt" in state["names"],
+                    state["selectedEntry"]["entryId"],
+                ),
+                ("files.location.desktop", "", False, "files.entry.notes"),
+            ),
+        )
+        await self.exercise(
             "entry.trash",
             {"entryId": "files.entry.project"},
             lambda state: self.assertEqual(
@@ -302,6 +315,12 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 principal(),
             )
         self.assertEqual(move_rename.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as delete_symlink:
+            await provider.preflight("entry.delete", {"entryId": "files.entry.unsafe-link"}, principal())
+        self.assertEqual(delete_symlink.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as delete_tree:
+            await provider.preflight("entry.delete", {"entryId": "files.entry.project"}, principal())
+        self.assertEqual(delete_tree.exception.code, "files.precondition-failed")
         for path in ("../escape", "/absolute", "Project//child", "Project\\child", "Project/./child"):
             with self.subTest(path=path), self.assertRaises(FabricError):
                 await provider.preflight(
