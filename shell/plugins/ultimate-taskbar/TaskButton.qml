@@ -108,6 +108,19 @@ Item {
   }
 
   Rectangle {
+    id: stackedEdge
+    anchors.fill: parent
+    anchors.margins: 3
+    anchors.leftMargin: 6
+    anchors.bottomMargin: 6
+    radius: Tokens.radius.medium
+    visible: root.windows.length > 1
+    color: "transparent"
+    border.color: root.active ? bar.chromeGlow : Tokens.border.subtle
+    border.width: 1
+  }
+
+  Rectangle {
     id: tile
     anchors.fill: parent
     anchors.margins: 3

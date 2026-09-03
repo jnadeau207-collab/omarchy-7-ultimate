@@ -144,6 +144,10 @@ grep -Fq 'id: peekLeaveTimer' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.q
   || fail "TaskButton peek uses a leave delay so the pointer can enter the card"
 grep -Fq 'id: peekHover' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "TaskButton peek stays hovered while the pointer is on the card"
+grep -Fq 'id: stackedEdge' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "TaskButton paints a stacked tile edge for multi-window groups"
+grep -Fq 'visible: root.windows.length > 1' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
+  || fail "TaskButton stacked edge shows only for multi-window groups"
 grep -Fq 'readonly property bool lockCovering' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
   || fail "TaskButton hides peeks while the lock overlay covers the desktop"
 grep -Fq 'function hidePeekAndMenu' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
