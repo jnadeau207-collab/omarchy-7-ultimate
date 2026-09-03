@@ -117,7 +117,8 @@ FocusScope {
             Text {
               anchors.left: parent.left
               anchors.leftMargin: 8
-              anchors.right: sortMark.left
+              anchors.right: parent.right
+              anchors.rightMargin: 8
               anchors.verticalCenter: parent.verticalCenter
               text: Semantics.text(root.productProfile, modelData.label)
               textFormat: Text.PlainText
@@ -129,11 +130,11 @@ FocusScope {
 
             Canvas {
               id: sortMark
-              width: 9
-              height: 6
-              anchors.right: parent.right
-              anchors.rightMargin: 8
-              anchors.verticalCenter: parent.verticalCenter
+              width: 6
+              height: 5
+              anchors.top: parent.top
+              anchors.topMargin: 2
+              anchors.horizontalCenter: parent.horizontalCenter
               visible: root.sortColumn === modelData.key
               antialiasing: true
               onVisibleChanged: requestPaint()
@@ -148,6 +149,10 @@ FocusScope {
                 var ctx = getContext("2d")
                 ctx.reset()
                 ctx.clearRect(0, 0, width, height)
+                var wash = ctx.createLinearGradient(0, 0, width, height)
+                wash.addColorStop(0.45, "#667f91")
+                wash.addColorStop(0.65, "#90c1e2")
+                wash.addColorStop(1, "#cce3f2")
                 ctx.beginPath()
                 if (root.sortAscending) {
                   ctx.moveTo(0.5, height - 0.5)
@@ -159,7 +164,7 @@ FocusScope {
                   ctx.lineTo(width / 2, height - 0.5)
                 }
                 ctx.closePath()
-                ctx.fillStyle = "#6b7b8a"
+                ctx.fillStyle = wash
                 ctx.fill()
               }
             }
