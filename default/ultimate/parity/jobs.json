@@ -131,6 +131,7 @@
         "files.entry.trash",
         "files.entry.rename",
         "files.entry.copy",
+        "files.entry.move",
         "files.copy",
         "files.properties.read"
       ],
