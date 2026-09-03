@@ -106,3 +106,12 @@ grep -Fq 'width: 16' "$nav" || fail "Explorer nav icons are the measured size"
 grep -Fq 'fillStyle = open ? "#5a6b7b" : "#ffffff"' "$nav" \
   || fail "Explorer nav expander fills dark open and hollow closed"
 pass "Explorer nav keeps measured icons and expander states"
+
+bar="$ROOT/shell/apps/ultimate-files/ExplorerAddressBar.qml"
+
+grep -Fq 'height: 24' "$bar" || fail "Explorer search field is the measured height"
+grep -Fq 'radius: 2' "$bar" || fail "Explorer search field carries the measured radius"
+grep -Fq 'Math.max(187,' "$bar" || fail "Explorer search field keeps the measured minimum width"
+grep -Fq 'font.italic: text === ""' "$bar" \
+  || fail "Explorer search placeholder is italic until text arrives"
+pass "Explorer search field is the measured box with an italic placeholder"

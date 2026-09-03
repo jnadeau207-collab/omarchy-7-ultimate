@@ -210,16 +210,41 @@ Item {
     anchors.right: parent.right
     anchors.rightMargin: 8
     anchors.verticalCenter: parent.verticalCenter
-    width: Math.max(120, Math.min(220, parent.width * 0.24))
-    height: 22
+    width: Math.max(187, Math.min(240, parent.width * 0.24))
+    height: 24
+    radius: 2
     color: Aero.fieldFill
     border.width: 1
     border.color: searchInput.activeFocus ? Aero.fieldFocusBorder : Aero.fieldBorder
 
+    Rectangle {
+      anchors.top: parent.top
+      anchors.topMargin: 1
+      anchors.left: parent.left
+      anchors.leftMargin: 1
+      anchors.right: parent.right
+      anchors.rightMargin: 1
+      height: 1
+      color: "#8e8f8f"
+      opacity: 0.55
+    }
+
+    Rectangle {
+      anchors.left: parent.left
+      anchors.leftMargin: 1
+      anchors.top: parent.top
+      anchors.topMargin: 1
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: 1
+      width: 1
+      color: "#8e8f8f"
+      opacity: 0.55
+    }
+
     Controls.TextField {
       id: searchInput
       anchors.left: parent.left
-      anchors.leftMargin: 4
+      anchors.leftMargin: 6
       anchors.right: searchGlyph.left
       anchors.rightMargin: 2
       anchors.verticalCenter: parent.verticalCenter
@@ -230,6 +255,7 @@ Item {
       color: Aero.textPrimary
       font.family: Aero.fontFamily
       font.pixelSize: 12
+      font.italic: text === ""
       background: null
       padding: 0
       selectByMouse: true
