@@ -43,6 +43,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Explorer Rename | Files Rename / `files.entry.rename` write plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Rename`; `renameAuthorized=true`); same-directory only |
 | Explorer Copy and Paste | Files Copy and Paste / `files.entry.copy` write plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Copy and Paste`; `copyAuthorized=true`); regular files and directories; in-app staging; no OS clipboard |
 | Explorer Cut and Paste | Files cut/move / `files.entry.move` write plane is reachable (claim=partial; risk consequential; SHELL refused at `grant.shell-consequential`; humanRoute planned empty; `cutAuthorized=false`); regular files; dest-scoped identity; no LIVE Cut, OS clipboard, or folder copy |
+| Explorer Permanent Delete | Files permanent delete / `files.entry.delete` write plane is reachable (claim=partial; risk consequential; SHELL refused at `grant.shell-consequential`; humanRoute planned empty; `deleteAuthorized=false`); regular files and empty directories; identity-bound; no LIVE Delete, Empty Bin, or `files.trash.manage` |
 
 ---
 

@@ -132,6 +132,7 @@
         "files.entry.rename",
         "files.entry.copy",
         "files.entry.move",
+        "files.entry.delete",
         "files.copy",
         "files.properties.read"
       ],

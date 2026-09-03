@@ -617,6 +617,10 @@ def stable_move_directory_id(location_id: str, parent: str, entry_id: str) -> st
     return stable_rename_directory_id(location_id, parent, entry_id)
 
 
+def stable_delete_directory_id(location_id: str, parent: str, entry_id: str) -> str:
+    return stable_rename_directory_id(location_id, parent, entry_id)
+
+
 def require_destination_name(payload: Mapping[str, Any]) -> str:
     name = payload.get("destinationName")
     if not isinstance(name, str) or not name:
@@ -971,6 +975,47 @@ def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+
+def apply_files_entry_delete(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_files_resource_id(payload)
+    entry_id = require_entry_id(payload)
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot be permanently deleted.")
+    parent_relative = "/".join(require_entry_relative(payload)[:-1])
+    if resource_id != stable_delete_directory_id(payload["locationId"], parent_relative, entry_id):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    _, final, relative = resolve_entry_path(payload, pathlib.Path.home())
+    try:
+        info = final.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be permanently deleted.")
+    if stat.S_ISREG(info.st_mode):
+        try:
+            final.unlink()
+        except OSError as error:
+            raise ApplyError("apply.failed", "Deleting the entry reported a failure status.") from error
+        json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "deleted": True}, stdout)
+        stdout.write("\n")
+        return 0
+    if not stat.S_ISDIR(info.st_mode):
+        raise ApplyError("payload.invalid", "Only regular files and empty directories can be permanently deleted.")
+    try:
+        children = list(final.iterdir())
+    except OSError as error:
+        raise ApplyError("apply.failed", "Deleting the entry reported a failure status.") from error
+    if children:
+        raise ApplyError("payload.invalid", "Only empty directories can be permanently deleted.")
+    try:
+        final.rmdir()
+    except OSError as error:
+        raise ApplyError("apply.failed", "Deleting the entry reported a failure status.") from error
+    json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "deleted": True}, stdout)
+    stdout.write("\n")
+    return 0
+
 def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
@@ -1183,6 +1228,7 @@ ACTIONS = {
     "files-entry-rename": apply_files_entry_rename,
     "files-entry-copy": apply_files_entry_copy,
     "files-entry-move": apply_files_entry_move,
+    "files-entry-delete": apply_files_entry_delete,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

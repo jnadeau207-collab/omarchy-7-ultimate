@@ -1383,6 +1383,74 @@ def _copy_destination_inside_source(selected: Mapping[str, Any], dest_location_i
     return selected["kind"] == "directory" and dest_relative.startswith(f"{source}/")
 
 
+def _entry_delete_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+    matches = [entry for entry in current["entries"] if entry["id"] == arguments["entryId"]]
+    hint = None
+    if backend is not None:
+        hints = getattr(backend, "_entry_delete_hints", None)
+        if not isinstance(hints, dict):
+            hints = {}
+            backend._entry_delete_hints = hints
+        hint = hints.get(arguments["entryId"])
+    if matches:
+        selected = _entry(current, arguments["entryId"])
+        location = _location(current, selected["locationId"], writable=True)
+        if location["kind"] == "trash":
+            raise _precondition("Trash entries cannot be permanently deleted.", selected["id"])
+        if selected["kind"] == "directory":
+            if any(entry["parentId"] == selected["id"] for entry in current["entries"]):
+                raise _precondition("Only empty directories can be permanently deleted.", selected["id"])
+        elif selected["kind"] != "file":
+            raise _precondition("The selected entry is not a regular file.", selected["id"])
+        location_id = selected["locationId"]
+        relative = selected["relativePath"]
+        parent = relative.rsplit("/", 1)[0] if "/" in relative else ""
+        name = selected["name"]
+        identity = selected["identity"]
+        if backend is not None:
+            backend._entry_delete_hints[selected["id"]] = {
+                "locationId": location_id,
+                "parent": parent,
+                "name": name,
+                "identity": identity,
+            }
+    elif isinstance(hint, Mapping) and hint.get("locationId") and hint.get("name") and hint.get("identity"):
+        location_id = hint["locationId"]
+        parent = hint.get("parent") if isinstance(hint.get("parent"), str) else ""
+        name = hint["name"]
+        identity = hint["identity"]
+    else:
+        raise _precondition("The selected entry is not present in the current workspace.", arguments["entryId"])
+    listing = None
+    if backend is not None and hasattr(backend, "directory_listing"):
+        listing = backend.directory_listing(location_id, parent)
+    current_names = sorted(listing) if listing is not None else _directory_names_from_state(current, location_id, parent)
+    if matches and name not in current_names:
+        current_names = sorted([*current_names, name])
+    if matches:
+        proposed_names = sorted(candidate for candidate in current_names if candidate != name)
+        listing_current, listing_proposed = current_names, proposed_names
+    else:
+        listing_current = sorted(candidate for candidate in current_names if candidate != name)
+        listing_proposed = list(listing_current)
+    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}\0{arguments['entryId']}".encode("utf-8")).hexdigest()
+
+    def document(names: list[str]) -> dict[str, Any]:
+        return {
+            "locationId": location_id,
+            "parentRelativePath": parent,
+            "names": names,
+            "selectedEntry": {"entryId": arguments["entryId"], "identity": identity},
+        }
+
+    return {
+        "kind": "files.directory",
+        "id": f"files.directory.{digest}",
+        "current": document(listing_current),
+        "proposed": document(listing_proposed),
+    }
+
+
 def _entry_move_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
     selected = _entry(current, arguments["entryId"])
     source_location = _location(current, selected["locationId"])
@@ -1600,6 +1668,27 @@ def _copy_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dic
     state["entries"].sort(key=lambda item: item["id"])
     return state
 
+def _delete_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
+    state = deepcopy(dict(current))
+    selected = _entry(state, arguments["entryId"])
+    location = _location(state, selected["locationId"], writable=True)
+    if location["kind"] == "trash":
+        raise _precondition("Trash entries cannot be permanently deleted.", selected["id"])
+    if selected["kind"] == "directory":
+        if any(entry["parentId"] == selected["id"] for entry in state["entries"]):
+            raise _precondition("Only empty directories can be permanently deleted.", selected["id"])
+    elif selected["kind"] != "file":
+        raise _precondition("The selected entry is not a regular file.", selected["id"])
+    if not selected["writable"]:
+        raise _precondition("The selected entry is not writable.", selected["id"])
+    removed_id = selected["id"]
+    state["entries"] = [entry for entry in state["entries"] if entry["id"] != removed_id]
+    state["recent"] = [item for item in state["recent"] if item["entryId"] != removed_id]
+    for rank, item in enumerate(sorted(state["recent"], key=lambda value: value["rank"])):
+        item["rank"] = rank
+    return state
+
+
 def _move_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     selected = _entry(state, arguments["entryId"])
@@ -1778,6 +1867,7 @@ OPERATIONS = {
     "entry.rename": OperationSpec("entry.rename", _normalize_rename, _rename_entry, _summary("rename"), _rename_guards, _entry_rename_scope),
     "entry.copy": OperationSpec("entry.copy", _normalize_copy, _copy_entry, _summary("copy"), _copy_guards, _entry_copy_scope),
     "entry.move": OperationSpec("entry.move", _normalize_move, _move_entry, _summary("move"), _copy_guards, _entry_move_scope),
+    "entry.delete": OperationSpec("entry.delete", _normalize_entry, _delete_entry, _summary("delete"), _rename_guards, _entry_delete_scope),
     "entry.trash": OperationSpec("entry.trash", _normalize_entry, _trash_entry, _summary("Trash"), _anchors, _entry_trash_scope),
     "trash.restore": OperationSpec("trash.restore", _normalize_entry, _restore_entry, _summary("restore"), _anchors, _trash_restore_scope),
     "entry.open": OperationSpec("entry.open", _normalize_entry, _open_entry, _open_summary, _open_guards, _entry_open_scope),

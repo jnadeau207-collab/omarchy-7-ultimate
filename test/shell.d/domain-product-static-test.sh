@@ -216,7 +216,20 @@ grep -Fq '`files.entry.move` is write-plane reachable' "$ROOT/docs/files-default
 grep -Fq 'Trash write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner states Trash is not shell-authorizable"
 grep -Fq 'CHANGES UNAVAILABLE' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names CHANGES UNAVAILABLE for Trash"
 grep -Fq 'Restore write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the Restore write plane as not shell-authorizable"
-grep -Fq 'Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore UI and files.trash.manage unavailable"
+grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the permanent delete write plane as not shell-authorizable"
+grep -Fq 'Restore UI, empty Recycle Bin, and files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore UI and files.trash.manage unavailable"
+grep -Fq 'readonly property bool deleteAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files pins deleteAuthorized false; permanent Delete is not LIVE under the shell principal"
+if grep -Eq 'deleteAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files must not authorize shell consequential permanent delete"
+fi
+if grep -Eq 'action: "entry.delete"' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files invents LIVE permanent delete under SHELL"
+fi
+grep -Fq 'files.entry.delete' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names files.entry.delete"
+grep -Fq 'deleteAuthorized=false' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Delete UI gated deleteAuthorized=false"
+grep -Fq '`files.entry.delete` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names the entry.delete write plane"
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
 grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins trashAuthorized false; Trash is not LIVE under the shell principal"

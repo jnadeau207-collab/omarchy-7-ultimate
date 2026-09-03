@@ -9,8 +9,8 @@
     "schemaVersion": {"const": "v0"},
     "provider": {"const": "files.provider"},
     "providerVersion": {"const": "v0"},
-    "action": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.copy", "entry.move", "entry.trash", "trash.restore", "entry.open", "mount.connect", "mount.disconnect"]},
-    "capability": {"type": "string", "enum": ["files.directory.create", "files.entry.rename", "files.entry.copy", "files.entry.move", "files.entry.trash", "files.trash.restore", "files.entry.open", "files.mount.connect", "files.mount.disconnect"]},
+    "action": {"type": "string", "enum": ["directory.create", "entry.rename", "entry.copy", "entry.move", "entry.delete", "entry.trash", "trash.restore", "entry.open", "mount.connect", "mount.disconnect"]},
+    "capability": {"type": "string", "enum": ["files.directory.create", "files.entry.rename", "files.entry.copy", "files.entry.move", "files.entry.delete", "files.entry.trash", "files.trash.restore", "files.entry.open", "files.mount.connect", "files.mount.disconnect"]},
     "resource": {"$ref": "#/$defs/resource"},
     "normalizedArguments": {"oneOf": [
       {"$ref": "urn:omarchy:fabric:provider:files:create-directory-arguments:v0"},
