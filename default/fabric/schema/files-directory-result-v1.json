@@ -36,6 +36,7 @@
         "entry.delete",
         "entry.trash",
         "trash.restore",
+        "trash.manage",
         "entry.open"
       ]
     },
@@ -49,6 +50,7 @@
         "files.entry.delete",
         "files.entry.trash",
         "files.trash.restore",
+        "files.trash.manage",
         "files.entry.open",
         "files.mount.connect",
         "files.mount.disconnect"

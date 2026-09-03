@@ -149,6 +149,15 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                         "entryRelativePath": lambda value: value,
                     },
                 ),
+                IntentDefinition(
+                    "files.trash.manage",
+                    FixedArgvCommand("/bin/true", ("files-trash-manage",)),
+                    required={
+                        "resourceId": stable_token,
+                        "locationId": stable_token,
+                        "parentRelativePath": lambda value: value,
+                    },
+                ),
             )
         )
         self.coordinator = OperationCoordinator(
@@ -207,6 +216,12 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                     "entry.delete",
                     "files.entry.delete",
                     FabricDaemon._delete_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "trash.manage",
+                    "files.trash.manage",
+                    FabricDaemon._manage_payload,
                 ),
             ),
             intents=self.intents,
@@ -448,6 +463,32 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("identity", listing["selectedEntry"])
         with self.assertRaises(SecurityValidationError) as caught:
             self._shell_grant(deleted["operationId"])
+        self.assertEqual(caught.exception.code, "grant.shell-consequential")
+
+    async def test_trash_manage_preflight_is_consequential_and_not_shell_grantable(self) -> None:
+        trash_plan = await self.files.preflight("entry.trash", {"entryId": "files.entry.notes"}, self.shell)
+        await self.files.execute("entry.trash", trash_plan["normalizedArguments"], trash_plan["stateRevision"])
+        managed = await self.coordinator.preflight(
+            self.shell,
+            provider_id="files.provider",
+            action="trash.manage",
+            arguments={"locationId": "files.location.trash"},
+            idempotency_key="files.trash.manage.empty",
+        )
+        request = self.coordinator.approval_request(self.shell, managed["operationId"])
+        self.assertEqual(request.risk, RiskLevel.CONSEQUENTIAL)
+        self.assertEqual(request.capability, "files.trash.manage")
+        self.assertTrue(request.resource.resource_id.startswith("files.directory."))
+        payload = self.store.get(managed["operationId"]).plan.intent.payload
+        self.assertEqual(payload["locationId"], "files.location.trash")
+        self.assertEqual(payload["parentRelativePath"], "")
+        listing = self.store.get(managed["operationId"]).plan.preflight["currentState"]["value"]
+        self.assertEqual(listing["locationId"], "files.location.trash")
+        self.assertIn("notes.txt", listing["names"])
+        proposed = self.store.get(managed["operationId"]).plan.preflight["proposedState"]["value"]
+        self.assertEqual(proposed["names"], [])
+        with self.assertRaises(SecurityValidationError) as caught:
+            self._shell_grant(managed["operationId"])
         self.assertEqual(caught.exception.code, "grant.shell-consequential")
 
     def test_shell_cannot_hold_a_consequential_files_grant(self) -> None:
