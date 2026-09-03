@@ -113,9 +113,11 @@ grep -Fq 'key: "paste", label: "Paste"' "$application" \
 if grep -Eq 'key: "cut"' "$application"; then
   fail "Files invents cut/move"
 fi
-if grep -Eq 'wl-copy|wl-paste|clipboard' "$application"; then
+if grep -Eq 'wl-copy|wl-paste|Qt\.application\.clipboard' "$application"; then
   fail "Files invents an OS clipboard product"
 fi
+grep -Fq 'The OS clipboard and cut/move stay unavailable' "$application" \
+  || fail "Files names the OS clipboard leftover instead of inventing one"
 pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing cut or an OS clipboard"
 
 run_node_test <<'JS'
