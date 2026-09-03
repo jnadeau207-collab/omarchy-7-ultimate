@@ -229,6 +229,13 @@ grep -Fq 'files.entry.rename' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HAN
 grep -Fq 'renameAuthorized=true' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Rename UI gated renameAuthorized=true"
 grep -Fq 'files.entry.copy' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names files.entry.copy"
 grep -Fq 'copyAuthorized=true' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Copy UI gated copyAuthorized=true"
+grep -Fq '`files.entry.copy` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names the entry.copy write plane"
+grep -Fq 'Files Copy and Paste use that plane with in-app staging' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names in-app staging instead of an OS clipboard"
+if grep -Fq 'It does not invent cut, copy, paste, or a move-across-directories verb' "$ROOT/docs/files-defaults-provider.md"; then
+  fail "files-defaults-provider still claims copy and paste are uninvented"
+fi
 if grep -Eq 'maximumLineCount:[[:space:]]*2' "$ROOT/shell/apps/ultimate-files/ExplorerDetailsPane.qml"; then
   fail "Files details boundary Text is limited to 2 lines and can clip the unavailable half"
 fi
