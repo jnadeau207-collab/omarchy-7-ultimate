@@ -161,7 +161,7 @@ Right-click on a taskbar button opens a **jump list**: a dark translucent panel 
 | Tray cluster | `shell/plugins/ultimate-taskbar/TrayCluster.qml` |
 | Jump lists | `shell/services/AppSearch.js` supplies desktop actions; the taskbar renders them |
 
-**Known gaps:** count badges are rendered and must go; jump lists and context menus can overlap; left-click interactions are unreliable; the Start orb is a flat tile rather than a sphere overhanging the bar; hover does not sample icon colour; there are no live thumbnails.
+**Known gaps:** count badges are gone from task buttons (notification counts stay in NotificationLogic); multi-window groups paint a stacked tile edge; peek captures live grim thumbnails for mapped windows; jump lists and context menus can overlap; left-click interactions are unreliable; the Start orb is a flat tile rather than a sphere overhanging the bar; hover does not sample icon colour.
 
 ## 3. Start menu
 
@@ -251,7 +251,7 @@ Double-click opens; single-click selects; Enter opens; Backspace and Alt+Up go t
 | Palette | `ExplorerTheme.js` |
 | Data | `files.provider` — `default/fabric/omarchy_fabric/providers/files/provider.py`, routes in `routes-v1.json`, locations in `default/ultimate/files/locations-v0.json` |
 
-**Known gaps:** selection is too saturated; the sort indicator is at the header's right rather than top-centre; columns cannot be resized; there is no library header band; the details pane has no editable fields or rating; there are no thumbnails (the provider never reads file contents by design — decide explicitly whether to add a thumbnail capability or accept type icons permanently); no rename, no clipboard; the command bar has no icons and a shorter verb set than Windows 7's.
+**Known gaps:** selection is the near-white wash with a pale blue border and the sort indicator sits top-centre with the diagonal wash; the header band, row heights, and sorted-column wash are the measured values; columns cannot be resized; there is no library header band; the details pane has no editable fields or rating; there are no thumbnails (the provider never reads file contents by design — decide explicitly whether to add a thumbnail capability or accept type icons permanently); rename, copy, paste, and open run through the typed write plane but cut, trash, restore, permanent delete, and empty-bin stay shell-unauthorized; no OS clipboard; the command bar has no icons and a shorter verb set than Windows 7's.
 
 ## 5. Control Panel
 

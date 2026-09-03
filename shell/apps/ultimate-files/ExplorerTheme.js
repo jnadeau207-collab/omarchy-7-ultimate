@@ -21,7 +21,7 @@ var fieldShadow = "#e3e9ef"
 var crumbHoverTop = "#f3fbff"
 var crumbHoverBottom = "#dcf0fc"
 var crumbHoverBorder = "#70c0e7"
-var crumbSeparator = "#7b8794"
+var crumbSeparator = "#000000"
 
 var navFill = "#ffffff"
 var navBorder = "#e4e8ec"

@@ -115,3 +115,7 @@ grep -Fq 'Math.max(187,' "$bar" || fail "Explorer search field keeps the measure
 grep -Fq 'font.italic: text === ""' "$bar" \
   || fail "Explorer search placeholder is italic until text arrives"
 pass "Explorer search field is the measured box with an italic placeholder"
+
+grep -Fq 'var crumbSeparator = "#000000"' "$ROOT/shell/apps/ultimate-files/ExplorerTheme.js" \
+  || fail "Explorer breadcrumb wedges are filled black"
+pass "Explorer breadcrumb wedges are filled black"
