@@ -923,6 +923,14 @@ if "Recycle Bin / files.trash.manage residual OPEN after PR #63" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry Recycle leftover after PR #63")
 if "73ec97959174" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #63 tip parent for the Recycle leftover residual")
+if "40212d204a1c" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #64 tip parent for the OS clipboard leftover residual")
+if "OS clipboard residual OPEN after PR #64" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the OS clipboard leftover after PR #64")
+if "There is no Files `wl-copy`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Files OS clipboard bridge uninvented")
+if "Do not invent an OS clipboard LIVE" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must refuse OS clipboard LIVE invent")
 if "OS clipboard leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the OS clipboard leftover")
 if "OS clipboard residual CLOSED" in gaps:
@@ -1813,6 +1821,10 @@ if "deleteAuthorized=false" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS residual names Files Delete UI gated deleteAuthorized=false")
 if "OS clipboard residual OPEN after PR #60" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep OS clipboard residual OPEN after PR #60")
+if "OS clipboard residual OPEN after PR #64" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep OS clipboard residual OPEN after PR #64")
+if "There is no Files `wl-copy`" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep Files OS clipboard bridge uninvented")
 if "folder copy CLOSED" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name folder copy CLOSED")
 if "permanent delete write plane exists but is not shell-authorizable" not in writers_handoff:
@@ -1857,6 +1869,8 @@ if "deleteAuthorized=false" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name deleteAuthorized=false")
 if "OS clipboard residual OPEN after PR #60" not in explorer_notes:
     raise SystemExit("PARITY Explorer row dropped OS clipboard residual OPEN after PR #60")
+if "OS clipboard residual OPEN after PR #64" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row dropped OS clipboard residual OPEN after PR #64")
 if "Folder copy CLOSED" not in explorer_notes and "folder copy CLOSED" not in explorer_notes:
     raise SystemExit("PARITY Explorer row dropped folder copy CLOSED")
 if "permanent delete write plane exists but is not shell-authorizable" not in explorer_notes:
@@ -1891,6 +1905,8 @@ if "files.trash.manage" not in cp or "write plane is reachable" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage write plane")
 if "OS clipboard residual OPEN after PR #60" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped OS clipboard residual OPEN after PR #60")
+if "OS clipboard residual OPEN after PR #64" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped OS clipboard residual OPEN after PR #64")
 if "folder copy CLOSED" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped folder copy CLOSED")
 if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in cp:
@@ -1899,6 +1915,8 @@ if "permanent delete write plane exists but is not shell-authorizable" not in cp
     raise SystemExit("fleet-catalog-controlpanel dropped permanent delete not shell-authorizable")
 if "OS clipboard residual OPEN after PR #60" not in plan:
     raise SystemExit("project-ultimate dropped OS clipboard residual OPEN after PR #60")
+if "OS clipboard residual OPEN after PR #64" not in plan:
+    raise SystemExit("project-ultimate dropped OS clipboard residual OPEN after PR #64")
 if "folder copy CLOSED" not in plan:
     raise SystemExit("project-ultimate dropped folder copy CLOSED")
 if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in plan:
