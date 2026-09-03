@@ -75,11 +75,7 @@ Rectangle {
 
           Rectangle {
             anchors.fill: parent
-            anchors.leftMargin: 2
-            anchors.rightMargin: 2
-            anchors.topMargin: 1
-            anchors.bottomMargin: 1
-            radius: 2
+            radius: 3
             visible: row.selected || hover.hovered
             border.width: 1
             border.color: row.selected ? (hover.hovered ? Aero.hoverSelectedBorder : Aero.selectionBorder) : Aero.hoverBorder
@@ -150,7 +146,7 @@ Rectangle {
             color: row.modelData.group ? Aero.navHeaderText : Aero.navItemText
             font.family: Aero.fontFamily
             font.pixelSize: 12
-            font.bold: row.modelData.group
+            font.weight: Font.Normal
           }
 
           HoverHandler { id: hover; enabled: row.actionable }

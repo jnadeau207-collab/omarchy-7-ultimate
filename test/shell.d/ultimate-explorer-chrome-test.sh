@@ -85,3 +85,24 @@ grep -Fq 'visible: root.sortColumn === modelData.key' "$view" \
 grep -Fq 'font.weight: Font.Normal' "$view" \
   || fail "Explorer header text is regular weight, not bold"
 pass "Explorer header paints the sorted wash and regular-weight labels"
+
+nav="$ROOT/shell/apps/ultimate-files/ExplorerNavigationPane.qml"
+
+grep -Fq 'font.weight: Font.Normal' "$nav" \
+  || fail "Explorer nav section headers are regular weight, not bold"
+if grep -Fq 'font.bold: row.modelData.group' "$nav"; then
+  fail "Explorer nav section headers are regular weight, not bold"
+fi
+pass "Explorer nav section headers are regular weight, not bold"
+
+grep -Fq 'radius: 3' "$nav" \
+  || fail "Explorer nav selection is the full-width wash"
+if grep -Eq 'anchors.(leftMargin: 2|rightMargin: 2|topMargin: 1|bottomMargin: 1)' "$nav"; then
+  fail "Explorer nav selection is the full-width wash"
+fi
+pass "Explorer nav selection is the full-width wash"
+
+grep -Fq 'width: 16' "$nav" || fail "Explorer nav icons are the measured size"
+grep -Fq 'fillStyle = open ? "#5a6b7b" : "#ffffff"' "$nav" \
+  || fail "Explorer nav expander fills dark open and hollow closed"
+pass "Explorer nav keeps measured icons and expander states"
