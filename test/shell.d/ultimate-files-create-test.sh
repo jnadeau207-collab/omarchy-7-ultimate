@@ -18,8 +18,10 @@ grep -Fq 'provider: "files.provider"' "$application" || fail "Files creates thro
 grep -Fq 'action: "directory.create"' "$application" || fail "Files uses the typed directory.create action"
 grep -Fq 'action: "entry.open"' "$application" || fail "Files uses the typed entry.open action"
 grep -Fq 'action: "entry.rename"' "$application" || fail "Files uses the typed entry.rename action"
+grep -Fq 'action: "entry.copy"' "$application" || fail "Files uses the typed entry.copy action"
 grep -Fq 'function openEntry(record)' "$application" || fail "Files names openEntry for the launch plane"
 grep -Fq 'function renameEntry(record, name)' "$application" || fail "Files names renameEntry for the rename plane"
+grep -Fq 'function pasteStagedCopy()' "$application" || fail "Files names pasteStagedCopy for the copy plane"
 grep -Fq 'arguments: { entryId: String(record.id) }' "$application" || fail "Files sends only the entry identity for Open"
 for stage in operation.preflight operation.approve operation.start; do
   grep -Fq "\"$stage\"" "$application" || fail "Files drives the $stage step"
@@ -97,10 +99,26 @@ grep -Fq 'key: "rename", label: "Rename"' "$application" \
   || fail "Rename stays a gated command-bar control"
 grep -Fq 'arguments: { entryId: String(record.id), newName: String(name) }' "$application" \
   || fail "Files sends only the entry identity and new name for Rename"
-if grep -Eq 'key: "cut"|key: "copy"|key: "paste"' "$application"; then
-  fail "Files invents cut/copy/paste"
+grep -Fq 'readonly property bool copyAuthorized: true' "$application" \
+  || fail "copyAuthorized stays true; SHELL can authorize scoped copy"
+if grep -Eq 'copyAuthorized:\s*false' "$application"; then
+  fail "Files must not hide SHELL-grantable copy"
 fi
-pass "Files Rename is LIVE for same-directory names without inventing clipboard verbs"
+grep -Fq 'if (!root.copyAuthorized) return' "$application" \
+  || fail "copy and paste refuse when authorization is withdrawn"
+grep -Fq 'key: "copy", label: "Copy"' "$application" \
+  || fail "Copy stays a gated command-bar control"
+grep -Fq 'key: "paste", label: "Paste"' "$application" \
+  || fail "Paste stays a gated command-bar control"
+if grep -Eq 'key: "cut"' "$application"; then
+  fail "Files invents cut/move"
+fi
+if grep -Eq 'wl-copy|wl-paste|Qt\.application\.clipboard' "$application"; then
+  fail "Files invents an OS clipboard product"
+fi
+grep -Fq 'The OS clipboard and cut/move stay unavailable' "$application" \
+  || fail "Files names the OS clipboard leftover instead of inventing one"
+pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing cut or an OS clipboard"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')
@@ -133,6 +151,11 @@ assertEqual(Model.createNameRefusal('x'.repeat(255)), '', 'a 255 character name 
 
 const traversal = Model.createNameRefusal('../../etc/passwd')
 assert(traversal !== '', 'a traversal attempt is refused before it reaches the operation plane')
+
+assertEqual(Model.nextCopyName({}, 'notes.txt'), 'notes.txt', 'an unused name is reused')
+assertEqual(Model.nextCopyName({ 'notes.txt': true }, 'notes.txt'), 'notes (2).txt', 'a taken name gets a numbered replica')
+assertEqual(Model.nextCopyName({ 'notes.txt': true, 'notes (2).txt': true }, 'notes.txt'), 'notes (3).txt', 'numbered replicas skip taken names')
+assertEqual(Model.nextCopyName({}, 'a/b'), '', 'a separator is refused before copy staging')
 JS
 pass "the create target map and name guard refuse traversal, separators, and control characters"
 

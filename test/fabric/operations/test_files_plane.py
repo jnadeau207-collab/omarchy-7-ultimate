@@ -113,6 +113,19 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                         "newName": lambda value: value,
                     },
                 ),
+                IntentDefinition(
+                    "files.entry.copy",
+                    FixedArgvCommand("/bin/true", ("files-entry-copy",)),
+                    required={
+                        "resourceId": stable_token,
+                        "entryId": stable_token,
+                        "locationId": stable_token,
+                        "entryRelativePath": lambda value: value,
+                        "destinationLocationId": stable_token,
+                        "destinationParentRelativePath": lambda value: value,
+                        "destinationName": lambda value: value,
+                    },
+                ),
             )
         )
         self.coordinator = OperationCoordinator(
@@ -153,6 +166,12 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                     "entry.rename",
                     "files.entry.rename",
                     FabricDaemon._rename_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.copy",
+                    "files.entry.copy",
+                    FabricDaemon._copy_payload,
                 ),
             ),
             intents=self.intents,
@@ -280,6 +299,36 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(listing["selectedEntry"]["entryId"], "files.entry.notes")
         self.assertIn("identity", listing["selectedEntry"])
         grant = self._shell_grant(renamed["operationId"])
+        self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
+
+    async def test_entry_copy_preflight_is_low_and_shell_grantable(self) -> None:
+        copied = await self.coordinator.preflight(
+            self.shell,
+            provider_id="files.provider",
+            action="entry.copy",
+            arguments={
+                "entryId": "files.entry.notes",
+                "destinationLocationId": "files.location.desktop",
+                "destinationParentRelativePath": "",
+                "destinationName": "notes (2).txt",
+            },
+            idempotency_key="files.entry.copy.notes",
+        )
+        request = self.coordinator.approval_request(self.shell, copied["operationId"])
+        self.assertEqual(request.risk, RiskLevel.LOW)
+        self.assertEqual(request.capability, "files.entry.copy")
+        self.assertTrue(request.resource.resource_id.startswith("files.directory."))
+        payload = self.store.get(copied["operationId"]).plan.intent.payload
+        self.assertEqual(payload["locationId"], "files.location.desktop")
+        self.assertEqual(payload["entryRelativePath"], "notes.txt")
+        self.assertEqual(payload["entryId"], "files.entry.notes")
+        self.assertEqual(payload["destinationLocationId"], "files.location.desktop")
+        self.assertEqual(payload["destinationParentRelativePath"], "")
+        self.assertEqual(payload["destinationName"], "notes (2).txt")
+        listing = self.store.get(copied["operationId"]).plan.preflight["currentState"]["value"]
+        self.assertEqual(listing["selectedEntry"]["entryId"], "files.entry.notes")
+        self.assertIn("identity", listing["selectedEntry"])
+        grant = self._shell_grant(copied["operationId"])
         self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
 
     def test_shell_cannot_hold_a_consequential_files_grant(self) -> None:

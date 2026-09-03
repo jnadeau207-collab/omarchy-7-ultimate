@@ -60,6 +60,25 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
         await self.exercise(
+            "entry.copy",
+            {
+                "entryId": "files.entry.notes",
+                "destinationLocationId": "files.location.desktop",
+                "destinationParentRelativePath": "",
+                "destinationName": "notes (2).txt",
+            },
+            lambda state: self.assertEqual(
+                (
+                    state["locationId"],
+                    state["parentRelativePath"],
+                    "notes.txt" in state["names"],
+                    "notes (2).txt" in state["names"],
+                    state["selectedEntry"]["entryId"],
+                ),
+                ("files.location.desktop", "", True, True, "files.entry.notes"),
+            ),
+        )
+        await self.exercise(
             "entry.trash",
             {"entryId": "files.entry.project"},
             lambda state: self.assertEqual(
@@ -161,6 +180,42 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(FabricError) as symlink:
             await provider.preflight("entry.rename", {"entryId": "files.entry.unsafe-link", "newName": "safe"}, principal())
         self.assertEqual(symlink.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as copy_symlink:
+            await provider.preflight(
+                "entry.copy",
+                {
+                    "entryId": "files.entry.unsafe-link",
+                    "destinationLocationId": "files.location.desktop",
+                    "destinationParentRelativePath": "",
+                    "destinationName": "safe.txt",
+                },
+                principal(),
+            )
+        self.assertEqual(copy_symlink.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as copy_directory:
+            await provider.preflight(
+                "entry.copy",
+                {
+                    "entryId": "files.entry.project",
+                    "destinationLocationId": "files.location.desktop",
+                    "destinationParentRelativePath": "",
+                    "destinationName": "Project-copy",
+                },
+                principal(),
+            )
+        self.assertEqual(copy_directory.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as copy_collision:
+            await provider.preflight(
+                "entry.copy",
+                {
+                    "entryId": "files.entry.notes",
+                    "destinationLocationId": "files.location.desktop",
+                    "destinationParentRelativePath": "",
+                    "destinationName": "notes.txt",
+                },
+                principal(),
+            )
+        self.assertEqual(copy_collision.exception.code, "files.precondition-failed")
         for path in ("../escape", "/absolute", "Project//child", "Project\\child", "Project/./child"):
             with self.subTest(path=path), self.assertRaises(FabricError):
                 await provider.preflight(

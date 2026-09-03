@@ -28,6 +28,7 @@
       "enum": [
         "directory.create",
         "entry.rename",
+        "entry.copy",
         "entry.trash",
         "trash.restore",
         "entry.open"
