@@ -785,15 +785,8 @@ def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
         raise ApplyError("payload.invalid", "The apply payload names no move destination.")
     if resource_id != stable_move_directory_id(dest_location, dest_parent, entry_id):
         raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
-    _, source, relative = resolve_entry_path(payload, pathlib.Path.home())
-    try:
-        info = source.lstat()
-    except OSError as error:
-        raise ApplyError("resource.unresolved", "The entry is not present.") from error
-    if stat.S_ISLNK(info.st_mode):
-        raise ApplyError("payload.invalid", "Symlink entries cannot be moved.")
-    if not stat.S_ISREG(info.st_mode):
-        raise ApplyError("payload.invalid", "Only regular files can be moved.")
+    home = pathlib.Path.home()
+    _, source, relative = resolve_entry_slot(payload, home)
     dest_payload = {
         "locationId": dest_location,
         "parentRelativePath": dest_parent,
@@ -801,7 +794,7 @@ def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
     }
     dest_key = files_location_key(dest_location)
     dest_segments = require_relative(dest_payload)
-    dest_base = resolve_location_path(dest_key, pathlib.Path.home())
+    dest_base = resolve_location_path(dest_key, home)
     try:
         dest_root = dest_base.resolve(strict=True)
     except OSError as error:
@@ -819,6 +812,15 @@ def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
     if "desired" in payload:
         if destination.exists() and not source.exists():
             try:
+                info = destination.lstat()
+            except OSError as error:
+                raise ApplyError("resource.unresolved", "The moved entry is not present.") from error
+            if stat.S_ISLNK(info.st_mode):
+                raise ApplyError("payload.invalid", "Symlink entries cannot be moved.")
+            observed = stable_entry_id(payload["locationId"], info.st_dev, info.st_ino, relative)
+            if observed != entry_id:
+                raise ApplyError("resource.drifted", "The entry on disk is not the entry the plan approved.")
+            try:
                 os.rename(destination, source)
             except OSError as error:
                 raise ApplyError("apply.failed", "Restoring the moved entry reported a failure status.") from error
@@ -828,6 +830,15 @@ def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
         json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "moved": False}, stdout)
         stdout.write("\n")
         return 0
+    _, source, relative = resolve_entry_path(payload, home)
+    try:
+        info = source.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be moved.")
+    if not stat.S_ISREG(info.st_mode):
+        raise ApplyError("payload.invalid", "Only regular files can be moved.")
     if destination == source:
         json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "moved": False}, stdout)
         stdout.write("\n")
