@@ -239,6 +239,16 @@ grep -Fq '`files.entry.delete` is write-plane reachable' "$ROOT/docs/files-defau
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
 grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins trashAuthorized false; Trash is not LIVE under the shell principal"
+grep -Fq 'if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files invoke delete refuses while trashAuthorized is false"
+grep -Fq 'else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files Key_Delete refuses while trashAuthorized is false"
+if grep -Fq 'if (key === "delete") { root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files invoke delete must not accept Delete while unauthorized"
+fi
+if grep -Fq 'else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files Key_Delete must not accept Delete while unauthorized"
+fi
 grep -Fq 'readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files keeps New folder createEnabled LIVE"
 grep -Fq 'readonly property bool renameAuthorized: true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \

@@ -42,6 +42,16 @@ grep -Fq 'if (root.createVisible && root.trashAuthorized)' "$application" \
   || fail "Delete stays hidden while trashAuthorized is false"
 grep -Fq 'if (root.trashAuthorized) {' "$application" \
   || fail "Organize and context Delete stay hidden while trashAuthorized is false"
+grep -Fq 'if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }' "$application" \
+  || fail "invoke delete refuses while trashAuthorized is false"
+grep -Fq 'else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }' "$application" \
+  || fail "Key_Delete refuses while trashAuthorized is false"
+if grep -Fq 'if (key === "delete") { root.trashEntry(root.selectedRecord); return }' "$application"; then
+  fail "invoke delete must not accept Delete while unauthorized"
+fi
+if grep -Fq 'else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }' "$application"; then
+  fail "Key_Delete must not accept Delete while unauthorized"
+fi
 grep -Fq 'action: "entry.trash"' "$application" || fail "Files keeps the typed entry.trash action"
 grep -Fq 'arguments: { entryId: String(record.id) }' "$application" ||
   fail "Files sends only the entry identity; the daemon derives the path from its own scope"
