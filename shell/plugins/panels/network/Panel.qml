@@ -379,7 +379,7 @@ Panel {
   onConnectionKeyChanged: Qt.callLater(checkConnectivity)
   onConnectivityChecksEnabledChanged: Qt.callLater(checkConnectivity)
   onHasCaptivePortalChanged: {
-    if (hasCaptivePortal && opened && passwordSsid === "") {
+    if (hasCaptivePortal && (opened || embedMode) && passwordSsid === "") {
       focusSection = "portal"
       cursorActive = true
     } else if (!hasCaptivePortal && focusSection === "portal") {
@@ -1149,7 +1149,7 @@ Panel {
           id: portalAction
           width: parent.width
           text: "Open Captive Portal"
-          iconText: "󰏌"
+          iconText: "\u25B3"
           foreground: root.bar.urgent
           accent: root.bar.urgent
           fontFamily: root.bar.fontFamily
@@ -1167,7 +1167,7 @@ Panel {
 
         Text {
           width: parent.width
-          text: "Sign in or accept this network’s terms to access the internet."
+          text: "Sign in or accept this network's terms to access the internet."
           textFormat: Text.PlainText
           wrapMode: Text.WordWrap
           color: root.bar.foreground

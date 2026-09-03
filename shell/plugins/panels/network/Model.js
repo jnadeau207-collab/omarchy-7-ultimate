@@ -31,9 +31,9 @@ function connectivityState(kind, connectivity, states, checksEnabled) {
 
 function connectionIcon(kind, signalStrength, connectivity) {
   var restricted = connectivity === "portal" || connectivity === "limited"
-  if (kind === "wifi") return restricted ? "󰤩" : wifiIconFor(signalStrength)
-  if (kind === "ethernet") return restricted ? "󰈂" : "󰈀"
-  return "󰤮"
+  if (kind === "wifi") return restricted ? "\u25B3" : wifiIconFor(signalStrength)
+  if (kind === "ethernet") return restricted ? "\u25A3" : "\u25A0"
+  return "\u25A1"
 }
 
 function formatHeaderSpeed(mbps) {
