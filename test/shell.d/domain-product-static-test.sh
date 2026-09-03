@@ -234,6 +234,10 @@ grep -Fq 'folder copy CLOSED' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS names folder copy CLOSED"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS keeps permanent delete not shell-authorizable"
+grep -Fq 'MIME / Default Programs association UI residual OPEN after PR #62' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps MIME leftover OPEN after PR #62"
+grep -Fq 'defaults-mime-set' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS names the reachable defaults-mime-set write plane"
 grep -Fq '`files.entry.delete` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the entry.delete write plane"
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
@@ -290,6 +294,8 @@ grep -Fq 'The permanent delete write plane exists but is not shell-authorizable'
   || fail "files-defaults-provider keeps permanent delete not shell-authorizable"
 grep -Fq 'Recycle / Empty Bin / `files.trash.manage` residual OPEN' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps Recycle residual OPEN"
+grep -Fq 'MIME / Default Programs association UI residual OPEN after PR #62' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider keeps MIME leftover OPEN after PR #62"
 if grep -Fq 'No permanent-delete capability exists in this tranche' "$ROOT/docs/files-defaults-provider.md"; then
   fail "files-defaults-provider still underclaims permanent delete after PR #60"
 fi

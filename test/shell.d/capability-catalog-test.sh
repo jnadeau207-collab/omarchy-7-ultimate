@@ -889,6 +889,12 @@ if "Settings does not offer MIME LIVE CONTROL" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Settings MIME LIVE CONTROL refused")
 if "defaults.inspect" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name MIME inspect via defaults.inspect")
+if "ad4a68e1b225" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the PR #62 tip parent for the MIME leftover residual")
+if "MIME / Default Programs association UI residual OPEN after PR #62" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must carry the MIME leftover after PR #62")
+if "humanRoute.status=planned" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep defaults.mime.set humanRoute planned empty after PR #62")
 if "c1886b423c11" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #60 tip parent for the Files leftover residual")
 if "OS clipboard residual OPEN" not in gaps:
@@ -972,8 +978,17 @@ if "Settings does not offer MIME LIVE CONTROL" not in file_assoc_notes:
     raise SystemExit("PARITY File associations invented or dropped MIME LIVE CONTROL honesty")
 if "files.associations.set" not in file_assoc_notes or "missing/planned MIME" not in file_assoc_notes:
     raise SystemExit("PARITY File associations dropped files.associations.set missing/planned MIME")
+if "MIME / Default Programs association UI residual OPEN after PR #62" not in file_assoc_notes:
+    raise SystemExit("PARITY File associations dropped MIME leftover after PR #62")
 if "this row is not present" not in file_assoc_notes:
     raise SystemExit("PARITY File associations dropped the not-present close")
+defaults_status, defaults_notes = parity_notes("Default Programs")
+if defaults_status == "present":
+    raise SystemExit("PARITY Default Programs was flipped to present")
+if "MIME / Default Programs association UI residual OPEN after PR #62" not in defaults_notes:
+    raise SystemExit("PARITY Default Programs dropped MIME leftover after PR #62")
+if "Settings does not offer MIME LIVE CONTROL" not in defaults_notes:
+    raise SystemExit("PARITY Default Programs invented or dropped MIME LIVE CONTROL honesty")
 
 event_status, event_notes = parity_notes("Event / history")
 if event_status == "present":
@@ -1207,6 +1222,8 @@ if "defaults.protocol.set" not in gt06 or "browser LIVE only" not in gt06:
     raise SystemExit("06-settings-admin-media does not name defaults.protocol.set as browser LIVE only")
 if "files.associations.set" not in gt06 or "missing/planned MIME" not in gt06:
     raise SystemExit("06-settings-admin-media dropped files.associations.set missing/planned MIME")
+if "MIME / Default Programs association UI residual OPEN after PR #62" not in gt06:
+    raise SystemExit("06-settings-admin-media dropped MIME leftover after PR #62")
 if "writers Phase 5" in gt06 or "Phase 5 writers remain" in gt06 or "Phase 9 Administration not started" in gt06:
     raise SystemExit("06-settings-admin-media still blankets a Phase 5/9 fence")
 if "Phase 5 exit criteria still open" not in gt06 or "Phase 9 exit criteria still open" not in gt06:
@@ -1856,6 +1873,14 @@ if "Recycle Bin / `files.trash.manage` residual OPEN after PR #60" not in plan a
     raise SystemExit("project-ultimate dropped Recycle leftover after PR #60")
 if "permanent delete write plane exists but is not shell-authorizable" not in plan:
     raise SystemExit("project-ultimate dropped permanent delete not shell-authorizable")
+if "MIME / Default Programs association UI residual OPEN after PR #62" not in plan:
+    raise SystemExit("project-ultimate dropped MIME leftover after PR #62")
+if "MIME / Default Programs association UI residual OPEN after PR #62" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped MIME leftover after PR #62")
+if "MIME / Default Programs association UI residual OPEN after PR #62" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS dropped MIME leftover after PR #62")
+if "defaults-mime-set" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS dropped the reachable defaults-mime-set write plane")
 if "REJECTED" not in plan:
     raise SystemExit("project-ultimate dropped product REJECTED")
 PY
