@@ -22,7 +22,7 @@ This is schema version `v0`, not a frozen public `v1` contract. The root-owned s
 
 ## Current inventory
 
-The checked inventory contains 129 capability descriptors. WindowService contributes 39 writers: 21 names are in the prototype `CapabilityBroker.windowVerbs` catalog and 18 remain public legacy-direct writers. Five additional public WindowService methods are readers, producing an exact 44-method service inventory. Twenty-two typed leaf providers add honest read-only inventory capabilities in builtin factory order; these providers do not make the corresponding managed-agent routes available.
+The checked inventory contains 137 capability descriptors. WindowService contributes 39 writers: 21 names are in the prototype `CapabilityBroker.windowVerbs` catalog and 18 remain public legacy-direct writers. Five additional public WindowService methods are readers, producing an exact 44-method service inventory. Twenty-two typed leaf providers add honest read-only inventory capabilities in builtin factory order; these providers do not make the corresponding managed-agent routes available.
 
 The `window` IPC target has 40 functions. `ping` and `cycleSnapshot` are read-only, `invoke` and `undoLast` are broker gateways, and 36 dedicated or UI routes still bypass the generic broker path. The inventory records the target WindowService methods for each direct route, so a transport change cannot quietly alter the mutation surface.
 
