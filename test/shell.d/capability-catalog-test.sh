@@ -1713,6 +1713,10 @@ if 'action: "trash.restore"' in files_app:
 desktop_status, desktop_notes = parity_notes("Desktop (icons, wallpaper, context menu, Recycle)")
 if desktop_status == "present":
     raise SystemExit("PARITY Recycle row was flipped to present")
+if "offers Trash" in desktop_notes:
+    raise SystemExit("PARITY Recycle row still says offers Trash")
+if "trashAuthorized=false" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row must gate Delete/Trash at trashAuthorized=false")
 if "files.trash.restore" not in desktop_notes:
     raise SystemExit("PARITY Recycle row does not name files.trash.restore")
 if "Restore UI stays honest-unavailable" not in desktop_notes:
@@ -1758,6 +1762,19 @@ if "availability.claim=missing" not in writers_handoff:
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")
+if "Trash applies" in explorer_notes:
+    raise SystemExit("PARITY Explorer row still says Trash applies")
+if "trashAuthorized=false" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row must gate Delete/Trash at trashAuthorized=false")
+context_status, context_notes = parity_notes("Context menus")
+if context_status == "present":
+    raise SystemExit("PARITY Context menus row was flipped to present")
+if "command-bar Delete exists on writable location routes" in context_notes:
+    raise SystemExit("PARITY Context menus row still invents command-bar Delete as present")
+if "trashAuthorized=false" not in context_notes:
+    raise SystemExit("PARITY Context menus row must gate Delete/Trash at trashAuthorized=false")
+if "write plane reachable" not in context_notes or "not shell-authorizable" not in context_notes:
+    raise SystemExit("PARITY Context menus row must name the trash write plane as reachable but not shell-authorizable")
 if "files.entry.open" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name files.entry.open")
 if "files.entry.rename" not in explorer_notes:

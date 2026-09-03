@@ -369,11 +369,26 @@ def table_row(md, job):
 
 desktop = table_row(parity, "Desktop (icons")
 context = table_row(parity, "Context menus")
+explorer = table_row(parity, "Explorer / Computer")
 for label, row in (("Desktop", desktop), ("Context menus", context)):
     if re.search(r"remain Phase 6|stay Phase 6|Phase 6", row):
         raise SystemExit(f"{label} row still invents a Phase 6 fence")
     if not re.search(r"unavailable|not product-complete", row, re.I):
         raise SystemExit(f"{label} row must name unavailable / not product-complete")
+if "command-bar Delete exists on writable location routes" in context:
+    raise SystemExit("Context menus row still invents command-bar Delete as present")
+if "trashAuthorized=false" not in context:
+    raise SystemExit("Context menus row must gate Delete/Trash at trashAuthorized=false")
+if "write plane reachable" not in context or "not shell-authorizable" not in context:
+    raise SystemExit("Context menus row must name the trash write plane as reachable but not shell-authorizable")
+if "offers Trash" in desktop:
+    raise SystemExit("Desktop row still says offers Trash")
+if "trashAuthorized=false" not in desktop:
+    raise SystemExit("Desktop row must gate Delete/Trash at trashAuthorized=false")
+if "Trash applies" in explorer:
+    raise SystemExit("Explorer row still says Trash applies")
+if "trashAuthorized=false" not in explorer:
+    raise SystemExit("Explorer row must gate Delete/Trash at trashAuthorized=false")
 if "honest-unavailable" not in desktop:
     raise SystemExit("Desktop row dropped Restore honest-unavailable")
 if "files.trash.manage" not in desktop:
