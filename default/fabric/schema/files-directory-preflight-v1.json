@@ -72,9 +72,6 @@
           "$ref": "urn:omarchy:fabric:provider:files:copy-arguments:v0"
         },
         {
-          "$ref": "urn:omarchy:fabric:provider:files:move-arguments:v0"
-        },
-        {
           "$ref": "urn:omarchy:fabric:provider:files:entry-arguments:v0"
         },
         {
