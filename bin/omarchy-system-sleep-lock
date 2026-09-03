@@ -7,7 +7,7 @@
 budget_cap_ms=12000
 lock_timeout_ms=1000
 status_timeout_ms=500
-poll_interval=0.1
+poll_cap_ms=100
 
 derive_budget_ms() {
   local window
@@ -87,7 +87,11 @@ while (( $(remaining_ms) > 0 )); do
     *) request_lock ;;
   esac
 
-  sleep "$poll_interval"
+  pause_ms=$(remaining_ms)
+  if (( pause_ms > 0 )); then
+    (( pause_ms > poll_cap_ms )) && pause_ms=$poll_cap_ms
+    sleep "0.$(printf '%03d' "$pause_ms")"
+  fi
 done
 
 report_unsecured "the shell did not secure the session within ${budget_ms}ms"
