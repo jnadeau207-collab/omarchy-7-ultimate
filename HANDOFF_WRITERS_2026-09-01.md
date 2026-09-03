@@ -4,6 +4,8 @@ SHA `6e01615d` on `work` (session that landed the root executor and write-plane 
 
 Honesty addendum 2026-09-02: `files.entry.open` launch plane is reachable (`files-entry-open` helper). Real preflight binds entry identity and location scope. Risk is `low`. SHELL grant is allowed. Catalog claim=partial; humanRoute visible `Files > Open`. Agent stays unavailable. Files Open / double-click is LIVE for regular files. File contents are never read. Do not invent Open With / MIME association UI, Restore LIVE, Empty Bin, or Explorer product-complete. Recycle and MIME residuals stay OPEN. Product REJECTED.
 
+Honesty addendum 2026-09-03: `files.entry.rename` write plane is reachable (`files-entry-rename` helper). Real preflight binds entry identity inside the scoped directory listing and keeps the rename in the same directory. Collision, drift, traversal, symlink, and Trash refuse. Risk is `low` (same class as `directory.create`: a reversible same-directory name change, not a Trash relocation). SHELL grant is allowed. Catalog claim=partial; humanRoute visible `Files > Rename`. Agent stays unavailable. Files Rename is LIVE (`renameAuthorized=true`). Do not invent cut/copy/paste, Open With / MIME UI, Restore LIVE, Empty Bin, or Explorer product-complete. Recycle and MIME residuals stay OPEN. Product REJECTED.
+
 Honesty addendum 2026-09-02 vs tip after PR #31 (`62372edf9e62`): Settings Power LIVE stays refused. Heritage Superbar / Quick Settings Power remains the catalog leftover (`power.profile.set` / `legacy-direct` / Process/`omarchy-powerprofiles-set`). Distinct from fabric `app.slice`: shell launch is Hyprland `exec_cmd`, compositor documented in `session.slice`. Not a `session-N.scope` leftover. That leftover was unverified on metal after PR #31. Metal FAIL on tip `20484de6` (Not authorized / session-5103; !batteryPresent; amd_pstate EINVAL). QS Power METAL_HEAD OPEN / KEEP OPEN. Settings Power LIVE refused. Do not claim the heritage QS Power panel works on this metal. Do not honesty-gate the heritage panel; do not invent Settings LIVE or a broad polkit grant. Product REJECTED.
 
 Honesty addendum 2026-09-02 vs tip after PR #29 (`aee1d78a8cf1`): opting power into `session_operable=True` without a session-scope or polkit authorization for `org.freedesktop.UPower.PowerProfiles.switch-profile` was a LIVE invent (Settings Power buttons that cannot succeed from `app.slice`). KEEP: `session_operable=False`; Power not in `LIVE_WRITER_ROUTES`; `profileMutationAuthorized=false`; CHANGES UNAVAILABLE honesty names polkit/session. Write plane kept. Operator owns polkit/session-scope. Product REJECTED. METAL_HEAD OPEN.
@@ -53,6 +55,7 @@ Local, `origin`, and metal hold the same commit and the same tree.
 | `files-entry-trash` | Files › Trash | write plane reachable (`entry.trash`, risk `consequential`; SHELL refused at `grant.shell-consequential`; Files Trash controls gated `trashAuthorized=false`, not LIVE) |
 | `files-trash-restore` | none | write plane reachable (`files.trash.restore`, risk `consequential`; SHELL refused at `grant.shell-consequential`; catalog claim=partial; humanRoute planned empty; no Restore UI; Recycle residual stays OPEN) |
 | `files-entry-open` | Files › Open | launch plane reachable (`files.entry.open`, risk `low`; SHELL grant OK; catalog claim=partial; humanRoute visible; Files Open LIVE for regular files; no Open With / MIME UI) |
+| `files-entry-rename` | Files › Rename | write plane reachable (`files.entry.rename`, risk `low`; SHELL grant OK; catalog claim=partial; humanRoute visible; Files Rename LIVE for same-directory names; collision refuse; no cut/copy/paste) |
 
 Each device-scoped writer resolves its opaque resource id by recomputing the provider's own digest over the live device list, so a payload can never name a monitor, keyboard or sink directly.
 
@@ -73,6 +76,7 @@ Each device-scoped writer resolves its opaque resource id by recomputing the pro
 **LIVE**
 
 - `directory.create` — Files › New folder. Risk `low`. SHELL may hold a standing grant.
+- `entry.rename` — Files › Rename. Risk `low`. SHELL may hold a standing grant. Same-directory only. Collision refuses. The scoped listing carries the selected entry identity so a names-only TOCTOU cannot hide inode drift.
 
 **Write plane reachable, not LIVE under SHELL**
 
@@ -90,13 +94,13 @@ The Files banner matches: New folder runs through `files.provider`; Trash write 
 
 The scope function and payload deriver shipped with the v1 widen (not left reverted). `_entry_trash_scope` resolves the entry, derives its parent, and proposes the listing minus that name. The payload deriver reads scoped `currentState.value` and refuses any plan that does not remove exactly one name.
 
-## Why entry.rename is not scoped
+## Why entry.rename is scoped with identity in the listing
 
-Scoping `entry.rename` to its parent directory looks identical to the other three and is wrong. The directory scope derives its revision from the listing, which is names only. Renaming changes a name, so the scope tracks the effect correctly, but it stops seeing anything else about the entry.
+A names-only directory listing is the wrong scope for rename. The listing revision tracks names. Renaming changes a name, so the effect is visible, but an identity drift that leaves the names in place does not move the revision. `test_compare_and_swap_contains_concurrent_execution_and_toctou_drift` requires `files.state-stale` when the target entry's `identity` changes between preflight and execute.
 
-`test_compare_and_swap_contains_concurrent_execution_and_toctou_drift` proves it: it drifts the target entry's `identity` between preflight and execute and requires `files.state-stale`. Against the whole-workspace revision that fires. Against a directory listing it does not, because the names did not move. Scoping rename would silently drop the provider-level TOCTOU check on the exact operation that resolves an entry by id and then moves it.
+The scoped rename plane keeps the v1 directory family and puts `selectedEntry.{entryId,identity}` on the listing document. Resource id is `files.directory.<digest(location,parent,entryId)>` so the session reader can rehydrate that identity from live inventory. Adversarial tests stay workspace-shaped where they already inspect the whole workspace. Lifecycle rename asserts the scoped listing.
 
-Create and trash are safe under this scope because their observable effect *is* a name appearing or disappearing, and an entry that drifted underneath still fails the helper's inode check. Restore write plane is reachable from `.trashinfo` at real preflight; Restore UI stays honest-unavailable. Do not invent Restore LIVE. Rename needs a scope carrying the entry identity as well as the listing. That is a different document shape and a different schema family; it was attempted, caught by that test, and reverted rather than shipped weakened.
+Create and trash stay names-only. Their observable effect is a name appearing or disappearing, and the helper still inode-checks. Restore write plane is reachable from `.trashinfo` at real preflight; Restore UI stays honest-unavailable. Do not invent Restore LIVE.
 ## What still blocks Software Center
 
 Not the executor. The shipped catalog carries `assurance: contract-seed`, and `PackageProvider` deliberately refuses live mutation for an unattested seed. That gate is correct and was left closed. Opening it is a release-attestation decision.

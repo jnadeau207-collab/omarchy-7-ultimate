@@ -35,6 +35,7 @@
     "action": {
       "enum": [
         "directory.create",
+        "entry.rename",
         "entry.trash",
         "trash.restore",
         "entry.open"

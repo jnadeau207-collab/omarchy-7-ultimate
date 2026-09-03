@@ -32,6 +32,9 @@ Item {
   readonly property bool createVisible: createLocationId !== ""
   readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady
   readonly property bool trashAuthorized: false
+  readonly property bool renameAuthorized: true
+  property string renameDraft: ""
+  property var renameRecord: null
 
   property var history: []
   property int historyIndex: -1
@@ -220,6 +223,40 @@ Item {
     return base
   }
 
+  function beginRename(record) {
+    if (!root.renameAuthorized) return
+    if (!host || operationBusy || createLocationId === "") return
+    if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return
+    if (String(record.locationId || "") === "files.location.trash") return
+    root.renameRecord = record
+    root.renameDraft = String(record.title || "")
+    renameDialog.open()
+  }
+
+  function renameEntry(record, name) {
+    if (!root.renameAuthorized) return
+    if (!host || operationBusy || createLocationId === "") return
+    if (!record || String(record.kind || "") !== "entry" || String(record.status || "") === "symlink") return
+    if (String(record.locationId || "") === "files.location.trash") return
+    var refusal = FilesModel.createNameRefusal(name)
+    if (refusal !== "") {
+      root.operationMessage = refusal
+      return
+    }
+    if (String(name) === String(record.title || "")) return
+    root.operationName = String(name)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationKind = "rename"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "files.provider",
+      action: "entry.rename",
+      arguments: { entryId: String(record.id), newName: String(name) },
+      idempotencyKey: "files.entry.rename." + String(record.id) + "." + String(name)
+    })
+    if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
+  }
+
   function trashEntry(record) {
     if (!root.trashAuthorized) return
     if (!host || operationBusy || createLocationId === "") return
@@ -281,8 +318,8 @@ Item {
     }
     if (root.operationStage === "start") {
       var succeeded = String(result.status || "") === "succeeded"
-      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "open" ? "Opened " : "Created "
-      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "open" ? "Opening " : "Creating "
+      var verb = root.operationKind === "trash" ? "Moved " : root.operationKind === "open" ? "Opened " : root.operationKind === "rename" ? "Renamed " : "Created "
+      var gerund = root.operationKind === "trash" ? "Moving " : root.operationKind === "open" ? "Opening " : root.operationKind === "rename" ? "Renaming " : "Creating "
       var tail = root.operationKind === "trash" ? " to the Recycle Bin." : "."
       root.resetOperation(succeeded
         ? verb + root.operationName + tail
@@ -294,6 +331,12 @@ Item {
   function commandActions() {
     var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
     if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
+    if (root.createVisible && root.renameAuthorized) {
+      list.push({
+        key: "rename", label: "Rename", dropdown: false,
+        enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
+      })
+    }
     if (root.createVisible && root.trashAuthorized) {
       list.push({
         key: "delete", label: "Delete", dropdown: false,
@@ -306,6 +349,9 @@ Item {
 
   function organizeMenuItems() {
     var list = [{ key: "new-folder", label: "New folder", enabled: root.createEnabled }]
+    if (root.renameAuthorized) {
+      list.push({ key: "rename", label: "Rename", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
+    }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
@@ -316,6 +362,9 @@ Item {
 
   function contextMenuItems() {
     var list = [{ key: "open", label: "Open", enabled: root.selectedRecord !== null }]
+    if (root.renameAuthorized) {
+      list.push({ key: "rename", label: "Rename", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
+    }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
     }
@@ -326,6 +375,7 @@ Item {
   function invoke(key) {
     if (key === "organize") { organizeMenu.visible ? organizeMenu.close() : organizeMenu.open(); return }
     if (key === "new-folder") { root.createFolder(root.nextFolderName()); return }
+    if (key === "rename") { root.beginRename(root.selectedRecord); return }
     if (key === "delete") { root.trashEntry(root.selectedRecord); return }
     if (key === "properties") { propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
@@ -342,6 +392,7 @@ Item {
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Left) { root.goBack(); event.accepted = true }
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Right) { root.goForward(); event.accepted = true }
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Up) { root.goUp(); event.accepted = true }
+    else if (event.key === Qt.Key_F2) { root.beginRename(root.selectedRecord); event.accepted = true }
     else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }
   }
 
@@ -581,7 +632,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -710,6 +761,90 @@ Item {
 
           Accessible.role: Accessible.MenuItem
           Accessible.name: modelData.label
+        }
+      }
+    }
+  }
+
+  Controls.Popup {
+    id: renameDialog
+    anchors.centerIn: Controls.Overlay.overlay
+    width: Math.min(320, root.width - 40)
+    modal: true
+    padding: 12
+    onOpened: renameField.forceActiveFocus()
+
+    background: Rectangle {
+      color: "#f0f0f0"
+      border.width: 1
+      border.color: "#8b97a3"
+    }
+
+    contentItem: Column {
+      spacing: 8
+      width: renameDialog.availableWidth
+
+      Text {
+        text: "Rename"
+        textFormat: Text.PlainText
+        color: Aero.textPrimary
+        font.family: Aero.fontFamily
+        font.pixelSize: 12
+      }
+
+      Controls.TextField {
+        id: renameField
+        width: parent.width
+        text: root.renameDraft
+        onTextChanged: root.renameDraft = text
+        onAccepted: {
+          renameDialog.close()
+          root.renameEntry(root.renameRecord, root.renameDraft)
+        }
+      }
+
+      Row {
+        anchors.right: parent.right
+        spacing: 6
+
+        Repeater {
+          model: [
+            { key: "ok", label: "OK" },
+            { key: "cancel", label: "Cancel" }
+          ]
+
+          delegate: Rectangle {
+            required property var modelData
+            width: 74
+            height: 23
+            radius: 3
+            border.width: 1
+            border.color: renameHover.hovered ? Aero.hoverSelectedBorder : "#a0a6ac"
+            gradient: Gradient {
+              GradientStop { position: 0; color: renameHover.hovered ? Aero.hoverTop : "#fdfdfd" }
+              GradientStop { position: 1; color: renameHover.hovered ? Aero.hoverBottom : "#e6e8ea" }
+            }
+
+            Text {
+              anchors.centerIn: parent
+              text: modelData.label
+              textFormat: Text.PlainText
+              color: Aero.textPrimary
+              font.family: Aero.fontFamily
+              font.pixelSize: 12
+            }
+
+            HoverHandler { id: renameHover }
+            TapHandler {
+              onSingleTapped: {
+                renameDialog.close()
+                if (modelData.key === "ok") root.renameEntry(root.renameRecord, root.renameDraft)
+              }
+            }
+
+            Accessible.role: Accessible.Button
+            Accessible.name: modelData.label
+          }
         }
       }
     }
