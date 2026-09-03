@@ -1615,11 +1615,21 @@ if "files.entry.delete" not in (parity_explorer.get("capabilityIds") or []):
 if "files.entry.delete" in (native12.get("capabilityIds") or []):
     raise SystemExit("windows-native.12 invents a Permanent Delete task by naming files.entry.delete")
 files_copy = by_id["files.copy"]
-if files_copy.get("provider", {}).get("state") != "present":
-    raise SystemExit(f"files.copy leftover was not retargeted: {files_copy.get('provider')}")
+if files_copy.get("provider", {}).get("state") == "present":
+    raise SystemExit("files.copy invents a second present writer outside the files.provider manifest")
+if files_copy.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"files.copy leftover was not demoted to legacy-direct: {files_copy.get('provider')}")
+if files_copy.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.copy must not claim present")
 named_files_copy = f"{files_copy.get('source', {}).get('file') or ''} {files_copy.get('source', {}).get('symbol') or ''}".lower()
 if "nautilus" in named_files_copy:
     raise SystemExit(f"files.copy still names Nautilus: {files_copy.get('source')}")
+files_manifest = json.loads((root / "default/fabric/omarchy_fabric/providers/files/manifest-v0.json").read_text(encoding="utf-8"))
+manifest_caps = files_manifest.get("capabilities") or []
+if "files.copy" in manifest_caps:
+    raise SystemExit("files.provider manifest invents a second files.copy capability")
+if "files.entry.copy" not in manifest_caps:
+    raise SystemExit("files.provider manifest dropped files.entry.copy")
 if "files.entry.trash" not in by_id:
     raise SystemExit("absent live trash writer invent: files.entry.trash missing from catalog")
 entry_trash = by_id["files.entry.trash"]
