@@ -282,6 +282,7 @@ FILES_XDG_KEYS = {
 FILES_WRITABLE_KEYS = frozenset({"home", "desktop", "documents", "downloads", "pictures"})
 MAX_NAME_LENGTH = 128
 MAX_RELATIVE_DEPTH = 16
+MAX_COPY_ENTRIES = 4096
 
 def files_location_key(location_id: str) -> str:
     prefix = "files.location."
@@ -700,6 +701,98 @@ def apply_files_entry_rename(stdin: Any, stdout: Any) -> int:
         stdout.write("\n")
         return 0
 
+def remove_replica(path: pathlib.Path) -> None:
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        raise ApplyError("apply.failed", "Removing the copied entry reported a failure status.") from error
+    if stat.S_ISLNK(info.st_mode) or stat.S_ISREG(info.st_mode):
+        try:
+            path.unlink()
+        except OSError as error:
+            raise ApplyError("apply.failed", "Removing the copied entry reported a failure status.") from error
+        return
+    if not stat.S_ISDIR(info.st_mode):
+        raise ApplyError("apply.failed", "Removing the copied entry reported a failure status.")
+    try:
+        children = list(path.iterdir())
+    except OSError as error:
+        raise ApplyError("apply.failed", "Removing the copied entry reported a failure status.") from error
+    for child in children:
+        remove_replica(child)
+    try:
+        path.rmdir()
+    except OSError as error:
+        raise ApplyError("apply.failed", "Removing the copied entry reported a failure status.") from error
+
+
+def copy_regular_file(source: pathlib.Path, destination: pathlib.Path) -> None:
+    try:
+        with source.open("rb") as incoming, destination.open("xb") as outgoing:
+            shutil.copyfileobj(incoming, outgoing)
+    except FileExistsError as error:
+        raise ApplyError("apply.exists", "Something already occupies the destination name.") from error
+    except OSError as error:
+        if error.errno == errno.EXDEV:
+            raise ApplyError("apply.failed", "The copy cannot cross devices.") from error
+        raise ApplyError("apply.failed", "Copying the entry reported a failure status.") from error
+
+
+def copy_entry_tree(
+    source: pathlib.Path,
+    destination: pathlib.Path,
+    seen: set[tuple[int, int]],
+    remaining_depth: int,
+    remaining_entries: list[int],
+    created_root: list[bool],
+) -> None:
+    if remaining_depth <= 0:
+        raise ApplyError("payload.out-of-range", "The entry path is too deep.")
+    try:
+        info = source.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be copied.")
+    identity = (info.st_dev, info.st_ino)
+    if identity in seen:
+        raise ApplyError("payload.invalid", "A cyclic directory cannot be copied.")
+    if remaining_entries[0] <= 0:
+        raise ApplyError("payload.out-of-range", "The copy exceeds its entry bound.")
+    remaining_entries[0] -= 1
+    if stat.S_ISREG(info.st_mode):
+        copy_regular_file(source, destination)
+        created_root[0] = True
+        return
+    if not stat.S_ISDIR(info.st_mode):
+        raise ApplyError("payload.invalid", "Only regular files and directories can be copied.")
+    try:
+        destination.mkdir(exist_ok=False)
+    except FileExistsError as error:
+        raise ApplyError("apply.exists", "Something already occupies the destination name.") from error
+    except OSError as error:
+        if error.errno == errno.EXDEV:
+            raise ApplyError("apply.failed", "The copy cannot cross devices.") from error
+        raise ApplyError("apply.failed", "Copying the entry reported a failure status.") from error
+    created_root[0] = True
+    seen.add(identity)
+    try:
+        children = sorted(source.iterdir(), key=lambda child: child.name)
+    except OSError as error:
+        raise ApplyError("apply.failed", "Copying the entry reported a failure status.") from error
+    for child in children:
+        copy_entry_tree(
+            child,
+            destination / child.name,
+            seen,
+            remaining_depth - 1,
+            remaining_entries,
+            created_root,
+        )
+
+
 def apply_files_entry_copy(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = require_files_resource_id(payload)
@@ -722,8 +815,8 @@ def apply_files_entry_copy(stdin: Any, stdout: Any) -> int:
         raise ApplyError("resource.unresolved", "The entry is not present.") from error
     if stat.S_ISLNK(info.st_mode):
         raise ApplyError("payload.invalid", "Symlink entries cannot be copied.")
-    if not stat.S_ISREG(info.st_mode):
-        raise ApplyError("payload.invalid", "Only regular files can be copied.")
+    if not stat.S_ISREG(info.st_mode) and not stat.S_ISDIR(info.st_mode):
+        raise ApplyError("payload.invalid", "Only regular files and directories can be copied.")
     dest_payload = {
         "locationId": dest_location,
         "parentRelativePath": dest_parent,
@@ -746,12 +839,16 @@ def apply_files_entry_copy(stdin: Any, stdout: Any) -> int:
     if not dest_parent_path.is_dir():
         raise ApplyError("resource.unresolved", "The destination parent is not a directory.")
     destination = dest_parent_path / dest_name
+    if stat.S_ISDIR(info.st_mode):
+        try:
+            destination.relative_to(source)
+        except ValueError:
+            pass
+        else:
+            raise ApplyError("payload.invalid", "A directory cannot be copied into itself.")
     if "desired" in payload:
         if destination.exists() and source.exists():
-            try:
-                destination.unlink()
-            except OSError as error:
-                raise ApplyError("apply.failed", "Removing the copied entry reported a failure status.") from error
+            remove_replica(destination)
             json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "copied": False}, stdout)
             stdout.write("\n")
             return 0
@@ -760,13 +857,23 @@ def apply_files_entry_copy(stdin: Any, stdout: Any) -> int:
         return 0
     if destination.exists():
         raise ApplyError("apply.exists", "Something already occupies the destination name.")
+    created_root = [False]
     try:
-        with source.open("rb") as incoming, destination.open("xb") as outgoing:
-            shutil.copyfileobj(incoming, outgoing)
-    except FileExistsError as error:
-        raise ApplyError("apply.exists", "Something already occupies the destination name.") from error
-    except OSError as error:
-        raise ApplyError("apply.failed", "Copying the entry reported a failure status.") from error
+        copy_entry_tree(
+            source,
+            destination,
+            set(),
+            MAX_RELATIVE_DEPTH - len(dest_segments),
+            [MAX_COPY_ENTRIES],
+            created_root,
+        )
+    except ApplyError:
+        if created_root[0] and destination.exists():
+            try:
+                remove_replica(destination)
+            except ApplyError:
+                pass
+        raise
     json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "destinationName": dest_name, "copied": True}, stdout)
     stdout.write("\n")
     return 0

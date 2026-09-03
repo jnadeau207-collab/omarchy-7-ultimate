@@ -79,6 +79,25 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
         await self.exercise(
+            "entry.copy",
+            {
+                "entryId": "files.entry.project",
+                "destinationLocationId": "files.location.desktop",
+                "destinationParentRelativePath": "",
+                "destinationName": "Project-copy",
+            },
+            lambda state: self.assertEqual(
+                (
+                    state["locationId"],
+                    state["parentRelativePath"],
+                    "Project" in state["names"],
+                    "Project-copy" in state["names"],
+                    state["selectedEntry"]["entryId"],
+                ),
+                ("files.location.desktop", "", True, True, "files.entry.project"),
+            ),
+        )
+        await self.exercise(
             "entry.move",
             {
                 "entryId": "files.entry.readme",
@@ -211,18 +230,18 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 principal(),
             )
         self.assertEqual(copy_symlink.exception.code, "files.precondition-failed")
-        with self.assertRaises(FabricError) as copy_directory:
+        with self.assertRaises(FabricError) as copy_into_self:
             await provider.preflight(
                 "entry.copy",
                 {
                     "entryId": "files.entry.project",
                     "destinationLocationId": "files.location.desktop",
-                    "destinationParentRelativePath": "",
-                    "destinationName": "Project-copy",
+                    "destinationParentRelativePath": "Project",
+                    "destinationName": "nested",
                 },
                 principal(),
             )
-        self.assertEqual(copy_directory.exception.code, "files.precondition-failed")
+        self.assertEqual(copy_into_self.exception.code, "files.precondition-failed")
         with self.assertRaises(FabricError) as copy_collision:
             await provider.preflight(
                 "entry.copy",
