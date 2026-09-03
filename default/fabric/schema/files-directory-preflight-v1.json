@@ -37,6 +37,7 @@
         "directory.create",
         "entry.rename",
         "entry.copy",
+        "entry.move",
         "entry.trash",
         "trash.restore",
         "entry.open"
@@ -48,6 +49,7 @@
         "files.directory.create",
         "files.entry.rename",
         "files.entry.copy",
+        "files.entry.move",
         "files.entry.trash",
         "files.trash.restore",
         "files.entry.open",

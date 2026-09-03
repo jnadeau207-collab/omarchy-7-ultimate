@@ -202,7 +202,17 @@ grep -Fq 'File contents are never read' "$ROOT/shell/apps/ultimate-files/FilesAp
 grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live New folder writer"
 grep -Fq 'Rename runs through files.provider entry.rename' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Rename writer"
 grep -Fq 'Copy and Paste run through files.provider entry.copy' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Copy writer"
-grep -Fq 'The OS clipboard and cut/move stay unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps OS clipboard and cut/move unavailable"
+grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the cut/move write plane as not shell-authorizable"
+grep -Fq 'The OS clipboard and folder copy stay unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps OS clipboard and folder copy unavailable"
+grep -Fq 'readonly property bool cutAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files pins cutAuthorized false; Cut is not LIVE under the shell principal"
+if grep -Eq 'cutAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files must not authorize shell consequential move"
+fi
+grep -Fq 'files.entry.move' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names files.entry.move"
+grep -Fq 'cutAuthorized=false' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Cut UI gated cutAuthorized=false"
+grep -Fq '`files.entry.move` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names the entry.move write plane"
 grep -Fq 'Trash write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner states Trash is not shell-authorizable"
 grep -Fq 'CHANGES UNAVAILABLE' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names CHANGES UNAVAILABLE for Trash"
 grep -Fq 'Restore write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the Restore write plane as not shell-authorizable"

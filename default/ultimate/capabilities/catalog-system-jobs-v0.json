@@ -5611,6 +5611,99 @@
       }
     },
     {
+      "id": "files.entry.move",
+      "version": "v0",
+      "provider": {
+        "id": "files.provider",
+        "version": "v0",
+        "state": "present"
+      },
+      "kind": "writer",
+      "effects": [
+        "mutating"
+      ],
+      "schemas": {
+        "input": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
+        },
+        "state": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/capabilityState"
+        },
+        "result": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationResult"
+        },
+        "error": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
+        },
+        "preflight": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
+        },
+        "progress": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+        },
+        "undo": {
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+        }
+      },
+      "availability": {
+        "human": "partial",
+        "agent": "unavailable",
+        "claim": "partial"
+      },
+      "resourceScopes": [
+        "files.resource"
+      ],
+      "consent": {
+        "mode": "high-risk",
+        "policy": "Bind approval to normalized arguments, state revision, consequences, and recovery before execution."
+      },
+      "idempotency": {
+        "mode": "idempotent",
+        "keyRequired": false
+      },
+      "concurrency": {
+        "mode": "resource-serialized",
+        "scope": "files.resource"
+      },
+      "cancellation": {
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the state mutation begins."
+      },
+      "recovery": {
+        "mode": "undo",
+        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
+        "stateFingerprintRequired": true
+      },
+      "redaction": {
+        "fields": [
+          "secret",
+          "credential",
+          "content"
+        ],
+        "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
+      },
+      "humanRoute": {
+        "status": "planned",
+        "surface": "Files",
+        "label": "Cut and paste an item",
+        "path": ""
+      },
+      "agentCenterLabel": "Cut and paste an item",
+      "proofIds": {
+        "acceptance": [
+          "proof.capability.files-entry-move.tree-audit"
+        ],
+        "parity": [
+          "proof.parity.tree-audit"
+        ]
+      },
+      "source": {
+        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
+        "symbol": "apply_files_entry_move",
+        "brokerVerb": null
+      }
+    },
+    {
       "id": "files.copy",
       "version": "v0",
       "provider": {

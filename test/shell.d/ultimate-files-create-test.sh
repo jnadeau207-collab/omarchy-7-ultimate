@@ -111,14 +111,24 @@ grep -Fq 'key: "copy", label: "Copy"' "$application" \
 grep -Fq 'key: "paste", label: "Paste"' "$application" \
   || fail "Paste stays a gated command-bar control"
 if grep -Eq 'key: "cut"' "$application"; then
-  fail "Files invents cut/move"
+  fail "Files invents LIVE Cut"
+fi
+if grep -Eq 'action: "entry.move"' "$application"; then
+  fail "Files invents LIVE cut/move under SHELL"
 fi
 if grep -Eq 'wl-copy|wl-paste|Qt\.application\.clipboard' "$application"; then
   fail "Files invents an OS clipboard product"
 fi
-grep -Fq 'The OS clipboard and cut/move stay unavailable' "$application" \
+grep -Fq 'readonly property bool cutAuthorized: false' "$application" \
+  || fail "cutAuthorized stays false; shell principal cannot authorize move"
+if grep -Eq 'cutAuthorized:\s*true' "$application"; then
+  fail "Files invents cutAuthorized=true"
+fi
+grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$application" \
+  || fail "Files names the cut/move write plane as not shell-authorizable"
+grep -Fq 'The OS clipboard and folder copy stay unavailable' "$application" \
   || fail "Files names the OS clipboard leftover instead of inventing one"
-pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing cut or an OS clipboard"
+pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing LIVE Cut or an OS clipboard"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')
