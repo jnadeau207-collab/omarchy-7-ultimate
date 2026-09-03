@@ -241,10 +241,12 @@ grep -Fq 'pcall' "$ROOT/default/hypr/desktop-windows.lua" || fail "plugin load m
 first_monitors=$(grep -n '^require("hypr.monitors")' "$ROOT/config/hypr/hyprland.lua" | head -1 | cut -d: -f1)
 omarchy_line=$(grep -n '^require("default.hypr.omarchy")' "$ROOT/config/hypr/hyprland.lua" | head -1 | cut -d: -f1)
 (( first_monitors < omarchy_line )) || fail "hyprland.lua must pin monitors before Desktop Mode plugins load"
-grep -Fq 'active_border = chrome_hex_rgb(chrome, "borderActiveHex")' "$ROOT/default/hypr/desktop-windows.lua" ||
+grep -Fq 'active_border = chrome_aero_alpha_rgba(chrome, 58)' "$ROOT/default/hypr/desktop-windows.lua" ||
   fail "desktop mode reads the active border from the resolved chrome adapter"
-grep -Fq 'inactive_border = chrome_hex_rgb(chrome, "borderInactiveHex")' "$ROOT/default/hypr/desktop-windows.lua" ||
+grep -Fq 'inactive_border = chrome_aero_alpha_rgba(chrome, 34)' "$ROOT/default/hypr/desktop-windows.lua" ||
   fail "desktop mode reads the inactive border from the resolved chrome adapter"
+grep -Fq 'border_active = chrome_hex_rgb(chrome, "borderActiveHex")' "$ROOT/default/hypr/desktop-windows.lua" ||
+  fail "desktop mode reads group borders from the resolved chrome adapter"
 if grep -nE '(active|inactive)_border\s*=\s*"?rgba?\(' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "desktop mode must not hard-code a border colour beside the chrome adapter"
 fi

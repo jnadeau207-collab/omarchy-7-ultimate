@@ -601,8 +601,8 @@ grep -Fq 'namespace = "omarchy-start"' "$ROOT/default/hypr/desktop-windows.lua" 
 if grep -Fq 'bg_color = "rgb(3d3d3d)"' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "hyprbars min/max must not be charcoal on a charcoal bar"
 fi
-grep -Fq '.round = 2' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp" \
-  || fail "hyprbars caption buttons are rectangles, not traffic-light circles"
+grep -Fq '.round = aero ? 0 : 2' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp" \
+  || fail "hyprbars caption buttons are rectangles in Aero glass (round 0), not traffic-light circles"
 if grep -Eq '\.round[[:space:]]*=[[:space:]]*scaledButtonSize' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp"; then
   fail "hyprbars must not round caption buttons to circles"
 fi

@@ -403,9 +403,10 @@ if bash "$ROOT/shell/services/capture-window-preview.sh" 0 0 1 1 /tmp/peek.png 2
   fail "preview helper rejects geometry that is too small"
 fi
 pass "window preview helper rejects invalid geometry"
-grep -Fq 'badgeCount' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml" \
-  || fail "Superbar task buttons show notification badges"
-pass "Superbar has jump lists, structured previews, and badges"
+if grep -Fq 'badgeCount' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml"; then
+  fail "Windows 7 puts no count badges on taskbar buttons"
+fi
+pass "Superbar has jump lists and structured previews, without count badges"
 
 run_node_test <<'JS'
 const JumpList = requireFromRoot('shell/services/JumpList.js')
