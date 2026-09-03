@@ -206,7 +206,7 @@ const unloadMatch = shellSource.match(/function unloadPluginServices\(\) \{[\s\S
 check(!!unloadMatch, 'unloadPluginServices is defined')
 check(!!unloadMatch && /serviceKeepLoaded/.test(unloadMatch[0]), 'unloadPluginServices honors keepLoaded')
 check(
-  /function _syncServices\(\) \{[\s\S]*Drop services for plugins that have been disabled/.test(shellSource),
+  /function _syncServices\(\) \{[\s\S]*?for \(var existingId in _services\)[\s\S]*?inst\.destroy\(\)/.test(shellSource),
   '_syncServices still drops disabled or removed services'
 )
 
