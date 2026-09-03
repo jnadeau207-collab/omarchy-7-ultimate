@@ -231,6 +231,10 @@ grep -Fq 'files.entry.delete' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HAN
 grep -Fq 'deleteAuthorized=false' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Delete UI gated deleteAuthorized=false"
 grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #60"
+grep -Fq 'OS clipboard residual OPEN after PR #64' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #64"
+grep -Fq 'There is no Files `wl-copy`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps Files OS clipboard bridge uninvented"
 grep -Fq 'folder copy CLOSED' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS names folder copy CLOSED"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
@@ -298,6 +302,8 @@ grep -Fq 'Folder copy CLOSED via `files.entry.copy` directories' "$ROOT/docs/fil
   || fail "files-defaults-provider names folder copy CLOSED"
 grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps OS clipboard residual OPEN after PR #60"
+grep -Fq 'OS clipboard residual OPEN after PR #64' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider keeps OS clipboard residual OPEN after PR #64"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps permanent delete not shell-authorizable"
 grep -Fq 'Recycle / Empty Bin LIVE residual OPEN after PR #63' "$ROOT/docs/files-defaults-provider.md" \
