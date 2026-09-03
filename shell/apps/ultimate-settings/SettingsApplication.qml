@@ -88,6 +88,41 @@ Item {
     return "this application"
   }
 
+  readonly property var mailerResource: firstMailerResource()
+  readonly property var mailerOptions: mailerResource ? SettingsModel.browserCandidates(mailerResource, queryState.records) : []
+  readonly property string activeMailerId: mailerResource ? String(mailerResource.defaultAppId || "") : ""
+  property string operationMailerId: ""
+
+  function firstMailerResource() {
+    if (!currentRoute || currentRoute.id !== "settings.apps.overview") return null
+    var record = SettingsModel.mailerAssociation(queryState.records)
+    return record && record.writable ? record : null
+  }
+
+  function applyDefaultMailer(appId) {
+    if (!host || operationBusy) return
+    var record = firstMailerResource()
+    if (!record || record.candidateAppIds.indexOf(appId) < 0) return
+    root.operationKind = "mailer"
+    root.operationMailerId = String(appId)
+    root.operationMessage = ""
+    root.operationStage = "preflight"
+    root.operationRequestId = host.requestFabric("operation.preflight", {
+      provider: "defaults.provider",
+      action: "protocol.set",
+      arguments: { scheme: record.associationKey, appId: root.operationMailerId },
+      idempotencyKey: "settings.default-mailer." + root.operationMailerId + "." + Date.now()
+    })
+    if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
+  }
+
+  function mailerLabel(appId) {
+    for (var i = 0; i < mailerOptions.length; i++) {
+      if (mailerOptions[i].id === appId) return mailerOptions[i].label
+    }
+    return "this application"
+  }
+
   function mimeRowFor(key) {
     for (var i = 0; i < mimeRows.length; i++) {
       if (mimeRows[i].key === key) return mimeRows[i]
@@ -317,6 +352,8 @@ Item {
             ? "Keyboard layout set to " + root.keyboardLayouts[root.operationLayoutIndex] + "."
             : root.operationKind === "browser"
               ? "Default browser set to " + root.browserLabel(root.operationBrowserId) + "."
+            : root.operationKind === "mailer"
+              ? "Default email application set to " + root.mailerLabel(root.operationMailerId) + "."
             : root.operationKind === "mime"
               ? "Default application for " + root.operationMimeKey + " set to " + root.mimeLabel(root.operationMimeKey, root.operationMimeAppId) + "."
             : root.operationKind === "network"
@@ -330,6 +367,8 @@ Item {
             ? "The keyboard layout change ended as " + String(result.status || "unknown") + "."
             : root.operationKind === "browser"
               ? "The default browser change ended as " + String(result.status || "unknown") + "."
+            : root.operationKind === "mailer"
+              ? "The default email change ended as " + String(result.status || "unknown") + "."
             : root.operationKind === "mime"
               ? "The default application change ended as " + String(result.status || "unknown") + "."
             : root.operationKind === "network"
@@ -926,6 +965,78 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Only applications that declare they handle web links are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.apps.overview" && root.mailerOptions.length > 1
+              Layout.fillWidth: true
+              implicitHeight: mailerColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: Semantics.text(root.productProfile, "Default email application")
+
+              ColumnLayout {
+                id: mailerColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    textFormat: Text.PlainText
+                    text: Semantics.text(root.productProfile, "Default email application")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: root.operationBusy && root.operationKind === "mailer" ? "APPLYING" : "LIVE CONTROL"
+                    tone: root.operationBusy && root.operationKind === "mailer" ? "info" : "success"
+                    semanticProfile: root.productProfile
+                  }
+                }
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Repeater {
+                    model: root.mailerOptions
+                    delegate: Ui.Button {
+                      required property var modelData
+                      text: modelData.label
+                      focusable: true
+                      bordered: true
+                      enabled: !root.operationBusy && modelData.id !== root.activeMailerId
+                      accessibleDescription: Semantics.text(root.productProfile, "Set the default email application through") + " defaults.provider protocol.set"
+                      onClicked: root.applyDefaultMailer(modelData.id)
+                    }
+                  }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: root.operationMessage !== "" && root.operationKind === "mailer"
+                    ? root.operationMessage
+                    : Semantics.text(root.productProfile,
+                        "Only applications that declare they handle email links are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall

@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings."
+    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set for the https scheme. The default email application applies through defaults.provider protocol.set for the mailto scheme. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings."
   },
   {
     routeId: "settings.accessibility.overview",
@@ -144,7 +144,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, and Apps default browser are LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, and Apps default email are LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function isObject(value) {
@@ -618,6 +618,14 @@ function browserAssociation(records) {
   if (!Array.isArray(records)) return null
   for (var i = 0; i < records.length; i++) {
     if (records[i].associationKind === "protocol" && records[i].associationKey === "https") return records[i]
+  }
+  return null
+}
+
+function mailerAssociation(records) {
+  if (!Array.isArray(records)) return null
+  for (var i = 0; i < records.length; i++) {
+    if (records[i].associationKind === "protocol" && records[i].associationKey === "mailto") return records[i]
   }
   return null
 }
@@ -1242,6 +1250,7 @@ if (typeof module !== "undefined") {
     POWER_PROFILES: POWER_PROFILES,
     BROWSER_SCHEMES: BROWSER_SCHEMES,
     browserAssociation: browserAssociation,
+    mailerAssociation: mailerAssociation,
     browserCandidates: browserCandidates,
     mimeAssociations: mimeAssociations,
     normalizeStartup: normalizeStartup,

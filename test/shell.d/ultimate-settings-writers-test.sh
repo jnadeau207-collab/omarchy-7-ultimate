@@ -138,6 +138,8 @@ grep -Fq 'if (!supported) return' "$application" ||
   fail "Settings refuses a MIME application the row does not list as a candidate"
 grep -Eq 'currentRoute\.id !== "settings\.apps\.overview"\) return$' "$application" ||
   fail "Settings offers MIME defaults only on the Apps overview route"
+grep -Fq 'id: mailerColumn' "$application" || fail "Settings shows a Default email application card"
+grep -Fq 'function applyDefaultMailer(appId)' "$application" || fail "Settings wires the mailer writer"
 grep -Fq 'id: startupColumn' "$application" || fail "Settings shows a Startup applications card"
 grep -Fq 'readonly property var startupRows: SettingsModel.startupEntries(queryState.records)' "$application" \
   || fail "Settings reads startup rows through the typed model"
@@ -218,6 +220,10 @@ assertDeepEqual(Model.browserCandidates(browserAssoc, []), [], 'no records means
 
 const mimeAssoc = Model.normalizeAssociation({ id: 'defaults.association.b', kind: 'mime', key: 'text/html', status: 'configured', defaultAppId: null, writable: true, candidateAppIds: [] }, 0)
 assertEqual(Model.browserAssociation([mimeAssoc]), null, 'a MIME association is not the browser row')
+const mailtoAssoc = Model.normalizeAssociation({ id: 'defaults.association.g', kind: 'protocol', key: 'mailto', status: 'configured', defaultAppId: 'defaults.app.x', writable: true, candidateAppIds: ['defaults.app.x'] }, 6)
+assertEqual(Model.mailerAssociation(browserRecords.concat([mimeAssoc, mailtoAssoc])), mailtoAssoc, 'the mailto protocol association is the mailer row')
+assertEqual(Model.mailerAssociation(browserRecords), null, 'no mailer row without a mailto association')
+assertEqual(Model.mailerAssociation('nope'), null, 'non-array records offer no mailer row')
 assertEqual(Model.normalizeAssociation({ id: 'defaults.association.c', kind: 'protocol', key: 'https', status: 'configured', defaultAppId: null, writable: false, candidateAppIds: [] }, 0).writable, false, 'a read-only association reports itself read-only')
 
 const appsQuery = Model.queryForRoute('settings.apps.overview')
