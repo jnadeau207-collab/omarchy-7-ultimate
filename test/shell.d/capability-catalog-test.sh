@@ -32,6 +32,11 @@ fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
 [[ $valid_output == *"137 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+grep -Fq 'The checked inventory contains 137 capability descriptors.' "$ROOT/docs/capability-graph.md" \
+  || fail "capability-graph.md locks the same 137 capability count"
+if grep -Fq 'contains 129 capability descriptors' "$ROOT/docs/capability-graph.md"; then
+  fail "capability-graph.md still locks the stale 129 capability count"
+fi
 [[ $valid_output == *"39 writers: 21 broker, 18 legacy"* ]] || fail "capability checker reports the exact WindowService writer inventory" "$valid_output"
 [[ $valid_output == *"window IPC 40 paths (36 direct legacy)"* ]] || fail "capability checker reports every window IPC route" "$valid_output"
 [[ $valid_output == *"42 parity jobs; 40 Windows-native tasks"* ]] || fail "capability checker reports both complete job sources" "$valid_output"
@@ -1615,11 +1620,21 @@ if "files.entry.delete" not in (parity_explorer.get("capabilityIds") or []):
 if "files.entry.delete" in (native12.get("capabilityIds") or []):
     raise SystemExit("windows-native.12 invents a Permanent Delete task by naming files.entry.delete")
 files_copy = by_id["files.copy"]
-if files_copy.get("provider", {}).get("state") != "present":
-    raise SystemExit(f"files.copy leftover was not retargeted: {files_copy.get('provider')}")
+if files_copy.get("provider", {}).get("state") == "present":
+    raise SystemExit("files.copy invents a second present writer outside the files.provider manifest")
+if files_copy.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"files.copy leftover was not demoted to legacy-direct: {files_copy.get('provider')}")
+if files_copy.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.copy must not claim present")
 named_files_copy = f"{files_copy.get('source', {}).get('file') or ''} {files_copy.get('source', {}).get('symbol') or ''}".lower()
 if "nautilus" in named_files_copy:
     raise SystemExit(f"files.copy still names Nautilus: {files_copy.get('source')}")
+files_manifest = json.loads((root / "default/fabric/omarchy_fabric/providers/files/manifest-v0.json").read_text(encoding="utf-8"))
+manifest_caps = files_manifest.get("capabilities") or []
+if "files.copy" in manifest_caps:
+    raise SystemExit("files.provider manifest invents a second files.copy capability")
+if "files.entry.copy" not in manifest_caps:
+    raise SystemExit("files.provider manifest dropped files.entry.copy")
 if "files.entry.trash" not in by_id:
     raise SystemExit("absent live trash writer invent: files.entry.trash missing from catalog")
 entry_trash = by_id["files.entry.trash"]
@@ -1713,6 +1728,10 @@ if 'action: "trash.restore"' in files_app:
 desktop_status, desktop_notes = parity_notes("Desktop (icons, wallpaper, context menu, Recycle)")
 if desktop_status == "present":
     raise SystemExit("PARITY Recycle row was flipped to present")
+if "offers Trash" in desktop_notes:
+    raise SystemExit("PARITY Recycle row still says offers Trash")
+if "trashAuthorized=false" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row must gate Delete/Trash at trashAuthorized=false")
 if "files.trash.restore" not in desktop_notes:
     raise SystemExit("PARITY Recycle row does not name files.trash.restore")
 if "Restore UI stays honest-unavailable" not in desktop_notes:
@@ -1758,6 +1777,19 @@ if "availability.claim=missing" not in writers_handoff:
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")
+if "Trash applies" in explorer_notes:
+    raise SystemExit("PARITY Explorer row still says Trash applies")
+if "trashAuthorized=false" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row must gate Delete/Trash at trashAuthorized=false")
+context_status, context_notes = parity_notes("Context menus")
+if context_status == "present":
+    raise SystemExit("PARITY Context menus row was flipped to present")
+if "command-bar Delete exists on writable location routes" in context_notes:
+    raise SystemExit("PARITY Context menus row still invents command-bar Delete as present")
+if "trashAuthorized=false" not in context_notes:
+    raise SystemExit("PARITY Context menus row must gate Delete/Trash at trashAuthorized=false")
+if "write plane reachable" not in context_notes or "not shell-authorizable" not in context_notes:
+    raise SystemExit("PARITY Context menus row must name the trash write plane as reachable but not shell-authorizable")
 if "files.entry.open" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name files.entry.open")
 if "files.entry.rename" not in explorer_notes:

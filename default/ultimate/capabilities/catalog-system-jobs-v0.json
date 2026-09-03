@@ -5802,7 +5802,7 @@
       "provider": {
         "id": "files.provider",
         "version": "v0",
-        "state": "present"
+        "state": "legacy-direct"
       },
       "kind": "writer",
       "effects": [

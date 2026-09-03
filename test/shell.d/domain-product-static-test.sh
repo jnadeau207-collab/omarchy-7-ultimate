@@ -239,6 +239,16 @@ grep -Fq '`files.entry.delete` is write-plane reachable' "$ROOT/docs/files-defau
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
 grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins trashAuthorized false; Trash is not LIVE under the shell principal"
+grep -Fq 'if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files invoke delete refuses while trashAuthorized is false"
+grep -Fq 'else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files Key_Delete refuses while trashAuthorized is false"
+if grep -Fq 'if (key === "delete") { root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files invoke delete must not accept Delete while unauthorized"
+fi
+if grep -Fq 'else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files Key_Delete must not accept Delete while unauthorized"
+fi
 grep -Fq 'readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files keeps New folder createEnabled LIVE"
 grep -Fq 'readonly property bool renameAuthorized: true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
@@ -260,6 +270,16 @@ grep -Fq 'files.entry.copy' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDO
 grep -Fq 'copyAuthorized=true' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Copy UI gated copyAuthorized=true"
 grep -Fq '`files.entry.copy` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the entry.copy write plane"
+grep -Fq 'Copy maps `EXDEV` errno from `mkdir`/`open` only' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names copy EXDEV as errno-only"
+if grep -Fq 'unsafe `EXDEV`' "$ROOT/docs/files-defaults-provider.md"; then
+  fail "files-defaults-provider still claims copy refuses unsafe EXDEV"
+fi
+if grep -Fq 'unsafe `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md"; then
+  fail "HANDOFF_WRITERS still claims copy refuses unsafe EXDEV"
+fi
+grep -Fq 'cross-device `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps move cross-device EXDEV"
 grep -Fq 'Files Copy and Paste use that plane with in-app staging' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names in-app staging instead of an OS clipboard"
 grep -Fq 'Folder copy CLOSED via `files.entry.copy` directories' "$ROOT/docs/files-defaults-provider.md" \
@@ -359,11 +379,26 @@ def table_row(md, job):
 
 desktop = table_row(parity, "Desktop (icons")
 context = table_row(parity, "Context menus")
+explorer = table_row(parity, "Explorer / Computer")
 for label, row in (("Desktop", desktop), ("Context menus", context)):
     if re.search(r"remain Phase 6|stay Phase 6|Phase 6", row):
         raise SystemExit(f"{label} row still invents a Phase 6 fence")
     if not re.search(r"unavailable|not product-complete", row, re.I):
         raise SystemExit(f"{label} row must name unavailable / not product-complete")
+if "command-bar Delete exists on writable location routes" in context:
+    raise SystemExit("Context menus row still invents command-bar Delete as present")
+if "trashAuthorized=false" not in context:
+    raise SystemExit("Context menus row must gate Delete/Trash at trashAuthorized=false")
+if "write plane reachable" not in context or "not shell-authorizable" not in context:
+    raise SystemExit("Context menus row must name the trash write plane as reachable but not shell-authorizable")
+if "offers Trash" in desktop:
+    raise SystemExit("Desktop row still says offers Trash")
+if "trashAuthorized=false" not in desktop:
+    raise SystemExit("Desktop row must gate Delete/Trash at trashAuthorized=false")
+if "Trash applies" in explorer:
+    raise SystemExit("Explorer row still says Trash applies")
+if "trashAuthorized=false" not in explorer:
+    raise SystemExit("Explorer row must gate Delete/Trash at trashAuthorized=false")
 if "honest-unavailable" not in desktop:
     raise SystemExit("Desktop row dropped Restore honest-unavailable")
 if "files.trash.manage" not in desktop:
