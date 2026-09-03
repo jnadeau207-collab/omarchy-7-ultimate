@@ -270,6 +270,16 @@ grep -Fq 'files.entry.copy' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDO
 grep -Fq 'copyAuthorized=true' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Copy UI gated copyAuthorized=true"
 grep -Fq '`files.entry.copy` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the entry.copy write plane"
+grep -Fq 'Copy maps `EXDEV` errno from `mkdir`/`open` only' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names copy EXDEV as errno-only"
+if grep -Fq 'unsafe `EXDEV`' "$ROOT/docs/files-defaults-provider.md"; then
+  fail "files-defaults-provider still claims copy refuses unsafe EXDEV"
+fi
+if grep -Fq 'unsafe `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md"; then
+  fail "HANDOFF_WRITERS still claims copy refuses unsafe EXDEV"
+fi
+grep -Fq 'cross-device `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps move cross-device EXDEV"
 grep -Fq 'Files Copy and Paste use that plane with in-app staging' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names in-app staging instead of an OS clipboard"
 grep -Fq 'Folder copy CLOSED via `files.entry.copy` directories' "$ROOT/docs/files-defaults-provider.md" \

@@ -154,6 +154,16 @@ grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/HANDOFF_WRITERS_2026-0
   || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #60"
 grep -Fq 'Folder copy CLOSED via `files.entry.copy` directories' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names folder copy CLOSED"
+grep -Fq 'Copy maps `EXDEV` errno from `mkdir`/`open` only' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names copy EXDEV as errno-only"
+if grep -Fq 'unsafe `EXDEV`' "$ROOT/docs/files-defaults-provider.md"; then
+  fail "files-defaults-provider still claims copy refuses unsafe EXDEV"
+fi
+if grep -Fq 'unsafe `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md"; then
+  fail "HANDOFF_WRITERS still claims copy refuses unsafe EXDEV"
+fi
+grep -Fq 'cross-device `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps move cross-device EXDEV"
 grep -Fq 'Recycle / Empty Bin / `files.trash.manage` residual OPEN' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps Recycle residual OPEN"
 pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing LIVE Cut or an OS clipboard"
