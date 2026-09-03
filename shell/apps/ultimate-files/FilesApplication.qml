@@ -261,9 +261,10 @@ Item {
   }
 
   function copyableRecord(record) {
+    var kind = String(record.entryKind || "")
     return record
       && String(record.kind || "") === "entry"
-      && String(record.entryKind || "") === "file"
+      && (kind === "file" || kind === "directory")
       && String(record.status || "") !== "symlink"
       && String(record.locationId || "") !== "files.location.trash"
   }
@@ -711,7 +712,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy with in-app staging. The cut/move write plane exists but is not shell-authorizable. The OS clipboard and folder copy stay unavailable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy with in-app staging. The cut/move write plane exists but is not shell-authorizable. The OS clipboard stays unavailable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. Restore UI, empty Recycle Bin, permanent delete, and files.trash.manage remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))

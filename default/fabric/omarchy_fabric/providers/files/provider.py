@@ -1341,6 +1341,9 @@ def _entry_copy_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], a
     location_id = dest_location["id"]
     parent = arguments["destinationParentRelativePath"]
     dest_name = arguments["destinationName"]
+    dest_relative = dest_name if not parent else f"{parent}/{dest_name}"
+    if _copy_destination_inside_source(selected, location_id, dest_relative):
+        raise _precondition("A directory cannot be copied into itself.", selected["id"])
     listing = None
     if backend is not None and hasattr(backend, "directory_listing"):
         listing = backend.directory_listing(location_id, parent)
@@ -1369,6 +1372,15 @@ def _entry_copy_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], a
 
 def _source_parent(relative: str) -> str:
     return relative.rsplit("/", 1)[0] if "/" in relative else ""
+
+
+def _copy_destination_inside_source(selected: Mapping[str, Any], dest_location_id: str, dest_relative: str) -> bool:
+    if dest_location_id != selected["locationId"]:
+        return False
+    source = selected["relativePath"]
+    if dest_relative == source:
+        return True
+    return selected["kind"] == "directory" and dest_relative.startswith(f"{source}/")
 
 
 def _entry_move_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
@@ -1547,8 +1559,8 @@ def _copy_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dic
     source_location = _location(state, selected["locationId"], writable=True)
     if source_location["kind"] == "trash":
         raise _precondition("Trash entries cannot be copied.", selected["id"])
-    if selected["kind"] != "file":
-        raise _precondition("The selected entry is not a regular file.", selected["id"])
+    if selected["kind"] not in {"file", "directory"}:
+        raise _precondition("The selected entry is not a regular file or directory.", selected["id"])
     dest_location = _location(state, arguments["destinationLocationId"], writable=True)
     if dest_location["kind"] == "trash":
         raise _precondition("Trash is not a copy destination.", dest_location["id"])
@@ -1564,6 +1576,8 @@ def _copy_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dic
         parent_identity = parent["identity"]
     dest_name = arguments["destinationName"]
     dest_relative = dest_name if not parent_path else f"{parent_path}/{dest_name}"
+    if _copy_destination_inside_source(selected, dest_location["id"], dest_relative):
+        raise _precondition("A directory cannot be copied into itself.", selected["id"])
     if any(entry["locationId"] == dest_location["id"] and entry["relativePath"] == dest_relative for entry in state["entries"]):
         raise _precondition("An entry already exists at the copy destination.", dest_relative)
     entry_id = stable_resource_id(DOMAIN, "entry", f"copied\0{dest_location['id']}\0{parent_identity}\0{dest_relative}\0{selected['identity']}")
@@ -1573,10 +1587,10 @@ def _copy_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dic
         "parentId": parent_id,
         "name": dest_name,
         "relativePath": dest_relative,
-        "kind": "file",
-        "sizeBytes": selected["sizeBytes"],
+        "kind": selected["kind"],
+        "sizeBytes": selected["sizeBytes"] if selected["kind"] == "file" else None,
         "modifiedMs": selected["modifiedMs"],
-        "mimeType": selected["mimeType"],
+        "mimeType": selected["mimeType"] if selected["kind"] == "file" else None,
         "hidden": dest_name.startswith("."),
         "writable": True,
         "identity": state_revision({"copied": selected["id"], "parent": parent_identity, "relative": dest_relative}),

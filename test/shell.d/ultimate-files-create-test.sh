@@ -126,8 +126,10 @@ if grep -Eq 'cutAuthorized:\s*true' "$application"; then
 fi
 grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$application" \
   || fail "Files names the cut/move write plane as not shell-authorizable"
-grep -Fq 'The OS clipboard and folder copy stay unavailable' "$application" \
+grep -Fq 'The OS clipboard stays unavailable' "$application" \
   || fail "Files names the OS clipboard leftover instead of inventing one"
+grep -Fq 'kind === "file" || kind === "directory"' "$application" \
+  || fail "Files Copy accepts regular files and directories"
 pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing LIVE Cut or an OS clipboard"
 
 run_node_test <<'JS'
@@ -165,6 +167,7 @@ assert(traversal !== '', 'a traversal attempt is refused before it reaches the o
 assertEqual(Model.nextCopyName({}, 'notes.txt'), 'notes.txt', 'an unused name is reused')
 assertEqual(Model.nextCopyName({ 'notes.txt': true }, 'notes.txt'), 'notes (2).txt', 'a taken name gets a numbered replica')
 assertEqual(Model.nextCopyName({ 'notes.txt': true, 'notes (2).txt': true }, 'notes.txt'), 'notes (3).txt', 'numbered replicas skip taken names')
+assertEqual(Model.nextCopyName({ reports: true }, 'reports'), 'reports (2)', 'a taken folder name gets a numbered replica')
 assertEqual(Model.nextCopyName({}, 'a/b'), '', 'a separator is refused before copy staging')
 JS
 pass "the create target map and name guard refuse traversal, separators, and control characters"
