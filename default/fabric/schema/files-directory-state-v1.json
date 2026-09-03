@@ -27,6 +27,7 @@
       "type": "string",
       "enum": [
         "directory.create",
+        "entry.rename",
         "entry.trash",
         "trash.restore",
         "entry.open"
@@ -64,6 +65,27 @@
             "minLength": 1,
             "maxLength": 255
           }
+        },
+        "selectedEntry": {
+          "$ref": "#/$defs/selectedEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "selectedEntry": {
+      "type": "object",
+      "required": [
+        "entryId",
+        "identity"
+      ],
+      "properties": {
+        "entryId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+          "maxLength": 160
+        },
+        "identity": {
+          "$ref": "#/$defs/revision"
         }
       },
       "additionalProperties": false

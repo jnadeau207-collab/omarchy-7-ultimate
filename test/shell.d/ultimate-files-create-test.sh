@@ -17,7 +17,9 @@ pass "Files carries the bounded operation allowlist and nothing wider"
 grep -Fq 'provider: "files.provider"' "$application" || fail "Files creates through its own provider"
 grep -Fq 'action: "directory.create"' "$application" || fail "Files uses the typed directory.create action"
 grep -Fq 'action: "entry.open"' "$application" || fail "Files uses the typed entry.open action"
+grep -Fq 'action: "entry.rename"' "$application" || fail "Files uses the typed entry.rename action"
 grep -Fq 'function openEntry(record)' "$application" || fail "Files names openEntry for the launch plane"
+grep -Fq 'function renameEntry(record, name)' "$application" || fail "Files names renameEntry for the rename plane"
 grep -Fq 'arguments: { entryId: String(record.id) }' "$application" || fail "Files sends only the entry identity for Open"
 for stage in operation.preflight operation.approve operation.start; do
   grep -Fq "\"$stage\"" "$application" || fail "Files drives the $stage step"
@@ -83,6 +85,22 @@ if grep -Eq 'readFile\(|XMLHttpRequest|FileReader' "$application"; then
 fi
 grep -Fq 'File contents are never read' "$application" || fail "Files keeps the no-content-read boundary"
 pass "Files Open is LIVE for regular files without inventing MIME UI or thumbnails"
+
+grep -Fq 'readonly property bool renameAuthorized: true' "$application" \
+  || fail "renameAuthorized stays true; SHELL can authorize same-directory rename"
+if grep -Eq 'renameAuthorized:\s*false' "$application"; then
+  fail "Files must not hide SHELL-grantable rename"
+fi
+grep -Fq 'if (!root.renameAuthorized) return' "$application" \
+  || fail "renameEntry refuses when authorization is withdrawn"
+grep -Fq 'key: "rename", label: "Rename"' "$application" \
+  || fail "Rename stays a gated command-bar control"
+grep -Fq 'arguments: { entryId: String(record.id), newName: String(name) }' "$application" \
+  || fail "Files sends only the entry identity and new name for Rename"
+if grep -Eq 'key: "cut"|key: "copy"|key: "paste"' "$application"; then
+  fail "Files invents cut/copy/paste"
+fi
+pass "Files Rename is LIVE for same-directory names without inventing clipboard verbs"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')

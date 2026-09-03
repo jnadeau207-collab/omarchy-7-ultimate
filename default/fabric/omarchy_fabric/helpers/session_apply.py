@@ -600,6 +600,83 @@ def stable_directory_id(location_id: str, parent: str) -> str:
     digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
     return f"files.directory.{digest}"
 
+
+def stable_rename_directory_id(location_id: str, parent: str, entry_id: str) -> str:
+    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}\0{entry_id}".encode("utf-8")).hexdigest()
+    return f"files.directory.{digest}"
+
+
+def require_new_name(payload: Mapping[str, Any]) -> str:
+    name = payload.get("newName")
+    if not isinstance(name, str) or not name:
+        raise ApplyError("payload.invalid", "The new name is missing.")
+    if len(name) > 255:
+        raise ApplyError("payload.out-of-range", "The new name exceeds its bound.")
+    if name in {".", ".."} or "/" in name or "\\" in name or "\x00" in name:
+        raise ApplyError("payload.invalid", "The new name holds an unsafe character.")
+    if name != name.strip():
+        raise ApplyError("payload.invalid", "The new name is not trimmed.")
+    return name
+
+
+def apply_files_entry_rename(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_files_resource_id(payload)
+    entry_id = require_entry_id(payload)
+    new_name = require_new_name(payload)
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot be renamed.")
+    home = pathlib.Path.home()
+    parent_relative = "/".join(require_entry_relative(payload)[:-1])
+    if resource_id != stable_rename_directory_id(payload["locationId"], parent_relative, entry_id):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    if "desired" in payload:
+        _, original, relative = resolve_entry_slot(payload, home)
+        renamed = original.parent / new_name
+        if original.exists() and not renamed.exists():
+            json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "newName": original.name, "renamed": False}, stdout)
+            stdout.write("\n")
+            return 0
+        try:
+            info = renamed.lstat()
+        except OSError as error:
+            raise ApplyError("resource.unresolved", "The renamed entry is not present.") from error
+        if stat.S_ISLNK(info.st_mode):
+            raise ApplyError("payload.invalid", "Symlink entries cannot be renamed.")
+        observed = stable_entry_id(payload["locationId"], info.st_dev, info.st_ino, relative)
+        if observed != entry_id:
+            raise ApplyError("resource.drifted", "The entry on disk is not the entry the plan approved.")
+        if original.exists():
+            raise ApplyError("apply.exists", "Something already occupies the original name.")
+        try:
+            os.rename(renamed, original)
+        except OSError as error:
+            raise ApplyError("apply.failed", "Restoring the original name reported a failure status.") from error
+        json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "newName": original.name, "renamed": True}, stdout)
+        stdout.write("\n")
+        return 0
+    _, final, relative = resolve_entry_path(payload, home)
+    try:
+        info = final.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be renamed.")
+    destination = final.parent / new_name
+    if destination == final:
+        json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "newName": new_name, "renamed": False}, stdout)
+        stdout.write("\n")
+        return 0
+    if destination.exists():
+        raise ApplyError("apply.exists", "Something already occupies the new name.")
+    try:
+        os.rename(final, destination)
+    except OSError as error:
+        raise ApplyError("apply.failed", "Renaming the entry reported a failure status.") from error
+    json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "newName": new_name, "renamed": True}, stdout)
+    stdout.write("\n")
+    return 0
+
 def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
@@ -809,6 +886,7 @@ ACTIONS = {
     "files-entry-trash": apply_files_entry_trash,
     "files-trash-restore": apply_files_trash_restore,
     "files-entry-open": apply_files_entry_open,
+    "files-entry-rename": apply_files_entry_rename,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

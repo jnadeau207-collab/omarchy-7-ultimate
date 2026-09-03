@@ -5430,7 +5430,7 @@
       "provider": {
         "id": "files.provider",
         "version": "v0",
-        "state": "legacy-direct"
+        "state": "present"
       },
       "kind": "writer",
       "effects": [
@@ -5512,8 +5512,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-rename",
+        "file": "shell/apps/ultimate-files/FilesApplication.qml",
+        "symbol": "renameEntry",
         "brokerVerb": null
       }
     },

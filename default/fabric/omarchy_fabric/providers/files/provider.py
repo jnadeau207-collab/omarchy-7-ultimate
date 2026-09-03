@@ -1277,6 +1277,56 @@ def _open_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dic
     return current
 
 
+def _entry_rename_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+    selected = _entry(current, arguments["entryId"])
+    location = _location(current, selected["locationId"])
+    if location["kind"] == "trash":
+        raise _precondition("Trash entries cannot be renamed.", selected["id"])
+    location_id = selected["locationId"]
+    relative = selected["relativePath"]
+    parent = relative.rsplit("/", 1)[0] if "/" in relative else ""
+    old_name = selected["name"]
+    new_name = arguments["newName"]
+    listing = None
+    if backend is not None and hasattr(backend, "directory_listing"):
+        listing = backend.directory_listing(location_id, parent)
+    current_names = sorted(listing) if listing is not None else _directory_names_from_state(current, location_id, parent)
+    if old_name not in current_names:
+        current_names = sorted([*current_names, old_name])
+    if old_name == new_name:
+        proposed_names = list(current_names)
+    else:
+        proposed_names = sorted([name for name in current_names if name != old_name] + [new_name])
+    proposed_selected = _entry(proposed, arguments["entryId"], safe_path=False)
+    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}\0{selected['id']}".encode("utf-8")).hexdigest()
+
+    def document(names: list[str], identity: str) -> dict[str, Any]:
+        return {
+            "locationId": location_id,
+            "parentRelativePath": parent,
+            "names": names,
+            "selectedEntry": {"entryId": selected["id"], "identity": identity},
+        }
+
+    return {
+        "kind": "files.directory",
+        "id": f"files.directory.{digest}",
+        "current": document(current_names, selected["identity"]),
+        "proposed": document(proposed_names, proposed_selected["identity"]),
+    }
+
+
+def _rename_guards(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
+    selected = _entry(current, arguments["entryId"])
+    guards = _anchors(current, arguments)
+    guards["selectedEntry"] = {
+        "entryId": selected["id"],
+        "locationId": selected["locationId"],
+        "entryRelativePath": selected["relativePath"],
+    }
+    return guards
+
+
 def _entry_open_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
     selected = _entry(current, arguments["entryId"])
     location_id = selected["locationId"]
@@ -1350,7 +1400,9 @@ def _create_directory(current: Mapping[str, Any], arguments: Mapping[str, Any]) 
 def _rename_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     selected = _entry(state, arguments["entryId"])
-    _location(state, selected["locationId"], writable=True)
+    location = _location(state, selected["locationId"], writable=True)
+    if location["kind"] == "trash":
+        raise _precondition("Trash entries cannot be renamed.", selected["id"])
     if not selected["writable"]:
         raise _precondition("The selected entry is not writable.", selected["id"])
     old_path = selected["relativePath"]
@@ -1510,7 +1562,7 @@ def _summary(noun: str):
 
 OPERATIONS = {
     "directory.create": OperationSpec("directory.create", _normalize_create, _create_directory, _summary("directory"), _anchors, _directory_scope),
-    "entry.rename": OperationSpec("entry.rename", _normalize_rename, _rename_entry, _summary("rename"), _anchors),
+    "entry.rename": OperationSpec("entry.rename", _normalize_rename, _rename_entry, _summary("rename"), _rename_guards, _entry_rename_scope),
     "entry.trash": OperationSpec("entry.trash", _normalize_entry, _trash_entry, _summary("Trash"), _anchors, _entry_trash_scope),
     "trash.restore": OperationSpec("trash.restore", _normalize_entry, _restore_entry, _summary("restore"), _anchors, _trash_restore_scope),
     "entry.open": OperationSpec("entry.open", _normalize_entry, _open_entry, _open_summary, _open_guards, _entry_open_scope),

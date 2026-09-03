@@ -705,6 +705,21 @@ class FabricDaemon:
             )
         return value
 
+    def _operation_new_name(self, value: Any) -> str:
+        if not isinstance(value, str) or not 1 <= len(value) <= 255 or value != value.strip():
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The new name is outside its bound.",
+            )
+        if value in {".", ".."} or "/" in value or "\\" in value:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The new name holds an unsafe character.",
+            )
+        return value
+
     @staticmethod
     def _directory_listing(state: Mapping[str, Any]) -> Mapping[str, Any]:
         value = state.get("value") if isinstance(state.get("value"), Mapping) else state
@@ -782,6 +797,64 @@ class FabricDaemon:
             "entryId": preflight["normalizedArguments"]["entryId"],
             "locationId": current["locationId"],
             "entryRelativePath": f"{parent}/{removed[0]}" if parent else removed[0],
+        }
+
+    @staticmethod
+    def _rename_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        selected = preflight.get("guards", {}).get("selectedEntry") if isinstance(preflight.get("guards"), Mapping) else None
+        if not isinstance(selected, Mapping):
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The rename plan does not name a scoped entry.",
+            )
+        entry_id = selected.get("entryId")
+        location_id = selected.get("locationId")
+        relative = selected.get("entryRelativePath")
+        new_name = preflight.get("normalizedArguments", {}).get("newName") if isinstance(preflight.get("normalizedArguments"), Mapping) else None
+        if not isinstance(entry_id, str) or not isinstance(location_id, str) or not isinstance(relative, str) or not relative:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The rename plan does not name a scoped entry.",
+            )
+        if not isinstance(new_name, str) or not new_name:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The rename plan does not name a new name.",
+            )
+        current = FabricDaemon._directory_listing(preflight["currentState"])
+        proposed = FabricDaemon._directory_listing(preflight["proposedState"])
+        listing_selected = current.get("selectedEntry") if isinstance(current, Mapping) else None
+        if not isinstance(listing_selected, Mapping) or listing_selected.get("entryId") != entry_id:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The rename plan listing does not carry the selected entry identity.",
+            )
+        old_name = relative.rsplit("/", 1)[-1]
+        removed = [name for name in current["names"] if name not in set(proposed["names"])]
+        added = [name for name in proposed["names"] if name not in set(current["names"])]
+        if old_name == new_name:
+            if removed or added:
+                raise FabricError(
+                    "operation.invalid-arguments",
+                    "Fabric operation arguments are invalid",
+                    "The rename plan changes names without changing the selected name.",
+                )
+        elif removed != [old_name] or added != [new_name]:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The rename plan does not rename exactly one entry inside its directory.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "entryId": entry_id,
+            "locationId": location_id,
+            "entryRelativePath": relative,
+            "newName": new_name,
         }
 
     @staticmethod
@@ -942,10 +1015,35 @@ class FabricDaemon:
                     relative = entry.get("relativePath")
                     if isinstance(relative, str):
                         candidates.add(relative)
+            children = [
+                entry
+                for entry in state.get("entries", ())
+                if entry.get("locationId") == location_id
+            ]
             for parent in candidates:
                 digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
+                matched_entry = None
                 if f"files.directory.{digest}" != resource_id:
-                    continue
+                    prefix = f"{parent}/" if parent else ""
+                    for entry in children:
+                        relative = entry.get("relativePath")
+                        if not isinstance(relative, str):
+                            continue
+                        remainder = relative[len(prefix):] if prefix else relative
+                        if prefix and not relative.startswith(prefix):
+                            continue
+                        if remainder and "/" in remainder:
+                            continue
+                        if not remainder:
+                            continue
+                        qualified = hashlib.sha256(
+                            f"files.directory\0{location_id}\0{parent}\0{entry.get('id')}".encode("utf-8")
+                        ).hexdigest()
+                        if f"files.directory.{qualified}" == resource_id:
+                            matched_entry = entry
+                            break
+                    if matched_entry is None:
+                        continue
                 read = await self.typed_providers.read(
                     "files.provider",
                     "directory.inspect",
@@ -955,10 +1053,20 @@ class FabricDaemon:
                 value = payload.get("state")
                 if not isinstance(value, Mapping):
                     break
+                document = dict(value)
+                if matched_entry is not None:
+                    identity = matched_entry.get("identity")
+                    entry_id = matched_entry.get("id")
+                    if not isinstance(identity, str) or not isinstance(entry_id, str):
+                        break
+                    document = {
+                        **document,
+                        "selectedEntry": {"entryId": entry_id, "identity": identity},
+                    }
                 return {
                     "resourceId": resource_id,
-                    "revision": state_revision(value),
-                    "value": value,
+                    "revision": state_revision(document),
+                    "value": document,
                 }
         raise FabricError(
             "operation.resource-unavailable",
@@ -1092,6 +1200,17 @@ class FabricDaemon:
                             "entryRelativePath": self._operation_entry_relative,
                         },
                     ),
+                    IntentDefinition(
+                        "files.entry.rename",
+                        FixedArgvCommand(str(helper), ("files-entry-rename",)),
+                        required={
+                            "resourceId": stable_token,
+                            "entryId": stable_token,
+                            "locationId": stable_token,
+                            "entryRelativePath": self._operation_entry_relative,
+                            "newName": self._operation_new_name,
+                        },
+                    ),
                     *package_intents(),
                     *compatibility_intents(),
                     *device_intents(),
@@ -1192,6 +1311,12 @@ class FabricDaemon:
                     "entry.open",
                     "files.entry.open",
                     self._open_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.rename",
+                    "files.entry.rename",
+                    self._rename_payload,
                 ),
                 *package_definitions(),
                 *compatibility_definitions(),

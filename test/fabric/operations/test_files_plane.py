@@ -102,6 +102,17 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                         "entryRelativePath": lambda value: value,
                     },
                 ),
+                IntentDefinition(
+                    "files.entry.rename",
+                    FixedArgvCommand("/bin/true", ("files-entry-rename",)),
+                    required={
+                        "resourceId": stable_token,
+                        "entryId": stable_token,
+                        "locationId": stable_token,
+                        "entryRelativePath": lambda value: value,
+                        "newName": lambda value: value,
+                    },
+                ),
             )
         )
         self.coordinator = OperationCoordinator(
@@ -136,6 +147,12 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
                     "entry.open",
                     "files.entry.open",
                     FabricDaemon._open_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.rename",
+                    "files.entry.rename",
+                    FabricDaemon._rename_payload,
                 ),
             ),
             intents=self.intents,
@@ -240,6 +257,29 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["entryRelativePath"], "notes.txt")
         self.assertEqual(payload["entryId"], "files.entry.notes")
         grant = self._shell_grant(opened["operationId"])
+        self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
+
+    async def test_entry_rename_preflight_is_low_and_shell_grantable(self) -> None:
+        renamed = await self.coordinator.preflight(
+            self.shell,
+            provider_id="files.provider",
+            action="entry.rename",
+            arguments={"entryId": "files.entry.notes", "newName": "memo.txt"},
+            idempotency_key="files.entry.rename.notes",
+        )
+        request = self.coordinator.approval_request(self.shell, renamed["operationId"])
+        self.assertEqual(request.risk, RiskLevel.LOW)
+        self.assertEqual(request.capability, "files.entry.rename")
+        self.assertTrue(request.resource.resource_id.startswith("files.directory."))
+        payload = self.store.get(renamed["operationId"]).plan.intent.payload
+        self.assertEqual(payload["locationId"], "files.location.desktop")
+        self.assertEqual(payload["entryRelativePath"], "notes.txt")
+        self.assertEqual(payload["entryId"], "files.entry.notes")
+        self.assertEqual(payload["newName"], "memo.txt")
+        listing = self.store.get(renamed["operationId"]).plan.preflight["currentState"]["value"]
+        self.assertEqual(listing["selectedEntry"]["entryId"], "files.entry.notes")
+        self.assertIn("identity", listing["selectedEntry"])
+        grant = self._shell_grant(renamed["operationId"])
         self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
 
     def test_shell_cannot_hold_a_consequential_files_grant(self) -> None:
