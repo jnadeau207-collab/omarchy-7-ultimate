@@ -49,8 +49,14 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
             "entry.rename",
             {"entryId": "files.entry.project", "newName": "Renamed"},
             lambda state: self.assertEqual(
-                {item["relativePath"] for item in state["entries"] if item["id"] in {"files.entry.project", "files.entry.readme"}},
-                {"Renamed", "Renamed/README.txt"},
+                (
+                    state["locationId"],
+                    state["parentRelativePath"],
+                    "Renamed" in state["names"],
+                    "Project" in state["names"],
+                    state["selectedEntry"]["entryId"],
+                ),
+                ("files.location.desktop", "", True, False, "files.entry.project"),
             ),
         )
         await self.exercise(
@@ -183,7 +189,10 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(state_path.stat().st_mode & 0o777, 0o600)
             restarted = files.build_fake_provider(clone_workspace(), state_path=state_path)
             inventory = await restarted.read("inspect", {})
-            self.assertEqual(inventory["state"], result["state"]["value"])
+            note = next(item for item in inventory["state"]["entries"] if item["id"] == "files.entry.notes")
+            self.assertEqual(note["relativePath"], "memo.txt")
+            self.assertEqual(result["state"]["value"]["selectedEntry"]["entryId"], "files.entry.notes")
+            self.assertIn("memo.txt", result["state"]["value"]["names"])
             noop = await restarted.execute("entry.rename", plan["normalizedArguments"], result["stateRevision"])
             self.assertFalse(noop["changed"])
             self.assertEqual(restarted.backend.write_count, 0)

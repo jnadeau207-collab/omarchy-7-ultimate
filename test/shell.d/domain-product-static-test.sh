@@ -200,6 +200,7 @@ grep -Fq 'Deployment remains unavailable' "$ROOT/shell/apps/ultimate-compatibili
 grep -Fq 'This surface never invokes a package manager' "$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml" || fail "Software Center states its execution boundary"
 grep -Fq 'File contents are never read' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files states its content-read boundary"
 grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live New folder writer"
+grep -Fq 'Rename runs through files.provider entry.rename' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Rename writer"
 grep -Fq 'Trash write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner states Trash is not shell-authorizable"
 grep -Fq 'CHANGES UNAVAILABLE' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names CHANGES UNAVAILABLE for Trash"
 grep -Fq 'Restore write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the Restore write plane as not shell-authorizable"
@@ -209,6 +210,8 @@ grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultim
   || fail "Files pins trashAuthorized false; Trash is not LIVE under the shell principal"
 grep -Fq 'readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files keeps New folder createEnabled LIVE"
+grep -Fq 'readonly property bool renameAuthorized: true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files pins renameAuthorized true; Rename is SHELL-grantable"
 if grep -Eq 'trashAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
   fail "Files must not authorize shell consequential trash"
 fi
@@ -218,6 +221,8 @@ fi
 grep -Fq 'grant.shell-consequential' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names the SHELL consequential refuse for entry.trash"
 grep -Fq 'files.trash.manage' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS keeps files.trash.manage unavailable"
 grep -Fq 'trashAuthorized=false' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Trash UI gated trashAuthorized=false"
+grep -Fq 'files.entry.rename' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names files.entry.rename"
+grep -Fq 'renameAuthorized=true' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Rename UI gated renameAuthorized=true"
 if grep -Eq 'maximumLineCount:[[:space:]]*2' "$ROOT/shell/apps/ultimate-files/ExplorerDetailsPane.qml"; then
   fail "Files details boundary Text is limited to 2 lines and can clip the unavailable half"
 fi
