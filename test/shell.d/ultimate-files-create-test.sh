@@ -142,7 +142,7 @@ grep -Fq 'kind === "file" || kind === "directory"' "$application" \
   || fail "Files Copy accepts regular files and directories"
 grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #60"
-grep -Fq 'folder copy CLOSED' "$ROOT/docs/files-defaults-provider.md" \
+grep -Fq 'Folder copy CLOSED via `files.entry.copy` directories' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names folder copy CLOSED"
 grep -Fq 'Recycle / Empty Bin / `files.trash.manage` residual OPEN' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps Recycle residual OPEN"
