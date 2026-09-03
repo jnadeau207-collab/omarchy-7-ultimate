@@ -987,6 +987,49 @@ class FabricDaemon:
         }
 
     @staticmethod
+    def _delete_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
+        selected = preflight.get("guards", {}).get("selectedEntry") if isinstance(preflight.get("guards"), Mapping) else None
+        if not isinstance(selected, Mapping):
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The delete plan does not name a scoped entry.",
+            )
+        entry_id = selected.get("entryId")
+        location_id = selected.get("locationId")
+        relative = selected.get("entryRelativePath")
+        if not isinstance(entry_id, str) or not isinstance(location_id, str) or not isinstance(relative, str) or not relative:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The delete plan does not name a scoped entry.",
+            )
+        current = FabricDaemon._directory_listing(preflight["currentState"])
+        proposed = FabricDaemon._directory_listing(preflight["proposedState"])
+        listing_selected = current.get("selectedEntry") if isinstance(current, Mapping) else None
+        if not isinstance(listing_selected, Mapping) or listing_selected.get("entryId") != entry_id:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The delete plan listing does not carry the selected entry identity.",
+            )
+        old_name = relative.rsplit("/", 1)[-1]
+        removed = [name for name in current["names"] if name not in set(proposed["names"])]
+        added = [name for name in proposed["names"] if name not in set(current["names"])]
+        if removed != [old_name] or added:
+            raise FabricError(
+                "operation.invalid-arguments",
+                "Fabric operation arguments are invalid",
+                "The delete plan does not remove exactly one entry from its directory.",
+            )
+        return {
+            "resourceId": preflight["resource"]["id"],
+            "entryId": entry_id,
+            "locationId": location_id,
+            "entryRelativePath": relative,
+        }
+
+    @staticmethod
     def _open_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
         selected = preflight.get("guards", {}).get("selectedEntry") if isinstance(preflight.get("guards"), Mapping) else None
         if not isinstance(selected, Mapping):
@@ -1377,6 +1420,16 @@ class FabricDaemon:
                             "destinationName": self._operation_new_name,
                         },
                     ),
+                    IntentDefinition(
+                        "files.entry.delete",
+                        FixedArgvCommand(str(helper), ("files-entry-delete",)),
+                        required={
+                            "resourceId": stable_token,
+                            "entryId": stable_token,
+                            "locationId": stable_token,
+                            "entryRelativePath": self._operation_entry_relative,
+                        },
+                    ),
                     *package_intents(),
                     *compatibility_intents(),
                     *device_intents(),
@@ -1495,6 +1548,12 @@ class FabricDaemon:
                     "entry.move",
                     "files.entry.move",
                     self._move_payload,
+                ),
+                OperationDefinition(
+                    "files.provider",
+                    "entry.delete",
+                    "files.entry.delete",
+                    self._delete_payload,
                 ),
                 *package_definitions(),
                 *compatibility_definitions(),

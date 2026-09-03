@@ -848,6 +848,8 @@ if "`files.entry.copy`" not in gaps and "files.entry.copy" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the files.entry.copy write plane")
 if "`files.entry.move`" not in gaps and "files.entry.move" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the files.entry.move write plane")
+if "`files.entry.delete`" not in gaps and "files.entry.delete" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite the files.entry.delete write plane")
 if "`files.trash.restore` write plane is reachable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the reachable files.trash.restore write plane")
 if "humanRoute planned empty" not in gaps:
@@ -1552,6 +1554,38 @@ if "files.entry.move" not in (parity_explorer.get("capabilityIds") or []):
     raise SystemExit("parity.explorer-this-pc does not name files.entry.move")
 if "files.entry.move" in (native12.get("capabilityIds") or []):
     raise SystemExit("windows-native.12 invents a Cut/Move task by naming files.entry.move")
+if "files.entry.delete" not in by_id:
+    raise SystemExit("absent delete writer invent: files.entry.delete missing from catalog")
+entry_delete = by_id["files.entry.delete"]
+if entry_delete.get("provider", {}).get("id") != "files.provider":
+    raise SystemExit(f"files.entry.delete provider is {entry_delete.get('provider')}")
+if entry_delete.get("provider", {}).get("state") != "present":
+    raise SystemExit(f"files.entry.delete provider state is {entry_delete.get('provider')}")
+if entry_delete.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.entry.delete claim is {entry_delete.get('availability')}")
+if entry_delete.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.entry.delete must not claim present")
+if entry_delete.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"files.entry.delete agent availability is {entry_delete.get('availability')}")
+if entry_delete.get("consent", {}).get("mode") != "high-risk":
+    raise SystemExit(f"files.entry.delete consent is not consequential: {entry_delete.get('consent')}")
+if entry_delete.get("effects") != ["mutating"]:
+    raise SystemExit(f"files.entry.delete effects are {entry_delete.get('effects')}")
+if entry_delete["humanRoute"].get("status") != "planned":
+    raise SystemExit(f"files.entry.delete invents a Delete LIVE route: {entry_delete.get('humanRoute')}")
+if entry_delete["humanRoute"].get("path"):
+    raise SystemExit(f"files.entry.delete invents a Delete LIVE path: {entry_delete.get('humanRoute')}")
+if entry_delete.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+    raise SystemExit(f"files.entry.delete source is {entry_delete.get('source')}")
+if entry_delete.get("source", {}).get("symbol") != "apply_files_entry_delete":
+    raise SystemExit(f"files.entry.delete source is {entry_delete.get('source')}")
+named_delete = f"{entry_delete.get('source', {}).get('file') or ''} {entry_delete.get('source', {}).get('symbol') or ''}".lower()
+if "nautilus" in named_delete:
+    raise SystemExit(f"files.entry.delete still names Nautilus: {entry_delete.get('source')}")
+if "files.entry.delete" not in (parity_explorer.get("capabilityIds") or []):
+    raise SystemExit("parity.explorer-this-pc does not name files.entry.delete")
+if "files.entry.delete" in (native12.get("capabilityIds") or []):
+    raise SystemExit("windows-native.12 invents a Permanent Delete task by naming files.entry.delete")
 files_copy = by_id["files.copy"]
 if files_copy.get("provider", {}).get("state") != "present":
     raise SystemExit(f"files.copy leftover was not retargeted: {files_copy.get('provider')}")
@@ -1640,6 +1674,12 @@ if "cutAuthorized: true" in files_app:
     raise SystemExit("Files invents cutAuthorized=true")
 if 'action: "entry.move"' in files_app:
     raise SystemExit("Files invents LIVE cut/move under SHELL")
+if "readonly property bool deleteAuthorized: false" not in files_app:
+    raise SystemExit("Files must keep deleteAuthorized=false")
+if "deleteAuthorized: true" in files_app:
+    raise SystemExit("Files invents deleteAuthorized=true")
+if 'action: "entry.delete"' in files_app:
+    raise SystemExit("Files invents LIVE permanent delete under SHELL")
 if 'action: "trash.restore"' in files_app:
     raise SystemExit("Files invents Restore LIVE")
 desktop_status, desktop_notes = parity_notes("Desktop (icons, wallpaper, context menu, Recycle)")
@@ -1673,6 +1713,10 @@ if "files.entry.move" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS does not name files.entry.move")
 if "cutAuthorized=false" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS residual names Files Cut UI gated cutAuthorized=false")
+if "files.entry.delete" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS does not name files.entry.delete")
+if "deleteAuthorized=false" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS residual names Files Delete UI gated deleteAuthorized=false")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")
@@ -1688,6 +1732,10 @@ if "files.entry.move" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name files.entry.move")
 if "cutAuthorized=false" not in explorer_notes:
     raise SystemExit("PARITY Explorer row does not name cutAuthorized=false")
+if "files.entry.delete" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row does not name files.entry.delete")
+if "deleteAuthorized=false" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row does not name deleteAuthorized=false")
 if "opening a file in its handler" in explorer_notes and "remain unavailable" in explorer_notes.split("opening a file in its handler", 1)[-1][:80]:
     raise SystemExit("PARITY Explorer row still lists opening a file in its handler as unavailable")
 if "File contents are never read" not in explorer_notes:
@@ -1710,6 +1758,8 @@ if "files.entry.copy" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.copy")
 if "files.entry.move" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name files.entry.move")
+if "files.entry.delete" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must name files.entry.delete")
 if "files.trash.manage still missing" not in cp and "files.trash.manage` still missing" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped files.trash.manage still missing")
 if "REJECTED" not in plan:
@@ -1772,6 +1822,7 @@ inventory = {
     "files.entry.rename": "partial",
     "files.entry.copy": "partial",
     "files.entry.move": "partial",
+    "files.entry.delete": "partial",
     "files.entry.trash": "partial",
     "files.trash.restore": "partial",
     "account.inspect": "missing",

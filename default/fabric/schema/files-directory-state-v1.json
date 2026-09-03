@@ -30,6 +30,7 @@
         "entry.rename",
         "entry.copy",
         "entry.move",
+        "entry.delete",
         "entry.trash",
         "trash.restore",
         "entry.open"
