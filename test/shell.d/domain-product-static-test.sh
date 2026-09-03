@@ -203,7 +203,7 @@ grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-fil
 grep -Fq 'Rename runs through files.provider entry.rename' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Rename writer"
 grep -Fq 'Copy and Paste run through files.provider entry.copy' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Copy writer"
 grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the cut/move write plane as not shell-authorizable"
-grep -Fq 'The OS clipboard and folder copy stay unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps OS clipboard and folder copy unavailable"
+grep -Fq 'The OS clipboard stays unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps OS clipboard unavailable"
 grep -Fq 'readonly property bool cutAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins cutAuthorized false; Cut is not LIVE under the shell principal"
 if grep -Eq 'cutAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then

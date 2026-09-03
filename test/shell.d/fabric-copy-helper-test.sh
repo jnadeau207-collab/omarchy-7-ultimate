@@ -12,6 +12,7 @@ import io
 import json
 import os
 import pathlib
+import sys
 import tempfile
 
 os.environ.pop("XDG_DATA_HOME", None)
@@ -119,8 +120,50 @@ check("a symlink refuses", result.get("code") == "payload.invalid", json.dumps(r
 
 folder = home / "Documents" / "reports"
 folder.mkdir()
+nested = folder / "2026"
+nested.mkdir()
+(nested / "notes.txt").write_text("year", encoding="utf-8")
 status, result = run(entry_payload("files.location.documents", "reports", folder, "files.location.documents", "", "reports-copy"))
-check("a directory refuses", result.get("code") == "payload.invalid", json.dumps(result))
+replica_dir = home / "Documents" / "reports-copy"
+check("a directory copy writes a replica tree", status == 0 and result.get("ok") and result.get("copied") and replica_dir.is_dir(), json.dumps(result))
+check("directory copy keeps the source tree", folder.is_dir() and (nested / "notes.txt").read_text(encoding="utf-8") == "year", str(folder.exists()))
+check("directory replica holds nested bytes", (replica_dir / "2026" / "notes.txt").read_text(encoding="utf-8") == "year" if (replica_dir / "2026" / "notes.txt").exists() else False, str(replica_dir.exists()))
+
+status, result = run({**entry_payload("files.location.documents", "reports", folder, "files.location.documents", "", "reports-copy"), "desired": {"names": ["reports"]}})
+check("rollback desired removes the directory replica", status == 0 and result.get("ok") and folder.is_dir() and not replica_dir.exists(), json.dumps(result))
+
+status, result = run(entry_payload("files.location.documents", "reports", folder, "files.location.documents", "", "reports-copy"))
+check("directory copy can be replayed after rollback", status == 0 and result.get("copied") and replica_dir.is_dir(), json.dumps(result))
+
+status, result = run(entry_payload("files.location.documents", "reports", folder, "files.location.documents", "reports", "nested-copy"))
+check("a nest-inside-source copy refuses", result.get("code") == "payload.invalid", json.dumps(result))
+check("nest-inside-source leaves the source tree", folder.is_dir() and not (folder / "nested-copy").exists(), str((folder / "nested-copy").exists()))
+
+looped = home / "Documents" / "looped"
+looped.mkdir()
+(looped / "alias").symlink_to(looped / "missing")
+status, result = run(entry_payload("files.location.documents", "looped", looped, "files.location.documents", "", "looped-copy"))
+check("a directory with a symlink child refuses", result.get("code") == "payload.invalid", json.dumps(result))
+check("symlink-child refuse leaves no replica", not (home / "Documents" / "looped-copy").exists(), str((home / "Documents" / "looped-copy").exists()))
+
+collision_dir = home / "Documents" / "taken-dir"
+collision_dir.mkdir()
+status, result = run(entry_payload("files.location.documents", "reports", folder, "files.location.documents", "", "taken-dir"))
+check("a directory collision refuses", result.get("code") == "apply.exists", json.dumps(result))
+check("directory collision leaves both trees", folder.is_dir() and collision_dir.is_dir() and not any(collision_dir.iterdir()), str(list(collision_dir.iterdir())))
+
+empty = home / "Documents" / "empty-folder"
+empty.mkdir()
+status, result = run(entry_payload("files.location.documents", "empty-folder", empty, "files.location.desktop", "", "empty-folder"))
+desktop_empty = home / "Desktop" / "empty-folder"
+check("an empty directory copies across locations", status == 0 and result.get("copied") and desktop_empty.is_dir() and empty.is_dir(), json.dumps(result))
+
+special = home / "Documents" / "special"
+special.mkdir()
+os.mkfifo(special / "pipe")
+status, result = run(entry_payload("files.location.documents", "special", special, "files.location.documents", "", "special-copy"))
+check("a non-regular child refuses", result.get("code") == "payload.invalid", json.dumps(result))
+check("non-regular refuse leaves no replica", not (home / "Documents" / "special-copy").exists(), str((home / "Documents" / "special-copy").exists()))
 
 trash_file = home / "Documents" / "trashed.txt"
 trash_file.write_text("x", encoding="utf-8")
@@ -135,4 +178,4 @@ if failures:
     print("\n".join(f"not ok - {item}" for item in failures), file=sys.stderr)
     raise SystemExit(1)
 PY
-pass "the Copy helper writes a scoped replica and refuses drift, traversal, collision, parent-only scope, symlinks, directories, and Trash"
+pass "the Copy helper writes scoped file and directory replicas and refuses drift, traversal, collision, parent-only scope, symlinks, nest-inside-source, and Trash"

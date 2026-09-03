@@ -350,6 +350,36 @@ class FilesPlaneTests(unittest.IsolatedAsyncioTestCase):
         grant = self._shell_grant(copied["operationId"])
         self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
 
+    async def test_entry_copy_directory_preflight_is_low_and_shell_grantable(self) -> None:
+        copied = await self.coordinator.preflight(
+            self.shell,
+            provider_id="files.provider",
+            action="entry.copy",
+            arguments={
+                "entryId": "files.entry.project",
+                "destinationLocationId": "files.location.desktop",
+                "destinationParentRelativePath": "",
+                "destinationName": "Project-copy",
+            },
+            idempotency_key="files.entry.copy.project",
+        )
+        request = self.coordinator.approval_request(self.shell, copied["operationId"])
+        self.assertEqual(request.risk, RiskLevel.LOW)
+        self.assertEqual(request.capability, "files.entry.copy")
+        self.assertTrue(request.resource.resource_id.startswith("files.directory."))
+        payload = self.store.get(copied["operationId"]).plan.intent.payload
+        self.assertEqual(payload["locationId"], "files.location.desktop")
+        self.assertEqual(payload["entryRelativePath"], "Project")
+        self.assertEqual(payload["entryId"], "files.entry.project")
+        self.assertEqual(payload["destinationLocationId"], "files.location.desktop")
+        self.assertEqual(payload["destinationParentRelativePath"], "")
+        self.assertEqual(payload["destinationName"], "Project-copy")
+        listing = self.store.get(copied["operationId"]).plan.preflight["currentState"]["value"]
+        self.assertEqual(listing["selectedEntry"]["entryId"], "files.entry.project")
+        self.assertIn("identity", listing["selectedEntry"])
+        grant = self._shell_grant(copied["operationId"])
+        self.assertEqual(grant.maximum_risk, RiskLevel.LOW)
+
     async def test_entry_move_preflight_is_consequential_and_not_shell_grantable(self) -> None:
         moved = await self.coordinator.preflight(
             self.shell,
