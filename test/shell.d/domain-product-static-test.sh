@@ -228,6 +228,12 @@ if grep -Eq 'action: "entry.delete"' "$ROOT/shell/apps/ultimate-files/FilesAppli
 fi
 grep -Fq 'files.entry.delete' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS names files.entry.delete"
 grep -Fq 'deleteAuthorized=false' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" || fail "HANDOFF_WRITERS residual names Files Delete UI gated deleteAuthorized=false"
+grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #60"
+grep -Fq 'folder copy CLOSED' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS names folder copy CLOSED"
+grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS keeps permanent delete not shell-authorizable"
 grep -Fq '`files.entry.delete` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the entry.delete write plane"
 grep -Fq 'files.trash.manage remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner does not invent files.trash.manage"
@@ -256,6 +262,17 @@ grep -Fq '`files.entry.copy` is write-plane reachable' "$ROOT/docs/files-default
   || fail "files-defaults-provider names the entry.copy write plane"
 grep -Fq 'Files Copy and Paste use that plane with in-app staging' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names in-app staging instead of an OS clipboard"
+grep -Fq 'Folder copy CLOSED via `files.entry.copy` directories' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names folder copy CLOSED"
+grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider keeps OS clipboard residual OPEN after PR #60"
+grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider keeps permanent delete not shell-authorizable"
+grep -Fq 'Recycle / Empty Bin / `files.trash.manage` residual OPEN' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider keeps Recycle residual OPEN"
+if grep -Fq 'No permanent-delete capability exists in this tranche' "$ROOT/docs/files-defaults-provider.md"; then
+  fail "files-defaults-provider still underclaims permanent delete after PR #60"
+fi
 if grep -Fq 'It does not invent cut, copy, paste, or a move-across-directories verb' "$ROOT/docs/files-defaults-provider.md"; then
   fail "files-defaults-provider still claims copy and paste are uninvented"
 fi
@@ -351,6 +368,8 @@ if "honest-unavailable" not in desktop:
     raise SystemExit("Desktop row dropped Restore honest-unavailable")
 if "files.trash.manage" not in desktop:
     raise SystemExit("Desktop row dropped files.trash.manage missing")
+if "Recycle Bin / files.trash.manage residual OPEN after PR #60" not in desktop:
+    raise SystemExit("Desktop row dropped Recycle leftover after PR #60")
 if "not product-complete" not in desktop:
     raise SystemExit("Desktop row dropped Recycle not product-complete")
 if "prototype" not in desktop:
