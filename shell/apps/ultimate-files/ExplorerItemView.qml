@@ -83,6 +83,7 @@ FocusScope {
         anchors.fill: parent
         gradient: Gradient {
           GradientStop { position: 0; color: Aero.headerTop }
+          GradientStop { position: 0.45; color: Aero.headerMid }
           GradientStop { position: 1; color: Aero.headerBottom }
         }
       }
@@ -102,6 +103,18 @@ FocusScope {
             required property var modelData
             width: Math.floor(header.width * modelData.weight)
             height: header.height
+
+            Rectangle {
+              anchors.fill: parent
+              visible: root.sortColumn === modelData.key
+              gradient: Gradient {
+                GradientStop { position: 0; color: Aero.sortedHeaderTop }
+                GradientStop { position: 0.45; color: Aero.sortedHeaderMid }
+                GradientStop { position: 1; color: Aero.sortedHeaderBottom }
+              }
+              border.width: 1
+              border.color: Aero.sortedHeaderBorder
+            }
 
             Rectangle {
               anchors.fill: parent
@@ -126,6 +139,7 @@ FocusScope {
               color: Aero.headerText
               font.family: Aero.fontFamily
               font.pixelSize: 12
+              font.weight: Font.Normal
             }
 
             Canvas {

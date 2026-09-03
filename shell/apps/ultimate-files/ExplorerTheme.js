@@ -31,10 +31,15 @@ var navExpander = "#71889c"
 
 var contentFill = "#ffffff"
 
-var headerTop = "#f9fbfd"
-var headerBottom = "#edf1f6"
-var headerBorder = "#d9dfe7"
-var headerSeparator = "#e3e8ee"
+var headerTop = "#ffffff"
+var headerMid = "#fafafa"
+var headerBottom = "#f0f0f0"
+var headerBorder = "#d7d7d7"
+var headerSeparator = "#eeeeee"
+var sortedHeaderTop = "#f3f9fc"
+var sortedHeaderMid = "#e4f0f8"
+var sortedHeaderBottom = "#d9eaf5"
+var sortedHeaderBorder = "#a7d8f5"
 var headerText = "#3c4b5a"
 var headerHoverTop = "#e9f5fd"
 var headerHoverBottom = "#d3ebfa"
@@ -105,8 +110,8 @@ var warningBorder = "#e3c96a"
 var errorFill = "#fdeaea"
 var errorBorder = "#e0a3a3"
 
-var rowHeight = 22
-var headerHeight = 24
+var rowHeight = 18
+var headerHeight = 22
 var commandHeight = 30
 var addressHeight = 40
 var detailsHeight = 52
