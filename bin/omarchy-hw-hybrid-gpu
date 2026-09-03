@@ -7,8 +7,13 @@ multiple_gpus() {
 }
 
 if omarchy-cmd-present supergfxctl; then
-  modes=$(timeout --kill-after=1s 1s supergfxctl -s 2>/dev/null)
+  probe_tmp=$(mktemp /tmp/omarchy-hw-hybrid-gpu-probe.XXXXXX)
+  trap 'rm -f "$probe_tmp"' EXIT
+  timeout --kill-after=1s 1s supergfxctl -s </dev/null >"$probe_tmp" 2>/dev/null
   status=$?
+  modes=$(<"$probe_tmp")
+  rm -f "$probe_tmp"
+  trap - EXIT
 
   if ((status == 124 || status == 137)); then
     multiple_gpus

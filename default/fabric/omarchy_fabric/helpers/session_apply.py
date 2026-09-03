@@ -766,9 +766,9 @@ def apply_files_entry_rename(stdin: Any, stdout: Any) -> int:
         os.rename(final, destination)
     except OSError as error:
         raise ApplyError("apply.failed", "Renaming the entry reported a failure status.") from error
-        json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "newName": new_name, "renamed": True}, stdout)
-        stdout.write("\n")
-        return 0
+    json.dump({"ok": True, "resourceId": resource_id, "entry": relative, "newName": new_name, "renamed": True}, stdout)
+    stdout.write("\n")
+    return 0
 
 def remove_replica(path: pathlib.Path) -> None:
     try:
