@@ -171,6 +171,35 @@ class OperationLifecycleTests(unittest.IsolatedAsyncioTestCase):
         undone = await provider.undo("trash.restore", restore_plan["recovery"]["priorState"], restored["stateRevision"])
         self.assertEqual(undone["state"]["value"], before_restore["state"])
 
+    async def test_trash_manage_empties_regular_files_and_refuses_trees(self) -> None:
+        provider = files.build_fake_provider(clone_workspace())
+        trash_plan = await provider.preflight("entry.trash", {"entryId": "files.entry.notes"}, principal())
+        await provider.execute("entry.trash", trash_plan["normalizedArguments"], trash_plan["stateRevision"])
+        before_empty = await provider.read("inspect", {})
+        self.assertTrue(any(item["locationId"] == "files.location.trash" for item in before_empty["state"]["entries"]))
+        manage_plan = await provider.preflight("trash.manage", {"locationId": "files.location.trash"}, principal())
+        self.assertEqual(manage_plan["capability"], "files.trash.manage")
+        self.assertEqual(manage_plan["risk"], "consequential")
+        self.assertEqual(manage_plan["currentState"]["value"]["locationId"], "files.location.trash")
+        self.assertIn("notes.txt", manage_plan["currentState"]["value"]["names"])
+        self.assertEqual(manage_plan["proposedState"]["value"]["names"], [])
+        emptied = await provider.execute("trash.manage", manage_plan["normalizedArguments"], manage_plan["stateRevision"])
+        self.assertTrue(emptied["changed"])
+        workspace = await provider.read("inspect", {})
+        self.assertFalse(any(item["locationId"] == "files.location.trash" for item in workspace["state"]["entries"]))
+        undone = await provider.undo("trash.manage", manage_plan["recovery"]["priorState"], emptied["stateRevision"])
+        self.assertEqual(undone["state"]["value"], before_empty["state"])
+
+        tree = files.build_fake_provider(clone_workspace())
+        tree_plan = await tree.preflight("entry.trash", {"entryId": "files.entry.project"}, principal())
+        await tree.execute("entry.trash", tree_plan["normalizedArguments"], tree_plan["stateRevision"])
+        with self.assertRaises(FabricError) as caught:
+            await tree.preflight("trash.manage", {"locationId": "files.location.trash"}, principal())
+        self.assertEqual(caught.exception.code, "files.precondition-failed")
+        with self.assertRaises(FabricError) as wrong_location:
+            await tree.preflight("trash.manage", {"locationId": "files.location.desktop"}, principal())
+        self.assertEqual(wrong_location.exception.code, "files.precondition-failed")
+
     async def test_entry_open_is_a_low_risk_launch_with_no_listing_change(self) -> None:
         provider = files.build_fake_provider(clone_workspace())
         before = await provider.read("inspect", {})

@@ -67,8 +67,15 @@ fi
 if grep -Eq 'action: "(files\.)?trash\.manage"|key: "trash.manage"' "$application"; then
   fail "Files does not invent a files.trash.manage action or control"
 fi
-grep -Fq 'files.trash.manage remain unavailable' "$application" \
-  || fail "Files names files.trash.manage only as unavailable"
+grep -Fq 'readonly property bool emptyBinAuthorized: false' "$application" \
+  || fail "emptyBinAuthorized stays false; shell principal cannot authorize Empty Bin"
+if grep -Eq 'emptyBinAuthorized:\s*true' "$application"; then
+  fail "Files invents emptyBinAuthorized=true"
+fi
+grep -Fq 'The empty Recycle Bin write plane exists but is not shell-authorizable' "$application" \
+  || fail "Files names the empty Recycle Bin write plane as not shell-authorizable"
+grep -Fq 'Empty Bin LIVE' "$application" \
+  || fail "Files keeps Empty Bin LIVE unavailable"
 if grep -Fq 'LIVE CONTROL' "$application"; then
   fail "Files must not claim LIVE CONTROL for Trash under the shell principal"
 fi
@@ -164,8 +171,10 @@ if grep -Fq 'unsafe `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md"; then
 fi
 grep -Fq 'cross-device `EXDEV`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS keeps move cross-device EXDEV"
-grep -Fq 'Recycle / Empty Bin / `files.trash.manage` residual OPEN' "$ROOT/docs/files-defaults-provider.md" \
-  || fail "files-defaults-provider keeps Recycle residual OPEN"
+grep -Fq 'Recycle / Empty Bin LIVE residual OPEN after PR #63' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider keeps Recycle residual OPEN after PR #63"
+grep -Fq '`files.trash.manage` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider names the trash.manage write plane"
 pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing LIVE Cut or an OS clipboard"
 
 run_node_test <<'JS'

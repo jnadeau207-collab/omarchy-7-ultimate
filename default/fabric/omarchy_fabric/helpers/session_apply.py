@@ -560,6 +560,71 @@ def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
     return 0
 
 
+def apply_files_trash_manage(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    resource_id = require_files_resource_id(payload)
+    if payload.get("locationId") != "files.location.trash":
+        raise ApplyError("payload.invalid", "Only the Trash location can be emptied.")
+    parent = payload.get("parentRelativePath")
+    if parent not in (None, ""):
+        raise ApplyError("payload.invalid", "Empty Bin only targets the Trash root.")
+    if resource_id != stable_directory_id("files.location.trash", ""):
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than Trash.")
+    root = trash_root(pathlib.Path.home())
+    files_dir = root / "files"
+    info_dir = root / "info"
+    try:
+        names = os.listdir(files_dir)
+    except FileNotFoundError:
+        json.dump({"ok": True, "resourceId": resource_id, "emptied": False, "count": 0}, stdout)
+        stdout.write("\n")
+        return 0
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The Trash directory is not present.") from error
+    if len(names) > 4096:
+        raise ApplyError("apply.failed", "The Trash directory exceeds its scan bound.")
+    targets: list[tuple[pathlib.Path, str]] = []
+    for name in names:
+        if name in {".", ".."} or "/" in name or "\\" in name or "\x00" in name:
+            raise ApplyError("payload.invalid", "The Trash directory holds an unsafe name.")
+        candidate = files_dir / name
+        try:
+            info = candidate.lstat()
+        except OSError as error:
+            raise ApplyError("resource.unresolved", "A Trash entry disappeared before Empty Bin could run.") from error
+        if stat.S_ISLNK(info.st_mode):
+            raise ApplyError("payload.invalid", "Symlink entries cannot be emptied from Trash.")
+        if stat.S_ISREG(info.st_mode):
+            targets.append((candidate, "file"))
+            continue
+        if not stat.S_ISDIR(info.st_mode):
+            raise ApplyError("payload.invalid", "Only regular files and empty directories can be emptied from Trash.")
+        try:
+            children = list(candidate.iterdir())
+        except OSError as error:
+            raise ApplyError("apply.failed", "Emptying Trash reported a failure status.") from error
+        if children:
+            raise ApplyError("payload.invalid", "Only regular files and empty directories can be emptied from Trash.")
+        targets.append((candidate, "directory"))
+    removed = 0
+    for candidate, kind in targets:
+        try:
+            if kind == "file":
+                candidate.unlink()
+            else:
+                candidate.rmdir()
+        except OSError as error:
+            raise ApplyError("apply.failed", "Emptying Trash reported a failure status.") from error
+        try:
+            (info_dir / f"{candidate.name}.trashinfo").unlink()
+        except OSError:
+            pass
+        removed += 1
+    json.dump({"ok": True, "resourceId": resource_id, "emptied": removed > 0, "count": removed}, stdout)
+    stdout.write("\n")
+    return 0
+
+
 def apply_open(path: pathlib.Path, run: Any = subprocess.run) -> None:
     completed = run(
         [XDG_OPEN, str(path)],
@@ -1224,6 +1289,7 @@ ACTIONS = {
     "files-directory-create": apply_files_directory_create,
     "files-entry-trash": apply_files_entry_trash,
     "files-trash-restore": apply_files_trash_restore,
+    "files-trash-manage": apply_files_trash_manage,
     "files-entry-open": apply_files_entry_open,
     "files-entry-rename": apply_files_entry_rename,
     "files-entry-copy": apply_files_entry_copy,

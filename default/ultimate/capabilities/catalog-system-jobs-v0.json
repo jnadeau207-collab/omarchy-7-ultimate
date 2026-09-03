@@ -288,7 +288,7 @@
       "provider": {
         "id": "files.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "present"
       },
       "kind": "writer",
       "effects": [
@@ -319,9 +319,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "files.resource"
@@ -356,12 +356,12 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "missing",
-        "surface": "Desktop",
-        "label": "Recycle or restore items",
+        "status": "planned",
+        "surface": "Files",
+        "label": "Empty Recycle Bin",
         "path": ""
       },
-      "agentCenterLabel": "Recycle or restore items",
+      "agentCenterLabel": "Empty Recycle Bin",
       "proofIds": {
         "acceptance": [
           "proof.capability.files-trash-manage.tree-audit"
@@ -371,8 +371,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:files.trash.manage",
+        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
+        "symbol": "apply_files_trash_manage",
         "brokerVerb": null
       }
     },

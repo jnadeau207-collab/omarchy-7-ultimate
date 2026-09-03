@@ -96,6 +96,7 @@ SCHEMA_FILES = (
     "files-copy-arguments-v0.json",
     "files-move-arguments-v0.json",
     "files-entry-arguments-v0.json",
+    "files-trash-manage-arguments-v0.json",
     "files-mount-arguments-v0.json",
     "files-inventory-result-v0.json",
     "files-query-result-v0.json",
@@ -583,7 +584,7 @@ class RealFilesBackend:
     def directory_listing(self, location_id: str, parent: str) -> list[str] | None:
         key = location_id.rsplit(".", 1)[-1]
         definition = LOCATION_CATALOG.get(key)
-        if definition is None or not definition[2] and key not in {"desktop", "documents", "downloads", "pictures"}:
+        if definition is None or not definition[2] and key not in {"desktop", "documents", "downloads", "pictures", "trash"}:
             return None
         reasons: list[FabricError] = []
         root = self._root_paths(self._user_dirs(reasons)).get(definition[1])
@@ -1205,6 +1206,35 @@ def _normalize_move(arguments: Mapping[str, Any]) -> dict[str, Any]:
 def _normalize_entry(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"entryId": arguments["entryId"]}
 
+def _normalize_manage(arguments: Mapping[str, Any]) -> dict[str, Any]:
+    location_id = arguments["locationId"]
+    if location_id != "files.location.trash":
+        raise _precondition("Only the Trash location can be emptied.", location_id)
+    return {"locationId": location_id}
+
+def _trash_top_level(state: Mapping[str, Any], location_id: str) -> list[Mapping[str, Any]]:
+    return [
+        entry
+        for entry in state["entries"]
+        if entry["locationId"] == location_id and "/" not in entry["relativePath"]
+    ]
+
+def _refuse_unemptyable_trash(entries: list[Mapping[str, Any]], current: Mapping[str, Any]) -> None:
+    for selected in entries:
+        if selected["kind"] == "symlink" or selected.get("symlinkTargetState"):
+            raise _precondition("Symlink entries cannot be emptied from Trash.", selected["id"])
+        if selected["kind"] == "directory":
+            prefix = f"{selected['relativePath']}/"
+            if any(
+                entry["id"] != selected["id"]
+                and entry["locationId"] == selected["locationId"]
+                and (entry["parentId"] == selected["id"] or entry["relativePath"].startswith(prefix))
+                for entry in current["entries"]
+            ):
+                raise _precondition("Only regular files and empty directories can be emptied from Trash.", selected["id"])
+        elif selected["kind"] != "file":
+            raise _precondition("Only regular files and empty directories can be emptied from Trash.", selected["id"])
+
 def _normalize_mount(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"mountId": arguments["mountId"]}
 
@@ -1279,6 +1309,30 @@ def _entry_trash_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], 
 
 def _trash_restore_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
     return _entry_directory_scope(current, arguments, backend, restoring=True)
+
+
+def _trash_manage_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
+    location = _location(current, arguments["locationId"], writable=True)
+    if location["kind"] != "trash":
+        raise _precondition("Only the Trash location can be emptied.", location["id"])
+    location_id = location["id"]
+    parent = ""
+    _refuse_unemptyable_trash(_trash_top_level(current, location_id), current)
+    listing = None
+    if backend is not None and hasattr(backend, "directory_listing"):
+        listing = backend.directory_listing(location_id, parent)
+    current_names = sorted(listing) if listing is not None else _directory_names_from_state(current, location_id, parent)
+    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}".encode("utf-8")).hexdigest()
+
+    def document(names: list[str]) -> dict[str, Any]:
+        return {"locationId": location_id, "parentRelativePath": parent, "names": names}
+
+    return {
+        "kind": "files.directory",
+        "id": f"files.directory.{digest}",
+        "current": document(current_names),
+        "proposed": document([]),
+    }
 
 
 def _open_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
@@ -1765,6 +1819,23 @@ def _trash_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> di
         item["rank"] = rank
     return state
 
+def _manage_trash(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
+    state = deepcopy(dict(current))
+    location = _location(state, arguments["locationId"], writable=True)
+    if location["kind"] != "trash":
+        raise _precondition("Only the Trash location can be emptied.", location["id"])
+    top = _trash_top_level(state, location["id"])
+    _refuse_unemptyable_trash(top, state)
+    removed = {entry["id"] for entry in top}
+    if not removed:
+        return state
+    state["entries"] = [entry for entry in state["entries"] if entry["id"] not in removed]
+    state["recent"] = [item for item in state["recent"] if item["entryId"] not in removed]
+    for rank, item in enumerate(sorted(state["recent"], key=lambda value: value["rank"])):
+        item["rank"] = rank
+    return state
+
+
 def _restore_entry(current: Mapping[str, Any], arguments: Mapping[str, Any]) -> dict[str, Any]:
     state = deepcopy(dict(current))
     selected = _entry(state, arguments["entryId"])
@@ -1870,6 +1941,7 @@ OPERATIONS = {
     "entry.delete": OperationSpec("entry.delete", _normalize_entry, _delete_entry, _summary("delete"), _rename_guards, _entry_delete_scope),
     "entry.trash": OperationSpec("entry.trash", _normalize_entry, _trash_entry, _summary("Trash"), _anchors, _entry_trash_scope),
     "trash.restore": OperationSpec("trash.restore", _normalize_entry, _restore_entry, _summary("restore"), _anchors, _trash_restore_scope),
+    "trash.manage": OperationSpec("trash.manage", _normalize_manage, _manage_trash, _summary("Empty Bin"), _anchors, _trash_manage_scope),
     "entry.open": OperationSpec("entry.open", _normalize_entry, _open_entry, _open_summary, _open_guards, _entry_open_scope),
     "mount.connect": OperationSpec("mount.connect", _normalize_mount, _connect, _summary("mount connection"), _anchors),
     "mount.disconnect": OperationSpec("mount.disconnect", _normalize_mount, _disconnect, _summary("mount disconnection"), _anchors),
