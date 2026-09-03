@@ -1384,41 +1384,70 @@ def _copy_destination_inside_source(selected: Mapping[str, Any], dest_location_i
 
 
 def _entry_delete_scope(current: Mapping[str, Any], proposed: Mapping[str, Any], arguments: Mapping[str, Any], backend: Any) -> dict[str, Any]:
-    selected = _entry(current, arguments["entryId"])
-    location = _location(current, selected["locationId"], writable=True)
-    if location["kind"] == "trash":
-        raise _precondition("Trash entries cannot be permanently deleted.", selected["id"])
-    if selected["kind"] == "directory":
-        if any(entry["parentId"] == selected["id"] for entry in current["entries"]):
-            raise _precondition("Only empty directories can be permanently deleted.", selected["id"])
-    elif selected["kind"] != "file":
-        raise _precondition("The selected entry is not a regular file.", selected["id"])
-    location_id = selected["locationId"]
-    relative = selected["relativePath"]
-    parent = relative.rsplit("/", 1)[0] if "/" in relative else ""
-    name = selected["name"]
+    matches = [entry for entry in current["entries"] if entry["id"] == arguments["entryId"]]
+    hint = None
+    if backend is not None:
+        hints = getattr(backend, "_entry_delete_hints", None)
+        if not isinstance(hints, dict):
+            hints = {}
+            backend._entry_delete_hints = hints
+        hint = hints.get(arguments["entryId"])
+    if matches:
+        selected = _entry(current, arguments["entryId"])
+        location = _location(current, selected["locationId"], writable=True)
+        if location["kind"] == "trash":
+            raise _precondition("Trash entries cannot be permanently deleted.", selected["id"])
+        if selected["kind"] == "directory":
+            if any(entry["parentId"] == selected["id"] for entry in current["entries"]):
+                raise _precondition("Only empty directories can be permanently deleted.", selected["id"])
+        elif selected["kind"] != "file":
+            raise _precondition("The selected entry is not a regular file.", selected["id"])
+        location_id = selected["locationId"]
+        relative = selected["relativePath"]
+        parent = relative.rsplit("/", 1)[0] if "/" in relative else ""
+        name = selected["name"]
+        identity = selected["identity"]
+        if backend is not None:
+            backend._entry_delete_hints[selected["id"]] = {
+                "locationId": location_id,
+                "parent": parent,
+                "name": name,
+                "identity": identity,
+            }
+    elif isinstance(hint, Mapping) and hint.get("locationId") and hint.get("name") and hint.get("identity"):
+        location_id = hint["locationId"]
+        parent = hint.get("parent") if isinstance(hint.get("parent"), str) else ""
+        name = hint["name"]
+        identity = hint["identity"]
+    else:
+        raise _precondition("The selected entry is not present in the current workspace.", arguments["entryId"])
     listing = None
     if backend is not None and hasattr(backend, "directory_listing"):
         listing = backend.directory_listing(location_id, parent)
     current_names = sorted(listing) if listing is not None else _directory_names_from_state(current, location_id, parent)
-    if name not in current_names:
+    if matches and name not in current_names:
         current_names = sorted([*current_names, name])
-    proposed_names = sorted(candidate for candidate in current_names if candidate != name)
-    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}\0{selected['id']}".encode("utf-8")).hexdigest()
+    if matches:
+        proposed_names = sorted(candidate for candidate in current_names if candidate != name)
+        listing_current, listing_proposed = current_names, proposed_names
+    else:
+        listing_current = sorted(candidate for candidate in current_names if candidate != name)
+        listing_proposed = list(listing_current)
+    digest = hashlib.sha256(f"files.directory\0{location_id}\0{parent}\0{arguments['entryId']}".encode("utf-8")).hexdigest()
 
-    def document(names: list[str], identity: str) -> dict[str, Any]:
+    def document(names: list[str]) -> dict[str, Any]:
         return {
             "locationId": location_id,
             "parentRelativePath": parent,
             "names": names,
-            "selectedEntry": {"entryId": selected["id"], "identity": identity},
+            "selectedEntry": {"entryId": arguments["entryId"], "identity": identity},
         }
 
     return {
         "kind": "files.directory",
         "id": f"files.directory.{digest}",
-        "current": document(current_names, selected["identity"]),
-        "proposed": document(proposed_names, selected["identity"]),
+        "current": document(listing_current),
+        "proposed": document(listing_proposed),
     }
 
 
