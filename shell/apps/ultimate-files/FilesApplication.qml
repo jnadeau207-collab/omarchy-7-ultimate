@@ -455,7 +455,7 @@ Item {
     if (key === "rename") { root.beginRename(root.selectedRecord); return }
     if (key === "copy") { root.stageCopy(root.selectedRecord); return }
     if (key === "paste") { root.pasteStagedCopy(); return }
-    if (key === "delete") { root.trashEntry(root.selectedRecord); return }
+    if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }
     if (key === "properties") { propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
@@ -474,7 +474,7 @@ Item {
     else if (event.key === Qt.Key_F2) { root.beginRename(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_C) { root.stageCopy(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { root.pasteStagedCopy(); event.accepted = true }
-    else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }
+    else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }
   }
 
   Timer {
