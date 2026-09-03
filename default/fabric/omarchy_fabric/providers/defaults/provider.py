@@ -38,6 +38,7 @@ STATE_CONTRACT_ID = "urn:omarchy:fabric:provider:defaults:operation-state:v0"
 MAX_CONFIG_BYTES = 32 * 1024
 MAX_DESKTOP_BYTES = 64 * 1024
 MAX_DESKTOP_FILES = 128
+MAX_STARTUP_FILES = 64
 MAX_REAL_STATE_BYTES = 36 * 1024
 
 MIME_TYPES = (
@@ -123,6 +124,10 @@ def _validate_database_schema(state: Mapping[str, Any]) -> None:
 def _association_id(kind: str, key: str) -> str:
     return stable_resource_id(DOMAIN, "association", f"{kind}\0{key}")
 
+
+def _startup_id(source: str, desktop_id: str) -> str:
+    return stable_resource_id(DOMAIN, "startup", f"{source}\0{desktop_id}")
+
 def _application_id(desktop_id: str) -> str:
     return stable_resource_id(DOMAIN, "app", desktop_id)
 
@@ -140,6 +145,21 @@ def validate_database(state: Mapping[str, Any]) -> None:
     _validate_database_schema(state)
     applications = state["applications"]
     associations = state["associations"]
+    startup = state.get("startup", ())
+    if not isinstance(startup, (list, tuple)):
+        raise ValueError("startup inventory must be a sequence")
+    startup_ids = [entry["id"] for entry in startup]
+    if len(startup_ids) != len(set(startup_ids)):
+        raise ValueError("startup identities must be unique")
+    for entry in startup:
+        if entry["id"] != _startup_id(entry["source"], entry["desktopId"]):
+            raise ValueError("startup identity is not deterministic")
+        if entry["source"] not in {"user", "system"}:
+            raise ValueError("startup entry has no authoritative source")
+        if not isinstance(entry["enabled"], bool):
+            raise ValueError("startup entry enabled must be a boolean")
+        if not isinstance(entry["name"], str) or not entry["name"]:
+            raise ValueError("startup entry has no display name")
     app_ids = [app["id"] for app in applications]
     desktop_ids = [app["desktopId"] for app in applications]
     association_ids = [association["id"] for association in associations]
@@ -199,10 +219,13 @@ def canonicalize_database(state: Mapping[str, Any]) -> dict[str, Any]:
         association["candidateAppIds"] = sorted(association["candidateAppIds"])
     normalized["applications"] = sorted(normalized["applications"], key=lambda item: item["id"])
     normalized["associations"] = sorted(normalized["associations"], key=lambda item: item["id"])
+    normalized["startup"] = sorted(normalized.get("startup", []), key=lambda item: item["id"])
     validate_database(normalized)
     return normalized
 
-READ_COMPLETENESS_CODES = frozenset({"defaults.application-inventory-truncated"})
+READ_COMPLETENESS_CODES = frozenset(
+    {"defaults.application-inventory-truncated", "defaults.autostart-inventory-truncated"}
+)
 
 class RealDefaultsBackend:
     """No-follow desktop inventory plus code-owned fixed-argv xdg-mime reads."""
@@ -235,9 +258,11 @@ class RealDefaultsBackend:
 
     async def snapshot(self) -> StateSnapshot:
         applications_task = asyncio.to_thread(self._applications)
+        startup_task = asyncio.to_thread(self._startup)
         probe_tasks = [invoke_probe(command, self.runner) for command in QUERY_COMMANDS.values()]
-        applications_result, *probe_results = await asyncio.gather(
+        applications_result, startup_result, *probe_results = await asyncio.gather(
             applications_task,
+            startup_task,
             *probe_tasks,
             return_exceptions=True,
         )
@@ -256,6 +281,19 @@ class RealDefaultsBackend:
             )
         applications, inventory_reasons = applications_result
         reasons.extend(inventory_reasons)
+        if isinstance(startup_result, Exception):
+            startup: list[dict[str, Any]] = []
+            reasons.append(
+                _reason(
+                    "defaults.autostart-inventory-unavailable",
+                    "Startup inventory is unavailable",
+                    "The no-follow autostart inventory could not be constructed.",
+                    detail=type(startup_result).__name__,
+                )
+            )
+        else:
+            startup, startup_reasons = startup_result
+            reasons.extend(startup_reasons)
         home_safe = _directory_is_safe(self.home)
         home_writable = home_safe and directory_writable_no_follow(self.home)
         if not home_safe:
@@ -317,6 +355,7 @@ class RealDefaultsBackend:
             "databaseId": RESOURCE_ID,
             "applications": sorted(applications, key=lambda item: item["id"]),
             "associations": sorted(associations, key=lambda item: item["id"]),
+            "startup": sorted(startup, key=lambda item: item["id"]),
         }
         truncated = False
         while len(canonical_json(state).encode("utf-8")) > MAX_REAL_STATE_BYTES and state["applications"]:
@@ -461,6 +500,116 @@ class RealDefaultsBackend:
             ))
         return list(applications.values()), reasons
 
+    def _startup(self) -> tuple[list[dict[str, Any]], list[FabricError]]:
+        entries: dict[str, dict[str, Any]] = {}
+        reasons: list[FabricError] = []
+        examined = 0
+        truncated = False
+        for source, root in self._startup_roots():
+            if examined >= MAX_STARTUP_FILES:
+                truncated = True
+                break
+            try:
+                if os.name == "posix":
+                    directory_fd = open_directory_path_no_follow(root)
+                else:
+                    root_lstat = os.lstat(root)
+                    if stat.S_ISLNK(root_lstat.st_mode) or not stat.S_ISDIR(root_lstat.st_mode):
+                        raise OSError("unsafe autostart directory")
+                    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+                    directory_fd = os.open(root, flags)
+                opened = os.fstat(directory_fd)
+                if not stat.S_ISDIR(opened.st_mode):
+                    os.close(directory_fd)
+                    raise OSError("autostart directory identity changed")
+            except FileNotFoundError:
+                continue
+            except OSError:
+                reasons.append(
+                    _reason(
+                        "defaults.autostart-root-unsafe",
+                        "Startup inventory is degraded",
+                        "An autostart directory is not a real no-follow directory.",
+                        detail=source,
+                        retryable=False,
+                    )
+                )
+                continue
+            try:
+                try:
+                    names = sorted(os.listdir(directory_fd))
+                except OSError:
+                    reasons.append(
+                        _reason(
+                            "defaults.autostart-root-unreadable",
+                            "Startup inventory is degraded",
+                            "An autostart directory could not be enumerated after its no-follow identity was established.",
+                            detail=source,
+                        )
+                    )
+                    continue
+                for name in names:
+                    if examined >= MAX_STARTUP_FILES:
+                        truncated = True
+                        break
+                    if not _valid_desktop_id(name):
+                        continue
+                    if name in entries:
+                        continue
+                    examined += 1
+                    try:
+                        descriptor = os.open(name, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
+                        try:
+                            file_stat = os.fstat(descriptor)
+                            if not stat.S_ISREG(file_stat.st_mode) or file_stat.st_size > MAX_DESKTOP_BYTES:
+                                continue
+                            raw = _read_bounded(descriptor, MAX_DESKTOP_BYTES)
+                            after = os.fstat(descriptor)
+                            if (
+                                file_stat.st_dev,
+                                file_stat.st_ino,
+                                file_stat.st_mode,
+                                file_stat.st_size,
+                                file_stat.st_mtime_ns,
+                                file_stat.st_ctime_ns,
+                            ) != (
+                                after.st_dev,
+                                after.st_ino,
+                                after.st_mode,
+                                after.st_size,
+                                after.st_mtime_ns,
+                                after.st_ctime_ns,
+                            ):
+                                raise ValueError("autostart file changed while it was read")
+                        finally:
+                            os.close(descriptor)
+                        parsed = _parse_autostart(raw, name, source, file_stat)
+                    except (OSError, UnicodeError, ValueError):
+                        continue
+                    if parsed is not None:
+                        entries[name] = parsed
+            finally:
+                os.close(directory_fd)
+            if truncated:
+                break
+        if truncated:
+            reasons.append(
+                _reason(
+                    "defaults.autostart-inventory-truncated",
+                    "Startup inventory is truncated",
+                    "The bounded autostart inventory reached its configured limit.",
+                    retryable=False,
+                    recovery=("defaults.query",),
+                )
+            )
+        return list(entries.values()), reasons
+
+    def _startup_roots(self) -> tuple[tuple[str, Path], ...]:
+        return (
+            ("user", self.home / ".config" / "autostart"),
+            ("system", Path("/etc/xdg/autostart")),
+        )
+
     def _application_roots(self) -> tuple[tuple[str, Path], ...]:
         return (
             ("user", self.home / ".local" / "share" / "applications"),
@@ -543,6 +692,51 @@ def _parse_desktop(raw: bytes, desktop_id: str, source: str, file_stat: os.stat_
         "identity": identity,
         "reason": None,
     }
+
+def _parse_autostart(raw: bytes, desktop_id: str, source: str, file_stat: os.stat_result) -> dict[str, Any] | None:
+    text = raw.decode("utf-8", errors="strict")
+    in_desktop = False
+    values: dict[str, str] = {}
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            in_desktop = line == "[Desktop Entry]"
+            continue
+        if not in_desktop or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key in {"Type", "Name", "Hidden", "X-GNOME-Autostart-enabled"}:
+            if key in values:
+                raise ValueError("duplicate autostart key")
+            values[key] = value.strip()
+    if values.get("Type") != "Application" or not values.get("Name"):
+        return None
+    name = _safe_display_field(values["Name"], 160)
+    enabled = values.get("Hidden", "false").lower() != "true" and values.get(
+        "X-GNOME-Autostart-enabled", "true"
+    ).lower() != "false"
+    identity = state_revision(
+        {
+            "desktopId": desktop_id,
+            "source": source,
+            "device": file_stat.st_dev,
+            "inode": file_stat.st_ino,
+            "ctimeNs": file_stat.st_ctime_ns,
+            "content": state_revision(text),
+            "enabled": enabled,
+        }
+    )
+    return {
+        "id": _startup_id(source, desktop_id),
+        "desktopId": desktop_id,
+        "name": name,
+        "enabled": enabled,
+        "source": source,
+        "identity": identity,
+    }
+
 
 def _safe_display_field(value: str, maximum: int) -> str:
     if not value or len(value) > maximum:

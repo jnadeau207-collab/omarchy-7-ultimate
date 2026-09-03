@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup and background application inventory remain unavailable from Settings."
+    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings."
   },
   {
     routeId: "settings.accessibility.overview",
@@ -687,6 +687,34 @@ function normalizeApplication(application, index) {
   }
 }
 
+function normalizeStartup(entry, index) {
+  if (!isObject(entry) || typeof entry.id !== "string" || entry.id.length > 160) return null
+  if (typeof entry.desktopId !== "string" || typeof entry.name !== "string" || entry.name === "") return null
+  if (entry.enabled !== true && entry.enabled !== false) return null
+  if (entry.source !== "user" && entry.source !== "system") return null
+  return {
+    id: entry.id,
+    label: clippedText(entry.name, 240),
+    kind: "startup",
+    status: entry.enabled ? "enabled" : "disabled",
+    subtitle: clippedText(entry.desktopId + (entry.source === "user" ? " (your autostart)" : " (system autostart)"), 240),
+    details: detailFields(entry, { id: true, name: true, desktopId: true }),
+    desktopId: entry.desktopId,
+    startupEnabled: entry.enabled,
+    startupSource: entry.source,
+    order: index
+  }
+}
+
+function startupEntries(records) {
+  if (!Array.isArray(records)) return []
+  var out = []
+  for (var i = 0; i < records.length; i++) {
+    if (records[i] && records[i].kind === "startup") out.push(records[i])
+  }
+  return out
+}
+
 function payloadAvailability(value) {
   var availability = isObject(value && value.availability) ? value.availability : null
   if (!availability) return { state: "unknown", detail: "The provider result has no availability declaration." }
@@ -727,6 +755,9 @@ function validateReadResult(query, entry, result) {
       if (!Array.isArray(result.value.state.applications) || result.value.state.applications.length > MAX_SOURCE_RECORDS ||
           !Array.isArray(result.value.state.associations) || result.value.state.associations.length > MAX_SOURCE_RECORDS)
         return "The defaults database inventory exceeds the Settings source bound."
+      if (result.value.state.startup !== undefined &&
+          (!Array.isArray(result.value.state.startup) || result.value.state.startup.length > MAX_SOURCE_RECORDS))
+        return "The defaults database inventory exceeds the Settings source bound."
     }
   }
   return ""
@@ -744,7 +775,8 @@ function normalizedRecords(query, value, selectedResourceId) {
   } else if (query.providerId === "defaults.provider" && isObject(value.state)) {
     var associations = value.state.associations
     var applications = value.state.applications
-    sourceCount = associations.length + applications.length
+    var startup = Array.isArray(value.state.startup) ? value.state.startup : []
+    sourceCount = associations.length + applications.length + startup.length
     for (var j = 0; j < associations.length; j++) {
       var association = normalizeAssociation(associations[j], j)
       if (association) all.push(association)
@@ -752,6 +784,10 @@ function normalizedRecords(query, value, selectedResourceId) {
     for (var k = 0; k < applications.length; k++) {
       var application = normalizeApplication(applications[k], associations.length + k)
       if (application) all.push(application)
+    }
+    for (var t = 0; t < startup.length; t++) {
+      var startupEntry = normalizeStartup(startup[t], associations.length + applications.length + t)
+      if (startupEntry) all.push(startupEntry)
     }
   }
   var selectedMissing = false
@@ -1208,6 +1244,8 @@ if (typeof module !== "undefined") {
     browserAssociation: browserAssociation,
     browserCandidates: browserCandidates,
     mimeAssociations: mimeAssociations,
+    normalizeStartup: normalizeStartup,
+    startupEntries: startupEntries,
     normalizeAssociation: normalizeAssociation,
     normalizeApplication: normalizeApplication,
     MAX_DISPLAY_TEXT: MAX_DISPLAY_TEXT,

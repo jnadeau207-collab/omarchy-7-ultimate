@@ -56,6 +56,8 @@ Item {
   property string operationMimeKey: ""
   property string operationMimeAppId: ""
 
+  readonly property var startupRows: SettingsModel.startupEntries(queryState.records)
+
   function firstBrowserResource() {
     if (!currentRoute || currentRoute.id !== "settings.apps.overview") return null
     var record = SettingsModel.browserAssociation(queryState.records)
@@ -1017,6 +1019,90 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Only applications that declare they handle each type are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
+            Rectangle {
+              visible: root.currentRoute && root.currentRoute.id === "settings.apps.overview" && root.startupRows.length > 0
+              Layout.fillWidth: true
+              implicitHeight: startupColumn.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: Semantics.text(root.productProfile, "Startup applications")
+
+              ColumnLayout {
+                id: startupColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    textFormat: Text.PlainText
+                    text: Semantics.text(root.productProfile, "Startup applications")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: "READ ONLY"
+                    tone: "info"
+                    semanticProfile: root.productProfile
+                  }
+                }
+
+                Repeater {
+                  model: root.startupRows
+                  delegate: RowLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: Style.space(8)
+
+                    Text {
+                      textFormat: Text.PlainText
+                      text: modelData.label
+                      color: Tokens.text.primary
+                      font.family: Tokens.typography.family
+                      font.pixelSize: Style.font.body
+                      Layout.fillWidth: true
+                    }
+
+                    Text {
+                      textFormat: Text.PlainText
+                      text: modelData.startupSource === "user" ? "Your autostart" : "System autostart"
+                      color: Tokens.text.secondary
+                      font.family: Tokens.typography.family
+                      font.pixelSize: Style.font.bodySmall
+                    }
+
+                    Ui.Badge {
+                      text: modelData.startupEnabled ? "ENABLED" : "DISABLED"
+                      tone: modelData.startupEnabled ? "success" : "info"
+                      semanticProfile: root.productProfile
+                    }
+                  }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: Semantics.text(root.productProfile,
+                    "These entries launch at sign-in. Settings cannot enable, disable, or remove them.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall

@@ -65,6 +65,19 @@
       },
       "additionalProperties": false
     },
+    "startupEntry": {
+      "type": "object",
+      "required": ["id", "desktopId", "name", "enabled", "source", "identity"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "desktopId": {"type": "string", "pattern": "^[A-Za-z0-9_.+-]+\\.desktop$", "maxLength": 255},
+        "name": {"type": "string", "minLength": 1, "maxLength": 160},
+        "enabled": {"type": "boolean"},
+        "source": {"type": "string", "enum": ["user", "system"]},
+        "identity": {"$ref": "#/$defs/revision"}
+      },
+      "additionalProperties": false
+    },
     "database": {
       "type": "object",
       "required": ["schemaVersion", "databaseId", "applications", "associations"],
@@ -72,7 +85,8 @@
         "schemaVersion": {"const": "v0"},
         "databaseId": {"const": "defaults.database.primary"},
         "applications": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/application"}},
-        "associations": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/association"}}
+        "associations": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/association"}},
+        "startup": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/startupEntry"}}
       },
       "additionalProperties": false
     }

@@ -138,6 +138,14 @@ grep -Fq 'if (!supported) return' "$application" ||
   fail "Settings refuses a MIME application the row does not list as a candidate"
 grep -Eq 'currentRoute\.id !== "settings\.apps\.overview"\) return$' "$application" ||
   fail "Settings offers MIME defaults only on the Apps overview route"
+grep -Fq 'id: startupColumn' "$application" || fail "Settings shows a Startup applications card"
+grep -Fq 'readonly property var startupRows: SettingsModel.startupEntries(queryState.records)' "$application" \
+  || fail "Settings reads startup rows through the typed model"
+if grep -Eq 'startup.*operation\.preflight|operation\.preflight.*startup' "$application"; then
+  fail "Settings must not wire a startup mutation"
+fi
+grep -Fq 'These entries launch at sign-in. Settings cannot enable, disable, or remove them.' "$application" \
+  || fail "Settings states the startup refusal on the card"
 grep -Fq 'MIME defaults apply through defaults.provider mime.set' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS records MIME LIVE CONTROL in Settings Apps"
 pass "Settings drives protocol.set through the typed operation plane only"
@@ -216,7 +224,9 @@ const appsQuery = Model.queryForRoute('settings.apps.overview')
 assert(appsQuery.coverage.indexOf('protocol.set') >= 0, 'the apps coverage note names the settable verb')
 assert(appsQuery.coverage.indexOf('defaults.inspect') >= 0, 'the apps coverage note names MIME inspect inventory')
 assert(appsQuery.coverage.indexOf('MIME defaults apply through defaults.provider mime.set') >= 0, 'the apps coverage note names the live MIME verb')
-assert(appsQuery.coverage.indexOf('Startup and background application inventory remain unavailable') >= 0, 'the apps coverage note still refuses what Settings cannot do')
+assert(appsQuery.coverage.indexOf('Startup applications are readable through defaults.inspect') >= 0, 'the apps coverage note names the readable startup inventory')
+assert(appsQuery.coverage.indexOf('Settings cannot enable, disable, or remove startup applications') >= 0, 'the apps coverage note refuses startup mutation')
+assert(appsQuery.coverage.indexOf('Background application inventory remains unavailable') >= 0, 'the apps coverage note still refuses what Settings cannot do')
 
 const mimeAppZ = Model.normalizeApplication({ id: 'defaults.app.z', name: 'TextPro', state: 'available', desktopId: 'textpro.desktop' }, 3)
 const mimeRows = Model.mimeAssociations([
@@ -231,6 +241,17 @@ assertEqual(mimeRows.length, 1, 'only a writable MIME row with a real choice is 
 assertEqual(mimeRows[0].key, 'text/plain', 'the offered MIME row keeps its key')
 assertDeepEqual(mimeRows[0].candidates, [{ id: 'defaults.app.x', label: 'Firefox' }, { id: 'defaults.app.z', label: 'TextPro' }], 'only installed candidates are offered for a MIME row')
 assertDeepEqual(Model.mimeAssociations('nope'), [], 'non-array records offer no MIME rows')
+
+const startupOn = Model.normalizeStartup({ id: 'defaults.startup.aaa', desktopId: 'notes.desktop', name: 'Notes', enabled: true, source: 'user' }, 0)
+assertEqual(startupOn.kind, 'startup', 'startup entries normalize to their own kind')
+assertEqual(startupOn.status, 'enabled', 'an enabled startup entry reads enabled')
+const startupOff = Model.normalizeStartup({ id: 'defaults.startup.bbb', desktopId: 'quiet.desktop', name: 'Quiet', enabled: false, source: 'system' }, 1)
+assertEqual(startupOff.status, 'disabled', 'a disabled startup entry reads disabled')
+assertEqual(Model.normalizeStartup({ id: 'x', desktopId: 'a.desktop', name: '', enabled: true, source: 'user' }, 0), null, 'a nameless startup entry is refused')
+assertEqual(Model.normalizeStartup({ id: 'x', desktopId: 'a.desktop', name: 'A', enabled: 'yes', source: 'user' }, 0), null, 'a non-boolean startup flag is refused')
+assertEqual(Model.normalizeStartup({ id: 'x', desktopId: 'a.desktop', name: 'A', enabled: true, source: 'local' }, 0), null, 'a non-autostart startup source is refused')
+assertDeepEqual(Model.startupEntries([{ kind: 'startup' }, { kind: 'application' }]), [{ kind: 'startup' }], 'only startup records are offered as startup rows')
+assertDeepEqual(Model.startupEntries('nope'), [], 'non-array records offer no startup rows')
 
 function radioRecord(state) {
   return Model.normalizeLeafResource({ id: 'network.radio.wifi', label: 'Wi-Fi', kind: 'radio', state: state }, 0)
