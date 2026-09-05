@@ -839,7 +839,7 @@ if "Recycle Bin / files.trash.manage residual OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry Recycle Bin / files.trash.manage residual OPEN")
 if "Recycle Bin / files.trash.manage residual OPEN after PR #48" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the Recycle leftover after PR #48")
-if "Empty Bin LIVE" in gaps:
+if "Empty Bin LIVE" in gaps and "Empty Bin LIVE residual OPEN" not in gaps and "Empty Bin LIVE residual stays OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps invented Empty Bin LIVE")
 if "files.trash.manage present" in gaps:
     raise SystemExit("fleet-doctrine-gaps invented files.trash.manage present")
@@ -897,6 +897,15 @@ if "Settings does not offer MIME LIVE CONTROL" not in gaps:
     raise SystemExit("fleet-doctrine-gaps dated #49/#62 leftovers must stay tip-true")
 if "Honesty addendum 2026-09-05" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated 2026-09-05 addendum instead of rewriting leftover #49/#62")
+if "Honesty addendum 2026-09-05 vs Recycle desktop place" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Recycle desktop place addendum")
+if "Desktop Recycle icon is the shipped" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name the shipped Recycle Bin.desktop shortcut")
+recycle_shortcut = root / "default/ultimate/desktop/Recycle Bin.desktop"
+if not recycle_shortcut.is_file():
+    raise SystemExit("Desktop Mode must ship Recycle Bin.desktop")
+if "files.trash" not in recycle_shortcut.read_text(encoding="utf-8"):
+    raise SystemExit("Recycle Bin.desktop must launch files.trash")
 if "claims: missing=35, partial=6, plumbing=4, present=0, prototype=37" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
 if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
@@ -1809,6 +1818,8 @@ if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in desktop_note
     raise SystemExit("PARITY Recycle row dropped Recycle leftover after PR #63")
 if "Recycle Bin is not product-complete" not in desktop_notes:
     raise SystemExit("PARITY Recycle row closed Recycle residual")
+if "Recycle Bin.desktop" not in desktop_notes:
+    raise SystemExit("PARITY Recycle row must name the shipped Recycle Bin.desktop shortcut")
 if "this row is not present" not in desktop_notes:
     raise SystemExit("PARITY Recycle row dropped the not-present close")
 if "files.trash.restore" not in cp or "write plane is reachable" not in cp:
@@ -1849,6 +1860,10 @@ if "emptyBinAuthorized=false" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS residual names Files Empty Bin UI gated emptyBinAuthorized=false")
 if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep Recycle leftover OPEN after PR #63")
+if "Honesty addendum 2026-09-05 vs Recycle desktop place" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must add the Recycle desktop place addendum")
+if "Recycle Bin.desktop" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name the shipped Recycle Bin.desktop shortcut")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")

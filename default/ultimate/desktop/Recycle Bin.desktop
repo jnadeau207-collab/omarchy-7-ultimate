@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Recycle Bin
+Comment=Open Recycle Bin
+Exec=omarchy-launch-files --source desktop files.trash
+Icon=user-trash
+Terminal=false
+Categories=System;
+StartupNotify=true

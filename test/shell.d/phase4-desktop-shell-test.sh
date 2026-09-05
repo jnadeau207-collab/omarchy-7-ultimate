@@ -304,6 +304,10 @@ with tempfile.TemporaryDirectory() as tmp:
         "[Desktop Entry]\nName=Computer\nExec=omarchy-launch-files --source desktop files.this-pc\nIcon=computer\n",
         encoding="utf-8",
     )
+    (desktop / "Recycle Bin.desktop").write_text(
+        "[Desktop Entry]\nName=Recycle Bin\nExec=omarchy-launch-files --source desktop files.trash\nIcon=user-trash\n",
+        encoding="utf-8",
+    )
     env = os.environ.copy()
     env["HOME"] = tmp
     env["XDG_DESKTOP_DIR"] = str(desktop)
@@ -314,6 +318,8 @@ with tempfile.TemporaryDirectory() as tmp:
     assert by_name["notes.txt"]["kind"] == "file"
     assert by_name["Computer"]["kind"] == "application"
     assert by_name["Computer"]["command"] == ["omarchy-launch-files", "--source", "desktop", "files.this-pc"]
+    assert by_name["Recycle Bin"]["kind"] == "application"
+    assert by_name["Recycle Bin"]["command"] == ["omarchy-launch-files", "--source", "desktop", "files.trash"]
     env["XDG_DESKTOP_DIR"] = tmp
     out = subprocess.check_output(["python3", str(root / "shell/plugins/desktop-icons/list-desktop.py")], env=env, text=True)
     data = json.loads(out)
@@ -331,6 +337,21 @@ pass "desktop icon lister reads the real Desktop directory"
   || fail "Desktop Mode ships a Computer desktop shortcut"
 grep -Fq 'files.this-pc' "$ROOT/default/ultimate/desktop/Computer.desktop" \
   || fail "Desktop Computer shortcut opens Files This PC"
+[[ -f "$ROOT/default/ultimate/desktop/Recycle Bin.desktop" ]] \
+  || fail "Desktop Mode ships a Recycle Bin desktop shortcut"
+grep -Fq 'files.trash' "$ROOT/default/ultimate/desktop/Recycle Bin.desktop" \
+  || fail "Desktop Recycle Bin shortcut opens Files trash"
+(
+  seed=$(mktemp -d)
+  HOME=$seed OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788635200.sh"
+  [[ -f "$seed/Desktop/Recycle Bin.desktop" ]] \
+    || fail "Recycle Bin migration copies the shortcut onto Desktop"
+  first=$(stat -c %Y "$seed/Desktop/Recycle Bin.desktop")
+  HOME=$seed OMARCHY_PATH="$ROOT" bash -euo pipefail "$ROOT/migrations/1788635200.sh"
+  second=$(stat -c %Y "$seed/Desktop/Recycle Bin.desktop")
+  [[ $first == "$second" ]] \
+    || fail "Recycle Bin migration is idempotent when the shortcut already exists"
+)
 grep -Fq 'Util.execArgv(["uwsm-app", "--"].concat(argv))' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
   || fail "Desktop shortcuts launch Exec through uwsm argv, not bash -lc string concat"
 grep -Fq 'Util.resolveLaunchArgv(item && item.command, root.omarchyPath)' "$ROOT/shell/plugins/desktop-icons/DesktopIcons.qml" \
