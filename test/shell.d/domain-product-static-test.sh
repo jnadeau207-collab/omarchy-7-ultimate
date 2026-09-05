@@ -429,6 +429,8 @@ if "write plane is reachable" not in desktop:
     raise SystemExit("Desktop row dropped files.trash.manage write plane")
 if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in desktop:
     raise SystemExit("Desktop row dropped Recycle leftover after PR #63")
+if "Recycle Bin.desktop" not in desktop:
+    raise SystemExit("Desktop row must name the shipped Recycle Bin.desktop shortcut")
 if "not product-complete" not in desktop:
     raise SystemExit("Desktop row dropped Recycle not product-complete")
 if "prototype" not in desktop:
