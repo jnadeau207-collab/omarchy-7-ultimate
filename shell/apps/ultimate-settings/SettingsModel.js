@@ -147,6 +147,31 @@ function authorityFooter() {
   return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, and Apps default email are LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
+function operationIdempotencyToken(value) {
+  var text = String(value == null ? "" : value)
+  var out = ""
+  var i
+  for (i = 0; i < text.length; i += 1) {
+    var ch = text.charAt(i)
+    if ((ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z") || (ch >= "0" && ch <= "9") || ch === "." || ch === "_" || ch === ":" || ch === "-") {
+      out += ch
+    } else {
+      out += "."
+    }
+  }
+  if (out.length === 0 || !((out.charAt(0) >= "A" && out.charAt(0) <= "Z") || (out.charAt(0) >= "a" && out.charAt(0) <= "z") || (out.charAt(0) >= "0" && out.charAt(0) <= "9"))) {
+    out = "x" + out
+  }
+  if (out.length > 256) {
+    out = out.slice(0, 256)
+  }
+  return out
+}
+
+function mimeDefaultIdempotencyKey(mimeType, appId, stamp) {
+  return "settings.mime-default." + operationIdempotencyToken(mimeType) + "." + operationIdempotencyToken(appId) + "." + String(stamp)
+}
+
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)
 }
@@ -1293,6 +1318,8 @@ if (typeof module !== "undefined") {
     coverageBadge: coverageBadge,
     coverageTone: coverageTone,
     declaredOpsHonesty: declaredOpsHonesty,
-    authorityFooter: authorityFooter
+    authorityFooter: authorityFooter,
+    operationIdempotencyToken: operationIdempotencyToken,
+    mimeDefaultIdempotencyKey: mimeDefaultIdempotencyKey
   }
 }

@@ -22,7 +22,7 @@ _defaults_helper_spec.loader.exec_module(_defaults_helper)
 clone_database = _defaults_helper.clone_database
 
 from omarchy_fabric.daemon import FabricDaemon
-from omarchy_fabric.models import FixedArgvCommand
+from omarchy_fabric.models import FabricError, FixedArgvCommand
 from omarchy_fabric.operations.coordinator import OperationCoordinator
 from omarchy_fabric.operations.contracts import OperationDefinition
 from omarchy_fabric.operations.executor import IntentCatalog, IntentDefinition, stable_token
@@ -202,3 +202,26 @@ class DefaultsPlaneTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(protocol["scheme"], "https")
         self.assertEqual(protocol["appId"], "defaults.app.browser")
         self.assertEqual(protocol["resourceId"], "defaults.association.https")
+
+    async def test_mime_idempotency_key_rejects_plus_and_slash(self) -> None:
+        with self.assertRaises(FabricError) as raised:
+            await self.coordinator.preflight(
+                self.shell,
+                provider_id="defaults.provider",
+                action="mime.set",
+                arguments={"mimeType": "text/plain", "appId": self.alternate["id"]},
+                idempotency_key="settings.mime-default.image/svg+xml.alt",
+            )
+        self.assertEqual(raised.exception.code, "operation.idempotency-invalid")
+
+    async def test_mime_idempotency_key_accepts_coordinator_charset(self) -> None:
+        planned = await self.coordinator.preflight(
+            self.shell,
+            provider_id="defaults.provider",
+            action="mime.set",
+            arguments={"mimeType": "text/plain", "appId": self.alternate["id"]},
+            idempotency_key="settings.mime-default.image.svg.xml.alt",
+        )
+        payload = self.store.get(planned["operationId"]).plan.intent.payload
+        self.assertEqual(payload["mimeType"], "text/plain")
+        self.assertEqual(payload["appId"], self.alternate["id"])
