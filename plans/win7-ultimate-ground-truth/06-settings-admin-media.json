@@ -36,7 +36,7 @@
       "parity_jobs": [
         "Default Programs"
       ],
-      "product_note": "Phase 5 exit criteria still open. Live host today is defaults.protocol.set (browser LIVE only). Do not invent MIME UI."
+      "product_note": "Phase 5 exit criteria still open. Live host today is Settings > Apps: defaults.protocol.set (browser and mailto) plus partial MIME rows LIVE. Default Programs applet still missing."
     },
     {
       "area": "File/protocol associations + AutoPlay",
@@ -46,7 +46,7 @@
         "File associations",
         "Default Programs"
       ],
-      "product_note": "Phase 6 exit criteria still open. files.associations.set stays missing/planned MIME. Do not invent MIME UI."
+      "product_note": "Phase 6 exit criteria still open. files.associations.set stays missing/planned MIME. partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing."
     },
     {
       "area": "Administration MMC / Task Manager / Device Manager / Disk / Services / Scheduler / Event Viewer / Local Users",
@@ -720,11 +720,12 @@
       "network.manage",
       "display.brightness.set",
       "input.keyboard-layout.set",
-      "defaults.protocol.set"
+      "defaults.protocol.set",
+      "defaults.mime.set"
     ],
     "defaults_writer": "defaults.protocol.set",
-    "defaults_scope": "browser LIVE only",
-    "defaults_mime_plane": "defaults.mime.set write-plane, no Settings LIVE",
+    "defaults_scope": "browser, mailto, and partial MIME rows LIVE; Default Programs applet still missing",
+    "defaults_mime_plane": "defaults.mime.set Settings Apps LIVE for writable multi-candidate rows; Default Programs applet still missing",
     "files_associations": "missing/planned MIME",
     "settings_power_live": "refused",
     "accessibility_panel": "missing",
@@ -797,12 +798,12 @@
       {
         "job": "Change default browser",
         "win7": "Default Programs → Set your default programs → Set this program as default",
-        "omarchy": "Phase 5 exit still open; Settings > Apps defaults.protocol.set (browser LIVE only)"
+        "omarchy": "Phase 5 exit still open; Settings > Apps defaults.protocol.set (browser and mailto); Default Programs applet still missing"
       },
       {
         "job": "Associate one extension",
         "win7": "Associate a file type… → Change program",
-        "omarchy": "Phase 6 exit still open; files.associations.set missing/planned MIME; do not invent MIME UI"
+        "omarchy": "Phase 6 exit still open; partial MIME rows LIVE on Settings > Apps; files.associations.set missing/planned MIME; Default Programs applet still missing"
       },
       {
         "job": "Configure AutoPlay",
