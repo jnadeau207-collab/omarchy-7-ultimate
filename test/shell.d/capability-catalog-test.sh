@@ -148,7 +148,7 @@ elif mutation == "reader-empty-redaction":
 elif mutation == "window-agent-without-entry":
     window_path, window = load("default/ultimate/capabilities/catalog-window-v0.json")
     capability = next(item for item in window["capabilities"] if item["id"] == "window.maximize")
-    capability["source"]["brokerVerb"] = ""
+    capability["availability"]["agent"] = "present"
     save(window_path, window)
 elif mutation == "window-agent-claim-present":
     window_path, window = load("default/ultimate/capabilities/catalog-window-v0.json")
@@ -195,7 +195,7 @@ assert_rejected "unregistered-builtin-reader" "unregistered builtin provider rea
 assert_rejected "phantom-inspect-reader" "capability packages.inspect is not on the packages.provider manifest"
 assert_rejected "reader-agent-available" "must keep availability.agent unavailable"
 assert_rejected "reader-empty-redaction" "has empty redaction.fields"
-assert_rejected "window-agent-without-entry" "window capability window.maximize has availability.agent present without a CapabilityBroker verb"
+assert_rejected "window-agent-without-entry" "window capability window.maximize marks availability.agent present while Fabric principals do not own the verb"
 assert_rejected "window-agent-claim-present" "window capability window.maximize claims present while the broker is an actor-label allowlist"
 
 python3 - "$ROOT" <<'PY' || fail "leftover catalog routes stay honest after Settings inspect hosting"
@@ -206,7 +206,15 @@ from pathlib import Path
 root = Path(sys.argv[1])
 readers = json.loads((root / "default/ultimate/capabilities/catalog-provider-readers-v0.json").read_text(encoding="utf-8"))
 writers = json.loads((root / "default/ultimate/capabilities/catalog-system-jobs-v0.json").read_text(encoding="utf-8"))
+window = json.loads((root / "default/ultimate/capabilities/catalog-window-v0.json").read_text(encoding="utf-8"))
 by_id = {row["id"]: row for row in readers["capabilities"] + writers["capabilities"]}
+window_agent_present = [row["id"] for row in window["capabilities"] if row.get("availability", {}).get("agent") == "present"]
+if window_agent_present:
+    raise SystemExit(f"window capabilities mark availability.agent present without Fabric ownership: {window_agent_present}")
+if any(row.get("availability", {}).get("agent") != "unavailable" for row in window["capabilities"] if row["id"] in {
+    "window.pin", "window.maximize", "window.toggle-show-desktop"
+}):
+    raise SystemExit("broker-catalogued window writers must keep availability.agent unavailable")
 
 inspect_routes = {
     "audio.inspect": ("Settings", "Settings > Sound"),
@@ -886,15 +894,21 @@ if "`defaults.mime.set` write plane is reachable" not in gaps:
 if "association.inspect" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite published association.inspect apply re-read")
 if "Settings does not offer MIME LIVE CONTROL" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep Settings MIME LIVE CONTROL refused")
+    raise SystemExit("fleet-doctrine-gaps dated #49/#62 leftovers must stay tip-true")
+if "Honesty addendum 2026-09-05" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated 2026-09-05 addendum instead of rewriting leftover #49/#62")
+if "claims: missing=35, partial=6, plumbing=4, present=0, prototype=37" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
+if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE and keep the Default Programs applet missing")
 if "defaults.inspect" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name MIME inspect via defaults.inspect")
 if "ad4a68e1b225" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #62 tip parent for the MIME leftover residual")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the MIME leftover after PR #62")
-if "humanRoute.status=planned" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep defaults.mime.set humanRoute planned empty after PR #62")
+if "humanRoute visible `Settings > Apps`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep defaults.mime.set humanRoute visible Settings > Apps after PR #62")
 if "c1886b423c11" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #60 tip parent for the Files leftover residual")
 if "OS clipboard residual OPEN" not in gaps:
@@ -1228,8 +1242,10 @@ gt06_json = json.loads((root / "plans/win7-ultimate-ground-truth/06-settings-adm
 gt06_json_text = json.dumps(gt06_json)
 if "apps.defaults.set" in gt06 or "apps.defaults.set" in gt06_json_text:
     raise SystemExit("06-settings-admin-media still names leftover apps.defaults.set as the live Apps writer")
-if "defaults.protocol.set" not in gt06 or "browser LIVE only" not in gt06:
-    raise SystemExit("06-settings-admin-media does not name defaults.protocol.set as browser LIVE only")
+if "defaults.protocol.set" not in gt06 or "Default Programs applet still missing" not in gt06:
+    raise SystemExit("06-settings-admin-media does not name defaults.protocol.set with the Default Programs applet still missing")
+if "partial MIME rows LIVE on Settings > Apps" not in gt06:
+    raise SystemExit("06-settings-admin-media does not name partial MIME rows LIVE")
 if "files.associations.set" not in gt06 or "missing/planned MIME" not in gt06:
     raise SystemExit("06-settings-admin-media dropped files.associations.set missing/planned MIME")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in gt06:
@@ -1286,11 +1302,11 @@ if "METAL_HEAD closed" in gt06:
 honesty = gt06_json.get("product_honesty") or {}
 if honesty.get("defaults_writer") != "defaults.protocol.set":
     raise SystemExit(f"06 JSON defaults_writer is {honesty.get('defaults_writer')}")
-if honesty.get("defaults_scope") != "browser LIVE only":
+if honesty.get("defaults_scope") != "browser, mailto, and partial MIME rows LIVE; Default Programs applet still missing":
     raise SystemExit(f"06 JSON defaults_scope is {honesty.get('defaults_scope')}")
 if honesty.get("files_associations") != "missing/planned MIME":
     raise SystemExit(f"06 JSON files_associations is {honesty.get('files_associations')}")
-if honesty.get("defaults_mime_plane") != "defaults.mime.set write-plane, no Settings LIVE":
+if honesty.get("defaults_mime_plane") != "defaults.mime.set Settings Apps LIVE for writable multi-candidate rows; Default Programs applet still missing":
     raise SystemExit(f"06 JSON defaults_mime_plane is {honesty.get('defaults_mime_plane')}")
 if honesty.get("settings_power_live") != "refused":
     raise SystemExit(f"06 JSON settings_power_live is {honesty.get('settings_power_live')}")
@@ -1376,8 +1392,10 @@ if "planned host" in cp or "planned Admin" in cp:
     raise SystemExit("fleet-catalog-controlpanel still keeps Admin inspect rows as planned hosts after #36")
 if "apps.defaults.set" in cp:
     raise SystemExit("fleet-catalog-controlpanel still names leftover apps.defaults.set as the live Apps writer")
-if "defaults.protocol.set" not in cp or "browser LIVE only" not in cp:
-    raise SystemExit("fleet-catalog-controlpanel does not name defaults.protocol.set as browser LIVE only")
+if "defaults.protocol.set" not in cp or "Default Programs applet still missing" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel does not name defaults.protocol.set with the Default Programs applet still missing")
+if "partial MIME rows LIVE on Settings > Apps" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel does not name partial MIME rows LIVE")
 if "files.associations.set" not in cp or "missing/planned MIME" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped files.associations.set missing/planned MIME")
 if "publish honest" in cp and "humanRoutes" in cp:
@@ -1925,6 +1943,12 @@ if "MIME / Default Programs association UI residual OPEN after PR #62" not in cp
     raise SystemExit("fleet-catalog-controlpanel dropped MIME leftover after PR #62")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS dropped MIME leftover after PR #62")
+if "Settings does not offer MIME LIVE CONTROL" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS #62 leftover must stay tip-true")
+if "Honesty addendum 2026-09-05" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must date the Settings apply outage instead of rewriting leftover #62")
+if "operation.intent-build-failed" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name the defaults payload KeyError that killed apply")
 if "defaults-mime-set" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS dropped the reachable defaults-mime-set write plane")
 if "REJECTED" not in plan:

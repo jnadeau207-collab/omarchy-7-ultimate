@@ -752,8 +752,8 @@ class FabricDaemon:
 
     @staticmethod
     def _defaults_mime_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
-        proposed = preflight["proposedState"]
-        app_id = proposed["defaultAppId"]
+        arguments = preflight["normalizedArguments"]
+        app_id = arguments["appId"]
         if not isinstance(app_id, str) or not app_id:
             raise FabricError(
                 "operation.invalid-arguments",
@@ -762,13 +762,13 @@ class FabricDaemon:
             )
         return {
             "resourceId": preflight["resource"]["id"],
-            "mimeType": proposed["key"],
+            "mimeType": arguments["mimeType"],
             "appId": app_id,
         }
     @staticmethod
     def _defaults_payload(preflight: Mapping[str, Any]) -> dict[str, Any]:
-        proposed = preflight["proposedState"]
-        app_id = proposed["defaultAppId"]
+        arguments = preflight["normalizedArguments"]
+        app_id = arguments["appId"]
         if not isinstance(app_id, str) or not app_id:
             raise FabricError(
                 "operation.invalid-arguments",
@@ -777,7 +777,7 @@ class FabricDaemon:
             )
         return {
             "resourceId": preflight["resource"]["id"],
-            "scheme": proposed["key"],
+            "scheme": arguments["scheme"],
             "appId": app_id,
         }
     @staticmethod

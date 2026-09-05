@@ -1103,7 +1103,7 @@
         "surface": "Existing window affordances and agent invocation",
         "path": "Superbar window controls; agent capability invocation"
       },
-      "agentAvailability": "present",
+      "agentAvailability": "unavailable",
       "recoveryExpectation": "Window mutations use the existing one-shot undo prototype; durable operation recovery remains required.",
       "proofStatus": "tree-audit",
       "proofIds": [
@@ -1643,7 +1643,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Pin an app",
       "sourceStatus": "automated",
-      "claim": "present",
+      "claim": "partial",
       "capabilityIds": [
         "window.pin"
       ],
@@ -1652,7 +1652,7 @@
         "surface": "Superbar",
         "path": "Right-click app > Pin"
       },
-      "agentAvailability": "present",
+      "agentAvailability": "unavailable",
       "recoveryExpectation": "Undo by removing the exact pin if it has not changed.",
       "proofStatus": "automated",
       "proofIds": [
@@ -1669,7 +1669,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Unpin an app",
       "sourceStatus": "automated",
-      "claim": "present",
+      "claim": "partial",
       "capabilityIds": [
         "window.unpin"
       ],
@@ -1678,7 +1678,7 @@
         "surface": "Superbar",
         "path": "Right-click app > Unpin"
       },
-      "agentAvailability": "present",
+      "agentAvailability": "unavailable",
       "recoveryExpectation": "Undo by restoring the exact pin if the app identity still matches.",
       "proofStatus": "automated",
       "proofIds": [
@@ -1695,7 +1695,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Minimize three windows",
       "sourceStatus": "automated",
-      "claim": "present",
+      "claim": "partial",
       "capabilityIds": [
         "window.minimize"
       ],
@@ -1704,7 +1704,7 @@
         "surface": "Window chrome",
         "path": "Caption > Minimize"
       },
-      "agentAvailability": "present",
+      "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore each exact minimized window.",
       "proofStatus": "automated",
       "proofIds": [
@@ -1721,7 +1721,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Restore the one they want",
       "sourceStatus": "automated",
-      "claim": "present",
+      "claim": "partial",
       "capabilityIds": [
         "window.restore",
         "window.activate"
@@ -1731,7 +1731,7 @@
         "surface": "Superbar",
         "path": "Click the desired taskbar button"
       },
-      "agentAvailability": "present",
+      "agentAvailability": "unavailable",
       "recoveryExpectation": "Re-minimize only while the target fingerprint still matches.",
       "proofStatus": "automated",
       "proofIds": [
@@ -1748,7 +1748,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Snap two windows",
       "sourceStatus": "automated",
-      "claim": "present",
+      "claim": "partial",
       "capabilityIds": [
         "window.snap-left",
         "window.snap-right",
@@ -1759,7 +1759,7 @@
         "surface": "Window chrome",
         "path": "Drag to edge or open Snap chooser"
       },
-      "agentAvailability": "present",
+      "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore each captured normal rectangle.",
       "proofStatus": "automated",
       "proofIds": [

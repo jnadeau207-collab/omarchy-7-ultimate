@@ -138,6 +138,8 @@ if grep -Eq 'xdg-mime|xdg-settings' "$application"; then
   fail "Settings assembles a defaults shell string instead of the typed verb"
 fi
 grep -Fq 'action: "mime.set"' "$application" || fail "Settings uses the typed mime.set action"
+grep -Fq 'SettingsModel.mimeDefaultIdempotencyKey(root.operationMimeKey, root.operationMimeAppId, Date.now())' "$application" ||
+  fail "Settings builds MIME idempotency keys through the coordinator charset sanitizer"
 grep -Fq 'if (!row || row.defaultAppId === appId) return' "$application" ||
   fail "Settings refuses a MIME default that is already set"
 grep -Fq 'if (!supported) return' "$application" ||
@@ -156,6 +158,10 @@ grep -Fq 'These entries launch at sign-in. Settings cannot enable, disable, or r
   || fail "Settings states the startup refusal on the card"
 grep -Fq 'MIME defaults apply through defaults.provider mime.set' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS records MIME LIVE CONTROL in Settings Apps"
+grep -Fq 'Honesty addendum 2026-09-05' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS dates the Settings apply outage instead of rewriting leftover #62"
+grep -Fq 'operation.intent-build-failed' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS names the defaults payload KeyError that killed apply"
 pass "Settings drives protocol.set through the typed operation plane only"
 
 run_node_test <<'JS'
@@ -257,6 +263,14 @@ const mimeRows = Model.mimeAssociations([
 ])
 assertEqual(mimeRows.length, 1, 'only a writable MIME row with a real choice is offered')
 assertEqual(mimeRows[0].key, 'text/plain', 'the offered MIME row keeps its key')
+assertEqual(Model.operationIdempotencyToken('image/svg+xml'), 'image.svg.xml', 'plus-suffix MIME types become coordinator tokens')
+assertEqual(Model.operationIdempotencyToken('application/rss+xml'), 'application.rss.xml', 'rss+xml becomes a coordinator token')
+assertEqual(Model.operationIdempotencyToken('image/vnd.djvu+multipage'), 'image.vnd.djvu.multipage', 'vendor plus-suffix MIME types become coordinator tokens')
+const mimeKey = Model.mimeDefaultIdempotencyKey('image/svg+xml', 'viewer.desktop', 1700000000000)
+assertEqual(mimeKey, 'settings.mime-default.image.svg.xml.viewer.desktop.1700000000000', 'the MIME apply key keeps prefix, tokens, and stamp')
+assert(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/.test(mimeKey), 'the MIME apply key matches the coordinator charset')
+assertEqual(mimeKey.indexOf('+'), -1, 'the MIME apply key drops plus')
+assertEqual(mimeKey.indexOf('/'), -1, 'the MIME apply key drops slash')
 assertDeepEqual(mimeRows[0].candidates, [{ id: 'defaults.app.x', label: 'Firefox' }, { id: 'defaults.app.z', label: 'TextPro' }], 'only installed candidates are offered for a MIME row')
 assertDeepEqual(Model.mimeAssociations('nope'), [], 'non-array records offer no MIME rows')
 
