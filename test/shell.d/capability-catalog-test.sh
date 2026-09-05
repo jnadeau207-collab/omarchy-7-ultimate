@@ -893,8 +893,12 @@ if "`defaults.mime.set` write plane is reachable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the reachable defaults.mime.set write plane")
 if "association.inspect" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite published association.inspect apply re-read")
-if "Settings does not offer MIME LIVE CONTROL" in gaps:
-    raise SystemExit("fleet-doctrine-gaps leftover still refuses Settings MIME LIVE CONTROL after the Apps rows landed")
+if "Settings does not offer MIME LIVE CONTROL" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps dated #49/#62 leftovers must stay tip-true")
+if "Honesty addendum 2026-09-05" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated 2026-09-05 addendum instead of rewriting leftover #49/#62")
+if "claims: missing=35, partial=6, plumbing=4, present=0, prototype=37" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
 if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE and keep the Default Programs applet missing")
 if "defaults.inspect" not in gaps:
@@ -1939,6 +1943,12 @@ if "MIME / Default Programs association UI residual OPEN after PR #62" not in cp
     raise SystemExit("fleet-catalog-controlpanel dropped MIME leftover after PR #62")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS dropped MIME leftover after PR #62")
+if "Settings does not offer MIME LIVE CONTROL" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS #62 leftover must stay tip-true")
+if "Honesty addendum 2026-09-05" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must date the Settings apply outage instead of rewriting leftover #62")
+if "operation.intent-build-failed" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name the defaults payload KeyError that killed apply")
 if "defaults-mime-set" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS dropped the reachable defaults-mime-set write plane")
 if "REJECTED" not in plan:
