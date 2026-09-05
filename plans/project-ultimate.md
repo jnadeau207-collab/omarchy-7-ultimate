@@ -178,6 +178,8 @@ Claims from the 2026-08-22 course-correction that this turn **verified in the tr
 
 ## Phases (vertical product capability)
 
+Appearance is specified separately in [`plans/windows-7-visual-reference.md`](windows-7-visual-reference.md): what each component is in Windows 7 Ultimate, its measured metrics and colours, and the Omarchy file that owns it. A phase is finished when its capability works **and** its surface matches that anatomy. Build from that document, not from a recollection of Windows 7.
+
 The named phases below are the product taxonomy and the execution order. Do not skip Phase 1. Do not treat a later overlay document as a replacement for this list.
 
 ### Phase 0 — Foundation
