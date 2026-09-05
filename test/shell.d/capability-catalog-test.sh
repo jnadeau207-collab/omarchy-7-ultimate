@@ -906,6 +906,63 @@ if not recycle_shortcut.is_file():
     raise SystemExit("Desktop Mode must ship Recycle Bin.desktop")
 if "files.trash" not in recycle_shortcut.read_text(encoding="utf-8"):
     raise SystemExit("Recycle Bin.desktop must launch files.trash")
+files_live_proof = root / "test/acceptance.d/files-live-metal-proof.py"
+if not files_live_proof.is_file():
+    raise SystemExit("Files LIVE metal leftover harness is missing")
+files_live_proof_text = files_live_proof.read_text(encoding="utf-8")
+if "movetoworkspacesilent" in files_live_proof_text:
+    raise SystemExit("Files LIVE metal leftover still uses Hyprland 0.51 movetoworkspacesilent")
+if "hl.dsp.window.move" not in files_live_proof_text:
+    raise SystemExit("Files LIVE metal leftover must park occluders with Hyprland 0.56 hl.dsp.window.move")
+if "omarchy-shell window moveToDesktop" in files_live_proof_text and "without moving the client" not in files_live_proof_text:
+    raise SystemExit("Files LIVE metal leftover must not trust omarchy-shell moveToDesktop on this metal")
+if "HDMI-A-1" not in files_live_proof_text:
+    raise SystemExit("Files LIVE metal leftover must grim HDMI-A-1")
+if "cutAuthorized" not in files_live_proof_text:
+    raise SystemExit("Files LIVE metal leftover must keep Cut unauthorized")
+if "emptyBinAuthorized" not in files_live_proof_text:
+    raise SystemExit("Files LIVE metal leftover must keep Empty Bin unauthorized")
+if "cloudExit0IsNotMetalLeftover" not in files_live_proof_text:
+    raise SystemExit("Files LIVE metal leftover must name Cloud EXIT 0 as not metal leftover")
+if "Honesty addendum 2026-09-05 vs Files LIVE metal leftover" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Files LIVE metal leftover addendum")
+if "Files LIVE Open/Rename/Copy grim leftover OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Files LIVE Open/Rename/Copy grim leftover OPEN")
+if "Cloud EXIT 0 is not metal leftover" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name Cloud EXIT 0 as not metal leftover")
+if "compositor focus stays on Cursor" not in gaps and "Compositor focus stays on Cursor" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name the compositor focus block on Cursor")
+if "e9dda27c70b8fc61fdb7b3f739c3774ca48c9809" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite metal tip e9dda27c for the Files LIVE grim leftover")
+if "9394a019ee4d89954be0eccde682460c7f59f33202c411f5d77dd5a2d1719948" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must cite fail-hdmi.png sha256")
+if "Win7 visual parity from this grim" not in gaps and "Win7 visual parity from hex" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must refuse Win7 visual parity from this grim")
+files_live_leftover_path = root / "test/acceptance.d/leftovers/files-live-metal/leftover.json"
+if not files_live_leftover_path.is_file():
+    raise SystemExit("Files LIVE metal leftover.json is missing")
+files_live_leftover = json.loads(files_live_leftover_path.read_text(encoding="utf-8"))
+if files_live_leftover.get("filesLiveMetal") != "OPEN":
+    raise SystemExit("Files LIVE metal leftover.json must stay OPEN")
+if files_live_leftover.get("focus") != "fail":
+    raise SystemExit("Files LIVE metal leftover.json must keep focus fail")
+if files_live_leftover.get("sha") != "e9dda27c70b8fc61fdb7b3f739c3774ca48c9809":
+    raise SystemExit("Files LIVE metal leftover.json must cite metal tip e9dda27c")
+if (files_live_leftover.get("monitor") or {}).get("name") != "HDMI-A-1":
+    raise SystemExit("Files LIVE metal leftover.json must name HDMI-A-1")
+if files_live_leftover.get("verbs", {}).get("open") != "unrun":
+    raise SystemExit("Files LIVE metal leftover.json must keep Open unrun")
+if files_live_leftover.get("verbs", {}).get("rename") != "unrun":
+    raise SystemExit("Files LIVE metal leftover.json must keep Rename unrun")
+if files_live_leftover.get("verbs", {}).get("copy") != "unrun":
+    raise SystemExit("Files LIVE metal leftover.json must keep Copy unrun")
+if files_live_leftover.get("cutAuthorized") is not False:
+    raise SystemExit("Files LIVE metal leftover.json must keep cutAuthorized false")
+if files_live_leftover.get("emptyBinAuthorized") is not False:
+    raise SystemExit("Files LIVE metal leftover.json must keep emptyBinAuthorized false")
+hdmi_png = root / "test/acceptance.d/leftovers/files-live-metal/fail-hdmi.png"
+if not hdmi_png.is_file():
+    raise SystemExit("Files LIVE metal leftover fail-hdmi.png is missing")
 if "claims: missing=35, partial=6, plumbing=4, present=0, prototype=37" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
 if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
@@ -1864,6 +1921,12 @@ if "Honesty addendum 2026-09-05 vs Recycle desktop place" not in writers_handoff
     raise SystemExit("HANDOFF_WRITERS must add the Recycle desktop place addendum")
 if "Recycle Bin.desktop" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name the shipped Recycle Bin.desktop shortcut")
+if "Honesty addendum 2026-09-05 vs Files LIVE metal leftover" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must add the Files LIVE metal leftover addendum")
+if "Files LIVE Open/Rename/Copy grim leftover OPEN" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep Files LIVE Open/Rename/Copy grim leftover OPEN")
+if "Cloud EXIT 0 is not metal leftover" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name Cloud EXIT 0 as not metal leftover")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")
