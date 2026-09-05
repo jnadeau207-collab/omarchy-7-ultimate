@@ -192,7 +192,7 @@ Item {
       provider: "defaults.provider",
       action: "mime.set",
       arguments: { mimeType: root.operationMimeKey, appId: root.operationMimeAppId },
-      idempotencyKey: "settings.mime-default." + root.operationMimeKey + "." + root.operationMimeAppId + "." + Date.now()
+      idempotencyKey: "settings.mime-default." + String(root.operationMimeKey).replace(/\//g, ".") + "." + root.operationMimeAppId + "." + Date.now()
     })
     if (root.operationRequestId === "") root.resetOperation("Settings could not reach the operation service.")
   }

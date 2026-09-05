@@ -138,6 +138,8 @@ if grep -Eq 'xdg-mime|xdg-settings' "$application"; then
   fail "Settings assembles a defaults shell string instead of the typed verb"
 fi
 grep -Fq 'action: "mime.set"' "$application" || fail "Settings uses the typed mime.set action"
+grep -Fq 'String(root.operationMimeKey).replace(/\//g, ".")' "$application" ||
+  fail "Settings sanitizes MIME slashes out of the coordinator idempotency key"
 grep -Fq 'if (!row || row.defaultAppId === appId) return' "$application" ||
   fail "Settings refuses a MIME default that is already set"
 grep -Fq 'if (!supported) return' "$application" ||
