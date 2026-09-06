@@ -189,10 +189,14 @@ night = by_id["display.night-light.set"]
 route = night["humanRoute"]
 if route.get("status") != "visible" or route.get("surface") != "Settings":
     raise SystemExit(f"display.night-light.set route is {route}")
-if route.get("path") not in {"Settings > Display", "Start > Settings > Display"}:
+if route.get("path") != "Settings > Display; Superbar > Quick Settings > Night light":
     raise SystemExit(f"display.night-light.set path is {route}")
-if "Settings" not in str(route.get("path") or ""):
+if "Settings > Display" not in str(route.get("path") or ""):
     raise SystemExit(f"display.night-light.set underclaims the Settings Display host: {route}")
+if "Superbar > Quick Settings > Night light" not in str(route.get("path") or ""):
+    raise SystemExit(f"display.night-light.set underclaims the QS leftover tile: {route}")
+if route.get("label") != "Turn night light on or off; QS leftover tile remains":
+    raise SystemExit(f"display.night-light.set underclaims the QS leftover tile in label: {route}")
 if night.get("source", {}).get("file") != "shell/plugins/services/nightlight/Service.qml":
     raise SystemExit(f"display.night-light.set source is {night.get('source')}")
 if night.get("source", {}).get("symbol") != "NightlightService":
@@ -268,8 +272,14 @@ for required in (
 ):
     if required not in addendum:
         raise SystemExit(f"fleet-doctrine-gaps night-light addendum dropped OPEN leftover: {required}")
-if "Settings does not invent night-light LIVE" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep Settings from inventing night-light LIVE")
+if "does not invent Fabric durable night-light LIVE / claim=present" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Settings from inventing Fabric durable night-light LIVE / claim=present")
+if "Settings > Display; Superbar > Quick Settings > Night light" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must name both visible night-light routes")
+if "QS leftover tile" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must name the QS leftover tile residual")
+if "Do not walk `windows-native.34` to present" not in addendum and "Do not walk windows-native.34 to present" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must refuse walking windows-native.34 to present")
 if "Do not invent claim=present" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must refuse claim=present invent")
 if "Do not walk `parity.modern-display-scaling-hdr-night-light` to present" not in addendum and "Do not walk parity.modern-display-scaling-hdr-night-light to present" not in addendum:
@@ -280,12 +290,14 @@ if "NightlightService" not in addendum or "Quick Settings" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must name Settings vs QS NightlightService planes")
 if "display.inspect" not in addendum and "Fabric" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must keep Fabric inspect separate")
-if "Settings → Display" in parity and "does not invent night-light LIVE" not in parity and "does not invent a display.provider night-light" not in parity:
-    raise SystemExit("PARITY Display row must keep night-light Fabric LIVE refused")
+if "Settings → Display" in parity and "does not invent Fabric durable night-light LIVE / claim=present" not in parity and "does not invent a display.provider night-light" not in parity:
+    raise SystemExit("PARITY Display row must keep Fabric durable night-light LIVE / claim=present refused")
 if "NightlightService" not in parity:
     raise SystemExit("PARITY Display row must name NightlightService")
-if "Settings does not invent night-light LIVE" not in parity and "does not invent a display.provider night-light" not in parity:
+if "does not invent Fabric durable night-light LIVE / claim=present" not in parity and "does not invent a display.provider night-light" not in parity:
     raise SystemExit("PARITY Display row must refuse a Fabric night-light invent")
+if "Settings > Display; Superbar > Quick Settings > Night light" not in parity:
+    raise SystemExit("PARITY Display row must name both visible night-light routes")
 if "NightlightService" not in settings_api:
     raise SystemExit("settings-service-api must name NightlightService")
 if "Settings Display hosts" not in settings_api and "Settings Display hosts that control" not in settings_api:
@@ -294,6 +306,10 @@ if "display.provider night-light" not in settings_api:
     raise SystemExit("settings-service-api must refuse a display.provider night-light durable writer")
 if "windows-native.34" not in settings_api:
     raise SystemExit("settings-service-api must keep windows-native.34 pending")
+if "does not invent Fabric durable night-light LIVE / claim=present" not in settings_api:
+    raise SystemExit("settings-service-api must refuse Fabric durable night-light LIVE / claim=present")
+if "Settings > Display; Superbar > Quick Settings > Night light" not in settings_api:
+    raise SystemExit("settings-service-api must name both visible night-light routes")
 PY
 
-pass "display.night-light.set stays leftover partial with a visible Settings Display route"
+pass "display.night-light.set stays leftover partial with dual visible Settings Display and QS leftover routes"

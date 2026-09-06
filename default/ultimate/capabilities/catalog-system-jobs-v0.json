@@ -4285,8 +4285,8 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Settings",
-        "label": "Turn night light on or off",
-        "path": "Settings > Display"
+        "label": "Turn night light on or off; QS leftover tile remains",
+        "path": "Settings > Display; Superbar > Quick Settings > Night light"
       },
       "agentCenterLabel": "Turn night light on or off",
       "proofIds": {

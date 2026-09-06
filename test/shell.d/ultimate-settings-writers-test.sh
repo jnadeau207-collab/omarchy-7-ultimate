@@ -94,11 +94,13 @@ if grep -Eq 'action: "night-light|action: "nightlight|provider: "display.provide
 fi
 grep -Fq 'does not invent a display.provider night-light durable writer' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" ||
   fail "Settings Display coverage refuses a Fabric night-light writer"
-grep -Fq 'Settings does not invent night-light LIVE' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
-  fail "fleet-doctrine-gaps keeps Settings from inventing night-light LIVE"
+grep -Fq 'does not invent Fabric durable night-light LIVE / claim=present' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps keeps Settings from inventing Fabric durable night-light LIVE / claim=present"
+grep -Fq 'Settings > Display; Superbar > Quick Settings > Night light' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps names both visible night-light routes"
 grep -Fq 'Settings Power LIVE stays refused' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
   fail "fleet-doctrine-gaps keeps Settings Power LIVE refused"
-pass "Settings does not invent night-light LIVE"
+pass "Settings does not invent Fabric durable night-light LIVE / claim=present"
 
 grep -Fq 'provider: "display.provider"' "$application" || fail "Settings sets brightness through display.provider"
 grep -Fq 'action: "brightness.set"' "$application" || fail "Settings uses the typed brightness.set action"

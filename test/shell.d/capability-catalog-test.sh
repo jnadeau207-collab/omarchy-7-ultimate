@@ -236,7 +236,7 @@ writer_routes = {
     "audio.output.manage": ("Quick Settings", "Superbar > Quick Settings > Sound"),
     "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
-    "display.night-light.set": ("Settings", "Settings > Display"),
+    "display.night-light.set": ("Settings", "Settings > Display; Superbar > Quick Settings > Night light"),
     "network.wifi.connect": ("Settings", "Settings > Network"),
     "power.profile.set": ("Quick Settings", "Superbar > Quick Settings > Power"),
 }
@@ -792,8 +792,10 @@ if "display.night-light.set" not in (parity_display.get("capabilityIds") or []):
 night_light = by_id["display.night-light.set"]
 if night_light["humanRoute"].get("status") != "visible":
     raise SystemExit(f"display.night-light.set underclaims a visible Settings Display host: {night_light.get('humanRoute')}")
-if night_light["humanRoute"].get("surface") != "Settings" or night_light["humanRoute"].get("path") != "Settings > Display":
-    raise SystemExit(f"display.night-light.set underclaims the Settings Display host: {night_light.get('humanRoute')}")
+if night_light["humanRoute"].get("surface") != "Settings" or night_light["humanRoute"].get("path") != "Settings > Display; Superbar > Quick Settings > Night light":
+    raise SystemExit(f"display.night-light.set underclaims the Settings Display host or QS leftover tile: {night_light.get('humanRoute')}")
+if night_light["humanRoute"].get("label") != "Turn night light on or off; QS leftover tile remains":
+    raise SystemExit(f"display.night-light.set underclaims the QS leftover tile in label: {night_light.get('humanRoute')}")
 if night_light.get("availability", {}).get("claim") == "present":
     raise SystemExit("display.night-light.set must not claim present")
 if night_light.get("provider", {}).get("state") != "legacy-direct":
@@ -864,8 +866,10 @@ if "KEEP OPEN" not in gaps or "honesty-gated" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep QS Power leftover OPEN / honesty-gated")
 if "Settings Power LIVE stays refused" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Settings Power LIVE refused")
-if "display.night-light.set" not in gaps or "Settings does not invent night-light LIVE" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep the QS night-light leftover visible without Settings LIVE")
+if "display.night-light.set" not in gaps or "does not invent Fabric durable night-light LIVE / claim=present" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep the QS night-light leftover visible without Fabric durable night-light LIVE / claim=present")
+if "Settings > Display; Superbar > Quick Settings > Night light" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name both visible night-light routes")
 if "process.termination.plan" not in gaps or "Administration > Processes" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name the visible Administration End Task host without LIVE")
 if "shell principal cannot authorize" not in gaps or "UI stays unauthorized" not in gaps:
