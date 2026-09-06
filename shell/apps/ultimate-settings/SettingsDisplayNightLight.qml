@@ -58,7 +58,7 @@ Rectangle {
       return root.sessionNightlight.message
     if (root.sessionNightlight.phase === "succeeded")
       return root.sessionNightlight.message
-    return "Night light uses NightlightService on this session, the same heritage plane as Superbar > Quick Settings. Settings hosts that control here. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. HDR, arrangement, and multi-monitor policy remain unavailable. Scaling is a sibling session leftover. Night light alone is not modern display complete."
+    return "Night light uses tip-true SettingsSessionNightlight.setEnabled → NightlightService on this session, the same heritage plane as Superbar > Quick Settings. Settings hosts that control here. Soft leftover-attaches windows-native.34 to this tip-true Settings > Display night-light plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.34. windows-native.34 stays prototype/pending. Never claim=present. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. HDR, arrangement, and multi-monitor policy remain unavailable. Scaling is a sibling session leftover. Night light alone is not modern display complete. session leftover recorded: Enable night light leftover-attach only (not product CLOSED / not metal CLOSED / not claim=present)."
   }
 
   readonly property string nightlightBadge: {

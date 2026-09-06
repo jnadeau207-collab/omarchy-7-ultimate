@@ -61,9 +61,15 @@ grep -Fq 'settings.display.overview' "$settings_app" || fail "Settings still own
 grep -Fq 'this session' "$settings_card" || fail "Settings Display night-light names the session principal"
 grep -Fq 'Quick Settings' "$settings_card" || fail "Settings Display night-light names the QS plane"
 grep -Fq 'NightlightService' "$settings_card" || fail "Settings Display night-light names NightlightService"
+grep -Fiq 'soft leftover-attaches windows-native.34' "$settings_card" || fail "Settings Display night-light soft leftover-attaches wn.34"
+grep -Fq 'windows-native.34 stays prototype/pending' "$settings_card" || fail "Settings Display night-light keeps wn.34 prototype/pending"
+grep -Fq 'SettingsSessionNightlight.setEnabled' "$settings_card" || fail "Settings Display night-light names tip-true setEnabled"
 grep -Fq 'Fabric' "$settings_card" || fail "Settings Display night-light keeps Fabric inspect honest"
-if grep -Eqi 'claim=present|is modern display complete' "$settings_card" "$settings_app"; then
-  fail "Settings Display night-light must not invent present or modern-display complete"
+if grep -Eqi 'claim=present' "$settings_card" "$settings_app" | grep -Eiv 'not claim=present|Never claim=present|never claim=present'; then
+  fail "Settings Display night-light must not invent claim=present"
+fi
+if grep -Eqi 'is modern display complete' "$settings_card" "$settings_app" | grep -Eiv 'not modern display complete|Night light alone is not modern|Night light or scaling alone is not modern'; then
+  fail "Settings Display night-light must not invent modern-display complete"
 fi
 if grep -Eqi 'invents a display.provider night-light|display.provider night-light.set' "$settings_card" "$settings_app"; then
   fail "Settings Display night-light must not invent a Fabric night-light writer"
@@ -169,6 +175,9 @@ assert(display.coverage.indexOf('NightlightService') >= 0, 'display coverage nam
 assert(display.coverage.indexOf('Quick Settings') >= 0, 'display coverage names the QS plane')
 assert(display.coverage.indexOf('display.inspect') >= 0, 'display coverage keeps Fabric inspect separate')
 assert(display.coverage.indexOf('does not invent a display.provider night-light durable writer') >= 0, 'display coverage refuses a Fabric night-light writer')
+assert(display.coverage.indexOf('soft leftover-attaches windows-native.34') >= 0, 'display coverage soft leftover-attaches wn.34')
+assert(display.coverage.indexOf('windows-native.34 stays prototype/pending') >= 0, 'display coverage keeps wn.34 prototype/pending')
+assert(Model.declaredOpsHonesty('settings.display.overview').indexOf('soft leftover-attaches windows-native.34') >= 0, 'display declared ops soft leftover-attach wn.34')
 assert(display.coverage.indexOf('Resolution, arrangement, and HDR remain unavailable') >= 0, 'display coverage still refuses arrangement and HDR')
 assert(display.coverage.indexOf('does not invent a display.provider scale durable writer') >= 0, 'display coverage refuses a Fabric scale writer')
 assert(display.coverage.indexOf('not modern display complete') >= 0, 'display coverage refuses modern-display complete')
@@ -221,6 +230,15 @@ if night.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"display.night-light.set was raised off leftover: {night.get('provider')}")
 if night.get("provider", {}).get("id") != "display.provider":
     raise SystemExit(f"display.night-light.set provider is {night.get('provider')}")
+recovery = night.get("recovery") or {}
+if recovery.get("mode") != "undo":
+    raise SystemExit(f"display.night-light.set recovery mode is {recovery}")
+if recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"display.night-light.set recovery fingerprint invent: {recovery}")
+exp = recovery.get("expectation") or ""
+for needle in ("setEnabled", "NightlightService", "no Fabric durable undo fingerprint invent"):
+    if needle not in exp:
+        raise SystemExit(f"display.night-light.set recovery missing {needle!r}: {exp}")
 
 by_job = {job["id"]: job for job in jobs["jobs"]}
 parity_display = by_job["parity.display"]
@@ -250,6 +268,12 @@ if native34["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.34 route is {native34.get('humanRoute')}")
 if native34["humanRoute"].get("path") not in {"Settings > Display", "Start > Settings > Display"}:
     raise SystemExit(f"windows-native.34 path is {native34.get('humanRoute')}")
+rec34 = native34.get("recoveryExpectation") or ""
+for needle in ("setEnabled", "NightlightService"):
+    if needle not in rec34:
+        raise SystemExit(f"windows-native.34 recovery missing {needle!r}")
+if "fingerprint invent" not in rec34.lower() and "no Fabric durable undo fingerprint invent" not in rec34:
+    raise SystemExit(f"windows-native.34 recovery must refuse Fabric fingerprint invent: {rec34}")
 
 by_debt = {entry["id"]: entry for entry in debt["entries"]}
 legacy = by_debt["legacy.domain.direct-providers"]
@@ -261,13 +285,20 @@ agent = by_debt["missing.agent.routes"]
 if "display.night-light.set" not in agent.get("capabilityIds", []):
     raise SystemExit("display.night-light.set left missing.agent.routes")
 
-if "Honesty addendum 2026-09-06 vs Settings Display night-light" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display night-light addendum")
-addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings Display night-light", 1)[1].split("Honesty addendum", 1)[0]
-if "CLOSED leftover: Settings Display night-light UI" not in addendum:
-    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Settings Display night-light UI")
+if "Honesty addendum 2026-09-06 vs Settings Display night-light leftover plane (windows-native.34)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display night-light leftover plane addendum")
+addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings Display night-light leftover plane (windows-native.34)", 1)[1].split("Honesty addendum", 1)[0]
+if "CLOSED leftover: Settings Display night-light UI" in addendum:
+    raise SystemExit("fleet-doctrine-gaps invents CLOSED leftover for soft leftover-attach ACC wn.34")
+if "soft leftover-attach acc" not in addendum.lower():
+    raise SystemExit("fleet-doctrine-gaps must soft leftover-attach ACC wn.34")
+if "not product CLOSED" not in addendum or "not metal CLOSED" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must refuse product/metal CLOSED for wn.34")
+if "setEnabled" not in addendum or "NightlightService" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must name tip-true setEnabled → NightlightService")
 for required in (
     "Settings Power LIVE",
+    "Empty Bin LIVE",
     "Files LIVE metal",
     "Win7 visual",
     "End Task LIVE",
@@ -275,6 +306,7 @@ for required in (
     "Software Center present",
     "scaling",
     "HDR",
+    "Soft Ship park",
 ):
     if required not in addendum:
         raise SystemExit(f"fleet-doctrine-gaps night-light addendum dropped OPEN leftover: {required}")
@@ -304,6 +336,10 @@ if "does not invent Fabric durable night-light LIVE / claim=present" not in pari
     raise SystemExit("PARITY Display row must refuse a Fabric night-light invent")
 if "Settings > Display; Superbar > Quick Settings > Night light" not in parity:
     raise SystemExit("PARITY Display row must name both visible night-light routes")
+if "soft leftover-attaches" not in parity.lower() or "windows-native.34" not in parity:
+    raise SystemExit("PARITY must soft leftover-attach wn.34")
+if "setEnabled" not in parity or "NightlightService" not in parity:
+    raise SystemExit("PARITY must name tip-true setEnabled → NightlightService")
 if "NightlightService" not in settings_api:
     raise SystemExit("settings-service-api must name NightlightService")
 if "Settings Display hosts" not in settings_api and "Settings Display hosts that control" not in settings_api:
@@ -312,6 +348,10 @@ if "display.provider night-light" not in settings_api:
     raise SystemExit("settings-service-api must refuse a display.provider night-light durable writer")
 if "windows-native.34" not in settings_api:
     raise SystemExit("settings-service-api must keep windows-native.34 pending")
+if "prototype/pending" not in settings_api:
+    raise SystemExit("settings-service-api must keep windows-native.34 prototype/pending")
+if "soft leftover-attach acc" not in settings_api.lower() and "SettingsSessionNightlight.setEnabled" not in settings_api:
+    raise SystemExit("settings-service-api must soft leftover-attach wn.34 to tip-true setEnabled plane")
 if "does not invent Fabric durable night-light LIVE / claim=present" not in settings_api:
     raise SystemExit("settings-service-api must refuse Fabric durable night-light LIVE / claim=present")
 if "Settings > Display; Superbar > Quick Settings > Night light" not in settings_api:
