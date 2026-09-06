@@ -64,10 +64,22 @@ grep -Fq 'SettingsComponents.SettingsSystemInformation' "$settings_app" ||
 grep -Fq 'settings.system.overview' "$settings_app" || fail "Settings still owns the System information route"
 grep -Fq 'this session' "$settings_card" || fail "Settings System information names the session principal"
 grep -Fq 'session leftover recorded' "$settings_card" || fail "Settings System information records a session leftover"
-grep -Fq 'session-UI leftover only' "$settings_card" || fail "Settings System information names session-UI leftover only"
+grep -Eq 'session-UI leftover only|leftover-attach only' "$settings_card" || fail "Settings System information names leftover-attach only"
 grep -Fq 'not product CLOSED' "$settings_card" || fail "Settings System information refuses product CLOSED"
 grep -Fq 'not metal CLOSED' "$settings_card" || fail "Settings System information refuses metal CLOSED"
 grep -Fq 'not claim=present' "$settings_card" || fail "Settings System information refuses claim=present"
+grep -Fiq 'soft leftover-attaches windows-native.38' "$settings_card" ||
+  fail "Settings System information honesty soft leftover-attaches wn.38"
+grep -Fq 'windows-native.38 stays prototype/pending' "$settings_card" ||
+  fail "Settings System information honesty keeps wn.38 prototype/pending"
+grep -Fq 'SettingsSessionSystemInformation.readInformation' "$settings_card" ||
+  fail "Settings System information honesty names tip-true readInformation"
+grep -Fiq 'soft leftover-attaches windows-native.38' "$settings_model" ||
+  fail "System coverage soft leftover-attaches wn.38"
+grep -Fq 'windows-native.38 stays prototype/pending' "$settings_model" ||
+  fail "System coverage keeps windows-native.38 prototype/pending"
+grep -Fq 'SettingsSessionSystemInformation.readInformation' "$settings_model" ||
+  fail "System coverage names tip-true readInformation"
 if grep -Eq 'CLOSED leftover:' "$settings_card"; then
   fail "Settings System information must not use bare CLOSED leftover invent"
 fi
@@ -126,13 +138,17 @@ assertEqual(refused.code, 'payload.invalid', 'payload refuse keeps payload.inval
 assertEqual(refused.available, false, 'payload refuse stays unavailable')
 
 const system = Model.queryForRoute('settings.system.overview')
-assert(system.coverage.indexOf('system-information-inspect') >= 0, 'system coverage names the session inspect verb')
+assert(system.coverage.indexOf('system-information-inspect') >= 0 || system.coverage.indexOf('apply_system_information_inspect') >= 0, 'system coverage names the session inspect verb')
+assert(system.coverage.indexOf('SettingsSessionSystemInformation.readInformation') >= 0, 'system coverage names tip-true readInformation')
 assert(system.coverage.indexOf('does not invent a system-information.provider durable writer') >= 0, 'system coverage refuses a Fabric writer')
 assert(system.coverage.indexOf('session leftover recorded') >= 0, 'system coverage records a session leftover')
+assert(system.coverage.toLowerCase().indexOf('soft leftover-attaches windows-native.38') >= 0, 'system coverage soft leftover-attaches wn.38')
+assert(system.coverage.indexOf('windows-native.38 stays prototype/pending') >= 0, 'system coverage keeps wn.38 prototype/pending')
 assert(system.coverage.indexOf('not product CLOSED') >= 0, 'system coverage refuses product CLOSED')
 assert(system.coverage.indexOf('not metal CLOSED') >= 0, 'system coverage refuses metal CLOSED')
 assert(system.coverage.indexOf('not claim=present') >= 0, 'system coverage refuses claim=present')
-assert(Model.declaredOpsHonesty('settings.system.overview').indexOf('system-information-inspect') >= 0, 'system declared ops name the session inspect verb')
+assert(Model.declaredOpsHonesty('settings.system.overview').indexOf('readInformation') >= 0, 'system declared ops name tip-true readInformation')
+assert(Model.declaredOpsHonesty('settings.system.overview').toLowerCase().indexOf('soft leftover-attaches windows-native.38') >= 0, 'system declared ops soft leftover-attach wn.38')
 assert(Model.declaredOpsHonesty('settings.system.overview').indexOf('no preflight, approval, or execution control') >= 0, 'system declared ops stay non-mutating')
 assert(Model.authorityFooter().indexOf('system-information-inspect') >= 0, 'authority footer names the session inspect verb')
 assertEqual(Model.routeHasLiveWriter('settings.system.overview'), false, 'system information is not a live writer')
@@ -219,9 +235,9 @@ if route.get("status") != "visible" or route.get("surface") != "Settings":
     raise SystemExit(f"system.info.read route is {route}")
 if route.get("path") != "Settings > System information":
     raise SystemExit(f"system.info.read path is {route}")
-if info.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if info.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionSystemInformation.qml":
     raise SystemExit(f"system.info.read source is {info.get('source')}")
-if info.get("source", {}).get("symbol") != "apply_system_information_inspect":
+if info.get("source", {}).get("symbol") != "readInformation":
     raise SystemExit(f"system.info.read source is {info.get('source')}")
 if "SettingsSystemInformation.qml" in str(info.get("source", {}).get("file") or ""):
     raise SystemExit("system.info.read must not invent source on SettingsSystemInformation.qml")
@@ -237,8 +253,20 @@ if info.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"system.info.read was raised off leftover: {info.get('provider')}")
 if info.get("provider", {}).get("id") != "system.provider":
     raise SystemExit(f"system.info.read provider is {info.get('provider')}")
-if info.get("recovery", {}).get("expectation") != "No durable mutation is expected.":
-    raise SystemExit(f"system.info.read recoveryExpectation drifted: {info.get('recovery')}")
+recovery = info.get("recovery") or {}
+if recovery.get("mode") != "none":
+    raise SystemExit(f"system.info.read recovery mode is {recovery}")
+if recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"system.info.read recovery fingerprint invent: {recovery}")
+exp = recovery.get("expectation") or ""
+for needle in (
+    "readInformation",
+    "apply_system_information_inspect",
+    "no durable mutation",
+    "no Fabric fingerprint invent",
+):
+    if needle not in exp:
+        raise SystemExit(f"system.info.read recovery missing {needle!r}: {exp}")
 
 by_job = {job["id"]: job for job in jobs["jobs"]}
 native38 = by_job["windows-native.38"]
@@ -256,8 +284,12 @@ if native38["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.38 route is {native38.get('humanRoute')}")
 if native38["humanRoute"].get("path") != "Settings > System information":
     raise SystemExit(f"windows-native.38 path is {native38.get('humanRoute')}")
-if native38.get("recoveryExpectation") != "Read-only inspection requires no recovery.":
-    raise SystemExit(f"windows-native.38 recoveryExpectation drifted: {native38.get('recoveryExpectation')}")
+rec38 = native38.get("recoveryExpectation") or ""
+for needle in ("readInformation", "apply_system_information_inspect"):
+    if needle not in rec38:
+        raise SystemExit(f"windows-native.38 recovery missing {needle!r}")
+if "fingerprint invent" not in rec38.lower() and "no Fabric fingerprint invent" not in rec38:
+    raise SystemExit(f"windows-native.38 recovery must refuse Fabric fingerprint invent: {rec38}")
 
 by_debt = {entry["id"]: entry for entry in debt["entries"]}
 missing_providers = by_debt["missing.domain.providers"]
@@ -272,14 +304,14 @@ agent = by_debt["missing.agent.routes"]
 if "system.info.read" not in agent.get("capabilityIds", []):
     raise SystemExit("system.info.read left missing.agent.routes")
 
-if "Honesty addendum 2026-09-06 vs Settings System information" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must add a dated Settings System information addendum")
-addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings System information", 1)[1].split("Honesty addendum", 1)[0]
+if "Honesty addendum 2026-09-06 vs Settings System information leftover plane (windows-native.38)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings System information leftover plane addendum")
+addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings System information leftover plane (windows-native.38)", 1)[1].split("Honesty addendum", 1)[0]
 if "CLOSED leftover:" in addendum:
     raise SystemExit("fleet-doctrine-gaps must not use bare CLOSED leftover invent for system information")
 for required in (
     "session leftover recorded",
-    "session-UI leftover only",
+    "leftover-attach only",
     "not product CLOSED",
     "not metal CLOSED",
     "not claim=present",
@@ -287,10 +319,14 @@ for required in (
     "system.info.read",
     "legacy-direct",
     "system-information-inspect",
+    "readInformation",
+    "Soft leftover-attach ACC",
     "Cloud EXIT 0 is not metal leftover CLOSED",
     "Cloud mocks do not close windows-native.38",
     "windows-native.38",
     "Settings Power LIVE",
+    "Empty Bin LIVE",
+    "End Task LIVE",
 ):
     if required not in addendum:
         raise SystemExit(f"fleet-doctrine-gaps system-information addendum dropped required honesty: {required}")
@@ -326,6 +362,14 @@ if "session leftover recorded" not in handoff:
     raise SystemExit("HANDOFF must record the session leftover")
 if "Cloud mocks do not close windows-native.38" not in handoff:
     raise SystemExit("HANDOFF must refuse Cloud mocks closing windows-native.38")
+if "soft leftover-attach" not in handoff.lower() or "windows-native.38" not in handoff:
+    raise SystemExit("HANDOFF must soft leftover-attach wn.38")
+if "readInformation" not in handoff:
+    raise SystemExit("HANDOFF must name tip-true readInformation")
+if "soft leftover-attaches" not in parity.lower() or "windows-native.38" not in parity:
+    raise SystemExit("PARITY must soft leftover-attach wn.38")
+if "readInformation" not in parity:
+    raise SystemExit("PARITY must name tip-true readInformation")
 PY
 
 pass "system.info.read stays leftover partial with visible Settings System information route"

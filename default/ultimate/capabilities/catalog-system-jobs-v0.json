@@ -6785,7 +6785,7 @@
       },
       "recovery": {
         "mode": "none",
-        "expectation": "No durable mutation is expected.",
+        "expectation": "Read-only inspect from Settings > System information through tip-true SettingsSessionSystemInformation.readInformation \u2192 apply_system_information_inspect (no durable mutation; no Fabric fingerprint invent).",
         "stateFingerprintRequired": false
       },
       "redaction": {
@@ -6812,8 +6812,8 @@
         ]
       },
       "source": {
-        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
-        "symbol": "apply_system_information_inspect",
+        "file": "shell/apps/shared/SettingsSessionSystemInformation.qml",
+        "symbol": "readInformation",
         "brokerVerb": null
       }
     },

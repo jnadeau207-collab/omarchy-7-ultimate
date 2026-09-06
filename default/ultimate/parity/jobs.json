@@ -2128,7 +2128,7 @@
         "path": "Settings > System information"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Read-only inspection requires no recovery.",
+      "recoveryExpectation": "Read-only inspect from Settings > System information through tip-true SettingsSessionSystemInformation.readInformation \u2192 apply_system_information_inspect (no durable mutation; no Fabric fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.38"
