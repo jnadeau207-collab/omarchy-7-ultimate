@@ -308,3 +308,14 @@ grep -Fq 'Fabric Empty Bin LIVE under SHELL' "$plan" ||
   fail "project-ultimate Files unavailable column names Fabric Empty Bin LIVE under SHELL"
 
 pass "project-ultimate Files row names session Trash/Restore/Empty and Fabric leftovers"
+
+docs="$ROOT/docs/files-defaults-provider.md"
+grep -Fq 'current humanRoute is visible `Files > Restore`' "$docs" ||
+  fail "files-defaults-provider names the session-visible Restore route"
+grep -Fq 'current humanRoute is visible `Files > Empty Recycle Bin`' "$docs" ||
+  fail "files-defaults-provider names the session-visible Empty Recycle Bin route"
+if grep -Eq 'dated leftover humanRoute is planned empty\. Session (Restore|Empty)' "$docs"; then
+  fail "files-defaults-provider must not present planned-empty humanRoute as the current recycle route"
+fi
+
+pass "files-defaults-provider recycle humanRoutes are session-visible, not planned empty"
