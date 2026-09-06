@@ -379,6 +379,14 @@ if termination.get("source", {}).get("symbol") != "endTask":
     raise SystemExit(f"process.termination.plan source is {termination.get('source')}")
 if "process.termination.plan" not in (parity_task_manager.get("capabilityIds") or []):
     raise SystemExit("parity.task-manager does not name process.termination.plan")
+if "apps.startup.disable" in (parity_task_manager.get("capabilityIds") or []):
+    raise SystemExit("parity.task-manager still claims apps.startup.disable after ownership moved to Settings Apps")
+if parity_task_manager.get("capabilityIds") != ["process.inspect", "process.termination.plan"]:
+    raise SystemExit(f"parity.task-manager capabilityIds are {parity_task_manager.get('capabilityIds')}")
+if "startup" in str(parity_task_manager.get("recoveryExpectation") or "").lower():
+    raise SystemExit(f"parity.task-manager recoveryExpectation still implies startup belongs to Task Manager: {parity_task_manager.get('recoveryExpectation')}")
+if "undo" in str(parity_task_manager.get("recoveryExpectation") or "").lower():
+    raise SystemExit(f"parity.task-manager recoveryExpectation still uses startup undo language: {parity_task_manager.get('recoveryExpectation')}")
 admin_coverage = (root / "shell/apps/ultimate-administration/AdministrationModel.js").read_text(encoding="utf-8")
 if "Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize." not in admin_coverage:
     raise SystemExit("Administration Processes coverage must keep End Task unauthorized")

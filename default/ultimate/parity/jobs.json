@@ -588,8 +588,7 @@
       "claim": "missing",
       "capabilityIds": [
         "process.inspect",
-        "process.termination.plan",
-        "apps.startup.disable"
+        "process.termination.plan"
       ],
       "humanRoute": {
         "status": "planned",
@@ -597,7 +596,7 @@
         "path": ""
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Inspection is read-only; startup changes retain guarded undo.",
+      "recoveryExpectation": "Inspection is read-only; End Task stays unauthorized.",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.task-manager"

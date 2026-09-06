@@ -401,8 +401,18 @@ by_job = {job["id"]: job for job in jobs["jobs"]}
 parity_task = by_job["parity.task-manager"]
 if parity_task.get("claim") == "present":
     raise SystemExit("parity.task-manager must not claim present")
-if "apps.startup.disable" not in (parity_task.get("capabilityIds") or []):
-    raise SystemExit("parity.task-manager dropped apps.startup.disable")
+if "apps.startup.disable" in (parity_task.get("capabilityIds") or []):
+    raise SystemExit("parity.task-manager still claims apps.startup.disable after ownership moved to Settings Apps")
+if parity_task.get("capabilityIds") != ["process.inspect", "process.termination.plan"]:
+    raise SystemExit(f"parity.task-manager capabilityIds are {parity_task.get('capabilityIds')}")
+if "startup" in str(parity_task.get("recoveryExpectation") or "").lower():
+    raise SystemExit(f"parity.task-manager recoveryExpectation still implies startup belongs to Task Manager: {parity_task.get('recoveryExpectation')}")
+if "undo" in str(parity_task.get("recoveryExpectation") or "").lower():
+    raise SystemExit(f"parity.task-manager recoveryExpectation still uses startup undo language: {parity_task.get('recoveryExpectation')}")
+if "read-only" not in str(parity_task.get("recoveryExpectation") or "").lower():
+    raise SystemExit(f"parity.task-manager recoveryExpectation dropped read-only inspect: {parity_task.get('recoveryExpectation')}")
+if "unauthorized" not in str(parity_task.get("recoveryExpectation") or "").lower():
+    raise SystemExit(f"parity.task-manager recoveryExpectation dropped End Task unauthorized: {parity_task.get('recoveryExpectation')}")
 if parity_task["humanRoute"].get("path"):
     raise SystemExit(f"parity.task-manager invents a Task Manager destination: {parity_task['humanRoute']}")
 native27 = by_job["windows-native.27"]
