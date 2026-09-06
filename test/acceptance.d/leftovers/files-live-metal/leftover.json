@@ -1,0 +1,179 @@
+{
+  "sha": "e9dda27c70b8fc61fdb7b3f739c3774ca48c9809",
+  "monitor": {
+    "name": "HDMI-A-1",
+    "description": "Samsung Electric Company SAMSUNG 0x01000E00",
+    "width": 1920,
+    "height": 1080,
+    "refresh": 60.0
+  },
+  "hyprlandSignature": "efb50993780079460b0cbed1363e2166a2de1d9f_1787832642_1302381439",
+  "filesLiveMetal": "OPEN",
+  "focus": "fail",
+  "verbs": {
+    "open": "unrun",
+    "rename": "unrun",
+    "copy": "unrun"
+  },
+  "cutAuthorized": false,
+  "emptyBinAuthorized": false,
+  "trashAuthorized": false,
+  "cloudExit0IsNotMetalLeftover": true,
+  "exit": 2,
+  "error": "compositor did not focus Files; active='cursor' files=0x558ec95382e0 (Lua dispatch and AbsPointer click returned ok; Cursor kept activewindow)",
+  "grims": {
+    "fail": "fail-hdmi.png",
+    "failWindow": "fail-files.png"
+  },
+  "pngSha256": {
+    "fail-hdmi.png": "9394a019ee4d89954be0eccde682460c7f59f33202c411f5d77dd5a2d1719948",
+    "fail-files.png": "fa07b06190958ef675237d53df192cc77387f9323a5bd93033b8953699539fc7"
+  },
+  "suiteExit": 2,
+  "observed": {
+    "filesVisibleOnHdmi": true,
+    "addressBarRelativePath": "omarchy-files-live-e9dda27c70b8",
+    "sessionExpiredBanner": true,
+    "listingItemCount": 0,
+    "networkPolicyPasswordOverlay": true,
+    "cursorParkedWorkspace": "2",
+    "settingsParkedWorkspace": "2"
+  },
+  "focusAttempts": [
+    {
+      "step": "omarchy-shell-activate",
+      "active": "cursor"
+    },
+    {
+      "step": "lua-focus-address",
+      "active": "cursor"
+    },
+    {
+      "step": "lua-focus-class",
+      "active": "cursor"
+    },
+    {
+      "step": "lua-bring-to-top",
+      "active": "cursor"
+    },
+    {
+      "step": "lua-focus-workspace-1",
+      "active": "cursor"
+    },
+    {
+      "step": "abs-pointer-click-files",
+      "active": "cursor"
+    }
+  ],
+  "xdgMimeTextPlain": "nvim.desktop",
+  "proofDir": "/home/jesse/Documents/omarchy-files-live-e9dda27c70b8",
+  "names": {
+    "source": "alpha-live.txt",
+    "renamed": "beta-live.txt",
+    "copied": "beta-live (2).txt"
+  },
+  "activeClass": "cursor",
+  "activeWindow": {
+    "class": "cursor",
+    "title": "Cursor",
+    "address": "0x558ec95a1220"
+  },
+  "clients": [
+    {
+      "class": "Aether",
+      "title": "Aether",
+      "workspace": "special:goldenclean",
+      "mapped": true,
+      "hidden": false,
+      "at": [
+        0,
+        32
+      ],
+      "size": [
+        960,
+        1000
+      ],
+      "address": "0x558ec944c250"
+    },
+    {
+      "class": "google-chrome",
+      "title": "Kalliope420! - Google Search - Google Chrome",
+      "workspace": "special:goldenclean",
+      "mapped": true,
+      "hidden": false,
+      "at": [
+        948,
+        -12
+      ],
+      "size": [
+        972,
+        1045
+      ],
+      "address": "0x558ec87c6df0"
+    },
+    {
+      "class": "org.omarchy.Files",
+      "title": "Files",
+      "workspace": "1",
+      "mapped": true,
+      "hidden": false,
+      "at": [
+        520,
+        236
+      ],
+      "size": [
+        880,
+        560
+      ],
+      "address": "0x558ec95382e0"
+    },
+    {
+      "class": "cursor",
+      "title": "Cursor Agents",
+      "workspace": "2",
+      "mapped": true,
+      "hidden": false,
+      "at": [
+        206,
+        164
+      ],
+      "size": [
+        1200,
+        740
+      ],
+      "address": "0x558ec951dee0"
+    },
+    {
+      "class": "org.omarchy.Settings",
+      "title": "Settings",
+      "workspace": "2",
+      "mapped": true,
+      "hidden": false,
+      "at": [
+        520,
+        236
+      ],
+      "size": [
+        880,
+        560
+      ],
+      "address": "0x558ec947d100"
+    },
+    {
+      "class": "cursor",
+      "title": "Cursor",
+      "workspace": "2",
+      "mapped": true,
+      "hidden": false,
+      "at": [
+        360,
+        146
+      ],
+      "size": [
+        1200,
+        740
+      ],
+      "address": "0x558ec95a1220"
+    }
+  ]
+}
