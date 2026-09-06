@@ -481,8 +481,20 @@ if "capability:storage.removable.eject" not in agent.get("surfaceRefs", []):
 if "Honesty addendum 2026-09-06 vs Files Devices Eject session plane" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Files Devices Eject addendum")
 addendum = gaps.split("Honesty addendum 2026-09-06 vs Files Devices Eject session plane", 1)[1].split("Honesty addendum", 1)[0]
-if "CLOSED leftover: Files Devices Eject session UI" not in addendum:
-    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Files Devices Eject session UI")
+if "CLOSED leftover: Files Devices Eject session UI" in addendum:
+    raise SystemExit("fleet-doctrine-gaps must not invent product CLOSE from a bare CLOSED leftover pin")
+if "session leftover recorded" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must record session leftover honesty")
+if "session-UI leftover only" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must qualify Eject as session-UI leftover only")
+if "not product CLOSED" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must refuse product CLOSED invent")
+if "not metal CLOSED" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must refuse metal CLOSED invent")
+if "leftover-attach before citing suite EXIT 0 as metal" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must leftover-attach before citing suite EXIT 0 as metal")
+if "Cloud mocks do not close windows-native.15" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must refuse closing windows-native.15 from Cloud mocks")
 for required in (
     "metal proof",
     "mount if unfinished",
@@ -530,19 +542,37 @@ if "this row is not present" not in explorer_row or "prototype" not in explorer_
     raise SystemExit("PARITY Explorer row must stay not present")
 if "storage-removable-eject" not in handoff:
     raise SystemExit("HANDOFF must name storage-removable-eject")
+if "session leftover recorded" not in handoff:
+    raise SystemExit("HANDOFF must record session leftover honesty")
+if "not product CLOSED" not in handoff:
+    raise SystemExit("HANDOFF must refuse product CLOSED invent")
+if "Cloud mocks do not close windows-native.15" not in handoff:
+    raise SystemExit("HANDOFF must refuse closing windows-native.15 from Cloud mocks")
+if "CLOSED leftover: Files Devices Eject session UI" in handoff:
+    raise SystemExit("HANDOFF must not invent product CLOSE from a bare CLOSED leftover pin")
 if "session Eject" not in handoff and "Files Devices Eject session" not in handoff:
     raise SystemExit("HANDOFF must name session Eject")
 if "storage-removable-eject" not in project and "session Eject" not in project:
     raise SystemExit("project-ultimate must name session Eject")
+if "session leftover recorded" not in project:
+    raise SystemExit("project-ultimate must record session leftover honesty")
+if "not product CLOSED" not in project:
+    raise SystemExit("project-ultimate must refuse product CLOSED invent")
 if "storage.removable.eject" not in files_docs:
     raise SystemExit("files-defaults-provider must name storage.removable.eject")
-docs_slice = files_docs.split("storage.removable.eject", 1)[1][:1200]
+docs_slice = files_docs.split("storage.removable.eject", 1)[1][:1600]
 if "does not invent a Fabric" not in docs_slice:
     raise SystemExit("files-defaults-provider must refuse a Fabric eject writer")
 if "USB" not in docs_slice or "optical" not in docs_slice.lower():
     raise SystemExit("files-defaults-provider must document USB vs optical scope")
 if "device.busy" not in docs_slice:
     raise SystemExit("files-defaults-provider must name device.busy")
+if "session leftover recorded" not in docs_slice:
+    raise SystemExit("files-defaults-provider must record session leftover honesty")
+if "not product CLOSED" not in docs_slice:
+    raise SystemExit("files-defaults-provider must refuse product CLOSED invent")
+if "Cloud mocks do not close" not in docs_slice:
+    raise SystemExit("files-defaults-provider must refuse closing windows-native.15 from Cloud mocks")
 PY
 
 pass "storage.removable.eject stays leftover partial with a visible Files Devices Eject route"
