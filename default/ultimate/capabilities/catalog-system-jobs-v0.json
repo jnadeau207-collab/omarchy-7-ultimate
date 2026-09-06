@@ -4284,9 +4284,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Turn night light on or off",
-        "path": "Superbar > Quick Settings > Night light"
+        "path": "Settings > Display"
       },
       "agentCenterLabel": "Turn night light on or off",
       "proofIds": {

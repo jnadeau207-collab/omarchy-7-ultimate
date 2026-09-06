@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "display.inspect",
     supportsResource: true,
-    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position), and brightness applies through display.provider brightness.set on outputs that expose a controllable backlight. Resolution, scale, and arrangement changes remain unavailable from Settings. Night light remains a Superbar leftover, not a Settings LIVE writer."
+    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position), and brightness applies through display.provider brightness.set on outputs that expose a controllable backlight. Night light uses the same NightlightService session/heritage plane as Superbar > Quick Settings; Settings hosts that control here and does not invent a display.provider night-light durable writer. Fabric display.inspect stays separate. Resolution, scale, and arrangement changes remain unavailable from Settings. Night light alone is not modern display complete."
   },
   {
     routeId: "settings.audio.overview",
@@ -155,6 +155,8 @@ function coverageTone(routeId) {
 }
 
 function declaredOpsHonesty(routeId) {
+  if (String(routeId || "") === "settings.display.overview")
+    return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer."
   if (String(routeId || "") === "settings.bluetooth.overview")
     return "Settings pairs and connects through this session's BlueZ adapter. Fabric bluetooth.inspect stays read-only; pairing secrets never enter durable evidence."
   if (String(routeId || "") === "settings.update.overview")
@@ -165,7 +167,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1497,6 +1499,116 @@ function sessionUpdateHistoryFinished(previous, helperResult) {
   }
 }
 
+function sessionNightlightIdle() {
+  return { phase: "idle", action: "", enabled: false, known: false, temperature: null, message: "", code: "" }
+}
+
+function sessionNightlightFailureCode(stderr) {
+  var text = String(stderr || "")
+  if (text.indexOf("not running") >= 0 || text.indexOf("not responding") >= 0 || text.indexOf("not ready") >= 0 || text.indexOf("OMARCHY_PATH") >= 0)
+    return "nightlight.shell-unavailable"
+  if (text.indexOf("Target not found") >= 0 || text.indexOf("Function not found") >= 0)
+    return "nightlight.service-missing"
+  return "nightlight.apply-failed"
+}
+
+function sessionNightlightFromIpc(kind, raw, exitCode, stderr) {
+  var output = String(raw === undefined || raw === null ? "" : raw).trim()
+  if (Number(exitCode) !== 0) {
+    return {
+      ok: false,
+      enabled: false,
+      known: false,
+      temperature: null,
+      code: sessionNightlightFailureCode(stderr),
+      explanation: clippedText(String(stderr || "").trim() || "NightlightService is not reachable through this session.", MAX_DISPLAY_TEXT)
+    }
+  }
+  if (output.charAt(0) === "\"" && output.charAt(output.length - 1) === "\"") {
+    try {
+      var unwrapped = JSON.parse(output)
+      if (typeof unwrapped === "string") output = unwrapped
+    } catch (unwrapError) {
+    }
+  }
+  if (kind === "set") {
+    var token = output.replace(/^"+|"+$/g, "")
+    if (token === "enabled" || token === "disabled") {
+      return {
+        ok: true,
+        enabled: token === "enabled",
+        known: true,
+        temperature: null,
+        code: "",
+        explanation: token === "enabled"
+          ? "Night light is on through NightlightService."
+          : "Night light is off through NightlightService."
+      }
+    }
+    return {
+      ok: false,
+      enabled: false,
+      known: false,
+      temperature: null,
+      code: "nightlight.parse-failed",
+      explanation: "NightlightService returned an unreadable apply result."
+    }
+  }
+  try {
+    var parsed = JSON.parse(output)
+    if (!isObject(parsed)) throw new Error("nightlight-status")
+    var temperature = parsed.temperature
+    if (temperature === "" || temperature === undefined) temperature = null
+    if (temperature !== null) {
+      temperature = Number(temperature)
+      if (!isFinite(temperature)) temperature = null
+    }
+    var known = temperature !== null
+    var enabled = parsed.enabled === true
+    return {
+      ok: true,
+      enabled: enabled,
+      known: known,
+      temperature: temperature,
+      code: "",
+      explanation: !known
+        ? "NightlightService could not read hyprsunset temperature."
+        : enabled
+          ? "Night light is on through NightlightService."
+          : "Night light is off through NightlightService."
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      enabled: false,
+      known: false,
+      temperature: null,
+      code: "nightlight.parse-failed",
+      explanation: "NightlightService returned an unreadable status."
+    }
+  }
+}
+
+function sessionNightlightFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var ok = result.ok === true
+  var temperature = result.temperature
+  if (temperature === "" || temperature === undefined) temperature = null
+  if (temperature !== null) {
+    temperature = Number(temperature)
+    if (!isFinite(temperature)) temperature = null
+  }
+  return {
+    phase: ok ? "succeeded" : "failed",
+    action: previous && previous.action || "",
+    enabled: result.enabled === true,
+    known: result.known === true,
+    temperature: temperature,
+    message: clippedText(result.explanation || result.message || (ok ? "NightlightService finished." : "NightlightService failed."), MAX_DISPLAY_TEXT),
+    code: result.code || ""
+  }
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     CATALOG_METHOD: CATALOG_METHOD,
@@ -1572,6 +1684,10 @@ if (typeof module !== "undefined") {
     sessionUpdateAccepted: sessionUpdateAccepted,
     sessionUpdateFinished: sessionUpdateFinished,
     sessionUpdateHistoryIdle: sessionUpdateHistoryIdle,
-    sessionUpdateHistoryFinished: sessionUpdateHistoryFinished
+    sessionUpdateHistoryFinished: sessionUpdateHistoryFinished,
+    sessionNightlightIdle: sessionNightlightIdle,
+    sessionNightlightFailureCode: sessionNightlightFailureCode,
+    sessionNightlightFromIpc: sessionNightlightFromIpc,
+    sessionNightlightFinished: sessionNightlightFinished
   }
 }
