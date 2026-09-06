@@ -75,6 +75,14 @@ status, result = run(pdf_payload)
 check("a PDF launches xdg-open through entry.open", status == 0 and result.get("ok") and result.get("launched"), json.dumps(result))
 check("xdg-open receives the PDF path", opened[before_pdf:] == [str(pdf)], str(opened[before_pdf:]))
 
+notes = home / "Documents" / "notes.txt"
+notes.write_text("wn.18 leftover text edit\n", encoding="utf-8")
+notes_payload = entry_payload("files.location.documents", "notes.txt", notes)
+before_notes = len(opened)
+status, result = run(notes_payload)
+check("a .txt launches xdg-open through entry.open", status == 0 and result.get("ok") and result.get("launched"), json.dumps(result))
+check("xdg-open receives the .txt path", opened[before_notes:] == [str(notes)], str(opened[before_notes:]))
+
 drifted = dict(payload)
 drifted["entryId"] = "files.entry." + "0" * 64
 status, result = run(drifted)

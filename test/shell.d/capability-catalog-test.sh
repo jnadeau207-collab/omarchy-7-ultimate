@@ -1944,6 +1944,38 @@ if document_open.get("source", {}).get("symbol") != "openEntry":
     raise SystemExit(f"files.document.open source is {document_open.get('source')}")
 if "nautilus" in str(document_open.get("source") or "").lower():
     raise SystemExit(f"files.document.open still names Nautilus: {document_open.get('source')}")
+native18 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.18")
+if native18.get("claim") == "present":
+    raise SystemExit(f"windows-native.18 was flipped to present: {native18}")
+if native18.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.18 claim is {native18.get('claim')}")
+if native18.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.18 sourceStatus is {native18.get('sourceStatus')}")
+if "files.entry.open" not in (native18.get("capabilityIds") or []):
+    raise SystemExit("windows-native.18 does not name files.entry.open")
+if "files.text.edit" not in (native18.get("capabilityIds") or []):
+    raise SystemExit("windows-native.18 does not name files.text.edit")
+if native18.get("humanRoute", {}).get("path") != "Files > Text":
+    raise SystemExit(f"windows-native.18 path is {native18.get('humanRoute')}")
+if native18.get("humanRoute", {}).get("surface") != "Files":
+    raise SystemExit(f"windows-native.18 surface is {native18.get('humanRoute')}")
+text_edit = by_id["files.text.edit"]
+if text_edit.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"files.text.edit was raised off leftover: {text_edit.get('provider')}")
+if text_edit.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.text.edit claim is {text_edit.get('availability')}")
+if text_edit.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.text.edit invents claim=present")
+if text_edit.get("humanRoute", {}).get("path") != "Files > Text":
+    raise SystemExit(f"files.text.edit path is {text_edit.get('humanRoute')}")
+if text_edit.get("humanRoute", {}).get("surface") != "Files":
+    raise SystemExit(f"files.text.edit surface is {text_edit.get('humanRoute')}")
+if text_edit.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesApplication.qml":
+    raise SystemExit(f"files.text.edit source is {text_edit.get('source')}")
+if text_edit.get("source", {}).get("symbol") != "openEntry":
+    raise SystemExit(f"files.text.edit source is {text_edit.get('source')}")
+if "nautilus" in str(text_edit.get("source") or "").lower():
+    raise SystemExit(f"files.text.edit still names Nautilus: {text_edit.get('source')}")
 native10 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.10")
 if native10.get("claim") == "present":
     raise SystemExit(f"windows-native.10 was flipped to present: {native10}")
