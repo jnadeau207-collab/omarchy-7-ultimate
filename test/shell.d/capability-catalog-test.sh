@@ -963,6 +963,33 @@ if files_live_leftover.get("emptyBinAuthorized") is not False:
 hdmi_png = root / "test/acceptance.d/leftovers/files-live-metal/fail-hdmi.png"
 if not hdmi_png.is_file():
     raise SystemExit("Files LIVE metal leftover fail-hdmi.png is missing")
+explorer_chrome = (root / "test/shell.d/ultimate-explorer-chrome-test.sh").read_text(encoding="utf-8")
+if "SOURCE LOCK (not pixel proof)" not in explorer_chrome:
+    raise SystemExit("ultimate-explorer-chrome-test must name hex-grep as SOURCE LOCK (not pixel proof)")
+if "not pixel proof" not in explorer_chrome:
+    raise SystemExit("ultimate-explorer-chrome-test still treats hex-grep as pixel proof")
+if "Honesty addendum 2026-09-05 vs Win7 visual leftover" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Win7 visual leftover addendum")
+if "Win7 visual leftover OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Win7 visual leftover OPEN")
+if "hex-grep is not pixel proof" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name hex-grep as not pixel proof")
+if "Do not invent Files LIVE metal CLOSED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must refuse Files LIVE metal CLOSED invent")
+win7_leftover_path = root / "test/acceptance.d/leftovers/win7-visual/leftover.json"
+if not win7_leftover_path.is_file():
+    raise SystemExit("Win7 visual leftover.json is missing")
+win7_leftover = json.loads(win7_leftover_path.read_text(encoding="utf-8"))
+if win7_leftover.get("win7VisualLeftover") != "OPEN":
+    raise SystemExit("Win7 visual leftover.json must stay OPEN")
+if win7_leftover.get("hexGrepIsNotPixelProof") is not True:
+    raise SystemExit("Win7 visual leftover.json must name hex-grep as not pixel proof")
+if win7_leftover.get("filesLiveMetal") != "OPEN":
+    raise SystemExit("Win7 visual leftover.json must keep Files LIVE metal OPEN")
+if win7_leftover.get("emptyBinAuthorized") is not False:
+    raise SystemExit("Win7 visual leftover.json must keep emptyBinAuthorized false")
+if (root / "test/acceptance.d/leftovers/win7-visual/hdmi.png").is_file() is False:
+    raise SystemExit("Win7 visual leftover hdmi.png is missing")
 if "claims: missing=35, partial=6, plumbing=4, present=0, prototype=37" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
 if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
@@ -1927,6 +1954,14 @@ if "Files LIVE Open/Rename/Copy grim leftover OPEN" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep Files LIVE Open/Rename/Copy grim leftover OPEN")
 if "Cloud EXIT 0 is not metal leftover" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name Cloud EXIT 0 as not metal leftover")
+if "Honesty addendum 2026-09-05 vs Win7 visual leftover" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must add the Win7 visual leftover addendum")
+if "Win7 visual leftover OPEN" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep Win7 visual leftover OPEN")
+if "hex-grep is not pixel proof" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name hex-grep as not pixel proof")
+if "Do not invent Files LIVE metal CLOSED" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must refuse Files LIVE metal CLOSED invent")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
 if explorer_status == "present":
     raise SystemExit("PARITY Explorer row was flipped to present")

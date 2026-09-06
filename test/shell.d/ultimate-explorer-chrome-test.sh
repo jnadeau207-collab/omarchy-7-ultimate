@@ -7,13 +7,16 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 theme="$ROOT/shell/apps/ultimate-files/ExplorerTheme.js"
 view="$ROOT/shell/apps/ultimate-files/ExplorerItemView.qml"
 
+# Token and QML greps below are SOURCE LOCKS, not pixel proof.
+# Pixel leftover: test/acceptance.d/leftovers/win7-visual against plans/windows-7-visual-reference.md.
+
 grep -Fq 'var selectionTop = "#ffffff"' "$theme" \
   || fail "Explorer selection wash starts near-white"
 grep -Fq 'var selectionBottom = "#e6ecf5"' "$theme" \
   || fail "Explorer selection wash ends in the pale blue wash"
 grep -Fq 'var selectionBorder = "#aaddfa"' "$theme" \
   || fail "Explorer selection border is the pale blue rule"
-pass "Explorer selection is the near-white wash, not a saturated blue"
+pass "Explorer selection SOURCE LOCK (not pixel proof) keeps the near-white wash tokens"
 
 if grep -Eq 'var selection(Bottom|Border) = "#(dcebfc|c1dbfc|7da2ce)"' "$theme"; then
   fail "Explorer selection keeps no saturated blue fill"
@@ -26,7 +29,7 @@ grep -Fq 'var hoverSelectedBottom = "#d7e4f1"' "$theme" \
   || fail "Explorer hovered selection stays in the pale family"
 grep -Fq 'var hoverSelectedBorder = "#8fb8d8"' "$theme" \
   || fail "Explorer hovered selection stays in the pale family"
-pass "Explorer hovered selection stays in the pale family"
+pass "Explorer hovered selection SOURCE LOCK (not pixel proof) stays in the pale family"
 
 grep -Fq 'id: sortMark' "$view" || fail "Explorer header paints a sort mark"
 grep -Fq 'width: 6' "$view" || fail "Explorer sort mark is the narrow triangle"
@@ -48,7 +51,7 @@ grep -Fq 'addColorStop(1, "#cce3f2")' "$view" \
 if grep -Fq 'fillStyle = "#6b7b8a"' "$view"; then
   fail "Explorer sort mark keeps no flat grey fill"
 fi
-pass "Explorer sort mark carries the diagonal wash, not a flat fill"
+pass "Explorer sort mark SOURCE LOCK (not pixel proof) carries the diagonal wash tokens"
 
 grep -Fq 'var headerHeight = 22' "$theme" \
   || fail "Explorer header is the measured height"
@@ -66,7 +69,7 @@ grep -Fq 'var headerBorder = "#d7d7d7"' "$theme" \
   || fail "Explorer header border is the measured grey"
 grep -Fq 'var headerSeparator = "#eeeeee"' "$theme" \
   || fail "Explorer column separators are the measured grey"
-pass "Explorer header fill, border, and separators are the measured values"
+pass "Explorer header SOURCE LOCK (not pixel proof) keeps the measured tokens"
 
 grep -Fq 'var sortedHeaderTop = "#f3f9fc"' "$theme" \
   || fail "Explorer sorted header starts near-white blue"
@@ -76,7 +79,7 @@ grep -Fq 'var sortedHeaderBottom = "#d9eaf5"' "$theme" \
   || fail "Explorer sorted header ends in the pale blue"
 grep -Fq 'var sortedHeaderBorder = "#a7d8f5"' "$theme" \
   || fail "Explorer sorted header border is the measured blue"
-pass "Explorer sorted header carries its own measured wash"
+pass "Explorer sorted header SOURCE LOCK (not pixel proof) keeps the measured wash tokens"
 
 grep -Fq 'position: 0.45; color: Aero.headerMid' "$view" \
   || fail "Explorer header gradient inflects at forty-five percent"

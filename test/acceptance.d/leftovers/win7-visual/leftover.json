@@ -1,0 +1,108 @@
+{
+  "sha": "0c54390554ece5c0f70c5c5509890b48355133e7",
+  "monitor": {
+    "name": "HDMI-A-1",
+    "description": "Samsung Electric Company SAMSUNG 0x01000E00",
+    "width": 1920,
+    "height": 1080,
+    "refresh": 60.0
+  },
+  "win7VisualLeftover": "OPEN",
+  "hexGrepIsNotPixelProof": true,
+  "cloudExit0IsNotMetalLeftover": true,
+  "filesLiveMetal": "OPEN",
+  "emptyBinAuthorized": false,
+  "cutAuthorized": false,
+  "trashAuthorized": false,
+  "exit": 0,
+  "error": "",
+  "surfaces": {
+    "captionCentering": {
+      "status": "OPEN",
+      "windowTitle": "Files",
+      "ocr": "",
+      "note": "Win7 Explorer caption is blank. hyprbars bar_text_align=center. Empty windowTitle fell back to quickshell and is not a fix."
+    },
+    "aeroGlassAlpha": {
+      "status": "OPEN",
+      "tokenAeroAlpha": 0.42,
+      "measuredAlpha": 0.6,
+      "captionMeanRgb": [
+        77,
+        80,
+        101
+      ],
+      "distanceTo4580c4": 106.7379969832674,
+      "note": "Reference glass is #4580c4 at 0.6 opacity. Token aeroAlpha is 0.42. Hex-grep is not this leftover."
+    },
+    "selectionWash": {
+      "status": "OPEN",
+      "navMeanRgb": [
+        131,
+        132,
+        136
+      ],
+      "distanceToE6ecf5": 180.2720166858961,
+      "note": "Source tokens match #ffffff/#e6ecf5/#aaddfa. Grim shows a pale selected Documents nav row and omarchy-files-live-e9dda27c70b8 content row. That is not a closed pixel proof against the measured wash."
+    },
+    "superbarStackUnderline": {
+      "status": "OPEN",
+      "note": "TaskButton.qml still paints a chromeGlow underline for running apps. Win7 running idiom is a bordered glass tile, not an underline. Grim Superbar shows workspace indices 1-5 rather than stacked running tiles."
+    },
+    "badgePainting": {
+      "status": "OPEN",
+      "redBadgeHits": 0,
+      "note": "TaskButton has no badgeCount (source lock). Notification Center BarWidget still paints a count Badge. Grim tray cluster shows a numeric badge."
+    }
+  },
+  "grims": {
+    "hdmi": "hdmi.png"
+  },
+  "pngSha256": {
+    "hdmi.png": "6d0ebf9b971c5a93e1037e624f2467ff482a5889ea1a4bc2af334aca7b6a7f26"
+  },
+  "filesGeometry": {
+    "at": [
+      520,
+      247
+    ],
+    "size": [
+      880,
+      560
+    ],
+    "title": "Files"
+  },
+  "captionSample": {
+    "rgb": [
+      77,
+      80,
+      101
+    ],
+    "refAero": [
+      69,
+      128,
+      196
+    ]
+  },
+  "captionOcr": "",
+  "navSample": {
+    "rgb": [
+      131,
+      132,
+      136
+    ],
+    "refSelBottom": [
+      230,
+      236,
+      245
+    ]
+  },
+  "superbarSample": {
+    "rgb": [
+      29,
+      26,
+      48
+    ],
+    "redBadgeHits": 0
+  }
+}

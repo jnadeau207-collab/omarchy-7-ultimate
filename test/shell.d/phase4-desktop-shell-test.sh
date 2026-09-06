@@ -427,7 +427,7 @@ pass "window preview helper rejects invalid geometry"
 if grep -Fq 'badgeCount' "$ROOT/shell/plugins/ultimate-taskbar/TaskButton.qml"; then
   fail "Windows 7 puts no count badges on taskbar buttons"
 fi
-pass "Superbar has jump lists and structured previews, without count badges"
+pass "Superbar task-button SOURCE LOCK (not pixel proof) has no badgeCount; tray Badge leftover is win7-visual"
 
 run_node_test <<'JS'
 const JumpList = requireFromRoot('shell/services/JumpList.js')
