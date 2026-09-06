@@ -156,9 +156,9 @@
         "limit": "Cancellation is accepted before the state mutation begins."
       },
       "recovery": {
-        "mode": "undo",
-        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "mode": "none",
+        "expectation": "Session wallpaper apply runs tip-true ImagePicker.applyEmbedded \u2192 omarchy-theme-bg-set; set-only with no prior-wallpaper undo / no compensating fingerprint invent.",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [

@@ -301,8 +301,10 @@ if "update.history.read" not in agent.get("capabilityIds", []):
 
 if "Honesty addendum 2026-09-06 vs Settings Update history" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update history addendum")
-if "CLOSED leftover: Update history UI" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Update history UI")
+if "Soft leftover-attach: Settings > Update history exists" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name tip-true Soft leftover-attach: Settings > Update history exists")
+if "CLOSED leftover: Update history UI" in gaps:
+    raise SystemExit("fleet-doctrine-gaps must not invent CLOSED leftover: Update history UI")
 if "windows-native.29 stays prototype/pending" not in gaps.replace("`", ""):
     raise SystemExit("fleet-doctrine-gaps must keep windows-native.29 prototype/pending")
 if "not product CLOSED" not in gaps or "not metal CLOSED" not in gaps:

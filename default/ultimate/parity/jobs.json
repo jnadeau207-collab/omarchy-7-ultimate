@@ -22,7 +22,7 @@
         "path": "Desktop; Start > Settings > Personalization"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Wallpaper can be restored; destructive trash operations require guarded undo.",
+      "recoveryExpectation": "Wallpaper apply is tip-true set-only with no prior-wallpaper undo invent; destructive trash operations require guarded undo.",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.desktop-icons-wallpaper-context-menu-recycle"
@@ -196,7 +196,7 @@
         "path": "Start > Settings > Personalization"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Capture the previous wallpaper and theme and offer guarded undo.",
+      "recoveryExpectation": "Wallpaper apply is tip-true set-only applyEmbedded \u2192 omarchy-theme-bg-set with no prior-wallpaper undo invent; typed theme service undo remains unavailable.",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.personalization"
@@ -222,7 +222,7 @@
         "path": ""
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers; Network Add / driver wizard remains OPEN leftover (session inventory/queue only — no Add-setup cancel/remove recovery).",
+      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers; Network Add / driver wizard remains OPEN leftover (session inventory/queue only \u2014 no Add-setup cancel/remove recovery).",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.devices-printers"
@@ -1236,7 +1236,7 @@
         "path": "Settings > Personalization"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the previous wallpaper.",
+      "recoveryExpectation": "Apply wallpaper from Settings > Personalization through tip-true applyEmbedded \u2192 omarchy-theme-bg-set (set-only; no prior-wallpaper undo / no compensating fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.4"
@@ -1972,7 +1972,7 @@
         "path": "Settings > Printers"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers (session inventory/set-default/pause/resume/test-page plane applies immediately; Network Add / driver wizard remains OPEN leftover — no Add-setup cancel/remove recovery).",
+      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers (session inventory/set-default/pause/resume/test-page plane applies immediately; Network Add / driver wizard remains OPEN leftover \u2014 no Add-setup cancel/remove recovery).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.32"

@@ -108,6 +108,16 @@ if wallpaper.get("source", {}).get("file") != "shell/plugins/image-picker/ImageP
     raise SystemExit(f"desktop.wallpaper.set source is {wallpaper.get('source')}")
 if wallpaper.get("source", {}).get("symbol") != "applyEmbedded":
     raise SystemExit(f"desktop.wallpaper.set source symbol is {wallpaper.get('source')}")
+recovery = wallpaper.get("recovery") or {}
+if recovery.get("mode") == "undo" or recovery.get("stateFingerprintRequired") is True:
+    raise SystemExit(f"desktop.wallpaper.set recovery still invents undo/fingerprint: {recovery}")
+if recovery.get("mode") != "none" or recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"desktop.wallpaper.set recovery must be tip-true set-only mode=none: {recovery}")
+expectation = str(recovery.get("expectation") or "")
+if "applyEmbedded" not in expectation or "omarchy-theme-bg-set" not in expectation:
+    raise SystemExit(f"desktop.wallpaper.set recovery missing tip-true applyEmbedded path: {expectation}")
+if "no prior-wallpaper undo" not in expectation or "no compensating fingerprint invent" not in expectation:
+    raise SystemExit(f"desktop.wallpaper.set recovery dropped set-only refuse: {expectation}")
 
 theme = by_id["personalization.theme.set"]
 if theme.get("availability", {}).get("claim") == "present":
@@ -131,6 +141,13 @@ if native4.get("humanRoute", {}).get("status") != "visible":
     raise SystemExit(f"windows-native.4 route is {native4.get('humanRoute')}")
 if native4.get("humanRoute", {}).get("surface") != "Settings":
     raise SystemExit(f"windows-native.4 surface is {native4.get('humanRoute')}")
+native4_recovery = str(native4.get("recoveryExpectation") or "")
+if native4_recovery != "Apply wallpaper from Settings > Personalization through tip-true applyEmbedded → omarchy-theme-bg-set (set-only; no prior-wallpaper undo / no compensating fingerprint invent).":
+    raise SystemExit(f"windows-native.4 recoveryExpectation drifted: {native4_recovery}")
+if "Restore the previous wallpaper" in native4_recovery:
+    raise SystemExit("windows-native.4 recoveryExpectation still invents Restore the previous wallpaper")
+if "no prior-wallpaper undo" not in native4_recovery:
+    raise SystemExit(f"windows-native.4 recoveryExpectation dropped set-only refuse: {native4_recovery}")
 
 parity_person = by_job["parity.personalization"]
 if parity_person.get("claim") == "present":
@@ -139,6 +156,11 @@ if parity_person.get("claim") != "prototype":
     raise SystemExit(f"parity.personalization claim is {parity_person.get('claim')}")
 if "desktop.wallpaper.set" not in (parity_person.get("capabilityIds") or []):
     raise SystemExit("parity.personalization must name desktop.wallpaper.set")
+person_recovery = str(parity_person.get("recoveryExpectation") or "")
+if "Capture the previous wallpaper" in person_recovery or ("guarded undo" in person_recovery and "no prior-wallpaper undo" not in person_recovery):
+    raise SystemExit(f"parity.personalization recoveryExpectation still invents wallpaper undo: {person_recovery}")
+if "no prior-wallpaper undo invent" not in person_recovery:
+    raise SystemExit(f"parity.personalization recoveryExpectation dropped set-only refuse: {person_recovery}")
 
 if "| 4 | Change the wallpaper | pending |" not in acc:
     raise SystemExit("WINDOWS_NATIVE_ACCEPTANCE must keep wn.4 pending")
@@ -154,6 +176,8 @@ required_gaps = [
     "not claim=present",
     "Do not invent Settings Power LIVE",
     "Do not invent Empty Bin LIVE",
+    "no prior-wallpaper undo",
+    "no compensating fingerprint invent",
 ]
 for needle in required_gaps:
     if needle not in gaps:
@@ -170,6 +194,7 @@ required_handoff = [
     "Settings > Personalization",
     "desktop.wallpaper.set",
     "not claim=present",
+    "no prior-wallpaper undo",
 ]
 for needle in required_handoff:
     if needle not in handoff:

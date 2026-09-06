@@ -729,6 +729,34 @@ if native39_recovery != "Session audio restart applies immediately through tip-t
     raise SystemExit(f"windows-native.39 recoveryExpectation drifted: {native39_recovery}")
 if "cancel/restore invent" not in native39_recovery or "OPEN leftover" not in native39_recovery:
     raise SystemExit(f"windows-native.39 recoveryExpectation dropped leftover refuse: {native39_recovery}")
+wallpaper_cap = by_id["desktop.wallpaper.set"]
+wallpaper_recovery = wallpaper_cap.get("recovery") or {}
+if wallpaper_recovery.get("mode") == "undo" or wallpaper_recovery.get("stateFingerprintRequired") is True:
+    raise SystemExit(f"desktop.wallpaper.set recovery still invents undo/fingerprint: {wallpaper_recovery}")
+if wallpaper_recovery.get("mode") != "none" or wallpaper_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"desktop.wallpaper.set recovery must be tip-true set-only mode=none: {wallpaper_recovery}")
+wallpaper_expectation = str(wallpaper_recovery.get("expectation") or "")
+if "applyEmbedded" not in wallpaper_expectation or "omarchy-theme-bg-set" not in wallpaper_expectation:
+    raise SystemExit(f"desktop.wallpaper.set recoveryExpectation missing tip-true applyEmbedded path: {wallpaper_expectation}")
+if "fingerprint" in wallpaper_expectation.lower() and "no compensating fingerprint" not in wallpaper_expectation.lower():
+    raise SystemExit(f"desktop.wallpaper.set recovery invents fingerprint path: {wallpaper_expectation}")
+if "undo" in wallpaper_expectation.lower() and "no prior-wallpaper undo" not in wallpaper_expectation.lower():
+    raise SystemExit(f"desktop.wallpaper.set recovery invents undo path: {wallpaper_expectation}")
+native4 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.4")
+native4_recovery = str(native4.get("recoveryExpectation") or "")
+if native4_recovery != "Apply wallpaper from Settings > Personalization through tip-true applyEmbedded → omarchy-theme-bg-set (set-only; no prior-wallpaper undo / no compensating fingerprint invent).":
+    raise SystemExit(f"windows-native.4 recoveryExpectation drifted: {native4_recovery}")
+if "Restore the previous wallpaper" in native4_recovery:
+    raise SystemExit(f"windows-native.4 recoveryExpectation still invents Restore previous wallpaper: {native4_recovery}")
+if "no prior-wallpaper undo" not in native4_recovery or "no compensating fingerprint invent" not in native4_recovery:
+    raise SystemExit(f"windows-native.4 recoveryExpectation dropped set-only refuse: {native4_recovery}")
+parity_person = next(job for job in jobs["jobs"] if job["id"] == "parity.personalization")
+person_recovery = str(parity_person.get("recoveryExpectation") or "")
+if "Capture the previous wallpaper" in person_recovery or "guarded undo" in person_recovery:
+    raise SystemExit(f"parity.personalization recoveryExpectation still invents wallpaper undo: {person_recovery}")
+if "no prior-wallpaper undo invent" not in person_recovery:
+    raise SystemExit(f"parity.personalization recoveryExpectation dropped set-only refuse: {person_recovery}")
+
 
 volume_set = by_id["audio.volume.set"]
 if volume_set.get("provider", {}).get("id") != "audio.provider":
@@ -1406,8 +1434,10 @@ if "Honesty addendum 2026-09-06 vs Settings Update apply" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update apply leftover addendum")
 if "Honesty addendum 2026-09-06 vs Settings Update history" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update history leftover addendum")
-if "Soft leftover-attach: Settings > Update history exists" not in gaps and "CLOSED leftover: Update history UI" not in gaps:
+if "Soft leftover-attach: Settings > Update history exists" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name tip-true Update history soft leftover-attach")
+if "CLOSED leftover: Update history UI" in gaps:
+    raise SystemExit("fleet-doctrine-gaps must not invent CLOSED leftover: Update history UI")
 if "Honesty addendum 2026-09-06 vs Settings Display night-light" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display night-light leftover addendum")
 if "CLOSED leftover: Settings Display night-light UI" not in gaps:
