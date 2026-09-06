@@ -1367,7 +1367,7 @@
         "path": "Start > Downloads; Superbar > Files > Downloads"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Read-only navigation requires no recovery.",
+      "recoveryExpectation": "Read-only navigation to Files Downloads through tip-true FilesModel files.downloads \u2192 files.location.downloads browse requires no recovery (no durable mutation; no Fabric fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.9"

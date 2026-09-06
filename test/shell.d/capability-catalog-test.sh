@@ -297,23 +297,74 @@ if this_pc.get("path") != "Start > Computer; Superbar > Files > Computer":
 downloads = by_id["files.downloads.open"]
 if downloads["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > Downloads":
     raise SystemExit(f"files.downloads.open invents or underclaims Downloads: {downloads['humanRoute']}")
-if downloads.get("source", {}).get("file") != "bin/omarchy-launch-files":
-    raise SystemExit(f"files.downloads.open still names an absent Files launcher: {downloads.get('source')}")
+if downloads.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.downloads.open must not claim present")
+if downloads.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.downloads.open claim is {downloads.get('availability')}")
+if downloads.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"files.downloads.open human is {downloads.get('availability')}")
+if downloads.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"files.downloads.open was raised off leftover: {downloads.get('provider')}")
+if downloads.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesModel.js":
+    raise SystemExit(f"files.downloads.open source is {downloads.get('source')}")
+if downloads.get("source", {}).get("symbol") != "files.downloads":
+    raise SystemExit(f"files.downloads.open source is {downloads.get('source')}")
+if "omarchy-launch-files" in str(downloads.get("source") or "").lower():
+    raise SystemExit(f"files.downloads.open still invents launch-files source: {downloads.get('source')}")
 if "nautilus" in str(downloads.get("source", {}).get("symbol") or "").lower():
     raise SystemExit(f"files.downloads.open still names Nautilus: {downloads.get('source')}")
+downloads_recovery = downloads.get("recovery") or {}
+if downloads_recovery.get("mode") != "none":
+    raise SystemExit(f"files.downloads.open recovery mode is {downloads_recovery}")
+if downloads_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"files.downloads.open recovery fingerprint invent: {downloads_recovery}")
+downloads_exp = downloads_recovery.get("expectation") or ""
+for needle in ("FilesModel", "files.downloads", "files.location.downloads", "no Fabric fingerprint invent"):
+    if needle not in downloads_exp:
+        raise SystemExit(f"files.downloads.open recovery missing {needle!r}: {downloads_exp}")
 for row in writers["capabilities"]:
     capability_id = row.get("id") or ""
-    if capability_id in {"files.this-pc.open", "files.downloads.open"}:
+    if capability_id == "files.this-pc.open":
         source = row.get("source") or {}
         named = f"{source.get('file') or ''} {source.get('symbol') or ''}".lower()
         if "nautilus" in named:
             raise SystemExit(f"{capability_id} still names Nautilus for a published Files location: {source}")
         if source.get("file") != "bin/omarchy-launch-files":
             raise SystemExit(f"{capability_id} does not name product Files: {source}")
+    if capability_id == "files.downloads.open":
+        source = row.get("source") or {}
+        named = f"{source.get('file') or ''} {source.get('symbol') or ''}".lower()
+        if "nautilus" in named:
+            raise SystemExit(f"{capability_id} still names Nautilus for a published Files location: {source}")
+        if "omarchy-launch-files" in named:
+            raise SystemExit(f"{capability_id} still invents launch-files: {source}")
+        if source.get("file") != "shell/apps/ultimate-files/FilesModel.js":
+            raise SystemExit(f"{capability_id} does not tip-align Files Downloads place: {source}")
+        if source.get("symbol") != "files.downloads":
+            raise SystemExit(f"{capability_id} does not tip-align files.downloads symbol: {source}")
 jobs_lock = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
 native9 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.9")
+if native9.get("claim") == "present":
+    raise SystemExit("windows-native.9 must not claim present")
+if native9.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.9 claim is {native9.get('claim')}")
+if native9.get("sourceStatus") != "pending" or native9.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.9 status drifted: {native9}")
 if native9["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > Downloads":
     raise SystemExit(f"windows-native.9 still names Superbar Files without Start Downloads: {native9['humanRoute']}")
+if native9["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"windows-native.9 route is {native9.get('humanRoute')}")
+native9_recovery = native9.get("recoveryExpectation") or ""
+for needle in ("FilesModel", "files.downloads", "files.location.downloads"):
+    if needle not in native9_recovery:
+        raise SystemExit(f"windows-native.9 recovery is not tip-aligned to Files Downloads place: {native9_recovery}")
+if "fingerprint invent" not in native9_recovery.lower() and "no Fabric fingerprint invent" not in native9_recovery:
+    raise SystemExit(f"windows-native.9 recovery must refuse Fabric fingerprint invent: {native9_recovery}")
+files_app_downloads = (root / "shell/apps/ultimate-files/FilesApplication.qml").read_text(encoding="utf-8")
+if "soft leftover-attached" not in files_app_downloads.lower() or "windows-native.9" not in files_app_downloads:
+    raise SystemExit("FilesApplication must soft leftover-attach windows-native.9")
+if "FilesModel" not in files_app_downloads or "files.location.downloads" not in files_app_downloads:
+    raise SystemExit("FilesApplication must name tip-true Files Downloads place")
 native38 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.38")
 if native38.get("claim") == "present":
     raise SystemExit(f"windows-native.38 was flipped to present: {native38}")
