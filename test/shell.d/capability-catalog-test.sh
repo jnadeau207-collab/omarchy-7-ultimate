@@ -1406,8 +1406,8 @@ if "Honesty addendum 2026-09-06 vs Settings Update apply" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update apply leftover addendum")
 if "Honesty addendum 2026-09-06 vs Settings Update history" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update history leftover addendum")
-if "CLOSED leftover: Update history UI" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Update history UI")
+if "Soft leftover-attach: Settings > Update history exists" not in gaps and "CLOSED leftover: Update history UI" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name tip-true Update history soft leftover-attach")
 if "Honesty addendum 2026-09-06 vs Settings Display night-light" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display night-light leftover addendum")
 if "CLOSED leftover: Settings Display night-light UI" not in gaps:

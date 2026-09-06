@@ -161,7 +161,7 @@ required_gaps = [
     "SettingsSessionUpdate.qml",
     "readHistory",
     "update.history.read",
-    "CLOSED leftover: Update history UI",
+    "Soft leftover-attach: Settings > Update history exists",
     "not product CLOSED",
     "not metal CLOSED",
     "not claim=present",

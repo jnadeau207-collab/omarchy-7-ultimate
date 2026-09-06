@@ -652,7 +652,7 @@ if grep -Fq 'Accessibility, Input, and System information have no hostable panel
   fail "settings-service-api no longer underclaims Input as having no hostable panel"
 fi
 settings_api="$ROOT/docs/settings-service-api.md"
-for writer in "Sound volume" "Network Wi-Fi radio" "Display brightness" "Input layout" "Apps default browser"; do
+for writer in "Sound volume" "Network Wi-Fi radio" "Display brightness" "Input layout" "Default Programs default browser"; do
   grep -Fq "$writer" "$settings_api" || fail "settings-service-api names live writer: $writer"
 done
 grep -Fq 'Power profile' "$settings_api" || fail "settings-service-api names Power profile"
