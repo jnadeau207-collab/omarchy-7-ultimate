@@ -264,10 +264,21 @@ if system_info_cap.get("availability", {}).get("claim") != "partial":
     raise SystemExit(f"system.info.read claim is {system_info_cap.get('availability')}")
 if system_info_cap.get("availability", {}).get("human") != "partial":
     raise SystemExit(f"system.info.read human availability is {system_info_cap.get('availability')}")
-if system_info_cap.get("source", {}).get("symbol") != "apply_system_information_inspect":
+if system_info_cap.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionSystemInformation.qml":
     raise SystemExit(f"system.info.read source is {system_info_cap.get('source')}")
-if system_info_cap.get("recovery", {}).get("expectation") != "No durable mutation is expected.":
-    raise SystemExit(f"system.info.read recoveryExpectation drifted: {system_info_cap.get('recovery')}")
+if system_info_cap.get("source", {}).get("symbol") != "readInformation":
+    raise SystemExit(f"system.info.read source is {system_info_cap.get('source')}")
+if "SettingsSystemInformation.qml" in str(system_info_cap.get("source", {}).get("file") or ""):
+    raise SystemExit("system.info.read must not invent source on SettingsSystemInformation.qml")
+sys_recovery = system_info_cap.get("recovery") or {}
+if sys_recovery.get("mode") != "none":
+    raise SystemExit(f"system.info.read recovery mode is {sys_recovery}")
+if sys_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"system.info.read recovery fingerprint invent: {sys_recovery}")
+sys_exp = sys_recovery.get("expectation") or ""
+for needle in ("readInformation", "apply_system_information_inspect", "no Fabric fingerprint invent"):
+    if needle not in sys_exp:
+        raise SystemExit(f"system.info.read recovery missing {needle!r}: {sys_exp}")
 accessibility = by_id["accessibility.configure"]["humanRoute"]
 if accessibility.get("status") != "missing" or accessibility.get("path"):
     raise SystemExit(f"accessibility.configure invents an Accessibility route: {accessibility}")
@@ -316,8 +327,33 @@ if native38["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.38 route is {native38.get('humanRoute')}")
 if native38["humanRoute"].get("path") != "Settings > System information":
     raise SystemExit(f"windows-native.38 path is {native38.get('humanRoute')}")
-if native38.get("recoveryExpectation") != "Read-only inspection requires no recovery.":
-    raise SystemExit(f"windows-native.38 recoveryExpectation drifted: {native38.get('recoveryExpectation')}")
+native38_recovery = native38.get("recoveryExpectation") or ""
+if "readInformation" not in native38_recovery or "apply_system_information_inspect" not in native38_recovery:
+    raise SystemExit(f"windows-native.38 recovery is not tip-aligned to readInformation plane: {native38_recovery}")
+if "fingerprint invent" not in native38_recovery.lower() and "no Fabric fingerprint invent" not in native38_recovery:
+    raise SystemExit(f"windows-native.38 recovery must refuse Fabric fingerprint invent: {native38_recovery}")
+settings_system_coverage = ""
+for entry in [
+    line
+    for line in Path(root, "shell", "apps", "ultimate-settings", "SettingsModel.js").read_text(encoding="utf-8").splitlines()
+    if "settings.system.overview" in line or "soft leftover-attaches windows-native.38" in line.lower() or "SettingsSessionSystemInformation.readInformation" in line
+]:
+    settings_system_coverage += entry + "\n"
+# Prefer the route coverage string directly
+model_text = Path(root, "shell", "apps", "ultimate-settings", "SettingsModel.js").read_text(encoding="utf-8")
+# Extract system overview coverage by crude slice around routeId
+idx = model_text.find('routeId: "settings.system.overview"')
+if idx < 0:
+    raise SystemExit("settings.system.overview route missing")
+slice_ = model_text[idx: idx + 2500]
+if "soft leftover-attaches windows-native.38" not in slice_.lower():
+    raise SystemExit("Settings System coverage must soft leftover-attach windows-native.38")
+if "windows-native.38 stays prototype/pending" not in slice_:
+    raise SystemExit("Settings System coverage must keep windows-native.38 prototype/pending")
+if "SettingsSessionSystemInformation.readInformation" not in slice_:
+    raise SystemExit("Settings System coverage must name tip-true readInformation")
+if native38.get("capabilityIds") != ["system.info.read"]:
+    raise SystemExit(f"windows-native.38 capabilityIds are {native38.get('capabilityIds')}")
 if "processes.inspect" in by_id:
     raise SystemExit("processes.inspect remains as a catalog invent")
 for row in readers["capabilities"] + writers["capabilities"]:
@@ -1564,6 +1600,10 @@ if "CLOSED leftover: Update history UI" in gaps:
     raise SystemExit("fleet-doctrine-gaps must not invent CLOSED leftover: Update history UI")
 if "Honesty addendum 2026-09-06 vs Settings Display night-light leftover plane (windows-native.34)" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display night-light leftover plane addendum")
+if "Honesty addendum 2026-09-06 vs Settings System information leftover plane (windows-native.38)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings System information leftover plane addendum")
+if "soft leftover-attach acc" not in gaps.lower() or "windows-native.38" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must soft leftover-attach ACC windows-native.38")
 if "CLOSED leftover: Settings Display night-light UI" in gaps:
     raise SystemExit("fleet-doctrine-gaps must not invent CLOSED leftover: Settings Display night-light UI")
 if "soft leftover-attach acc" not in gaps.lower() or "windows-native.34" not in gaps:
