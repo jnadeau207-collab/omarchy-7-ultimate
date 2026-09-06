@@ -203,7 +203,7 @@ grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-fil
 grep -Fq 'Rename runs through files.provider entry.rename' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Rename writer"
 grep -Fq 'Copy and Paste run through files.provider entry.copy' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Copy writer"
 grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the cut/move write plane as not shell-authorizable"
-grep -Fq 'The OS clipboard stays unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps OS clipboard unavailable"
+grep -Fq 'place or read files on this session' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the session clipboard path"
 grep -Fq 'readonly property bool cutAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins cutAuthorized false; Cut is not LIVE under the shell principal"
 if grep -Eq 'cutAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
@@ -234,7 +234,9 @@ grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/HANDOFF_WRITERS_2026-0
 grep -Fq 'OS clipboard residual OPEN after PR #64' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #64"
 grep -Fq 'There is no Files `wl-copy`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
-  || fail "HANDOFF_WRITERS keeps Files OS clipboard bridge uninvented"
+  || fail "HANDOFF_WRITERS keeps the dated PR #64 leftover that had no Files wl-copy"
+grep -Fq 'OS clipboard residual CLOSED for Files copy-out/paste-in' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS closes the OS clipboard residual for the shipped session path"
 grep -Fq 'folder copy CLOSED' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS names folder copy CLOSED"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
@@ -304,6 +306,8 @@ grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/docs/files-defaults-pr
   || fail "files-defaults-provider keeps OS clipboard residual OPEN after PR #60"
 grep -Fq 'OS clipboard residual OPEN after PR #64' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps OS clipboard residual OPEN after PR #64"
+grep -Fq 'OS clipboard residual CLOSED for Files copy-out/paste-in' "$ROOT/docs/files-defaults-provider.md" \
+  || fail "files-defaults-provider closes the OS clipboard residual for the shipped session path"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider keeps permanent delete not shell-authorizable"
 grep -Fq 'Recycle / Empty Bin LIVE residual OPEN after PR #63' "$ROOT/docs/files-defaults-provider.md" \

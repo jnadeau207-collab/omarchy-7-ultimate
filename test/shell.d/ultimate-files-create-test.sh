@@ -133,9 +133,16 @@ fi
 if grep -Eq 'action: "entry.move"' "$application"; then
   fail "Files invents LIVE cut/move under SHELL"
 fi
-if grep -Eq 'wl-copy|wl-paste|Qt\.application\.clipboard' "$application"; then
-  fail "Files invents an OS clipboard product"
+if grep -Eq 'wl-copy|wl-paste|Qt\.application\.clipboard|Process[[:space:]]*\{' "$application"; then
+  fail "Files consumer QML must not assemble wl-copy or a Process block"
 fi
+grep -Fq 'Shared.FilesOsClipboard' "$application" || fail "Files hosts the session clipboard helper"
+grep -Fq 'osClipboard.copyPayload' "$application" || fail "Files Copy offers the selection on the session clipboard"
+grep -Fq 'function pasteFromClipboard()' "$application" || fail "Files Paste reads the session clipboard"
+grep -Fq 'files-clipboard-copy' "$ROOT/shell/apps/shared/FilesOsClipboard.qml" || fail "the session clipboard helper copies with files-clipboard-copy"
+grep -Fq 'files-clipboard-paste' "$ROOT/shell/apps/shared/FilesOsClipboard.qml" || fail "the session clipboard helper pastes with files-clipboard-paste"
+grep -Fq 'WL_COPY = "/usr/bin/wl-copy"' "$ROOT/default/fabric/omarchy_fabric/helpers/session_apply.py" ||
+  fail "the session apply helper owns the wl-copy argv"
 grep -Fq 'readonly property bool cutAuthorized: false' "$application" \
   || fail "cutAuthorized stays false; shell principal cannot authorize move"
 if grep -Eq 'cutAuthorized:\s*true' "$application"; then
@@ -153,16 +160,18 @@ grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$appli
   || fail "Files names the cut/move write plane as not shell-authorizable"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$application" \
   || fail "Files names the permanent delete write plane as not shell-authorizable"
-grep -Fq 'The OS clipboard stays unavailable' "$application" \
-  || fail "Files names the OS clipboard leftover instead of inventing one"
-grep -Fq 'kind === "file" || kind === "directory"' "$application" \
+grep -Fq 'place or read files on this session' "$application" \
+  || fail "Files names the session clipboard path"
+grep -Fq 'kind === "file" || kind === "directory"' "$ROOT/shell/apps/ultimate-files/FilesModel.js" \
   || fail "Files Copy accepts regular files and directories"
 grep -Fq 'OS clipboard residual OPEN after PR #60' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #60"
 grep -Fq 'OS clipboard residual OPEN after PR #64' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS keeps OS clipboard residual OPEN after PR #64"
 grep -Fq 'There is no Files `wl-copy`' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
-  || fail "HANDOFF_WRITERS keeps Files OS clipboard bridge uninvented"
+  || fail "HANDOFF_WRITERS keeps the dated PR #64 leftover that had no Files wl-copy"
+grep -Fq 'OS clipboard residual CLOSED for Files copy-out/paste-in' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
+  || fail "HANDOFF_WRITERS closes the OS clipboard residual for the shipped session path"
 grep -Fq 'Folder copy CLOSED via `files.entry.copy` directories' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names folder copy CLOSED"
 grep -Fq 'Copy maps `EXDEV` errno from `mkdir`/`open` only' "$ROOT/docs/files-defaults-provider.md" \
@@ -179,7 +188,7 @@ grep -Fq 'Recycle / Empty Bin LIVE residual OPEN after PR #63' "$ROOT/docs/files
   || fail "files-defaults-provider keeps Recycle residual OPEN after PR #63"
 grep -Fq '`files.trash.manage` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the trash.manage write plane"
-pass "Files Rename is LIVE and Copy/Paste stay in-app without inventing LIVE Cut or an OS clipboard"
+pass "Files Rename is LIVE and Copy/Paste offer a session clipboard without inventing LIVE Cut"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')
@@ -197,6 +206,31 @@ assertEqual(Model.isTrashRoute('files.trash'), true, 'Trash is the Recycle Bin b
 for (const routeId of ['files.documents', 'files.desktop', 'files.overview', 'files.recent', 'files.search', 'files.network', '']) {
   assertEqual(Model.isTrashRoute(routeId), false, `${routeId || '(none)'} is not the Recycle Bin browse route`)
 }
+
+const copyable = { id: 'files.entry.abc', kind: 'entry', entryKind: 'file', status: 'file', locationId: 'files.location.documents', relativePath: 'memo.txt', title: 'memo.txt' }
+assertEqual(Model.copyableRecord(copyable), true, 'a regular file in Documents is copyable')
+assertEqual(Model.copyableRecord({ ...copyable, status: 'symlink' }), false, 'a symlink is not copyable')
+assertEqual(Model.copyableRecord({ ...copyable, locationId: 'files.location.trash' }), false, 'Trash is not copyable')
+assertDeepEqual(
+  Model.clipboardCopyArguments(copyable),
+  { entryId: 'files.entry.abc', locationId: 'files.location.documents', entryRelativePath: 'memo.txt' },
+  'clipboard copy arguments keep identity without an absolute path'
+)
+assertDeepEqual(
+  Model.clipboardPasteArguments('files.location.documents', ''),
+  { destinationLocationId: 'files.location.documents', destinationParentRelativePath: '' },
+  'Documents can receive a paste'
+)
+assertDeepEqual(
+  Model.clipboardPasteArguments('files.location.documents', 'Reports'),
+  { destinationLocationId: 'files.location.documents', destinationParentRelativePath: 'Reports' },
+  'paste arguments name only the destination location'
+)
+assertEqual(Model.clipboardPasteArguments('files.location.trash', ''), null, 'Trash cannot receive a paste')
+assertEqual(Model.encodeFileUri('/home/jesse/Documents/My File.txt'), 'file:///home/jesse/Documents/My%20File.txt', 'file URIs encode spaces')
+assertDeepEqual(Model.parseFileUriList('file:///home/jesse/Documents/memo.txt\n'), ['/home/jesse/Documents/memo.txt'], 'uri-list parser returns local paths')
+assertDeepEqual(Model.parseFileUriList('copy\nfile:///home/jesse/Documents/memo.txt\n'), ['/home/jesse/Documents/memo.txt'], 'gnome copy header is skipped')
+assertDeepEqual(Model.parseFileUriList('file:///home/../etc/passwd\n'), [], 'uri-list parser drops traversal')
 
 assertEqual(Model.createNameRefusal('Reports'), '', 'an ordinary folder name is accepted')
 assertEqual(Model.createNameRefusal('My Folder'), '', 'a space is a legal folder name character')
