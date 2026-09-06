@@ -60,7 +60,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "input.inspect",
     supportsResource: true,
-    coverage: "Keyboard inventory and layout state are readable, and the active layout applies through input.provider keyboard-layout.set on keyboards that carry more than one layout. Pointer, repeat rate, and accessibility input changes remain unavailable from Settings."
+    coverage: "Keyboard inventory and layout state are readable from input.inspect. The active layout applies through this session's omarchy-fabric-session-apply input-keyboard-layout helper when a typed keyboard carries more than one configured layout. Settings does not invent an input.provider keyboard-layout durable writer. Fabric input.inspect stays separate. Pointer, repeat rate, and accessibility input changes remain unavailable from Settings. Layout alone is not locale complete. session leftover recorded: Settings Input keyboard layout session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present)."
   },
   {
     routeId: "settings.personalization.overview",
@@ -157,6 +157,8 @@ function coverageTone(routeId) {
 function declaredOpsHonesty(routeId) {
   if (String(routeId || "") === "settings.display.overview")
     return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Scale uses this session's omarchy-hyprland-monitor-scaling helper. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. Settings does not invent a display.provider scale durable writer."
+  if (String(routeId || "") === "settings.input.overview")
+    return "Layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper. Fabric input.inspect stays separate. Settings does not invent an input.provider keyboard-layout durable writer."
   if (String(routeId || "") === "settings.apps.overview")
     return "Settings runs browser, mailer, and MIME defaults through preflight, approval, and the durable coordinator. Startup applications enable or disable through this session's XDG autostart helper. Fabric defaults.inspect stays readable. Settings does not invent a Fabric apps.startup.disable durable writer. Settings does not invent Task Manager present."
   if (String(routeId || "") === "settings.bluetooth.overview")
@@ -169,7 +171,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Input layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1721,6 +1723,76 @@ function sessionScalingAccepted(previous, action) {
   }
 }
 
+function sessionKeyboardLayoutIdle() {
+  return { phase: "idle", action: "", layout: "", layouts: [], known: false, switchable: false, empty: false, message: "", code: "" }
+}
+
+function sessionKeyboardLayoutAccepted(previous, action) {
+  var prior = isObject(previous) ? previous : sessionKeyboardLayoutIdle()
+  return {
+    phase: prior.phase,
+    action: String(action || ""),
+    layout: prior.layout || "",
+    layouts: copyArray(prior.layouts),
+    known: prior.known === true,
+    switchable: prior.switchable === true,
+    empty: prior.empty === true,
+    message: prior.message || "",
+    code: prior.code || ""
+  }
+}
+
+function sessionKeyboardLayoutCanSubmit(layout, layouts) {
+  var token = String(layout || "")
+  var list = Array.isArray(layouts) ? layouts : []
+  if (list.length < 2) return false
+  return token !== "" && list.indexOf(token) >= 0
+}
+
+function sessionKeyboardLayoutFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var layouts = []
+  if (Array.isArray(result.layouts)) {
+    var i
+    for (i = 0; i < result.layouts.length && i < 8; i += 1) {
+      var name = result.layouts[i]
+      if (typeof name !== "string" || name.length === 0 || name.length > 64) {
+        layouts = []
+        break
+      }
+      layouts.push(name)
+    }
+  }
+  var ok = result.ok === true
+  var layout = String(result.layout || "")
+  if (layout && layouts.indexOf(layout) < 0) {
+    ok = false
+    result = {
+      ok: false,
+      layout: "",
+      layouts: layouts,
+      known: false,
+      switchable: false,
+      code: result.code || "layout.unknown",
+      explanation: result.explanation || "The typed keyboard layout is not one of the configured layouts."
+    }
+    layout = ""
+  }
+  var empty = layouts.length === 0
+  var known = result.known === true && layout !== "" && !empty
+  return {
+    phase: ok ? "succeeded" : "failed",
+    action: previous && previous.action || "",
+    layout: layout,
+    layouts: layouts,
+    known: known,
+    switchable: layouts.length > 1,
+    empty: empty,
+    message: clippedText(result.explanation || result.message || (ok ? "The session keyboard layout helper finished." : "The session keyboard layout helper failed."), MAX_DISPLAY_TEXT),
+    code: result.code || ""
+  }
+}
+
 function sessionScalingFinished(previous, helperResult) {
   var result = isObject(helperResult) ? helperResult : {}
   var ok = result.ok === true
@@ -1857,6 +1929,10 @@ if (typeof module !== "undefined") {
     sessionScalingCanSubmit: sessionScalingCanSubmit,
     sessionScalingIdle: sessionScalingIdle,
     sessionScalingAccepted: sessionScalingAccepted,
-    sessionScalingFinished: sessionScalingFinished
+    sessionScalingFinished: sessionScalingFinished,
+    sessionKeyboardLayoutIdle: sessionKeyboardLayoutIdle,
+    sessionKeyboardLayoutAccepted: sessionKeyboardLayoutAccepted,
+    sessionKeyboardLayoutCanSubmit: sessionKeyboardLayoutCanSubmit,
+    sessionKeyboardLayoutFinished: sessionKeyboardLayoutFinished
   }
 }
