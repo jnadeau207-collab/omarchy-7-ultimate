@@ -2144,17 +2144,17 @@
       "kind": "windows-native-task",
       "sourceLabel": "Troubleshoot intentionally broken audio",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "troubleshooting.audio.run"
       ],
       "humanRoute": {
-        "status": "planned",
-        "surface": "Troubleshooting",
-        "path": ""
+        "status": "visible",
+        "surface": "Settings",
+        "path": "Settings > Sound"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Record each repair and restore the previous route or configuration.",
+      "recoveryExpectation": "Session audio restart applies immediately through tip-true omarchy-restart-audio; port changes and the full troubleshoot wizard remain OPEN leftover with no cancel/restore invent.",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.39"

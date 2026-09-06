@@ -234,6 +234,7 @@ for capability_id, (surface, path) in inspect_routes.items():
 
 writer_routes = {
     "audio.output.manage": ("Settings", "Settings > Sound; Superbar > Quick Settings > Sound"),
+    "troubleshooting.audio.run": ("Settings", "Settings > Sound"),
     "printers.manage": ("Settings", "Settings > Printers"),
     "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
@@ -671,6 +672,47 @@ if "Panel.qml" in str(output_manage.get("source", {}).get("file") or ""):
     raise SystemExit(f"audio.output.manage still names the QS panel only: {output_manage.get('source')}")
 if "SettingsSound.qml" in str(output_manage.get("source", {}).get("file") or ""):
     raise SystemExit("audio.output.manage must not invent source on SettingsSound.qml")
+
+troubleshoot_audio = by_id["troubleshooting.audio.run"]
+if troubleshoot_audio.get("availability", {}).get("claim") == "present":
+    raise SystemExit("troubleshooting.audio.run must not claim present")
+if troubleshoot_audio.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"troubleshooting.audio.run claim is {troubleshoot_audio.get('availability')}")
+if troubleshoot_audio.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"troubleshooting.audio.run human availability is {troubleshoot_audio.get('availability')}")
+if troubleshoot_audio.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"troubleshooting.audio.run was raised off leftover: {troubleshoot_audio.get('provider')}")
+if troubleshoot_audio.get("humanRoute", {}).get("status") != "visible":
+    raise SystemExit(f"troubleshooting.audio.run route is {troubleshoot_audio.get('humanRoute')}")
+if troubleshoot_audio.get("humanRoute", {}).get("path") != "Settings > Sound":
+    raise SystemExit(f"troubleshooting.audio.run path is {troubleshoot_audio.get('humanRoute')}")
+if troubleshoot_audio.get("source", {}).get("symbol") != "apply_audio_troubleshoot_restart":
+    raise SystemExit(f"troubleshooting.audio.run source is {troubleshoot_audio.get('source')}")
+if "SettingsSound.qml" in str(troubleshoot_audio.get("source", {}).get("file") or ""):
+    raise SystemExit("troubleshooting.audio.run must not invent source on SettingsSound.qml")
+troubleshoot_recovery = troubleshoot_audio.get("recovery") or {}
+if troubleshoot_recovery.get("mode") == "compensating" or troubleshoot_recovery.get("stateFingerprintRequired") is True:
+    raise SystemExit(f"troubleshooting.audio.run recovery still invents compensating fingerprint: {troubleshoot_recovery}")
+if troubleshoot_recovery.get("mode") != "none" or troubleshoot_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"troubleshooting.audio.run recovery is not tip-true session leftover: {troubleshoot_recovery}")
+troubleshoot_expectation = str(troubleshoot_recovery.get("expectation") or "")
+if "omarchy-restart-audio" not in troubleshoot_expectation or "FixedArgv" not in troubleshoot_expectation:
+    raise SystemExit(f"troubleshooting.audio.run recovery expectation not tip-true FixedArgv restart: {troubleshoot_expectation}")
+if "fingerprint" in troubleshoot_expectation.lower() and "no compensating fingerprint" not in troubleshoot_expectation.lower():
+    raise SystemExit(f"troubleshooting.audio.run recovery invents fingerprint path: {troubleshoot_expectation}")
+if "compensating" in troubleshoot_expectation.lower() and "no compensating" not in troubleshoot_expectation.lower():
+    raise SystemExit(f"troubleshooting.audio.run recovery invents compensating path: {troubleshoot_expectation}")
+jobs_wn39 = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
+native39 = next(job for job in jobs_wn39["jobs"] if job["id"] == "windows-native.39")
+if native39.get("sourceStatus") != "pending" or native39.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.39 must stay prototype/pending: {native39}")
+if native39.get("humanRoute", {}).get("path") != "Settings > Sound":
+    raise SystemExit(f"windows-native.39 underclaims Settings Sound: {native39.get('humanRoute')}")
+native39_recovery = str(native39.get("recoveryExpectation") or "")
+if native39_recovery != "Session audio restart applies immediately through tip-true omarchy-restart-audio; port changes and the full troubleshoot wizard remain OPEN leftover with no cancel/restore invent.":
+    raise SystemExit(f"windows-native.39 recoveryExpectation drifted: {native39_recovery}")
+if "cancel/restore invent" not in native39_recovery or "OPEN leftover" not in native39_recovery:
+    raise SystemExit(f"windows-native.39 recoveryExpectation dropped leftover refuse: {native39_recovery}")
 
 volume_set = by_id["audio.volume.set"]
 if volume_set.get("provider", {}).get("id") != "audio.provider":

@@ -168,6 +168,7 @@
         "storage.removable.eject",
         "storage.removable.mount",
         "system.info.read",
+        "troubleshooting.audio.run",
         "update.history.read",
         "update.install"
       ],
@@ -208,6 +209,7 @@
         "capability:storage.removable.eject",
         "capability:storage.removable.mount",
         "capability:system.info.read",
+        "capability:troubleshooting.audio.run",
         "capability:update.history.read",
         "capability:update.install"
       ],
@@ -237,8 +239,7 @@
         "software.installed.manage",
         "storage.disk.manage",
         "storage.encryption.manage",
-        "tasks.schedule",
-        "troubleshooting.audio.run"
+        "tasks.schedule"
       ],
       "surfaceRefs": [
         "capability:accessibility.configure",
@@ -260,8 +261,7 @@
         "capability:software.installed.manage",
         "capability:storage.disk.manage",
         "capability:storage.encryption.manage",
-        "capability:tasks.schedule",
-        "capability:troubleshooting.audio.run"
+        "capability:tasks.schedule"
       ],
       "reason": "The product and acceptance graphs require these capabilities, but no provider implementing their semantic contract exists in the current tree.",
       "removalGate": "Land and verify a real provider, change its catalog state, and retain an honest human route and agent availability record."

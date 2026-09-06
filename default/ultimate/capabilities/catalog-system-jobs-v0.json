@@ -6821,7 +6821,7 @@
       "provider": {
         "id": "troubleshooting.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "legacy-direct"
       },
       "kind": "long-running",
       "effects": [
@@ -6851,9 +6851,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "troubleshooting.resource"
@@ -6875,9 +6875,9 @@
         "limit": "The provider declares the last safe cancellation checkpoint before apply."
       },
       "recovery": {
-        "mode": "compensating",
-        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "mode": "none",
+        "expectation": "Restart audio services via session-apply wrapping tip-true omarchy-restart-audio FixedArgv; port changes and the full troubleshoot wizard remain OPEN leftover with no compensating fingerprint invent.",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [
@@ -6888,10 +6888,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "missing",
-        "surface": "Troubleshooting",
-        "label": "Troubleshoot audio",
-        "path": ""
+        "status": "visible",
+        "surface": "Settings",
+        "label": "Restart audio services; port and full wizard remain OPEN leftover",
+        "path": "Settings > Sound"
       },
       "agentCenterLabel": "Troubleshoot audio",
       "proofIds": {
@@ -6903,8 +6903,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:troubleshooting.audio.run",
+        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
+        "symbol": "apply_audio_troubleshoot_restart",
         "brokerVerb": null
       }
     },
