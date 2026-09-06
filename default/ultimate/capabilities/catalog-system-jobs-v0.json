@@ -6427,10 +6427,10 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Files",
-        "label": "Open a document",
-        "path": "Files > document"
+        "label": "Open a PDF",
+        "path": "Files > PDF"
       },
-      "agentCenterLabel": "Open a document",
+      "agentCenterLabel": "Open a PDF",
       "proofIds": {
         "acceptance": [
           "proof.capability.files-document-open.tree-audit"
@@ -6440,8 +6440,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-open",
+        "file": "shell/apps/ultimate-files/FilesApplication.qml",
+        "symbol": "openEntry",
         "brokerVerb": null
       }
     },
