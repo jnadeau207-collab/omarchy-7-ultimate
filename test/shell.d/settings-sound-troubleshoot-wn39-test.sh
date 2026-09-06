@@ -349,6 +349,18 @@ if troubleshoot.get("availability", {}).get("human") != "partial":
     raise SystemExit(f"troubleshooting.audio.run human is {troubleshoot.get('availability')}")
 if troubleshoot.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"troubleshooting.audio.run was raised off leftover: {troubleshoot.get('provider')}")
+troubleshoot_recovery = troubleshoot.get("recovery") or {}
+if troubleshoot_recovery.get("mode") == "compensating" or troubleshoot_recovery.get("stateFingerprintRequired") is True:
+    raise SystemExit(f"troubleshooting.audio.run recovery still invents compensating fingerprint: {troubleshoot_recovery}")
+if troubleshoot_recovery.get("mode") != "none" or troubleshoot_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"troubleshooting.audio.run recovery is not tip-true session leftover: {troubleshoot_recovery}")
+troubleshoot_expectation = str(troubleshoot_recovery.get("expectation") or "")
+if "omarchy-restart-audio" not in troubleshoot_expectation or "FixedArgv" not in troubleshoot_expectation:
+    raise SystemExit(f"troubleshooting.audio.run recovery expectation not tip-true FixedArgv restart: {troubleshoot_expectation}")
+if "fingerprint" in troubleshoot_expectation.lower() and "no compensating fingerprint" not in troubleshoot_expectation.lower():
+    raise SystemExit(f"troubleshooting.audio.run recovery invents fingerprint path: {troubleshoot_expectation}")
+if "compensating" in troubleshoot_expectation.lower() and "no compensating" not in troubleshoot_expectation.lower():
+    raise SystemExit(f"troubleshooting.audio.run recovery invents compensating path: {troubleshoot_expectation}")
 manage = by_id["audio.output.manage"]
 if manage.get("availability", {}).get("claim") == "present":
     raise SystemExit("audio.output.manage must not claim present")
@@ -357,6 +369,11 @@ if native39.get("sourceStatus") != "pending" or native39.get("claim") != "protot
     raise SystemExit(f"windows-native.39 must stay prototype/pending: {native39}")
 if native39.get("humanRoute", {}).get("path") != "Settings > Sound":
     raise SystemExit(f"windows-native.39 underclaims Settings Sound: {native39.get('humanRoute')}")
+native39_recovery = str(native39.get("recoveryExpectation") or "")
+if native39_recovery != "Session audio restart applies immediately through tip-true omarchy-restart-audio; port changes and the full troubleshoot wizard remain OPEN leftover with no cancel/restore invent.":
+    raise SystemExit(f"windows-native.39 recoveryExpectation drifted: {native39_recovery}")
+if "cancel/restore invent" not in native39_recovery or "OPEN leftover" not in native39_recovery:
+    raise SystemExit(f"windows-native.39 recoveryExpectation dropped leftover refuse: {native39_recovery}")
 if "troubleshooting.audio.run" not in (native39.get("capabilityIds") or []):
     raise SystemExit("windows-native.39 dropped troubleshooting.audio.run")
 native6 = next(row for row in jobs["jobs"] if row["id"] == "windows-native.6")

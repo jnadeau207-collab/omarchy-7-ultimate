@@ -6875,9 +6875,9 @@
         "limit": "The provider declares the last safe cancellation checkpoint before apply."
       },
       "recovery": {
-        "mode": "compensating",
-        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "mode": "none",
+        "expectation": "Restart audio services via session-apply wrapping tip-true omarchy-restart-audio FixedArgv; port changes and the full troubleshoot wizard remain OPEN leftover with no compensating fingerprint invent.",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [
