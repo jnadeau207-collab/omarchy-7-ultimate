@@ -131,7 +131,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
 | Date and Time | Superbar clock / calendar chrome | No dedicated parity job | clock widgets |
-| Region and Language | Settings → Input (layout); full locale **planned** empty | `parity.language-locale` prototype; `locale.configure` planned; `input.keyboard-layout.set` visible Settings > Input | `input.provider`; no full locale writer |
+| Region and Language | Settings → Input (layout); full locale **planned** empty | `parity.language-locale` prototype; `locale.configure` planned; `input.keyboard-layout.set` leftover `legacy-direct` visible Settings > Input | session hyprctl leftover; no full locale writer |
 
 ### 2.8 Ease of Access
 
