@@ -431,6 +431,21 @@ if native32.get("humanRoute", {}).get("path") != "Settings > Printers":
     raise SystemExit(f"windows-native.32 humanRoute drifted: {native32.get('humanRoute')}")
 if "printers.manage" not in (native32.get("capabilityIds") or []):
     raise SystemExit("windows-native.32 dropped printers.manage")
+native32_recovery = str(native32.get("recoveryExpectation") or "")
+if "Cancel setup" in native32_recovery or "remove the newly added" in native32_recovery.lower() or "newly added printer" in native32_recovery.lower():
+    raise SystemExit(f"windows-native.32 recoveryExpectation still invents Add-setup cancel/remove: {native32_recovery}")
+if "Settings > Printers" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recoveryExpectation dropped Settings > Printers session plane: {native32_recovery}")
+if "OPEN leftover" not in native32_recovery and "Network Add" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recoveryExpectation dropped Add OPEN leftover: {native32_recovery}")
+if "no Add-setup" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recoveryExpectation dropped no Add-setup refuse: {native32_recovery}")
+devices = next(row for row in jobs["jobs"] if row["id"] == "parity.devices-printers")
+devices_recovery = str(devices.get("recoveryExpectation") or "")
+if "cancellable setup" in devices_recovery.lower() or "compensating removal" in devices_recovery.lower():
+    raise SystemExit(f"parity.devices-printers recoveryExpectation still invents Add-setup cancel/remove: {devices_recovery}")
+if "no Add-setup" not in devices_recovery:
+    raise SystemExit(f"parity.devices-printers recoveryExpectation dropped no Add-setup refuse: {devices_recovery}")
 if "printer-default-set" not in parity or "Settings > Printers" not in parity:
     raise SystemExit("parity must record Settings Printers session leftover")
 if "windows-native.32 stays prototype/pending" not in parity and "`windows-native.32` stays prototype/pending" not in parity:

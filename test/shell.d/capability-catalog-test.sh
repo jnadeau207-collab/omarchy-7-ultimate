@@ -622,6 +622,17 @@ if native32.get("claim") != "prototype" or native32.get("sourceStatus") != "pend
     raise SystemExit(f"windows-native.32 must stay prototype/pending: {native32}")
 if native32.get("humanRoute", {}).get("path") != "Settings > Printers":
     raise SystemExit(f"windows-native.32 humanRoute drifted: {native32.get('humanRoute')}")
+native32_recovery = str(native32.get("recoveryExpectation") or "")
+if "Cancel setup" in native32_recovery or "newly added printer" in native32_recovery.lower():
+    raise SystemExit(f"windows-native.32 recoveryExpectation still invents Add-setup cancel/remove: {native32_recovery}")
+if "Settings > Printers" not in native32_recovery or "no Add-setup" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recoveryExpectation not tip-true session leftover: {native32_recovery}")
+devices_printers = next(job for job in jobs["jobs"] if job["id"] == "parity.devices-printers")
+devices_recovery = str(devices_printers.get("recoveryExpectation") or "")
+if "cancellable setup" in devices_recovery.lower() or "compensating removal" in devices_recovery.lower():
+    raise SystemExit(f"parity.devices-printers recoveryExpectation still invents Add-setup: {devices_recovery}")
+if "no Add-setup" not in devices_recovery:
+    raise SystemExit(f"parity.devices-printers recoveryExpectation dropped no Add-setup refuse: {devices_recovery}")
 
 output_manage = by_id["audio.output.manage"]
 if output_manage.get("availability", {}).get("claim") == "present":
