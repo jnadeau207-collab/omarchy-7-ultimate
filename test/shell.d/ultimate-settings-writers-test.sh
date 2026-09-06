@@ -89,6 +89,8 @@ pass "heritage QS Power leftover stays cataloged, was unverified on metal, and Q
 
 grep -Fq 'SettingsComponents.SettingsDisplayNightLight' "$application" ||
   fail "Settings Display hosts the NightlightService night-light card"
+grep -Fq 'SettingsComponents.SettingsDisplayScaling' "$application" ||
+  fail "Settings Display hosts the session scaling card"
 if grep -Eq 'action: "night-light|action: "nightlight|provider: "display.provider".*night' "$application"; then
   fail "Settings invents a Fabric night-light writer"
 fi
