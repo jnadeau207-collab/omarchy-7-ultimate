@@ -142,7 +142,7 @@ Settings and Files writer honesty — LIVE means a typed Settings/Files control 
 | Input / Language | `input.inspect` | `keyboard-layout.set` (multi-layout) | pointer / repeat / locale; `parity.language-locale` prototype; `windows-native.33` pending |
 | Apps | `defaults.inspect` | `protocol.set` (default browser http+https scheme-by-scheme, default email mailto), `mime.set` (writable multi-candidate associations) | MIME / Default Programs association UI residual OPEN after PR #62; Settings offers MIME LIVE CONTROL for writable multi-candidate associations and read-only startup inventory since; other associations / Default Programs applet; `files.associations.set` stays missing/planned MIME; `parity.default-programs` prototype; `windows-native.19` pending |
 | Bluetooth | `bluetooth.inspect` | session pair/connect (BlueZ) | audio routing / PIN-entry / rfkill; `windows-native.5` pending |
-| Update | `update.inspect` | none | download / apply; `windows-native.28–29` pending |
+| Update | `update.inspect` | session apply (`omarchy-update`); Fabric `system.update` not LIVE | history / restart / reboot; `parity.update` prototype; `windows-native.28` pending until human/metal proof; `windows-native.29` pending |
 | Recovery | `recovery.inspect` | none | restore plan / exec; `windows-native.30–31` pending |
 | Personalization | hosted Process picker | no typed service | typed Personalization writers |
 | Accessibility | none | none | no `accessibility.provider` |

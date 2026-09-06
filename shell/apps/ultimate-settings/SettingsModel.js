@@ -105,7 +105,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "update.inspect",
     supportsResource: false,
-    coverage: "Update availability and lifecycle state are readable. Download, apply, checkpoint, restart, and reboot controls remain unavailable from Settings."
+    coverage: "Update availability and lifecycle state are readable. Install uses this session's update helper; elevated auth never enters Fabric. Fabric system.update stays inspect-only / not LIVE. History, restart, and reboot writers remain unavailable from Settings. Update is not present as product."
   },
   {
     routeId: "settings.recovery.overview",
@@ -133,7 +133,8 @@ var LIVE_WRITER_ROUTES = [
   "settings.display.overview",
   "settings.input.overview",
   "settings.apps.overview",
-  "settings.apps.default-programs"
+  "settings.apps.default-programs",
+  "settings.update.overview"
 ]
 
 function isDefaultsWriterRoute(routeId) {
@@ -156,13 +157,15 @@ function coverageTone(routeId) {
 function declaredOpsHonesty(routeId) {
   if (String(routeId || "") === "settings.bluetooth.overview")
     return "Settings pairs and connects through this session's BlueZ adapter. Fabric bluetooth.inspect stays read-only; pairing secrets never enter durable evidence."
+  if (String(routeId || "") === "settings.update.overview")
+    return "Settings applies updates through this session's update helper. Fabric system.update stays inspect-only; elevated auth never enters durable evidence."
   return routeHasLiveWriter(routeId)
     ? "Settings runs this operation through preflight, approval, and the durable coordinator."
     : "Settings exposes no preflight, approval, or execution control for this domain."
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1431,6 +1434,46 @@ function provenance(state) {
   return clippedText(parts.join(" \u00b7 "), 640)
 }
 
+function sessionUpdateIdle() {
+  return { phase: "idle", action: "", channel: "", message: "", code: "" }
+}
+
+function sessionUpdatePlan(action, status) {
+  if (action === "check") return { action: "check", channel: "", reason: "" }
+  var state = isObject(status) ? status : {}
+  var channel = typeof state.channel === "string" ? state.channel : ""
+  var requested = typeof state.requestedChannel === "string" ? state.requestedChannel : ""
+  if (requested && requested !== channel) {
+    return { action: "unavailable", channel: channel, reason: "The requested channel is not the channel this machine tracks." }
+  }
+  if (!channel) return { action: "unavailable", channel: "", reason: "Settings has not read this machine's update channel." }
+  if (state.available !== true) return { action: "unavailable", channel: channel, reason: "No system updates are available." }
+  if (state.lockHeld === true) return { action: "unavailable", channel: channel, reason: "An Omarchy update is already running." }
+  if (state.diskOk === false) return { action: "unavailable", channel: channel, reason: "This machine does not have enough free disk space to update safely." }
+  return { action: "apply", channel: channel, reason: "" }
+}
+
+function sessionUpdateCanSubmit(plan) {
+  return !!(plan && (plan.action === "check" || (plan.action === "apply" && plan.channel)))
+}
+
+function sessionUpdateAccepted(previous, plan) {
+  return { phase: "running", action: plan && plan.action || "", channel: plan && plan.channel || "", message: "", code: "" }
+}
+
+function sessionUpdateFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var ok = result.ok === true
+  var message = clippedText(result.explanation || result.message || (ok ? "The session update helper finished." : "The session update helper failed."), MAX_DISPLAY_TEXT)
+  return {
+    phase: ok ? "succeeded" : "failed",
+    action: previous && previous.action || "",
+    channel: result.channel || (previous && previous.channel) || "",
+    message: message,
+    code: result.code || ""
+  }
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     CATALOG_METHOD: CATALOG_METHOD,
@@ -1499,6 +1542,11 @@ if (typeof module !== "undefined") {
     bluetoothDeviceRow: bluetoothDeviceRow,
     bluetoothDeviceGroups: bluetoothDeviceGroups,
     bluetoothPairAction: bluetoothPairAction,
-    bluetoothCanSubmit: bluetoothCanSubmit
+    bluetoothCanSubmit: bluetoothCanSubmit,
+    sessionUpdateIdle: sessionUpdateIdle,
+    sessionUpdatePlan: sessionUpdatePlan,
+    sessionUpdateCanSubmit: sessionUpdateCanSubmit,
+    sessionUpdateAccepted: sessionUpdateAccepted,
+    sessionUpdateFinished: sessionUpdateFinished
   }
 }

@@ -1401,6 +1401,13 @@ Item {
               onPaired: if (root.controller) root.controller.refreshCurrent()
               onConnected: if (root.controller) root.controller.refreshCurrent()
             }
+            SettingsComponents.SettingsUpdateApply {
+              visible: root.currentRoute && root.currentRoute.id === "settings.update.overview"
+              pageActive: visible
+              semanticProfile: root.productProfile
+              Layout.fillWidth: true
+              onApplied: if (root.controller) root.controller.refreshCurrent()
+            }
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.input.overview" && root.keyboardLayouts.length > 1
               Layout.fillWidth: true

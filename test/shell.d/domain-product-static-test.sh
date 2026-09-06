@@ -141,6 +141,14 @@ if grep -Eq 'pkexec|sudo|/usr/bin/pacman|yay|flatpak' "$ROOT/shell/apps/shared/S
 fi
 grep -Fq 'omarchy-fabric-session-apply' "$ROOT/shell/apps/shared/SoftwareSessionInstall.qml" ||
   fail "Software session install uses the session apply helper"
+if grep -Eq 'pkexec|sudo|/usr/bin/pacman|omarchy-update-confirm' "$ROOT/shell/apps/shared/SettingsSessionUpdate.qml" "$ROOT/shell/apps/ultimate-settings/SettingsUpdateApply.qml"; then
+  fail "Settings session update must not spawn privileged or interactive update argv"
+fi
+grep -Fq 'omarchy-fabric-session-apply' "$ROOT/shell/apps/shared/SettingsSessionUpdate.qml" ||
+  fail "Settings session update uses the session apply helper"
+if grep -Eq 'operation\.(preflight|start|approve)|requestFabric' "$ROOT/shell/apps/shared/SettingsSessionUpdate.qml" "$ROOT/shell/apps/ultimate-settings/SettingsUpdateApply.qml"; then
+  fail "Settings session update must not mint Fabric durable operations"
+fi
 pass "Domain product QML is command-free, least-privilege, accessible, and long-string safe"
 
 for model in \
