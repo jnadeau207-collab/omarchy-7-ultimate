@@ -109,9 +109,13 @@ check("status reports the machine channel", result.get("channel") == "stable", s
 check("status reports updates available", result.get("available") is True, str(result))
 check("status reports lock free", result.get("lockHeld") is False, str(result))
 check("status reports disk ok", result.get("diskOk") is True, str(result))
+check("channel helper is /usr/bin pinned", sa.OMARCHY_VERSION_CHANNEL == "/usr/bin/omarchy-version-channel", sa.OMARCHY_VERSION_CHANNEL)
+check("update helper is /usr/bin pinned", sa.OMARCHY_UPDATE == "/usr/bin/omarchy-update", sa.OMARCHY_UPDATE)
+check("available helper is /usr/bin pinned", sa.OMARCHY_UPDATE_AVAILABLE == "/usr/bin/omarchy-update-available", sa.OMARCHY_UPDATE_AVAILABLE)
+check("free-space helper is /usr/bin pinned", sa.OMARCHY_UPDATE_FREE_SPACE == "/usr/bin/omarchy-update-requires-free-space", sa.OMARCHY_UPDATE_FREE_SPACE)
 check(
     "status probes channel before apply",
-    any(call and call[0] == sa.OMARCHY_VERSION_CHANNEL for call in calls),
+    any(call and call[0] == "/usr/bin/omarchy-version-channel" for call in calls),
     str(calls),
 )
 
@@ -120,8 +124,8 @@ status, result = run_action(sa.apply_system_update, {"channel": "stable"})
 check("apply on the tracked channel succeeds", status == 0 and result.get("ok") is True, str(result))
 check("apply reports the channel", result.get("channel") == "stable", str(result))
 check(
-    "apply uses omarchy-update unattended",
-    any(call and call[0] == sa.OMARCHY_UPDATE and "-y" in call for call in calls),
+    "apply uses /usr/bin/omarchy-update unattended",
+    any(call and call[0] == "/usr/bin/omarchy-update" and "-y" in call for call in calls),
     str(calls),
 )
 
