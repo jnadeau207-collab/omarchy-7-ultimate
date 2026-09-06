@@ -35,14 +35,16 @@ Item {
   readonly property bool trashAuthorized: false
   readonly property bool renameAuthorized: true
   readonly property bool copyAuthorized: true
-  readonly property bool cutAuthorized: false
-  readonly property bool deleteAuthorized: false
+  readonly property bool cutAuthorized: false // leftover Fabric SHELL refuse; session Cut does not consult this pin
+  readonly property bool deleteAuthorized: false // leftover Fabric SHELL refuse; session Permanent Delete does not consult this pin
   readonly property bool emptyBinAuthorized: false
   readonly property bool trashRoute: FilesModel.isTrashRoute(host ? host.currentRoute : "")
-  readonly property bool sessionBusy: sessionTrash.busy
+  readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy
   property string renameDraft: ""
   property var renameRecord: null
   property var stagedCopyRecord: null
+  property var stagedCutRecord: null
+  property var pendingDeleteRecord: null
 
   property var history: []
   property int historyIndex: -1
@@ -288,6 +290,7 @@ Item {
     if (!host || operationBusy) return
     if (!root.copyableRecord(record)) return
     root.stagedCopyRecord = record
+    root.stagedCutRecord = null
     var payload = FilesModel.clipboardCopyArguments(record)
     if (payload) osClipboard.copyPayload(payload)
     root.operationMessage = "Copied " + String(record.title || "this entry") + " to the clipboard."
@@ -301,6 +304,10 @@ Item {
   }
 
   function pasteFromClipboard() {
+    if (root.stagedCutRecord) {
+      root.sessionMoveStagedCut()
+      return
+    }
     if (!root.copyAuthorized) return
     if (!host || operationBusy || createLocationId === "") return
     var payload = FilesModel.clipboardPasteArguments(root.createLocationId, root.relativePath)
@@ -387,6 +394,53 @@ Item {
     if (!sessionTrash.emptyBin(plan)) root.operationMessage = "The session recycle helper is busy."
   }
 
+  function sessionCutEntry(record) {
+    if (root.operationBusy || root.sessionBusy) return
+    if (!FilesModel.sessionMovableRecord(record)) {
+      var preview = FilesModel.sessionMovePlan(record, "files.location.desktop", "", String(record && record.title || "item"))
+      root.operationMessage = preview.reason || "That item cannot be cut through this session."
+      return
+    }
+    root.stagedCutRecord = record
+    root.stagedCopyRecord = null
+    root.operationMessage = "Cut " + String(record.title || "this item") + ". Paste moves it through this session."
+  }
+
+  function sessionMoveStagedCut() {
+    if (root.operationBusy || root.sessionBusy) return
+    if (!root.stagedCutRecord) return
+    var destName = String(root.stagedCutRecord.title || "")
+    var plan = FilesModel.sessionMovePlan(root.stagedCutRecord, root.createLocationId, root.relativePath, destName)
+    if (!FilesModel.sessionMutateCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That item cannot be moved through this session."
+      return
+    }
+    root.operationMessage = "Moving " + destName + " through this session."
+    if (!sessionMutate.moveRecord(plan)) root.operationMessage = "The session cut helper is busy."
+  }
+
+  function beginPermanentDelete(record) {
+    if (root.operationBusy || root.sessionBusy) return
+    var plan = FilesModel.sessionDeletePlan(record)
+    if (!FilesModel.sessionMutateCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That item cannot be permanently deleted through this session."
+      return
+    }
+    root.pendingDeleteRecord = record
+    deleteDialog.open()
+  }
+
+  function sessionDeleteEntry(record) {
+    if (root.operationBusy || root.sessionBusy) return
+    var plan = FilesModel.sessionDeletePlan(record)
+    if (!FilesModel.sessionMutateCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That item cannot be permanently deleted through this session."
+      return
+    }
+    root.operationMessage = "Permanently deleting " + String(record.title || "this item") + " through this session."
+    if (!sessionMutate.deleteRecord(plan)) root.operationMessage = "The session delete helper is busy."
+  }
+
   function createFolder(name) {
     if (!host || operationBusy || !createVisible) return
     var refusal = FilesModel.createNameRefusal(name)
@@ -456,16 +510,24 @@ Item {
         enabled: !root.operationBusy && root.copyableRecord(root.selectedRecord)
       })
     }
+    list.push({
+      key: "cut", label: "Cut", dropdown: false,
+      enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionMovableRecord(root.selectedRecord)
+    })
     if (root.createVisible && root.copyAuthorized) {
       list.push({
         key: "paste", label: "Paste", dropdown: false,
-        enabled: !root.operationBusy
+        enabled: !root.operationBusy && !root.sessionBusy
       })
     }
     if (root.createVisible && FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({
         key: "delete", label: "Delete", dropdown: false,
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionTrashableRecord(root.selectedRecord)
+      })
+      list.push({
+        key: "permanently-delete", label: "Permanently delete", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionDeletableRecord(root.selectedRecord)
       })
     }
     if (root.trashRoute) {
@@ -489,13 +551,17 @@ Item {
     }
     if (root.copyAuthorized) {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
-      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy })
+    }
+    list.push({ key: "cut", label: "Cut", enabled: FilesModel.sessionMovableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    if (root.copyAuthorized) {
+      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy && !root.sessionBusy })
     }
     if (root.trashRoute) {
       list.push({ key: "restore", label: "Restore", enabled: FilesModel.sessionRestorableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "empty-bin", label: "Empty Recycle Bin", enabled: !root.operationBusy && !root.sessionBusy && root.showRecords })
     } else if (FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({ key: "delete", label: "Delete", enabled: FilesModel.sessionTrashableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+      list.push({ key: "permanently-delete", label: "Permanently delete", enabled: FilesModel.sessionDeletableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     list.push({ key: "refresh", label: "Refresh", enabled: true })
     list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
@@ -509,13 +575,17 @@ Item {
     }
     if (root.copyAuthorized) {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
-      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy })
+    }
+    list.push({ key: "cut", label: "Cut", enabled: FilesModel.sessionMovableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    if (root.copyAuthorized) {
+      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy && !root.sessionBusy })
     }
     if (root.trashRoute) {
       list.push({ key: "restore", label: "Restore", enabled: FilesModel.sessionRestorableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "empty-bin", label: "Empty Recycle Bin", enabled: !root.operationBusy && !root.sessionBusy && root.showRecords })
     } else if (FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({ key: "delete", label: "Delete", enabled: FilesModel.sessionTrashableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+      list.push({ key: "permanently-delete", label: "Permanently delete", enabled: FilesModel.sessionDeletableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
     return list
@@ -526,8 +596,10 @@ Item {
     if (key === "new-folder") { root.createFolder(root.nextFolderName()); return }
     if (key === "rename") { root.beginRename(root.selectedRecord); return }
     if (key === "copy") { root.stageCopy(root.selectedRecord); return }
+    if (key === "cut") { root.sessionCutEntry(root.selectedRecord); return }
     if (key === "paste") { root.pasteFromClipboard(); return }
     if (key === "delete") { root.sessionTrashEntry(root.selectedRecord); return }
+    if (key === "permanently-delete") { root.beginPermanentDelete(root.selectedRecord); return }
     if (key === "restore") { root.sessionRestoreEntry(root.selectedRecord); return }
     if (key === "empty-bin") { emptyBinDialog.open(); return }
     if (key === "properties") { propertiesDialog.open(); return }
@@ -547,14 +619,25 @@ Item {
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Up) { root.goUp(); event.accepted = true }
     else if (event.key === Qt.Key_F2) { root.beginRename(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_C) { root.stageCopy(root.selectedRecord); event.accepted = true }
+    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_X) { root.sessionCutEntry(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { root.pasteFromClipboard(); event.accepted = true }
-    else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; root.sessionTrashEntry(root.selectedRecord); event.accepted = true }
+    else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; if (event.modifiers & Qt.ShiftModifier) root.beginPermanentDelete(root.selectedRecord); else root.sessionTrashEntry(root.selectedRecord); event.accepted = true }
   }
 
   Shared.FilesSessionTrash {
     id: sessionTrash
     onFinished: function(kind, ok, message) {
       root.operationMessage = message
+      if (ok && root.controller) root.controller.refresh()
+    }
+  }
+
+  Shared.FilesSessionMutate {
+    id: sessionMutate
+    onFinished: function(kind, ok, message) {
+      root.operationMessage = message
+      if (ok && kind === "move") root.stagedCutRecord = null
+      if (ok && kind === "delete") root.pendingDeleteRecord = null
       if (ok && root.controller) root.controller.refresh()
     }
   }
@@ -821,7 +904,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. The cut/move write plane exists but is not shell-authorizable. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable. The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable under SHELL."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable under SHELL."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -1110,6 +1193,88 @@ Item {
               onSingleTapped: {
                 emptyBinDialog.close()
                 if (modelData.key === "ok") root.sessionEmptyBin()
+              }
+            }
+
+            Accessible.role: Accessible.Button
+            Accessible.name: modelData.label
+          }
+        }
+      }
+    }
+  }
+
+  Controls.Popup {
+    id: deleteDialog
+    anchors.centerIn: Controls.Overlay.overlay
+    width: Math.min(360, root.width - 40)
+    modal: true
+    padding: 12
+
+    background: Rectangle {
+      color: "#f0f0f0"
+      border.width: 1
+      border.color: "#8b97a3"
+    }
+
+    contentItem: Column {
+      spacing: 8
+      width: deleteDialog.availableWidth
+
+      Text {
+        text: "Permanently delete"
+        textFormat: Text.PlainText
+        color: Aero.textPrimary
+        font.family: Aero.fontFamily
+        font.pixelSize: 12
+      }
+
+      Text {
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: "This permanently removes " + String(root.pendingDeleteRecord && root.pendingDeleteRecord.title || "this item") + " from this folder. It does not go to the Recycle Bin. Regular files and empty folders only. Trash stays on Empty Recycle Bin."
+        textFormat: Text.PlainText
+        color: Aero.textSecondary
+        font.family: Aero.fontFamily
+        font.pixelSize: 12
+      }
+
+      Row {
+        anchors.right: parent.right
+        spacing: 6
+
+        Repeater {
+          model: [
+            { key: "ok", label: "Delete" },
+            { key: "cancel", label: "Cancel" }
+          ]
+
+          delegate: Rectangle {
+            required property var modelData
+            width: 86
+            height: 23
+            radius: 3
+            border.width: 1
+            border.color: deleteHover.hovered ? Aero.hoverSelectedBorder : "#a0a6ac"
+            gradient: Gradient {
+              GradientStop { position: 0; color: deleteHover.hovered ? Aero.hoverTop : "#fdfdfd" }
+              GradientStop { position: 1; color: deleteHover.hovered ? Aero.hoverBottom : "#e6e8ea" }
+            }
+
+            Text {
+              anchors.centerIn: parent
+              text: modelData.label
+              textFormat: Text.PlainText
+              color: Aero.textPrimary
+              font.family: Aero.fontFamily
+              font.pixelSize: 12
+            }
+
+            HoverHandler { id: deleteHover }
+            TapHandler {
+              onSingleTapped: {
+                deleteDialog.close()
+                if (modelData.key === "ok") root.sessionDeleteEntry(root.pendingDeleteRecord)
               }
             }
 

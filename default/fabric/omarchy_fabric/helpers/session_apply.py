@@ -416,6 +416,17 @@ def require_files_resource_id(payload: Mapping[str, Any]) -> str:
     return resource_id
 
 
+def bind_files_named_directory_resource(payload: Mapping[str, Any], expected: str) -> str:
+    resource_id = payload.get("resourceId")
+    if resource_id in (None, ""):
+        return expected
+    if not isinstance(resource_id, str) or not resource_id.startswith("files."):
+        raise ApplyError("payload.invalid", "The apply payload names no files resource.")
+    if resource_id != expected:
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    return resource_id
+
+
 def bind_files_directory_resource(payload: Mapping[str, Any], location_id: str, parent: str) -> str:
     expected = stable_directory_id(location_id, parent)
     resource_id = payload.get("resourceId")
@@ -1193,7 +1204,6 @@ def apply_files_clipboard_paste(stdin: Any, stdout: Any, run: Any = subprocess.r
 
 def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_files_resource_id(payload)
     entry_id = require_entry_id(payload)
     dest_name = require_destination_name(payload)
     dest_location = payload.get("destinationLocationId")
@@ -1204,8 +1214,9 @@ def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
         raise ApplyError("payload.invalid", "Trash is not a move destination.")
     if not isinstance(dest_location, str) or not isinstance(dest_parent, str):
         raise ApplyError("payload.invalid", "The apply payload names no move destination.")
-    if resource_id != stable_move_directory_id(dest_location, dest_parent, entry_id):
-        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    resource_id = bind_files_named_directory_resource(
+        payload, stable_move_directory_id(dest_location, dest_parent, entry_id)
+    )
     home = pathlib.Path.home()
     _, source, relative = resolve_entry_slot(payload, home)
     source_parent = "/".join(relative.split("/")[:-1])
@@ -1287,13 +1298,13 @@ def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
 
 def apply_files_entry_delete(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_files_resource_id(payload)
     entry_id = require_entry_id(payload)
     if payload.get("locationId") == "files.location.trash":
         raise ApplyError("payload.invalid", "Trash entries cannot be permanently deleted.")
     parent_relative = "/".join(require_entry_relative(payload)[:-1])
-    if resource_id != stable_delete_directory_id(payload["locationId"], parent_relative, entry_id):
-        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    resource_id = bind_files_named_directory_resource(
+        payload, stable_delete_directory_id(payload["locationId"], parent_relative, entry_id)
+    )
     _, final, relative = resolve_entry_path(payload, pathlib.Path.home())
     try:
         info = final.lstat()

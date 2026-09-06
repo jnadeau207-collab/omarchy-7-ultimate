@@ -203,6 +203,96 @@ function sessionTrashCanSubmit(plan) {
   return plan.action === "trash" || plan.action === "restore" || plan.action === "empty"
 }
 
+function sessionWritableLocation(locationId) {
+  return sessionTrashableLocation(locationId)
+}
+
+function sessionMovableRecord(record) {
+  if (!isObject(record)) return false
+  return String(record.kind || "") === "entry"
+    && String(record.entryKind || "") === "file"
+    && String(record.status || "") !== "symlink"
+    && sessionWritableLocation(record.locationId)
+    && String(record.id || "") !== ""
+    && String(record.relativePath || "") !== ""
+}
+
+function sessionDeletableRecord(record) {
+  if (!isObject(record)) return false
+  var kind = String(record.entryKind || "")
+  return String(record.kind || "") === "entry"
+    && (kind === "file" || kind === "directory")
+    && String(record.status || "") !== "symlink"
+    && sessionWritableLocation(record.locationId)
+    && String(record.id || "") !== ""
+    && String(record.relativePath || "") !== ""
+}
+
+function sessionMovePlan(record, destLocationId, destParent, destName) {
+  if (!sessionMovableRecord(record)) {
+    if (isObject(record) && String(record.locationId || "") === "files.location.trash") {
+      return { action: "unavailable", reason: "Trash entries cannot be moved." }
+    }
+    if (isObject(record) && String(record.entryKind || "") === "directory") {
+      return { action: "unavailable", reason: "Only regular files can be cut through this session." }
+    }
+    if (isObject(record) && String(record.status || "") === "symlink") {
+      return { action: "unavailable", reason: "Symlink entries cannot be moved." }
+    }
+    return { action: "unavailable", reason: "That item cannot be cut through this session." }
+  }
+  var dest = String(destLocationId || "")
+  if (dest === "files.location.trash") {
+    return { action: "unavailable", reason: "Trash is not a move destination." }
+  }
+  if (!sessionWritableLocation(dest)) {
+    return { action: "unavailable", reason: "That folder cannot receive a session move." }
+  }
+  var name = String(destName || record.title || "")
+  var refusal = createNameRefusal(name)
+  if (refusal !== "") {
+    return { action: "unavailable", reason: refusal }
+  }
+  var sourceParent = parentRelativePath(String(record.relativePath || ""))
+  if (dest === String(record.locationId) && String(destParent || "") === sourceParent && name !== String(record.title || "")) {
+    return { action: "unavailable", reason: "Same-directory name changes use Rename." }
+  }
+  return {
+    action: "move",
+    locationId: String(record.locationId),
+    entryRelativePath: String(record.relativePath),
+    entryId: String(record.id),
+    destinationLocationId: dest,
+    destinationParentRelativePath: String(destParent || ""),
+    destinationName: name,
+    title: String(record.title || "")
+  }
+}
+
+function sessionDeletePlan(record) {
+  if (!sessionDeletableRecord(record)) {
+    if (isObject(record) && String(record.locationId || "") === "files.location.trash") {
+      return { action: "unavailable", reason: "Trash entries cannot be permanently deleted. Empty Recycle Bin stays on Empty Bin." }
+    }
+    if (isObject(record) && String(record.status || "") === "symlink") {
+      return { action: "unavailable", reason: "Symlink entries cannot be permanently deleted." }
+    }
+    return { action: "unavailable", reason: "That item cannot be permanently deleted through this session." }
+  }
+  return {
+    action: "delete",
+    locationId: String(record.locationId),
+    entryRelativePath: String(record.relativePath),
+    entryId: String(record.id),
+    title: String(record.title || "")
+  }
+}
+
+function sessionMutateCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "move" || plan.action === "delete"
+}
+
 function encodeFileUri(absolutePath) {
   var value = String(absolutePath || "")
   if (!value.startsWith("/") || value.indexOf("\x00") >= 0) return ""
@@ -1094,7 +1184,10 @@ if (typeof module !== "undefined") module.exports = {
   sessionTrashableLocation: sessionTrashableLocation, sessionTrashableRecord: sessionTrashableRecord,
   sessionRestorableRecord: sessionRestorableRecord, sessionTrashPlan: sessionTrashPlan,
   sessionRestorePlan: sessionRestorePlan, sessionEmptyPlan: sessionEmptyPlan,
-  sessionTrashCanSubmit: sessionTrashCanSubmit,
+  sessionTrashCanSubmit: sessionTrashCanSubmit, sessionWritableLocation: sessionWritableLocation,
+  sessionMovableRecord: sessionMovableRecord, sessionDeletableRecord: sessionDeletableRecord,
+  sessionMovePlan: sessionMovePlan, sessionDeletePlan: sessionDeletePlan,
+  sessionMutateCanSubmit: sessionMutateCanSubmit,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,

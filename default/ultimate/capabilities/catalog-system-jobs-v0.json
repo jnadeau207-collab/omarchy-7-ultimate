@@ -5683,10 +5683,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Files",
         "label": "Cut and paste an item",
-        "path": ""
+        "path": "Files > Cut"
       },
       "agentCenterLabel": "Cut and paste an item",
       "proofIds": {
@@ -5698,8 +5698,8 @@
         ]
       },
       "source": {
-        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
-        "symbol": "apply_files_entry_move",
+        "file": "shell/apps/shared/FilesSessionMutate.qml",
+        "symbol": "moveRecord",
         "brokerVerb": null
       }
     },
@@ -5776,10 +5776,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Files",
         "label": "Permanently delete an item",
-        "path": ""
+        "path": "Files > Permanently delete"
       },
       "agentCenterLabel": "Permanently delete an item",
       "proofIds": {
@@ -5791,8 +5791,8 @@
         ]
       },
       "source": {
-        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
-        "symbol": "apply_files_entry_delete",
+        "file": "shell/apps/shared/FilesSessionMutate.qml",
+        "symbol": "deleteRecord",
         "brokerVerb": null
       }
     },

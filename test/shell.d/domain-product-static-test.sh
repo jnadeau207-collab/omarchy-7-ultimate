@@ -218,6 +218,8 @@ grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-fil
 grep -Fq 'Rename runs through files.provider entry.rename' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Rename writer"
 grep -Fq 'Copy and Paste run through files.provider entry.copy' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Copy writer"
 grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the cut/move write plane as not shell-authorizable"
+grep -Fq 'Cut and Paste-after-cut run through this session' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names session LIVE Cut"
+grep -Fq 'Permanent Delete runs through this session' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names session LIVE permanent Delete"
 grep -Fq 'place or read files on this session' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the session clipboard path"
 grep -Fq 'readonly property bool cutAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins cutAuthorized false; Cut is not LIVE under the shell principal"
@@ -274,8 +276,8 @@ grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultim
   || fail "Files pins trashAuthorized false; Fabric Trash is not LIVE under the shell principal"
 grep -Fq 'if (key === "delete") { root.sessionTrashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files invoke delete uses the session trash plane"
-grep -Fq 'else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; root.sessionTrashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
-  || fail "Files Key_Delete uses the session trash plane"
+grep -Fq 'else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; if (event.modifiers & Qt.ShiftModifier) root.beginPermanentDelete(root.selectedRecord); else root.sessionTrashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files Key_Delete uses the session trash plane; Shift+Delete uses session permanent delete"
 if grep -Fq 'if (key === "delete") { root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
   fail "Files invoke delete must not accept Fabric Delete while unauthorized"
 fi
