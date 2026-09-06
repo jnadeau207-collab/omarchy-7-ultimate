@@ -427,7 +427,8 @@ for capability_id, path in admin_readers.items():
 
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
-    "Update", "Recovery", "Input", "Bluetooth", "Accessibility", "System",
+    "Default Programs", "Update", "Recovery", "Input", "Bluetooth",
+    "Accessibility", "System",
 }
 invented_start_prefixes = (
     "Start > Backup and Restore",
