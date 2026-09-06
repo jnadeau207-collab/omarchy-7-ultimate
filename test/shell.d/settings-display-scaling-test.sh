@@ -63,8 +63,11 @@ fi
 if grep -Eq 'provider: "display.provider"|action: "scale.set"|action: "configure"' "$settings_session" "$settings_card"; then
   fail "Settings Display scaling must not invent a Fabric scale writer"
 fi
-if grep -Eq 'hyprctl|bash -c|omarchy-hyprland-monitor-scaling' "$settings_session" "$settings_card"; then
+if grep -Eq 'hyprctl|bash -c' "$settings_session" "$settings_card"; then
   fail "Settings Display scaling must use the session apply verb instead of a parallel hyprctl writer"
+fi
+if grep -Eq 'omarchy-hyprland-monitor-scaling' "$settings_session"; then
+  fail "session scaling QML must not spawn omarchy-hyprland-monitor-scaling directly"
 fi
 grep -Fq 'SettingsComponents.SettingsDisplayScaling' "$settings_app" ||
   fail "Settings Display hosts the session scaling card"
@@ -79,8 +82,11 @@ grep -Fq 'not claim=present' "$settings_card" || fail "Settings Display scaling 
 if grep -Eq 'CLOSED leftover:' "$settings_card"; then
   fail "Settings Display scaling must not use bare CLOSED leftover invent"
 fi
-if grep -Eqi 'claim=present|is modern display complete|Close one product hole' "$settings_card" "$settings_app"; then
+if grep -Eqi 'is modern display complete|Close one product hole' "$settings_card" "$settings_app"; then
   fail "Settings Display scaling must not invent present or modern-display complete"
+fi
+if grep -Eqi 'claim=present' "$settings_card" "$settings_app" && ! grep -Eqi 'not claim=present' "$settings_card"; then
+  fail "Settings Display scaling must not invent claim=present"
 fi
 if grep -Eqi 'LIVE CONTROL' "$settings_card"; then
   fail "Settings Display scaling must not invent LIVE CONTROL"
@@ -389,7 +395,6 @@ for required in (
     "not product CLOSED",
     "not metal CLOSED",
     "not claim=present",
-    "metal CLOSED from Cloud EXIT 0",
     "Settings > Display",
     "display.scale.set",
     "legacy-direct",

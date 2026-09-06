@@ -31,9 +31,9 @@ if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"138 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
-grep -Fq 'The checked inventory contains 138 capability descriptors.' "$ROOT/docs/capability-graph.md" \
-  || fail "capability-graph.md locks the same 138 capability count"
+[[ $valid_output == *"139 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+grep -Fq 'The checked inventory contains 139 capability descriptors.' "$ROOT/docs/capability-graph.md" \
+  || fail "capability-graph.md locks the same 139 capability count"
 if grep -Fq 'contains 129 capability descriptors' "$ROOT/docs/capability-graph.md"; then
   fail "capability-graph.md still locks the stale 129 capability count"
 fi

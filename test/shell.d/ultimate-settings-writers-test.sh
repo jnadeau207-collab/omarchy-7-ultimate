@@ -454,7 +454,8 @@ assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility inpu
 
 const displayQuery = Model.queryForRoute('settings.display.overview')
 assert(displayQuery.coverage.indexOf('brightness.set') >= 0, 'the display coverage note names the settable verb')
-assert(displayQuery.coverage.indexOf('Resolution, scale, and arrangement changes remain unavailable') >= 0, 'the display coverage note still refuses what Settings cannot do')
+assert(displayQuery.coverage.indexOf('Resolution, arrangement, and HDR remain unavailable') >= 0, 'the display coverage note still refuses what Settings cannot do')
+assert(displayQuery.coverage.indexOf('does not invent a display.provider scale durable writer') >= 0, 'the display coverage note refuses a Fabric scale writer')
 assert(displayQuery.coverage.indexOf('does not invent a display.provider night-light durable writer') >= 0, 'the display coverage note refuses a Fabric night-light writer')
 assert(displayQuery.coverage.indexOf('NightlightService') >= 0, 'the display coverage note names NightlightService')
 assert(displayQuery.coverage.indexOf('Quick Settings') >= 0, 'the display coverage note names the QS plane')
