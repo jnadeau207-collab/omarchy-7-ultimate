@@ -55,6 +55,10 @@ Item {
     return root.run("default", "audio-output-default-set", { resourceId: token }, true)
   }
 
+  function restartAudio() {
+    return root.run("troubleshoot", "audio-troubleshoot-restart", {}, true)
+  }
+
   function run(kind, action, payload, refreshAfter) {
     if (root.busy || proc.running) return false
     root.busy = true

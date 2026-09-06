@@ -4126,6 +4126,89 @@ def apply_audio_output_default_set(
     return 0
 
 
+
+AUDIO_TROUBLESHOOT_RESTART_TIMEOUT = 120
+AUDIO_TROUBLESHOOT_REFUSE = (
+    "stdin JSON for audio troubleshoot restart must be empty; this session leftover refuses extra keys"
+)
+
+
+def audio_restart_helper() -> str:
+    base = os.environ.get("OMARCHY_PATH")
+    if base:
+        return str(pathlib.Path(base) / "bin" / "omarchy-restart-audio")
+    return "/usr/bin/omarchy-restart-audio"
+
+
+def run_audio_restart(argv: list[str], run: Any, timeout: int = AUDIO_TROUBLESHOOT_RESTART_TIMEOUT) -> Any:
+    if not argv or not str(argv[0]).startswith("/"):
+        raise ApplyError("command.unavailable", "The audio restart helper must be an absolute path.")
+    if len(argv) != 1:
+        raise ApplyError("payload.invalid", "Audio restart refuses appended arguments.")
+    try:
+        return run(argv, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned system command is not installed.") from error
+    except subprocess.TimeoutExpired as error:
+        raise ApplyError("apply.failed", "The audio restart helper timed out through this session.") from error
+
+
+def apply_audio_troubleshoot_restart(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        extra = set(payload)
+        if extra & AUDIO_OUTPUT_SECRET_KEYS or extra:
+            raise ApplyError("payload.invalid", AUDIO_TROUBLESHOOT_REFUSE)
+        helper = audio_restart_helper()
+        completed = run_audio_restart([helper], run)
+        if completed.returncode != 0:
+            raise ApplyError(
+                "apply.failed",
+                "This session could not restart audio services through the tip-true omarchy-restart-audio helper.",
+            )
+        try:
+            refreshed, default_resource_id = session_audio_sink_records(run)
+        except ApplyError:
+            refreshed, default_resource_id = [], ""
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "sinks": [],
+                "defaultResourceId": "",
+                "restarted": False,
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    known = bool(refreshed)
+    json.dump(
+        {
+            "ok": True,
+            "restarted": True,
+            "sinks": public_audio_sinks(refreshed),
+            "defaultResourceId": default_resource_id,
+            "known": known,
+            "explanation": (
+                "Restarted audio services through this session's tip-true omarchy-restart-audio helper."
+                if refreshed
+                else "Restarted audio services through this session; no audio outputs reported yet."
+            ),
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
 SYSTEM_INFORMATION_SECRET_KEYS = frozenset({
     "password", "passwd", "secret", "token", "credential", "credentials", "key", "cookie",
 })
@@ -4859,6 +4942,7 @@ ACTIONS = {
     "audio-output-status": apply_audio_output_status,
     "audio-output-mute-set": apply_audio_output_mute_set,
     "audio-output-default-set": apply_audio_output_default_set,
+    "audio-troubleshoot-restart": apply_audio_troubleshoot_restart,
     "printer-status": apply_printer_status,
     "printer-default-set": apply_printer_default_set,
     "printer-pause": apply_printer_pause,

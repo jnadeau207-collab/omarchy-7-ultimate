@@ -87,24 +87,38 @@ Rectangle {
     }
   }
 
+  function applyTroubleshoot() {
+    if (root.busy) return
+    root.sessionSound = SettingsModel.sessionSoundAccepted(root.sessionSound, "troubleshoot")
+    if (!sessionHost.restartAudio()) {
+      root.sessionSound = SettingsModel.sessionSoundFinished(root.sessionSound, {
+        ok: false,
+        code: "sound.busy",
+        explanation: "The session Sound helper is busy."
+      })
+    }
+  }
+
   readonly property string soundHonesty: {
     if (root.busy && root.sessionSound.action === "mute")
       return "Applying audio output mute through this session."
     if (root.busy && root.sessionSound.action === "default")
       return "Applying the default audio output through this session."
+    if (root.busy && root.sessionSound.action === "troubleshoot")
+      return "Restarting audio services through this session."
     if (root.busy)
       return "Reading audio outputs through this session."
     if (root.sessionSound.phase === "failed")
       return root.sessionSound.message
     if (root.sessionSound.empty)
-      return root.sessionSound.message || "No audio outputs reported through this session. Port changes and troubleshoot remain unavailable."
+      return root.sessionSound.message || "No audio outputs reported through this session. Port changes and the full troubleshoot wizard remain OPEN leftover."
     if (root.sessionSound.phase === "succeeded")
       return root.sessionSound.message
-    return "Output mute and default sink use this session's /usr/bin/pactl helper through omarchy-fabric-session-apply with tip-true audio.sink identities. session leftover recorded: Settings Sound mute and default output session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present). Soft leftover-attach of catalog audio.output.manage leftover legacy-direct. Settings does not invent an audio.provider mute or default-sink durable writer. Fabric audio.inspect and durable volume stay separate. Port changes and audio troubleshoot remain unavailable. Mute or default alone is not Sound product-complete. Cloud EXIT 0 is not metal leftover CLOSED. windows-native.6 stays pending. Superbar / Quick Settings Sound panel remains."
+    return "Output mute and default sink use this session's /usr/bin/pactl helper through omarchy-fabric-session-apply with tip-true audio.sink identities. Audio troubleshoot restart uses this session's absolute tip-true omarchy-restart-audio FixedArgv helper through omarchy-fabric-session-apply audio-troubleshoot-restart. session leftover recorded: Settings Sound mute, default output, and audio restart session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present). Soft leftover-attach of catalog audio.output.manage and troubleshooting.audio.run leftover legacy-direct. Settings does not invent an audio.provider mute, default-sink, or troubleshoot durable writer. Fabric audio.inspect and durable volume stay separate. Port changes and the full troubleshoot wizard remain OPEN leftover. Mute, default, or restart alone is not Sound product-complete. Cloud EXIT 0 is not metal leftover CLOSED. windows-native.6 stays pending. windows-native.39 stays prototype/pending. Superbar / Quick Settings Sound panel remains."
   }
 
   readonly property string soundBadge: {
-    if (root.busy && (root.sessionSound.action === "mute" || root.sessionSound.action === "default")) return "APPLYING"
+    if (root.busy && (root.sessionSound.action === "mute" || root.sessionSound.action === "default" || root.sessionSound.action === "troubleshoot")) return "APPLYING"
     if (root.busy) return "READING"
     if (root.sessionSound.phase === "failed") return "FAILED"
     if (root.sessionSound.empty) return "NONE FOUND"
@@ -200,6 +214,16 @@ Rectangle {
           onClicked: root.applyDefault(modelData.resourceId)
         }
       }
+    }
+
+    Ui.Button {
+      text: "Restart audio services"
+      bordered: true
+      focusable: true
+      enabled: !root.busy
+      semanticProfile: root.semanticProfile
+      accessibleDescription: Semantics.text(root.semanticProfile, "Restart audio services through this session tip-true omarchy-restart-audio helper")
+      onClicked: root.applyTroubleshoot()
     }
 
     Ui.Button {
