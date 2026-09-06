@@ -40,8 +40,8 @@ grep -Fq 'if (!root.trashAuthorized) return' "$application" \
   || fail "trashEntry refuses to start a doomed shell preflight"
 grep -Fq 'if (key === "delete") { root.sessionTrashEntry(root.selectedRecord); return }' "$application" \
   || fail "invoke delete uses the session trash plane"
-grep -Fq 'else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; root.sessionTrashEntry(root.selectedRecord); event.accepted = true }' "$application" \
-  || fail "Key_Delete uses the session trash plane outside Trash"
+grep -Fq 'else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; if (event.modifiers & Qt.ShiftModifier) root.beginPermanentDelete(root.selectedRecord); else root.sessionTrashEntry(root.selectedRecord); event.accepted = true }' "$application" \
+  || fail "Key_Delete uses the session trash plane outside Trash; Shift+Delete uses session permanent delete"
 if grep -Fq 'if (key === "delete") { root.trashEntry(root.selectedRecord); return }' "$application"; then
   fail "invoke delete must not accept Fabric Delete while unauthorized"
 fi
@@ -124,9 +124,10 @@ grep -Fq 'key: "copy", label: "Copy"' "$application" \
   || fail "Copy stays a gated command-bar control"
 grep -Fq 'key: "paste", label: "Paste"' "$application" \
   || fail "Paste stays a gated command-bar control"
-if grep -Eq 'key: "cut"' "$application"; then
-  fail "Files invents LIVE Cut"
-fi
+grep -Fq 'key: "cut", label: "Cut"' "$application" \
+  || fail "Files shows session Cut"
+grep -Fq 'key: "permanently-delete", label: "Permanently delete"' "$application" \
+  || fail "Files shows session Permanently delete"
 if grep -Eq 'action: "entry.move"' "$application"; then
   fail "Files invents LIVE cut/move under SHELL"
 fi
@@ -155,6 +156,10 @@ if grep -Eq 'action: "entry.delete"' "$application"; then
 fi
 grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$application" \
   || fail "Files names the cut/move write plane as not shell-authorizable"
+grep -Fq 'Cut and Paste-after-cut run through this session' "$application" \
+  || fail "Files names session LIVE Cut"
+grep -Fq 'Permanent Delete runs through this session' "$application" \
+  || fail "Files names session LIVE permanent Delete"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$application" \
   || fail "Files names the permanent delete write plane as not shell-authorizable"
 grep -Fq 'place or read files on this session' "$application" \
@@ -185,7 +190,7 @@ grep -Fq 'Recycle / Empty Bin LIVE residual OPEN after PR #63' "$ROOT/docs/files
   || fail "files-defaults-provider keeps Recycle residual OPEN after PR #63"
 grep -Fq '`files.trash.manage` is write-plane reachable' "$ROOT/docs/files-defaults-provider.md" \
   || fail "files-defaults-provider names the trash.manage write plane"
-pass "Files Rename is LIVE and Copy/Paste offer a session clipboard without inventing LIVE Cut"
+pass "Files Rename is LIVE and Copy/Paste offer a session clipboard; Cut/Delete stay session-not-Fabric"
 
 run_node_test <<'JS'
 const Model = requireFromRoot('shell/apps/ultimate-files/FilesModel.js')
