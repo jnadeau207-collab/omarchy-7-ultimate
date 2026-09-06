@@ -44,7 +44,7 @@ Rectangle {
       return root.sessionHistory.message
     if (root.sessionHistory.phase === "succeeded")
       return root.sessionHistory.message
-    return "History reads this session's Omarchy update log. Elevated auth never enters Fabric. Fabric update.inspect and system.update stay inspect-only / not LIVE. Restart and reboot writers stay unavailable. Update is not present as product."
+    return "History reads this session's Omarchy update log through system-update-history. session leftover recorded: Inspect update history soft leftover-attaches windows-native.29 to this tip-true Settings > Update history plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.29. Elevated auth never enters Fabric. Fabric update.inspect and system.update stay inspect-only / not LIVE. Restart and reboot writers stay unavailable. windows-native.29 stays prototype/pending. Update is not present as product. Never claim=present."
   }
 
   readonly property string historyBadge: {

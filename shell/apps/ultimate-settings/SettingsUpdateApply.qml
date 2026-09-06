@@ -82,7 +82,7 @@ Rectangle {
       return "No system updates are available on " + root.probedChannel + "."
     if (root.probedChannel !== "" && root.available)
       return "Updates are available on " + root.probedChannel + ". Apply uses this session's update helper."
-    return "Apply uses this session's update helper. Elevated auth never enters Fabric. Fabric system.update stays inspect-only / not LIVE. Restart and reboot writers stay unavailable. Update history is a session log read. Update is not present as product."
+    return "Apply uses this session's update helper. Elevated auth never enters Fabric. Fabric system.update stays inspect-only / not LIVE. Restart and reboot writers stay unavailable. Update history is a session log read soft leftover-attached to windows-native.29 (prototype/pending; not product CLOSED / not metal CLOSED / not claim=present). Update is not present as product."
   }
 
   readonly property string updateBadge: {

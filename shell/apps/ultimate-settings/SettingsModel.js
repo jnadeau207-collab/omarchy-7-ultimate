@@ -114,7 +114,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "update.inspect",
     supportsResource: false,
-    coverage: "Update availability and lifecycle state are readable. Install uses this session's update helper; elevated auth never enters Fabric. Fabric system.update stays inspect-only / not LIVE. History is readable from this session's update log. Restart and reboot writers remain unavailable from Settings. Update is not present as product."
+    coverage: "Update availability and lifecycle state are readable. Install uses this session's update helper; elevated auth never enters Fabric. Fabric system.update stays inspect-only / not LIVE. History is readable from this session's update log through SettingsSessionUpdate.readHistory. session leftover recorded: Inspect update history soft leftover-attaches windows-native.29 to this tip-true Settings > Update history plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.29. Restart and reboot writers remain unavailable from Settings. windows-native.29 stays prototype/pending. Update is not present as product. Never claim=present."
   },
   {
     routeId: "settings.recovery.overview",
