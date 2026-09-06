@@ -1312,6 +1312,13 @@ Item {
               semanticProfile: root.productProfile
               Layout.fillWidth: true
             }
+
+            SettingsComponents.SettingsPrinters {
+              visible: root.currentRoute && root.currentRoute.id === "settings.printers.overview"
+              pageActive: visible
+              semanticProfile: root.productProfile
+              Layout.fillWidth: true
+            }
             SettingsComponents.SettingsSystemInformation {
               visible: root.currentRoute && root.currentRoute.id === "settings.system.overview"
               pageActive: visible

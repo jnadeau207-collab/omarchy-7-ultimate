@@ -230,6 +230,17 @@ var START_DESTINATIONS = [
     actionId: "Input"
   },
   {
+    id: "omarchy.start.printers",
+    name: "Printers",
+    genericName: "Settings",
+    comment: "Open Settings Printers",
+    keywords: ["printer", "printers", "print", "cups", "queue", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    actionId: "Printers"
+  },
+
+  {
     id: "omarchy.start.system",
     name: "System information",
     genericName: "Settings",

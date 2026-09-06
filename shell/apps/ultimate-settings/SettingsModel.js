@@ -63,6 +63,15 @@ var ROUTE_QUERIES = [
     coverage: "Keyboard inventory and layout state are readable from input.inspect. The active layout applies through this session's omarchy-fabric-session-apply input-keyboard-layout helper when a typed keyboard carries more than one configured layout. Settings does not invent an input.provider keyboard-layout durable writer. Fabric input.inspect stays separate. Pointer, repeat rate, and accessibility input changes remain unavailable from Settings. Layout alone is not locale complete. session leftover recorded: Settings Input keyboard layout session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present)."
   },
   {
+    routeId: "settings.printers.overview",
+    title: "Printers",
+    providerId: "printer.provider",
+    action: "inspect",
+    capability: "printer.inspect",
+    supportsResource: true,
+    coverage: "Printer inventory is readable through this session's omarchy-fabric-session-apply printer-status helper (/usr/bin/lpstat -v/-d/-a, tip-true printer.* identities; credentialed URIs refused). Set-default, pause, resume, and test-page apply through printer-default-set / printer-pause / printer-resume / printer-test-page FixedArgv helpers. Soft leftover-attach of catalog printers.manage leftover legacy-direct. session leftover recorded: Settings Printers inventory and queue session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present). Settings does not invent a printers.provider durable writer or Fabric SHELL LIVE queue mutation. Fabric printer.inspect and plan-only queue.plan stay separate. Network Add / driver wizard remains OPEN leftover. Inventory or set-default alone is not Devices and Printers product-complete. windows-native.32 stays pending. Administration > Printers and scanners remains the bounded printer.inspect host."
+  },
+  {
     routeId: "settings.personalization.overview",
     title: "Personalization",
     providerId: "personalization.provider",
@@ -132,6 +141,7 @@ var LIVE_WRITER_ROUTES = [
   "settings.bluetooth.overview",
   "settings.display.overview",
   "settings.input.overview",
+  "settings.printers.overview",
   "settings.apps.overview",
   "settings.apps.default-programs",
   "settings.update.overview"
@@ -159,6 +169,8 @@ function declaredOpsHonesty(routeId) {
     return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Scale uses this session's omarchy-hyprland-monitor-scaling helper. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. Settings does not invent a display.provider scale durable writer."
   if (String(routeId || "") === "settings.audio.overview")
     return "Volume applies through preflight, approval, and the durable coordinator. Mute and default sink use this session's omarchy-fabric-session-apply audio-output-mute-set / audio-output-default-set helpers. Fabric audio.inspect stays separate. Settings does not invent an audio.provider mute or default-sink durable writer."
+  if (String(routeId || "") === "settings.printers.overview")
+    return "Printer inventory, set-default, pause, resume, and test-page use this session's omarchy-fabric-session-apply printer-status / printer-default-set / printer-pause / printer-resume / printer-test-page helpers. Fabric printer.inspect stays separate. Settings does not invent a printers.provider durable writer. Network Add remains OPEN leftover."
   if (String(routeId || "") === "settings.input.overview")
     return "Layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper. Fabric input.inspect stays separate. Settings does not invent an input.provider keyboard-layout durable writer."
   if (String(routeId || "") === "settings.system.overview")
@@ -175,7 +187,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Sound mute and default output use this session's omarchy-fabric-session-apply audio helpers \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Input layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper \u00b7 System information uses this session's omarchy-fabric-session-apply system-information-inspect helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Sound mute and default output use this session's omarchy-fabric-session-apply audio helpers \u00b7 Printers inventory and queue controls use this session's omarchy-fabric-session-apply printer helpers \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Input layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper \u00b7 System information uses this session's omarchy-fabric-session-apply system-information-inspect helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1955,6 +1967,104 @@ function sessionNightlightFinished(previous, helperResult) {
 }
 
 
+
+function sessionPrintersIdle() {
+  return { phase: "idle", action: "", printers: [], defaultResourceId: "", known: false, empty: false, message: "", code: "" }
+}
+
+function sessionPrintersAccepted(previous, action) {
+  var prior = isObject(previous) ? previous : sessionPrintersIdle()
+  return {
+    phase: "busy",
+    action: String(action || ""),
+    printers: Array.isArray(prior.printers) ? prior.printers.slice() : [],
+    defaultResourceId: String(prior.defaultResourceId || ""),
+    known: prior.known === true,
+    empty: prior.empty === true,
+    message: "",
+    code: ""
+  }
+}
+
+function sessionPrintersNormalizePrinters(raw) {
+  if (!Array.isArray(raw)) return []
+  var out = []
+  for (var i = 0; i < raw.length && out.length < 32; i++) {
+    var row = raw[i]
+    if (!isObject(row)) continue
+    var resourceId = String(row.resourceId || "")
+    if (resourceId.indexOf("printer.") !== 0 || resourceId.length !== ("printer.".length + 24)) continue
+    var accepting = null
+    if (row.accepting === true) accepting = true
+    if (row.accepting === false) accepting = false
+    out.push({
+      resourceId: resourceId,
+      label: clippedText(row.label || "Printer", 128),
+      connection: clippedText(row.connection || "unknown", 32),
+      endpoint: clippedText(row.endpoint || "unknown", 253),
+      accepting: accepting,
+      default: row.default === true
+    })
+  }
+  return out
+}
+
+function sessionPrintersCanSubmit(resourceId, printers) {
+  var token = String(resourceId || "")
+  if (token.indexOf("printer.") !== 0 || token.length !== ("printer.".length + 24)) return false
+  var list = Array.isArray(printers) ? printers : []
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] && list[i].resourceId === token) return true
+  }
+  return false
+}
+
+function sessionPrintersFinished(previous, helperResult) {
+  var prior = isObject(previous) ? previous : sessionPrintersIdle()
+  var result = isObject(helperResult) ? helperResult : {}
+  var printers = sessionPrintersNormalizePrinters(result.printers)
+  var defaultResourceId = String(result.defaultResourceId || "")
+  if (defaultResourceId && !sessionPrintersCanSubmit(defaultResourceId, printers)) defaultResourceId = ""
+  var known = result.known === true && printers.length > 0
+  var empty = printers.length === 0
+  var ok = result.ok === true
+  var message = clippedText(result.explanation || result.message || "", MAX_DISPLAY_TEXT)
+  if (!ok) {
+    return {
+      phase: "failed",
+      action: String(prior.action || ""),
+      printers: printers,
+      defaultResourceId: defaultResourceId,
+      known: false,
+      empty: empty,
+      message: message || "The session Printers helper failed.",
+      code: String(result.code || "command.failed")
+    }
+  }
+  if (known && result.resourceId && !sessionPrintersCanSubmit(result.resourceId, printers) && String(prior.action || "") !== "status") {
+    return {
+      phase: "failed",
+      action: String(prior.action || ""),
+      printers: printers,
+      defaultResourceId: defaultResourceId,
+      known: false,
+      empty: empty,
+      message: "The session Printers helper returned an unknown printer identity.",
+      code: "payload.invalid"
+    }
+  }
+  return {
+    phase: "succeeded",
+    action: String(prior.action || ""),
+    printers: printers,
+    defaultResourceId: defaultResourceId,
+    known: known,
+    empty: empty,
+    message: message || (empty ? "No printers reported through this session." : "Typed printers through this session."),
+    code: ""
+  }
+}
+
 function sessionSoundIdle() {
   return { phase: "idle", action: "", sinks: [], defaultResourceId: "", known: false, empty: false, message: "", code: "" }
 }
@@ -2149,6 +2259,10 @@ if (typeof module !== "undefined") {
     sessionSoundIdle: sessionSoundIdle,
     sessionSoundAccepted: sessionSoundAccepted,
     sessionSoundCanSubmit: sessionSoundCanSubmit,
-    sessionSoundFinished: sessionSoundFinished
+    sessionSoundFinished: sessionSoundFinished,
+    sessionPrintersIdle: sessionPrintersIdle,
+    sessionPrintersAccepted: sessionPrintersAccepted,
+    sessionPrintersCanSubmit: sessionPrintersCanSubmit,
+    sessionPrintersFinished: sessionPrintersFinished
   }
 }
