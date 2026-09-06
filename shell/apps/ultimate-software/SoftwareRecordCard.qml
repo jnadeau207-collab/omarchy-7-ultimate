@@ -7,6 +7,12 @@ Rectangle {
   id: root
   required property var record
   property bool selected: false
+  property bool sessionBusy: false
+  property var installPlan: null
+  property var removePlan: null
+
+  signal install(var record)
+  signal remove(var record)
 
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Style.space(28)
@@ -74,6 +80,41 @@ Rectangle {
       wrapMode: Text.WrapAnywhere
       maximumLineCount: 3
       elide: Text.ElideRight
+      Layout.fillWidth: true
+    }
+
+    RowLayout {
+      visible: root.record.kind === "software" || root.record.kind === "installation"
+      Layout.fillWidth: true
+      spacing: Style.space(8)
+
+      Ui.Button {
+        visible: root.record.kind === "software"
+        text: "Install"
+        focusable: true
+        bordered: true
+        enabled: !root.sessionBusy && root.installPlan && root.installPlan.action === "install"
+        accessibleDescription: root.installPlan && root.installPlan.reason ? root.installPlan.reason : "Install this catalog package through this session"
+        onClicked: root.install(root.record)
+      }
+      Ui.Button {
+        text: "Remove"
+        focusable: true
+        bordered: true
+        enabled: !root.sessionBusy && root.removePlan && root.removePlan.action === "remove"
+        accessibleDescription: root.removePlan && root.removePlan.reason ? root.removePlan.reason : "Remove this catalog package through this session"
+        onClicked: root.remove(root.record)
+      }
+    }
+
+    Text {
+      visible: (root.installPlan && root.installPlan.action === "unavailable" && root.record.kind === "software") || (root.removePlan && root.removePlan.action === "unavailable" && (root.record.kind === "software" || root.record.kind === "installation"))
+      textFormat: Text.PlainText
+      text: String((root.installPlan && root.installPlan.reason) || (root.removePlan && root.removePlan.reason) || "")
+      color: Tokens.text.disabled
+      font.family: Tokens.typography.family
+      font.pixelSize: Style.font.caption
+      wrapMode: Text.WordWrap
       Layout.fillWidth: true
     }
 

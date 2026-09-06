@@ -136,6 +136,11 @@ for directory in ultimate-files ultimate-software ultimate-compatibility; do
   grep -R -q --include='*.qml' 'focusable: true' "$ROOT/shell/apps/$directory" || fail "$directory exposes keyboard-operable controls"
   grep -R -q -E --include='*.qml' 'Text\.WrapAnywhere|Text\.WordWrap' "$ROOT/shell/apps/$directory" || fail "$directory guards long strings"
 done
+if grep -Eq 'pkexec|sudo|/usr/bin/pacman|yay|flatpak' "$ROOT/shell/apps/shared/SoftwareSessionInstall.qml"; then
+  fail "Software session install must not spawn a package manager argv"
+fi
+grep -Fq 'omarchy-fabric-session-apply' "$ROOT/shell/apps/shared/SoftwareSessionInstall.qml" ||
+  fail "Software session install uses the session apply helper"
 pass "Domain product QML is command-free, least-privilege, accessible, and long-string safe"
 
 for model in \
@@ -197,7 +202,9 @@ pass "Files Explorer Aero chrome routes through Semantics.text; path and entry c
 
 grep -Fq 'USER-DECLARED INPUT' "$ROOT/shell/apps/ultimate-compatibility/CompatibilityApplication.qml" || fail "Compatibility labels unmeasured host input"
 grep -Fq 'Deployment remains unavailable' "$ROOT/shell/apps/ultimate-compatibility/CompatibilityModel.js" || fail "Compatibility preserves its plan-only boundary"
-grep -Fq 'This surface never invokes a package manager' "$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml" || fail "Software Center states its execution boundary"
+grep -Fq 'this session' "$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml" || fail "Software Center names the session principal"
+grep -Fq 'Fabric packages.install is not LIVE' "$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml" || fail "Software Center keeps Fabric install not LIVE"
+grep -Fq 'Software Center is not present as product' "$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml" || fail "Software Center does not claim present"
 grep -Fq 'File contents are never read' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files states its content-read boundary"
 grep -Fq 'New folder runs through files.provider' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live New folder writer"
 grep -Fq 'Rename runs through files.provider entry.rename' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the live Rename writer"

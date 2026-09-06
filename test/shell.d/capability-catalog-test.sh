@@ -647,6 +647,38 @@ if native5["humanRoute"].get("path") != "Settings > Bluetooth":
 if native5.get("sourceStatus") != "pending":
     raise SystemExit(f"windows-native.5 sourceStatus is {native5.get('sourceStatus')}")
 
+software_install = by_id["software.install"]
+if software_install["humanRoute"].get("surface") != "Software Center" or software_install["humanRoute"].get("path") != "Software Center > Catalog":
+    raise SystemExit(f"software.install route is {software_install.get('humanRoute')}")
+if software_install["humanRoute"].get("label") != "Install software":
+    raise SystemExit(f"software.install label is {software_install.get('humanRoute')}")
+if software_install.get("source", {}).get("file") != "shell/apps/shared/SoftwareSessionInstall.qml":
+    raise SystemExit(f"software.install source is {software_install.get('source')}")
+if software_install.get("source", {}).get("symbol") != "installRecord":
+    raise SystemExit(f"software.install source is {software_install.get('source')}")
+if software_install.get("availability", {}).get("claim") == "present":
+    raise SystemExit("software.install must not claim present")
+if software_install.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"software.install human availability is {software_install.get('availability')}")
+if software_install.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"software.install agent availability is {software_install.get('availability')}")
+if software_install.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"software.install was raised off leftover: {software_install.get('provider')}")
+software_uninstall = by_id["software.uninstall"]
+if software_uninstall["humanRoute"].get("path") != "Software Center > Catalog":
+    raise SystemExit(f"software.uninstall route is {software_uninstall.get('humanRoute')}")
+if software_uninstall.get("source", {}).get("file") != "shell/apps/shared/SoftwareSessionInstall.qml":
+    raise SystemExit(f"software.uninstall source is {software_uninstall.get('source')}")
+if software_uninstall.get("source", {}).get("symbol") != "removeRecord":
+    raise SystemExit(f"software.uninstall source is {software_uninstall.get('source')}")
+if software_uninstall.get("availability", {}).get("claim") == "present":
+    raise SystemExit("software.uninstall must not claim present")
+if software_uninstall.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"software.uninstall was raised off leftover: {software_uninstall.get('provider')}")
+parity_software = next(job for job in jobs["jobs"] if job["id"] == "parity.software-center")
+if parity_software.get("claim") == "present":
+    raise SystemExit(f"parity.software-center was flipped to present: {parity_software}")
+
 if "display.brightness.set" not in by_id:
     raise SystemExit("absent live brightness writer invent: display.brightness.set missing from catalog")
 brightness_set = by_id["display.brightness.set"]

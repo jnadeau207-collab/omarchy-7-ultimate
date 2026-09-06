@@ -9,6 +9,7 @@ import io
 import json
 import os
 import pathlib
+import re
 import shutil
 import signal
 import stat
@@ -35,6 +36,10 @@ POWERPROFILESCTL = "/usr/bin/powerprofilesctl"
 POWER_RESOURCE_ID = "power.profile.current"
 FILES_WORKSPACE_ID = "files.workspace.primary"
 MAX_PAYLOAD_BYTES = 8192
+OMARCHY_PKG_ADD = "omarchy-pkg-add"
+OMARCHY_PKG_DROP = "omarchy-pkg-drop"
+SOFTWARE_PACKAGE_ID = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
+SOFTWARE_COMMAND_TIMEOUT_SECONDS = 900
 
 class ApplyError(Exception):
     def __init__(self, code: str, explanation: str) -> None:
@@ -1493,6 +1498,74 @@ def apply_process_terminate(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+def require_software_package_id(payload: Mapping[str, Any]) -> str:
+    package_id = payload.get("packageId")
+    if not isinstance(package_id, str) or not SOFTWARE_PACKAGE_ID.fullmatch(package_id):
+        raise ApplyError("payload.invalid", "The apply payload names no admitted software catalog identity.")
+    return package_id
+
+def resolve_session_package_ref(package_id: str) -> str:
+    catalog_path = pathlib.Path(__file__).resolve().parents[3] / "ultimate" / "software" / "catalog-v0.json"
+    try:
+        document = json.loads(catalog_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise ApplyError("package.catalog-unreadable", "The code-owned software catalog could not be read.") from error
+    entries = document.get("entries") if isinstance(document, dict) else None
+    if not isinstance(entries, list):
+        raise ApplyError("package.catalog-invalid", "The code-owned software catalog has no entry list.")
+    for entry in entries:
+        if not isinstance(entry, Mapping):
+            continue
+        if entry.get("id") != package_id:
+            continue
+        source_type = entry.get("sourceType")
+        package_ref = entry.get("packageRef")
+        if source_type not in ("curated", "signed-repo"):
+            raise ApplyError("package.source-unsupported", "This source channel has no code-owned root install path yet.")
+        if not isinstance(package_ref, str) or not package_ref:
+            raise ApplyError("package.unknown", "A requested package is not admitted by the code-owned catalog.")
+        return package_ref
+    raise ApplyError("package.unknown", "A requested package is not admitted by the code-owned catalog.")
+
+def run_software_helper(helper: str, package_ref: str, run: Any) -> None:
+    completed = run(
+        [helper, package_ref],
+        capture_output=True,
+        text=True,
+        timeout=SOFTWARE_COMMAND_TIMEOUT_SECONDS,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout or "").strip()[:480]
+        raise ApplyError("command.failed", detail or "The session package helper reported a failure.")
+
+def apply_software_mutation(stdin: Any, stdout: Any, helper: str, explanation: str, run: Any) -> int:
+    try:
+        payload = read_payload(stdin)
+        package_id = require_software_package_id(payload)
+        package_ref = resolve_session_package_ref(package_id)
+        run_software_helper(helper, package_ref, run)
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "packageId": package_id,
+            "packageRef": package_ref,
+            "explanation": explanation.format(package_ref=package_ref),
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+def apply_software_install(stdin: Any, stdout: Any, run: Any = subprocess.run) -> int:
+    return apply_software_mutation(stdin, stdout, OMARCHY_PKG_ADD, "Installed {package_ref}.", run)
+
+def apply_software_remove(stdin: Any, stdout: Any, run: Any = subprocess.run) -> int:
+    return apply_software_mutation(stdin, stdout, OMARCHY_PKG_DROP, "Removed {package_ref}.", run)
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
@@ -1513,6 +1586,8 @@ ACTIONS = {
     "files-clipboard-paste": apply_files_clipboard_paste,
     "files-entry-move": apply_files_entry_move,
     "files-entry-delete": apply_files_entry_delete,
+    "software-install": apply_software_install,
+    "software-remove": apply_software_remove,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
