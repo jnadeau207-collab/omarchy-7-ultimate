@@ -108,6 +108,7 @@ Local, `origin`, and metal hold the same commit and the same tree.
 | Action | Surface | State |
 |--------|---------|-------|
 | `audio-output-volume-set` | Settings › Sound | pre-existing |
+| `audio-output-status` / `audio-output-mute-set` / `audio-output-default-set` | Settings › Sound | session leftover recorded: Settings Sound mute + default sink via absolute `/usr/bin/pactl` (`audio.output.manage`, leftover `legacy-direct`; claim=partial; humanRoute visible `Settings > Sound; Superbar > Quick Settings > Sound`; tip-true `audio.sink.*` identity; no Fabric audio.provider mute/default durable writer; session-UI leftover only; not product CLOSED; not metal CLOSED; not claim=present; `windows-native.6` stays prototype/pending; Cloud mocks do not close windows-native.6) |
 | `process-terminate` | Administration › End task | pre-existing |
 | `power-profile-set` | Settings › Power | surfaced here |
 | `files-directory-create` | Files › New folder | LIVE (`directory.create`, risk `low`; SHELL grant OK) |

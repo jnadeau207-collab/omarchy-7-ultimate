@@ -24,7 +24,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "audio.inspect",
     supportsResource: true,
-    coverage: "Audio output inventory is readable from audio.inspect (sink, default, mute, channel volume, ports). Output volume applies through the durable operation service as this user. Routing, mute, and port changes remain unavailable from Settings."
+    coverage: "Audio output inventory is readable from audio.inspect (sink, default, mute, channel volume, ports). Output volume applies through the durable operation service as this user. Output mute and default sink apply through this session's omarchy-fabric-session-apply audio-output-mute-set / audio-output-default-set helpers with tip-true audio.sink identities; Settings does not invent an audio.provider mute or default-sink durable writer. Soft leftover-attach of catalog audio.output.manage leftover legacy-direct. session leftover recorded: Settings Sound mute and default output session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present). Port changes and audio troubleshoot remain unavailable from Settings. Mute or default alone is not Sound product-complete. windows-native.6 stays pending."
   },
   {
     routeId: "settings.network.overview",
@@ -157,6 +157,8 @@ function coverageTone(routeId) {
 function declaredOpsHonesty(routeId) {
   if (String(routeId || "") === "settings.display.overview")
     return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Scale uses this session's omarchy-hyprland-monitor-scaling helper. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. Settings does not invent a display.provider scale durable writer."
+  if (String(routeId || "") === "settings.audio.overview")
+    return "Volume applies through preflight, approval, and the durable coordinator. Mute and default sink use this session's omarchy-fabric-session-apply audio-output-mute-set / audio-output-default-set helpers. Fabric audio.inspect stays separate. Settings does not invent an audio.provider mute or default-sink durable writer."
   if (String(routeId || "") === "settings.input.overview")
     return "Layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper. Fabric input.inspect stays separate. Settings does not invent an input.provider keyboard-layout durable writer."
   if (String(routeId || "") === "settings.system.overview")
@@ -173,7 +175,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Input layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper \u00b7 System information uses this session's omarchy-fabric-session-apply system-information-inspect helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Sound mute and default output use this session's omarchy-fabric-session-apply audio helpers \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Input layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper \u00b7 System information uses this session's omarchy-fabric-session-apply system-information-inspect helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1952,6 +1954,99 @@ function sessionNightlightFinished(previous, helperResult) {
   }
 }
 
+
+function sessionSoundIdle() {
+  return { phase: "idle", action: "", sinks: [], defaultResourceId: "", known: false, empty: false, message: "", code: "" }
+}
+
+function sessionSoundAccepted(previous, action) {
+  var prior = isObject(previous) ? previous : sessionSoundIdle()
+  return {
+    phase: "busy",
+    action: String(action || ""),
+    sinks: Array.isArray(prior.sinks) ? prior.sinks.slice() : [],
+    defaultResourceId: String(prior.defaultResourceId || ""),
+    known: prior.known === true,
+    empty: prior.empty === true,
+    message: "",
+    code: ""
+  }
+}
+
+function sessionSoundNormalizeSinks(raw) {
+  if (!Array.isArray(raw)) return []
+  var out = []
+  for (var i = 0; i < raw.length && out.length < 8; i++) {
+    var row = raw[i]
+    if (!isObject(row)) continue
+    var resourceId = String(row.resourceId || "")
+    if (resourceId.indexOf("audio.sink.") !== 0 || resourceId.length !== ("audio.sink.".length + 64)) continue
+    out.push({
+      resourceId: resourceId,
+      label: clippedText(row.label || "Audio output", 160),
+      muted: row.muted === true,
+      default: row.default === true
+    })
+  }
+  return out
+}
+
+function sessionSoundCanSubmit(resourceId, sinks) {
+  var token = String(resourceId || "")
+  if (token.indexOf("audio.sink.") !== 0 || token.length !== ("audio.sink.".length + 64)) return false
+  var list = Array.isArray(sinks) ? sinks : []
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] && list[i].resourceId === token) return true
+  }
+  return false
+}
+
+function sessionSoundFinished(previous, helperResult) {
+  var prior = isObject(previous) ? previous : sessionSoundIdle()
+  var result = isObject(helperResult) ? helperResult : {}
+  var sinks = sessionSoundNormalizeSinks(result.sinks)
+  var defaultResourceId = String(result.defaultResourceId || "")
+  if (defaultResourceId && !sessionSoundCanSubmit(defaultResourceId, sinks)) defaultResourceId = ""
+  var known = result.known === true && sinks.length > 0
+  var empty = sinks.length === 0
+  var ok = result.ok === true
+  var message = clippedText(result.explanation || result.message || "", MAX_DISPLAY_TEXT)
+  if (!ok) {
+    return {
+      phase: "failed",
+      action: String(prior.action || ""),
+      sinks: sinks,
+      defaultResourceId: defaultResourceId,
+      known: false,
+      empty: empty,
+      message: message || "The session Sound helper failed.",
+      code: String(result.code || "command.failed")
+    }
+  }
+  if (known && result.resourceId && !sessionSoundCanSubmit(result.resourceId, sinks) && String(prior.action || "") !== "status") {
+    return {
+      phase: "failed",
+      action: String(prior.action || ""),
+      sinks: sinks,
+      defaultResourceId: defaultResourceId,
+      known: false,
+      empty: empty,
+      message: "The session Sound helper returned an unknown sink identity.",
+      code: "payload.invalid"
+    }
+  }
+  return {
+    phase: "succeeded",
+    action: String(prior.action || ""),
+    sinks: sinks,
+    defaultResourceId: defaultResourceId,
+    known: known,
+    empty: empty,
+    message: message || (empty ? "No audio outputs reported through this session." : "Typed audio outputs through this session."),
+    code: ""
+  }
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     CATALOG_METHOD: CATALOG_METHOD,
@@ -2050,6 +2145,10 @@ if (typeof module !== "undefined") {
     sessionKeyboardLayoutFinished: sessionKeyboardLayoutFinished,
     sessionSystemInformationIdle: sessionSystemInformationIdle,
     sessionSystemInformationAccepted: sessionSystemInformationAccepted,
-    sessionSystemInformationFinished: sessionSystemInformationFinished
+    sessionSystemInformationFinished: sessionSystemInformationFinished,
+    sessionSoundIdle: sessionSoundIdle,
+    sessionSoundAccepted: sessionSoundAccepted,
+    sessionSoundCanSubmit: sessionSoundCanSubmit,
+    sessionSoundFinished: sessionSoundFinished
   }
 }

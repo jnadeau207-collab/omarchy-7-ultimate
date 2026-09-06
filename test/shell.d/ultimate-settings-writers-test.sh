@@ -120,6 +120,18 @@ if grep -Eq 'hyprctl|switchxkblayout|bash -c' "$application"; then
 fi
 pass "Settings drives keyboard-layout through the session leftover plane only"
 
+grep -Fq 'SettingsComponents.SettingsSound' "$application" ||
+  fail "Settings Sound hosts the session mute/default card"
+if grep -A30 'SettingsComponents.SettingsSound' "$application" | grep -Eq 'operation\.(preflight|start|approve)|requestFabric'; then
+  fail "Settings Sound mute/default host must not mint Fabric durable operations"
+fi
+if grep -Eq 'action: "output-mute|action: "default-sink|"mute\.set"|"default-sink\.set"' "$application"; then
+  fail "Settings Sound must not invent a Fabric mute/default writer"
+fi
+grep -Fq 'does not invent an audio.provider mute or default-sink durable writer' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" ||
+  fail "Settings Sound coverage refuses a Fabric mute/default writer"
+pass "Settings drives Sound mute/default through the session leftover plane only"
+
 grep -Fq 'provider: "network.provider"' "$application" || fail "Settings switches the radio through network.provider"
 grep -Fq 'action: "wifi.set-enabled"' "$application" || fail "Settings uses the typed wifi.set-enabled action"
 grep -Fq 'if (enabled && record.radioBlocked) return' "$application" ||
@@ -453,6 +465,12 @@ const inputQuery = Model.queryForRoute('settings.input.overview')
 assert(inputQuery.coverage.indexOf('input-keyboard-layout') >= 0, 'the input coverage note names the session layout verb')
 assert(inputQuery.coverage.indexOf('does not invent an input.provider keyboard-layout durable writer') >= 0, 'the input coverage note refuses a Fabric layout writer')
 assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility input changes remain unavailable') >= 0, 'the input coverage note still refuses what Settings cannot do')
+
+const audioQuery = Model.queryForRoute('settings.audio.overview')
+assert(audioQuery.coverage.indexOf('audio-output-mute-set') >= 0, 'the audio coverage note names the session mute verb')
+assert(audioQuery.coverage.indexOf('audio-output-default-set') >= 0, 'the audio coverage note names the session default verb')
+assert(audioQuery.coverage.indexOf('does not invent an audio.provider mute or default-sink durable writer') >= 0, 'the audio coverage note refuses a Fabric mute/default writer')
+assert(audioQuery.coverage.indexOf('windows-native.6 stays pending') >= 0, 'the audio coverage note keeps wn.6 pending')
 
 const displayQuery = Model.queryForRoute('settings.display.overview')
 assert(displayQuery.coverage.indexOf('brightness.set') >= 0, 'the display coverage note names the settable verb')

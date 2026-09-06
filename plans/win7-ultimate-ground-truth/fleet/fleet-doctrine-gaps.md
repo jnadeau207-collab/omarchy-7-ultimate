@@ -67,7 +67,7 @@ Jobs in `jobs.json`: **82** (claims: missing=35, partial=6, plumbing=4, present=
 | `parity.network` | prototype/prototype | visible: Start > Settings > Network | User can view network state, toggle Wi-Fi radio, and join open or password-protected networks from Settings without terminal; enterprise/VPN/DNS remain separate. | Claiming Network complete from radio+join; inventing VPN/enterprise UI. |
 | `parity.personalization` | prototype/prototype | visible: Start > Settings > Personalization | User can change wallpaper/theme-related personalization from Settings Personalization with the mouse. | Equating Personalization picker with full theme/density/cursor product. |
 | `parity.power-options` | prototype/prototype | visible: Start > Settings > Power | User can view power source/profile and set power profile from Settings/Superbar without terminal; sleep/lid remain separate if missing. | Claiming Power Options complete from profile.set alone. |
-| `parity.sound` | prototype/prototype | visible: Start > Settings > Sound | User can view outputs and set output volume from Settings/Superbar without terminal; mute/routing may remain unavailable if stated. | Inventing full mixer/port UI from volume writer. |
+| `parity.sound` | prototype/prototype | visible: Start > Settings > Sound | User can view outputs and set output volume from Settings/Superbar without terminal; mute and default sink are session leftover on Settings Sound (soft leftover-attach `audio.output.manage`); port/troubleshoot may remain unavailable if stated. | Inventing full mixer/port UI or Fabric mute/default durable LIVE / claim=present from session leftover. |
 | `parity.display` | prototype/prototype | visible: Start > Settings > Display | User can view displays and change brightness when hardware allows; resolution/scale/arrangement are separate requirements if missing. | Claiming Display complete from brightness-only; inventing arrangement UI. |
 | `parity.modern-display-scaling-hdr-night-light` | prototype/prototype / plumbing | visible: Settings > Display | User can set scaling (e.g. 125%), HDR if available, night light from Display/Quick Settings. | Claiming modern display complete from one of scaling/night-light alone. / metal CLOSED from Cloud EXIT 0. |
 
@@ -138,7 +138,7 @@ Jobs in `jobs.json`: **82** (claims: missing=35, partial=6, plumbing=4, present=
 | `windows-native.3` | prototype/pending | visible: Settings > Display | **Set display scaling to 125%.** Set display scaling to 125% from Display UI. | Inventing scaling present / Fabric display.provider scale durable LIVE / claim=present / metal CLOSED from Cloud EXIT 0. |
 | `windows-native.4` | prototype/pending | visible: Personalization > Background | **Change the wallpaper.** Change wallpaper from Personalization. | Equating any background change API without UI. |
 | `windows-native.5` | prototype/pending | visible: Settings > Bluetooth | **Pair Bluetooth headphones.** Pair Bluetooth headphones from Bluetooth UI. | Claiming present without metal pair proof; inventing PIN-entry/audio routing. |
-| `windows-native.6` | prototype/pending | visible: Superbar > Sound | **Adjust output volume.** Adjust output volume from Sound UI/Superbar. | OK if volume writer+UI; not full Sound job. |
+| `windows-native.6` | prototype/pending | visible: Settings > Sound | **Adjust output volume.** Adjust output volume from Sound UI/Superbar. Mute + default sink are adjacent session leftover (not product CLOSED / not metal CLOSED / not claim=present). | OK if volume writer+UI; mute/default session leftover does not close this row; not full Sound job. |
 | `windows-native.7` | missing/pending | planned: Software Center | **Install Firefox or Chrome.** Install Firefox or Chrome from Software surface without terminal. | Inventing install from package plane. |
 | `windows-native.8` | missing/pending | planned: Software Center | **Install Steam.** Install Steam from Software/Compatibility without terminal. | Inventing Steam install. |
 | `windows-native.9` | prototype/pending | visible: Start > Downloads; Superbar > Files > Downloads | **Open Downloads.** Open Downloads folder from Start/Files with mouse. | OK if Files Downloads place works. |
@@ -221,6 +221,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
   | Live surface / verb | Catalog id | availability.claim |
   | --- | --- | --- |
   | Settings Sound volume (`output-volume.set`) | `audio.volume.set` | partial |
+| Settings Sound mute/default session leftover (`audio-output-mute-set` / `audio-output-default-set`) | `audio.output.manage` | partial leftover-direct |
   | Settings Network Wi-Fi radio (`wifi.set-enabled`) | `network.manage` | partial |
   | Settings Network Wi-Fi join (session NetworkManager; passphrase never enters Fabric) | `network.wifi.connect` | partial |
   | Settings Bluetooth pair/connect (session BlueZ; pairing secrets never enter Fabric) | `bluetooth.audio.pair` | partial |

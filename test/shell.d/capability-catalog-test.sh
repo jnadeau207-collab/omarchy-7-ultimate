@@ -233,7 +233,7 @@ for capability_id, (surface, path) in inspect_routes.items():
         raise SystemExit(f"{capability_id} inspect route is {route}")
 
 writer_routes = {
-    "audio.output.manage": ("Quick Settings", "Superbar > Quick Settings > Sound"),
+    "audio.output.manage": ("Settings", "Settings > Sound; Superbar > Quick Settings > Sound"),
     "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
     "display.night-light.set": ("Settings", "Settings > Display; Superbar > Quick Settings > Night light"),
@@ -595,6 +595,27 @@ if native19.get("claim") == "present":
     raise SystemExit(f"windows-native.19 was flipped to present: {native19}")
 if native19.get("capabilityIds") != ["defaults.protocol.set"]:
     raise SystemExit(f"windows-native.19 capabilityIds are {native19.get('capabilityIds')}")
+
+
+output_manage = by_id["audio.output.manage"]
+if output_manage.get("availability", {}).get("claim") == "present":
+    raise SystemExit("audio.output.manage must not claim present")
+if output_manage.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"audio.output.manage claim is {output_manage.get('availability')}")
+if output_manage.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"audio.output.manage human availability is {output_manage.get('availability')}")
+if output_manage.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"audio.output.manage was raised off leftover: {output_manage.get('provider')}")
+if output_manage.get("humanRoute", {}).get("path") != "Settings > Sound; Superbar > Quick Settings > Sound":
+    raise SystemExit(f"audio.output.manage route is {output_manage.get('humanRoute')}")
+if output_manage.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+    raise SystemExit(f"audio.output.manage source is {output_manage.get('source')}")
+if output_manage.get("source", {}).get("symbol") != "apply_audio_output_default_set":
+    raise SystemExit(f"audio.output.manage source is {output_manage.get('source')}")
+if "Panel.qml" in str(output_manage.get("source", {}).get("file") or ""):
+    raise SystemExit(f"audio.output.manage still names the QS panel only: {output_manage.get('source')}")
+if "SettingsSound.qml" in str(output_manage.get("source", {}).get("file") or ""):
+    raise SystemExit("audio.output.manage must not invent source on SettingsSound.qml")
 
 volume_set = by_id["audio.volume.set"]
 if volume_set.get("provider", {}).get("id") != "audio.provider":
