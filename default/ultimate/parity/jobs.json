@@ -882,7 +882,7 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Files (legacy Nautilus)",
+        "surface": "Files",
         "path": "Files > right-click > Properties"
       },
       "agentAvailability": "unavailable",

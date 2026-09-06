@@ -3825,8 +3825,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-properties",
+        "file": "shell/apps/shared/FilesSessionProperties.qml",
+        "symbol": "readProperties",
         "brokerVerb": null
       }
     },
