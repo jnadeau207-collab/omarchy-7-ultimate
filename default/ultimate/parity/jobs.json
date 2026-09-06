@@ -1524,7 +1524,7 @@
         "path": "Files > Devices > Eject"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Report busy state without pretending the device was ejected.",
+      "recoveryExpectation": "Report device.busy honestly through tip-true FilesSessionEject.ejectDevice \u2192 storage-removable-eject when the volume is in use; do not pretend eject succeeded (no Fabric durable undo fingerprint invent; no timed auto-rollback).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.15"

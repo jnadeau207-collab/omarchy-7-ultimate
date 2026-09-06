@@ -2393,6 +2393,49 @@ if "openEntry" not in rec or "xdg-open" not in rec:
     raise SystemExit(f"files.text.edit recoveryExpectation dual-truth: {text_edit.get('recovery')}")
 if "fingerprint" in rec.lower() or "undo path" in rec.lower():
     raise SystemExit(f"files.text.edit still invents undo/fingerprint recovery: {text_edit.get('recovery')}")
+
+eject_cap = by_id["storage.removable.eject"]
+if eject_cap.get("availability", {}).get("claim") == "present":
+    raise SystemExit("storage.removable.eject must not claim present")
+if eject_cap.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"storage.removable.eject claim is {eject_cap.get('availability')}")
+if eject_cap.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"storage.removable.eject human is {eject_cap.get('availability')}")
+if eject_cap.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"storage.removable.eject was raised off leftover: {eject_cap.get('provider')}")
+if eject_cap.get("source", {}).get("file") != "shell/apps/shared/FilesSessionEject.qml":
+    raise SystemExit(f"storage.removable.eject source is {eject_cap.get('source')}")
+if eject_cap.get("source", {}).get("symbol") != "ejectDevice":
+    raise SystemExit(f"storage.removable.eject source is {eject_cap.get('source')}")
+eject_recovery = eject_cap.get("recovery") or {}
+if eject_recovery.get("mode") != "compensating":
+    raise SystemExit(f"storage.removable.eject recovery mode is {eject_recovery}")
+if eject_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"storage.removable.eject recovery fingerprint invent: {eject_recovery}")
+eject_exp = eject_recovery.get("expectation") or ""
+for needle in ("ejectDevice", "storage-removable-eject", "device.busy", "no Fabric durable undo fingerprint invent", "no timed auto-rollback"):
+    if needle not in eject_exp:
+        raise SystemExit(f"storage.removable.eject recovery missing {needle!r}: {eject_exp}")
+if "state-fingerprint-guarded" in eject_exp:
+    raise SystemExit(f"storage.removable.eject still invents fingerprint-guarded compensating path: {eject_exp}")
+native15 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.15")
+if native15.get("claim") == "present":
+    raise SystemExit("windows-native.15 must not claim present")
+if native15.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.15 claim is {native15.get('claim')}")
+if native15.get("sourceStatus") != "pending" or native15.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.15 status drifted: {native15}")
+native15_recovery = native15.get("recoveryExpectation") or ""
+if "ejectDevice" not in native15_recovery or "storage-removable-eject" not in native15_recovery:
+    raise SystemExit(f"windows-native.15 recovery is not tip-aligned to ejectDevice plane: {native15_recovery}")
+if "fingerprint invent" not in native15_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native15_recovery:
+    raise SystemExit(f"windows-native.15 recovery must refuse Fabric fingerprint invent: {native15_recovery}")
+files_app_eject = (root / "shell/apps/ultimate-files/FilesApplication.qml").read_text(encoding="utf-8")
+if "soft leftover-attached" not in files_app_eject.lower() or "windows-native.15" not in files_app_eject:
+    raise SystemExit("FilesApplication must soft leftover-attach windows-native.15")
+if "FilesSessionEject.ejectDevice" not in files_app_eject and "ejectDevice" not in files_app_eject:
+    raise SystemExit("FilesApplication must name tip-true ejectDevice")
+
 if "Preserve file history or a guarded undo artifact." in (native18.get("recoveryExpectation") or ""):
     raise SystemExit(f"windows-native.18 still invents undo recovery: {native18.get('recoveryExpectation')}")
 wn18_rec = native18.get("recoveryExpectation") or ""
