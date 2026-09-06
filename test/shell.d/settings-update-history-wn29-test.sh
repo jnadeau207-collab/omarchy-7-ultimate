@@ -161,7 +161,7 @@ required_gaps = [
     "SettingsSessionUpdate.qml",
     "readHistory",
     "update.history.read",
-    "CLOSED leftover: Update history UI",
+    "Soft leftover-attach: Settings > Update history exists",
     "not product CLOSED",
     "not metal CLOSED",
     "not claim=present",
@@ -173,6 +173,16 @@ for needle in required_gaps:
         raise SystemExit(f"fleet-doctrine-gaps missing {needle!r}")
 if "windows-native.29 stays prototype/pending" not in gaps.replace("`", ""):
     raise SystemExit("fleet-doctrine-gaps must keep windows-native.29 prototype/pending")
+if "CLOSED leftover: Update history UI" in gaps:
+    raise SystemExit("fleet-doctrine-gaps must not invent CLOSED leftover: Update history UI")
+if "CLOSED leftover: Update history UI" in parity:
+    raise SystemExit("PARITY must not invent CLOSED leftover: Update history UI")
+if "CLOSED leftover: Update history UI" in handoff:
+    raise SystemExit("HANDOFF_WRITERS must not invent CLOSED leftover: Update history UI")
+if "Soft leftover-attach: Settings > Update history exists" not in parity:
+    raise SystemExit("PARITY must name Soft leftover-attach: Settings > Update history exists")
+if "Soft leftover-attach: Settings > Update history exists" not in handoff:
+    raise SystemExit("HANDOFF_WRITERS must name Soft leftover-attach: Settings > Update history exists")
 if "claims: missing=30, partial=6, plumbing=4, present=0, prototype=42" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims after wn.29 soft leftover-attach")
 
