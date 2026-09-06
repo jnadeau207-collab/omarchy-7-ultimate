@@ -78,7 +78,9 @@ grep -Fq 'settings.input.overview' "$settings_app" || fail "Settings still owns 
 grep -Fq 'this session' "$settings_card" || fail "Settings Input keyboard-layout names the session principal"
 grep -Fq 'hyprctl' "$settings_card" || fail "Settings Input keyboard-layout names the absolute helper"
 grep -Fq 'session leftover recorded' "$settings_card" || fail "Settings Input keyboard-layout records a session leftover"
-grep -Fq 'session-UI leftover only' "$settings_card" || fail "Settings Input keyboard-layout names session-UI leftover only"
+grep -Eqi 'soft leftover-attaches windows-native.33' "$settings_card" || fail "Settings Input keyboard-layout soft leftover-attaches wn.33"
+grep -Fq 'windows-native.33 stays prototype/pending' "$settings_card" || fail "Settings Input keyboard-layout keeps wn.33 prototype/pending"
+grep -Fq 'SettingsSessionKeyboardLayout.setLayout' "$settings_card" || fail "Settings Input keyboard-layout names tip-true setLayout"
 grep -Fq 'not product CLOSED' "$settings_card" || fail "Settings Input keyboard-layout refuses product CLOSED"
 grep -Fq 'not metal CLOSED' "$settings_card" || fail "Settings Input keyboard-layout refuses metal CLOSED"
 grep -Fq 'not claim=present' "$settings_card" || fail "Settings Input keyboard-layout refuses claim=present"
@@ -193,12 +195,16 @@ assert(input.coverage.indexOf('does not invent an input.provider keyboard-layout
   input.coverage.indexOf('does not invent a input.provider keyboard-layout durable writer') >= 0,
   'input coverage refuses a Fabric layout writer')
 assert(input.coverage.indexOf('session leftover recorded') >= 0, 'input coverage records a session leftover')
+assert(input.coverage.indexOf('soft leftover-attaches windows-native.33') >= 0, 'input coverage soft leftover-attaches wn.33')
+assert(input.coverage.indexOf('SettingsSessionKeyboardLayout.setLayout') >= 0, 'input coverage names tip-true setLayout')
+assert(input.coverage.indexOf('windows-native.33 stays prototype/pending') >= 0, 'input coverage keeps wn.33 prototype/pending')
 assert(input.coverage.indexOf('not product CLOSED') >= 0, 'input coverage refuses product CLOSED')
 assert(input.coverage.indexOf('not metal CLOSED') >= 0, 'input coverage refuses metal CLOSED')
 assert(input.coverage.indexOf('not claim=present') >= 0, 'input coverage refuses claim=present')
 assert(input.coverage.indexOf('Pointer, repeat rate, and accessibility input changes remain unavailable') >= 0, 'input coverage still refuses pointer and locale')
 assert(input.coverage.indexOf('not locale complete') >= 0 || input.coverage.indexOf('full locale') >= 0, 'input coverage refuses locale complete')
 assert(Model.declaredOpsHonesty('settings.input.overview').indexOf('input-keyboard-layout') >= 0, 'input declared ops name the session layout verb')
+assert(Model.declaredOpsHonesty('settings.input.overview').indexOf('soft leftover-attaches windows-native.33') >= 0, 'input declared ops soft leftover-attach wn.33')
 assert(Model.declaredOpsHonesty('settings.input.overview').indexOf('does not invent') >= 0, 'input declared ops refuse a Fabric layout writer')
 assert(Model.authorityFooter().indexOf('input-keyboard-layout') >= 0, 'authority footer names the session layout verb')
 JS
@@ -407,6 +413,19 @@ if layout.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"input.keyboard-layout.set was raised off leftover: {layout.get('provider')}")
 if layout.get("provider", {}).get("id") != "input.provider":
     raise SystemExit(f"input.keyboard-layout.set provider is {layout.get('provider')}")
+recovery = layout.get("recovery") or {}
+if recovery.get("mode") != "undo":
+    raise SystemExit(f"input.keyboard-layout.set recovery mode is {recovery}")
+if recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"input.keyboard-layout.set recovery fingerprint invent: {recovery}")
+exp = recovery.get("expectation") or ""
+for needle in (
+    "setLayout",
+    "input-keyboard-layout",
+    "no Fabric durable undo fingerprint invent",
+):
+    if needle not in exp:
+        raise SystemExit(f"input.keyboard-layout.set recovery missing {needle!r}: {exp}")
 
 by_job = {job["id"]: job for job in jobs["jobs"]}
 parity_locale = by_job["parity.language-locale"]
@@ -429,6 +448,12 @@ if native33["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.33 route is {native33.get('humanRoute')}")
 if native33["humanRoute"].get("path") != "Settings > Input":
     raise SystemExit(f"windows-native.33 path is {native33.get('humanRoute')}")
+rec33 = native33.get("recoveryExpectation") or ""
+for needle in ("setLayout", "input-keyboard-layout"):
+    if needle not in rec33:
+        raise SystemExit(f"windows-native.33 recovery missing {needle!r}")
+if "fingerprint invent" not in rec33.lower() and "no Fabric durable undo fingerprint invent" not in rec33:
+    raise SystemExit(f"windows-native.33 recovery must refuse Fabric fingerprint invent: {rec33}")
 
 by_debt = {entry["id"]: entry for entry in debt["entries"]}
 legacy = by_debt["legacy.domain.direct-providers"]
@@ -447,7 +472,8 @@ if "CLOSED leftover:" in addendum:
     raise SystemExit("fleet-doctrine-gaps must not use bare CLOSED leftover invent for keyboard layout")
 for required in (
     "session leftover recorded",
-    "session-UI leftover only",
+    "Soft leftover-attach ACC",
+    "leftover-attach only",
     "not product CLOSED",
     "not metal CLOSED",
     "not claim=present",
@@ -456,6 +482,7 @@ for required in (
     "legacy-direct",
     "hyprctl",
     "input-keyboard-layout",
+    "setLayout",
     "Cloud EXIT 0 is not metal leftover CLOSED",
     "Cloud mocks do not close windows-native.33",
     "windows-native.33",
@@ -474,8 +501,12 @@ if "metal CLOSED from Cloud EXIT 0" not in gaps.split("`windows-native.33`", 1)[
     raise SystemExit("fleet-doctrine-gaps invent-mode for windows-native.33 must include metal CLOSED from Cloud EXIT 0")
 if "session leftover recorded" not in parity:
     raise SystemExit("PARITY Input row must record the session leftover")
+if "soft leftover-attaches `windows-native.33`" not in parity and "soft leftover-attaches windows-native.33" not in parity:
+    raise SystemExit("PARITY must soft leftover-attach wn.33")
 if "input.keyboard-layout.set" not in parity:
     raise SystemExit("PARITY Input row must name input.keyboard-layout.set")
+if "setLayout" not in parity or "input-keyboard-layout" not in parity:
+    raise SystemExit("PARITY must name tip-true setLayout → input-keyboard-layout")
 if "does not invent an `input.provider` keyboard-layout durable writer" not in parity and "does not invent a input.provider keyboard-layout" not in parity and "does not invent an input.provider keyboard-layout" not in parity:
     raise SystemExit("PARITY Input row must refuse a Fabric layout invent")
 if "windows-native.33` stays prototype/pending" not in parity and "windows-native.33` stays pending" not in parity and "windows-native.33 stays prototype/pending" not in parity:

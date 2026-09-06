@@ -873,6 +873,29 @@ if "keyboardlayout.qml" in named_layout:
     raise SystemExit(f"input.keyboard-layout.set still names the bar widget: {layout_set.get('source')}")
 if "settingsapplication.qml" in named_layout or "settingsinputlayout.qml" in named_layout:
     raise SystemExit(f"input.keyboard-layout.set must not invent source on Settings QML: {layout_set.get('source')}")
+layout_recovery = layout_set.get("recovery") or {}
+if layout_recovery.get("mode") != "undo":
+    raise SystemExit(f"input.keyboard-layout.set recovery mode is {layout_recovery}")
+if layout_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"input.keyboard-layout.set recovery fingerprint invent: {layout_recovery}")
+layout_exp = layout_recovery.get("expectation") or ""
+for needle in ("setLayout", "input-keyboard-layout", "no Fabric durable undo fingerprint invent"):
+    if needle not in layout_exp:
+        raise SystemExit(f"input.keyboard-layout.set recovery missing {needle!r}: {layout_exp}")
+native33 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.33")
+if native33.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.33 claim is {native33.get('claim')}")
+if native33.get("sourceStatus") != "pending" or native33.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.33 left pending: {native33}")
+if native33["humanRoute"].get("status") != "visible" or native33["humanRoute"].get("path") != "Settings > Input":
+    raise SystemExit(f"windows-native.33 underclaims Settings Input: {native33['humanRoute']}")
+if native33.get("capabilityIds") != ["input.keyboard-layout.set"]:
+    raise SystemExit(f"windows-native.33 capabilityIds are {native33.get('capabilityIds')}")
+native33_recovery = native33.get("recoveryExpectation") or ""
+if "setLayout" not in native33_recovery or "input-keyboard-layout" not in native33_recovery:
+    raise SystemExit(f"windows-native.33 recovery is not tip-aligned to setLayout plane: {native33_recovery}")
+if "fingerprint invent" not in native33_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native33_recovery:
+    raise SystemExit(f"windows-native.33 recovery must refuse Fabric fingerprint invent: {native33_recovery}")
 settings_app_layout = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
 if "SettingsInputLayout" not in settings_app_layout:
     raise SystemExit("Settings Input does not host the session keyboard-layout card")

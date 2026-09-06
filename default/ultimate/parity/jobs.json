@@ -1998,7 +1998,7 @@
         "path": "Settings > Input"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Re-select another configured layout from Settings > Input (session plane applies immediately via hyprctl; no prior-layout undo plane).",
+      "recoveryExpectation": "Apply layout from Settings > Input through tip-true SettingsSessionKeyboardLayout.setLayout \u2192 input-keyboard-layout (re-select another configured layout; no Fabric durable undo fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.33"
