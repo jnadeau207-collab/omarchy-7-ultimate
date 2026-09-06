@@ -63,6 +63,8 @@ LSBLK = "/usr/bin/lsblk"
 GIO = "/usr/bin/gio"
 MAX_MOUNTINFO_BYTES = 262144
 FILES_MOUNT_ID_PREFIX = "files.mount."
+FILES_VOLUME_ID_PREFIX = "files.volume."
+LSBLK_VOLUME_OUTPUT = "NAME,PATH,TYPE,SIZE,RM,RO,FSTYPE,UUID,LABEL,MOUNTPOINTS,PKNAME"
 EJECT_BUSY_MARKERS = (
     "devicebusy",
     "device busy",
@@ -85,6 +87,13 @@ EJECT_UNSUPPORTED_MARKERS = (
     "not ejectable",
     "does not support",
 )
+MOUNT_ALREADY_MARKERS = (
+    "already mounted",
+    "is already mounted",
+    "already mounted at",
+)
+MOUNT_BUSY_MARKERS = EJECT_BUSY_MARKERS
+MOUNT_AUTH_MARKERS = EJECT_AUTH_MARKERS
 
 class ApplyError(Exception):
     def __init__(self, code: str, explanation: str) -> None:
@@ -3125,6 +3134,311 @@ def apply_storage_removable_eject(
     return 0
 
 
+def require_files_volume_id(payload: Mapping[str, Any]) -> str:
+    volume_id = payload.get("volumeId")
+    if not isinstance(volume_id, str) or not volume_id.startswith(FILES_VOLUME_ID_PREFIX):
+        raise ApplyError("payload.invalid", "The apply payload names no removable volume.")
+    digest = volume_id[len(FILES_VOLUME_ID_PREFIX) :]
+    if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+        raise ApplyError("payload.invalid", "The volume identity is malformed.")
+    return volume_id
+
+
+def stable_files_volume_id(device_path: str, uuid_value: str | None) -> str:
+    identity = uuid_value if uuid_value else device_path
+    digest = hashlib.sha256(f"files\0volume\0{identity}".encode("utf-8", errors="strict")).hexdigest()
+    return f"{FILES_VOLUME_ID_PREFIX}{digest}"
+
+
+def classify_mount_failure(completed: Any) -> ApplyError:
+    text = command_detail(completed).lower()
+    if any(marker in text for marker in MOUNT_BUSY_MARKERS):
+        return ApplyError("device.busy", "The device is busy and was not mounted.")
+    if any(marker in text for marker in MOUNT_AUTH_MARKERS):
+        return ApplyError("mount.auth-denied", "This session could not authorize the mount.")
+    return ApplyError("apply.failed", "Mounting the removable volume reported a failure status.")
+
+
+def lsblk_mountpoints(item: Mapping[str, Any]) -> list[str]:
+    mounts = item.get("mountpoints") or []
+    if not isinstance(mounts, list):
+        return []
+    return [value for value in mounts if isinstance(value, str) and value]
+
+
+def is_system_mount_point(mount_point: str, home: pathlib.Path) -> bool:
+    if mount_point in {"/", "/boot", "/home"}:
+        return True
+    if mount_point.startswith("/boot/") or mount_point.startswith("/mnt/"):
+        return True
+    home_text = os.fspath(home)
+    if mount_point == home_text or mount_point.startswith(f"{home_text}/"):
+        return True
+    return False
+
+
+def flatten_lsblk_items(items: list[Any], parent: Mapping[str, Any] | None = None) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    pending: list[tuple[Any, Mapping[str, Any] | None]] = [(item, parent) for item in items]
+    while pending:
+        item, ancestor = pending.pop(0)
+        if not isinstance(item, Mapping):
+            raise ApplyError("probe.invalid", "The volume inventory is unreadable.")
+        children = item.get("children", [])
+        if children is None:
+            children = []
+        if not isinstance(children, list):
+            raise ApplyError("probe.invalid", "The volume inventory is unreadable.")
+        normalized = dict(item)
+        normalized.pop("children", None)
+        normalized["_parent"] = ancestor
+        output.append(normalized)
+        pending[0:0] = [(child, normalized) for child in children]
+        if len(output) > 64:
+            raise ApplyError("probe.invalid", "The volume inventory exceeds its bound.")
+    return output
+
+
+def parse_lsblk_volumes(text: str) -> list[dict[str, Any]]:
+    try:
+        document = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise ApplyError("probe.invalid", "The volume inventory is unreadable.") from error
+    if not isinstance(document, dict) or not isinstance(document.get("blockdevices"), list):
+        raise ApplyError("probe.invalid", "The volume inventory is unreadable.")
+    return flatten_lsblk_items(document["blockdevices"])
+
+
+def lsblk_uuid(item: Mapping[str, Any]) -> str | None:
+    uuid_value = item.get("uuid")
+    if uuid_value in (None, ""):
+        return None
+    if not isinstance(uuid_value, str) or not 1 <= len(uuid_value) <= 256:
+        raise ApplyError("probe.invalid", "The volume identity is unreadable.")
+    if any(ord(character) < 32 or ord(character) == 127 for character in uuid_value):
+        raise ApplyError("probe.invalid", "The volume identity is unreadable.")
+    return uuid_value
+
+
+def lsblk_label(item: Mapping[str, Any], device_path: str) -> str:
+    label = item.get("label")
+    if isinstance(label, str) and 1 <= len(label) <= 160 and not any(ord(character) < 32 or ord(character) == 127 for character in label):
+        return label
+    leaf = pathlib.PurePosixPath(device_path).name
+    return leaf if leaf else "Removable device"
+
+
+def system_device_names(items: list[Mapping[str, Any]], home: pathlib.Path) -> set[str]:
+    names: set[str] = set()
+    by_name: dict[str, Mapping[str, Any]] = {}
+    for item in items:
+        name = item.get("name")
+        if isinstance(name, str) and name:
+            by_name[name] = item
+        if any(is_system_mount_point(mount, home) for mount in lsblk_mountpoints(item)):
+            if isinstance(name, str) and name:
+                names.add(name)
+            pkname = item.get("pkname")
+            if isinstance(pkname, str) and pkname:
+                names.add(pkname)
+    changed = True
+    while changed:
+        changed = False
+        for item in items:
+            name = item.get("name")
+            pkname = item.get("pkname")
+            if isinstance(name, str) and isinstance(pkname, str) and pkname in names and name not in names:
+                names.add(name)
+                changed = True
+            if isinstance(name, str) and name in names:
+                parent = item.get("_parent")
+                parent_name = parent.get("name") if isinstance(parent, Mapping) else None
+                if isinstance(parent_name, str) and parent_name not in names:
+                    names.add(parent_name)
+                    changed = True
+    return names
+
+
+def classify_session_volume(item: Mapping[str, Any], home: pathlib.Path, system_names: set[str]) -> dict[str, Any] | None:
+    raw_type = str(item.get("type") or "other")
+    path_value = item.get("path")
+    try:
+        device_path = require_block_device(str(path_value))
+    except ApplyError:
+        return None
+    optical = raw_type == "rom" or is_optical_device(device_path)
+    removable = item.get("rm") is True or optical
+    parent = item.get("_parent")
+    if isinstance(parent, Mapping) and parent.get("rm") is True:
+        removable = True
+    if not removable:
+        return None
+    name = item.get("name")
+    if isinstance(name, str) and name in system_names:
+        return None
+    if any(is_system_mount_point(mount, home) for mount in lsblk_mountpoints(item)):
+        return None
+    if raw_type not in {"part", "rom"} and not (raw_type == "disk" and not item.get("_has_children")):
+        return None
+    filesystem = item.get("fstype")
+    if filesystem == "crypto_LUKS":
+        return None
+    mounts = lsblk_mountpoints(item)
+    if any(mount == "[SWAP]" for mount in mounts):
+        return None
+    if filesystem is None and not optical:
+        return None
+    if filesystem is not None and (not isinstance(filesystem, str) or not 1 <= len(filesystem) <= 32):
+        return None
+    uuid_value = lsblk_uuid(item)
+    user_media = [mount for mount in mounts if not is_system_mount_point(mount, home)]
+    mounted = len(user_media) > 0
+    return {
+        "id": stable_files_volume_id(device_path, uuid_value),
+        "devicePath": device_path,
+        "label": lsblk_label(item, device_path),
+        "filesystem": filesystem,
+        "mounted": mounted,
+        "mountPoint": user_media[0] if user_media else None,
+        "scope": "optical" if optical else "usb-volume",
+    }
+
+
+def inventory_session_volumes(text: str, home: pathlib.Path) -> list[dict[str, Any]]:
+    items = parse_lsblk_volumes(text)
+    children_of: set[str] = set()
+    for item in items:
+        parent = item.get("_parent")
+        if isinstance(parent, Mapping):
+            parent_path = parent.get("path")
+            if isinstance(parent_path, str):
+                children_of.add(parent_path)
+    for item in items:
+        item["_has_children"] = isinstance(item.get("path"), str) and item["path"] in children_of
+    system_names = system_device_names(items, home)
+    volumes: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in items:
+        volume = classify_session_volume(item, home, system_names)
+        if volume is None:
+            continue
+        if volume["id"] in seen:
+            raise ApplyError("probe.invalid", "The volume inventory has a duplicated identity.")
+        seen.add(volume["id"])
+        volumes.append(volume)
+        if len(volumes) > 64:
+            raise ApplyError("probe.invalid", "The volume inventory exceeds its bound.")
+    return volumes
+
+
+def read_lsblk_volumes(run: Any) -> str:
+    completed = run_eject_helper([LSBLK, "--json", "--bytes", "--output", LSBLK_VOLUME_OUTPUT], run, 8)
+    if completed.returncode != 0:
+        raise ApplyError("probe.failed", "The volume inventory could not be read.")
+    text = completed.stdout or ""
+    if len(text.encode("utf-8")) > MAX_MOUNTINFO_BYTES:
+        raise ApplyError("probe.invalid", "The volume inventory exceeds its bound.")
+    return text
+
+
+def resolve_mount_volume(volume_id: str, volumes: list[Mapping[str, Any]]) -> Mapping[str, Any]:
+    matches = [volume for volume in volumes if volume.get("id") == volume_id]
+    if len(matches) != 1:
+        raise ApplyError("resource.unresolved", "The selected removable volume is not present.")
+    return matches[0]
+
+
+def public_session_volume(volume: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "volumeId": volume["id"],
+        "label": volume["label"],
+        "mountState": "mounted" if volume.get("mounted") else "unmounted",
+        "scope": volume["scope"],
+        "filesystem": volume.get("filesystem"),
+    }
+
+
+def mount_removable(device_path: str, run: Any) -> str:
+    try:
+        completed = run_eject_helper([UDISKSCTL, "mount", "-b", device_path], run, 30)
+    except ApplyError as error:
+        if error.code != "command.unavailable":
+            raise
+        completed = run_eject_helper([GIO, "mount", "-d", device_path], run, 30)
+    if completed.returncode == 0:
+        return "mounted"
+    text = command_detail(completed).lower()
+    if any(marker in text for marker in MOUNT_ALREADY_MARKERS):
+        return "already"
+    raise classify_mount_failure(completed)
+
+
+def apply_storage_removable_list(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+    lsblk_text: str | None = None,
+    home: Any = None,
+) -> int:
+    try:
+        read_payload(stdin)
+        home_path = pathlib.Path.home() if home is None else pathlib.Path(home)
+        text = lsblk_text if lsblk_text is not None else read_lsblk_volumes(run)
+        volumes = [volume for volume in inventory_session_volumes(text, home_path) if not volume.get("mounted")]
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "volumes": [public_session_volume(volume) for volume in volumes],
+            "explanation": "Listed unmounted removable volumes through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_storage_removable_mount(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+    lsblk_text: str | None = None,
+    home: Any = None,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        volume_id = require_files_volume_id(payload)
+        home_path = pathlib.Path.home() if home is None else pathlib.Path(home)
+        text = lsblk_text if lsblk_text is not None else read_lsblk_volumes(run)
+        volumes = inventory_session_volumes(text, home_path)
+        volume = resolve_mount_volume(volume_id, volumes)
+        device_path = require_block_device(str(volume["devicePath"]))
+        if volume.get("mounted"):
+            method = "already"
+        else:
+            method = mount_removable(device_path, run)
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "volumeId": volume_id,
+            "mounted": True,
+            "method": method,
+            "scope": volume["scope"],
+            "explanation": "Mounted the removable volume through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
@@ -3156,6 +3470,8 @@ ACTIONS = {
     "apps-startup-list": apply_apps_startup_list,
     "apps-startup-set": apply_apps_startup_set,
     "storage-removable-eject": apply_storage_removable_eject,
+    "storage-removable-list": apply_storage_removable_list,
+    "storage-removable-mount": apply_storage_removable_mount,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

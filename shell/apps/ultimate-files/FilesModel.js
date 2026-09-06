@@ -476,6 +476,15 @@ function sessionEjectableRecord(record) {
   if (!isObject(record)) return false
   return String(record.kind || "") === "mount"
     && String(record.mountKind || "") === "removable"
+    && String(record.mountState || "") === "mounted"
+    && String(record.id || "") !== ""
+}
+
+function sessionMountableRecord(record) {
+  if (!isObject(record)) return false
+  return String(record.kind || "") === "mount"
+    && String(record.mountKind || "") === "removable"
+    && String(record.mountState || "") === "unmounted"
     && String(record.id || "") !== ""
 }
 
@@ -502,9 +511,87 @@ function sessionEjectPlan(record) {
   }
 }
 
+function sessionMountPlan(record) {
+  if (!isObject(record)) {
+    return { action: "unavailable", reason: "Select an unmounted removable volume to mount through this session." }
+  }
+  if (String(record.kind || "") !== "mount") {
+    return { action: "unavailable", reason: "Select an unmounted removable volume to mount through this session." }
+  }
+  if (String(record.mountKind || "") === "system") {
+    return { action: "unavailable", reason: "System disks cannot be mounted through this session." }
+  }
+  if (String(record.mountKind || "") === "smb") {
+    return { action: "unavailable", reason: "Network locations cannot be mounted through this session." }
+  }
+  if (!sessionMountableRecord(record)) {
+    return { action: "unavailable", reason: "That volume cannot be mounted through this session." }
+  }
+  return {
+    action: "mount",
+    volumeId: String(record.volumeId || record.id),
+    title: String(record.title || "")
+  }
+}
+
 function sessionEjectCanSubmit(plan) {
   if (!isObject(plan)) return false
   return plan.action === "eject"
+}
+
+function sessionMountCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "mount"
+}
+
+function sessionVolumeRecord(volume, index) {
+  if (!isObject(volume)) return null
+  var volumeId = String(volume.volumeId || volume.id || "")
+  if (volumeId.indexOf("files.volume.") !== 0) return null
+  var label = String(volume.label || "Removable device")
+  var display = String(volume.scope || "") === "optical" ? "Optical disc" : "Not mounted"
+  return {
+    id: volumeId,
+    kind: "mount",
+    title: clippedText(label, 240),
+    subtitle: clippedText(display, 320),
+    status: "unmounted",
+    tone: "warning",
+    details: [detail("Kind", "removable"), detail("State", "unmounted"), detail("Source", display)],
+    order: index,
+    mountKind: "removable",
+    mountState: "unmounted",
+    locationId: "",
+    writable: false,
+    display: clippedText(display, 320),
+    volumeId: volumeId,
+    totalBytes: null,
+    freeBytes: null,
+    capacityText: "",
+    usedFraction: -1
+  }
+}
+
+function mergeSessionVolumes(items, volumes) {
+  var shaped = Array.isArray(items) ? items.slice() : []
+  var seen = {}
+  for (var i = 0; i < shaped.length; i++) seen[String(shaped[i].id || "")] = true
+  var source = Array.isArray(volumes) ? volumes : []
+  for (var v = 0; v < source.length; v++) {
+    var record = sessionVolumeRecord(source[v], shaped.length)
+    if (!record || seen[record.id]) continue
+    seen[record.id] = true
+    shaped.push({
+      id: record.id, title: record.title, entryKind: "drive",
+      typeLabel: "Removable Disk", sizeText: "", modifiedText: "", hidden: false, writable: false,
+      targetRoute: "", relativePath: "", details: record.details, kind: "mount",
+      status: record.status, subtitle: record.subtitle, tone: record.tone,
+      mountKind: record.mountKind, mountState: record.mountState, display: record.display,
+      volumeId: record.volumeId, capacityText: record.capacityText, usedFraction: record.usedFraction,
+      totalBytes: record.totalBytes, freeBytes: record.freeBytes
+    })
+  }
+  return shaped
 }
 
 function sessionPropertiesRows(result) {
@@ -1427,6 +1514,11 @@ if (typeof module !== "undefined") module.exports = {
   sessionEjectableRecord: sessionEjectableRecord,
   sessionEjectPlan: sessionEjectPlan,
   sessionEjectCanSubmit: sessionEjectCanSubmit,
+  sessionMountableRecord: sessionMountableRecord,
+  sessionMountPlan: sessionMountPlan,
+  sessionMountCanSubmit: sessionMountCanSubmit,
+  sessionVolumeRecord: sessionVolumeRecord,
+  mergeSessionVolumes: mergeSessionVolumes,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,
