@@ -1604,7 +1604,7 @@
         "path": "Files > Text"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Preserve file history or a guarded undo artifact.",
+      "recoveryExpectation": "Edit a text file through tip-true openEntry \u2192 files-entry-open \u2192 /usr/bin/xdg-open with the default/associated editor; launch does not mutate Files inventory and has no undo.",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.18"
