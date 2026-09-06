@@ -2487,6 +2487,48 @@ if "soft leftover-attached" not in files_app_eject.lower() or "windows-native.15
 if "FilesSessionEject.ejectDevice" not in files_app_eject and "ejectDevice" not in files_app_eject:
     raise SystemExit("FilesApplication must name tip-true ejectDevice")
 
+mount_cap = by_id["storage.removable.mount"]
+if mount_cap.get("availability", {}).get("claim") == "present":
+    raise SystemExit("storage.removable.mount must not claim present")
+if mount_cap.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"storage.removable.mount claim is {mount_cap.get('availability')}")
+if mount_cap.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"storage.removable.mount human is {mount_cap.get('availability')}")
+if mount_cap.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"storage.removable.mount was raised off leftover: {mount_cap.get('provider')}")
+if mount_cap.get("source", {}).get("file") != "shell/apps/shared/FilesSessionMount.qml":
+    raise SystemExit(f"storage.removable.mount source is {mount_cap.get('source')}")
+if mount_cap.get("source", {}).get("symbol") != "mountVolume":
+    raise SystemExit(f"storage.removable.mount source is {mount_cap.get('source')}")
+mount_recovery = mount_cap.get("recovery") or {}
+if mount_recovery.get("mode") != "compensating":
+    raise SystemExit(f"storage.removable.mount recovery mode is {mount_recovery}")
+if mount_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"storage.removable.mount recovery fingerprint invent: {mount_recovery}")
+mount_exp = mount_recovery.get("expectation") or ""
+for needle in ("mountVolume", "storage-removable-mount", "device.busy", "no Fabric durable undo fingerprint invent", "no timed auto-rollback"):
+    if needle not in mount_exp:
+        raise SystemExit(f"storage.removable.mount recovery missing {needle!r}: {mount_exp}")
+if "state-fingerprint-guarded" in mount_exp:
+    raise SystemExit(f"storage.removable.mount still invents fingerprint-guarded compensating path: {mount_exp}")
+native14 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.14")
+if native14.get("claim") == "present":
+    raise SystemExit("windows-native.14 must not claim present")
+if native14.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.14 claim is {native14.get('claim')}")
+if native14.get("sourceStatus") != "pending" or native14.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.14 status drifted: {native14}")
+native14_recovery = native14.get("recoveryExpectation") or ""
+if "mountVolume" not in native14_recovery or "storage-removable-mount" not in native14_recovery:
+    raise SystemExit(f"windows-native.14 recovery is not tip-aligned to mountVolume plane: {native14_recovery}")
+if "fingerprint invent" not in native14_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native14_recovery:
+    raise SystemExit(f"windows-native.14 recovery must refuse Fabric fingerprint invent: {native14_recovery}")
+files_app_mount = (root / "shell/apps/ultimate-files/FilesApplication.qml").read_text(encoding="utf-8")
+if "soft leftover-attached" not in files_app_mount.lower() or "windows-native.14" not in files_app_mount:
+    raise SystemExit("FilesApplication must soft leftover-attach windows-native.14")
+if "FilesSessionMount.mountVolume" not in files_app_mount and "mountVolume" not in files_app_mount:
+    raise SystemExit("FilesApplication must name tip-true mountVolume")
+
 if "Preserve file history or a guarded undo artifact." in (native18.get("recoveryExpectation") or ""):
     raise SystemExit(f"windows-native.18 still invents undo recovery: {native18.get('recoveryExpectation')}")
 wn18_rec = native18.get("recoveryExpectation") or ""

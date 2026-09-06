@@ -6229,8 +6229,8 @@
       },
       "recovery": {
         "mode": "compensating",
-        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "expectation": "Report device.busy or mount.auth-denied honestly through tip-true FilesSessionMount.mountVolume \u2192 storage-removable-mount when mount fails; unmount via tip-true FilesSessionEject.ejectDevice \u2192 storage-removable-eject when appropriate (no Fabric durable undo fingerprint invent; no timed auto-rollback).",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [

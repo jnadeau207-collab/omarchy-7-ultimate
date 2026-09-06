@@ -1498,7 +1498,7 @@
         "path": "Files > Devices > Mount"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Unmount an incomplete or no-longer-needed mount.",
+      "recoveryExpectation": "Report device.busy or mount.auth-denied honestly through tip-true FilesSessionMount.mountVolume \u2192 storage-removable-mount when mount fails; do not pretend mount succeeded; unmount via tip-true FilesSessionEject.ejectDevice \u2192 storage-removable-eject when appropriate (no Fabric durable undo fingerprint invent; no timed auto-rollback).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.14"
