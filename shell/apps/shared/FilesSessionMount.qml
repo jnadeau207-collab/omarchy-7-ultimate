@@ -86,8 +86,8 @@ Item {
       parsed.ok = ok
       root.busy = false
       if (kind === "list") {
-        var volumes = ok && parsed.volumes && parsed.volumes.constructor === Array ? parsed.volumes : []
-        root.listed(volumes)
+        if (ok && parsed.volumes && parsed.volumes.constructor === Array)
+          root.listed(parsed.volumes)
         return
       }
       if (!parsed.explanation)
