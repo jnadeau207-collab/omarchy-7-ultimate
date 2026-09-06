@@ -2207,6 +2207,26 @@ if document_open.get("source", {}).get("symbol") != "openEntry":
     raise SystemExit(f"files.document.open source is {document_open.get('source')}")
 if "nautilus" in str(document_open.get("source") or "").lower():
     raise SystemExit(f"files.document.open still names Nautilus: {document_open.get('source')}")
+if document_open.get("kind") != "writer":
+    raise SystemExit(f"files.document.open kind dual-truth (want writer/launch): {document_open.get('kind')}")
+if document_open.get("effects") != ["launch"]:
+    raise SystemExit(f"files.document.open effects dual-truth (want launch): {document_open.get('effects')}")
+if document_open.get("consent", {}).get("mode") != "implicit":
+    raise SystemExit(f"files.document.open consent dual-truth: {document_open.get('consent')}")
+if document_open.get("idempotency", {}).get("mode") != "non-idempotent":
+    raise SystemExit(f"files.document.open idempotency dual-truth: {document_open.get('idempotency')}")
+if document_open.get("cancellation", {}).get("mode") != "before-apply":
+    raise SystemExit(f"files.document.open cancellation dual-truth: {document_open.get('cancellation')}")
+if document_open.get("recovery", {}).get("mode") != "none":
+    raise SystemExit(f"files.document.open recovery mode dual-truth: {document_open.get('recovery')}")
+rec = document_open.get("recovery", {}).get("expectation") or ""
+if "openEntry" not in rec or "xdg-open" not in rec or "read-only" in rec.lower():
+    raise SystemExit(f"files.document.open recoveryExpectation dual-truth: {document_open.get('recovery')}")
+if "Read-only open requires no recovery." in (native17.get("recoveryExpectation") or ""):
+    raise SystemExit(f"windows-native.17 still invents read-only recovery: {native17.get('recoveryExpectation')}")
+wn17_rec = native17.get("recoveryExpectation") or ""
+if "openEntry" not in wn17_rec or "xdg-open" not in wn17_rec:
+    raise SystemExit(f"windows-native.17 recoveryExpectation not tip-true: {native17.get('recoveryExpectation')}")
 native18 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.18")
 if native18.get("claim") == "present":
     raise SystemExit(f"windows-native.18 was flipped to present: {native18}")
