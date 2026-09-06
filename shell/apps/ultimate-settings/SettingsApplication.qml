@@ -907,6 +907,13 @@ Item {
               }
             }
 
+            SettingsComponents.SettingsSound {
+              visible: root.currentRoute && root.currentRoute.id === "settings.audio.overview"
+              pageActive: visible
+              semanticProfile: root.productProfile
+              Layout.fillWidth: true
+            }
+
             Rectangle {
               visible: root.defaultProgramsPage
               Layout.fillWidth: true

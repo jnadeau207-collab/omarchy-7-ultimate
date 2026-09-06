@@ -3856,6 +3856,270 @@ def apply_input_keyboard_layout_session(
 
 
 
+
+AUDIO_OUTPUT_SECRET_KEYS = SMB_SECRET_KEYS
+AUDIO_OUTPUT_MUTE_ALLOWED_KEYS = frozenset({"resourceId", "muted"})
+AUDIO_OUTPUT_DEFAULT_ALLOWED_KEYS = frozenset({"resourceId"})
+AUDIO_OUTPUT_MUTE_REFUSE = "Mute must name one tip-true audio.sink identity with a boolean muted flag."
+AUDIO_OUTPUT_DEFAULT_REFUSE = "Default output must name one tip-true audio.sink identity from this session inventory."
+AUDIO_OUTPUT_SINK_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._@+:-]{0,191}$")
+AUDIO_OUTPUT_LABEL_LIMIT = 160
+
+
+def audio_output_helper() -> str:
+    return PACTL
+
+
+def run_pactl(argv: list[str], run: Any, timeout: int = 5) -> Any:
+    if not argv or not str(argv[0]).startswith("/"):
+        raise ApplyError("command.unavailable", "The audio helper must be an absolute path.")
+    try:
+        return run(argv, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned system command is not installed.") from error
+
+
+def clip_audio_label(value: Any, limit: int = AUDIO_OUTPUT_LABEL_LIMIT) -> str:
+    text = " ".join(str(value or "").replace("\x00", " ").split())
+    if not text:
+        return "Audio output"
+    if len(text) <= limit:
+        return text
+    if limit <= 1:
+        return text[:limit]
+    return text[: limit - 1] + "…"
+
+
+def session_audio_sink_records(run: Any = subprocess.run) -> tuple[list[dict[str, Any]], str]:
+    helper = audio_output_helper()
+    listed = run_pactl([helper, "--format=json", "list", "sinks"], run)
+    if listed.returncode != 0:
+        raise ApplyError("probe.failed", "The audio inventory probe reported a failure status.")
+    try:
+        sinks = json.loads(getattr(listed, "stdout", "") or "")
+    except json.JSONDecodeError as error:
+        raise ApplyError("probe.invalid", "The audio inventory probe returned unreadable output.") from error
+    if not isinstance(sinks, list):
+        raise ApplyError("probe.invalid", "The audio inventory probe returned no sink list.")
+    defaulted = run_pactl([helper, "get-default-sink"], run)
+    if defaulted.returncode != 0:
+        raise ApplyError("probe.failed", "The default audio sink probe reported a failure status.")
+    default_name = str(getattr(defaulted, "stdout", "") or "").strip()
+    if default_name and not AUDIO_OUTPUT_SINK_NAME.fullmatch(default_name):
+        raise ApplyError("probe.invalid", "The default audio sink identity is malformed.")
+    records: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for sink in sinks:
+        if not isinstance(sink, Mapping):
+            continue
+        name = sink.get("name")
+        if not isinstance(name, str) or not AUDIO_OUTPUT_SINK_NAME.fullmatch(name):
+            continue
+        if name in seen:
+            continue
+        seen.add(name)
+        muted = sink.get("mute")
+        if not isinstance(muted, bool):
+            continue
+        resource_id = stable_sink_id(name)
+        records.append(
+            {
+                "resourceId": resource_id,
+                "label": clip_audio_label(sink.get("description") or name),
+                "muted": muted,
+                "default": name == default_name,
+                "name": name,
+            }
+        )
+    if len(records) > 8:
+        raise ApplyError("probe.invalid", "The audio inventory probe returned too many sinks.")
+    default_resource_id = ""
+    for record in records:
+        if record["default"]:
+            default_resource_id = str(record["resourceId"])
+            break
+    if default_name and default_name not in seen:
+        raise ApplyError("probe.invalid", "The default audio sink is absent from the sink inventory.")
+    return records, default_resource_id
+
+
+def public_audio_sinks(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "resourceId": record["resourceId"],
+            "label": record["label"],
+            "muted": record["muted"],
+            "default": record["default"],
+        }
+        for record in records
+    ]
+
+
+def require_session_audio_resource_id(payload: Mapping[str, Any], allowed: frozenset[str], refuse: str) -> str:
+    extra = set(payload) - allowed
+    if extra & AUDIO_OUTPUT_SECRET_KEYS or extra:
+        raise ApplyError(
+            "payload.invalid",
+            "stdin JSON may include only the admitted audio keys; this session leftover refuses extra keys",
+        )
+    return require_resource_id(payload)
+
+
+def require_session_muted(payload: Mapping[str, Any]) -> bool:
+    muted = payload.get("muted")
+    if not isinstance(muted, bool):
+        raise ApplyError("payload.invalid", AUDIO_OUTPUT_MUTE_REFUSE)
+    return muted
+
+
+def apply_audio_output_status(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        extra = set(payload)
+        if extra & AUDIO_OUTPUT_SECRET_KEYS or extra:
+            raise ApplyError(
+                "payload.invalid",
+                "stdin JSON for audio status must be empty; this session leftover refuses extra keys",
+            )
+        records, default_resource_id = session_audio_sink_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "sinks": [],
+                "defaultResourceId": "",
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    known = bool(records)
+    json.dump(
+        {
+            "ok": True,
+            "sinks": public_audio_sinks(records),
+            "defaultResourceId": default_resource_id,
+            "known": known,
+            "explanation": (
+                "No audio outputs reported through this session."
+                if not records
+                else "Typed audio outputs through this session."
+            ),
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_audio_output_mute_set(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        resource_id = require_session_audio_resource_id(payload, AUDIO_OUTPUT_MUTE_ALLOWED_KEYS, AUDIO_OUTPUT_MUTE_REFUSE)
+        muted = require_session_muted(payload)
+        records, _default = session_audio_sink_records(run)
+        match = [record for record in records if record["resourceId"] == resource_id]
+        if len(match) != 1:
+            raise ApplyError("payload.invalid", AUDIO_OUTPUT_MUTE_REFUSE)
+        sink_name = str(match[0]["name"])
+        helper = audio_output_helper()
+        completed = run_pactl([helper, "set-sink-mute", sink_name, "1" if muted else "0"], run)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "This session could not apply the audio output mute state.")
+        refreshed, default_resource_id = session_audio_sink_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "sinks": [],
+                "defaultResourceId": "",
+                "resourceId": "",
+                "muted": False,
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "muted": muted,
+            "sinks": public_audio_sinks(refreshed),
+            "defaultResourceId": default_resource_id,
+            "known": True,
+            "explanation": "Applied the audio output mute state through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_audio_output_default_set(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        resource_id = require_session_audio_resource_id(
+            payload, AUDIO_OUTPUT_DEFAULT_ALLOWED_KEYS, AUDIO_OUTPUT_DEFAULT_REFUSE
+        )
+        records, _default = session_audio_sink_records(run)
+        match = [record for record in records if record["resourceId"] == resource_id]
+        if len(match) != 1:
+            raise ApplyError("payload.invalid", AUDIO_OUTPUT_DEFAULT_REFUSE)
+        sink_name = str(match[0]["name"])
+        helper = audio_output_helper()
+        completed = run_pactl([helper, "set-default-sink", sink_name], run)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "This session could not set the default audio output.")
+        refreshed, default_resource_id = session_audio_sink_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "sinks": [],
+                "defaultResourceId": "",
+                "resourceId": "",
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "sinks": public_audio_sinks(refreshed),
+            "defaultResourceId": default_resource_id,
+            "known": True,
+            "explanation": "Applied the default audio output through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
 SYSTEM_INFORMATION_SECRET_KEYS = frozenset({
     "password", "passwd", "secret", "token", "credential", "credentials", "key", "cookie",
 })
@@ -4116,6 +4380,9 @@ ACTIONS = {
     "input-keyboard-layout-status": apply_input_keyboard_layout_status,
     "input-keyboard-layout": apply_input_keyboard_layout_session,
     "system-information-inspect": apply_system_information_inspect,
+    "audio-output-status": apply_audio_output_status,
+    "audio-output-mute-set": apply_audio_output_mute_set,
+    "audio-output-default-set": apply_audio_output_default_set,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
