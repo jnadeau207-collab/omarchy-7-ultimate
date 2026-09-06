@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "display.inspect",
     supportsResource: true,
-    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position), and brightness applies through display.provider brightness.set on outputs that expose a controllable backlight. Night light uses the same NightlightService session/heritage plane as Superbar > Quick Settings; Settings hosts that control here and does not invent a display.provider night-light durable writer. Fabric display.inspect stays separate. Resolution, scale, and arrangement changes remain unavailable from Settings. Night light alone is not modern display complete."
+    coverage: "Display inventory is readable from display.inspect (connector, mode, scale, position), and brightness applies through display.provider brightness.set on outputs that expose a controllable backlight. Night light uses the same NightlightService session/heritage plane as Superbar > Quick Settings; Settings hosts that control here and does not invent a display.provider night-light durable writer. Scale applies through this session's omarchy-hyprland-monitor-scaling helper; Settings does not invent a display.provider scale durable writer. Fabric display.inspect stays separate. Resolution, arrangement, and HDR remain unavailable from Settings. Night light or scaling alone is not modern display complete. session leftover recorded: Settings Display scaling session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present)."
   },
   {
     routeId: "settings.audio.overview",
@@ -156,7 +156,7 @@ function coverageTone(routeId) {
 
 function declaredOpsHonesty(routeId) {
   if (String(routeId || "") === "settings.display.overview")
-    return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer."
+    return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Scale uses this session's omarchy-hyprland-monitor-scaling helper. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. Settings does not invent a display.provider scale durable writer."
   if (String(routeId || "") === "settings.apps.overview")
     return "Settings runs browser, mailer, and MIME defaults through preflight, approval, and the durable coordinator. Startup applications enable or disable through this session's XDG autostart helper. Fabric defaults.inspect stays readable. Settings does not invent a Fabric apps.startup.disable durable writer. Settings does not invent Task Manager present."
   if (String(routeId || "") === "settings.bluetooth.overview")
@@ -169,7 +169,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1676,6 +1676,76 @@ function sessionNightlightFromIpc(kind, raw, exitCode, stderr) {
   }
 }
 
+function sessionScalingAllowed() {
+  return ["1", "1.25", "1.6", "2", "3", "4"]
+}
+
+function sessionScalingChoices() {
+  return [
+    { value: "1", label: "100%" },
+    { value: "1.25", label: "125%" },
+    { value: "1.6", label: "160%" },
+    { value: "2", label: "200%" },
+    { value: "3", label: "300%" },
+    { value: "4", label: "400%" }
+  ]
+}
+
+function sessionScalingLabel(scale) {
+  var token = String(scale || "")
+  var choices = sessionScalingChoices()
+  var i
+  for (i = 0; i < choices.length; i += 1) {
+    if (choices[i].value === token) return choices[i].label
+  }
+  return token
+}
+
+function sessionScalingCanSubmit(scale) {
+  return sessionScalingAllowed().indexOf(String(scale || "")) >= 0
+}
+
+function sessionScalingIdle() {
+  return { phase: "idle", action: "", scale: "", known: false, message: "", code: "" }
+}
+
+function sessionScalingAccepted(previous, action) {
+  var prior = isObject(previous) ? previous : sessionScalingIdle()
+  return {
+    phase: prior.phase,
+    action: String(action || ""),
+    scale: prior.scale || "",
+    known: prior.known === true,
+    message: prior.message || "",
+    code: prior.code || ""
+  }
+}
+
+function sessionScalingFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var ok = result.ok === true
+  var scale = String(result.scale || "")
+  if (scale && sessionScalingAllowed().indexOf(scale) < 0) {
+    ok = false
+    result = {
+      ok: false,
+      scale: "",
+      known: false,
+      code: result.code || "scale.unknown",
+      explanation: result.explanation || "The focused monitor scale is not one of the allowed Settings scales."
+    }
+    scale = ""
+  }
+  return {
+    phase: ok ? "succeeded" : "failed",
+    action: previous && previous.action || "",
+    scale: scale,
+    known: result.known === true && scale !== "",
+    message: clippedText(result.explanation || result.message || (ok ? "The session monitor scaling helper finished." : "The session monitor scaling helper failed."), MAX_DISPLAY_TEXT),
+    code: result.code || ""
+  }
+}
+
 function sessionNightlightFinished(previous, helperResult) {
   var result = isObject(helperResult) ? helperResult : {}
   var ok = result.ok === true
@@ -1780,6 +1850,13 @@ if (typeof module !== "undefined") {
     sessionNightlightIdle: sessionNightlightIdle,
     sessionNightlightFailureCode: sessionNightlightFailureCode,
     sessionNightlightFromIpc: sessionNightlightFromIpc,
-    sessionNightlightFinished: sessionNightlightFinished
+    sessionNightlightFinished: sessionNightlightFinished,
+    sessionScalingAllowed: sessionScalingAllowed,
+    sessionScalingChoices: sessionScalingChoices,
+    sessionScalingLabel: sessionScalingLabel,
+    sessionScalingCanSubmit: sessionScalingCanSubmit,
+    sessionScalingIdle: sessionScalingIdle,
+    sessionScalingAccepted: sessionScalingAccepted,
+    sessionScalingFinished: sessionScalingFinished
   }
 }
