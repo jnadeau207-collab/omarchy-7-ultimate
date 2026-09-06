@@ -293,6 +293,74 @@ function sessionMutateCanSubmit(plan) {
   return plan.action === "move" || plan.action === "delete"
 }
 
+function sessionCompressableRecord(record) {
+  if (!isObject(record)) return false
+  var kind = String(record.entryKind || "")
+  return String(record.kind || "") === "entry"
+    && (kind === "file" || kind === "directory")
+    && String(record.status || "") !== "symlink"
+    && sessionWritableLocation(record.locationId)
+    && String(record.id || "") !== ""
+    && String(record.relativePath || "") !== ""
+}
+
+function sessionArchivePlan(selection) {
+  var records = []
+  if (Array.isArray(selection)) {
+    for (var i = 0; i < selection.length; i++) records.push(selection[i])
+  } else if (selection) {
+    records.push(selection)
+  }
+  if (records.length === 0) {
+    return { action: "unavailable", reason: "Select a file or folder to compress through this session." }
+  }
+  var entries = []
+  var locationId = ""
+  var parent = ""
+  var titles = []
+  for (var r = 0; r < records.length; r++) {
+    var record = records[r]
+    if (!sessionCompressableRecord(record)) {
+      if (isObject(record) && String(record.locationId || "") === "files.location.trash") {
+        return { action: "unavailable", reason: "Trash entries cannot be compressed." }
+      }
+      if (isObject(record) && String(record.status || "") === "symlink") {
+        return { action: "unavailable", reason: "Symlink entries cannot be compressed." }
+      }
+      return { action: "unavailable", reason: "That item cannot be compressed through this session." }
+    }
+    var nextLocation = String(record.locationId)
+    var nextParent = parentRelativePath(String(record.relativePath || ""))
+    if (locationId === "") {
+      locationId = nextLocation
+      parent = nextParent
+    } else if (nextLocation !== locationId || nextParent !== parent) {
+      return { action: "unavailable", reason: "Compress keeps selected items in one folder." }
+    }
+    entries.push({
+      locationId: nextLocation,
+      entryRelativePath: String(record.relativePath),
+      entryId: String(record.id),
+      title: String(record.title || "")
+    })
+    titles.push(String(record.title || "this item"))
+  }
+  return {
+    action: "archive",
+    locationId: locationId,
+    parentRelativePath: parent,
+    entryRelativePath: entries[0].entryRelativePath,
+    entryId: entries[0].entryId,
+    entries: entries,
+    title: titles.join(", ")
+  }
+}
+
+function sessionArchiveCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "archive"
+}
+
 function encodeFileUri(absolutePath) {
   var value = String(absolutePath || "")
   if (!value.startsWith("/") || value.indexOf("\x00") >= 0) return ""
@@ -1188,6 +1256,8 @@ if (typeof module !== "undefined") module.exports = {
   sessionMovableRecord: sessionMovableRecord, sessionDeletableRecord: sessionDeletableRecord,
   sessionMovePlan: sessionMovePlan, sessionDeletePlan: sessionDeletePlan,
   sessionMutateCanSubmit: sessionMutateCanSubmit,
+  sessionCompressableRecord: sessionCompressableRecord, sessionArchivePlan: sessionArchivePlan,
+  sessionArchiveCanSubmit: sessionArchiveCanSubmit,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,
