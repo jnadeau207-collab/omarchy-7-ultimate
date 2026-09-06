@@ -6457,7 +6457,7 @@
       },
       "kind": "writer",
       "effects": [
-        "mutating"
+        "launch"
       ],
       "schemas": {
         "input": {
@@ -6479,7 +6479,7 @@
           "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
         },
         "undo": {
-          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationUndo"
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
         }
       },
       "availability": {
@@ -6495,7 +6495,7 @@
         "policy": "The visible gesture or a scoped operation grant supplies consent."
       },
       "idempotency": {
-        "mode": "idempotent",
+        "mode": "non-idempotent",
         "keyRequired": false
       },
       "concurrency": {
@@ -6504,12 +6504,12 @@
       },
       "cancellation": {
         "mode": "before-apply",
-        "limit": "Cancellation is accepted before the state mutation begins."
+        "limit": "Cancellation is accepted before the launch begins."
       },
       "recovery": {
-        "mode": "undo",
-        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "mode": "none",
+        "expectation": "Edit a text file through tip-true openEntry \u2192 files-entry-open \u2192 /usr/bin/xdg-open with the default/associated editor; launch does not mutate Files inventory and has no undo.",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [

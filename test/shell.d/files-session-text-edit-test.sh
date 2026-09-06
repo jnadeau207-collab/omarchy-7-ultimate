@@ -95,6 +95,29 @@ if doc.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"files.text.edit was raised off leftover: {doc.get('provider')}")
 if doc.get("provider", {}).get("id") != "files.provider":
     raise SystemExit(f"files.text.edit provider is {doc.get('provider')}")
+if doc.get("kind") != "writer":
+    raise SystemExit(f"files.text.edit kind dual-truth (want writer/launch): {doc.get('kind')}")
+if doc.get("effects") != ["launch"]:
+    raise SystemExit(f"files.text.edit effects dual-truth (want launch): {doc.get('effects')}")
+if doc.get("consent", {}).get("mode") != "implicit":
+    raise SystemExit(f"files.text.edit consent dual-truth: {doc.get('consent')}")
+if doc.get("idempotency", {}).get("mode") != "non-idempotent":
+    raise SystemExit(f"files.text.edit idempotency dual-truth: {doc.get('idempotency')}")
+if doc.get("cancellation", {}).get("mode") != "before-apply":
+    raise SystemExit(f"files.text.edit cancellation dual-truth: {doc.get('cancellation')}")
+if doc.get("recovery", {}).get("mode") != "none":
+    raise SystemExit(f"files.text.edit recovery mode dual-truth: {doc.get('recovery')}")
+if doc.get("recovery", {}).get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"files.text.edit recovery fingerprint invent: {doc.get('recovery')}")
+if doc.get("schemas", {}).get("undo", {}).get("$ref", "").endswith("operationUndo"):
+    raise SystemExit(f"files.text.edit undo schema invent: {doc.get('schemas')}")
+rec = (doc.get("recovery") or {}).get("expectation") or ""
+if "openEntry" not in rec or "xdg-open" not in rec:
+    raise SystemExit(f"files.text.edit recoveryExpectation dual-truth: {doc.get('recovery')}")
+if "fingerprint" in rec.lower() or "undo path" in rec.lower():
+    raise SystemExit(f"files.text.edit still invents undo/fingerprint recovery: {doc.get('recovery')}")
+if doc.get("schemas", {}).get("preflight", {}).get("$ref", "").endswith("notApplicable"):
+    raise SystemExit(f"files.text.edit preflight drifted: {doc.get('schemas')}")
 
 entry_open = by_id["files.entry.open"]
 if entry_open.get("provider", {}).get("state") != "present":
@@ -125,6 +148,11 @@ if native18["humanRoute"].get("path") != "Files > Text":
     raise SystemExit(f"windows-native.18 path is {native18.get('humanRoute')}")
 if native18["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.18 route is {native18.get('humanRoute')}")
+wn18_rec = native18.get("recoveryExpectation") or ""
+if "Preserve file history or a guarded undo artifact." in wn18_rec:
+    raise SystemExit(f"windows-native.18 still invents undo recovery: {wn18_rec}")
+if "openEntry" not in wn18_rec or "xdg-open" not in wn18_rec:
+    raise SystemExit(f"windows-native.18 recoveryExpectation not tip-true: {wn18_rec}")
 
 explorer = by_job["parity.explorer-this-pc"]
 if explorer.get("claim") == "present":
@@ -216,6 +244,18 @@ if "session leftover recorded" not in handoff:
     raise SystemExit("HANDOFF must record session leftover honesty")
 if "Cloud mocks do not close windows-native.18" not in handoff:
     raise SystemExit("HANDOFF must refuse closing windows-native.18 from Cloud mocks")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in handoff or "effects=`launch`" not in handoff or "not mutating invent" not in handoff:
+    raise SystemExit("HANDOFF must tip-align files.text.edit writer/launch (not mutating invent)")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in gaps or "effects=`launch`" not in gaps or "not mutating invent" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must tip-align files.text.edit writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in parity or "effects=`launch`" not in parity or "not mutating invent" not in parity:
+    raise SystemExit("PARITY must tip-align files.text.edit writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in project or "effects=`launch`" not in project or "not mutating invent" not in project:
+    raise SystemExit("project-ultimate must tip-align files.text.edit writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in files_docs or "effects=`launch`" not in files_docs or "not mutating invent" not in files_docs:
+    raise SystemExit("files-defaults-provider must tip-align files.text.edit writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in controlpanel or "effects=`launch`" not in controlpanel or "not mutating invent" not in controlpanel:
+    raise SystemExit("fleet-catalog-controlpanel must tip-align files.text.edit writer/launch")
 if "not product CLOSED" not in handoff:
     raise SystemExit("HANDOFF must refuse product CLOSED invent")
 if "Files › Text" not in handoff and "Files > Text" not in handoff:

@@ -2259,6 +2259,32 @@ if text_edit.get("source", {}).get("symbol") != "openEntry":
     raise SystemExit(f"files.text.edit source is {text_edit.get('source')}")
 if "nautilus" in str(text_edit.get("source") or "").lower():
     raise SystemExit(f"files.text.edit still names Nautilus: {text_edit.get('source')}")
+if text_edit.get("kind") != "writer":
+    raise SystemExit(f"files.text.edit kind dual-truth (want writer/launch): {text_edit.get('kind')}")
+if text_edit.get("effects") != ["launch"]:
+    raise SystemExit(f"files.text.edit effects dual-truth (want launch): {text_edit.get('effects')}")
+if text_edit.get("consent", {}).get("mode") != "implicit":
+    raise SystemExit(f"files.text.edit consent dual-truth: {text_edit.get('consent')}")
+if text_edit.get("idempotency", {}).get("mode") != "non-idempotent":
+    raise SystemExit(f"files.text.edit idempotency dual-truth: {text_edit.get('idempotency')}")
+if text_edit.get("cancellation", {}).get("mode") != "before-apply":
+    raise SystemExit(f"files.text.edit cancellation dual-truth: {text_edit.get('cancellation')}")
+if text_edit.get("recovery", {}).get("mode") != "none":
+    raise SystemExit(f"files.text.edit recovery mode dual-truth: {text_edit.get('recovery')}")
+if text_edit.get("recovery", {}).get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"files.text.edit recovery fingerprint invent: {text_edit.get('recovery')}")
+if text_edit.get("schemas", {}).get("undo", {}).get("$ref", "").endswith("operationUndo"):
+    raise SystemExit(f"files.text.edit undo schema invent: {text_edit.get('schemas')}")
+rec = text_edit.get("recovery", {}).get("expectation") or ""
+if "openEntry" not in rec or "xdg-open" not in rec:
+    raise SystemExit(f"files.text.edit recoveryExpectation dual-truth: {text_edit.get('recovery')}")
+if "fingerprint" in rec.lower() or "undo path" in rec.lower():
+    raise SystemExit(f"files.text.edit still invents undo/fingerprint recovery: {text_edit.get('recovery')}")
+if "Preserve file history or a guarded undo artifact." in (native18.get("recoveryExpectation") or ""):
+    raise SystemExit(f"windows-native.18 still invents undo recovery: {native18.get('recoveryExpectation')}")
+wn18_rec = native18.get("recoveryExpectation") or ""
+if "openEntry" not in wn18_rec or "xdg-open" not in wn18_rec:
+    raise SystemExit(f"windows-native.18 recoveryExpectation not tip-true: {native18.get('recoveryExpectation')}")
 native10 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.10")
 if native10.get("claim") == "present":
     raise SystemExit(f"windows-native.10 was flipped to present: {native10}")
