@@ -3869,7 +3869,7 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
         "claim": "partial"
       },
@@ -3906,10 +3906,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Software Center",
         "label": "Install software",
-        "path": ""
+        "path": "Software Center > Catalog"
       },
       "agentCenterLabel": "Install software",
       "proofIds": {
@@ -3921,8 +3921,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-pkg-add",
-        "symbol": "omarchy-pkg-add",
+        "file": "shell/apps/ultimate-software/SoftwareSessionInstall.qml",
+        "symbol": "installRecord",
         "brokerVerb": null
       }
     },
@@ -3964,7 +3964,7 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
         "claim": "partial"
       },
@@ -4001,10 +4001,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Software Center",
         "label": "Uninstall software",
-        "path": ""
+        "path": "Software Center > Catalog"
       },
       "agentCenterLabel": "Uninstall software",
       "proofIds": {
@@ -4016,8 +4016,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-pkg-drop",
-        "symbol": "omarchy-pkg-drop",
+        "file": "shell/apps/ultimate-software/SoftwareSessionInstall.qml",
+        "symbol": "removeRecord",
         "brokerVerb": null
       }
     },
