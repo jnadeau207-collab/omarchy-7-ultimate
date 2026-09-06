@@ -1577,7 +1577,7 @@
         "path": "Files > PDF"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Read-only open requires no recovery.",
+      "recoveryExpectation": "Open a PDF through tip-true openEntry \u2192 files-entry-open \u2192 /usr/bin/xdg-open with the default/associated viewer; launch does not mutate Files inventory and has no undo.",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.17"
