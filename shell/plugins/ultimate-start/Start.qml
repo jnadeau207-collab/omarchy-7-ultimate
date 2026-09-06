@@ -248,6 +248,12 @@ Item {
     root.morePowerOpen = !root.morePowerOpen
   }
 
+  function shutdown() {
+    Util.execDetached("omarchy-system-shutdown")
+    root.morePowerOpen = false
+    root.close()
+  }
+
   function togglePinned(item) {
     if (!windowService || !item) return
     var payload = root.pinPayload(item)
@@ -737,10 +743,7 @@ Item {
               semanticProfile: productProfile
               Layout.fillWidth: true
               text: "Shut down"
-              onClicked: {
-                Util.execDetached("omarchy-system-shutdown")
-                root.close()
-              }
+              onClicked: root.shutdown()
             }
             IconButton {
               id: powerMore
@@ -837,6 +840,10 @@ Item {
                   hoverEnabled: true
                   cursorShape: Qt.PointingHandCursor
                   onClicked: {
+                    if (modelData.command === "omarchy-system-shutdown") {
+                      root.shutdown()
+                      return
+                    }
                     Util.execDetached(modelData.command)
                     root.morePowerOpen = false
                     root.close()

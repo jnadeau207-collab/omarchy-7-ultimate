@@ -21,8 +21,12 @@ acc="$ROOT/WINDOWS_NATIVE_ACCEPTANCE.md"
 [[ -f $shutdown_bin ]] || fail "omarchy-system-shutdown exists"
 
 grep -Fq 'text: "Shut down"' "$start_qml" || fail "Start hosts Shut down button"
+grep -Fq 'function shutdown()' "$start_qml" ||
+  fail "Start hosts named shutdown() symbol"
 grep -Fq 'Util.execDetached("omarchy-system-shutdown")' "$start_qml" ||
   fail "Start Shut down calls omarchy-system-shutdown"
+grep -Fq 'root.shutdown()' "$start_qml" ||
+  fail "Start Shut down routes through root.shutdown()"
 grep -Fq 'command: "omarchy-system-shutdown"' "$start_qml" ||
   fail "Start power flyout includes omarchy-system-shutdown"
 grep -Fq 'label: "Shut down"' "$start_qml" || fail "Start power flyout labels Shut down"
@@ -88,8 +92,20 @@ if shutdown.get("provider", {}).get("id") != "power.provider":
     raise SystemExit(f"power.shutdown provider is {shutdown.get('provider')}")
 if shutdown.get("source", {}).get("file") != "shell/plugins/ultimate-start/Start.qml":
     raise SystemExit(f"power.shutdown source is {shutdown.get('source')}")
-if shutdown.get("source", {}).get("symbol") != "Start.shutdown":
+if shutdown.get("source", {}).get("symbol") != "shutdown":
     raise SystemExit(f"power.shutdown source symbol is {shutdown.get('source')}")
+effects = shutdown.get("effects") or []
+if "logout" in effects:
+    raise SystemExit(f"power.shutdown effects still invent logout: {effects}")
+if effects != ["mutating", "irreversible"]:
+    raise SystemExit(f"power.shutdown effects must tip-align poweroff plane: {effects}")
+cancellation = shutdown.get("cancellation") or {}
+if cancellation.get("mode") == "before-apply":
+    raise SystemExit(f"power.shutdown cancellation still invents before-apply: {cancellation}")
+if cancellation.get("mode") != "uncancellable":
+    raise SystemExit(f"power.shutdown cancellation must be uncancellable vs irreversible poweroff: {cancellation}")
+if "no cancellation window" not in str(cancellation.get("limit") or "").lower() and "irreversible" not in str(cancellation.get("limit") or "").lower():
+    raise SystemExit(f"power.shutdown cancellation limit must refuse fake cancel window: {cancellation}")
 recovery = shutdown.get("recovery") or {}
 if recovery.get("mode") != "none":
     raise SystemExit(f"power.shutdown recovery mode is {recovery}")
@@ -97,7 +113,7 @@ if recovery.get("stateFingerprintRequired") is not False:
     raise SystemExit(f"power.shutdown recovery fingerprint is {recovery}")
 exp = recovery.get("expectation") or ""
 for needle in (
-    "Start.shutdown",
+    "shutdown",
     "omarchy-system-shutdown",
     "systemctl poweroff",
     "irreversible poweroff",
@@ -127,9 +143,11 @@ if native40.get("humanRoute", {}).get("status") != "visible":
 if native40.get("humanRoute", {}).get("surface") != "Start":
     raise SystemExit(f"windows-native.40 surface is {native40.get('humanRoute')}")
 rec40 = native40.get("recoveryExpectation") or ""
-for needle in ("Start.shutdown", "omarchy-system-shutdown", "irreversible poweroff", "no undo"):
+for needle in ("shutdown", "omarchy-system-shutdown", "irreversible poweroff", "no undo"):
     if needle not in rec40:
         raise SystemExit(f"windows-native.40 recovery missing {needle!r}")
+if "Start.shutdown" in rec40:
+    raise SystemExit("windows-native.40 recovery still invents Start.shutdown symbol")
 
 parity_start = by_job["parity.start"]
 if parity_start.get("claim") == "present":
@@ -139,9 +157,11 @@ if parity_start.get("claim") != "prototype":
 if "power.shutdown" not in (parity_start.get("capabilityIds") or []):
     raise SystemExit("parity.start must name power.shutdown")
 rec_start = parity_start.get("recoveryExpectation") or ""
-for needle in ("windows-native.40", "Start.shutdown", "omarchy-system-shutdown"):
+for needle in ("windows-native.40", "shutdown", "omarchy-system-shutdown"):
     if needle not in rec_start:
         raise SystemExit(f"parity.start recovery missing {needle!r}")
+if "Start.shutdown" in rec_start:
+    raise SystemExit("parity.start recovery still invents Start.shutdown symbol")
 
 if "| 40 | Shut down | pending |" not in acc:
     raise SystemExit("WINDOWS_NATIVE_ACCEPTANCE must keep wn.40 pending")
@@ -149,7 +169,7 @@ if "| 40 | Shut down | pending |" not in acc:
 required_gaps = [
     "Honesty addendum 2026-09-06 vs Start Shut down leftover plane (windows-native.40)",
     "| `windows-native.40` | prototype/pending | visible: Start > Shut down |",
-    "Start.shutdown",
+    "shutdown",
     "omarchy-system-shutdown",
     "power.shutdown",
     "not product CLOSED",
@@ -174,7 +194,7 @@ required_handoff = [
     "Start > Shut down",
     "power.shutdown",
     "not claim=present",
-    "Start.shutdown",
+    "shutdown",
     "omarchy-system-shutdown",
 ]
 for needle in required_handoff:
@@ -187,21 +207,31 @@ if "soft leftover-attaches `windows-native.40`" not in parity and "soft leftover
     raise SystemExit("PARITY must soft leftover-attach wn.40")
 if 'Forty-task "Shut down" stays pending' not in parity and "Forty-task \"Shut down\" stays pending" not in parity:
     raise SystemExit("PARITY must keep forty-task Shut down pending")
-if "Start.shutdown" not in parity or "omarchy-system-shutdown" not in parity:
-    raise SystemExit("PARITY must name tip-true Start.shutdown → omarchy-system-shutdown")
+if "shutdown" not in parity or "omarchy-system-shutdown" not in parity:
+    raise SystemExit("PARITY must name tip-true shutdown → omarchy-system-shutdown")
+if "Start.shutdown" in parity:
+    raise SystemExit("PARITY still invents Start.shutdown symbol")
 
 if "windows-native.40" not in project:
     raise SystemExit("project-ultimate must keep windows-native.40")
-if "Start.shutdown" not in project and "omarchy-system-shutdown" not in project:
-    raise SystemExit("project-ultimate must name Start Shut down plane")
+if "shutdown" not in project or "omarchy-system-shutdown" not in project:
+    raise SystemExit("project-ultimate must name tip-true shutdown → omarchy-system-shutdown plane")
+if "Start.shutdown" in project:
+    raise SystemExit("project-ultimate still invents Start.shutdown symbol")
 
 if "windows-native.40" not in controlpanel:
     raise SystemExit("fleet-catalog-controlpanel must keep windows-native.40")
-if "Start.shutdown" not in controlpanel and "omarchy-system-shutdown" not in controlpanel:
-    raise SystemExit("fleet-catalog-controlpanel must name Start.shutdown plane")
+if "shutdown" not in controlpanel or "omarchy-system-shutdown" not in controlpanel:
+    raise SystemExit("fleet-catalog-controlpanel must name tip-true shutdown plane")
+if "Start.shutdown" in controlpanel:
+    raise SystemExit("fleet-catalog-controlpanel still invents Start.shutdown symbol")
 
+if "function shutdown()" not in start_qml:
+    raise SystemExit("Start.qml must host named function shutdown()")
 if 'Util.execDetached("omarchy-system-shutdown")' not in start_qml:
     raise SystemExit("Start.qml must keep Shut down → omarchy-system-shutdown")
+if "root.shutdown()" not in start_qml:
+    raise SystemExit("Start.qml Shut down must call root.shutdown()")
 if "systemctl poweroff" not in shutdown_bin:
     raise SystemExit("omarchy-system-shutdown must keep systemctl poweroff")
 if "systemd-run --user" not in shutdown_bin:

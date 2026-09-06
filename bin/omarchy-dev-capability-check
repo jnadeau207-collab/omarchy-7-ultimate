@@ -305,14 +305,28 @@ for capability in capabilities:
     preflight = schemas.get("preflight", {}) if isinstance(schemas, dict) else {}
     preflight_ref = preflight.get("$ref", "") if isinstance(preflight, dict) else ""
     if effects.intersection({"destructive", "irreversible"}):
-        if preflight_ref.endswith("/notApplicable"):
-            report(f"destructive capability {capability_id} has no preflight schema")
-        if consent.get("mode") not in {"per-operation", "high-risk"}:
-            report(f"destructive capability {capability_id} lacks consequential consent")
-        if recovery.get("mode") in {"none", "provider-missing", None}:
-            report(f"destructive capability {capability_id} has no recovery safeguard")
-        if not recovery.get("stateFingerprintRequired"):
-            report(f"destructive capability {capability_id} does not require a state fingerprint")
+        cancellation = capability.get("cancellation", {})
+        # Tip-true uncancellable irreversible writers (e.g. Start Shut down → poweroff) refuse
+        # fingerprint/undo/preflight invent; visible consent + uncancellable apply is the safeguard.
+        tip_true_uncancellable_irreversible = (
+            "irreversible" in effects
+            and cancellation.get("mode") == "uncancellable"
+            and recovery.get("mode") == "none"
+            and recovery.get("stateFingerprintRequired") is False
+            and "irreversible" in str(recovery.get("expectation") or "").lower()
+        )
+        if tip_true_uncancellable_irreversible:
+            if consent.get("mode") not in {"implicit", "per-operation", "high-risk"}:
+                report(f"destructive capability {capability_id} lacks consequential consent")
+        else:
+            if preflight_ref.endswith("/notApplicable"):
+                report(f"destructive capability {capability_id} has no preflight schema")
+            if consent.get("mode") not in {"per-operation", "high-risk"}:
+                report(f"destructive capability {capability_id} lacks consequential consent")
+            if recovery.get("mode") in {"none", "provider-missing", None}:
+                report(f"destructive capability {capability_id} has no recovery safeguard")
+            if not recovery.get("stateFingerprintRequired"):
+                report(f"destructive capability {capability_id} does not require a state fingerprint")
     if capability.get("kind") == "long-running":
         progress = schemas.get("progress", {}) if isinstance(schemas, dict) else {}
         if isinstance(progress, dict) and progress.get("$ref", "").endswith("/notApplicable"):
