@@ -39,11 +39,19 @@ if grep -Eq 'action: "entry.move"|action: "entry.delete"' "$files_session"; then
   fail "session mutate QML must not call Fabric files.provider move/delete actions"
 fi
 grep -Fq 'readonly property bool cutAuthorized: false' "$files_app" ||
-  fail "Files keeps cutAuthorized=false for Fabric OperationDialog paths"
+  fail "Files keeps cutAuthorized=false as leftover Fabric SHELL refuse"
 grep -Fq 'readonly property bool deleteAuthorized: false' "$files_app" ||
-  fail "Files keeps deleteAuthorized=false for Fabric OperationDialog paths"
+  fail "Files keeps deleteAuthorized=false as leftover Fabric SHELL refuse"
 if grep -Eq 'cutAuthorized:\s*true|deleteAuthorized:\s*true' "$files_app"; then
   fail "Files invents Fabric SHELL authorization for Cut or permanent Delete"
+fi
+grep -Fq 'leftover Fabric SHELL refuse' "$files_app" ||
+  fail "Files names cut/delete pins as leftover Fabric SHELL refuse"
+if grep -E 'if \(!root\.(cutAuthorized|deleteAuthorized)\)' "$files_app"; then
+  fail "session Cut/Delete must not consult leftover Fabric pins"
+fi
+if grep -Fq 'for Fabric OperationDialog paths' "$files_app"; then
+  fail "Files must not document leftover cut/delete pins as OperationDialog refuse"
 fi
 if grep -Eq 'Process[[:space:]]*\{' "$files_app"; then
   fail "Files consumer QML must not host the session Process block"
@@ -58,6 +66,29 @@ grep -Fq 'The cut/move write plane exists but is not shell-authorizable' "$files
   fail "Files banner keeps Fabric cut/move CHANGES UNAVAILABLE"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$files_app" ||
   fail "Files banner keeps Fabric permanent delete CHANGES UNAVAILABLE"
+grep -Fq 'session Cut and Permanent Delete do not consult them' "$files_app" ||
+  fail "Files banner names leftover cut/delete pins as unused by session"
+
+python3 - "$files_app" <<'PY'
+import pathlib
+import re
+import sys
+
+src = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+for name in ("organizeMenuItems", "contextMenuItems"):
+    match = re.search(rf"function {name}\(\) \{{(.*?)\n  \}}", src, re.S)
+    if not match:
+        raise SystemExit(f"{name} is missing")
+    body = match.group(1)
+    if 'key: "cut"' not in body:
+        raise SystemExit(f"{name} dropped Cut")
+    for block in re.finditer(r"if \(root\.copyAuthorized\) \{([^}]*)\}", body):
+        if 'key: "cut"' in block.group(1):
+            raise SystemExit(f"{name} still nests Cut under copyAuthorized")
+    cut_tail = body.split('key: "cut"', 1)[1][:240]
+    if "sessionMovableRecord" not in cut_tail:
+        raise SystemExit(f"{name} Cut is not session-movable gated")
+PY
 
 pass "Files wires a session cut/delete plane instead of a Fabric LIVE button"
 
@@ -255,5 +286,14 @@ if delete.get("availability", {}).get("claim") == "present":
 if delete.get("availability", {}).get("claim") != "partial":
     raise SystemExit(f"files.entry.delete claim is {delete.get('availability')}")
 PY
+
+if grep -Fq '`cutAuthorized=false` and `deleteAuthorized=false` for Fabric OperationDialog paths' "$ROOT/HANDOFF_WRITERS_2026-09-01.md"; then
+  fail "HANDOFF must not document leftover cut/delete pins as OperationDialog refuse"
+fi
+grep -Fq 'leftover Fabric SHELL refuse' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" ||
+  fail "HANDOFF names cut/delete pins as leftover Fabric SHELL refuse"
+if grep -Fq '`cutAuthorized=false` and `deleteAuthorized=false` for Fabric OperationDialog paths' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md"; then
+  fail "doctrine must not document leftover cut/delete pins as OperationDialog refuse"
+fi
 
 pass "cut/delete writers stay leftover partial with visible Files routes"

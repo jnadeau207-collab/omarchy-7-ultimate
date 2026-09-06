@@ -35,8 +35,8 @@ Item {
   readonly property bool trashAuthorized: false
   readonly property bool renameAuthorized: true
   readonly property bool copyAuthorized: true
-  readonly property bool cutAuthorized: false
-  readonly property bool deleteAuthorized: false
+  readonly property bool cutAuthorized: false // leftover Fabric SHELL refuse; session Cut does not consult this pin
+  readonly property bool deleteAuthorized: false // leftover Fabric SHELL refuse; session Permanent Delete does not consult this pin
   readonly property bool emptyBinAuthorized: false
   readonly property bool trashRoute: FilesModel.isTrashRoute(host ? host.currentRoute : "")
   readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy
@@ -551,7 +551,9 @@ Item {
     }
     if (root.copyAuthorized) {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
-      list.push({ key: "cut", label: "Cut", enabled: FilesModel.sessionMovableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    }
+    list.push({ key: "cut", label: "Cut", enabled: FilesModel.sessionMovableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    if (root.copyAuthorized) {
       list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy && !root.sessionBusy })
     }
     if (root.trashRoute) {
@@ -573,7 +575,9 @@ Item {
     }
     if (root.copyAuthorized) {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
-      list.push({ key: "cut", label: "Cut", enabled: FilesModel.sessionMovableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    }
+    list.push({ key: "cut", label: "Cut", enabled: FilesModel.sessionMovableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    if (root.copyAuthorized) {
       list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy && !root.sessionBusy })
     }
     if (root.trashRoute) {
@@ -900,7 +904,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable under SHELL."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable under SHELL."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
