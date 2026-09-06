@@ -1087,8 +1087,8 @@
       },
       "recovery": {
         "mode": "compensating",
-        "expectation": "Provide a state-fingerprint-guarded compensating path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "expectation": "Restore prior default via tip-true SettingsSessionPrinters.setDefault \u2192 printer-default-set, or resume paused queue via tip-true SettingsSessionPrinters.resumeQueue \u2192 printer-resume (no Fabric durable undo fingerprint invent; no timed auto-rollback).",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [
@@ -1114,8 +1114,8 @@
         ]
       },
       "source": {
-        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
-        "symbol": "apply_printer_default_set",
+        "file": "shell/apps/shared/SettingsSessionPrinters.qml",
+        "symbol": "setDefault",
         "brokerVerb": null
       }
     },
