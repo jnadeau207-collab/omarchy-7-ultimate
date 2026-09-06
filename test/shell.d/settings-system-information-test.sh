@@ -250,7 +250,7 @@ if native38.get("sourceStatus") != "pending":
     raise SystemExit(f"windows-native.38 sourceStatus is {native38.get('sourceStatus')}")
 if native38.get("proofStatus") != "pending":
     raise SystemExit(f"windows-native.38 proofStatus is {native38.get('proofStatus')}")
-if native38.get("capabilityIds") != ["system.info.read", "storage.disk.manage"]:
+if native38.get("capabilityIds") != ["system.info.read"]:
     raise SystemExit(f"windows-native.38 capabilityIds are {native38.get('capabilityIds')}")
 if native38["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.38 route is {native38.get('humanRoute')}")

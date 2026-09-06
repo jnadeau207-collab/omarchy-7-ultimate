@@ -2119,8 +2119,7 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
-        "system.info.read",
-        "storage.disk.manage"
+        "system.info.read"
       ],
       "humanRoute": {
         "status": "visible",
