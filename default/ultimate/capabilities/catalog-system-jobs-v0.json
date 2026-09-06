@@ -5977,8 +5977,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-compress",
+        "file": "shell/apps/shared/FilesSessionArchive.qml",
+        "symbol": "createArchive",
         "brokerVerb": null
       }
     },
