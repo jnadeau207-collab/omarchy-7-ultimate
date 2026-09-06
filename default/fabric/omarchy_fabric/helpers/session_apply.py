@@ -3855,6 +3855,198 @@ def apply_input_keyboard_layout_session(
     return 0
 
 
+
+SYSTEM_INFORMATION_SECRET_KEYS = frozenset({
+    "password", "passwd", "secret", "token", "credential", "credentials", "key", "cookie",
+})
+SYSTEM_INFORMATION_FIELD_LIMIT = 240
+SYSTEM_INFORMATION_OS_RELEASE = pathlib.Path("/etc/os-release")
+SYSTEM_INFORMATION_HOSTNAME = pathlib.Path("/etc/hostname")
+SYSTEM_INFORMATION_MEMINFO = pathlib.Path("/proc/meminfo")
+SYSTEM_INFORMATION_CPUINFO = pathlib.Path("/proc/cpuinfo")
+SYSTEM_INFORMATION_DMI = pathlib.Path("/sys/class/dmi/id")
+
+
+def clip_system_information_text(value: Any, limit: int = SYSTEM_INFORMATION_FIELD_LIMIT) -> str:
+    text = " ".join(str(value or "").replace("\x00", " ").split())
+    if len(text) <= limit:
+        return text
+    if limit <= 1:
+        return text[:limit]
+    return text[: limit - 1] + "…"
+
+
+def read_os_release_map(path: pathlib.Path = SYSTEM_INFORMATION_OS_RELEASE) -> dict[str, str]:
+    out: dict[str, str] = {}
+    try:
+        if not path.is_file():
+            return out
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, raw = line.split("=", 1)
+            key = key.strip()
+            value = raw.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1]
+            if key:
+                out[key] = clip_system_information_text(value, 160)
+    except OSError:
+        return {}
+    return out
+
+
+def read_hostname_text(path: pathlib.Path = SYSTEM_INFORMATION_HOSTNAME) -> str:
+    try:
+        if path.is_file():
+            text = path.read_text(encoding="utf-8", errors="replace")
+            first = text.splitlines()[0] if text else ""
+            return clip_system_information_text(first)
+    except OSError:
+        pass
+    try:
+        return clip_system_information_text(os.uname().nodename)
+    except OSError:
+        return ""
+
+
+def read_meminfo_mib(path: pathlib.Path = SYSTEM_INFORMATION_MEMINFO) -> dict[str, int | None]:
+    total = None
+    available = None
+    try:
+        if not path.is_file():
+            return {"totalMib": None, "availableMib": None}
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("MemTotal:"):
+                parts = line.split()
+                total = int(parts[1]) // 1024
+            elif line.startswith("MemAvailable:"):
+                parts = line.split()
+                available = int(parts[1]) // 1024
+    except (OSError, ValueError, IndexError):
+        return {"totalMib": None, "availableMib": None}
+    return {"totalMib": total, "availableMib": available}
+
+
+def read_cpu_model(path: pathlib.Path = SYSTEM_INFORMATION_CPUINFO) -> str:
+    try:
+        if not path.is_file():
+            return ""
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("model name") and ":" in line:
+                return clip_system_information_text(line.split(":", 1)[1])
+            if line.startswith("Hardware") and ":" in line:
+                return clip_system_information_text(line.split(":", 1)[1])
+    except OSError:
+        return ""
+    return ""
+
+
+def read_dmi_field(name: str, root: pathlib.Path = SYSTEM_INFORMATION_DMI) -> str:
+    path = root / name
+    try:
+        if not path.is_file():
+            return ""
+        return clip_system_information_text(path.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        return ""
+
+
+def read_root_storage() -> dict[str, object]:
+    try:
+        usage = shutil.disk_usage("/")
+    except OSError:
+        return {
+            "mount": "/",
+            "totalBytes": None,
+            "usedBytes": None,
+            "freeBytes": None,
+            "available": False,
+        }
+    total = int(usage.total)
+    free = int(usage.free)
+    used = max(0, total - free)
+    return {
+        "mount": "/",
+        "totalBytes": total,
+        "usedBytes": used,
+        "freeBytes": free,
+        "available": True,
+    }
+
+
+def require_system_information_payload(payload: Mapping[str, Any]) -> None:
+    extra = set(payload)
+    if extra & SYSTEM_INFORMATION_SECRET_KEYS or extra:
+        raise ApplyError(
+            "payload.invalid",
+            "stdin JSON for system information must be empty; this session leftover refuses extra keys",
+        )
+
+
+def apply_system_information_inspect(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    del run
+    try:
+        payload = read_payload(stdin)
+        require_system_information_payload(payload)
+        os_release = read_os_release_map()
+        uname = os.uname()
+        memory = read_meminfo_mib()
+        storage = read_root_storage()
+        product_name = read_dmi_field("product_name")
+        product_version = read_dmi_field("product_version")
+        vendor = read_dmi_field("sys_vendor")
+        hostname = read_hostname_text()
+        if not hostname:
+            hostname = clip_system_information_text(uname.nodename)
+        os_name = os_release.get("PRETTY_NAME") or os_release.get("NAME") or clip_system_information_text(uname.sysname)
+        os_version = os_release.get("VERSION") or os_release.get("VERSION_ID") or ""
+        os_id = os_release.get("ID") or ""
+        result = {
+            "ok": True,
+            "available": True,
+            "hostname": hostname,
+            "os": {
+                "name": os_name,
+                "version": os_version,
+                "id": os_id,
+                "kernel": clip_system_information_text(uname.release),
+                "architecture": clip_system_information_text(uname.machine),
+            },
+            "product": {
+                "name": product_name,
+                "version": product_version,
+                "vendor": vendor,
+            },
+            "hardware": {
+                "cpuModel": read_cpu_model(),
+                "memoryTotalMib": memory.get("totalMib"),
+                "memoryAvailableMib": memory.get("availableMib"),
+            },
+            "storage": storage,
+            "explanation": "Read OS, product, hardware, and root storage through this session.",
+        }
+        json.dump(result, stdout)
+        stdout.write("\n")
+        return 0
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "available": False,
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+
+
 def apply_sharing_smb_connect(
     stdin: Any,
     stdout: Any,
@@ -3923,6 +4115,7 @@ ACTIONS = {
     "display-monitor-scale": apply_display_monitor_scale,
     "input-keyboard-layout-status": apply_input_keyboard_layout_status,
     "input-keyboard-layout": apply_input_keyboard_layout_session,
+    "system-information-inspect": apply_system_information_inspect,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
