@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 import errno
 import hashlib
+import io
 import json
 import os
 import pathlib
@@ -13,6 +14,7 @@ import signal
 import stat
 import subprocess
 import sys
+import urllib.parse
 from typing import Any, Mapping
 
 from .trash_info import parse_trash_info_path, trash_info_document
@@ -22,6 +24,9 @@ HYPRCTL = "/usr/bin/hyprctl"
 NMCLI = "/usr/bin/nmcli"
 XDG_MIME = "/usr/bin/xdg-mime"
 XDG_OPEN = "/usr/bin/xdg-open"
+WL_COPY = "/usr/bin/wl-copy"
+WL_PASTE = "/usr/bin/wl-paste"
+MAX_CLIPBOARD_URIS = 16
 DEFAULTS_PROTOCOLS = frozenset({"http", "https", "mailto"})
 MAX_MIME_LENGTH = 160
 NETWORK_WIFI_ID = "network.radio.wifi"
@@ -947,6 +952,217 @@ def apply_files_entry_copy(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+
+def path_as_file_uri(path: pathlib.Path) -> str:
+    return path.absolute().as_uri()
+
+
+def parse_file_uri_list(raw: str) -> list[pathlib.Path]:
+    text = str(raw or "").replace("\r\n", "\n").replace("\r", "\n")
+    lines = text.split("\n")
+    if lines and lines[0].strip().lower() in {"copy", "cut"}:
+        lines = lines[1:]
+    paths: list[pathlib.Path] = []
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("file:"):
+            parsed = urllib.parse.urlparse(line)
+            if parsed.scheme != "file" or parsed.netloc not in {"", "localhost"}:
+                raise ApplyError("payload.invalid", "The clipboard URI is not a local file.")
+            candidate = pathlib.Path(urllib.parse.unquote(parsed.path))
+        elif line.startswith("/"):
+            candidate = pathlib.Path(line)
+        else:
+            raise ApplyError("payload.invalid", "The clipboard does not hold file URIs.")
+        if not candidate.is_absolute() or ".." in candidate.parts or "\x00" in str(candidate):
+            raise ApplyError("payload.invalid", "The clipboard path is not a safe absolute path.")
+        paths.append(candidate)
+    if not paths:
+        raise ApplyError("resource.unresolved", "The clipboard does not hold files.")
+    if len(paths) > MAX_CLIPBOARD_URIS:
+        raise ApplyError("payload.out-of-range", "The clipboard holds too many files.")
+    return paths
+
+
+def apply_clipboard_uri_list(uris: list[str], run: Any = subprocess.run) -> None:
+    body = "\r\n".join(uris) + "\r\n"
+    argv = [WL_COPY, "--type", "text/uri-list"]
+    if run is not subprocess.run:
+        completed = run(argv, input=body, capture_output=True, text=True, timeout=5)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "Offering the files on the clipboard reported a failure status.")
+        return
+    process = subprocess.Popen(
+        argv,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    try:
+        _, stderr = process.communicate(body, timeout=1)
+    except subprocess.TimeoutExpired:
+        return
+    if process.returncode != 0:
+        raise ApplyError("apply.failed", "Offering the files on the clipboard reported a failure status.")
+
+
+def read_clipboard_files(run: Any = subprocess.run) -> str:
+    last_error = "resource.unresolved"
+    for mime in ("text/uri-list", "x-special/gnome-copied-files", "text/plain"):
+        completed = run(
+            [WL_PASTE, "--type", mime],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if completed.returncode == 0 and str(completed.stdout or "").strip():
+            return completed.stdout
+        last_error = "resource.unresolved"
+    raise ApplyError(last_error, "The clipboard does not hold files.")
+
+
+def next_copy_name(taken: set[str], source_name: str) -> str:
+    lowered = {name.lower() for name in taken}
+    if source_name.lower() not in lowered:
+        return source_name
+    stem, ext = source_name, ""
+    dot = source_name.rfind(".")
+    if dot > 0:
+        stem, ext = source_name[:dot], source_name[dot:]
+    for index in range(2, 512):
+        candidate = f"{stem} ({index}){ext}"
+        if candidate.lower() not in lowered:
+            return candidate
+    raise ApplyError("apply.exists", "No collision-free copy name is available.")
+
+
+def map_absolute_path_to_entry(path: pathlib.Path, home: pathlib.Path) -> tuple[str, str, pathlib.Path]:
+    try:
+        parent = path.parent.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The clipboard file is not present.") from error
+    final = parent / path.name
+    trash = trash_root(home)
+    try:
+        trash_root_resolved = trash.resolve()
+    except OSError:
+        trash_root_resolved = trash
+    try:
+        located = final.resolve(strict=False)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The clipboard file is not present.") from error
+    if located == trash_root_resolved or trash_root_resolved in located.parents:
+        raise ApplyError("payload.invalid", "Trash entries cannot be pasted.")
+    matches: list[tuple[str, str, pathlib.Path]] = []
+    for key in FILES_WRITABLE_KEYS:
+        try:
+            root = resolve_location_path(key, home).resolve(strict=True)
+        except OSError:
+            continue
+        try:
+            relative = located.relative_to(root)
+        except ValueError:
+            continue
+        relative_text = "" if str(relative) == "." else str(relative).replace("\\", "/")
+        if relative_text == "":
+            raise ApplyError("payload.invalid", "A files location root cannot be pasted as an entry.")
+        matches.append((f"files.location.{key}", relative_text, final))
+    if not matches:
+        raise ApplyError("payload.invalid", "The clipboard file is outside this account's Files locations.")
+    matches.sort(key=lambda item: len(item[1]))
+    return matches[0]
+
+
+def destination_taken_names(dest_location: str, dest_parent: str, home: pathlib.Path) -> set[str]:
+    key = files_location_key(dest_location)
+    segments = require_relative({"parentRelativePath": dest_parent})
+    base = resolve_location_path(key, home)
+    try:
+        root = base.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination files location is not present.") from error
+    parent = root.joinpath(*segments)
+    try:
+        resolved_parent = parent.resolve(strict=True)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination parent is not present.") from error
+    if resolved_parent != root and root not in resolved_parent.parents:
+        raise ApplyError("payload.invalid", "The destination escapes its files location.")
+    try:
+        names = [entry.name for entry in resolved_parent.iterdir()]
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination parent is not present.") from error
+    return set(names)
+
+
+def apply_files_clipboard_copy(stdin: Any, stdout: Any, run: Any = subprocess.run) -> int:
+    payload = read_payload(stdin)
+    require_entry_id(payload)
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot be copied to the clipboard.")
+    home = pathlib.Path.home()
+    _, final, relative = resolve_entry_path(payload, home)
+    try:
+        info = final.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be copied to the clipboard.")
+    if not stat.S_ISREG(info.st_mode) and not stat.S_ISDIR(info.st_mode):
+        raise ApplyError("payload.invalid", "Only regular files and directories can be copied to the clipboard.")
+    apply_clipboard_uri_list([path_as_file_uri(final)], run)
+    json.dump({"ok": True, "entry": relative, "offered": True}, stdout)
+    stdout.write("\n")
+    return 0
+
+
+def apply_files_clipboard_paste(stdin: Any, stdout: Any, run: Any = subprocess.run) -> int:
+    payload = read_payload(stdin)
+    dest_location = payload.get("destinationLocationId")
+    dest_parent = payload.get("destinationParentRelativePath")
+    if dest_location == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash is not a paste destination.")
+    files_location_key(dest_location)
+    if not isinstance(dest_parent, str):
+        raise ApplyError("payload.invalid", "The apply payload names no paste destination.")
+    require_relative({"parentRelativePath": dest_parent})
+    home = pathlib.Path.home()
+    sources = parse_file_uri_list(read_clipboard_files(run))
+    taken = destination_taken_names(dest_location, dest_parent, home)
+    names: list[str] = []
+    for source in sources:
+        location_id, relative, final = map_absolute_path_to_entry(source, home)
+        try:
+            info = final.lstat()
+        except OSError as error:
+            raise ApplyError("resource.unresolved", "The clipboard file is not present.") from error
+        if stat.S_ISLNK(info.st_mode):
+            raise ApplyError("payload.invalid", "Symlink entries cannot be pasted.")
+        if not stat.S_ISREG(info.st_mode) and not stat.S_ISDIR(info.st_mode):
+            raise ApplyError("payload.invalid", "Only regular files and directories can be pasted.")
+        entry_id = stable_entry_id(location_id, info.st_dev, info.st_ino, relative)
+        dest_name = next_copy_name(taken, final.name)
+        copy_payload = {
+            "resourceId": stable_copy_directory_id(dest_location, dest_parent, entry_id),
+            "locationId": location_id,
+            "entryRelativePath": relative,
+            "entryId": entry_id,
+            "destinationLocationId": dest_location,
+            "destinationParentRelativePath": dest_parent,
+            "destinationName": dest_name,
+        }
+        apply_files_entry_copy(io.StringIO(json.dumps(copy_payload)), io.StringIO())
+        names.append(dest_name)
+        taken.add(dest_name)
+    json.dump({"ok": True, "copied": True, "count": len(names), "names": names}, stdout)
+    stdout.write("\n")
+    return 0
+
+
 def apply_files_entry_move(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = require_files_resource_id(payload)
@@ -1293,6 +1509,8 @@ ACTIONS = {
     "files-entry-open": apply_files_entry_open,
     "files-entry-rename": apply_files_entry_rename,
     "files-entry-copy": apply_files_entry_copy,
+    "files-clipboard-copy": apply_files_clipboard_copy,
+    "files-clipboard-paste": apply_files_clipboard_paste,
     "files-entry-move": apply_files_entry_move,
     "files-entry-delete": apply_files_entry_delete,
 }
