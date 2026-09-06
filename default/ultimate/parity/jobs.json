@@ -807,7 +807,7 @@
         "path": "Settings > Input"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Record prior locale and layout and offer undo.",
+      "recoveryExpectation": "Re-select another configured layout from Settings > Input; locale and IME remain unavailable (session layout applies immediately; no prior-layout undo plane).",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.language-locale"
@@ -1997,7 +1997,7 @@
         "path": "Settings > Input"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the prior layout.",
+      "recoveryExpectation": "Re-select another configured layout from Settings > Input (session plane applies immediately via hyprctl; no prior-layout undo plane).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.33"
