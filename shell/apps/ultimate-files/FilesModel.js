@@ -110,6 +110,71 @@ function createNameRefusal(name) {
   return ""
 }
 
+function copyableRecord(record) {
+  if (!isObject(record)) return false
+  var kind = String(record.entryKind || "")
+  return String(record.kind || "") === "entry"
+    && (kind === "file" || kind === "directory")
+    && String(record.status || "") !== "symlink"
+    && String(record.locationId || "") !== "files.location.trash"
+}
+
+function clipboardCopyArguments(record) {
+  if (!copyableRecord(record)) return null
+  var entryId = String(record.id || "")
+  var locationId = String(record.locationId || "")
+  var relative = String(record.relativePath || "")
+  if (entryId === "" || locationId === "" || relative === "") return null
+  return { entryId: entryId, locationId: locationId, entryRelativePath: relative }
+}
+
+function clipboardPasteArguments(locationId, relativePath) {
+  var dest = String(locationId || "")
+  if (CREATE_LOCATIONS.indexOf(dest) < 0) return null
+  if (dest === "files.location.trash") return null
+  var parent = String(relativePath || "")
+  if (parent.indexOf("\\") >= 0 || parent.indexOf("\x00") >= 0) return null
+  return { destinationLocationId: dest, destinationParentRelativePath: parent }
+}
+
+function encodeFileUri(absolutePath) {
+  var value = String(absolutePath || "")
+  if (!value.startsWith("/") || value.indexOf("\x00") >= 0) return ""
+  var parts = value.split("/")
+  var encoded = []
+  for (var i = 0; i < parts.length; i++) {
+    encoded.push(i === 0 ? "" : encodeURIComponent(parts[i]))
+  }
+  return "file://" + encoded.join("/")
+}
+
+function parseFileUriList(raw) {
+  var text = String(raw || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+  var lines = text.split("\n")
+  var start = 0
+  if (lines.length > 0) {
+    var header = String(lines[0] || "").trim().toLowerCase()
+    if (header === "copy" || header === "cut") start = 1
+  }
+  var paths = []
+  for (var i = start; i < lines.length; i++) {
+    var line = String(lines[i] || "").trim()
+    if (line === "" || line.charAt(0) === "#") continue
+    if (line.indexOf("file:") === 0) {
+      var without = line.slice("file://".length)
+      if (without.indexOf("localhost/") === 0) without = without.slice("localhost".length)
+      try { line = decodeURIComponent(without) } catch (error) { return [] }
+    }
+    if (line.charAt(0) !== "/") return []
+    var parts = line.split("/")
+    for (var p = 0; p < parts.length; p++) {
+      if (parts[p] === "..") return []
+    }
+    paths.push(line)
+  }
+  return paths
+}
+
 function nextCopyName(taken, sourceName) {
   var names = taken && typeof taken === "object" ? taken : {}
   var base = String(sourceName === null || sourceName === undefined ? "" : sourceName)
@@ -957,6 +1022,8 @@ if (typeof module !== "undefined") module.exports = {
   stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone,
   CREATE_LOCATIONS: CREATE_LOCATIONS, createLocationForRoute: createLocationForRoute,
   createNameRefusal: createNameRefusal, nextCopyName: nextCopyName, isTrashRoute: isTrashRoute,
+  copyableRecord: copyableRecord, clipboardCopyArguments: clipboardCopyArguments,
+  clipboardPasteArguments: clipboardPasteArguments, encodeFileUri: encodeFileUri, parseFileUriList: parseFileUriList,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,

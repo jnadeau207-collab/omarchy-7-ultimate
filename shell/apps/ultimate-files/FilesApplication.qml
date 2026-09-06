@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import qs.Commons
+import qs.apps.shared as Shared
 
 import "FilesModel.js" as FilesModel
 import "ExplorerTheme.js" as Aero
@@ -277,12 +278,7 @@ Item {
   }
 
   function copyableRecord(record) {
-    var kind = String(record.entryKind || "")
-    return record
-      && String(record.kind || "") === "entry"
-      && (kind === "file" || kind === "directory")
-      && String(record.status || "") !== "symlink"
-      && String(record.locationId || "") !== "files.location.trash"
+    return FilesModel.copyableRecord(record)
   }
 
   function stageCopy(record) {
@@ -290,7 +286,9 @@ Item {
     if (!host || operationBusy) return
     if (!root.copyableRecord(record)) return
     root.stagedCopyRecord = record
-    root.operationMessage = "Copied " + String(record.title || "this entry") + " in Files. Paste stays inside this window."
+    var payload = FilesModel.clipboardCopyArguments(record)
+    if (payload) osClipboard.copyPayload(payload)
+    root.operationMessage = "Copied " + String(record.title || "this entry") + " to the clipboard."
   }
 
   function nextDestinationName(sourceTitle) {
@@ -298,6 +296,18 @@ Item {
     var existing = FilesModel.explorerEntries(root.queryState.records)
     for (var i = 0; i < existing.length; i++) taken[String(existing[i].title).toLowerCase()] = true
     return FilesModel.nextCopyName(taken, sourceTitle)
+  }
+
+  function pasteFromClipboard() {
+    if (!root.copyAuthorized) return
+    if (!host || operationBusy || createLocationId === "") return
+    var payload = FilesModel.clipboardPasteArguments(root.createLocationId, root.relativePath)
+    if (!payload) {
+      root.operationMessage = "This folder cannot receive a paste."
+      return
+    }
+    if (osClipboard.pastePayload(payload)) return
+    root.pasteStagedCopy()
   }
 
   function pasteStagedCopy() {
@@ -418,7 +428,7 @@ Item {
     if (root.createVisible && root.copyAuthorized) {
       list.push({
         key: "paste", label: "Paste", dropdown: false,
-        enabled: !root.operationBusy && root.stagedCopyRecord !== null && root.copyableRecord(root.stagedCopyRecord)
+        enabled: !root.operationBusy
       })
     }
     if (root.createVisible && root.trashAuthorized) {
@@ -438,7 +448,7 @@ Item {
     }
     if (root.copyAuthorized) {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
-      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && root.stagedCopyRecord !== null && !root.operationBusy })
+      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy })
     }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
@@ -455,7 +465,7 @@ Item {
     }
     if (root.copyAuthorized) {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
-      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && root.stagedCopyRecord !== null && !root.operationBusy })
+      list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy })
     }
     if (root.trashAuthorized) {
       list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
@@ -469,7 +479,7 @@ Item {
     if (key === "new-folder") { root.createFolder(root.nextFolderName()); return }
     if (key === "rename") { root.beginRename(root.selectedRecord); return }
     if (key === "copy") { root.stageCopy(root.selectedRecord); return }
-    if (key === "paste") { root.pasteStagedCopy(); return }
+    if (key === "paste") { root.pasteFromClipboard(); return }
     if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }
     if (key === "properties") { propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
@@ -488,8 +498,29 @@ Item {
     else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Up) { root.goUp(); event.accepted = true }
     else if (event.key === Qt.Key_F2) { root.beginRename(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_C) { root.stageCopy(root.selectedRecord); event.accepted = true }
-    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { root.pasteStagedCopy(); event.accepted = true }
+    else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { root.pasteFromClipboard(); event.accepted = true }
     else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }
+  }
+
+  Shared.FilesOsClipboard {
+    id: osClipboard
+    onFinished: function(kind, ok, message) {
+      if (kind === "copy") {
+        if (!ok) root.operationMessage = message
+        return
+      }
+      if (kind !== "paste") return
+      if (ok) {
+        root.operationMessage = message
+        if (root.controller) root.controller.refresh()
+        return
+      }
+      if (root.stagedCopyRecord) {
+        root.pasteStagedCopy()
+        return
+      }
+      root.operationMessage = message
+    }
   }
 
   Timer {
@@ -733,7 +764,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy with in-app staging. The cut/move write plane exists but is not shell-authorizable. The OS clipboard stays unavailable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable. The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. The cut/move write plane exists but is not shell-authorizable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable. The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))

@@ -5884,8 +5884,8 @@
         ]
       },
       "source": {
-        "file": "shell/apps/ultimate-files/FilesApplication.qml",
-        "symbol": "pasteStagedCopy",
+        "file": "shell/apps/shared/FilesOsClipboard.qml",
+        "symbol": "copyPayload",
         "brokerVerb": null
       }
     },

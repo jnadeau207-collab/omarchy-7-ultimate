@@ -1036,7 +1036,9 @@ if "trashAuthorized=false" not in gaps:
 if "permanent delete write plane exists but is not shell-authorizable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep permanent delete not shell-authorizable")
 if "Copy/Paste stay in-app only" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep Copy/Paste in-app only")
+    raise SystemExit("fleet-doctrine-gaps must keep the dated PR #64 in-app-only leftover")
+if "OS clipboard residual CLOSED for Files copy-out/paste-in" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must close the OS clipboard residual for the shipped session path")
 if "`files.trash.manage` write plane is reachable" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the reachable files.trash.manage write plane")
 if "emptyBinAuthorized=false" not in gaps:
@@ -1050,13 +1052,11 @@ if "40212d204a1c" not in gaps:
 if "OS clipboard residual OPEN after PR #64" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the OS clipboard leftover after PR #64")
 if "There is no Files `wl-copy`" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep Files OS clipboard bridge uninvented")
+    raise SystemExit("fleet-doctrine-gaps must keep the dated PR #64 leftover that had no Files wl-copy")
 if "Do not invent an OS clipboard LIVE" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must refuse OS clipboard LIVE invent")
-if "OS clipboard leftover CLOSED" in gaps:
-    raise SystemExit("fleet-doctrine-gaps closed the OS clipboard leftover")
-if "OS clipboard residual CLOSED" in gaps:
-    raise SystemExit("fleet-doctrine-gaps closed the OS clipboard residual")
+    raise SystemExit("fleet-doctrine-gaps must keep the dated PR #64 refuse-LIVE sentence")
+if "OS clipboard residual CLOSED for Files copy-out/paste-in" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must close the OS clipboard residual for the shipped session path")
 if "Files leftover CLOSED" in gaps:
     raise SystemExit("fleet-doctrine-gaps closed the Files leftover residual")
 
@@ -1948,7 +1948,9 @@ if "OS clipboard residual OPEN after PR #60" not in writers_handoff:
 if "OS clipboard residual OPEN after PR #64" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep OS clipboard residual OPEN after PR #64")
 if "There is no Files `wl-copy`" not in writers_handoff:
-    raise SystemExit("HANDOFF_WRITERS must keep Files OS clipboard bridge uninvented")
+    raise SystemExit("HANDOFF_WRITERS must keep the dated PR #64 leftover that had no Files wl-copy")
+if "OS clipboard residual CLOSED for Files copy-out/paste-in" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must close the OS clipboard residual for the shipped session path")
 if "folder copy CLOSED" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name folder copy CLOSED")
 if "permanent delete write plane exists but is not shell-authorizable" not in writers_handoff:
@@ -2017,6 +2019,8 @@ if "OS clipboard residual OPEN after PR #60" not in explorer_notes:
     raise SystemExit("PARITY Explorer row dropped OS clipboard residual OPEN after PR #60")
 if "OS clipboard residual OPEN after PR #64" not in explorer_notes:
     raise SystemExit("PARITY Explorer row dropped OS clipboard residual OPEN after PR #64")
+if "OS clipboard residual CLOSED for Files copy-out/paste-in" not in explorer_notes:
+    raise SystemExit("PARITY Explorer row dropped OS clipboard residual CLOSED for Files copy-out/paste-in")
 if "Folder copy CLOSED" not in explorer_notes and "folder copy CLOSED" not in explorer_notes:
     raise SystemExit("PARITY Explorer row dropped folder copy CLOSED")
 if "permanent delete write plane exists but is not shell-authorizable" not in explorer_notes:
@@ -2053,6 +2057,8 @@ if "OS clipboard residual OPEN after PR #60" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped OS clipboard residual OPEN after PR #60")
 if "OS clipboard residual OPEN after PR #64" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped OS clipboard residual OPEN after PR #64")
+if "OS clipboard residual CLOSED for Files copy-out/paste-in" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel dropped OS clipboard residual CLOSED for Files copy-out/paste-in")
 if "folder copy CLOSED" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped folder copy CLOSED")
 if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in cp:
@@ -2063,6 +2069,8 @@ if "OS clipboard residual OPEN after PR #60" not in plan:
     raise SystemExit("project-ultimate dropped OS clipboard residual OPEN after PR #60")
 if "OS clipboard residual OPEN after PR #64" not in plan:
     raise SystemExit("project-ultimate dropped OS clipboard residual OPEN after PR #64")
+if "OS clipboard residual CLOSED for Files copy-out/paste-in" not in plan:
+    raise SystemExit("project-ultimate dropped OS clipboard residual CLOSED for Files copy-out/paste-in")
 if "folder copy CLOSED" not in plan:
     raise SystemExit("project-ultimate dropped folder copy CLOSED")
 if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in plan:
