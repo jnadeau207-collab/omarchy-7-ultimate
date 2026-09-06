@@ -1543,7 +1543,7 @@
         "sharing.smb.connect"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Files",
         "path": "Files > Connect to Server"
       },

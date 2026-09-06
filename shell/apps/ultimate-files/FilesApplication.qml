@@ -40,8 +40,11 @@ Item {
   readonly property bool emptyBinAuthorized: false
   readonly property bool ejectAuthorized: false // leftover Fabric SHELL refuse; session Eject does not consult this pin
   readonly property bool mountAuthorized: false // leftover Fabric SHELL refuse; session Mount does not consult this pin
+  readonly property bool smbAuthorized: false // leftover Fabric SHELL refuse; session Connect does not consult this pin
   readonly property bool trashRoute: FilesModel.isTrashRoute(host ? host.currentRoute : "")
-  readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy || sessionArchive.busy || sessionProperties.busy || sessionEject.busy || sessionMount.busy
+  readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy || sessionArchive.busy || sessionProperties.busy || sessionEject.busy || sessionMount.busy || sessionSmb.busy
+  property string smbHostDraft: ""
+  property string smbShareDraft: ""
   property string renameDraft: ""
   property var renameRecord: null
   property var stagedCopyRecord: null
@@ -496,6 +499,18 @@ Item {
     if (!sessionMount.mountVolume(plan)) root.operationMessage = "The session Mount helper is busy."
   }
 
+  function sessionConnectShare() {
+    if (root.operationBusy || root.sessionBusy) return
+    var plan = FilesModel.sessionSmbPlan(root.smbHostDraft, root.smbShareDraft)
+    if (!FilesModel.sessionSmbCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That share cannot be connected through this session."
+      return
+    }
+    root.operationMessage = "Connecting to " + plan.host + "/" + plan.share + " through this session."
+    smbDialog.close()
+    if (!sessionSmb.connectShare(plan)) root.operationMessage = "The session Connect helper is busy."
+  }
+
   function sessionReadProperties(record) {
     var plan = FilesModel.sessionPropertiesPlan(record)
     root.propertiesResult = null
@@ -631,6 +646,10 @@ Item {
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionEjectableRecord(root.selectedRecord)
       })
     }
+    list.push({
+      key: "connect", label: "Connect to Server", dropdown: false,
+      enabled: !root.operationBusy && !root.sessionBusy
+    })
     list.push({ key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy })
     return list
   }
@@ -663,6 +682,7 @@ Item {
       list.push({ key: "mount", label: "Mount", enabled: FilesModel.sessionMountableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "eject", label: "Eject", enabled: FilesModel.sessionEjectableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
+    list.push({ key: "connect", label: "Connect to Server", enabled: !root.operationBusy && !root.sessionBusy })
     list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
@@ -694,6 +714,7 @@ Item {
       list.push({ key: "mount", label: "Mount", enabled: FilesModel.sessionMountableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "eject", label: "Eject", enabled: FilesModel.sessionEjectableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
+    list.push({ key: "connect", label: "Connect to Server", enabled: !root.operationBusy && !root.sessionBusy })
     list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
@@ -713,6 +734,7 @@ Item {
     if (key === "empty-bin") { emptyBinDialog.open(); return }
     if (key === "mount") { root.sessionMountVolume(root.selectedRecord); return }
     if (key === "eject") { root.sessionEjectDevice(root.selectedRecord); return }
+    if (key === "connect") { smbDialog.open(); return }
     if (key === "properties") { root.sessionReadProperties(root.selectedRecord); propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
@@ -780,6 +802,14 @@ Item {
       root.operationMessage = result && result.explanation ? String(result.explanation) : (ok ? "Mounted the removable volume through this session." : "The session Mount helper failed.")
       if (ok && root.controller) root.controller.refresh()
       else root.refreshSessionVolumes()
+    }
+  }
+
+  Shared.FilesSessionSmb {
+    id: sessionSmb
+    onFinished: function(ok, result) {
+      root.operationMessage = result && result.explanation ? String(result.explanation) : (ok ? "Connected the guest SMB share through this session." : "The session Connect helper failed.")
+      if (ok && root.controller) root.controller.refresh()
     }
   }
 
@@ -1061,7 +1091,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through this session's eject helper (SESSION CONTROL). Mount runs through this session's mount helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through this session's eject helper (SESSION CONTROL). Mount runs through this session's mount helper (SESSION CONTROL). Connect to Server runs through this session's connect helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. Files does not invent a Fabric SHELL LIVE SMB writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. smbAuthorized stays leftover Fabric SHELL refuse; session Connect does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -1612,6 +1642,135 @@ Item {
 
             Accessible.role: Accessible.Button
             Accessible.name: modelData
+          }
+        }
+      }
+    }
+  }
+
+  Controls.Popup {
+    id: smbDialog
+    anchors.centerIn: Controls.Overlay.overlay
+    width: Math.min(360, root.width - 40)
+    modal: true
+    padding: 12
+    onOpened: smbHostField.forceActiveFocus()
+
+    background: Rectangle {
+      color: "#f0f0f0"
+      border.width: 1
+      border.color: "#8b97a3"
+    }
+
+    contentItem: Column {
+      spacing: 8
+      width: smbDialog.availableWidth
+
+      Row {
+        width: parent.width
+
+        Text {
+          text: "Connect to Server"
+          textFormat: Text.PlainText
+          color: Aero.textPrimary
+          font.family: Aero.fontFamily
+          font.pixelSize: 12
+        }
+
+        Item { width: 12; height: 1 }
+
+        Text {
+          text: "SESSION CONTROL"
+          textFormat: Text.PlainText
+          color: Aero.textSecondary
+          font.family: Aero.fontFamily
+          font.pixelSize: 10
+        }
+      }
+
+      Text {
+        width: parent.width
+        text: "Guest or public SMB share only. This session leftover does not invent password vault or keyring UI."
+        textFormat: Text.PlainText
+        wrapMode: Text.WordWrap
+        color: Aero.textSecondary
+        font.family: Aero.fontFamily
+        font.pixelSize: 11
+      }
+
+      Text {
+        text: "Host"
+        textFormat: Text.PlainText
+        color: Aero.textSecondary
+        font.family: Aero.fontFamily
+        font.pixelSize: 11
+      }
+
+      Controls.TextField {
+        id: smbHostField
+        width: parent.width
+        text: root.smbHostDraft
+        onTextChanged: root.smbHostDraft = text
+        onAccepted: smbShareField.forceActiveFocus()
+      }
+
+      Text {
+        text: "Share"
+        textFormat: Text.PlainText
+        color: Aero.textSecondary
+        font.family: Aero.fontFamily
+        font.pixelSize: 11
+      }
+
+      Controls.TextField {
+        id: smbShareField
+        width: parent.width
+        text: root.smbShareDraft
+        onTextChanged: root.smbShareDraft = text
+        onAccepted: root.sessionConnectShare()
+      }
+
+      Row {
+        anchors.right: parent.right
+        spacing: 6
+
+        Repeater {
+          model: [
+            { key: "connect", label: "Connect" },
+            { key: "cancel", label: "Cancel" }
+          ]
+
+          delegate: Rectangle {
+            required property var modelData
+            width: 74
+            height: 23
+            radius: 3
+            border.width: 1
+            border.color: smbHover.hovered ? Aero.hoverSelectedBorder : "#a0a6ac"
+            gradient: Gradient {
+              GradientStop { position: 0; color: smbHover.hovered ? Aero.hoverTop : "#fdfdfd" }
+              GradientStop { position: 1; color: smbHover.hovered ? Aero.hoverBottom : "#e6e8ea" }
+            }
+
+            Text {
+              anchors.centerIn: parent
+              text: modelData.label
+              textFormat: Text.PlainText
+              color: Aero.textPrimary
+              font.family: Aero.fontFamily
+              font.pixelSize: 12
+            }
+
+            HoverHandler { id: smbHover }
+            TapHandler {
+              onSingleTapped: {
+                if (modelData.key === "connect") root.sessionConnectShare()
+                else smbDialog.close()
+              }
+            }
+
+            Accessible.role: Accessible.Button
+            Accessible.name: modelData.label
           }
         }
       }
