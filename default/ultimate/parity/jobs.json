@@ -1257,8 +1257,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
-        "path": "Superbar > Bluetooth"
+        "surface": "Settings",
+        "path": "Settings > Bluetooth"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Remove the incomplete pairing and restore the previous output route.",

@@ -141,6 +141,25 @@ grep -Fq 'onJoined: if (root.controller) root.controller.refreshCurrent()' "$app
   fail "Settings re-reads network.inspect after a successful join"
 pass "Settings joins Wi-Fi through session NetworkManager and never through Fabric credentials"
 
+pair="$ROOT/shell/apps/ultimate-settings/SettingsBluetoothPair.qml"
+[[ -f $pair ]] || fail "Settings ships a Bluetooth pair/connect card"
+grep -Fq 'import Quickshell.Bluetooth' "$pair" || fail "Settings Bluetooth pair uses the session BlueZ bindings"
+grep -Fq 'function pairOrConnect(' "$pair" || fail "Settings Bluetooth pair exposes pairOrConnect"
+grep -Fq 'device.pair()' "$pair" || fail "Settings pairs through the session device.pair path"
+grep -Fq 'device.connect()' "$pair" || fail "Settings connects through the session device.connect path"
+grep -Fq 'pageActive && adapter && adapter.enabled' "$pair" || fail "Settings only starts discovery while the Bluetooth page is active and powered"
+if grep -Eq 'bluetoothctl|omarchy-bluetooth-device|omarchy-bluetooth-power|requestFabric' "$pair"; then
+  fail "Settings Bluetooth pair must not assemble bluetoothctl or send pairing through Fabric"
+fi
+if grep -Eq 'adapter\.enabled[[:space:]]*=' "$pair"; then
+  fail "Settings Bluetooth pair must not write adapter rfkill"
+fi
+grep -Fq 'device.trusted = true' "$pair" || fail "Settings trusts the device on this session before pair/connect"
+grep -Fq 'SettingsComponents.SettingsBluetoothPair' "$application" || fail "Settings Bluetooth hosts the pair/connect card"
+grep -Fq 'onPaired: if (root.controller) root.controller.refreshCurrent()' "$application" ||
+  fail "Settings re-reads bluetooth.inspect after a successful pair"
+pass "Settings pairs Bluetooth through session BlueZ and never through Fabric credentials"
+
 grep -Fq 'provider: "defaults.provider"' "$application" || fail "Settings sets the browser through defaults.provider"
 grep -Fq 'action: "protocol.set"' "$application" || fail "Settings uses the typed protocol.set action"
 grep -Fq 'if (!record || record.candidateAppIds.indexOf(appId) < 0) return' "$application" ||
@@ -363,6 +382,30 @@ assertEqual(
   'join rows sort connected, then known, drop hidden SSIDs, and stay bounded'
 )
 assertEqual(Model.wifiJoinFailureReason('auth-timeout', 'prompt-password', { WifiAuthTimeout: 'auth-timeout' }), 'Wrong password', 'failed password join reports wrong password')
+
+const bluetoothQuery = Model.queryForRoute('settings.bluetooth.overview')
+assert(bluetoothQuery.coverage.indexOf('this session') >= 0 && bluetoothQuery.coverage.indexOf('BlueZ') >= 0, 'the bluetooth coverage note names the session pair path')
+assert(bluetoothQuery.coverage.indexOf('pairing secrets never enter Fabric') >= 0, 'the bluetooth coverage note keeps pairing secrets out of Fabric')
+assert(bluetoothQuery.coverage.indexOf('Discovery, pairing, and connection changes remain unavailable') < 0, 'the bluetooth coverage note no longer claims pair is unavailable')
+assertEqual(Model.routeHasLiveWriter('settings.bluetooth.overview'), true, 'Bluetooth is a live writer route')
+assert(Model.declaredOpsHonesty('settings.bluetooth.overview').indexOf('durable coordinator') < 0, 'Bluetooth declared ops do not invent a Fabric pair writer')
+assertEqual(Model.bluetoothPairAction({ address: 'aa:bb:cc:dd:ee:ff', connected: true, paired: true }), 'connected', 'a connected device reports connected')
+assertEqual(Model.bluetoothPairAction({ address: 'aa:bb:cc:dd:ee:ff', connected: false, paired: true }), 'connect', 'a paired device can connect')
+assertEqual(Model.bluetoothPairAction({ address: 'aa:bb:cc:dd:ee:ff', connected: false, paired: false }), 'pair', 'an unpaired device can pair')
+assertEqual(Model.bluetoothPairAction({ address: '', connected: false, paired: false }), 'hidden', 'address-less rows are not offered')
+assertEqual(Model.bluetoothCanSubmit('pair'), true, 'pair can submit')
+assertEqual(Model.bluetoothCanSubmit('connect'), true, 'connect can submit')
+assertEqual(Model.bluetoothCanSubmit('hidden'), false, 'hidden rows cannot submit')
+assertDeepEqual(
+  Model.bluetoothDeviceGroups([
+    { address: 'aa:bb:cc:dd:ee:01', deviceName: 'Headphones', connected: true, paired: true },
+    { address: 'aa:bb:cc:dd:ee:02', deviceName: 'Mouse', connected: false, paired: true },
+    { address: 'aa:bb:cc:dd:ee:03', deviceName: 'Keyboard', connected: false, paired: false },
+    { address: 'aa:bb:cc:dd:ee:04', name: 'AA:BB:CC:DD:EE:04', connected: false, paired: false }
+  ]).discovered.map(function(row) { return row.label }).join(','),
+  'Keyboard',
+  'bluetooth groups drop address-only names and keep discovered devices'
+)
 
 function keyboardRecord(state) {
   return Model.normalizeLeafResource({ id: 'input.keyboard.abc', label: 'Internal keyboard', kind: 'keyboard', main: true, state: state }, 0)

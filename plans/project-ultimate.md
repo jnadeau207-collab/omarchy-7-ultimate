@@ -48,7 +48,7 @@ Scope not delivered by W0 and now owned by the current program:
 - hyprbars is still not an ISO-mirror pacman package.
 - Tokyo Night seed, nvim-as-txt, TTY first-boot, no product ISO.
 - Chrome install-as-product, games, and “install any Windows app” are later phases.
-- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Live Settings writers are Sound volume, Network Wi-Fi radio, Display brightness, Input layout, and Apps default browser; Power stays inspect-only because polkit cannot authorize profile.set from app.slice; other domains stay inspect-only or host the existing Personalization picker. The Settings window already hosts those existing panels.
+- Jump lists and Agent Center UI are on the Superbar/Start path. Peek captures live window thumbnails. Live Settings writers are Sound volume, Network Wi-Fi radio, Display brightness, Input layout, and Apps default browser; Bluetooth pair and connect use this session's BlueZ adapter; Power stays inspect-only because polkit cannot authorize profile.set from app.slice; other domains stay inspect-only or host the existing Personalization picker. The Settings window already hosts those existing panels.
 
 ## Preserved W0 outcome and packaging debt
 
@@ -141,7 +141,7 @@ Settings and Files writer honesty — LIVE means a typed Settings/Files control 
 | Display | `display.inspect` | `brightness.set` | resolution / scale / arrangement; `parity.display` prototype; `windows-native.3` pending |
 | Input / Language | `input.inspect` | `keyboard-layout.set` (multi-layout) | pointer / repeat / locale; `parity.language-locale` prototype; `windows-native.33` pending |
 | Apps | `defaults.inspect` | `protocol.set` (default browser http+https scheme-by-scheme, default email mailto), `mime.set` (writable multi-candidate associations) | MIME / Default Programs association UI residual OPEN after PR #62; Settings offers MIME LIVE CONTROL for writable multi-candidate associations and read-only startup inventory since; other associations / Default Programs applet; `files.associations.set` stays missing/planned MIME; `parity.default-programs` prototype; `windows-native.19` pending |
-| Bluetooth | `bluetooth.inspect` | none | pair / connect / discover |
+| Bluetooth | `bluetooth.inspect` | session pair/connect (BlueZ) | audio routing / PIN-entry / rfkill; `windows-native.5` pending |
 | Update | `update.inspect` | none | download / apply; `windows-native.28–29` pending |
 | Recovery | `recovery.inspect` | none | restore plan / exec; `windows-native.30–31` pending |
 | Personalization | hosted Process picker | no typed service | typed Personalization writers |
