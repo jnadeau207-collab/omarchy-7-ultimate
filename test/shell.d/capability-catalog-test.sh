@@ -970,9 +970,9 @@ recycle_now = gaps.split("Honesty addendum 2026-09-06 vs Files Recycle session p
 if len(recycle_now) < 2:
     raise SystemExit("fleet-doctrine-gaps must add a dated Files Recycle session leftover addendum")
 recycle_now_text = recycle_now[1].split("Honesty addendum", 1)[0]
-if "visible `Files > Restore`" not in recycle_now_text:
+if "visible" not in recycle_now_text or "`Files > Restore`" not in recycle_now_text:
     raise SystemExit("fleet-doctrine-gaps current Recycle addendum must name files.trash.restore humanRoute as visible Files > Restore")
-if "visible `Files > Empty Recycle Bin`" not in recycle_now_text:
+if "visible" not in recycle_now_text or "`Files > Empty Recycle Bin`" not in recycle_now_text:
     raise SystemExit("fleet-doctrine-gaps current Recycle addendum must name files.trash.manage humanRoute as visible Files > Empty Recycle Bin")
 if "humanRoute planned empty" in recycle_now_text:
     raise SystemExit("fleet-doctrine-gaps current Recycle addendum invents planned-empty as the current restore/empty humanRoute")
