@@ -497,14 +497,17 @@ model = (root / "shell/apps/ultimate-settings/SettingsModel.js").read_text(encod
 honesty_fn = re.search(r"function declaredOpsHonesty\(routeId\) \{[\s\S]*?\n\}", model)
 if not honesty_fn:
     raise SystemExit("declaredOpsHonesty missing")
-honesty_strings = re.findall(r'"([^"]+)"', honesty_fn.group(0))
-if len(honesty_strings) < 2:
+honesty_block = honesty_fn.group(0)
+if "settings.bluetooth.overview" not in honesty_block or "this session's BlueZ adapter" not in honesty_block:
+    raise SystemExit("declaredOpsHonesty must name the Bluetooth session pair path")
+bt_return = honesty_block.split("settings.bluetooth.overview", 1)[1].split("routeHasLiveWriter", 1)[0]
+if "durable coordinator" in bt_return:
+    raise SystemExit("declaredOpsHonesty invents a Fabric pair writer for Bluetooth")
+if "no preflight, approval, or execution control" not in honesty_block:
     raise SystemExit("declaredOpsHonesty unavailable string missing")
-unavailable = honesty_strings[1]
-if " yet" in unavailable or re.search(r"phase 5", unavailable, re.I) or re.search(r"remain Phase", unavailable):
+unavailable_tail = honesty_block.split("no preflight, approval, or execution control", 1)[1]
+if " yet" in unavailable_tail or re.search(r"phase 5", unavailable_tail, re.I) or re.search(r"remain Phase", unavailable_tail):
     raise SystemExit("declaredOpsHonesty still invents forthcoming writers with yet / Phase 5 / remain Phase")
-if "no preflight, approval, or execution control" not in unavailable:
-    raise SystemExit("declaredOpsHonesty must keep unavailable / not-exposed honesty")
 if "not available yet" in model or " yet." in model:
     raise SystemExit("SettingsModel.js still invents forthcoming writers with not available yet")
 footer_fn = re.search(r"function authorityFooter\(\) \{[\s\S]*?\n\}", model)
