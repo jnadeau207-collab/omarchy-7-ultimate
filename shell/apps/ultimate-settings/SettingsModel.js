@@ -51,7 +51,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "bluetooth.inspect",
     supportsResource: true,
-    coverage: "Bluetooth inventory is readable from bluetooth.inspect (controller power, discovering, paired and connected devices). Discovery, pairing, and connection changes remain unavailable from Settings."
+    coverage: "Bluetooth inventory is readable from bluetooth.inspect (controller power, discovering, paired and connected devices). Pairing and connecting use this session's BlueZ adapter from Settings; pairing secrets never enter Fabric. Audio routing, PIN-entry UI, and adapter rfkill remain unavailable from Settings."
   },
   {
     routeId: "settings.input.overview",
@@ -129,6 +129,7 @@ var ROUTE_QUERIES = [
 var LIVE_WRITER_ROUTES = [
   "settings.audio.overview",
   "settings.network.overview",
+  "settings.bluetooth.overview",
   "settings.display.overview",
   "settings.input.overview",
   "settings.apps.overview",
@@ -153,13 +154,15 @@ function coverageTone(routeId) {
 }
 
 function declaredOpsHonesty(routeId) {
+  if (String(routeId || "") === "settings.bluetooth.overview")
+    return "Settings pairs and connects through this session's BlueZ adapter. Fabric bluetooth.inspect stays read-only; pairing secrets never enter durable evidence."
   return routeHasLiveWriter(routeId)
     ? "Settings runs this operation through preflight, approval, and the durable coordinator."
     : "Settings exposes no preflight, approval, or execution control for this domain."
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -695,6 +698,69 @@ function wifiJoinCanSubmit(action, passphrase) {
   if (action === "join-open" || action === "join-known") return true
   if (action === "prompt-password") return typeof passphrase === "string" && passphrase.length > 0
   return false
+}
+
+var BLUETOOTH_PAIR_MAX_ROWS = 16
+
+function bluetoothHasHumanName(label) {
+  var text = String(label || "").trim()
+  if (text === "") return false
+  if (/^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i.test(text)) return false
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text)) return false
+  return true
+}
+
+function bluetoothDeviceRow(device) {
+  if (!isObject(device)) return null
+  var address = String(device.address || "")
+  if (address === "") return null
+  var label = String(device.deviceName || device.name || "").trim()
+  if (!bluetoothHasHumanName(label)) return null
+  return {
+    address: address,
+    label: clippedText(label, 160),
+    connected: device.connected === true,
+    paired: device.paired === true || device.bonded === true || device.trusted === true,
+    pairing: device.pairing === true
+  }
+}
+
+function bluetoothDeviceGroups(devices) {
+  var connected = []
+  var known = []
+  var discovered = []
+  var list = Array.isArray(devices) ? devices : []
+  for (var i = 0; i < list.length; i++) {
+    var row = bluetoothDeviceRow(list[i])
+    if (!row) continue
+    if (row.connected) connected.push(row)
+    else if (row.paired) known.push(row)
+    else discovered.push(row)
+  }
+  function byLabel(a, b) {
+    if (a.label < b.label) return -1
+    if (a.label > b.label) return 1
+    return 0
+  }
+  connected.sort(byLabel)
+  known.sort(byLabel)
+  discovered.sort(byLabel)
+  return {
+    connected: connected.slice(0, BLUETOOTH_PAIR_MAX_ROWS),
+    known: known.slice(0, BLUETOOTH_PAIR_MAX_ROWS),
+    discovered: discovered.slice(0, BLUETOOTH_PAIR_MAX_ROWS)
+  }
+}
+
+function bluetoothPairAction(row) {
+  if (!isObject(row) || typeof row.address !== "string" || row.address === "") return "hidden"
+  if (row.connected === true) return "connected"
+  if (row.paired === true) return "connect"
+  return "pair"
+}
+
+function bluetoothCanSubmit(action) {
+  return action === "pair" || action === "connect" || action === "disconnect"
 }
 
 function wifiJoinFailureReason(reason, action, reasons) {
@@ -1427,6 +1493,12 @@ if (typeof module !== "undefined") {
     sortWifiJoinRows: sortWifiJoinRows,
     wifiJoinAction: wifiJoinAction,
     wifiJoinCanSubmit: wifiJoinCanSubmit,
-    wifiJoinFailureReason: wifiJoinFailureReason
+    wifiJoinFailureReason: wifiJoinFailureReason,
+    BLUETOOTH_PAIR_MAX_ROWS: BLUETOOTH_PAIR_MAX_ROWS,
+    bluetoothHasHumanName: bluetoothHasHumanName,
+    bluetoothDeviceRow: bluetoothDeviceRow,
+    bluetoothDeviceGroups: bluetoothDeviceGroups,
+    bluetoothPairAction: bluetoothPairAction,
+    bluetoothCanSubmit: bluetoothCanSubmit
   }
 }
