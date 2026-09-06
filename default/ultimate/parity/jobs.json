@@ -1179,8 +1179,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Network panel",
-        "path": "Superbar > Network"
+        "surface": "Settings",
+        "path": "Settings > Network"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore or disconnect the attempted connection on failure.",

@@ -122,6 +122,25 @@ if grep -Eq 'nmcli|rfkill' "$application"; then
 fi
 pass "Settings drives wifi.set-enabled through the typed operation plane only"
 
+join="$ROOT/shell/apps/ultimate-settings/SettingsWifiJoin.qml"
+[[ -f $join ]] || fail "Settings ships a Network Wi-Fi join card"
+grep -Fq 'import Quickshell.Networking' "$join" || fail "Settings Wi-Fi join uses the session NetworkManager bindings"
+grep -Fq 'function joinNetwork(' "$join" || fail "Settings Wi-Fi join exposes joinNetwork"
+grep -Fq 'network.connectWithPsk(' "$join" || fail "Settings joins password networks through connectWithPsk"
+grep -Fq 'network.connect()' "$join" || fail "Settings joins open and known networks through connect"
+grep -Fq 'pageActive ? wifiDevice : null' "$join" || fail "Settings only claims the Wi-Fi scanner while the Network page is active"
+grep -Fq 'scannerDevice.scannerEnabled = false' "$join" || fail "Settings releases the Wi-Fi scanner it owns"
+if grep -Eq 'nmcli|rfkill|requestFabric' "$join"; then
+  fail "Settings Wi-Fi join must not assemble nmcli or send credentials through Fabric"
+fi
+if grep -Eq 'connectEnterprise|enterpriseConnect' "$join"; then
+  fail "Settings Wi-Fi join invents enterprise LIVE"
+fi
+grep -Fq 'SettingsComponents.SettingsWifiJoin' "$application" || fail "Settings Network hosts the Wi-Fi join card"
+grep -Fq 'onJoined: if (root.controller) root.controller.refreshCurrent()' "$application" ||
+  fail "Settings re-reads network.inspect after a successful join"
+pass "Settings joins Wi-Fi through session NetworkManager and never through Fabric credentials"
+
 grep -Fq 'provider: "defaults.provider"' "$application" || fail "Settings sets the browser through defaults.provider"
 grep -Fq 'action: "protocol.set"' "$application" || fail "Settings uses the typed protocol.set action"
 grep -Fq 'if (!record || record.candidateAppIds.indexOf(appId) < 0) return' "$application" ||
@@ -317,7 +336,33 @@ assertEqual(radioRecord({ managerRunning: true, hardwareEnabled: true, enabled: 
 
 const networkQuery = Model.queryForRoute('settings.network.overview')
 assert(networkQuery.coverage.indexOf('wifi.set-enabled') >= 0, 'the network coverage note names the settable verb')
-assert(networkQuery.coverage.indexOf('Joining a network and per-connection changes remain unavailable') >= 0, 'the network coverage note still refuses what Settings cannot do')
+assert(networkQuery.coverage.indexOf('Joining an open or password-protected network') >= 0, 'the network coverage note names the session join path')
+assert(networkQuery.coverage.indexOf('the passphrase never enters Fabric') >= 0, 'the network coverage note keeps credentials out of Fabric')
+assert(networkQuery.coverage.indexOf('Enterprise, VPN, and per-connection DNS remain unavailable') >= 0, 'the network coverage note still refuses what Settings cannot do')
+assert(networkQuery.coverage.indexOf('Joining a network and per-connection changes remain unavailable') < 0, 'the network coverage note no longer claims join is unavailable')
+
+const security = Model.WIFI_JOIN_SECURITY
+assertEqual(Model.wifiJoinAction({ ssid: 'Open', connected: false, known: false, security: security.open }, security), 'join-open', 'open networks join without a passphrase')
+assertEqual(Model.wifiJoinAction({ ssid: 'Cafe', connected: false, known: false, security: security.wpa2Psk }, security), 'prompt-password', 'unknown PSK networks prompt for a passphrase')
+assertEqual(Model.wifiJoinAction({ ssid: 'Home', connected: false, known: true, security: security.wpa2Psk }, security), 'join-known', 'known PSK networks join without retyping the passphrase')
+assertEqual(Model.wifiJoinAction({ ssid: 'Home', connected: true, known: true, security: security.wpa2Psk }, security), 'connected', 'the connected network reports connected')
+assertEqual(Model.wifiJoinAction({ ssid: 'Corp', connected: false, known: false, security: security.wpa2Eap }, security), 'enterprise-unavailable', 'enterprise networks stay unavailable from Settings')
+assertEqual(Model.wifiJoinAction({ ssid: '', connected: false, known: false, security: security.open }, security), 'hidden', 'empty SSIDs are not offered')
+assertEqual(Model.wifiJoinCanSubmit('join-open', ''), true, 'open join can submit without a passphrase')
+assertEqual(Model.wifiJoinCanSubmit('prompt-password', ''), false, 'password join refuses an empty passphrase')
+assertEqual(Model.wifiJoinCanSubmit('prompt-password', 'secret'), true, 'password join accepts a passphrase')
+assertEqual(Model.wifiJoinCanSubmit('enterprise-unavailable', 'secret'), false, 'enterprise rows cannot submit')
+assertEqual(
+  Model.sortWifiJoinRows([
+    { ssid: 'Open', connected: false, known: false, signal: 95, security: security.open },
+    { ssid: 'Known', connected: false, known: true, signal: 10, security: security.wpa2Psk },
+    { ssid: 'Connected', connected: true, known: true, signal: 20, security: security.wpa2Psk },
+    { ssid: '', connected: false, known: false, signal: 100, security: security.open }
+  ]).map(row => row.ssid).join(','),
+  'Connected,Known,Open',
+  'join rows sort connected, then known, drop hidden SSIDs, and stay bounded'
+)
+assertEqual(Model.wifiJoinFailureReason('auth-timeout', 'prompt-password', { WifiAuthTimeout: 'auth-timeout' }), 'Wrong password', 'failed password join reports wrong password')
 
 function keyboardRecord(state) {
   return Model.normalizeLeafResource({ id: 'input.keyboard.abc', label: 'Internal keyboard', kind: 'keyboard', main: true, state: state }, 0)

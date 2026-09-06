@@ -1386,6 +1386,13 @@ Item {
                 }
               }
             }
+            SettingsComponents.SettingsWifiJoin {
+              visible: root.currentRoute && root.currentRoute.id === "settings.network.overview"
+              pageActive: visible
+              semanticProfile: root.productProfile
+              Layout.fillWidth: true
+              onJoined: if (root.controller) root.controller.refreshCurrent()
+            }
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.input.overview" && root.keyboardLayouts.length > 1
               Layout.fillWidth: true

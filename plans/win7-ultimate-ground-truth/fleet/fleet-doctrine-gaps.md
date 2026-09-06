@@ -64,7 +64,7 @@ Jobs in `jobs.json`: **82** (claims: missing=35, partial=6, plumbing=4, present=
 
 | Job | claim / sourceStatus | Route | Precise Win7 Ultimate behavior | Invent risk if under-specified |
 |-----|----------------------|-------|--------------------------------|--------------------------------|
-| `parity.network` | prototype/prototype | visible: Start > Settings > Network | User can view network state and toggle Wi-Fi radio from Settings/Superbar without terminal; joining networks is a separate requirement. | Claiming Network complete from radio toggle alone; inventing VPN/join UI. |
+| `parity.network` | prototype/prototype | visible: Start > Settings > Network | User can view network state, toggle Wi-Fi radio, and join open or password-protected networks from Settings without terminal; enterprise/VPN/DNS remain separate. | Claiming Network complete from radio+join; inventing VPN/enterprise UI. |
 | `parity.personalization` | prototype/prototype | visible: Start > Settings > Personalization | User can change wallpaper/theme-related personalization from Settings Personalization with the mouse. | Equating Personalization picker with full theme/density/cursor product. |
 | `parity.power-options` | prototype/prototype | visible: Start > Settings > Power | User can view power source/profile and set power profile from Settings/Superbar without terminal; sleep/lid remain separate if missing. | Claiming Power Options complete from profile.set alone. |
 | `parity.sound` | prototype/prototype | visible: Start > Settings > Sound | User can view outputs and set output volume from Settings/Superbar without terminal; mute/routing may remain unavailable if stated. | Inventing full mixer/port UI from volume writer. |
@@ -134,7 +134,7 @@ Jobs in `jobs.json`: **82** (claims: missing=35, partial=6, plumbing=4, present=
 | Job | claim / sourceStatus | Route | Precise Win7 Ultimate behavior | Invent risk if under-specified |
 |-----|----------------------|-------|--------------------------------|--------------------------------|
 | `windows-native.1` | missing/pending | planned: Boot installer | **Install the OS.** Complete OS install with mouse-guided installer (no terminal ownership). | Inventing install-complete from ISO packaging slogans. |
-| `windows-native.2` | prototype/pending | visible: Superbar > Network | **Connect Wi-Fi.** Connect to Wi-Fi from Network UI with mouse. | Claiming from radio toggle without join. |
+| `windows-native.2` | prototype/pending | visible: Settings > Network | **Connect Wi-Fi.** Connect to Wi-Fi from Network UI with mouse. | Claiming present without metal join proof; inventing enterprise/VPN. |
 | `windows-native.3` | prototype/pending | visible: Superbar > Display | **Set display scaling to 125%.** Set display scaling to 125% from Display UI. | Claiming scaling present without control. |
 | `windows-native.4` | prototype/pending | visible: Personalization > Background | **Change the wallpaper.** Change wallpaper from Personalization. | Equating any background change API without UI. |
 | `windows-native.5` | prototype/pending | visible: Superbar > Bluetooth | **Pair Bluetooth headphones.** Pair Bluetooth headphones from Bluetooth UI. | Claiming from inspect-only. |
@@ -222,6 +222,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
   | --- | --- | --- |
   | Settings Sound volume (`output-volume.set`) | `audio.volume.set` | partial |
   | Settings Network Wi-Fi radio (`wifi.set-enabled`) | `network.manage` | partial |
+  | Settings Network Wi-Fi join (session NetworkManager; passphrase never enters Fabric) | `network.wifi.connect` | partial |
   | Settings Power inspect | `power.inspect` | partial |
   | Settings Power profile (`profile.set`) write plane, not Settings LIVE; Superbar QS leftover unverified on metal — metal FAIL on tip `20484de6` (KEEP OPEN) | `power.profile.set` | partial |
   | Settings Display brightness (`brightness.set`) | `display.brightness.set` | partial |
