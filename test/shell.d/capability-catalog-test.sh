@@ -613,8 +613,24 @@ if parity_file_associations.get("humanRoute", {}).get("status") != "planned":
 native19 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.19")
 if native19.get("claim") == "present":
     raise SystemExit(f"windows-native.19 was flipped to present: {native19}")
+if native19.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.19 claim is {native19.get('claim')}")
+if native19.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.19 sourceStatus is {native19.get('sourceStatus')}")
+if native19.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.19 proofStatus is {native19.get('proofStatus')}")
 if native19.get("capabilityIds") != ["defaults.protocol.set"]:
     raise SystemExit(f"windows-native.19 capabilityIds are {native19.get('capabilityIds')}")
+if native19.get("humanRoute", {}).get("status") != "visible":
+    raise SystemExit(f"windows-native.19 route is {native19.get('humanRoute')}")
+if native19.get("humanRoute", {}).get("path") != "Settings > Default Programs":
+    raise SystemExit(f"windows-native.19 underclaims Default Programs: {native19.get('humanRoute')}")
+if protocol_set.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"defaults.protocol.set claim drifted: {protocol_set.get('availability')}")
+if protocol_set.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"defaults.protocol.set human drifted: {protocol_set.get('availability')}")
+if protocol_set.get("source", {}).get("symbol") != "applyDefaultBrowser":
+    raise SystemExit(f"defaults.protocol.set source symbol drifted: {protocol_set.get('source')}")
 
 
 printers_manage = by_id["printers.manage"]
@@ -1348,6 +1364,18 @@ if "SOURCE LOCK (not pixel proof)" not in explorer_chrome:
     raise SystemExit("ultimate-explorer-chrome-test must name hex-grep as SOURCE LOCK (not pixel proof)")
 if "not pixel proof" not in explorer_chrome:
     raise SystemExit("ultimate-explorer-chrome-test still treats hex-grep as pixel proof")
+
+if "Honesty addendum 2026-09-06 vs Settings Default Programs browser leftover plane (windows-native.19)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated wn.19 Default Programs browser leftover addendum")
+if "| `windows-native.19` | prototype/pending | visible: Settings > Default Programs |" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must soft leftover-attach wn.19 to Settings > Default Programs")
+if "| `windows-native.19` | prototype/pending | visible: Settings > Apps |" in gaps:
+    raise SystemExit("fleet-doctrine-gaps still underclaims wn.19 on Settings > Apps")
+if "applyDefaultBrowser" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name tip-true applyDefaultBrowser for wn.19")
+if "AutoPlay" not in gaps or "files.associations.set" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep AutoPlay / files.associations.set invent refuse for wn.19")
+
 if "Honesty addendum 2026-09-05 vs Default Programs page" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Default Programs page addendum")
 if "Default Programs page partial LIVE; Win7 applet parity still open" not in gaps:
@@ -1408,16 +1436,16 @@ if (root / "test/acceptance.d/leftovers/win7-visual/hdmi.png").is_file() is Fals
     raise SystemExit("Win7 visual leftover hdmi.png is missing")
 if "claims: missing=32, partial=6, plumbing=4, present=0, prototype=40" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
-if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE and keep the Default Programs applet missing")
+if "partial MIME rows LIVE on Settings > Default Programs; Default Programs applet still missing" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE on Settings > Default Programs and keep the Default Programs applet missing")
 if "defaults.inspect" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name MIME inspect via defaults.inspect")
 if "ad4a68e1b225" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #62 tip parent for the MIME leftover residual")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the MIME leftover after PR #62")
-if "humanRoute visible `Settings > Apps`" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep defaults.mime.set humanRoute visible Settings > Apps after PR #62")
+if "humanRoute visible `Settings > Default Programs`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep defaults.mime.set humanRoute visible Settings > Default Programs")
 if "c1886b423c11" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #60 tip parent for the Files leftover residual")
 if "OS clipboard residual OPEN" not in gaps:
@@ -1753,7 +1781,7 @@ if "apps.defaults.set" in gt06 or "apps.defaults.set" in gt06_json_text:
     raise SystemExit("06-settings-admin-media still names leftover apps.defaults.set as the live Apps writer")
 if "defaults.protocol.set" not in gt06 or "Default Programs page partial LIVE; Win7 applet parity still open" not in gt06:
     raise SystemExit("06-settings-admin-media does not name defaults.protocol.set with Default Programs page partial LIVE")
-if "partial MIME rows LIVE on Settings > Apps" not in gt06:
+if "partial MIME rows LIVE on Settings > Default Programs" not in gt06:
     raise SystemExit("06-settings-admin-media does not name partial MIME rows LIVE")
 if "files.associations.set" not in gt06 or "missing/planned MIME" not in gt06:
     raise SystemExit("06-settings-admin-media dropped files.associations.set missing/planned MIME")
@@ -1907,7 +1935,7 @@ if "apps.defaults.set" in cp:
     raise SystemExit("fleet-catalog-controlpanel still names leftover apps.defaults.set as the live Apps writer")
 if "defaults.protocol.set" not in cp or "Default Programs page partial LIVE; Win7 applet parity still open" not in cp:
     raise SystemExit("fleet-catalog-controlpanel does not name defaults.protocol.set with Default Programs page partial LIVE")
-if "partial MIME rows LIVE on Settings > Apps" not in cp:
+if "partial MIME rows LIVE on Settings > Default Programs" not in cp:
     raise SystemExit("fleet-catalog-controlpanel does not name partial MIME rows LIVE")
 if "files.associations.set" not in cp or "missing/planned MIME" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped files.associations.set missing/planned MIME")

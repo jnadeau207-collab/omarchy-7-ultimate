@@ -957,7 +957,7 @@ Item {
                 Text {
                   textFormat: Text.PlainText
                   text: Semantics.text(root.productProfile,
-                    "Set the default browser, default email, and writable MIME associations through defaults.provider. This is not the Win7 Default Programs applet. AutoPlay, Set Program Access and Computer Defaults, and files.associations.set stay unavailable. Win7 applet parity still open.")
+                    "Set the default browser (http+https), default email, and writable MIME associations through defaults.provider protocol.set / mime.set. session leftover recorded: Change the default browser soft leftover-attaches windows-native.19 to this tip-true Settings > Default Programs browser plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.19. This is not the Win7 Default Programs applet. AutoPlay, Set Program Access and Computer Defaults, and files.associations.set stay unavailable. Win7 applet parity still open. windows-native.19 stays prototype/pending. Cloud EXIT 0 is not metal leftover CLOSED.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
@@ -1030,7 +1030,7 @@ Item {
                   text: root.operationMessage !== "" && root.operationKind === "browser"
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
-                        "Only applications that declare they handle web links are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
+                        "Only applications that declare they handle web links are shown. Changes run through defaults.provider protocol.set for http and https as this user, never with elevated privilege. Soft leftover-attach ACC windows-native.19 stays prototype/pending. Do not invent MIME association UI, AutoPlay, SPAD, or files.associations.set product-complete. Never claim=present.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall
