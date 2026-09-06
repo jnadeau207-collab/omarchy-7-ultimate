@@ -2199,6 +2199,12 @@ if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in plan:
     raise SystemExit("project-ultimate dropped Recycle leftover after PR #63")
 if "permanent delete write plane exists but is not shell-authorizable" not in plan:
     raise SystemExit("project-ultimate dropped permanent delete not shell-authorizable")
+if "session Trash/Restore/Empty (#76)" not in plan:
+    raise SystemExit("project-ultimate Files LIVE column must name session Trash/Restore/Empty")
+if "Restore UI (do not invent Restore LIVE), Empty Bin LIVE" in plan:
+    raise SystemExit("project-ultimate Files row still lists bare Restore UI / Empty Bin LIVE as if the session plane is missing")
+if "Fabric Restore LIVE under SHELL" not in plan:
+    raise SystemExit("project-ultimate Files unavailable column must name Fabric Restore LIVE under SHELL")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in plan:
     raise SystemExit("project-ultimate dropped MIME leftover after PR #62")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in cp:

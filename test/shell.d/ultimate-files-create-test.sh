@@ -72,8 +72,8 @@ if grep -Eq 'emptyBinAuthorized:\s*true' "$application"; then
 fi
 grep -Fq 'The empty Recycle Bin write plane exists but is not shell-authorizable' "$application" \
   || fail "Files names the empty Recycle Bin write plane as not shell-authorizable"
-grep -Fq 'Empty Bin LIVE' "$application" \
-  || fail "Files keeps Empty Bin LIVE unavailable"
+grep -Fq 'Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL' "$application" \
+  || fail "Files keeps Fabric Empty Bin LIVE unavailable under SHELL"
 if grep -Fq 'LIVE CONTROL' "$application"; then
   fail "Files must not claim LIVE CONTROL for Trash under the shell principal"
 fi
