@@ -2186,7 +2186,7 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
         "claim": "partial"
       },
@@ -2223,10 +2223,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
         "label": "Install system updates",
-        "path": "Start > Settings > Update"
+        "path": "Settings > Update"
       },
       "agentCenterLabel": "Install system updates",
       "proofIds": {
@@ -2238,8 +2238,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:update.history.read",
+        "file": "shell/apps/shared/SettingsSessionUpdate.qml",
+        "symbol": "applyUpdate",
         "brokerVerb": null
       }
     },

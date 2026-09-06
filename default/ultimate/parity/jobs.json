@@ -1861,9 +1861,9 @@
         "update.install"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": "Start > Settings > Update"
+        "path": "Settings > Update"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Create a restore point and reconcile after restart or reboot.",

@@ -110,9 +110,10 @@ const liveWriterRoutes = [
   'settings.display.overview',
   'settings.input.overview',
   'settings.apps.overview',
-  'settings.apps.default-programs'
+  'settings.apps.default-programs',
+  'settings.update.overview'
 ]
-assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the seven live writer routes')
+assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the eight live writer routes')
 assertEqual(Model.isDefaultsWriterRoute('settings.apps.overview'), true, 'Apps is a defaults writer route')
 assertEqual(Model.isDefaultsWriterRoute('settings.apps.default-programs'), true, 'Default Programs is a defaults writer route')
 assertEqual(Model.isDefaultsWriterRoute('settings.audio.overview'), false, 'Sound is not a defaults writer route')
@@ -124,11 +125,14 @@ for (const routeId of liveWriterRoutes) {
   if (routeId === 'settings.bluetooth.overview') {
     assert(Model.declaredOpsHonesty(routeId).includes("this session's BlueZ adapter"), `${routeId} declared ops name the session pair path`)
     assert(!Model.declaredOpsHonesty(routeId).includes('durable coordinator'), `${routeId} declared ops do not invent a Fabric pair writer`)
+  } else if (routeId === 'settings.update.overview') {
+    assert(Model.declaredOpsHonesty(routeId).includes("this session's update helper"), `${routeId} declared ops name the session update path`)
+    assert(!Model.declaredOpsHonesty(routeId).includes('durable coordinator'), `${routeId} declared ops do not invent a Fabric update writer`)
   } else {
     assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
   }
 }
-for (const routeId of ['settings.power.overview', 'settings.update.overview', 'settings.recovery.overview', 'settings.accessibility.overview', 'settings.system.overview', 'settings.personalization.overview', '']) {
+for (const routeId of ['settings.power.overview', 'settings.recovery.overview', 'settings.accessibility.overview', 'settings.system.overview', 'settings.personalization.overview', '']) {
   assertEqual(Model.routeHasLiveWriter(routeId), false, `${routeId || '(none)'} is not a live writer`)
   assertEqual(Model.coverageBadge(routeId), 'CHANGES UNAVAILABLE', `${routeId || '(none)'} coverage badge stays unavailable`)
   const declaredOps = Model.declaredOpsHonesty(routeId)
@@ -138,7 +142,8 @@ for (const routeId of ['settings.power.overview', 'settings.update.overview', 's
   assert(!/remain Phase/i.test(declaredOps), `${routeId || '(none)'} declared ops do not invent a remain-Phase fence`)
 }
 const footer = Model.authorityFooter()
-assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser') && footer.includes('Default Programs protocol and MIME') && footer.includes('Bluetooth pair'), 'authority footer names every live writer')
+assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser') && footer.includes('Default Programs protocol and MIME') && footer.includes('Bluetooth pair') && footer.includes('Update apply'), 'authority footer names every live writer')
+assert(footer.includes('Fabric system.update is not LIVE'), 'authority footer keeps Fabric system.update inspect-only')
 assert(footer.includes('Power profile') && footer.includes('inspect-only') && footer.includes('polkit') && footer.includes('app.slice'), 'authority footer names Power profile as inspect-only polkit residual')
 assert(!footer.includes('Power profile, Display brightness'), 'authority footer does not list Power profile among LIVE writers')
 assert(footer.includes('other domains stay inspect-only'), 'authority footer keeps remaining domains inspect-only')

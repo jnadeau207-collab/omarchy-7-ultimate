@@ -56,7 +56,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Action Center | `Microsoft.ActionCenter` | Partial: Notification Center + Superbar update/security cues; **no** Action Center applet | `parity.event-history` prototype (`events.history.read`); no `action-center.*` | No Action Center provider |
 | Windows Firewall | `Microsoft.WindowsFirewall` | Administration > Firewall (visible inspect host); Settings network firewall path empty | `parity.firewall` plumbing; `firewall.inspect` visible; claim missing; honest-unavailable as Firewall Settings product; `firewall.manage` stays planned/unavailable | `firewall.provider` |
 | System | `Microsoft.System` | Settings jump **System information** dropped; Admin/system info missing | `system.info.read` missing; `windows-native.38` jump-list leftover vs empty catalog path | No `system-information.provider` product page |
-| Windows Update | `Microsoft.WindowsUpdate` | Settings → Update | `parity.update` prototype; `update.inspect` partial; `update.install` / history writers Phase-5/pending | `update.provider` |
+| Windows Update | `Microsoft.WindowsUpdate` | Settings → Update | `parity.update` prototype; `update.inspect` partial; `update.install` leftover session apply (claim=partial, visible Settings > Update); Fabric `system.update` inspect-only; history writers pending; `windows-native.28` pending | `update.provider` |
 | Power Options | `Microsoft.PowerOptions` | Settings → Power; Superbar/QS Power leftover | `parity.power-options` prototype; `power.inspect`; `power.profile.set` write plane not Settings LIVE (fabric polkit `app.slice`); QS Process leftover FAIL on this metal (pkcheck Not authorized / session-5103; !batteryPresent; amd_pstate EINVAL); leftover was unverified on metal after PR #31; QS Power METAL_HEAD OPEN | `power.provider` (session_operable=False) |
 | Backup and Restore | `Microsoft.BackupAndRestore` | Administration > Backup (visible inspect); Settings Recovery | `parity.backup-restore` / `parity.system-restore` plumbing; `backup.inspect` visible; claim missing; honest-unavailable as Backup and Restore product; `backup.manage` stays planned/unavailable | `backup.provider` / `recovery.provider` |
 | BitLocker Drive Encryption | `Microsoft.BitLockerDriveEncryption` (**Ultimate**) | **Missing** product | `parity.drive-encryption` missing; `storage.encryption.manage` | No encryption writer surface |
@@ -217,7 +217,7 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | 48 | Windows Defender | Yes | — | — | Gap |
 | 49 | Windows Firewall | Yes | Administration > Firewall | `parity.firewall`; `firewall.inspect` visible; claim missing | Plumbing; visible inspect; honest-unavailable as Firewall Settings product; `firewall.manage` planned/unavailable |
 | 50 | Windows Mobility Center | Laptop | — | — | Gap / HW |
-| 51 | Windows Update | Yes | Settings → Update | `parity.update` | Prototype inspect |
+| 51 | Windows Update | Yes | Settings → Update | `parity.update` prototype; `update.install` session apply leftover | Session apply; Fabric `system.update` inspect-only; row 28 pending |
 | 52 | Desktop Gadgets | Yes | — | — | N/A / removed later |
 
 **Related non-CP but Win7 “settings” destinations often confused with CP:**

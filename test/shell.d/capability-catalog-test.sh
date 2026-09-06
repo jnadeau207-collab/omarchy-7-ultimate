@@ -679,6 +679,40 @@ parity_software = next(job for job in jobs["jobs"] if job["id"] == "parity.softw
 if parity_software.get("claim") == "present":
     raise SystemExit(f"parity.software-center was flipped to present: {parity_software}")
 
+update_install = by_id["update.install"]
+if update_install["humanRoute"].get("surface") != "Settings" or update_install["humanRoute"].get("path") != "Settings > Update":
+    raise SystemExit(f"update.install route is {update_install.get('humanRoute')}")
+if update_install["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"update.install route status is {update_install.get('humanRoute')}")
+if update_install["humanRoute"].get("label") != "Install system updates":
+    raise SystemExit(f"update.install label is {update_install.get('humanRoute')}")
+if update_install.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionUpdate.qml":
+    raise SystemExit(f"update.install source is {update_install.get('source')}")
+if update_install.get("source", {}).get("symbol") != "applyUpdate":
+    raise SystemExit(f"update.install source is {update_install.get('source')}")
+if update_install.get("availability", {}).get("claim") == "present":
+    raise SystemExit("update.install must not claim present")
+if update_install.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"update.install human availability is {update_install.get('availability')}")
+if update_install.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"update.install agent availability is {update_install.get('availability')}")
+if update_install.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"update.install was raised off leftover: {update_install.get('provider')}")
+parity_update = next(job for job in jobs["jobs"] if job["id"] == "parity.update")
+if parity_update.get("claim") == "present":
+    raise SystemExit(f"parity.update was flipped to present: {parity_update}")
+native28 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.28")
+if native28.get("claim") == "present":
+    raise SystemExit(f"windows-native.28 was flipped to present: {native28}")
+if native28.get("capabilityIds") != ["update.install"]:
+    raise SystemExit(f"windows-native.28 capabilityIds are {native28.get('capabilityIds')}")
+if native28["humanRoute"].get("path") != "Settings > Update":
+    raise SystemExit(f"windows-native.28 route is {native28['humanRoute']}")
+if native28.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.28 sourceStatus is {native28.get('sourceStatus')}")
+if native28.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.28 proofStatus is {native28.get('proofStatus')}")
+
 if "display.brightness.set" not in by_id:
     raise SystemExit("absent live brightness writer invent: display.brightness.set missing from catalog")
 brightness_set = by_id["display.brightness.set"]
@@ -1049,6 +1083,16 @@ if "hex-grep is not pixel proof" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name hex-grep as not pixel proof")
 if "Do not invent Files LIVE metal CLOSED" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must refuse Files LIVE metal CLOSED invent")
+if "Honesty addendum 2026-09-06 vs Settings Update apply" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update apply leftover addendum")
+if "Fabric system.update stays inspect-only" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Fabric system.update inspect-only")
+if "windows-native.28 stays missing/pending" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep windows-native.28 missing/pending")
+if "Do not pin `command.unavailable` when the real failure is `update.channel-mismatch`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must refuse command.unavailable invent for channel mismatch")
+if "Cloud EXIT 0 is not metal leftover CLOSED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must refuse Cloud EXIT 0 as metal leftover CLOSED")
 win7_leftover_path = root / "test/acceptance.d/leftovers/win7-visual/leftover.json"
 if not win7_leftover_path.is_file():
     raise SystemExit("Win7 visual leftover.json is missing")
@@ -2197,6 +2241,7 @@ inventory = {
     "audio.volume.set": "partial",
     "network.manage": "partial",
     "network.wifi.connect": "partial",
+    "update.install": "partial",
     "power.profile.set": "partial",
     "display.configure": "partial",
     "display.night-light.set": "partial",

@@ -160,6 +160,27 @@ grep -Fq 'onPaired: if (root.controller) root.controller.refreshCurrent()' "$app
   fail "Settings re-reads bluetooth.inspect after a successful pair"
 pass "Settings pairs Bluetooth through session BlueZ and never through Fabric credentials"
 
+update_card="$ROOT/shell/apps/ultimate-settings/SettingsUpdateApply.qml"
+update_session="$ROOT/shell/apps/shared/SettingsSessionUpdate.qml"
+[[ -f $update_card ]] || fail "Settings ships an Update apply card"
+[[ -f $update_session ]] || fail "Settings hosts a session update plane"
+grep -Fq 'omarchy-fabric-session-apply' "$update_session" || fail "Settings Update uses the session apply helper"
+grep -Fq 'system-update-status' "$update_session" || fail "Settings Update checks through system-update-status"
+grep -Fq 'system-update' "$update_session" || fail "Settings Update applies through system-update"
+grep -Fq 'function applyUpdate(' "$update_session" || fail "Settings session update exposes applyUpdate"
+if grep -Eq 'operation\.(preflight|start|approve)|requestFabric' "$update_card" "$update_session"; then
+  fail "Settings Update must not mint Fabric durable operations"
+fi
+if grep -Eq 'pkexec|sudo|omarchy-update-confirm' "$update_card" "$update_session"; then
+  fail "Settings Update QML must not spawn privileged or interactive update argv"
+fi
+grep -Fq 'this session' "$update_card" || fail "Settings Update names the session principal"
+grep -Fq 'Fabric system.update stays inspect-only' "$update_card" || fail "Settings Update keeps Fabric system.update inspect-only"
+grep -Fq 'SettingsComponents.SettingsUpdateApply' "$application" || fail "Settings Update hosts the session apply card"
+grep -Fq 'onApplied: if (root.controller) root.controller.refreshCurrent()' "$application" ||
+  fail "Settings re-reads update.inspect after a successful apply"
+pass "Settings applies updates through this session and never through a Fabric LIVE button"
+
 grep -Fq 'provider: "defaults.provider"' "$application" || fail "Settings sets the browser through defaults.provider"
 grep -Fq 'action: "protocol.set"' "$application" || fail "Settings uses the typed protocol.set action"
 grep -Fq 'if (!record || record.candidateAppIds.indexOf(appId) < 0) return' "$application" ||
