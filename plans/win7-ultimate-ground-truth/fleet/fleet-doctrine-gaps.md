@@ -145,7 +145,7 @@ Jobs in `jobs.json`: **82** (claims: missing=35, partial=6, plumbing=4, present=
 | `windows-native.10` | prototype/pending | visible: Files > New Folder | **Create a folder.** Create a folder in Files with mouse. | Banner/handoff must not say create unavailable while New folder exists. |
 | `windows-native.11` | prototype/pending | visible: Files > Rename | **Rename it.** Rename a file/folder in Files with mouse. | Claiming rename present without UI/writer. |
 | `windows-native.12` | prototype/pending | visible: Files > Copy and Paste | **Copy files.** Copy files in Files with mouse. | OK if Files copy+paste writer+UI; leftover OS clipboard / cut / Explorer present. |
-| `windows-native.13` | prototype/pending | visible: Files > Compress | **Zip them.** Zip files from Files with mouse. | Inventing compress UI. |
+| `windows-native.13` | prototype/pending | visible: Files > Compress | **Zip them.** Zip files from Files with mouse. | Inventing Explorer present / Fabric SHELL LIVE / claim=present / metal CLOSED from Cloud EXIT 0. |
 | `windows-native.14` | prototype/pending | visible: Files > Devices | **Connect a USB drive.** Connect USB drive and see it in Files Devices. | Inventing from mount inspect. |
 | `windows-native.15` | prototype/pending | visible: Files > Devices > Eject | **Eject it.** Eject USB from Files Devices with mouse. | Inventing eject. |
 | `windows-native.16` | missing/pending | planned: Files > Connect to Server | **Connect to an SMB share.** Connect to SMB share from Files UI. | Inventing Connect to Server. |
