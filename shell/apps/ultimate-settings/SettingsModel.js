@@ -33,7 +33,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "network.inspect",
     supportsResource: true,
-    coverage: "Network inventory is readable from network.inspect (Wi-Fi radio, interfaces, connection status), and the Wi-Fi radio switches through network.provider wifi.set-enabled. Joining a network and per-connection changes remain unavailable from Settings."
+    coverage: "Network inventory is readable from network.inspect (Wi-Fi radio, interfaces, connection status), and the Wi-Fi radio switches through network.provider wifi.set-enabled. Joining an open or password-protected network uses this session's NetworkManager access from Settings; the passphrase never enters Fabric. Enterprise, VPN, and per-connection DNS remain unavailable from Settings."
   },
   {
     routeId: "settings.power.overview",
@@ -622,6 +622,90 @@ function radioEnabled(state) {
 
 function radioBlocked(state) {
   return radioControllable(state) && state.hardwareEnabled !== true
+}
+
+var WIFI_JOIN_MAX_ROWS = 16
+var WIFI_JOIN_SECURITY = {
+  wpa3SuiteB192: 0,
+  sae: 1,
+  wpa2Eap: 2,
+  wpa2Psk: 3,
+  wpaEap: 4,
+  wpaPsk: 5,
+  staticWep: 6,
+  dynamicWep: 7,
+  leap: 8,
+  owe: 9,
+  open: 10,
+  unknown: 11
+}
+
+function wifiJoinRow(network) {
+  if (!isObject(network)) return null
+  var ssid = typeof network.ssid === "string" ? network.ssid
+    : typeof network.name === "string" ? network.name : ""
+  if (ssid === "") return null
+  var signal = 0
+  if (typeof network.signal === "number" && isFinite(network.signal)) signal = Math.round(network.signal)
+  else if (typeof network.signalStrength === "number" && isFinite(network.signalStrength)) {
+    signal = network.signalStrength <= 1 ? Math.round(network.signalStrength * 100) : Math.round(network.signalStrength)
+  }
+  if (signal < 0) signal = 0
+  if (signal > 100) signal = 100
+  return {
+    connected: network.connected === true,
+    known: network.known === true,
+    ssid: clippedText(ssid, 160),
+    signal: signal,
+    security: network.security
+  }
+}
+
+function sortWifiJoinRows(rows) {
+  var nets = []
+  if (!Array.isArray(rows)) return nets
+  for (var i = 0; i < rows.length; i++) {
+    var row = wifiJoinRow(rows[i])
+    if (row) nets.push(row)
+  }
+  nets.sort(function(a, b) {
+    if (a.connected !== b.connected) return a.connected ? -1 : 1
+    if (a.known !== b.known) return a.known ? -1 : 1
+    if (b.signal !== a.signal) return b.signal - a.signal
+    if (a.ssid < b.ssid) return -1
+    if (a.ssid > b.ssid) return 1
+    return 0
+  })
+  if (nets.length > WIFI_JOIN_MAX_ROWS) nets = nets.slice(0, WIFI_JOIN_MAX_ROWS)
+  return nets
+}
+
+function wifiJoinAction(row, enums) {
+  var codes = isObject(enums) ? enums : WIFI_JOIN_SECURITY
+  if (!isObject(row) || typeof row.ssid !== "string" || row.ssid === "") return "hidden"
+  if (row.connected === true) return "connected"
+  if (row.security === codes.wpa2Eap || row.security === codes.wpaEap) return "enterprise-unavailable"
+  var needsCredentials = row.security !== codes.open && row.security !== codes.owe
+  if (!needsCredentials) return "join-open"
+  if (row.known === true) return "join-known"
+  return "prompt-password"
+}
+
+function wifiJoinCanSubmit(action, passphrase) {
+  if (action === "join-open" || action === "join-known") return true
+  if (action === "prompt-password") return typeof passphrase === "string" && passphrase.length > 0
+  return false
+}
+
+function wifiJoinFailureReason(reason, action, reasons) {
+  var r = isObject(reasons) ? reasons : {}
+  var needs = action === "prompt-password" || action === "join-known"
+  if (needs && reason === r.NoSecrets) return "Passphrase required"
+  if (needs && reason === r.WifiAuthTimeout) return "Wrong password"
+  if (reason === r.WifiNetworkLost) return "Network lost"
+  if (reason === r.WifiClientDisconnected) return "Disconnected"
+  if (reason === r.WifiClientFailed) return "Connection failed"
+  return "Failed to connect"
 }
 
 function normalizeLeafResource(resource, index) {
@@ -1336,6 +1420,13 @@ if (typeof module !== "undefined") {
     declaredOpsHonesty: declaredOpsHonesty,
     authorityFooter: authorityFooter,
     operationIdempotencyToken: operationIdempotencyToken,
-    mimeDefaultIdempotencyKey: mimeDefaultIdempotencyKey
+    mimeDefaultIdempotencyKey: mimeDefaultIdempotencyKey,
+    WIFI_JOIN_MAX_ROWS: WIFI_JOIN_MAX_ROWS,
+    WIFI_JOIN_SECURITY: WIFI_JOIN_SECURITY,
+    wifiJoinRow: wifiJoinRow,
+    sortWifiJoinRows: sortWifiJoinRows,
+    wifiJoinAction: wifiJoinAction,
+    wifiJoinCanSubmit: wifiJoinCanSubmit,
+    wifiJoinFailureReason: wifiJoinFailureReason
   }
 }
