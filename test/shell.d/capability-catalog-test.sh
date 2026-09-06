@@ -939,7 +939,7 @@ if update_history.get("provider", {}).get("state") != "legacy-direct":
 native29 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.29")
 if native29.get("claim") == "present":
     raise SystemExit(f"windows-native.29 was flipped to present: {native29}")
-if native29.get("claim") != "missing":
+if native29.get("claim") != "prototype":
     raise SystemExit(f"windows-native.29 claim is {native29.get('claim')}")
 if native29.get("capabilityIds") != ["update.history.read"]:
     raise SystemExit(f"windows-native.29 capabilityIds are {native29.get('capabilityIds')}")
@@ -1434,7 +1434,7 @@ if win7_leftover.get("emptyBinAuthorized") is not False:
     raise SystemExit("Win7 visual leftover.json must keep emptyBinAuthorized false")
 if (root / "test/acceptance.d/leftovers/win7-visual/hdmi.png").is_file() is False:
     raise SystemExit("Win7 visual leftover hdmi.png is missing")
-if "claims: missing=32, partial=6, plumbing=4, present=0, prototype=40" not in gaps:
+if "claims: missing=30, partial=6, plumbing=4, present=0, prototype=42" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
 if "partial MIME rows LIVE on Settings > Default Programs; Default Programs applet still missing" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE on Settings > Default Programs and keep the Default Programs applet missing")

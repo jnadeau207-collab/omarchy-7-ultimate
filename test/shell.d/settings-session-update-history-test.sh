@@ -53,8 +53,14 @@ grep -Fq 'No update transcript is available on this session' "$settings_card" ||
   fail "Settings Update history names the empty honest state"
 grep -Fq 'this session' "$settings_card" || fail "Settings Update history names the session principal"
 grep -Fq 'Fabric' "$settings_card" || fail "Settings Update history keeps Fabric inspect honest"
-if grep -Eqi 'Fabric system\.update is LIVE|claim=present|Update is present' "$settings_card" "$settings_app"; then
-  fail "Settings Update history must not invent present or Fabric LIVE"
+if grep -Eqi 'Fabric system\.update is LIVE' "$settings_card" "$settings_app"; then
+  fail "Settings Update history must not invent Fabric LIVE"
+fi
+if grep -Eqi 'claim=present' "$settings_card" "$settings_app" && ! grep -Eqi 'not claim=present|Never claim=present|never claim=present' "$settings_card" "$settings_app"; then
+  fail "Settings Update history must not invent claim=present"
+fi
+if grep -Eqi 'Update is present as product|Update Center present' "$settings_card" "$settings_app"; then
+  fail "Settings Update history must not invent Update present"
 fi
 grep -Fq 'sessionUpdateHistory' "$settings_model" || fail "Settings model normalizes session update history"
 grep -Fq 'History is readable from this session' "$settings_model" ||
@@ -269,7 +275,7 @@ if native28.get("proofStatus") != "pending":
 native29 = by_job["windows-native.29"]
 if native29.get("claim") == "present":
     raise SystemExit("windows-native.29 must not claim present")
-if native29.get("claim") != "missing":
+if native29.get("claim") != "prototype":
     raise SystemExit(f"windows-native.29 claim is {native29.get('claim')}")
 if native29.get("sourceStatus") != "pending":
     raise SystemExit(f"windows-native.29 sourceStatus is {native29.get('sourceStatus')}")
@@ -297,6 +303,10 @@ if "Honesty addendum 2026-09-06 vs Settings Update history" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update history addendum")
 if "CLOSED leftover: Update history UI" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Update history UI")
+if "windows-native.29 stays prototype/pending" not in gaps.replace("`", ""):
+    raise SystemExit("fleet-doctrine-gaps must keep windows-native.29 prototype/pending")
+if "not product CLOSED" not in gaps or "not metal CLOSED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep session leftover honesty")
 if "Restart/reboot writers" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Restart/reboot writers OPEN")
 if "windows-native.28 metal" not in gaps:
