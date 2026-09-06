@@ -3372,7 +3372,7 @@
       "provider": {
         "id": "sharing.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "legacy-direct"
       },
       "kind": "writer",
       "effects": [
@@ -3403,9 +3403,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "sharing.resource"
@@ -3440,10 +3440,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "missing",
+        "status": "visible",
         "surface": "Files",
         "label": "Connect to network share",
-        "path": ""
+        "path": "Files > Connect to Server"
       },
       "agentCenterLabel": "Connect to network share",
       "proofIds": {
@@ -3455,8 +3455,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:sharing.smb.connect",
+        "file": "shell/apps/shared/FilesSessionSmb.qml",
+        "symbol": "connectShare",
         "brokerVerb": null
       }
     },
