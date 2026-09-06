@@ -15,7 +15,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "process.inspect",
     supportsResource: true,
-    coverage: "Running processes are readable from process.inspect (pid, user, command, control group). Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize. Only the bounded inventory is reachable."
+    coverage: "Running processes are readable from process.inspect with CPU share (FixedArgv /usr/bin/ps pcpu; pid, user, command, control group). session leftover recorded: Administration > Processes CPU inspect plane only / session-UI leftover only / not product CLOSED / not metal CLOSED / not claim=present. windows-native.26 stays prototype/pending. Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize (End Task stays OPEN leftover; terminationAuthorized=false). Only the bounded inventory is reachable."
   },
   {
     routeId: "administration.services.overview",
@@ -469,8 +469,16 @@ function resourceStatus(resource) {
   return "reported"
 }
 
+function resourceCpuPercent(resource) {
+  if (!isObject(resource) || String(resource.kind || "") !== "process") return null
+  if (typeof resource.cpuPercent !== "number" || !isFinite(resource.cpuPercent) || resource.cpuPercent < 0) return null
+  return resource.cpuPercent
+}
+
 function resourceSubtitle(resource) {
   var state = isObject(resource && resource.state) ? resource.state : {}
+  var cpuPercent = resourceCpuPercent(resource)
+  if (cpuPercent !== null) return "CPU " + cpuPercent + "%"
   if (typeof state.connection === "string" && state.connection !== "") return state.connection
   if (typeof state.activeProfile === "string") return state.activeProfile + " profile"
   if (typeof state.activeKeymap === "string") return state.activeKeymap
@@ -531,6 +539,7 @@ function normalizeLeafResource(resource, index) {
   var details = detailFields(state, {})
   var topDetails = detailFields(resource, { id: true, label: true, kind: true, state: true })
   for (var i = 0; i < topDetails.length && details.length < MAX_VISIBLE_FIELDS; i++) details.push(topDetails[i])
+  var cpuPercent = resourceCpuPercent(resource)
   return {
     id: id,
     label: clippedText(resource.label || id, 240),
@@ -539,6 +548,7 @@ function normalizeLeafResource(resource, index) {
     subtitle: clippedText(resourceSubtitle(resource), 240),
     details: details,
     startDigest: processStartDigest(resource),
+    cpuPercent: cpuPercent,
     order: index
   }
 }
@@ -627,6 +637,14 @@ function normalizedRecords(query, value, selectedResourceId) {
     for (var i = 0; i < value.resources.length; i++) {
       var resource = normalizeLeafResource(value.resources[i], i)
       if (resource) all.push(resource)
+    }
+    if (query.providerId === "process.provider") {
+      all.sort(function(left, right) {
+        var leftCpu = typeof left.cpuPercent === "number" ? left.cpuPercent : -1
+        var rightCpu = typeof right.cpuPercent === "number" ? right.cpuPercent : -1
+        if (rightCpu !== leftCpu) return rightCpu - leftCpu
+        return left.order - right.order
+      })
     }
   } else if (query.providerId === "defaults.provider" && isObject(value.state)) {
     var associations = value.state.associations
@@ -1080,6 +1098,7 @@ if (typeof module !== "undefined") {
     operationActions: operationActions,
     validateReadResult: validateReadResult,
     normalizeLeafResource: normalizeLeafResource,
+    resourceCpuPercent: resourceCpuPercent,
     processStartDigest: processStartDigest,
     recordStartDigest: recordStartDigest,
     endTaskPreflightArguments: endTaskPreflightArguments,

@@ -1743,9 +1743,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "process.resource"
@@ -1780,7 +1780,7 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Administration",
-        "label": "View processes",
+        "label": "View processes with CPU",
         "path": "Administration > Processes"
       },
       "agentCenterLabel": "Inspect processes",

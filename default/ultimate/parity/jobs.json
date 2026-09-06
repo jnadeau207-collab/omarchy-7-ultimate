@@ -1806,17 +1806,17 @@
       "kind": "windows-native-task",
       "sourceLabel": "Find an application that is consuming CPU",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "process.inspect"
       ],
       "humanRoute": {
-        "status": "planned",
-        "surface": "Task Manager",
-        "path": ""
+        "status": "visible",
+        "surface": "Administration",
+        "path": "Administration > Processes"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Read-only inspection requires no recovery.",
+      "recoveryExpectation": "Read-only inspection requires no recovery. End Task stays OPEN leftover (terminationAuthorized=false; no Fabric SHELL LIVE kill invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.26"

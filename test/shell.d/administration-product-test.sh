@@ -87,6 +87,7 @@ const processResource = Model.normalizeLeafResource({
   id: 'process.1234.0123456789abcdef',
   label: 'firefox',
   kind: 'process',
+  cpuPercent: 12.5,
   state: {
     lifecycle: 'running',
     startDigest: '0123456789abcdef',
@@ -96,6 +97,8 @@ const processResource = Model.normalizeLeafResource({
 }, 0)
 assert(processResource, 'process inspect resources project into Administration records')
 assertEqual(processResource.startDigest, '0123456789abcdef', 'process records carry typed startDigest from inspect state')
+assertEqual(processResource.cpuPercent, 12.5, 'process records carry typed cpuPercent from inspect')
+assertEqual(processResource.subtitle, 'CPU 12.5%', 'process subtitle surfaces CPU percent')
 assertEqual(Model.recordStartDigest(processResource), '0123456789abcdef', 'endTask reads typed startDigest only')
 assertEqual(Model.processStartDigest({
   kind: 'process',

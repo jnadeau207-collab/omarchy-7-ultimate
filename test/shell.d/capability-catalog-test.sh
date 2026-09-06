@@ -333,12 +333,18 @@ if "processes.inspect" in (parity_task_manager.get("capabilityIds") or []):
 if "process.inspect" not in (parity_task_manager.get("capabilityIds") or []):
     raise SystemExit("parity.task-manager does not name process.inspect")
 native26 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.26")
-if native26["humanRoute"].get("path"):
-    raise SystemExit(f"windows-native.26 invents a Superbar Task Manager: {native26['humanRoute']}")
 if native26.get("claim") == "present":
     raise SystemExit(f"windows-native.26 was flipped to present: {native26}")
+if native26.get("sourceStatus") != "pending" or native26.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.26 must stay prototype/pending: {native26}")
+if native26.get("humanRoute") != {"status": "visible", "surface": "Administration", "path": "Administration > Processes"}:
+    raise SystemExit(f"windows-native.26 humanRoute drifted: {native26.get('humanRoute')}")
+if "Task Manager" in str(native26.get("humanRoute") or {}) or "Superbar" in str(native26.get("humanRoute") or {}):
+    raise SystemExit(f"windows-native.26 invents a Task Manager / Superbar route: {native26.get('humanRoute')}")
 if native26.get("capabilityIds") != ["process.inspect"]:
     raise SystemExit(f"windows-native.26 capabilityIds are {native26.get('capabilityIds')}")
+if "OPEN leftover" not in str(native26.get("recoveryExpectation") or "") and "terminationAuthorized=false" not in str(native26.get("recoveryExpectation") or ""):
+    raise SystemExit(f"windows-native.26 recoveryExpectation dropped End Task OPEN leftover: {native26.get('recoveryExpectation')}")
 desktop_icons = by_id["desktop.icons.manage"]["humanRoute"]
 if desktop_icons.get("status") != "missing" or desktop_icons.get("path"):
     raise SystemExit(f"desktop.icons.manage invents a desktop destination: {desktop_icons}")
@@ -356,6 +362,10 @@ if process_inspect.get("availability", {}).get("claim") == "present":
     raise SystemExit("process.inspect must not claim present")
 if process_inspect.get("availability", {}).get("human") == "present":
     raise SystemExit("process.inspect must not claim human present / Task Manager present")
+if process_inspect.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"process.inspect claim is {process_inspect.get('availability')}")
+if process_inspect.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"process.inspect human availability is {process_inspect.get('availability')}")
 if process_inspect.get("provider", {}).get("state") == "legacy-direct":
     raise SystemExit("process.inspect leftover legacy-direct invent")
 process_inspect_route = process_inspect["humanRoute"]
@@ -415,8 +425,16 @@ if "startup" in str(parity_task_manager.get("recoveryExpectation") or "").lower(
 if "undo" in str(parity_task_manager.get("recoveryExpectation") or "").lower():
     raise SystemExit(f"parity.task-manager recoveryExpectation still uses startup undo language: {parity_task_manager.get('recoveryExpectation')}")
 admin_coverage = (root / "shell/apps/ultimate-administration/AdministrationModel.js").read_text(encoding="utf-8")
-if "Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize." not in admin_coverage:
+if "Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize" not in admin_coverage:
     raise SystemExit("Administration Processes coverage must keep End Task unauthorized")
+if "FixedArgv /usr/bin/ps" not in admin_coverage and "/usr/bin/ps" not in admin_coverage:
+    raise SystemExit("Administration Processes coverage must name FixedArgv /usr/bin/ps CPU inspect")
+if "windows-native.26 stays prototype/pending" not in admin_coverage:
+    raise SystemExit("Administration Processes coverage must keep windows-native.26 pending")
+if "OPEN leftover" not in admin_coverage:
+    raise SystemExit("Administration Processes coverage must keep End Task OPEN leftover")
+if "not claim=present" not in admin_coverage:
+    raise SystemExit("Administration Processes coverage must refuse claim=present")
 startup_cap = by_id["apps.startup.disable"]
 startup = startup_cap["humanRoute"]
 if startup.get("status") != "visible" or startup.get("surface") != "Settings":
@@ -1346,7 +1364,7 @@ if win7_leftover.get("emptyBinAuthorized") is not False:
     raise SystemExit("Win7 visual leftover.json must keep emptyBinAuthorized false")
 if (root / "test/acceptance.d/leftovers/win7-visual/hdmi.png").is_file() is False:
     raise SystemExit("Win7 visual leftover hdmi.png is missing")
-if "claims: missing=35, partial=6, plumbing=4, present=0, prototype=37" not in gaps:
+if "claims: missing=32, partial=6, plumbing=4, present=0, prototype=40" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
 if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE and keep the Default Programs applet missing")
@@ -1803,10 +1821,14 @@ if "stay planned Phase 9 destinations" in plan:
     raise SystemExit("project-ultimate still underclaims Administration readers as planned Phase 9 destinations")
 if "Administration > Processes" not in plan:
     raise SystemExit("project-ultimate must name Administration > Processes visible host")
-if "claim stays missing" not in plan:
-    raise SystemExit("project-ultimate must keep process.inspect / Administration reader claim missing")
+if "claim=partial" not in plan and "claim=partial / human=partial" not in plan:
+    raise SystemExit("project-ultimate must soft leftover-attach process.inspect claim=partial")
+if "other Admin inspect claims stay missing" not in plan and "other Administration reader claims stay missing" not in plan:
+    raise SystemExit("project-ultimate must keep other Administration reader claims missing")
 if "honest-unavailable as Task Manager" not in plan:
     raise SystemExit("project-ultimate must keep process.inspect honest-unavailable as Task Manager")
+if "windows-native.26 stays prototype/pending" not in plan and "`windows-native.26` stays prototype/pending" not in plan:
+    raise SystemExit("project-ultimate must keep windows-native.26 pending")
 if "Phase 9 exit criteria still open" not in plan:
     raise SystemExit("project-ultimate must keep Phase 9 exit still open")
 if "task manager present" in plan.lower() and "no task manager present" not in plan.lower():
@@ -1857,10 +1879,12 @@ if "Administration > Processes" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name Administration > Processes visible host")
 if "process.inspect" not in cp or "terminationAuthorized=false" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must name process.inspect + unauthorized End Task path")
-if "claim missing" not in cp and "claim **missing**" not in cp:
-    raise SystemExit("fleet-catalog-controlpanel must keep process.inspect / Administration reader claim missing")
+if "claim=partial" not in cp and "claim=**partial**" not in cp and "claim **partial**" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must soft leftover-attach process.inspect claim=partial")
 if "honest-unavailable as Task Manager product" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must keep process.inspect honest-unavailable as Task Manager product")
+if "windows-native.26 stays prototype/pending" not in cp and "windows-native.26` stays prototype/pending" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel must keep windows-native.26 pending")
 if "Phase 9 exit still open" not in cp:
     raise SystemExit("fleet-catalog-controlpanel must keep Phase 9 exit still open")
 if "inspect ≠ MMC product present" not in cp and "inspect inventory ≠ product MMC present" not in cp:
@@ -2575,7 +2599,7 @@ inventory = {
     "diagnostics.inspect": "missing",
     "firewall.inspect": "missing",
     "printer.inspect": "missing",
-    "process.inspect": "missing",
+    "process.inspect": "partial",
     "process.termination.plan": "missing",
     "schedule.inspect": "missing",
     "service.inspect": "missing",
