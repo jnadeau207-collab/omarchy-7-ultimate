@@ -172,7 +172,7 @@
         "status": "visible",
         "surface": "Settings",
         "label": "Choose desktop background",
-        "path": "Start > Settings > Personalization"
+        "path": "Settings > Personalization"
       },
       "agentCenterLabel": "Choose desktop background",
       "proofIds": {
@@ -185,7 +185,7 @@
       },
       "source": {
         "file": "shell/plugins/image-picker/ImagePicker.qml",
-        "symbol": "ImagePicker.apply",
+        "symbol": "applyEmbedded",
         "brokerVerb": null
       }
     },

@@ -118,7 +118,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
-| Personalization | Settings → Personalization | `parity.personalization` prototype; wallpaper/theme caps | image picker / theme packs |
+| Personalization | Settings → Personalization | `parity.personalization` prototype; `desktop.wallpaper.set` leftover partial soft leftover-attach ACC `windows-native.4` via `ImagePicker.applyEmbedded` → `omarchy-theme-bg-set` (visible Settings > Personalization; never claim=present); theme caps | image picker / theme packs; `windows-native.4` prototype/pending |
 | Display (dup) | Settings → Display | See Hardware | `display.provider` |
 | Taskbar and Start Menu | Superbar + Start (chrome, not CP applet) | `parity.superbar-taskbar` / `parity.start` prototype | shell plugins |
 | Ease of Access Center | Settings Accessibility (**honest missing** page / empty path) | `parity.accessibility` missing; `accessibility.configure` missing | No `accessibility.provider` |
@@ -197,7 +197,7 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | 28 | Parental Controls | Yes | — | — | Gap |
 | 29 | Pen and Touch | HW | — | — | Gap / HW |
 | 30 | Performance Information and Tools | Yes | — | — | Gap |
-| 31 | Personalization | Yes | Settings → Personalization | `parity.personalization` | Prototype |
+| 31 | Personalization | Yes | Settings → Personalization | `parity.personalization`; soft leftover-attach wn.4 wallpaper via `applyEmbedded` | Prototype/pending wn.4; never claim=present |
 | 32 | Phone and Modem | Yes | — | — | Gap |
 | 33 | Power Options | Yes | Settings → Power | `parity.power-options` | Prototype; Settings Power LIVE refused; Superbar/QS leftover FAIL on this metal; QS Power METAL_HEAD OPEN |
 | 34 | Programs and Features | Yes | Software Center missing as product; Apps inspect | `parity.programs-and-features` / packages.* | Gap / plan_only packages |

@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "personalization.inspect",
     supportsResource: false,
-    coverage: "Settings hosts the existing image picker for theme packs and wallpapers. No code-owned personalization.provider is registered. Density, cursor, motion, and a typed full theme service remain unavailable from Settings."
+    coverage: "Settings hosts the existing image picker for theme packs and wallpapers. Wallpaper apply runs through tip-true ImagePicker.applyEmbedded → omarchy-theme-bg-set. No code-owned personalization.provider is registered. Density, cursor, motion, and a typed full theme service remain unavailable from Settings. session leftover recorded: Change the wallpaper soft leftover-attaches windows-native.4 to this tip-true Settings > Personalization wallpaper plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.4. windows-native.4 stays prototype/pending. Never claim=present."
   },
   {
     routeId: "settings.apps.overview",
@@ -1442,7 +1442,7 @@ function hostedPanel(routeId) {
     source: "Ui/SettingsPersonalizationHost.qml",
     pluginId: "omarchy.image-picker",
     label: "Live Personalization picker",
-    honesty: "This page hosts the existing image picker for theme packs and wallpapers. Typed personalization.provider writers for density, cursor, motion, and a full theme service remain unavailable."
+    honesty: "This page hosts the existing image picker for theme packs and wallpapers. Wallpaper apply runs through tip-true ImagePicker.applyEmbedded → omarchy-theme-bg-set. Soft leftover-attaches windows-native.4 to this tip-true Settings > Personalization wallpaper plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.4. Typed personalization.provider writers for density, cursor, motion, and a full theme service remain unavailable. windows-native.4 stays prototype/pending. Never claim=present."
   }
   return null
 }

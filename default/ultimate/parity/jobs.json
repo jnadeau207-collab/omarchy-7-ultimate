@@ -1232,8 +1232,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Image picker",
-        "path": "Personalization > Background"
+        "surface": "Settings",
+        "path": "Settings > Personalization"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous wallpaper.",
