@@ -294,12 +294,13 @@
       "claim": "prototype",
       "capabilityIds": [
         "defaults.protocol.set",
+        "defaults.mime.set",
         "files.associations.set"
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Settings Apps",
-        "path": "Settings > Apps"
+        "surface": "Settings",
+        "path": "Settings > Default Programs"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Record prior associations and offer guarded undo.",
@@ -1624,7 +1625,7 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Settings",
-        "path": "Settings > Apps"
+        "path": "Settings > Default Programs"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous default handler.",

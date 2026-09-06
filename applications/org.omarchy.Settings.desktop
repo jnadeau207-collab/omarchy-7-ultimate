@@ -9,11 +9,11 @@ Exec=omarchy-launch-settings --source desktop %u
 Icon=preferences-system
 Terminal=false
 Categories=Settings;
-Keywords=settings;display;sound;network;bluetooth;input;power;apps;defaults;accessibility;update;recovery;system;
+Keywords=settings;display;sound;network;bluetooth;input;power;apps;defaults;default programs;mailto;mime;accessibility;update;recovery;system;
 MimeType=x-scheme-handler/omarchy-settings;
 StartupNotify=true
 StartupWMClass=org.omarchy.Settings
-Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;
+Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;DefaultPrograms;Input;Update;Recovery;
 
 [Desktop Action Home]
 Name=Settings home
@@ -46,6 +46,10 @@ Exec=omarchy-launch-settings --source desktop settings.personalization.overview
 [Desktop Action Apps]
 Name=Apps
 Exec=omarchy-launch-settings --source desktop settings.apps.overview
+
+[Desktop Action DefaultPrograms]
+Name=Default Programs
+Exec=omarchy-launch-settings --source desktop settings.apps.default-programs
 
 [Desktop Action Input]
 Name=Input

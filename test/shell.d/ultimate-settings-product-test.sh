@@ -11,9 +11,9 @@ const Model = requireFromRoot('shell/apps/ultimate-settings/SettingsModel.js')
 const routes = JSON.parse(fs.readFileSync(path.join(root, 'shell/apps/ultimate-settings/routes-v1.json'), 'utf8'))
 const domainRoutes = routes.routes.filter(route => route.id !== Model.OVERVIEW_ROUTE)
 
-assertEqual(routes.routes.length, 13, 'Settings exposes home plus all twelve product domains')
-assertEqual(Model.ROUTE_QUERIES.length, 12, 'Settings closed query map covers all twelve provider domains')
-assertEqual(new Set(Model.ROUTE_QUERIES.map(query => query.routeId)).size, 12, 'Settings query map has no duplicate route')
+assertEqual(routes.routes.length, 14, 'Settings exposes home plus thirteen product pages')
+assertEqual(Model.ROUTE_QUERIES.length, 13, 'Settings closed query map covers all thirteen product pages')
+assertEqual(new Set(Model.ROUTE_QUERIES.map(query => query.routeId)).size, 13, 'Settings query map has no duplicate route')
 assertDeepEqual(
   domainRoutes.map(route => route.id),
   Model.ROUTE_QUERIES.map(query => query.routeId),
@@ -108,9 +108,13 @@ const liveWriterRoutes = [
   'settings.network.overview',
   'settings.display.overview',
   'settings.input.overview',
-  'settings.apps.overview'
+  'settings.apps.overview',
+  'settings.apps.default-programs'
 ]
-assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the five live writer routes')
+assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the six live writer routes')
+assertEqual(Model.isDefaultsWriterRoute('settings.apps.overview'), true, 'Apps is a defaults writer route')
+assertEqual(Model.isDefaultsWriterRoute('settings.apps.default-programs'), true, 'Default Programs is a defaults writer route')
+assertEqual(Model.isDefaultsWriterRoute('settings.audio.overview'), false, 'Sound is not a defaults writer route')
 assertEqual(Model.LIVE_WRITER_ROUTES.indexOf('settings.power.overview'), -1, 'Power is not a live writer route')
 for (const routeId of liveWriterRoutes) {
   assertEqual(Model.routeHasLiveWriter(routeId), true, `${routeId} is a live writer`)
@@ -128,7 +132,7 @@ for (const routeId of ['settings.power.overview', 'settings.bluetooth.overview',
   assert(!/remain Phase/i.test(declaredOps), `${routeId || '(none)'} declared ops do not invent a remain-Phase fence`)
 }
 const footer = Model.authorityFooter()
-assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser'), 'authority footer names every live writer')
+assert(footer.includes('Sound volume') && footer.includes('Network Wi-Fi radio') && footer.includes('Display brightness') && footer.includes('Input layout') && footer.includes('Apps default browser') && footer.includes('Default Programs protocol and MIME'), 'authority footer names every live writer')
 assert(footer.includes('Power profile') && footer.includes('inspect-only') && footer.includes('polkit') && footer.includes('app.slice'), 'authority footer names Power profile as inspect-only polkit residual')
 assert(!footer.includes('Power profile, Display brightness'), 'authority footer does not list Power profile among LIVE writers')
 assert(footer.includes('other domains stay inspect-only'), 'authority footer keeps remaining domains inspect-only')
@@ -277,7 +281,7 @@ function entryFor(query, order, state = 'available') {
   }
 }
 
-const fullCatalog = { providers: Model.ROUTE_QUERIES.map((query, index) => entryFor(query, index)) }
+const fullCatalog = { providers: Model.ROUTE_QUERIES.map((query, index) => entryFor(query, index)).filter((entry, index, list) => list.findIndex(other => other.manifest.provider === entry.manifest.provider) === index) }
 assertEqual(Model.validateCatalogResponse(fullCatalog), '', 'Settings accepts the bounded exact provider catalog envelope')
 for (const query of Model.ROUTE_QUERIES) {
   assertEqual(
@@ -300,7 +304,7 @@ const productionLike = {
   ].includes(entry.manifest.provider))
 }
 const cards = Model.catalogCards(productionLike.providers)
-assertEqual(cards.length, 12, 'overview always represents all twelve Settings domains')
+assertEqual(cards.length, 13, 'overview always represents all Settings pages including Default Programs')
 assertEqual(cards.filter(card => card.status === 'not registered').length, 3, 'overview exposes every intentionally missing provider')
 assert(cards.every(card => card.detail.length <= Model.MAX_DISPLAY_TEXT), 'overview details obey the display text bound')
 

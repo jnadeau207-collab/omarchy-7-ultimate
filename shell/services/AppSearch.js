@@ -184,10 +184,20 @@ var START_DESTINATIONS = [
     name: "Apps",
     genericName: "Settings",
     comment: "Open Settings Apps",
-    keywords: ["apps", "defaults", "default programs", "associations", "startup", "settings"],
+    keywords: ["apps", "startup", "settings"],
     icon: "org.omarchy.Settings",
     desktopId: "org.omarchy.Settings",
     actionId: "Apps"
+  },
+  {
+    id: "omarchy.start.default-programs",
+    name: "Default Programs",
+    genericName: "Settings",
+    comment: "Open Settings Default Programs",
+    keywords: ["default programs", "defaults", "browser", "mailto", "mime", "associations", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    actionId: "DefaultPrograms"
   },
   {
     id: "omarchy.start.update",

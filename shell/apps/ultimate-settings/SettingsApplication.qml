@@ -60,8 +60,11 @@ Item {
 
   readonly property var startupRows: SettingsModel.startupEntries(queryState.records)
 
+  readonly property bool defaultsWriterPage: SettingsModel.isDefaultsWriterRoute(host ? host.currentRoute : "")
+  readonly property bool defaultProgramsPage: host !== null && host.currentRoute === "settings.apps.default-programs"
+
   function firstProtocolResource(scheme) {
-    if (!currentRoute || currentRoute.id !== "settings.apps.overview") return null
+    if (!root.defaultsWriterPage) return null
     var record = SettingsModel.protocolAssociation(queryState.records, scheme)
     return record && record.writable ? record : null
   }
@@ -128,7 +131,7 @@ Item {
   property string operationMailerId: ""
 
   function firstMailerResource() {
-    if (!currentRoute || currentRoute.id !== "settings.apps.overview") return null
+    if (!root.defaultsWriterPage) return null
     var record = SettingsModel.mailerAssociation(queryState.records)
     return record && record.writable ? record : null
   }
@@ -175,7 +178,7 @@ Item {
 
   function applyMimeDefault(key, appId) {
     if (!host || operationBusy) return
-    if (!currentRoute || currentRoute.id !== "settings.apps.overview") return
+    if (!root.defaultsWriterPage) return
     var row = mimeRowFor(key)
     if (!row || row.defaultAppId === appId) return
     var supported = false
@@ -943,7 +946,60 @@ Item {
             }
 
             Rectangle {
-              visible: root.currentRoute && root.currentRoute.id === "settings.apps.overview" && root.browserOptions.length > 1
+              visible: root.defaultProgramsPage
+              Layout.fillWidth: true
+              implicitHeight: defaultProgramsHonesty.implicitHeight + Style.space(28)
+              radius: Tokens.radius.medium
+              color: Tokens.surface.raised
+              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              border.width: Tokens.accessibility.highContrast ? 2 : 1
+              Accessible.role: Accessible.Pane
+              Accessible.name: Semantics.text(root.productProfile, "Default Programs")
+
+              ColumnLayout {
+                id: defaultProgramsHonesty
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Style.space(14)
+                spacing: Style.space(8)
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(8)
+
+                  Text {
+                    textFormat: Text.PlainText
+                    text: Semantics.text(root.productProfile, "Default Programs")
+                    color: Tokens.text.primary
+                    font.family: Tokens.typography.family
+                    font.pixelSize: Style.font.title
+                    font.bold: true
+                    Layout.fillWidth: true
+                  }
+
+                  Ui.Badge {
+                    text: "PARTIAL LIVE CONTROL"
+                    tone: "info"
+                    semanticProfile: root.productProfile
+                  }
+                }
+
+                Text {
+                  textFormat: Text.PlainText
+                  text: Semantics.text(root.productProfile,
+                    "Set the default browser, default email, and writable MIME associations through defaults.provider. This is not the Win7 Default Programs applet. AutoPlay, Set Program Access and Computer Defaults, and files.associations.set stay unavailable. Win7 applet parity still open.")
+                  color: Tokens.text.secondary
+                  font.family: Tokens.typography.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.Wrap
+                  Layout.fillWidth: true
+                }
+              }
+            }
+
+            Rectangle {
+              visible: root.defaultsWriterPage && root.browserOptions.length > 1
               Layout.fillWidth: true
               implicitHeight: browserColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
@@ -1015,7 +1071,7 @@ Item {
               }
             }
             Rectangle {
-              visible: root.currentRoute && root.currentRoute.id === "settings.apps.overview" && root.mailerOptions.length > 1
+              visible: root.defaultsWriterPage && root.mailerOptions.length > 1
               Layout.fillWidth: true
               implicitHeight: mailerColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
@@ -1087,7 +1143,7 @@ Item {
               }
             }
             Rectangle {
-              visible: root.currentRoute && root.currentRoute.id === "settings.apps.overview" && root.mimeRows.length > 0
+              visible: root.defaultsWriterPage && root.mimeRows.length > 0
               Layout.fillWidth: true
               implicitHeight: mimeColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium

@@ -427,7 +427,8 @@ for capability_id, path in admin_readers.items():
 
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
-    "Update", "Recovery", "Input", "Bluetooth", "Accessibility", "System",
+    "Default Programs", "Update", "Recovery", "Input", "Bluetooth",
+    "Accessibility", "System",
 }
 invented_start_prefixes = (
     "Start > Backup and Restore",
@@ -487,7 +488,7 @@ if protocol_set.get("provider", {}).get("state") != "present":
     raise SystemExit(f"defaults.protocol.set provider state is {protocol_set.get('provider')}")
 if protocol_set.get("availability", {}).get("claim") == "present":
     raise SystemExit("defaults.protocol.set must not claim present")
-if protocol_set["humanRoute"].get("path") != "Settings > Apps":
+if protocol_set["humanRoute"].get("path") != "Settings > Default Programs":
     raise SystemExit(f"defaults.protocol.set route is {protocol_set.get('humanRoute')}")
 if protocol_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
     raise SystemExit(f"defaults.protocol.set source is {protocol_set.get('source')}")
@@ -502,7 +503,7 @@ if mime_set.get("availability", {}).get("claim") == "present":
     raise SystemExit("defaults.mime.set must not claim present")
 if mime_set["humanRoute"].get("status") != "visible":
     raise SystemExit(f"defaults.mime.set underclaims a visible Settings MIME setter route: {mime_set.get('humanRoute')}")
-if mime_set["humanRoute"].get("path") != "Settings > Apps":
+if mime_set["humanRoute"].get("path") != "Settings > Default Programs":
     raise SystemExit(f"defaults.mime.set route is {mime_set.get('humanRoute')}")
 if mime_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
     raise SystemExit(f"defaults.mime.set source is {mime_set.get('source')}")
@@ -968,6 +969,12 @@ if "SOURCE LOCK (not pixel proof)" not in explorer_chrome:
     raise SystemExit("ultimate-explorer-chrome-test must name hex-grep as SOURCE LOCK (not pixel proof)")
 if "not pixel proof" not in explorer_chrome:
     raise SystemExit("ultimate-explorer-chrome-test still treats hex-grep as pixel proof")
+if "Honesty addendum 2026-09-05 vs Default Programs page" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Default Programs page addendum")
+if "Default Programs page partial LIVE; Win7 applet parity still open" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name Default Programs page partial LIVE")
+if "settings.apps.default-programs" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name the Default Programs route")
 if "Honesty addendum 2026-09-05 vs Win7 visual leftover" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Win7 visual leftover addendum")
 if "Win7 visual leftover OPEN" not in gaps:
@@ -1335,8 +1342,8 @@ gt06_json = json.loads((root / "plans/win7-ultimate-ground-truth/06-settings-adm
 gt06_json_text = json.dumps(gt06_json)
 if "apps.defaults.set" in gt06 or "apps.defaults.set" in gt06_json_text:
     raise SystemExit("06-settings-admin-media still names leftover apps.defaults.set as the live Apps writer")
-if "defaults.protocol.set" not in gt06 or "Default Programs applet still missing" not in gt06:
-    raise SystemExit("06-settings-admin-media does not name defaults.protocol.set with the Default Programs applet still missing")
+if "defaults.protocol.set" not in gt06 or "Default Programs page partial LIVE; Win7 applet parity still open" not in gt06:
+    raise SystemExit("06-settings-admin-media does not name defaults.protocol.set with Default Programs page partial LIVE")
 if "partial MIME rows LIVE on Settings > Apps" not in gt06:
     raise SystemExit("06-settings-admin-media does not name partial MIME rows LIVE")
 if "files.associations.set" not in gt06 or "missing/planned MIME" not in gt06:
@@ -1395,11 +1402,11 @@ if "METAL_HEAD closed" in gt06:
 honesty = gt06_json.get("product_honesty") or {}
 if honesty.get("defaults_writer") != "defaults.protocol.set":
     raise SystemExit(f"06 JSON defaults_writer is {honesty.get('defaults_writer')}")
-if honesty.get("defaults_scope") != "browser, mailto, and partial MIME rows LIVE; Default Programs applet still missing":
+if honesty.get("defaults_scope") != "browser, mailto, and partial MIME rows LIVE; Default Programs page partial LIVE; Win7 applet parity still open":
     raise SystemExit(f"06 JSON defaults_scope is {honesty.get('defaults_scope')}")
 if honesty.get("files_associations") != "missing/planned MIME":
     raise SystemExit(f"06 JSON files_associations is {honesty.get('files_associations')}")
-if honesty.get("defaults_mime_plane") != "defaults.mime.set Settings Apps LIVE for writable multi-candidate rows; Default Programs applet still missing":
+if honesty.get("defaults_mime_plane") != "defaults.mime.set Default Programs LIVE for writable multi-candidate rows; Win7 applet parity still open":
     raise SystemExit(f"06 JSON defaults_mime_plane is {honesty.get('defaults_mime_plane')}")
 if honesty.get("settings_power_live") != "refused":
     raise SystemExit(f"06 JSON settings_power_live is {honesty.get('settings_power_live')}")
@@ -1485,8 +1492,8 @@ if "planned host" in cp or "planned Admin" in cp:
     raise SystemExit("fleet-catalog-controlpanel still keeps Admin inspect rows as planned hosts after #36")
 if "apps.defaults.set" in cp:
     raise SystemExit("fleet-catalog-controlpanel still names leftover apps.defaults.set as the live Apps writer")
-if "defaults.protocol.set" not in cp or "Default Programs applet still missing" not in cp:
-    raise SystemExit("fleet-catalog-controlpanel does not name defaults.protocol.set with the Default Programs applet still missing")
+if "defaults.protocol.set" not in cp or "Default Programs page partial LIVE; Win7 applet parity still open" not in cp:
+    raise SystemExit("fleet-catalog-controlpanel does not name defaults.protocol.set with Default Programs page partial LIVE")
 if "partial MIME rows LIVE on Settings > Apps" not in cp:
     raise SystemExit("fleet-catalog-controlpanel does not name partial MIME rows LIVE")
 if "files.associations.set" not in cp or "missing/planned MIME" not in cp:
@@ -1954,6 +1961,10 @@ if "Files LIVE Open/Rename/Copy grim leftover OPEN" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep Files LIVE Open/Rename/Copy grim leftover OPEN")
 if "Cloud EXIT 0 is not metal leftover" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name Cloud EXIT 0 as not metal leftover")
+if "Honesty addendum 2026-09-05 vs Default Programs page" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must add the Default Programs page addendum")
+if "Default Programs page partial LIVE; Win7 applet parity still open" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name Default Programs page partial LIVE")
 if "Honesty addendum 2026-09-05 vs Win7 visual leftover" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must add the Win7 visual leftover addendum")
 if "Win7 visual leftover OPEN" not in writers_handoff:

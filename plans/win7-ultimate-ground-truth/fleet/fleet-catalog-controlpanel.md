@@ -37,7 +37,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Control Panel home | `org.omarchy.Settings` home + Start search Settings hits |
 | Control Panel icon applets | Settings routes, Superbar/QS panels, Administration, Files, Start places |
 | Administrative Tools folder | `org.omarchy.Administration` (+ MMC-class tools still missing as product; inspect hosts visible, claim missing) |
-| Default Programs | Settings → Apps (`defaults.provider`); `defaults.protocol.set` browser and mailto LIVE; `defaults.mime.set` write plane is reachable; partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing; `files.associations.set` still missing/planned MIME; MIME / Default Programs association UI residual OPEN after PR #62 |
+| Default Programs | Settings → Default Programs (`settings.apps.default-programs`, `defaults.provider`); `defaults.protocol.set` browser and mailto LIVE; `defaults.mime.set` LIVE for writable multi-candidate rows; Default Programs page partial LIVE; Win7 applet parity still open; `files.associations.set` still missing/planned MIME; MIME / Default Programs association UI residual OPEN after PR #62 |
 | Recycle Bin | Files Trash routes / `files.trash.*` plane; Desktop Recycle icon is the shipped `Recycle Bin.desktop` shortcut (`omarchy-launch-files --source desktop files.trash`); `files.trash.restore` write plane is reachable (claim=partial; humanRoute planned empty); `files.trash.manage` write plane is reachable (claim=partial; humanRoute planned empty; `emptyBinAuthorized=false`); Recycle Bin / Empty Bin LIVE residual OPEN after PR #63 |
 | Explorer Open | Files Open / `files.entry.open` launch plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Open`); no Open With / MIME association UI |
 | Explorer Rename | Files Rename / `files.entry.rename` write plane is reachable (claim=partial; risk low; SHELL-grantable; visible `Files > Rename`; `renameAuthorized=true`); same-directory only |
@@ -243,7 +243,8 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | `settings.bluetooth.overview` | Devices and Printers (BT slice) | `bluetooth.provider` |
 | `settings.input.overview` | Keyboard / Region (partial) | `input.provider` |
 | `settings.personalization.overview` | Personalization | personalization / wallpaper |
-| `settings.apps.overview` | Default Programs / Programs and Features (partial) | `defaults.provider`; `defaults.protocol.set` browser and mailto LIVE; partial MIME rows LIVE; Default Programs applet still missing |
+| `settings.apps.overview` | Apps / startup inspect | `defaults.provider`; startup readable; protocol and MIME writers also live here |
+| `settings.apps.default-programs` | Default Programs (partial) | `defaults.provider`; `defaults.protocol.set` browser and mailto LIVE; `defaults.mime.set` LIVE; Default Programs page partial LIVE; Win7 applet parity still open |
 | `settings.accessibility.overview` | Ease of Access | honest missing (`accessibility.provider` absent) |
 | `settings.update.overview` | Windows Update | `update.provider` |
 | `settings.recovery.overview` | Recovery / Backup adjacency | `recovery.provider` |
