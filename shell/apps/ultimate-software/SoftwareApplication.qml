@@ -79,7 +79,7 @@ Item {
       return
     }
     root.sessionMutation = SoftwareModel.sessionMutationAccepted(root.sessionMutation, plan)
-    if (!sessionInstall.installRecord(record)) {
+    if (!sessionInstall.installRecord({ id: plan.packageId })) {
       root.sessionMutation = SoftwareModel.sessionMutationFinished(root.sessionMutation, { ok: false, explanation: "The session package helper is busy." })
     }
   }
@@ -92,7 +92,7 @@ Item {
       return
     }
     root.sessionMutation = SoftwareModel.sessionMutationAccepted(root.sessionMutation, plan)
-    if (!sessionInstall.removeRecord(record)) {
+    if (!sessionInstall.removeRecord({ id: plan.packageId })) {
       root.sessionMutation = SoftwareModel.sessionMutationFinished(root.sessionMutation, { ok: false, explanation: "The session package helper is busy." })
     }
   }

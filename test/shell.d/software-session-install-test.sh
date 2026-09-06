@@ -37,6 +37,10 @@ if grep -Fq 'This surface never invokes a package manager' "$software_app"; then
 fi
 grep -Fq 'Install' "$software_card" || fail "catalog cards expose Install"
 grep -Fq 'sessionMutationPlan' "$software_model" || fail "Software model plans session mutations"
+grep -Fq 'installRecord({ id: plan.packageId })' "$software_app" ||
+  fail "install submits the admitted plan identity"
+grep -Fq 'removeRecord({ id: plan.packageId })' "$software_app" ||
+  fail "remove submits the admitted plan identity"
 
 pass "Software Center wires a session install plane instead of a Fabric LIVE button"
 
@@ -151,6 +155,21 @@ assert(Model.sessionMutationCanSubmit(install), 'curated install can submit')
 const refused = Model.sessionMutationPlan(spotify, 'install')
 assertEqual(refused.action, 'unavailable', 'flatpak rows stay unavailable')
 assert(!Model.sessionMutationCanSubmit(refused), 'flatpak install cannot submit')
+
+const installed = {
+  id: 'install.local.neovim',
+  kind: 'installation',
+  title: 'neovim',
+  subtitle: 'software.curated.neovim',
+  details: [
+    { label: 'Source', value: 'curated' },
+    { label: 'Package', value: 'neovim' }
+  ]
+}
+const installedPlan = Model.sessionMutationPlan(installed, 'remove')
+assertEqual(installedPlan.action, 'remove', 'installation rows can remove')
+assertEqual(installedPlan.packageId, 'software.curated.neovim', 'installation rows admit the catalog identity, not the install id')
+assert(Model.sessionMutationCanSubmit(installedPlan), 'admitted installation remove can submit')
 
 const idle = Model.sessionMutationIdle()
 assertEqual(idle.phase, 'idle', 'session mutation starts idle')
