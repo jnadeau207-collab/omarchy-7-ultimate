@@ -452,6 +452,17 @@ Item {
     if (!sessionArchive.createArchive(plan)) root.operationMessage = "The session Compress helper is busy."
   }
 
+  function sessionExtractEntry(record) {
+    if (root.operationBusy || root.sessionBusy) return
+    var plan = FilesModel.sessionExtractPlan(record)
+    if (!FilesModel.sessionExtractCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That item cannot be extracted through this session."
+      return
+    }
+    root.operationMessage = "Extracting " + String(plan.title || record.title || "this item") + " through this session."
+    if (!sessionArchive.extractArchive(plan)) root.operationMessage = "The session Extract helper is busy."
+  }
+
   function createFolder(name) {
     if (!host || operationBusy || !createVisible) return
     var refusal = FilesModel.createNameRefusal(name)
@@ -536,6 +547,10 @@ Item {
         key: "compress", label: "Compress", dropdown: false,
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionCompressableRecord(root.selectedRecord)
       })
+      list.push({
+        key: "extract", label: "Extract", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionExtractableRecord(root.selectedRecord)
+      })
     }
     if (root.createVisible && FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({
@@ -575,6 +590,7 @@ Item {
     }
     if (FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({ key: "compress", label: "Compress", enabled: FilesModel.sessionCompressableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+      list.push({ key: "extract", label: "Extract", enabled: FilesModel.sessionExtractableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     if (root.trashRoute) {
       list.push({ key: "restore", label: "Restore", enabled: FilesModel.sessionRestorableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
@@ -602,6 +618,7 @@ Item {
     }
     if (FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({ key: "compress", label: "Compress", enabled: FilesModel.sessionCompressableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+      list.push({ key: "extract", label: "Extract", enabled: FilesModel.sessionExtractableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     if (root.trashRoute) {
       list.push({ key: "restore", label: "Restore", enabled: FilesModel.sessionRestorableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
@@ -622,6 +639,7 @@ Item {
     if (key === "cut") { root.sessionCutEntry(root.selectedRecord); return }
     if (key === "paste") { root.pasteFromClipboard(); return }
     if (key === "compress") { root.sessionCompressEntry(root.selectedRecord); return }
+    if (key === "extract") { root.sessionExtractEntry(root.selectedRecord); return }
     if (key === "delete") { root.sessionTrashEntry(root.selectedRecord); return }
     if (key === "permanently-delete") { root.beginPermanentDelete(root.selectedRecord); return }
     if (key === "restore") { root.sessionRestoreEntry(root.selectedRecord); return }
@@ -937,7 +955,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))

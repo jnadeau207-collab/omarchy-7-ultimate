@@ -361,6 +361,71 @@ function sessionArchiveCanSubmit(plan) {
   return plan.action === "archive"
 }
 
+function sessionExtractableName(record) {
+  var title = String(record && (record.title || record.relativePath) || "")
+  var cut = title.lastIndexOf("/")
+  var leaf = cut >= 0 ? title.slice(cut + 1) : title
+  return leaf.toLowerCase().endsWith(".zip") && leaf.toLowerCase() !== ".zip"
+}
+
+function sessionExtractableRecord(record) {
+  if (!isObject(record)) return false
+  return String(record.kind || "") === "entry"
+    && String(record.entryKind || "") === "file"
+    && String(record.status || "") !== "symlink"
+    && sessionWritableLocation(record.locationId)
+    && String(record.id || "") !== ""
+    && String(record.relativePath || "") !== ""
+    && sessionExtractableName(record)
+}
+
+function sessionExtractPlan(selection) {
+  var records = []
+  if (Array.isArray(selection)) {
+    for (var i = 0; i < selection.length; i++) records.push(selection[i])
+  } else if (selection) {
+    records.push(selection)
+  }
+  if (records.length === 0) {
+    return { action: "unavailable", reason: "Select a zip archive to extract through this session." }
+  }
+  if (records.length !== 1) {
+    return { action: "unavailable", reason: "Extract one zip archive at a time through this session." }
+  }
+  var record = records[0]
+  if (!sessionExtractableRecord(record)) {
+    if (isObject(record) && String(record.locationId || "") === "files.location.trash") {
+      return { action: "unavailable", reason: "Trash entries cannot be extracted." }
+    }
+    if (isObject(record) && String(record.status || "") === "symlink") {
+      return { action: "unavailable", reason: "Symlink entries cannot be extracted." }
+    }
+    if (isObject(record) && !sessionExtractableName(record)) {
+      return { action: "unavailable", reason: "Select a zip archive to extract through this session." }
+    }
+    return { action: "unavailable", reason: "That item cannot be extracted through this session." }
+  }
+  return {
+    action: "extract",
+    locationId: String(record.locationId),
+    parentRelativePath: parentRelativePath(String(record.relativePath || "")),
+    entryRelativePath: String(record.relativePath),
+    entryId: String(record.id),
+    entries: [{
+      locationId: String(record.locationId),
+      entryRelativePath: String(record.relativePath),
+      entryId: String(record.id),
+      title: String(record.title || "")
+    }],
+    title: String(record.title || "")
+  }
+}
+
+function sessionExtractCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "extract"
+}
+
 function encodeFileUri(absolutePath) {
   var value = String(absolutePath || "")
   if (!value.startsWith("/") || value.indexOf("\x00") >= 0) return ""
@@ -1258,6 +1323,8 @@ if (typeof module !== "undefined") module.exports = {
   sessionMutateCanSubmit: sessionMutateCanSubmit,
   sessionCompressableRecord: sessionCompressableRecord, sessionArchivePlan: sessionArchivePlan,
   sessionArchiveCanSubmit: sessionArchiveCanSubmit,
+  sessionExtractableRecord: sessionExtractableRecord, sessionExtractPlan: sessionExtractPlan,
+  sessionExtractCanSubmit: sessionExtractCanSubmit,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,
