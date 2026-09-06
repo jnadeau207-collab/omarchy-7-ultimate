@@ -69,7 +69,7 @@ Jobs in `jobs.json`: **82** (claims: missing=35, partial=6, plumbing=4, present=
 | `parity.power-options` | prototype/prototype | visible: Start > Settings > Power | User can view power source/profile and set power profile from Settings/Superbar without terminal; sleep/lid remain separate if missing. | Claiming Power Options complete from profile.set alone. |
 | `parity.sound` | prototype/prototype | visible: Start > Settings > Sound | User can view outputs and set output volume from Settings/Superbar without terminal; mute/routing may remain unavailable if stated. | Inventing full mixer/port UI from volume writer. |
 | `parity.display` | prototype/prototype | visible: Start > Settings > Display | User can view displays and change brightness when hardware allows; resolution/scale/arrangement are separate requirements if missing. | Claiming Display complete from brightness-only; inventing arrangement UI. |
-| `parity.modern-display-scaling-hdr-night-light` | prototype/prototype / plumbing | visible: Superbar > Display | User can set scaling (e.g. 125%), HDR if available, night light from Display/Quick Settings. | Claiming modern display complete from one of scaling/night-light alone. |
+| `parity.modern-display-scaling-hdr-night-light` | prototype/prototype / plumbing | visible: Settings > Display | User can set scaling (e.g. 125%), HDR if available, night light from Display/Quick Settings. | Claiming modern display complete from one of scaling/night-light alone. / metal CLOSED from Cloud EXIT 0. |
 
 ### Defaults
 

@@ -819,6 +819,11 @@ if native3["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.3 underclaims a visible Settings Display host: {native3.get('humanRoute')}")
 if native3["humanRoute"].get("path") != "Settings > Display":
     raise SystemExit(f"windows-native.3 underclaims the Settings Display host: {native3['humanRoute']}")
+native3_recovery = str(native3.get("recoveryExpectation") or "")
+if "Automatically roll back a timed display change unless kept." in native3_recovery:
+    raise SystemExit("windows-native.3 still invents timed auto-rollback/keep")
+if "no timed auto-rollback" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recoveryExpectation dropped no timed auto-rollback: {native3_recovery}")
 scale_set = by_id["display.scale.set"]
 if scale_set["humanRoute"].get("status") != "visible":
     raise SystemExit(f"display.scale.set underclaims a visible Settings Display host: {scale_set.get('humanRoute')}")
@@ -898,6 +903,15 @@ if "display.night-light.set" not in (parity_modern.get("capabilityIds") or []):
     raise SystemExit("parity.modern-display-scaling-hdr-night-light dropped display.night-light.set")
 if "display.scale.set" not in (parity_modern.get("capabilityIds") or []):
     raise SystemExit("parity.modern-display-scaling-hdr-night-light dropped display.scale.set")
+if "Settings > Display" not in str(parity_modern["humanRoute"].get("path") or ""):
+    raise SystemExit(f"parity.modern-display underclaims Settings > Display: {parity_modern.get('humanRoute')}")
+if str(parity_modern["humanRoute"].get("path") or "") == "Superbar > Display":
+    raise SystemExit(f"parity.modern-display invents Superbar-only scaling: {parity_modern.get('humanRoute')}")
+modern_recovery = str(parity_modern.get("recoveryExpectation") or "")
+if "Timed settings automatically roll back unless explicitly kept." in modern_recovery:
+    raise SystemExit("parity.modern-display still invents timed auto-rollback/keep")
+if "no timed auto-rollback" not in modern_recovery:
+    raise SystemExit(f"parity.modern-display recoveryExpectation dropped no timed auto-rollback: {modern_recovery}")
 
 power_set = by_id["power.profile.set"]
 if power_set["humanRoute"].get("surface") != "Quick Settings" or power_set["humanRoute"].get("path") != "Superbar > Quick Settings > Power":

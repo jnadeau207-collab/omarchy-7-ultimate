@@ -358,6 +358,19 @@ if modern.get("claim") != "prototype":
     raise SystemExit(f"parity.modern-display-scaling-hdr-night-light claim is {modern.get('claim')}")
 if "display.scale.set" not in (modern.get("capabilityIds") or []):
     raise SystemExit("parity.modern-display-scaling-hdr-night-light dropped display.scale.set")
+modern_recovery = str(modern.get("recoveryExpectation") or "")
+if "timed" in modern_recovery.lower() and "no timed" not in modern_recovery.lower():
+    raise SystemExit(f"parity.modern-display invents timed rollback: {modern_recovery}")
+if "unless" in modern_recovery.lower() and "kept" in modern_recovery.lower():
+    raise SystemExit(f"parity.modern-display invents keep-prompt rollback: {modern_recovery}")
+if "no timed auto-rollback" not in modern_recovery:
+    raise SystemExit(f"parity.modern-display recoveryExpectation dropped no timed auto-rollback: {modern_recovery}")
+if modern["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"parity.modern-display underclaims a visible route: {modern.get('humanRoute')}")
+if "Settings > Display" not in str(modern["humanRoute"].get("path") or ""):
+    raise SystemExit(f"parity.modern-display underclaims Settings > Display: {modern.get('humanRoute')}")
+if str(modern["humanRoute"].get("path") or "") == "Superbar > Display":
+    raise SystemExit(f"parity.modern-display invents Superbar-only scaling: {modern.get('humanRoute')}")
 native3 = by_job["windows-native.3"]
 if native3.get("claim") == "present":
     raise SystemExit("windows-native.3 must not claim present")
@@ -373,6 +386,15 @@ if native3["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.3 route is {native3.get('humanRoute')}")
 if native3["humanRoute"].get("path") != "Settings > Display":
     raise SystemExit(f"windows-native.3 path is {native3.get('humanRoute')}")
+native3_recovery = str(native3.get("recoveryExpectation") or "")
+if "timed" in native3_recovery.lower() and "no timed" not in native3_recovery.lower():
+    raise SystemExit(f"windows-native.3 invents timed rollback: {native3_recovery}")
+if "unless" in native3_recovery.lower() and "kept" in native3_recovery.lower():
+    raise SystemExit(f"windows-native.3 invents keep-prompt rollback: {native3_recovery}")
+if "no timed auto-rollback" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recoveryExpectation dropped no timed auto-rollback: {native3_recovery}")
+if "Settings > Display" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recoveryExpectation dropped Settings > Display: {native3_recovery}")
 
 by_debt = {entry["id"]: entry for entry in debt["entries"]}
 legacy = by_debt["legacy.domain.direct-providers"]
