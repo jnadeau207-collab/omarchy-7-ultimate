@@ -3921,7 +3921,7 @@
         ]
       },
       "source": {
-        "file": "shell/apps/ultimate-software/SoftwareSessionInstall.qml",
+        "file": "shell/apps/shared/SoftwareSessionInstall.qml",
         "symbol": "installRecord",
         "brokerVerb": null
       }
@@ -4016,7 +4016,7 @@
         ]
       },
       "source": {
-        "file": "shell/apps/ultimate-software/SoftwareSessionInstall.qml",
+        "file": "shell/apps/shared/SoftwareSessionInstall.qml",
         "symbol": "removeRecord",
         "brokerVerb": null
       }

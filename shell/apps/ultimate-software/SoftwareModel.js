@@ -287,9 +287,9 @@ function stateExplanation(state) {
   if (!state) return ""
   if (state.error && state.error.explanation) return clippedText(state.error.explanation, 1000)
   if (state.phase === "catalog-loading") return "Software Center is checking the exact code-owned provider generation before reading a route."
-  if (state.phase === "loading") return "Only the route's declared read action is active. No package command or mutation is available."
+  if (state.phase === "loading") return "Only the route's declared read action is active. Session install stays off the Fabric request."
   if (state.phase === "partial") return "This surface reached its visible-record bound. Omitted records are not inferred."
-  if (state.phase === "degraded" && state.assurance === "contract-seed") return "Catalog records are contract seeds with declared provenance, not release verification. Installation remains unavailable."
+  if (state.phase === "degraded" && state.assurance === "contract-seed") return "Catalog records are contract seeds with declared provenance, not release verification. Curated and signed-repo rows can install through this session."
   if (state.phase === "degraded") return "The current provider is usable for reads but explicitly reports degraded production readiness."
   if (state.phase === "empty") return state.selectedMissing ? "The exact deep-linked identity was not present in this revision." : "The provider returned a valid empty result."
   if (state.phase === "ready") return "Every visible record is bound to the displayed provider revision and provenance."
@@ -303,4 +303,44 @@ function phaseTone(state) {
   if (phase === "failed" || phase === "denied" || phase === "unavailable") return "danger"
   return "warning"
 }
-if (typeof module !== "undefined") module.exports = { ROUTES: ROUTES, queryForRoute: queryForRoute, normalizedSelection: normalizedSelection, requestParameters: requestParameters, catalogEntry: catalogEntry, normalizeResult: normalizeResult, baseState: baseState, createController: createController, stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone }
+function detailValue(record, label) {
+  var details = record && Array.isArray(record.details) ? record.details : []
+  for (var i = 0; i < details.length; i++) {
+    if (details[i] && details[i].label === label) return String(details[i].value || "")
+  }
+  return ""
+}
+function sessionMutationPlan(record, requested) {
+  var action = requested === "remove" ? "remove" : "install"
+  var packageId = record && record.id ? String(record.id) : ""
+  var packageRef = detailValue(record, "Package")
+  var source = detailValue(record, "Source")
+  if (record && record.kind === "installation") {
+    var catalogId = String(record.subtitle || "")
+    if (stableId(catalogId)) packageId = catalogId
+    if (packageRef === "" || packageRef === "Not reported") packageRef = String(record.title || "")
+  }
+  if (!stableId(packageId) || packageRef === "" || packageRef === "Not reported") {
+    return { action: "unavailable", packageId: packageId, packageRef: packageRef, reason: "This record has no admitted package identity." }
+  }
+  if (source !== "curated" && source !== "signed-repo") {
+    return { action: "unavailable", packageId: packageId, packageRef: packageRef, reason: "This source channel has no session install path yet." }
+  }
+  return { action: action, packageId: packageId, packageRef: packageRef, reason: "" }
+}
+function sessionMutationCanSubmit(plan) {
+  return !!(plan && (plan.action === "install" || plan.action === "remove") && plan.packageId && plan.packageRef)
+}
+function sessionMutationIdle() {
+  return { phase: "idle", action: "", packageId: "", packageRef: "", message: "" }
+}
+function sessionMutationAccepted(previous, plan) {
+  return { phase: "running", action: plan.action, packageId: plan.packageId, packageRef: plan.packageRef, message: "" }
+}
+function sessionMutationFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var ok = result.ok === true
+  var message = clippedText(result.explanation || result.message || (ok ? "The session package helper finished." : "The session package helper failed."), MAX_TEXT)
+  return { phase: ok ? "succeeded" : "failed", action: previous && previous.action || "", packageId: previous && previous.packageId || "", packageRef: result.packageRef || (previous && previous.packageRef) || "", message: message }
+}
+if (typeof module !== "undefined") module.exports = { ROUTES: ROUTES, queryForRoute: queryForRoute, normalizedSelection: normalizedSelection, requestParameters: requestParameters, catalogEntry: catalogEntry, normalizeResult: normalizeResult, baseState: baseState, createController: createController, stateTitle: stateTitle, stateExplanation: stateExplanation, phaseTone: phaseTone, sessionMutationPlan: sessionMutationPlan, sessionMutationCanSubmit: sessionMutationCanSubmit, sessionMutationIdle: sessionMutationIdle, sessionMutationAccepted: sessionMutationAccepted, sessionMutationFinished: sessionMutationFinished }

@@ -13,6 +13,7 @@ Item {
   property var host: null
   property var controller: null
   property var queryState: SoftwareModel.baseState("software.catalog", {}, "offline")
+  property var sessionMutation: SoftwareModel.sessionMutationIdle()
 
   readonly property var productProfile: host && host.productProfile ? host.productProfile : null
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
@@ -68,6 +69,32 @@ Item {
   function runSearch() {
     if (!host) return
     host.navigate("software.catalog", searchInput.text === "" ? {} : { query: searchInput.text })
+  }
+
+  function requestInstall(record) {
+    if (sessionInstall.busy) return
+    var plan = SoftwareModel.sessionMutationPlan(record, "install")
+    if (!SoftwareModel.sessionMutationCanSubmit(plan)) {
+      root.sessionMutation = SoftwareModel.sessionMutationFinished(SoftwareModel.sessionMutationIdle(), { ok: false, explanation: plan.reason })
+      return
+    }
+    root.sessionMutation = SoftwareModel.sessionMutationAccepted(root.sessionMutation, plan)
+    if (!sessionInstall.installRecord(record)) {
+      root.sessionMutation = SoftwareModel.sessionMutationFinished(root.sessionMutation, { ok: false, explanation: "The session package helper is busy." })
+    }
+  }
+
+  function requestRemove(record) {
+    if (sessionInstall.busy) return
+    var plan = SoftwareModel.sessionMutationPlan(record, "remove")
+    if (!SoftwareModel.sessionMutationCanSubmit(plan)) {
+      root.sessionMutation = SoftwareModel.sessionMutationFinished(SoftwareModel.sessionMutationIdle(), { ok: false, explanation: plan.reason })
+      return
+    }
+    root.sessionMutation = SoftwareModel.sessionMutationAccepted(root.sessionMutation, plan)
+    if (!sessionInstall.removeRecord(record)) {
+      root.sessionMutation = SoftwareModel.sessionMutationFinished(root.sessionMutation, { ok: false, explanation: "The session package helper is busy." })
+    }
   }
 
   function statusBorder() {
@@ -273,8 +300,13 @@ Item {
                   required property var modelData
                   record: modelData
                   selected: root.queryState.entityId !== "" && modelData.id === root.queryState.entityId
+                  sessionBusy: sessionInstall.busy
+                  installPlan: SoftwareModel.sessionMutationPlan(modelData, "install")
+                  removePlan: SoftwareModel.sessionMutationPlan(modelData, "remove")
                   Layout.fillWidth: true
                   Layout.columnSpan: 1
+                  onInstall: function(record) { root.requestInstall(record) }
+                  onRemove: function(record) { root.requestRemove(record) }
                 }
               }
             }
@@ -299,16 +331,34 @@ Item {
                 id: boundaryText
                 anchors.fill: parent
                 anchors.margins: Style.space(10)
-                text: "Read-only packages v0 \u00b7 install, remove, adopt, and recover controls remain unavailable until the durable coordinator, executor, and release-attested catalogs are connected. This surface never invokes a package manager."
+                text: "Fabric inspect stays read-only packages v0 \u00b7 curated and signed-repo catalog rows install or remove through this session's package helper \u00b7 elevated auth never enters Fabric durable evidence \u00b7 Fabric packages.install is not LIVE \u00b7 Software Center is not present as product."
                 color: Tokens.text.secondary
                 font.family: Tokens.typography.family
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.WordWrap
               }
             }
+
+            Text {
+              visible: root.sessionMutation.phase === "succeeded" || root.sessionMutation.phase === "failed" || root.sessionMutation.phase === "running"
+              textFormat: Text.PlainText
+              text: root.sessionMutation.phase === "running" ? "Changing " + root.sessionMutation.packageRef + " through this session." : root.sessionMutation.message
+              color: root.sessionMutation.phase === "failed" ? Tokens.state.danger : Tokens.text.secondary
+              font.family: Tokens.typography.family
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WordWrap
+              Layout.fillWidth: true
+            }
           }
         }
       }
+    }
+  }
+
+  Shared.SoftwareSessionInstall {
+    id: sessionInstall
+    onFinished: function(kind, ok, message) {
+      root.sessionMutation = SoftwareModel.sessionMutationFinished(root.sessionMutation, { ok: ok, explanation: message, packageRef: root.sessionMutation.packageRef })
     }
   }
 }

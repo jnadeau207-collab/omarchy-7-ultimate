@@ -652,7 +652,7 @@ if software_install["humanRoute"].get("surface") != "Software Center" or softwar
     raise SystemExit(f"software.install route is {software_install.get('humanRoute')}")
 if software_install["humanRoute"].get("label") != "Install software":
     raise SystemExit(f"software.install label is {software_install.get('humanRoute')}")
-if software_install.get("source", {}).get("file") != "shell/apps/ultimate-software/SoftwareSessionInstall.qml":
+if software_install.get("source", {}).get("file") != "shell/apps/shared/SoftwareSessionInstall.qml":
     raise SystemExit(f"software.install source is {software_install.get('source')}")
 if software_install.get("source", {}).get("symbol") != "installRecord":
     raise SystemExit(f"software.install source is {software_install.get('source')}")
@@ -667,7 +667,7 @@ if software_install.get("provider", {}).get("state") != "legacy-direct":
 software_uninstall = by_id["software.uninstall"]
 if software_uninstall["humanRoute"].get("path") != "Software Center > Catalog":
     raise SystemExit(f"software.uninstall route is {software_uninstall.get('humanRoute')}")
-if software_uninstall.get("source", {}).get("file") != "shell/apps/ultimate-software/SoftwareSessionInstall.qml":
+if software_uninstall.get("source", {}).get("file") != "shell/apps/shared/SoftwareSessionInstall.qml":
     raise SystemExit(f"software.uninstall source is {software_uninstall.get('source')}")
 if software_uninstall.get("source", {}).get("symbol") != "removeRecord":
     raise SystemExit(f"software.uninstall source is {software_uninstall.get('source')}")

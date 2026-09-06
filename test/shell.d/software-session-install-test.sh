@@ -10,7 +10,7 @@ require_command node
 helper="$ROOT/default/fabric/omarchy_fabric/helpers/session_apply.py"
 software_app="$ROOT/shell/apps/ultimate-software/SoftwareApplication.qml"
 software_card="$ROOT/shell/apps/ultimate-software/SoftwareRecordCard.qml"
-software_session="$ROOT/shell/apps/ultimate-software/SoftwareSessionInstall.qml"
+software_session="$ROOT/shell/apps/shared/SoftwareSessionInstall.qml"
 software_model="$ROOT/shell/apps/ultimate-software/SoftwareModel.js"
 catalog="$ROOT/default/ultimate/capabilities/catalog-system-jobs-v0.json"
 
@@ -180,7 +180,7 @@ if route.get("path") != "Software Center > Catalog":
     raise SystemExit(f"software.install path is {route}")
 if route.get("label") != "Install software":
     raise SystemExit(f"software.install label is {route}")
-if install.get("source", {}).get("file") != "shell/apps/ultimate-software/SoftwareSessionInstall.qml":
+if install.get("source", {}).get("file") != "shell/apps/shared/SoftwareSessionInstall.qml":
     raise SystemExit(f"software.install source is {install.get('source')}")
 if install.get("source", {}).get("symbol") != "installRecord":
     raise SystemExit(f"software.install source is {install.get('source')}")
