@@ -2018,8 +2018,8 @@
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
-        "path": "Superbar > Quick Settings > Night light"
+        "surface": "Settings",
+        "path": "Settings > Display"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the prior color-temperature schedule.",

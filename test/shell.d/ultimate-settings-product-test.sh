@@ -128,6 +128,10 @@ for (const routeId of liveWriterRoutes) {
   } else if (routeId === 'settings.update.overview') {
     assert(Model.declaredOpsHonesty(routeId).includes("this session's update helper"), `${routeId} declared ops name the session update path`)
     assert(!Model.declaredOpsHonesty(routeId).includes('durable coordinator'), `${routeId} declared ops do not invent a Fabric update writer`)
+  } else if (routeId === 'settings.display.overview') {
+    assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
+    assert(Model.declaredOpsHonesty(routeId).includes('NightlightService'), `${routeId} declared ops name the NightlightService plane`)
+    assert(Model.declaredOpsHonesty(routeId).includes('does not invent a display.provider night-light durable writer'), `${routeId} declared ops refuse a Fabric night-light writer`)
   } else {
     assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
   }
@@ -648,7 +652,9 @@ if grep -Fq 'Live typed writers are Sound volume, Network Wi-Fi radio, Power pro
 fi
 grep -Fq 'polkit' "$settings_api" || fail "settings-service-api names the Power polkit residual"
 grep -Fq 'unverified on metal' "$settings_api" || fail "settings-service-api names the Superbar QS Power leftover unverified on metal"
-grep -Fq 'Night light remains a Superbar leftover' "$settings_api" || fail "settings-service-api keeps night light as a Superbar leftover, not Settings LIVE"
+grep -Fq 'Night light remains a Superbar leftover' "$settings_api" || fail "settings-service-api keeps the QS night-light leftover tile"
+grep -Fq 'Settings Display hosts' "$settings_api" || fail "settings-service-api names the Settings Display night-light host"
+grep -Fq 'display.provider night-light' "$settings_api" || fail "settings-service-api refuses a display.provider night-light durable writer"
 grep -Fq 'keyboard-layout' "$settings_api" || fail "settings-service-api names the Input keyboard-layout writer"
 grep -Fq 'execDetached' "$settings_api" || fail "settings-service-api keeps Personalization Process/execDetached honesty"
 if grep -Eiq 'events[.]subscribe|MIME associations|Empty Bin|Task Manager LIVE|End Task LIVE' "$settings_api"; then

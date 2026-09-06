@@ -236,7 +236,7 @@ writer_routes = {
     "audio.output.manage": ("Quick Settings", "Superbar > Quick Settings > Sound"),
     "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
-    "display.night-light.set": ("Quick Settings", "Superbar > Quick Settings > Night light"),
+    "display.night-light.set": ("Settings", "Settings > Display; Superbar > Quick Settings > Night light"),
     "network.wifi.connect": ("Settings", "Settings > Network"),
     "power.profile.set": ("Quick Settings", "Superbar > Quick Settings > Power"),
 }
@@ -791,9 +791,11 @@ if "display.night-light.set" not in (parity_display.get("capabilityIds") or []):
 
 night_light = by_id["display.night-light.set"]
 if night_light["humanRoute"].get("status") != "visible":
-    raise SystemExit(f"display.night-light.set underclaims a visible QS tile: {night_light.get('humanRoute')}")
-if night_light["humanRoute"].get("surface") != "Quick Settings" or night_light["humanRoute"].get("path") != "Superbar > Quick Settings > Night light":
-    raise SystemExit(f"display.night-light.set invents a Settings night-light route: {night_light.get('humanRoute')}")
+    raise SystemExit(f"display.night-light.set underclaims a visible Settings Display host: {night_light.get('humanRoute')}")
+if night_light["humanRoute"].get("surface") != "Settings" or night_light["humanRoute"].get("path") != "Settings > Display; Superbar > Quick Settings > Night light":
+    raise SystemExit(f"display.night-light.set underclaims the Settings Display host or QS leftover tile: {night_light.get('humanRoute')}")
+if night_light["humanRoute"].get("label") != "Turn night light on or off; QS leftover tile remains":
+    raise SystemExit(f"display.night-light.set underclaims the QS leftover tile in label: {night_light.get('humanRoute')}")
 if night_light.get("availability", {}).get("claim") == "present":
     raise SystemExit("display.night-light.set must not claim present")
 if night_light.get("provider", {}).get("state") != "legacy-direct":
@@ -802,15 +804,18 @@ if night_light.get("source", {}).get("file") != "shell/plugins/services/nightlig
     raise SystemExit(f"display.night-light.set source is {night_light.get('source')}")
 if night_light.get("source", {}).get("symbol") != "NightlightService":
     raise SystemExit(f"display.night-light.set source is {night_light.get('source')}")
-night_light_path = str(night_light["humanRoute"].get("path") or "")
-if night_light_path.startswith("Settings") or "Start > Settings" in night_light_path:
-    raise SystemExit(f"display.night-light.set invents Settings night-light LIVE: {night_light.get('humanRoute')}")
+if "SettingsDisplayNightLight.qml" in str(night_light.get("source", {}).get("file") or ""):
+    raise SystemExit("display.night-light.set must not invent source on SettingsDisplayNightLight.qml")
 settings_app = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
-if "nightlight" in settings_app.lower() or "night-light" in settings_app.lower() or "night light" in settings_app.lower():
-    raise SystemExit("Settings invents night-light LIVE")
+if "SettingsDisplayNightLight" not in settings_app:
+    raise SystemExit("Settings Display does not host the NightlightService night-light card")
+if "action:" in settings_app and "night-light" in settings_app.lower() and "SettingsDisplayNightLight" not in settings_app:
+    raise SystemExit("Settings invents a Fabric night-light action")
 settings_coverage = (root / "shell/apps/ultimate-settings/SettingsModel.js").read_text(encoding="utf-8")
-if "Night light remains a Superbar leftover, not a Settings LIVE writer." not in settings_coverage:
-    raise SystemExit("Settings Display coverage must refuse night-light LIVE")
+if "does not invent a display.provider night-light durable writer" not in settings_coverage:
+    raise SystemExit("Settings Display coverage must refuse a Fabric night-light writer")
+if "NightlightService" not in settings_coverage or "Quick Settings" not in settings_coverage:
+    raise SystemExit("Settings Display coverage must name the NightlightService / QS plane")
 native34 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.34")
 if native34.get("claim") == "present":
     raise SystemExit(f"windows-native.34 was flipped to present: {native34}")
@@ -821,12 +826,9 @@ if native34.get("proofStatus") != "pending":
 if native34.get("capabilityIds") != ["display.night-light.set"]:
     raise SystemExit(f"windows-native.34 capabilityIds are {native34.get('capabilityIds')}")
 if native34["humanRoute"].get("status") != "visible":
-    raise SystemExit(f"windows-native.34 underclaims a visible QS tile: {native34.get('humanRoute')}")
-if native34["humanRoute"].get("path") != "Superbar > Quick Settings > Night light":
-    raise SystemExit(f"windows-native.34 invents Settings night-light LIVE: {native34['humanRoute']}")
-native34_path = str(native34["humanRoute"].get("path") or "")
-if native34_path.startswith("Settings") or "Start > Settings" in native34_path:
-    raise SystemExit(f"windows-native.34 invents Settings night-light LIVE: {native34['humanRoute']}")
+    raise SystemExit(f"windows-native.34 underclaims a visible Settings Display host: {native34.get('humanRoute')}")
+if native34["humanRoute"].get("path") != "Settings > Display":
+    raise SystemExit(f"windows-native.34 underclaims the Settings Display host: {native34['humanRoute']}")
 parity_modern = next(job for job in jobs["jobs"] if job["id"] == "parity.modern-display-scaling-hdr-night-light")
 if parity_modern.get("claim") == "present":
     raise SystemExit(f"parity.modern-display-scaling-hdr-night-light was flipped to present: {parity_modern}")
@@ -864,8 +866,10 @@ if "KEEP OPEN" not in gaps or "honesty-gated" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep QS Power leftover OPEN / honesty-gated")
 if "Settings Power LIVE stays refused" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Settings Power LIVE refused")
-if "display.night-light.set" not in gaps or "Settings does not invent night-light LIVE" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep the QS night-light leftover visible without Settings LIVE")
+if "display.night-light.set" not in gaps or "does not invent Fabric durable night-light LIVE / claim=present" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep the QS night-light leftover visible without Fabric durable night-light LIVE / claim=present")
+if "Settings > Display; Superbar > Quick Settings > Night light" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name both visible night-light routes")
 if "process.termination.plan" not in gaps or "Administration > Processes" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name the visible Administration End Task host without LIVE")
 if "shell principal cannot authorize" not in gaps or "UI stays unauthorized" not in gaps:
@@ -1144,6 +1148,10 @@ if "Honesty addendum 2026-09-06 vs Settings Update history" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update history leftover addendum")
 if "CLOSED leftover: Update history UI" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Update history UI")
+if "Honesty addendum 2026-09-06 vs Settings Display night-light" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display night-light leftover addendum")
+if "CLOSED leftover: Settings Display night-light UI" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Settings Display night-light UI")
 if "Fabric system.update stays inspect-only" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Fabric system.update inspect-only")
 if "windows-native.28 stays missing/pending" not in gaps:

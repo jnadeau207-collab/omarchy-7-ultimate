@@ -87,16 +87,20 @@ grep -Fq 'Settings Power LIVE refused' "$ROOT/docs/settings-service-api.md" ||
 pass "Settings does not offer LIVE power profile mutation"
 pass "heritage QS Power leftover stays cataloged, was unverified on metal, and QS Power METAL_HEAD OPEN after metal FAIL"
 
-if grep -Eiq 'nightlight|night-light|night light' "$application"; then
-  fail "Settings invents night-light LIVE"
+grep -Fq 'SettingsComponents.SettingsDisplayNightLight' "$application" ||
+  fail "Settings Display hosts the NightlightService night-light card"
+if grep -Eq 'action: "night-light|action: "nightlight|provider: "display.provider".*night' "$application"; then
+  fail "Settings invents a Fabric night-light writer"
 fi
-grep -Fq 'Night light remains a Superbar leftover, not a Settings LIVE writer.' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" ||
-  fail "Settings Display coverage refuses night-light LIVE"
-grep -Fq 'Settings does not invent night-light LIVE' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
-  fail "fleet-doctrine-gaps keeps Settings from inventing night-light LIVE"
+grep -Fq 'does not invent a display.provider night-light durable writer' "$ROOT/shell/apps/ultimate-settings/SettingsModel.js" ||
+  fail "Settings Display coverage refuses a Fabric night-light writer"
+grep -Fq 'does not invent Fabric durable night-light LIVE / claim=present' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps keeps Settings from inventing Fabric durable night-light LIVE / claim=present"
+grep -Fq 'Settings > Display; Superbar > Quick Settings > Night light' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
+  fail "fleet-doctrine-gaps names both visible night-light routes"
 grep -Fq 'Settings Power LIVE stays refused' "$ROOT/plans/win7-ultimate-ground-truth/fleet/fleet-doctrine-gaps.md" ||
   fail "fleet-doctrine-gaps keeps Settings Power LIVE refused"
-pass "Settings does not invent night-light LIVE"
+pass "Settings does not invent Fabric durable night-light LIVE / claim=present"
 
 grep -Fq 'provider: "display.provider"' "$application" || fail "Settings sets brightness through display.provider"
 grep -Fq 'action: "brightness.set"' "$application" || fail "Settings uses the typed brightness.set action"
@@ -447,6 +451,8 @@ assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility inpu
 const displayQuery = Model.queryForRoute('settings.display.overview')
 assert(displayQuery.coverage.indexOf('brightness.set') >= 0, 'the display coverage note names the settable verb')
 assert(displayQuery.coverage.indexOf('Resolution, scale, and arrangement changes remain unavailable') >= 0, 'the display coverage note still refuses what Settings cannot do')
-assert(displayQuery.coverage.indexOf('Night light remains a Superbar leftover, not a Settings LIVE writer.') >= 0, 'the display coverage note refuses Settings night-light LIVE')
+assert(displayQuery.coverage.indexOf('does not invent a display.provider night-light durable writer') >= 0, 'the display coverage note refuses a Fabric night-light writer')
+assert(displayQuery.coverage.indexOf('NightlightService') >= 0, 'the display coverage note names NightlightService')
+assert(displayQuery.coverage.indexOf('Quick Settings') >= 0, 'the display coverage note names the QS plane')
 JS
 pass "the power profile option set is closed, deduplicated, and refuses spoofed host values"

@@ -1553,6 +1553,12 @@ Item {
                 }
               }
             }
+            SettingsComponents.SettingsDisplayNightLight {
+              visible: root.currentRoute && root.currentRoute.id === "settings.display.overview"
+              pageActive: visible
+              semanticProfile: root.productProfile
+              Layout.fillWidth: true
+            }
 
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.power.overview" && root.powerProfiles.length > 0
