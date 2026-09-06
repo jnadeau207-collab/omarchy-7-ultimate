@@ -356,10 +356,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Files",
         "label": "Empty Recycle Bin",
-        "path": ""
+        "path": "Files > Empty Recycle Bin"
       },
       "agentCenterLabel": "Empty Recycle Bin",
       "proofIds": {
@@ -371,8 +371,8 @@
         ]
       },
       "source": {
-        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
-        "symbol": "apply_files_trash_manage",
+        "file": "shell/apps/shared/FilesSessionTrash.qml",
+        "symbol": "emptyBin",
         "brokerVerb": null
       }
     },
@@ -5233,8 +5233,8 @@
         ]
       },
       "source": {
-        "file": "shell/apps/ultimate-files/FilesApplication.qml",
-        "symbol": "trashEntry",
+        "file": "shell/apps/shared/FilesSessionTrash.qml",
+        "symbol": "trashRecord",
         "brokerVerb": null
       }
     },
@@ -5311,10 +5311,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Files",
         "label": "Restore an item from Trash",
-        "path": ""
+        "path": "Files > Restore"
       },
       "agentCenterLabel": "Restore an item from Trash",
       "proofIds": {
@@ -5326,8 +5326,8 @@
         ]
       },
       "source": {
-        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
-        "symbol": "apply_files_trash_restore",
+        "file": "shell/apps/shared/FilesSessionTrash.qml",
+        "symbol": "restoreRecord",
         "brokerVerb": null
       }
     },

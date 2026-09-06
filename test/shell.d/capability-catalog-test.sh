@@ -1083,6 +1083,14 @@ if "hex-grep is not pixel proof" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name hex-grep as not pixel proof")
 if "Do not invent Files LIVE metal CLOSED" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must refuse Files LIVE metal CLOSED invent")
+if "Honesty addendum 2026-09-06 vs Files Recycle session plane" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Files Recycle session leftover addendum")
+if "CLOSED leftover: session Trash/Restore/Empty UI" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as session Trash/Restore/Empty UI")
+if "OPEN leftovers: Fabric LIVE under SHELL" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Fabric LIVE under SHELL as an OPEN leftover")
+if "Recycle Bin is not product-complete" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep Recycle Bin is not product-complete OPEN")
 if "Honesty addendum 2026-09-06 vs Settings Update apply" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update apply leftover addendum")
 if "Fabric system.update stays inspect-only" not in gaps:
@@ -1903,9 +1911,9 @@ if entry_trash.get("consent", {}).get("mode") != "high-risk":
     raise SystemExit(f"files.entry.trash consent is not consequential: {entry_trash.get('consent')}")
 if entry_trash["humanRoute"].get("path") != "Files > Delete":
     raise SystemExit(f"files.entry.trash route is {entry_trash.get('humanRoute')}")
-if entry_trash.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesApplication.qml":
+if entry_trash.get("source", {}).get("file") != "shell/apps/shared/FilesSessionTrash.qml":
     raise SystemExit(f"files.entry.trash source is {entry_trash.get('source')}")
-if entry_trash.get("source", {}).get("symbol") != "trashEntry":
+if entry_trash.get("source", {}).get("symbol") != "trashRecord":
     raise SystemExit(f"files.entry.trash source is {entry_trash.get('source')}")
 named_trash = f"{entry_trash.get('source', {}).get('file') or ''} {entry_trash.get('source', {}).get('symbol') or ''}".lower()
 if "nautilus" in named_trash:
@@ -1932,13 +1940,13 @@ if trash_manage.get("availability", {}).get("agent") != "unavailable":
     raise SystemExit(f"files.trash.manage agent availability is {trash_manage.get('availability')}")
 if trash_manage.get("consent", {}).get("mode") != "high-risk":
     raise SystemExit(f"files.trash.manage consent is not consequential: {trash_manage.get('consent')}")
-if trash_manage["humanRoute"].get("status") != "planned":
-    raise SystemExit(f"files.trash.manage invents an Empty Bin LIVE route: {trash_manage.get('humanRoute')}")
-if trash_manage["humanRoute"].get("path"):
-    raise SystemExit(f"files.trash.manage invents an Empty Bin LIVE path: {trash_manage.get('humanRoute')}")
-if trash_manage.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if trash_manage["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"files.trash.manage route is {trash_manage.get('humanRoute')}")
+if trash_manage["humanRoute"].get("path") != "Files > Empty Recycle Bin":
+    raise SystemExit(f"files.trash.manage path is {trash_manage.get('humanRoute')}")
+if trash_manage.get("source", {}).get("file") != "shell/apps/shared/FilesSessionTrash.qml":
     raise SystemExit(f"files.trash.manage source is {trash_manage.get('source')}")
-if trash_manage.get("source", {}).get("symbol") != "apply_files_trash_manage":
+if trash_manage.get("source", {}).get("symbol") != "emptyBin":
     raise SystemExit(f"files.trash.manage source is {trash_manage.get('source')}")
 if "files.trash.restore" not in by_id:
     raise SystemExit("absent restore writer invent: files.trash.restore missing from catalog")
@@ -1955,13 +1963,13 @@ if restore.get("availability", {}).get("agent") != "unavailable":
     raise SystemExit(f"files.trash.restore agent availability is {restore.get('availability')}")
 if restore.get("consent", {}).get("mode") != "high-risk":
     raise SystemExit(f"files.trash.restore consent is not consequential: {restore.get('consent')}")
-if restore["humanRoute"].get("status") != "planned":
-    raise SystemExit(f"files.trash.restore invents a Restore LIVE route: {restore.get('humanRoute')}")
-if restore["humanRoute"].get("path"):
-    raise SystemExit(f"files.trash.restore invents a Restore LIVE path: {restore.get('humanRoute')}")
-if restore.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if restore["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"files.trash.restore route is {restore.get('humanRoute')}")
+if restore["humanRoute"].get("path") != "Files > Restore":
+    raise SystemExit(f"files.trash.restore path is {restore.get('humanRoute')}")
+if restore.get("source", {}).get("file") != "shell/apps/shared/FilesSessionTrash.qml":
     raise SystemExit(f"files.trash.restore source is {restore.get('source')}")
-if restore.get("source", {}).get("symbol") != "apply_files_trash_restore":
+if restore.get("source", {}).get("symbol") != "restoreRecord":
     raise SystemExit(f"files.trash.restore source is {restore.get('source')}")
 if "files.trash.restore" not in (parity_recycle.get("capabilityIds") or []):
     raise SystemExit("parity.desktop-icons-wallpaper-context-menu-recycle does not name files.trash.restore")
@@ -2063,6 +2071,10 @@ if "emptyBinAuthorized=false" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS residual names Files Empty Bin UI gated emptyBinAuthorized=false")
 if "Recycle Bin / Empty Bin LIVE residual OPEN after PR #63" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep Recycle leftover OPEN after PR #63")
+if "Honesty addendum 2026-09-06 vs Files Recycle session plane" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must add the Files Recycle session leftover addendum")
+if "CLOSED leftover: session Trash/Restore/Empty UI" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name CLOSED leftover as session Trash/Restore/Empty UI")
 if "Honesty addendum 2026-09-05 vs Recycle desktop place" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must add the Recycle desktop place addendum")
 if "Recycle Bin.desktop" not in writers_handoff:

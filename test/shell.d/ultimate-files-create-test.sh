@@ -38,19 +38,15 @@ if grep -Eq 'trashAuthorized:\s*true' "$application"; then
 fi
 grep -Fq 'if (!root.trashAuthorized) return' "$application" \
   || fail "trashEntry refuses to start a doomed shell preflight"
-grep -Fq 'if (root.createVisible && root.trashAuthorized)' "$application" \
-  || fail "Delete stays hidden while trashAuthorized is false"
-grep -Fq 'if (root.trashAuthorized) {' "$application" \
-  || fail "Organize and context Delete stay hidden while trashAuthorized is false"
-grep -Fq 'if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }' "$application" \
-  || fail "invoke delete refuses while trashAuthorized is false"
-grep -Fq 'else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }' "$application" \
-  || fail "Key_Delete refuses while trashAuthorized is false"
+grep -Fq 'if (key === "delete") { root.sessionTrashEntry(root.selectedRecord); return }' "$application" \
+  || fail "invoke delete uses the session trash plane"
+grep -Fq 'else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; root.sessionTrashEntry(root.selectedRecord); event.accepted = true }' "$application" \
+  || fail "Key_Delete uses the session trash plane outside Trash"
 if grep -Fq 'if (key === "delete") { root.trashEntry(root.selectedRecord); return }' "$application"; then
-  fail "invoke delete must not accept Delete while unauthorized"
+  fail "invoke delete must not accept Fabric Delete while unauthorized"
 fi
 if grep -Fq 'else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }' "$application"; then
-  fail "Key_Delete must not accept Delete while unauthorized"
+  fail "Key_Delete must not accept Fabric Delete while unauthorized"
 fi
 grep -Fq 'action: "entry.trash"' "$application" || fail "Files keeps the typed entry.trash action"
 grep -Fq 'arguments: { entryId: String(record.id) }' "$application" ||
@@ -65,8 +61,10 @@ if grep -Eq 'rm |unlink|shutil' "$application"; then
   fail "Files deletes directly instead of routing through the operation plane"
 fi
 if grep -Eq 'action: "(files\.)?trash\.manage"|key: "trash.manage"' "$application"; then
-  fail "Files does not invent a files.trash.manage action or control"
+  fail "Files does not invent a Fabric files.trash.manage action or control"
 fi
+grep -Fq 'key: "empty-bin", label: "Empty Recycle Bin"' "$application" \
+  || fail "Files shows session Empty Recycle Bin"
 grep -Fq 'readonly property bool emptyBinAuthorized: false' "$application" \
   || fail "emptyBinAuthorized stays false; shell principal cannot authorize Empty Bin"
 if grep -Eq 'emptyBinAuthorized:\s*true' "$application"; then
@@ -86,12 +84,11 @@ grep -Fq 'if (root.createVisible) list.push({ key: "new-folder", label: "New fol
 pass "Files keeps typed entry.trash but does not enable LIVE Trash under the shell principal"
 
 if grep -Fq 'action: "trash.restore"' "$application"; then
-  fail "Files does not offer trash.restore LIVE under the shell principal"
+  fail "Files does not offer Fabric trash.restore LIVE under the shell principal"
 fi
-if grep -Eq 'key: "restore"' "$application"; then
-  fail "Files does not show a Restore LIVE control under the shell principal"
-fi
-pass "Files keeps Restore UI honest-unavailable; Recycle Bin is not product-complete"
+grep -Fq 'key: "restore", label: "Restore"' "$application" \
+  || fail "Files shows session Restore on Trash"
+pass "Files keeps Fabric Restore LIVE honest-unavailable; session Restore is the Recycle path"
 
 grep -Fq 'root.operationKind = "open"' "$application" || fail "Files drives the open operation kind"
 grep -Fq 'String(record.entryKind || "") !== "file"' "$application" || fail "Files opens only regular file entries"

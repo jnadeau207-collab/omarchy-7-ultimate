@@ -268,19 +268,19 @@ if grep -Eq 'emptyBinAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesA
   fail "Files invents emptyBinAuthorized=true"
 fi
 if grep -Eq 'action: "(files\.)?trash\.manage"|key: "trash.manage"' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
-  fail "Files invents LIVE Empty Bin under SHELL"
+  fail "Files invents Fabric LIVE Empty Bin under SHELL"
 fi
 grep -Fq 'readonly property bool trashAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
-  || fail "Files pins trashAuthorized false; Trash is not LIVE under the shell principal"
-grep -Fq 'if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
-  || fail "Files invoke delete refuses while trashAuthorized is false"
-grep -Fq 'else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
-  || fail "Files Key_Delete refuses while trashAuthorized is false"
+  || fail "Files pins trashAuthorized false; Fabric Trash is not LIVE under the shell principal"
+grep -Fq 'if (key === "delete") { root.sessionTrashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files invoke delete uses the session trash plane"
+grep -Fq 'else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; root.sessionTrashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
+  || fail "Files Key_Delete uses the session trash plane"
 if grep -Fq 'if (key === "delete") { root.trashEntry(root.selectedRecord); return }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
-  fail "Files invoke delete must not accept Delete while unauthorized"
+  fail "Files invoke delete must not accept Fabric Delete while unauthorized"
 fi
 if grep -Fq 'else if (event.key === Qt.Key_Delete) { root.trashEntry(root.selectedRecord); event.accepted = true }' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
-  fail "Files Key_Delete must not accept Delete while unauthorized"
+  fail "Files Key_Delete must not accept Fabric Delete while unauthorized"
 fi
 grep -Fq 'readonly property bool createEnabled: createVisible && !operationBusy && host !== null && host.fabricReady' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files keeps New folder createEnabled LIVE"

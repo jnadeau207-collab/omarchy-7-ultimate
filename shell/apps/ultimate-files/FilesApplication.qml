@@ -38,6 +38,8 @@ Item {
   readonly property bool cutAuthorized: false
   readonly property bool deleteAuthorized: false
   readonly property bool emptyBinAuthorized: false
+  readonly property bool trashRoute: FilesModel.isTrashRoute(host ? host.currentRoute : "")
+  readonly property bool sessionBusy: sessionTrash.busy
   property string renameDraft: ""
   property var renameRecord: null
   property var stagedCopyRecord: null
@@ -356,6 +358,35 @@ Item {
     if (root.operationRequestId === "") root.resetOperation("Files could not reach the operation service.")
   }
 
+  function sessionTrashEntry(record) {
+    if (root.operationBusy || root.sessionBusy) return
+    var plan = FilesModel.sessionTrashPlan(record)
+    if (!FilesModel.sessionTrashCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That item cannot be moved to Trash through this session."
+      return
+    }
+    root.operationMessage = "Moving " + String(record.title || "this item") + " to the Recycle Bin through this session."
+    if (!sessionTrash.trashRecord(plan)) root.operationMessage = "The session recycle helper is busy."
+  }
+
+  function sessionRestoreEntry(record) {
+    if (root.operationBusy || root.sessionBusy) return
+    var plan = FilesModel.sessionRestorePlan(record)
+    if (!FilesModel.sessionTrashCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That Recycle Bin item cannot be restored through this session."
+      return
+    }
+    root.operationMessage = "Restoring " + String(record.title || "this item") + " through this session."
+    if (!sessionTrash.restoreRecord(plan)) root.operationMessage = "The session recycle helper is busy."
+  }
+
+  function sessionEmptyBin() {
+    if (root.operationBusy || root.sessionBusy || !root.trashRoute) return
+    var plan = FilesModel.sessionEmptyPlan()
+    root.operationMessage = "Emptying the Recycle Bin through this session."
+    if (!sessionTrash.emptyBin(plan)) root.operationMessage = "The session recycle helper is busy."
+  }
+
   function createFolder(name) {
     if (!host || operationBusy || !createVisible) return
     var refusal = FilesModel.createNameRefusal(name)
@@ -431,10 +462,20 @@ Item {
         enabled: !root.operationBusy
       })
     }
-    if (root.createVisible && root.trashAuthorized) {
+    if (root.createVisible && FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({
         key: "delete", label: "Delete", dropdown: false,
-        enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
+        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionTrashableRecord(root.selectedRecord)
+      })
+    }
+    if (root.trashRoute) {
+      list.push({
+        key: "restore", label: "Restore", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord)
+      })
+      list.push({
+        key: "empty-bin", label: "Empty Recycle Bin", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy && root.showRecords
       })
     }
     if (root.selectedRecord !== null) list.push({ key: "properties", label: "Properties", dropdown: false, enabled: true })
@@ -450,8 +491,11 @@ Item {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
       list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy })
     }
-    if (root.trashAuthorized) {
-      list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
+    if (root.trashRoute) {
+      list.push({ key: "restore", label: "Restore", enabled: FilesModel.sessionRestorableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+      list.push({ key: "empty-bin", label: "Empty Recycle Bin", enabled: !root.operationBusy && !root.sessionBusy && root.showRecords })
+    } else if (FilesModel.sessionTrashableLocation(root.createLocationId)) {
+      list.push({ key: "delete", label: "Delete", enabled: FilesModel.sessionTrashableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     list.push({ key: "refresh", label: "Refresh", enabled: true })
     list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
@@ -467,8 +511,11 @@ Item {
       list.push({ key: "copy", label: "Copy", enabled: root.copyableRecord(root.selectedRecord) && !root.operationBusy })
       list.push({ key: "paste", label: "Paste", enabled: root.createVisible && !root.operationBusy })
     }
-    if (root.trashAuthorized) {
-      list.push({ key: "delete", label: "Delete", enabled: root.createVisible && root.selectedRecord !== null && !root.operationBusy })
+    if (root.trashRoute) {
+      list.push({ key: "restore", label: "Restore", enabled: FilesModel.sessionRestorableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+      list.push({ key: "empty-bin", label: "Empty Recycle Bin", enabled: !root.operationBusy && !root.sessionBusy && root.showRecords })
+    } else if (FilesModel.sessionTrashableLocation(root.createLocationId)) {
+      list.push({ key: "delete", label: "Delete", enabled: FilesModel.sessionTrashableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
     return list
@@ -480,7 +527,9 @@ Item {
     if (key === "rename") { root.beginRename(root.selectedRecord); return }
     if (key === "copy") { root.stageCopy(root.selectedRecord); return }
     if (key === "paste") { root.pasteFromClipboard(); return }
-    if (key === "delete") { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); return }
+    if (key === "delete") { root.sessionTrashEntry(root.selectedRecord); return }
+    if (key === "restore") { root.sessionRestoreEntry(root.selectedRecord); return }
+    if (key === "empty-bin") { emptyBinDialog.open(); return }
     if (key === "properties") { propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
@@ -499,7 +548,15 @@ Item {
     else if (event.key === Qt.Key_F2) { root.beginRename(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_C) { root.stageCopy(root.selectedRecord); event.accepted = true }
     else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { root.pasteFromClipboard(); event.accepted = true }
-    else if (event.key === Qt.Key_Delete) { if (!root.trashAuthorized) return; root.trashEntry(root.selectedRecord); event.accepted = true }
+    else if (event.key === Qt.Key_Delete) { if (root.trashRoute) return; root.sessionTrashEntry(root.selectedRecord); event.accepted = true }
+  }
+
+  Shared.FilesSessionTrash {
+    id: sessionTrash
+    onFinished: function(kind, ok, message) {
+      root.operationMessage = message
+      if (ok && root.controller) root.controller.refresh()
+    }
   }
 
   Shared.FilesOsClipboard {
@@ -764,7 +821,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. The cut/move write plane exists but is not shell-authorizable. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable. The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. The cut/move write plane exists but is not shell-authorizable. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable. The empty Recycle Bin write plane exists but is not shell-authorizable. Restore UI, Empty Bin LIVE, and Recycle product remain unavailable under SHELL."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -971,6 +1028,88 @@ Item {
               onSingleTapped: {
                 renameDialog.close()
                 if (modelData.key === "ok") root.renameEntry(root.renameRecord, root.renameDraft)
+              }
+            }
+
+            Accessible.role: Accessible.Button
+            Accessible.name: modelData.label
+          }
+        }
+      }
+    }
+  }
+
+  Controls.Popup {
+    id: emptyBinDialog
+    anchors.centerIn: Controls.Overlay.overlay
+    width: Math.min(360, root.width - 40)
+    modal: true
+    padding: 12
+
+    background: Rectangle {
+      color: "#f0f0f0"
+      border.width: 1
+      border.color: "#8b97a3"
+    }
+
+    contentItem: Column {
+      spacing: 8
+      width: emptyBinDialog.availableWidth
+
+      Text {
+        text: "Empty Recycle Bin"
+        textFormat: Text.PlainText
+        color: Aero.textPrimary
+        font.family: Aero.fontFamily
+        font.pixelSize: 12
+      }
+
+      Text {
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: "This permanently removes regular files and empty folders in Trash, plus their .trashinfo records. Symlinks and non-empty trees stay refused."
+        textFormat: Text.PlainText
+        color: Aero.textSecondary
+        font.family: Aero.fontFamily
+        font.pixelSize: 12
+      }
+
+      Row {
+        anchors.right: parent.right
+        spacing: 6
+
+        Repeater {
+          model: [
+            { key: "ok", label: "Empty Bin" },
+            { key: "cancel", label: "Cancel" }
+          ]
+
+          delegate: Rectangle {
+            required property var modelData
+            width: 86
+            height: 23
+            radius: 3
+            border.width: 1
+            border.color: emptyHover.hovered ? Aero.hoverSelectedBorder : "#a0a6ac"
+            gradient: Gradient {
+              GradientStop { position: 0; color: emptyHover.hovered ? Aero.hoverTop : "#fdfdfd" }
+              GradientStop { position: 1; color: emptyHover.hovered ? Aero.hoverBottom : "#e6e8ea" }
+            }
+
+            Text {
+              anchors.centerIn: parent
+              text: modelData.label
+              textFormat: Text.PlainText
+              color: Aero.textPrimary
+              font.family: Aero.fontFamily
+              font.pixelSize: 12
+            }
+
+            HoverHandler { id: emptyHover }
+            TapHandler {
+              onSingleTapped: {
+                emptyBinDialog.close()
+                if (modelData.key === "ok") root.sessionEmptyBin()
               }
             }
 

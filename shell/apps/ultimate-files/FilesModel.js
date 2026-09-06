@@ -137,6 +137,72 @@ function clipboardPasteArguments(locationId, relativePath) {
   return { destinationLocationId: dest, destinationParentRelativePath: parent }
 }
 
+var SESSION_TRASH_LOCATIONS = [
+  "files.location.desktop", "files.location.documents", "files.location.downloads", "files.location.pictures"
+]
+
+function sessionTrashableLocation(locationId) {
+  return SESSION_TRASH_LOCATIONS.indexOf(String(locationId || "")) >= 0
+}
+
+function sessionTrashableRecord(record) {
+  if (!isObject(record)) return false
+  var kind = String(record.entryKind || "")
+  return String(record.kind || "") === "entry"
+    && (kind === "file" || kind === "directory")
+    && String(record.status || "") !== "symlink"
+    && sessionTrashableLocation(record.locationId)
+    && String(record.id || "") !== ""
+    && String(record.relativePath || "") !== ""
+}
+
+function sessionRestorableRecord(record) {
+  if (!isObject(record)) return false
+  if (String(record.kind || "") !== "entry") return false
+  if (String(record.locationId || "") !== "files.location.trash") return false
+  if (String(record.status || "") === "symlink") return false
+  var trash = record.trash
+  if (!isObject(trash)) return false
+  return sessionTrashableLocation(trash.originalLocationId)
+    && String(trash.originalRelativePath || "") !== ""
+    && String(record.id || "") !== ""
+}
+
+function sessionTrashPlan(record) {
+  if (!sessionTrashableRecord(record)) {
+    return { action: "unavailable", reason: "That item cannot be moved to Trash through this session." }
+  }
+  return {
+    action: "trash",
+    locationId: String(record.locationId),
+    entryRelativePath: String(record.relativePath),
+    entryId: String(record.id),
+    title: String(record.title || "")
+  }
+}
+
+function sessionRestorePlan(record) {
+  if (!sessionRestorableRecord(record)) {
+    return { action: "unavailable", reason: "That Recycle Bin item cannot be restored through this session." }
+  }
+  return {
+    action: "restore",
+    locationId: String(record.trash.originalLocationId),
+    entryRelativePath: String(record.trash.originalRelativePath),
+    entryId: String(record.id),
+    title: String(record.title || "")
+  }
+}
+
+function sessionEmptyPlan() {
+  return { action: "empty", locationId: "files.location.trash", parentRelativePath: "" }
+}
+
+function sessionTrashCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "trash" || plan.action === "restore" || plan.action === "empty"
+}
+
 function encodeFileUri(absolutePath) {
   var value = String(absolutePath || "")
   if (!value.startsWith("/") || value.indexOf("\x00") >= 0) return ""
@@ -624,7 +690,8 @@ function entryRecord(entry, index) {
     entryKind: entry.kind, locationId: entry.locationId, parentId: entry.parentId, relativePath: entry.relativePath,
     sizeBytes: entry.sizeBytes, modifiedMs: entry.modifiedMs, mimeType: entry.mimeType, hidden: entry.hidden,
     writable: entry.writable, typeLabel: typeLabelFor(entry.name, entry.kind, entry.mimeType),
-    sizeText: entry.kind === "file" ? formatSize(entry.sizeBytes) : "", modifiedText: formatModified(entry.modifiedMs)
+    sizeText: entry.kind === "file" ? formatSize(entry.sizeBytes) : "", modifiedText: formatModified(entry.modifiedMs),
+    trash: entry.trash
   }
 }
 
@@ -1024,6 +1091,10 @@ if (typeof module !== "undefined") module.exports = {
   createNameRefusal: createNameRefusal, nextCopyName: nextCopyName, isTrashRoute: isTrashRoute,
   copyableRecord: copyableRecord, clipboardCopyArguments: clipboardCopyArguments,
   clipboardPasteArguments: clipboardPasteArguments, encodeFileUri: encodeFileUri, parseFileUriList: parseFileUriList,
+  sessionTrashableLocation: sessionTrashableLocation, sessionTrashableRecord: sessionTrashableRecord,
+  sessionRestorableRecord: sessionRestorableRecord, sessionTrashPlan: sessionTrashPlan,
+  sessionRestorePlan: sessionRestorePlan, sessionEmptyPlan: sessionEmptyPlan,
+  sessionTrashCanSubmit: sessionTrashCanSubmit,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,
