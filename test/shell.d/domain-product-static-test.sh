@@ -512,8 +512,14 @@ if "Accessibility, Input, and System information have no hostable panel" in api:
     raise SystemExit("settings-service-api underclaims Input as having no hostable panel")
 if "keyboard-layout" not in api:
     raise SystemExit("settings-service-api must name the Input keyboard-layout writer")
-if "Accessibility" not in api or "System information" not in api:
-    raise SystemExit("settings-service-api must keep Accessibility and System information honest missing")
+if "Accessibility has no hostable panel" not in api:
+    raise SystemExit("settings-service-api must keep Accessibility honest missing")
+if "system-information-inspect" not in api:
+    raise SystemExit("settings-service-api must name system-information-inspect")
+if "windows-native.38" not in api:
+    raise SystemExit("settings-service-api must keep windows-native.38 pending")
+if "session leftover recorded" not in api:
+    raise SystemExit("settings-service-api must record session leftovers")
 if "Process" not in api or "execDetached" not in api:
     raise SystemExit("settings-service-api must keep Personalization Process/execDetached honesty")
 if re.search(r"events\.subscribe|MIME associations|Empty Bin|Task Manager LIVE|End Task LIVE", api):

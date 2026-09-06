@@ -166,6 +166,7 @@
         "software.uninstall",
         "storage.removable.eject",
         "storage.removable.mount",
+        "system.info.read",
         "update.history.read",
         "update.install"
       ],
@@ -204,6 +205,7 @@
         "capability:software.uninstall",
         "capability:storage.removable.eject",
         "capability:storage.removable.mount",
+        "capability:system.info.read",
         "capability:update.history.read",
         "capability:update.install"
       ],
@@ -234,7 +236,6 @@
         "software.installed.manage",
         "storage.disk.manage",
         "storage.encryption.manage",
-        "system.info.read",
         "tasks.schedule",
         "troubleshooting.audio.run"
       ],
@@ -259,7 +260,6 @@
         "capability:software.installed.manage",
         "capability:storage.disk.manage",
         "capability:storage.encryption.manage",
-        "capability:system.info.read",
         "capability:tasks.schedule",
         "capability:troubleshooting.audio.run"
       ],

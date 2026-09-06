@@ -2117,15 +2117,15 @@
       "kind": "windows-native-task",
       "sourceLabel": "Find system/storage information",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "system.info.read",
         "storage.disk.manage"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": "Settings jump list > System information"
+        "path": "Settings > System information"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Read-only inspection requires no recovery.",

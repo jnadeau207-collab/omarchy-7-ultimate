@@ -78,7 +78,7 @@
 - **Per-page matrix required (vagueness fix):** each page lists inspect verbs LIVE vs unavailable operation verbs; hide undrivable controls; consequential state Rule 6.
 - Default Programs = **four links** (Set defaults / Associate / AutoPlay / SPAD) — browser https alone ≠ `parity.default-programs` present; MIME associations separate (`parity.file-associations` missing until UI).
 - Personalization bottom row: Desktop Background · Window Color · Sounds · Screen Saver; wallpaper positions Fill/Fit/Stretch/Tile/Center.
-- Accessibility / System Information: honest missing — **omit** provider-less jump destinations (`windows-native.38`).
+- Accessibility: honest missing — **omit** provider-less jump destinations. System information: session leftover page visible (`windows-native.38` prototype/pending); do not invent Fabric aggregate LIVE / claim=present.
 - Stale fence fix: do not blanket “typed writers remain Phase 5” while some writers LIVE — list domain-by-domain vs `parity.sound|network|power|display|language-locale|default-programs` + `windows-native.6/2/35/3/33/19`.
 - Links: `plans/win7-ultimate-ground-truth/04-control-panel.md`, `plans/win7-ultimate-ground-truth/06-settings-admin-media.md`, `plans/win7-ultimate-ground-truth/05-interaction-polish.md`
 

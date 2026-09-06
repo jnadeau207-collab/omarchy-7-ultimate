@@ -6730,7 +6730,7 @@
       "provider": {
         "id": "system.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "legacy-direct"
       },
       "kind": "reader",
       "effects": [],
@@ -6758,9 +6758,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "system.resource"
@@ -6795,10 +6795,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "missing",
+        "status": "visible",
         "surface": "Settings",
         "label": "System information",
-        "path": ""
+        "path": "Settings > System information"
       },
       "agentCenterLabel": "System information",
       "proofIds": {
@@ -6810,8 +6810,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:system.info.read",
+        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
+        "symbol": "apply_system_information_inspect",
         "brokerVerb": null
       }
     },
