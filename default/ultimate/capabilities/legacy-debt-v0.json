@@ -161,6 +161,7 @@
         "software.uninstall",
         "storage.removable.eject",
         "storage.removable.mount",
+        "update.history.read",
         "update.install"
       ],
       "surfaceRefs": [
@@ -193,6 +194,7 @@
         "capability:software.uninstall",
         "capability:storage.removable.eject",
         "capability:storage.removable.mount",
+        "capability:update.history.read",
         "capability:update.install"
       ],
       "reason": "These jobs have real current plumbing or a human surface, but mutation and state ownership remain in panels, applications, or commands rather than a typed provider.",
@@ -226,8 +228,7 @@
         "storage.encryption.manage",
         "system.info.read",
         "tasks.schedule",
-        "troubleshooting.audio.run",
-        "update.history.read"
+        "troubleshooting.audio.run"
       ],
       "surfaceRefs": [
         "capability:accessibility.configure",
@@ -254,8 +255,7 @@
         "capability:storage.encryption.manage",
         "capability:system.info.read",
         "capability:tasks.schedule",
-        "capability:troubleshooting.audio.run",
-        "capability:update.history.read"
+        "capability:troubleshooting.audio.run"
       ],
       "reason": "The product and acceptance graphs require these capabilities, but no provider implementing their semantic contract exists in the current tree.",
       "removalGate": "Land and verify a real provider, change its catalog state, and retain an honest human route and agent availability record."

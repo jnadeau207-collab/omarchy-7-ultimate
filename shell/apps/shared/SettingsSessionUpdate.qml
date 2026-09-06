@@ -23,6 +23,10 @@ Item {
     return root.run("apply", "system-update", { channel: String(channel || "") })
   }
 
+  function readHistory() {
+    return root.run("history", "system-update-history", {})
+  }
+
   function run(kind, action, payload) {
     if (root.busy || proc.running) return false
     root.busy = true

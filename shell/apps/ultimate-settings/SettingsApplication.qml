@@ -1408,6 +1408,12 @@ Item {
               Layout.fillWidth: true
               onApplied: if (root.controller) root.controller.refreshCurrent()
             }
+            SettingsComponents.SettingsUpdateHistory {
+              visible: root.currentRoute && root.currentRoute.id === "settings.update.overview"
+              pageActive: visible
+              semanticProfile: root.productProfile
+              Layout.fillWidth: true
+            }
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.input.overview" && root.keyboardLayouts.length > 1
               Layout.fillWidth: true

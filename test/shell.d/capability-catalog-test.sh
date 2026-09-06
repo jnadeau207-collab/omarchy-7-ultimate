@@ -712,6 +712,41 @@ if native28.get("sourceStatus") != "pending":
     raise SystemExit(f"windows-native.28 sourceStatus is {native28.get('sourceStatus')}")
 if native28.get("proofStatus") != "pending":
     raise SystemExit(f"windows-native.28 proofStatus is {native28.get('proofStatus')}")
+update_history = by_id["update.history.read"]
+if update_history["humanRoute"].get("surface") != "Settings" or update_history["humanRoute"].get("path") != "Settings > Update":
+    raise SystemExit(f"update.history.read route is {update_history.get('humanRoute')}")
+if update_history["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"update.history.read route status is {update_history.get('humanRoute')}")
+if update_history["humanRoute"].get("label") != "Update history":
+    raise SystemExit(f"update.history.read label is {update_history.get('humanRoute')}")
+if update_history.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionUpdate.qml":
+    raise SystemExit(f"update.history.read source is {update_history.get('source')}")
+if update_history.get("source", {}).get("symbol") != "readHistory":
+    raise SystemExit(f"update.history.read source is {update_history.get('source')}")
+named_history = f"{update_history.get('source', {}).get('file') or ''} {update_history.get('source', {}).get('symbol') or ''}"
+if "SettingsUpdateHistory.qml" in named_history:
+    raise SystemExit("update.history.read must not invent source on SettingsUpdateHistory.qml")
+if update_history.get("availability", {}).get("claim") == "present":
+    raise SystemExit("update.history.read must not claim present")
+if update_history.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"update.history.read human availability is {update_history.get('availability')}")
+if update_history.get("availability", {}).get("agent") != "unavailable":
+    raise SystemExit(f"update.history.read agent availability is {update_history.get('availability')}")
+if update_history.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"update.history.read was raised off leftover: {update_history.get('provider')}")
+native29 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.29")
+if native29.get("claim") == "present":
+    raise SystemExit(f"windows-native.29 was flipped to present: {native29}")
+if native29.get("claim") != "missing":
+    raise SystemExit(f"windows-native.29 claim is {native29.get('claim')}")
+if native29.get("capabilityIds") != ["update.history.read"]:
+    raise SystemExit(f"windows-native.29 capabilityIds are {native29.get('capabilityIds')}")
+if native29["humanRoute"].get("path") != "Settings > Update":
+    raise SystemExit(f"windows-native.29 route is {native29['humanRoute']}")
+if native29.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.29 sourceStatus is {native29.get('sourceStatus')}")
+if native29.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.29 proofStatus is {native29.get('proofStatus')}")
 
 if "display.brightness.set" not in by_id:
     raise SystemExit("absent live brightness writer invent: display.brightness.set missing from catalog")
@@ -1105,6 +1140,10 @@ if "CLOSED leftover: session Cut/Move + permanent Delete UI" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as session Cut/Move + permanent Delete UI")
 if "Honesty addendum 2026-09-06 vs Settings Update apply" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update apply leftover addendum")
+if "Honesty addendum 2026-09-06 vs Settings Update history" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update history leftover addendum")
+if "CLOSED leftover: Update history UI" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Update history UI")
 if "Fabric system.update stays inspect-only" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Fabric system.update inspect-only")
 if "windows-native.28 stays missing/pending" not in gaps:
@@ -2276,6 +2315,7 @@ inventory = {
     "network.manage": "partial",
     "network.wifi.connect": "partial",
     "update.install": "partial",
+    "update.history.read": "partial",
     "power.profile.set": "partial",
     "display.configure": "partial",
     "display.night-light.set": "partial",

@@ -1887,9 +1887,9 @@
         "update.history.read"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": ""
+        "path": "Settings > Update"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Read-only history requires no recovery.",

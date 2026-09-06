@@ -1666,6 +1666,145 @@ def probe_update_disk(run: Any) -> tuple[bool, str]:
     detail = (completed.stdout or completed.stderr or "").strip()[:480]
     return False, detail or "This machine does not have enough free disk space to update safely."
 
+def update_history_log_path() -> pathlib.Path:
+    override = os.environ.get("OMARCHY_UPDATE_LOG")
+    if override:
+        return pathlib.Path(override)
+    return pathlib.Path("/tmp/omarchy-update.log")
+
+
+def update_history_state_dir() -> pathlib.Path:
+    xdg = os.environ.get("XDG_STATE_HOME")
+    if xdg:
+        return pathlib.Path(xdg) / "omarchy"
+    return pathlib.Path.home() / ".local" / "state" / "omarchy"
+
+
+def iso_from_mtime(path: pathlib.Path) -> str:
+    stamp = datetime.datetime.fromtimestamp(path.stat().st_mtime, datetime.timezone.utc)
+    return stamp.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def analyze_update_history_text(text: str) -> list[dict[str, str]]:
+    failures: list[dict[str, str]] = []
+    if "Updating linux initcpios" in text and "Initcpio image generation successful" not in text:
+        failures.append(
+            {
+                "code": "update.history.initramfs",
+                "title": "Initramfs generation may have failed",
+                "detail": "The update transcript started initramfs generation but did not record success. Review the log before restart.",
+            }
+        )
+    if "Something went wrong during the update" in text:
+        failures.append(
+            {
+                "code": "update.history.failed",
+                "title": "The update did not finish",
+                "detail": "The update transcript recorded a failure. Review the log and retry the update.",
+            }
+        )
+    if "already running" in text.lower():
+        failures.append(
+            {
+                "code": "update.history.lock-held",
+                "title": "An Omarchy update was already running",
+                "detail": "The transcript records a held update lock.",
+            }
+        )
+    lowered = text.lower()
+    if "10 gib" in lowered or "free to safely update" in lowered:
+        failures.append(
+            {
+                "code": "update.history.disk-space",
+                "title": "The update stopped for disk space",
+                "detail": "The transcript records a free-space refusal.",
+            }
+        )
+    return failures
+
+
+def inspect_update_restart_markers(state_dir: pathlib.Path) -> tuple[bool, list[str]]:
+    reboot_required = (state_dir / "reboot-required").is_file()
+    restart_required: list[str] = []
+    if state_dir.is_dir():
+        for marker in sorted(state_dir.glob("restart-*-required")):
+            name = marker.name[len("restart-") : -len("-required")]
+            if name:
+                restart_required.append(name)
+    return reboot_required, restart_required
+
+
+def apply_system_update_history(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    del run
+    try:
+        read_payload(stdin)
+        log_path = update_history_log_path()
+        reboot_required, restart_required = inspect_update_restart_markers(update_history_state_dir())
+        if not log_path.is_file():
+            json.dump(
+                {
+                    "ok": True,
+                    "available": False,
+                    "empty": True,
+                    "entries": [],
+                    "failures": [],
+                    "logPath": str(log_path),
+                    "logModifiedAt": None,
+                    "rebootRequired": reboot_required,
+                    "restartRequired": restart_required,
+                    "explanation": "No update transcript is available on this session.",
+                },
+                stdout,
+            )
+            stdout.write("\n")
+            return 0
+        text = log_path.read_text(encoding="utf-8", errors="replace")
+        failures = analyze_update_history_text(text)
+        occurred_at = iso_from_mtime(log_path)
+        status = "failed" if failures else "recorded"
+        title = "Last Omarchy update transcript"
+        if failures:
+            explanation = "The last update transcript recorded structured failures."
+            detail = failures[0]["detail"]
+        else:
+            explanation = "The last Omarchy update transcript is available on this session."
+            detail = "This session read the existing Omarchy update log. Restart and reboot writers stay unavailable."
+        json.dump(
+            {
+                "ok": True,
+                "available": True,
+                "empty": False,
+                "entries": [
+                    {
+                        "id": "update.history.transcript",
+                        "kind": "transcript",
+                        "status": status,
+                        "title": title,
+                        "detail": detail,
+                        "occurredAt": occurred_at,
+                    }
+                ],
+                "failures": failures,
+                "logPath": str(log_path),
+                "logModifiedAt": occurred_at,
+                "rebootRequired": reboot_required,
+                "restartRequired": restart_required,
+                "explanation": explanation,
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 0
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+
+
 def classify_update_failure(completed: Any) -> ApplyError:
     detail = (completed.stderr or completed.stdout or "").strip()[:480]
     text = detail.lower()
@@ -1777,6 +1916,7 @@ ACTIONS = {
     "software-remove": apply_software_remove,
     "system-update-status": apply_system_update_status,
     "system-update": apply_system_update,
+    "system-update-history": apply_system_update_history,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
