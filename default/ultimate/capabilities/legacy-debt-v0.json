@@ -133,6 +133,7 @@
       "state": "legacy-direct",
       "capabilityIds": [
         "apps.launch",
+        "apps.startup.disable",
         "audio.output.manage",
         "backup.manage",
         "bluetooth.audio.pair",
@@ -166,6 +167,7 @@
       ],
       "surfaceRefs": [
         "capability:apps.launch",
+        "capability:apps.startup.disable",
         "capability:audio.output.manage",
         "capability:backup.manage",
         "capability:bluetooth.audio.pair",
@@ -207,7 +209,6 @@
         "accessibility.configure",
         "accounts.manage",
         "agents.center.manage",
-        "apps.startup.disable",
         "compatibility.install",
         "compatibility.uninstall",
         "credentials.manage",
@@ -234,7 +235,6 @@
         "capability:accessibility.configure",
         "capability:accounts.manage",
         "capability:agents.center.manage",
-        "capability:apps.startup.disable",
         "capability:compatibility.install",
         "capability:compatibility.uninstall",
         "capability:credentials.manage",

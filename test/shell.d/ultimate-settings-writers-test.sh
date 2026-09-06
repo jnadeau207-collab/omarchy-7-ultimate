@@ -215,14 +215,13 @@ grep -Fq 'settings.apps.default-programs' "$ROOT/shell/apps/ultimate-settings/ro
   fail "Settings catalog registers the Default Programs route"
 grep -Fq 'id: mailerColumn' "$application" || fail "Settings shows a Default email application card"
 grep -Fq 'function applyDefaultMailer(appId)' "$application" || fail "Settings wires the mailer writer"
-grep -Fq 'id: startupColumn' "$application" || fail "Settings shows a Startup applications card"
-grep -Fq 'readonly property var startupRows: SettingsModel.startupEntries(queryState.records)' "$application" \
-  || fail "Settings reads startup rows through the typed model"
+grep -Fq 'SettingsComponents.SettingsAppsStartup' "$application" || fail "Settings shows a Startup applications card"
 if grep -Eq 'startup.*operation\.preflight|operation\.preflight.*startup' "$application"; then
-  fail "Settings must not wire a startup mutation"
+  fail "Settings must not wire a Fabric startup mutation"
 fi
-grep -Fq 'These entries launch at sign-in. Settings cannot enable, disable, or remove them.' "$application" \
-  || fail "Settings states the startup refusal on the card"
+if grep -Fq 'These entries launch at sign-in. Settings cannot enable, disable, or remove them.' "$application"; then
+  fail "Settings still refuses startup mutation on the host"
+fi
 grep -Fq 'MIME defaults apply through defaults.provider mime.set' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
   || fail "HANDOFF_WRITERS records MIME LIVE CONTROL in Settings Apps"
 grep -Fq 'Honesty addendum 2026-09-05' "$ROOT/HANDOFF_WRITERS_2026-09-01.md" \
@@ -322,9 +321,12 @@ assert(defaultProgramsQuery.coverage.indexOf('files.associations.set remain unav
 assert(appsQuery.coverage.indexOf('protocol.set') >= 0, 'the apps coverage note names the settable verb')
 assert(appsQuery.coverage.indexOf('defaults.inspect') >= 0, 'the apps coverage note names MIME inspect inventory')
 assert(appsQuery.coverage.indexOf('MIME defaults apply through defaults.provider mime.set') >= 0, 'the apps coverage note names the live MIME verb')
-assert(appsQuery.coverage.indexOf('Startup applications are readable through defaults.inspect') >= 0, 'the apps coverage note names the readable startup inventory')
-assert(appsQuery.coverage.indexOf('Settings cannot enable, disable, or remove startup applications') >= 0, 'the apps coverage note refuses startup mutation')
+assert(appsQuery.coverage.indexOf('XDG autostart') >= 0, 'the apps coverage note names the XDG autostart plane')
+assert(appsQuery.coverage.indexOf('does not invent a Fabric apps.startup.disable durable writer') >= 0, 'the apps coverage note refuses a Fabric startup writer')
+assert(appsQuery.coverage.indexOf('does not invent Task Manager present') >= 0, 'the apps coverage note refuses Task Manager present')
+assert(appsQuery.coverage.indexOf('Settings cannot enable, disable, or remove startup applications') < 0, 'the apps coverage note no longer refuses startup mutation')
 assert(appsQuery.coverage.indexOf('Background application inventory remains unavailable') >= 0, 'the apps coverage note still refuses what Settings cannot do')
+assert(appsQuery.coverage.indexOf('this session') >= 0, 'the apps coverage note names the session principal')
 
 const mimeAppZ = Model.normalizeApplication({ id: 'defaults.app.z', name: 'TextPro', state: 'available', desktopId: 'textpro.desktop' }, 3)
 const mimeRows = Model.mimeAssociations([

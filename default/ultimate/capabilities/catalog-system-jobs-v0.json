@@ -6358,7 +6358,7 @@
       "provider": {
         "id": "apps.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "legacy-direct"
       },
       "kind": "writer",
       "effects": [
@@ -6388,9 +6388,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "apps.resource"
@@ -6425,10 +6425,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "missing",
-        "surface": "Task Manager",
+        "status": "visible",
+        "surface": "Settings",
         "label": "Disable startup application",
-        "path": ""
+        "path": "Settings > Apps"
       },
       "agentCenterLabel": "Disable startup application",
       "proofIds": {
@@ -6440,8 +6440,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:apps.startup.disable",
+        "file": "shell/apps/shared/SettingsSessionStartup.qml",
+        "symbol": "setEnabled",
         "brokerVerb": null
       }
     },

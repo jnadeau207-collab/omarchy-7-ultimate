@@ -382,11 +382,34 @@ if "process.termination.plan" not in (parity_task_manager.get("capabilityIds") o
 admin_coverage = (root / "shell/apps/ultimate-administration/AdministrationModel.js").read_text(encoding="utf-8")
 if "Ending a task is wired through the durable operation service but is declared consequential, which the shell principal cannot authorize." not in admin_coverage:
     raise SystemExit("Administration Processes coverage must keep End Task unauthorized")
-startup = by_id["apps.startup.disable"]["humanRoute"]
-if startup.get("status") != "missing" or startup.get("path"):
+startup_cap = by_id["apps.startup.disable"]
+startup = startup_cap["humanRoute"]
+if startup.get("status") != "visible" or startup.get("surface") != "Settings":
+    raise SystemExit(f"apps.startup.disable underclaims a visible Settings Apps host: {startup}")
+if startup.get("path") != "Settings > Apps":
+    raise SystemExit(f"apps.startup.disable invents or underclaims a Settings Apps destination: {startup}")
+if "Task Manager" in str(startup.get("surface") or "") or "Task Manager" in str(startup.get("path") or ""):
     raise SystemExit(f"apps.startup.disable invents a Task Manager Startup page: {startup}")
+if startup_cap.get("availability", {}).get("claim") == "present":
+    raise SystemExit("apps.startup.disable must not claim present")
+if startup_cap.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"apps.startup.disable claim is {startup_cap.get('availability')}")
+if startup_cap.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"apps.startup.disable was raised off leftover: {startup_cap.get('provider')}")
+if startup_cap.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionStartup.qml":
+    raise SystemExit(f"apps.startup.disable source is {startup_cap.get('source')}")
+if startup_cap.get("source", {}).get("symbol") != "setEnabled":
+    raise SystemExit(f"apps.startup.disable source is {startup_cap.get('source')}")
 native27 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.27")
-if native27["humanRoute"].get("path"):
+if native27.get("claim") == "present":
+    raise SystemExit(f"windows-native.27 was flipped to present: {native27}")
+if native27.get("claim") != "missing":
+    raise SystemExit(f"windows-native.27 claim is {native27.get('claim')}")
+if native27.get("sourceStatus") != "pending" or native27.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.27 left pending: {native27}")
+if native27["humanRoute"].get("status") != "visible" or native27["humanRoute"].get("path") != "Settings > Apps":
+    raise SystemExit(f"windows-native.27 underclaims Settings Apps: {native27['humanRoute']}")
+if "Task Manager" in str(native27["humanRoute"].get("surface") or "") or "Task Manager" in str(native27["humanRoute"].get("path") or ""):
     raise SystemExit(f"windows-native.27 invents a Task Manager Startup page: {native27['humanRoute']}")
 resources = by_id["resources.inspect"]["humanRoute"]
 if resources.get("status") != "missing" or resources.get("path"):

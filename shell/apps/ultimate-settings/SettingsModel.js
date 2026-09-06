@@ -78,7 +78,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set for the http and https schemes. The default email application applies through defaults.provider protocol.set for the mailto scheme. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings. Default Programs is the dedicated protocol and MIME page."
+    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set for the http and https schemes. The default email application applies through defaults.provider protocol.set for the mailto scheme. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications enable or disable through this session's XDG autostart helper. Fabric defaults.inspect stays readable. Settings does not invent a Fabric apps.startup.disable durable writer. Settings does not invent Task Manager present. Background application inventory remains unavailable from Settings. Default Programs is the dedicated protocol and MIME page."
   },
   {
     routeId: "settings.apps.default-programs",
@@ -157,6 +157,8 @@ function coverageTone(routeId) {
 function declaredOpsHonesty(routeId) {
   if (String(routeId || "") === "settings.display.overview")
     return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer."
+  if (String(routeId || "") === "settings.apps.overview")
+    return "Settings runs browser, mailer, and MIME defaults through preflight, approval, and the durable coordinator. Startup applications enable or disable through this session's XDG autostart helper. Fabric defaults.inspect stays readable. Settings does not invent a Fabric apps.startup.disable durable writer. Settings does not invent Task Manager present."
   if (String(routeId || "") === "settings.bluetooth.overview")
     return "Settings pairs and connects through this session's BlueZ adapter. Fabric bluetooth.inspect stays read-only; pairing secrets never enter durable evidence."
   if (String(routeId || "") === "settings.update.overview")
@@ -167,7 +169,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1499,6 +1501,91 @@ function sessionUpdateHistoryFinished(previous, helperResult) {
   }
 }
 
+function sessionStartupIdle() {
+  return { phase: "idle", action: "", entries: [], empty: false, unavailable: false, message: "", code: "" }
+}
+
+function sessionStartupNormalizeEntry(entry) {
+  if (!isObject(entry) || typeof entry.desktopId !== "string" || entry.desktopId === "") return null
+  if (typeof entry.name !== "string" || entry.name === "") return null
+  if (entry.enabled !== true && entry.enabled !== false) return null
+  if (entry.source !== "user" && entry.source !== "system") return null
+  return {
+    desktopId: clippedText(entry.desktopId, 255),
+    name: clippedText(entry.name, 240),
+    label: clippedText(entry.name, 240),
+    startupEnabled: entry.enabled === true,
+    startupSource: entry.source,
+    source: entry.source,
+    controllable: entry.controllable === true
+  }
+}
+
+function sessionStartupCanSubmit(row) {
+  if (!isObject(row) || typeof row.desktopId !== "string" || row.desktopId === "") return false
+  if (row.controllable !== true) return false
+  return row.enabled === true || row.enabled === false || row.startupEnabled === true || row.startupEnabled === false
+}
+
+function sessionStartupAccepted(previous, action) {
+  return {
+    phase: "running",
+    action: action || "",
+    entries: previous && Array.isArray(previous.entries) ? previous.entries.slice() : [],
+    empty: previous && previous.empty === true,
+    unavailable: false,
+    message: "",
+    code: previous && previous.code || ""
+  }
+}
+
+function sessionStartupFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var ok = result.ok === true
+  var entries = []
+  if (Array.isArray(result.entries)) {
+    for (var i = 0; i < result.entries.length; i++) {
+      var normalized = sessionStartupNormalizeEntry(result.entries[i])
+      if (normalized) entries.push(normalized)
+    }
+  } else if (previous && Array.isArray(previous.entries)) {
+    entries = previous.entries.slice()
+    if (typeof result.desktopId === "string" && (result.enabled === true || result.enabled === false)) {
+      for (var j = 0; j < entries.length; j++) {
+        if (entries[j].desktopId === result.desktopId) {
+          entries[j] = {
+            desktopId: entries[j].desktopId,
+            name: entries[j].name,
+            label: entries[j].label,
+            startupEnabled: result.enabled === true,
+            startupSource: result.source === "user" || result.source === "system" ? result.source : entries[j].startupSource,
+            source: result.source === "user" || result.source === "system" ? result.source : entries[j].source,
+            controllable: entries[j].controllable
+          }
+        }
+      }
+    }
+  }
+  var code = result.code || result.reason || ""
+  var unavailable = !ok && (
+    code === "startup.home-unavailable" ||
+    code === "startup.autostart-unreadable" ||
+    code === "startup.autostart-unwritable"
+  )
+  var action = previous && previous.action || ""
+  if (ok && Array.isArray(result.entries)) action = "list"
+  else if (ok && typeof result.desktopId === "string") action = "set"
+  return {
+    phase: ok ? "succeeded" : "failed",
+    action: action,
+    entries: entries,
+    empty: result.empty === true || (ok && entries.length === 0),
+    unavailable: unavailable,
+    message: clippedText(result.explanation || result.message || (ok ? "The session startup helper finished." : "The session startup helper failed."), MAX_DISPLAY_TEXT),
+    code: code
+  }
+}
+
 function sessionNightlightIdle() {
   return { phase: "idle", action: "", enabled: false, known: false, temperature: null, message: "", code: "" }
 }
@@ -1685,6 +1772,11 @@ if (typeof module !== "undefined") {
     sessionUpdateFinished: sessionUpdateFinished,
     sessionUpdateHistoryIdle: sessionUpdateHistoryIdle,
     sessionUpdateHistoryFinished: sessionUpdateHistoryFinished,
+    sessionStartupIdle: sessionStartupIdle,
+    sessionStartupNormalizeEntry: sessionStartupNormalizeEntry,
+    sessionStartupCanSubmit: sessionStartupCanSubmit,
+    sessionStartupAccepted: sessionStartupAccepted,
+    sessionStartupFinished: sessionStartupFinished,
     sessionNightlightIdle: sessionNightlightIdle,
     sessionNightlightFailureCode: sessionNightlightFailureCode,
     sessionNightlightFromIpc: sessionNightlightFromIpc,

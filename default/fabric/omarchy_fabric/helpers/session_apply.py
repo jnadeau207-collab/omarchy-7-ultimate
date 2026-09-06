@@ -1892,6 +1892,341 @@ def apply_system_update(
     stdout.write("\n")
     return 0
 
+MAX_STARTUP_FILES = 64
+MAX_DESKTOP_BYTES = 65536
+SYSTEM_AUTOSTART = pathlib.Path("/etc/xdg/autostart")
+
+
+def valid_startup_desktop_id(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and value.isascii()
+        and 9 <= len(value) <= 255
+        and value.endswith(".desktop")
+        and all(character.isalnum() or character in "_.+-" for character in value)
+        and "/" not in value
+        and "\\" not in value
+    )
+
+
+def resolve_startup_home(home: Any) -> pathlib.Path:
+    path = pathlib.Path.home() if home is None else pathlib.Path(home)
+    try:
+        if path.is_symlink() or not path.is_dir():
+            raise ApplyError("startup.home-unavailable", "This session has no usable home directory for XDG autostart.")
+    except OSError as error:
+        raise ApplyError("startup.home-unavailable", "This session has no usable home directory for XDG autostart.") from error
+    return path
+
+
+def resolve_startup_system_root(system_root: Any) -> pathlib.Path:
+    return SYSTEM_AUTOSTART if system_root is None else pathlib.Path(system_root)
+
+
+def user_autostart_dir(home: pathlib.Path) -> pathlib.Path:
+    return home / ".config" / "autostart"
+
+
+def user_autostart_writable(home: pathlib.Path) -> bool:
+    target = user_autostart_dir(home)
+    try:
+        if target.exists():
+            return (not target.is_symlink()) and target.is_dir() and os.access(target, os.W_OK)
+        config = home / ".config"
+        if config.exists():
+            return (not config.is_symlink()) and config.is_dir() and os.access(config, os.W_OK)
+        return os.access(home, os.W_OK)
+    except OSError:
+        return False
+
+
+def read_bounded_fd(descriptor: int, maximum: int) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = os.read(descriptor, min(16384, maximum + 1 - total))
+        if not chunk:
+            break
+        chunks.append(chunk)
+        total += len(chunk)
+        if total > maximum:
+            raise ValueError("desktop file exceeds bound")
+    return b"".join(chunks)
+
+
+def parse_autostart_bytes(raw: bytes) -> dict[str, Any] | None:
+    text = raw.decode("utf-8", errors="strict")
+    in_desktop = False
+    values: dict[str, str] = {}
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            in_desktop = line == "[Desktop Entry]"
+            continue
+        if not in_desktop or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key in {"Type", "Name", "Hidden", "X-GNOME-Autostart-enabled"}:
+            if key in values:
+                raise ValueError("duplicate autostart key")
+            values[key] = value.strip()
+    if values.get("Type") != "Application" or not values.get("Name"):
+        return None
+    name = values["Name"]
+    if not name or len(name) > 160:
+        return None
+    if any(ord(character) < 32 for character in name):
+        raise ValueError("desktop display field contains a control character")
+    enabled = values.get("Hidden", "false").lower() != "true" and values.get(
+        "X-GNOME-Autostart-enabled", "true"
+    ).lower() != "false"
+    return {"name": name, "enabled": enabled, "text": text}
+
+
+def rewrite_autostart_enabled(text: str, enabled: bool) -> str:
+    newline = "\r\n" if "\r\n" in text else "\n"
+    lines = text.splitlines()
+    start = None
+    end = len(lines)
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped == "[Desktop Entry]":
+            start = index
+            continue
+        if start is not None and index > start and stripped.startswith("[") and stripped.endswith("]"):
+            end = index
+            break
+    if start is None:
+        raise ApplyError("startup.entry-unsafe", "The autostart file has no Desktop Entry section.")
+    hidden_value = "false" if enabled else "true"
+    gnome_value = "true" if enabled else "false"
+    hidden_seen = False
+    for index in range(start + 1, end):
+        stripped = lines[index].strip()
+        if stripped.startswith("Hidden="):
+            lines[index] = f"Hidden={hidden_value}"
+            hidden_seen = True
+        elif stripped.startswith("X-GNOME-Autostart-enabled="):
+            lines[index] = f"X-GNOME-Autostart-enabled={gnome_value}"
+    if not hidden_seen:
+        lines.insert(end, f"Hidden={hidden_value}")
+    body = newline.join(lines)
+    if text.endswith(("\n", "\r\n")):
+        body += newline
+    return body
+
+
+def read_startup_name(dir_fd: int, name: str) -> bytes | None:
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(name, flags, dir_fd=dir_fd)
+    except OSError:
+        return None
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_DESKTOP_BYTES:
+            return None
+        return read_bounded_fd(descriptor, MAX_DESKTOP_BYTES)
+    except (OSError, ValueError):
+        return None
+    finally:
+        os.close(descriptor)
+
+
+def collect_startup_dir(root: pathlib.Path, source: str, entries: dict[str, dict[str, Any]], examined: list[int]) -> None:
+    if examined[0] >= MAX_STARTUP_FILES:
+        return
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        directory_fd = os.open(root, flags)
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        raise ApplyError("startup.autostart-unreadable", "An autostart directory is not a real no-follow directory.") from error
+    try:
+        names = sorted(os.listdir(directory_fd))
+    except OSError as error:
+        os.close(directory_fd)
+        raise ApplyError("startup.autostart-unreadable", "An autostart directory could not be enumerated.") from error
+    try:
+        for name in names:
+            if examined[0] >= MAX_STARTUP_FILES:
+                break
+            if not valid_startup_desktop_id(name) or name in entries:
+                continue
+            examined[0] += 1
+            raw = read_startup_name(directory_fd, name)
+            if raw is None:
+                continue
+            try:
+                parsed = parse_autostart_bytes(raw)
+            except (UnicodeError, ValueError):
+                continue
+            if parsed is None:
+                continue
+            entries[name] = {
+                "desktopId": name,
+                "name": parsed["name"],
+                "enabled": parsed["enabled"],
+                "source": source,
+                "text": parsed["text"],
+            }
+    finally:
+        os.close(directory_fd)
+
+
+def list_startup_inventory(home: pathlib.Path, system_root: pathlib.Path) -> list[dict[str, Any]]:
+    entries: dict[str, dict[str, Any]] = {}
+    examined = [0]
+    collect_startup_dir(user_autostart_dir(home), "user", entries, examined)
+    collect_startup_dir(system_root, "system", entries, examined)
+    controllable = user_autostart_writable(home)
+    inventory = []
+    for desktop_id in sorted(entries):
+        entry = entries[desktop_id]
+        inventory.append(
+            {
+                "desktopId": desktop_id,
+                "name": entry["name"],
+                "enabled": entry["enabled"],
+                "source": entry["source"],
+                "controllable": controllable,
+            }
+        )
+    return inventory
+
+
+def locate_startup_entry(desktop_id: str, home: pathlib.Path, system_root: pathlib.Path) -> dict[str, Any] | None:
+    entries: dict[str, dict[str, Any]] = {}
+    examined = [0]
+    collect_startup_dir(user_autostart_dir(home), "user", entries, examined)
+    collect_startup_dir(system_root, "system", entries, examined)
+    return entries.get(desktop_id)
+
+
+def ensure_user_autostart(home: pathlib.Path) -> pathlib.Path:
+    target = user_autostart_dir(home)
+    try:
+        if target.exists():
+            if target.is_symlink() or not target.is_dir() or not os.access(target, os.W_OK):
+                raise ApplyError("startup.autostart-unwritable", "This session cannot write ~/.config/autostart.")
+            return target
+        target.mkdir(parents=True, exist_ok=True)
+    except ApplyError:
+        raise
+    except OSError as error:
+        raise ApplyError("startup.autostart-unwritable", "This session cannot write ~/.config/autostart.") from error
+    return target
+
+
+def write_user_autostart(user_dir: pathlib.Path, desktop_id: str, text: str) -> None:
+    dest = user_dir / desktop_id
+    try:
+        info = dest.lstat()
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+            raise ApplyError("startup.entry-unsafe", "The user autostart file is not a regular file.")
+    except FileNotFoundError:
+        pass
+    except ApplyError:
+        raise
+    except OSError as error:
+        raise ApplyError("startup.entry-unsafe", "The user autostart file is not a regular file.") from error
+    tmp = user_dir / f".{desktop_id}.{os.getpid()}.tmp"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(tmp, flags, 0o644)
+    except OSError as error:
+        raise ApplyError("startup.autostart-unwritable", "This session cannot write ~/.config/autostart.") from error
+    try:
+        os.write(descriptor, text.encode("utf-8"))
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    try:
+        os.replace(tmp, dest)
+    except OSError as error:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        raise ApplyError("startup.autostart-unwritable", "This session cannot write ~/.config/autostart.") from error
+
+
+def apply_apps_startup_list(stdin: Any, stdout: Any, home: Any = None, system_root: Any = None) -> int:
+    try:
+        read_payload(stdin)
+        home_path = resolve_startup_home(home)
+        inventory = list_startup_inventory(home_path, resolve_startup_system_root(system_root))
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    empty = len(inventory) == 0
+    json.dump(
+        {
+            "ok": True,
+            "empty": empty,
+            "entries": inventory,
+            "reason": "startup.empty" if empty else "",
+            "explanation": (
+                "No XDG autostart applications were found for this session. Hyprland session hooks stay outside this list."
+                if empty
+                else "Startup applications from this session XDG autostart."
+            ),
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_apps_startup_set(stdin: Any, stdout: Any, home: Any = None, system_root: Any = None) -> int:
+    try:
+        payload = read_payload(stdin)
+        desktop_id = payload.get("desktopId")
+        enabled = payload.get("enabled")
+        if not valid_startup_desktop_id(desktop_id) or enabled is not True and enabled is not False:
+            raise ApplyError("startup.payload-invalid", "The apply payload names no XDG autostart desktop identity.")
+        home_path = resolve_startup_home(home)
+        system_path = resolve_startup_system_root(system_root)
+        located = locate_startup_entry(desktop_id, home_path, system_path)
+        if located is None:
+            raise ApplyError("startup.entry-missing", "That startup application is not present in XDG autostart.")
+        if located["enabled"] is enabled:
+            json.dump(
+                {
+                    "ok": True,
+                    "desktopId": desktop_id,
+                    "enabled": enabled,
+                    "source": located["source"],
+                    "explanation": f"{'Enabled' if enabled else 'Disabled'} {desktop_id} for this session.",
+                },
+                stdout,
+            )
+            stdout.write("\n")
+            return 0
+        user_dir = ensure_user_autostart(home_path)
+        write_user_autostart(user_dir, desktop_id, rewrite_autostart_enabled(located["text"], enabled))
+        source = "user"
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "desktopId": desktop_id,
+            "enabled": enabled,
+            "source": source,
+            "explanation": f"{'Enabled' if enabled else 'Disabled'} {desktop_id} for this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
@@ -1917,6 +2252,8 @@ ACTIONS = {
     "system-update-status": apply_system_update_status,
     "system-update": apply_system_update,
     "system-update-history": apply_system_update_history,
+    "apps-startup-list": apply_apps_startup_list,
+    "apps-startup-set": apply_apps_startup_set,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

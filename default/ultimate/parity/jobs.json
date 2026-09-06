@@ -1835,9 +1835,9 @@
         "apps.startup.disable"
       ],
       "humanRoute": {
-        "status": "planned",
-        "surface": "Task Manager",
-        "path": ""
+        "status": "visible",
+        "surface": "Settings",
+        "path": "Settings > Apps"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Restore the previous startup state.",
