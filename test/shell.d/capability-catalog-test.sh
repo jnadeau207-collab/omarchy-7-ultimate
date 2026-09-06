@@ -31,9 +31,9 @@ if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 valid_output=$(OMARCHY_PATH="$ROOT" bash "$checker" --root "$ROOT")
-[[ $valid_output == *"138 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
-grep -Fq 'The checked inventory contains 138 capability descriptors.' "$ROOT/docs/capability-graph.md" \
-  || fail "capability-graph.md locks the same 138 capability count"
+[[ $valid_output == *"139 capabilities"* ]] || fail "capability checker reports the complete catalog" "$valid_output"
+grep -Fq 'The checked inventory contains 139 capability descriptors.' "$ROOT/docs/capability-graph.md" \
+  || fail "capability-graph.md locks the same 139 capability count"
 if grep -Fq 'contains 129 capability descriptors' "$ROOT/docs/capability-graph.md"; then
   fail "capability-graph.md still locks the stale 129 capability count"
 fi
@@ -237,6 +237,7 @@ writer_routes = {
     "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
     "display.night-light.set": ("Settings", "Settings > Display; Superbar > Quick Settings > Night light"),
+    "display.scale.set": ("Settings", "Settings > Display"),
     "network.wifi.connect": ("Settings", "Settings > Network"),
     "power.profile.set": ("Quick Settings", "Superbar > Quick Settings > Power"),
 }
@@ -806,10 +807,43 @@ if display_configure.get("source", {}).get("file") != "shell/plugins/panels/moni
 native3 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.3")
 if native3.get("claim") == "present":
     raise SystemExit(f"windows-native.3 was flipped to present: {native3}")
-if native3.get("capabilityIds") != ["display.configure"]:
+if native3.get("capabilityIds") != ["display.scale.set"]:
     raise SystemExit(f"windows-native.3 capabilityIds are {native3.get('capabilityIds')}")
-if "Settings" in str(native3["humanRoute"].get("path") or ""):
-    raise SystemExit(f"windows-native.3 invents Settings display scaling: {native3['humanRoute']}")
+if native3.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.3 sourceStatus is {native3.get('sourceStatus')}")
+if native3.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.3 proofStatus is {native3.get('proofStatus')}")
+if native3.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.3 claim is {native3.get('claim')}")
+if native3["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"windows-native.3 underclaims a visible Settings Display host: {native3.get('humanRoute')}")
+if native3["humanRoute"].get("path") != "Settings > Display":
+    raise SystemExit(f"windows-native.3 underclaims the Settings Display host: {native3['humanRoute']}")
+native3_recovery = str(native3.get("recoveryExpectation") or "")
+if "Automatically roll back a timed display change unless kept." in native3_recovery:
+    raise SystemExit("windows-native.3 still invents timed auto-rollback/keep")
+if "no timed auto-rollback" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recoveryExpectation dropped no timed auto-rollback: {native3_recovery}")
+scale_set = by_id["display.scale.set"]
+if scale_set["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"display.scale.set underclaims a visible Settings Display host: {scale_set.get('humanRoute')}")
+if scale_set["humanRoute"].get("surface") != "Settings" or scale_set["humanRoute"].get("path") != "Settings > Display":
+    raise SystemExit(f"display.scale.set underclaims the Settings Display host: {scale_set.get('humanRoute')}")
+if scale_set.get("availability", {}).get("claim") == "present":
+    raise SystemExit("display.scale.set must not claim present")
+if scale_set.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"display.scale.set claim is {scale_set.get('availability')}")
+if scale_set.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"display.scale.set human availability is {scale_set.get('availability')}")
+if scale_set.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"display.scale.set was raised off leftover: {scale_set.get('provider')}")
+if scale_set.get("source", {}).get("file") != "bin/omarchy-hyprland-monitor-scaling":
+    raise SystemExit(f"display.scale.set source is {scale_set.get('source')}")
+if "SettingsDisplayScaling.qml" in str(scale_set.get("source", {}).get("file") or ""):
+    raise SystemExit("display.scale.set must not invent source on SettingsDisplayScaling.qml")
+settings_app_scale = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
+if "SettingsDisplayScaling" not in settings_app_scale:
+    raise SystemExit("Settings Display does not host the session scaling card")
 parity_display = next(job for job in jobs["jobs"] if job["id"] == "parity.display")
 if parity_display.get("claim") == "present":
     raise SystemExit(f"parity.display was flipped to present: {parity_display}")
@@ -819,6 +853,8 @@ if "display.configure" not in (parity_display.get("capabilityIds") or []):
     raise SystemExit("parity.display dropped display.configure")
 if "display.night-light.set" not in (parity_display.get("capabilityIds") or []):
     raise SystemExit("parity.display dropped display.night-light.set")
+if "display.scale.set" not in (parity_display.get("capabilityIds") or []):
+    raise SystemExit("parity.display dropped display.scale.set")
 
 night_light = by_id["display.night-light.set"]
 if night_light["humanRoute"].get("status") != "visible":
@@ -865,6 +901,17 @@ if parity_modern.get("claim") == "present":
     raise SystemExit(f"parity.modern-display-scaling-hdr-night-light was flipped to present: {parity_modern}")
 if "display.night-light.set" not in (parity_modern.get("capabilityIds") or []):
     raise SystemExit("parity.modern-display-scaling-hdr-night-light dropped display.night-light.set")
+if "display.scale.set" not in (parity_modern.get("capabilityIds") or []):
+    raise SystemExit("parity.modern-display-scaling-hdr-night-light dropped display.scale.set")
+if "Settings > Display" not in str(parity_modern["humanRoute"].get("path") or ""):
+    raise SystemExit(f"parity.modern-display underclaims Settings > Display: {parity_modern.get('humanRoute')}")
+if str(parity_modern["humanRoute"].get("path") or "") == "Superbar > Display":
+    raise SystemExit(f"parity.modern-display invents Superbar-only scaling: {parity_modern.get('humanRoute')}")
+modern_recovery = str(parity_modern.get("recoveryExpectation") or "")
+if "Timed settings automatically roll back unless explicitly kept." in modern_recovery:
+    raise SystemExit("parity.modern-display still invents timed auto-rollback/keep")
+if "no timed auto-rollback" not in modern_recovery:
+    raise SystemExit(f"parity.modern-display recoveryExpectation dropped no timed auto-rollback: {modern_recovery}")
 
 power_set = by_id["power.profile.set"]
 if power_set["humanRoute"].get("surface") != "Quick Settings" or power_set["humanRoute"].get("path") != "Superbar > Quick Settings > Power":
@@ -2358,6 +2405,7 @@ inventory = {
     "power.profile.set": "partial",
     "display.configure": "partial",
     "display.night-light.set": "partial",
+    "display.scale.set": "partial",
     "display.brightness.set": "partial",
     "input.keyboard-layout.set": "partial",
     "defaults.protocol.set": "partial",

@@ -3525,6 +3525,143 @@ def connect_smb_guest(uri: str, run: Any) -> str:
     raise classify_smb_connect_failure(completed)
 
 
+MONITOR_SCALING_ALLOWED = frozenset({"1", "1.25", "1.6", "2", "3", "4"})
+MONITOR_SCALING_ALLOWED_KEYS = frozenset({"scale"})
+MONITOR_SCALING_SECRET_KEYS = SMB_SECRET_KEYS
+MONITOR_SCALING_REFUSE = "Scale must be one of 1, 1.25, 1.6, 2, 3, or 4."
+
+
+def monitor_scaling_helper() -> str:
+    base = os.environ.get("OMARCHY_PATH")
+    if base:
+        return str(pathlib.Path(base) / "bin" / "omarchy-hyprland-monitor-scaling")
+    return "/usr/bin/omarchy-hyprland-monitor-scaling"
+
+
+def run_monitor_scaling(argv: list[str], run: Any, timeout: int = 30) -> Any:
+    if not argv or not str(argv[0]).startswith("/"):
+        raise ApplyError("command.unavailable", "The monitor scaling helper must be an absolute path.")
+    try:
+        return run(argv, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned system command is not installed.") from error
+
+
+def require_monitor_scale(payload: Mapping[str, Any]) -> str:
+    extra = set(payload) - MONITOR_SCALING_ALLOWED_KEYS
+    if extra & MONITOR_SCALING_SECRET_KEYS or extra:
+        raise ApplyError(
+            "payload.invalid",
+            "stdin JSON may include scale only; this session leftover refuses extra keys",
+        )
+    raw = payload.get("scale")
+    if isinstance(raw, bool):
+        raise ApplyError("payload.invalid", MONITOR_SCALING_REFUSE)
+    if isinstance(raw, int):
+        text = str(raw)
+        if text in MONITOR_SCALING_ALLOWED:
+            return text
+        raise ApplyError("payload.invalid", MONITOR_SCALING_REFUSE)
+    if isinstance(raw, float):
+        for allowed in MONITOR_SCALING_ALLOWED:
+            try:
+                if float(allowed) == raw:
+                    return allowed
+            except ValueError:
+                continue
+        raise ApplyError("payload.invalid", MONITOR_SCALING_REFUSE)
+    if not isinstance(raw, str):
+        raise ApplyError("payload.invalid", MONITOR_SCALING_REFUSE)
+    scale = raw.strip()
+    if scale not in MONITOR_SCALING_ALLOWED:
+        raise ApplyError("payload.invalid", MONITOR_SCALING_REFUSE)
+    return scale
+
+
+def parse_monitor_scale(raw: str) -> str:
+    token = str(raw or "").strip().split()
+    if not token:
+        raise ApplyError("scale.parse-failed", "The monitor scaling helper returned an unreadable scale.")
+    text = token[0].strip()
+    if text in MONITOR_SCALING_ALLOWED:
+        return text
+    try:
+        value = float(text)
+    except ValueError as error:
+        raise ApplyError("scale.parse-failed", "The monitor scaling helper returned an unreadable scale.") from error
+    for allowed in MONITOR_SCALING_ALLOWED:
+        try:
+            if abs(float(allowed) - value) < 0.0001:
+                return allowed
+        except ValueError:
+            continue
+    raise ApplyError("scale.unknown", "The focused monitor scale is not one of the allowed Settings scales.")
+
+
+def apply_display_monitor_scale_status(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        extra = set(payload)
+        if extra & MONITOR_SCALING_SECRET_KEYS or extra:
+            raise ApplyError(
+                "payload.invalid",
+                "stdin JSON for scale status must be empty; this session leftover refuses extra keys",
+            )
+        helper = monitor_scaling_helper()
+        completed = run_monitor_scaling([helper], run)
+        if completed.returncode != 0:
+            raise ApplyError("scale.read-failed", "This session could not read the focused Hyprland monitor scale.")
+        scale = parse_monitor_scale(getattr(completed, "stdout", "") or "")
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation, "known": False, "scale": ""}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "scale": scale,
+            "known": True,
+            "explanation": "Focused Hyprland monitor scale through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_display_monitor_scale(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        scale = require_monitor_scale(payload)
+        helper = monitor_scaling_helper()
+        completed = run_monitor_scaling([helper, scale], run)
+        if completed.returncode != 0:
+            raise ApplyError("scale.apply-failed", "This session could not apply the focused Hyprland monitor scale.")
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation, "known": False, "scale": ""}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "scale": scale,
+            "known": True,
+            "explanation": "Applied the focused Hyprland monitor scale through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
 def apply_sharing_smb_connect(
     stdin: Any,
     stdout: Any,
@@ -3589,6 +3726,8 @@ ACTIONS = {
     "storage-removable-eject": apply_storage_removable_eject,
     "storage-removable-list": apply_storage_removable_list,
     "storage-removable-mount": apply_storage_removable_mount,
+    "display-monitor-scale-status": apply_display_monitor_scale_status,
+    "display-monitor-scale": apply_display_monitor_scale,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

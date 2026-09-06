@@ -429,7 +429,8 @@
       "capabilityIds": [
         "display.brightness.set",
         "display.configure",
-        "display.night-light.set"
+        "display.night-light.set",
+        "display.scale.set"
       ],
       "humanRoute": {
         "status": "visible",
@@ -1014,15 +1015,16 @@
       "claim": "prototype",
       "capabilityIds": [
         "display.configure",
-        "display.night-light.set"
+        "display.night-light.set",
+        "display.scale.set"
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Monitor panel",
-        "path": "Superbar > Display"
+        "surface": "Settings",
+        "path": "Settings > Display; Superbar > Quick Settings > Night light"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Timed settings automatically roll back unless explicitly kept.",
+      "recoveryExpectation": "Restore prior scale from Settings > Display; night-light restores its prior schedule; HDR remains unavailable (no timed auto-rollback for session scale).",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.modern-display-scaling-hdr-night-light"
@@ -1200,15 +1202,15 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
-        "display.configure"
+        "display.scale.set"
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Monitor panel",
-        "path": "Superbar > Display"
+        "surface": "Settings",
+        "path": "Settings > Display"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Automatically roll back a timed display change unless kept.",
+      "recoveryExpectation": "Restore the prior focused-monitor scale from Settings > Display (session plane applies immediately; no timed auto-rollback).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.3"

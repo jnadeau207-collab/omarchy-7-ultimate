@@ -89,6 +89,8 @@ pass "heritage QS Power leftover stays cataloged, was unverified on metal, and Q
 
 grep -Fq 'SettingsComponents.SettingsDisplayNightLight' "$application" ||
   fail "Settings Display hosts the NightlightService night-light card"
+grep -Fq 'SettingsComponents.SettingsDisplayScaling' "$application" ||
+  fail "Settings Display hosts the session scaling card"
 if grep -Eq 'action: "night-light|action: "nightlight|provider: "display.provider".*night' "$application"; then
   fail "Settings invents a Fabric night-light writer"
 fi
@@ -452,7 +454,8 @@ assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility inpu
 
 const displayQuery = Model.queryForRoute('settings.display.overview')
 assert(displayQuery.coverage.indexOf('brightness.set') >= 0, 'the display coverage note names the settable verb')
-assert(displayQuery.coverage.indexOf('Resolution, scale, and arrangement changes remain unavailable') >= 0, 'the display coverage note still refuses what Settings cannot do')
+assert(displayQuery.coverage.indexOf('Resolution, arrangement, and HDR remain unavailable') >= 0, 'the display coverage note still refuses what Settings cannot do')
+assert(displayQuery.coverage.indexOf('does not invent a display.provider scale durable writer') >= 0, 'the display coverage note refuses a Fabric scale writer')
 assert(displayQuery.coverage.indexOf('does not invent a display.provider night-light durable writer') >= 0, 'the display coverage note refuses a Fabric night-light writer')
 assert(displayQuery.coverage.indexOf('NightlightService') >= 0, 'the display coverage note names NightlightService')
 assert(displayQuery.coverage.indexOf('Quick Settings') >= 0, 'the display coverage note names the QS plane')

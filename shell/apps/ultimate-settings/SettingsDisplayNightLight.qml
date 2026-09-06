@@ -58,7 +58,7 @@ Rectangle {
       return root.sessionNightlight.message
     if (root.sessionNightlight.phase === "succeeded")
       return root.sessionNightlight.message
-    return "Night light uses NightlightService on this session, the same heritage plane as Superbar > Quick Settings. Settings hosts that control here. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. Scaling and HDR remain unavailable. Night light alone is not modern display complete."
+    return "Night light uses NightlightService on this session, the same heritage plane as Superbar > Quick Settings. Settings hosts that control here. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. HDR, arrangement, and multi-monitor policy remain unavailable. Scaling is a sibling session leftover. Night light alone is not modern display complete."
   }
 
   readonly property string nightlightBadge: {
