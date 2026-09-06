@@ -433,8 +433,8 @@ if eject.get("provider", {}).get("id") != "storage.provider":
 mount = by_id["storage.removable.mount"]
 if mount.get("availability", {}).get("claim") == "present":
     raise SystemExit("storage.removable.mount must not claim present")
-if "nautilus" not in str(mount.get("source") or "").lower():
-    raise SystemExit("storage.removable.mount leftover source should stay honest leftover")
+if mount.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"storage.removable.mount claim is {mount.get('availability')}")
 
 by_job = {job["id"]: job for job in jobs["jobs"]}
 native15 = by_job["windows-native.15"]
