@@ -58,6 +58,33 @@ UPDATE_AUTH_MARKERS = (
     "incorrect password",
     "sorry, try again",
 )
+UDISKSCTL = "/usr/bin/udisksctl"
+LSBLK = "/usr/bin/lsblk"
+GIO = "/usr/bin/gio"
+MAX_MOUNTINFO_BYTES = 262144
+FILES_MOUNT_ID_PREFIX = "files.mount."
+EJECT_BUSY_MARKERS = (
+    "devicebusy",
+    "device busy",
+    "device is busy",
+    "resource busy",
+    "target is busy",
+    "errno 16",
+    "ebusy",
+)
+EJECT_AUTH_MARKERS = UPDATE_AUTH_MARKERS
+EJECT_UNMOUNTED_MARKERS = (
+    "not mounted",
+    "isn't mounted",
+    "is not mounted",
+    "no mount point",
+)
+EJECT_UNSUPPORTED_MARKERS = (
+    "not supported",
+    "unknown method",
+    "not ejectable",
+    "does not support",
+)
 
 class ApplyError(Exception):
     def __init__(self, code: str, explanation: str) -> None:
@@ -2829,6 +2856,275 @@ def apply_apps_startup_set(stdin: Any, stdout: Any, home: Any = None, system_roo
     stdout.write("\n")
     return 0
 
+def require_files_mount_id(payload: Mapping[str, Any]) -> str:
+    mount_id = payload.get("mountId")
+    if not isinstance(mount_id, str) or not mount_id.startswith(FILES_MOUNT_ID_PREFIX):
+        raise ApplyError("payload.invalid", "The apply payload names no removable mount.")
+    digest = mount_id[len(FILES_MOUNT_ID_PREFIX) :]
+    if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+        raise ApplyError("payload.invalid", "The mount identity is malformed.")
+    return mount_id
+
+
+def stable_files_mount_id(identity_source: str, mount_point: str) -> str:
+    digest = hashlib.sha256(f"files\0{identity_source}\0{mount_point}".encode("utf-8", errors="strict")).hexdigest()
+    return f"files.mount.{digest}"
+
+
+def unescape_mount_field(value: str) -> str:
+    return value.replace("\\040", " ").replace("\\011", "\t").replace("\\012", "\n").replace("\\134", "\\")
+
+
+def require_block_device(path: str) -> str:
+    if not isinstance(path, str) or not 6 <= len(path) <= 205 or "\x00" in path or "\\" in path:
+        raise ApplyError("payload.invalid", "The mount source is not a block device.")
+    parsed = pathlib.PurePosixPath(path)
+    if (
+        not parsed.is_absolute()
+        or str(parsed) != path
+        or parsed.parts[:2] != ("/", "dev")
+        or len(parsed.parts) < 3
+        or any(part in {"", ".", ".."} or re.fullmatch(r"[A-Za-z0-9._+-]{1,128}", part) is None for part in parsed.parts[2:])
+    ):
+        raise ApplyError("payload.invalid", "The mount source escapes /dev.")
+    return path
+
+
+def require_user_media_mount(mount_point: str, home: pathlib.Path) -> str:
+    username = home.name
+    prefixes = (f"/run/media/{username}/", f"/media/{username}/")
+    if not any(mount_point.startswith(prefix) for prefix in prefixes):
+        raise ApplyError("payload.invalid", "That mount point is outside user removable media.")
+    parsed = pathlib.PurePosixPath(mount_point)
+    if not parsed.is_absolute() or str(parsed) != mount_point or ".." in parsed.parts or "\x00" in mount_point:
+        raise ApplyError("payload.invalid", "The mount point is unsafe.")
+    if len(mount_point) > 512 or any(ord(character) < 32 or ord(character) == 127 for character in mount_point):
+        raise ApplyError("payload.invalid", "The mount point is unsafe.")
+    return mount_point
+
+
+def classify_session_mount(mount_point: str, filesystem: str, home: pathlib.Path) -> str | None:
+    username = home.name
+    removable = mount_point.startswith(f"/run/media/{username}/") or mount_point.startswith(f"/media/{username}/")
+    smb = filesystem in {"cifs", "smb3"}
+    home_text = os.fspath(home)
+    relevant = (
+        mount_point == "/"
+        or mount_point == home_text
+        or mount_point.startswith(f"{home_text}/")
+        or mount_point.startswith("/mnt/")
+        or removable
+        or smb
+    )
+    if not relevant:
+        return None
+    if smb:
+        return "smb"
+    if removable:
+        return "removable"
+    return "system"
+
+
+def read_mountinfo(path: pathlib.Path | None = None) -> str:
+    target = path if path is not None else pathlib.Path("/proc/self/mountinfo")
+    try:
+        raw = target.read_bytes()
+    except OSError as error:
+        raise ApplyError("probe.failed", "The mount inventory could not be read.") from error
+    if len(raw) > MAX_MOUNTINFO_BYTES:
+        raise ApplyError("probe.invalid", "The mount inventory exceeds its bound.")
+    try:
+        return raw.decode("utf-8", errors="strict")
+    except UnicodeError as error:
+        raise ApplyError("probe.invalid", "The mount inventory is unreadable.") from error
+
+
+def inventory_session_mounts(text: str, home: pathlib.Path) -> list[dict[str, Any]]:
+    mounts: list[dict[str, Any]] = []
+    for line in text.splitlines():
+        fields = line.split()
+        try:
+            separator = fields.index("-")
+            mount_point = unescape_mount_field(fields[4])
+            filesystem = fields[separator + 1]
+            source = unescape_mount_field(fields[separator + 2])
+        except (ValueError, IndexError):
+            continue
+        if (
+            len(mount_point) > 4096
+            or len(source) > 4096
+            or len(filesystem) > 64
+            or any(ord(character) < 32 or ord(character) == 127 for character in mount_point + source)
+        ):
+            continue
+        kind = classify_session_mount(mount_point, filesystem, home)
+        if kind is None:
+            continue
+        identity_source = source
+        mounts.append(
+            {
+                "id": stable_files_mount_id(identity_source, mount_point),
+                "kind": kind,
+                "source": source,
+                "mountPoint": mount_point,
+                "filesystem": filesystem,
+            }
+        )
+        if len(mounts) > 64:
+            raise ApplyError("probe.invalid", "The mount inventory exceeds its bound.")
+    return mounts
+
+
+def resolve_eject_mount(mount_id: str, mounts: list[Mapping[str, Any]]) -> Mapping[str, Any]:
+    matches = [mount for mount in mounts if mount.get("id") == mount_id]
+    if len(matches) != 1:
+        raise ApplyError("resource.unresolved", "The selected removable device is not present.")
+    mount = matches[0]
+    kind = mount.get("kind")
+    if kind == "system":
+        raise ApplyError("payload.invalid", "System disks cannot be ejected through this session.")
+    if kind == "smb":
+        raise ApplyError("payload.invalid", "Network locations cannot be ejected through this session.")
+    if kind != "removable":
+        raise ApplyError("payload.invalid", "That device cannot be ejected through this session.")
+    return mount
+
+
+def is_optical_device(device_path: str) -> bool:
+    leaf = pathlib.PurePosixPath(device_path).name.lower()
+    return bool(re.fullmatch(r"(sr|scd)\d+", leaf))
+
+
+def command_detail(completed: Any) -> str:
+    return ((completed.stderr or "") + "\n" + (completed.stdout or "")).strip()
+
+
+def classify_eject_failure(completed: Any) -> ApplyError:
+    text = command_detail(completed).lower()
+    if any(marker in text for marker in EJECT_BUSY_MARKERS):
+        return ApplyError("device.busy", "The device is busy and was not ejected.")
+    if any(marker in text for marker in EJECT_AUTH_MARKERS):
+        return ApplyError("eject.auth-denied", "This session could not authorize the eject.")
+    return ApplyError("apply.failed", "Ejecting the removable device reported a failure status.")
+
+
+def run_eject_helper(argv: list[str], run: Any, timeout: int) -> Any:
+    if not argv or not str(argv[0]).startswith("/"):
+        raise ApplyError("command.unavailable", "The eject helper must be an absolute path.")
+    try:
+        return run(argv, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned system command is not installed.") from error
+
+
+def unmount_removable(device_path: str, mount_point: str, run: Any) -> str:
+    try:
+        completed = run_eject_helper([UDISKSCTL, "unmount", "-b", device_path], run, 30)
+    except ApplyError as error:
+        if error.code != "command.unavailable":
+            raise
+        completed = run_eject_helper([GIO, "mount", "-u", mount_point], run, 30)
+    if completed.returncode == 0:
+        return "unmounted"
+    text = command_detail(completed).lower()
+    if any(marker in text for marker in EJECT_UNMOUNTED_MARKERS):
+        return "already"
+    raise classify_eject_failure(completed)
+
+
+def resolve_poweroff_device(device_path: str, run: Any) -> str:
+    if is_optical_device(device_path):
+        return device_path
+    try:
+        completed = run_eject_helper([LSBLK, "--noheadings", "--output", "PKNAME", device_path], run, 8)
+    except ApplyError:
+        return device_path
+    if completed.returncode != 0:
+        return device_path
+    lines = (completed.stdout or "").strip().splitlines()
+    token = lines[0].strip() if lines else ""
+    if not token or not re.fullmatch(r"[A-Za-z0-9._+-]{1,128}", token):
+        return device_path
+    return require_block_device(f"/dev/{token}")
+
+
+def finish_eject(device_path: str, run: Any) -> dict[str, Any]:
+    if is_optical_device(device_path):
+        completed = run_eject_helper([UDISKSCTL, "eject", "-b", device_path], run, 30)
+        if completed.returncode != 0:
+            raise classify_eject_failure(completed)
+        return {
+            "method": "eject",
+            "scope": "optical",
+            "poweredOff": False,
+            "ejected": True,
+            "explanation": "Ejected the optical drive through this session.",
+        }
+    target = resolve_poweroff_device(device_path, run)
+    completed = run_eject_helper([UDISKSCTL, "power-off", "-b", target], run, 30)
+    if completed.returncode == 0:
+        return {
+            "method": "power-off",
+            "scope": "usb-volume",
+            "poweredOff": True,
+            "ejected": True,
+            "explanation": "Ejected the removable device through this session.",
+        }
+    text = command_detail(completed).lower()
+    if any(marker in text for marker in EJECT_BUSY_MARKERS):
+        raise ApplyError("device.busy", "The volume unmounted, but the drive is still in use.")
+    if any(marker in text for marker in EJECT_AUTH_MARKERS):
+        raise ApplyError("eject.auth-denied", "The volume unmounted, but this session could not authorize drive power-off.")
+    if any(marker in text for marker in EJECT_UNSUPPORTED_MARKERS):
+        return {
+            "method": "unmount",
+            "scope": "usb-volume",
+            "poweredOff": False,
+            "ejected": False,
+            "explanation": "Unmounted the removable volume through this session. Drive power-off is unavailable on this device.",
+        }
+    raise classify_eject_failure(completed)
+
+
+def apply_storage_removable_eject(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+    mountinfo_text: str | None = None,
+    home: Any = None,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        mount_id = require_files_mount_id(payload)
+        home_path = pathlib.Path.home() if home is None else pathlib.Path(home)
+        text = mountinfo_text if mountinfo_text is not None else read_mountinfo()
+        mounts = inventory_session_mounts(text, home_path)
+        mount = resolve_eject_mount(mount_id, mounts)
+        device_path = require_block_device(str(mount["source"]))
+        mount_point = require_user_media_mount(str(mount["mountPoint"]), home_path)
+        unmount_removable(device_path, mount_point, run)
+        result = finish_eject(device_path, run)
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "mountId": mount_id,
+            "unmounted": True,
+            "ejected": result["ejected"],
+            "poweredOff": result["poweredOff"],
+            "method": result["method"],
+            "scope": result["scope"],
+            "explanation": result["explanation"],
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
@@ -2859,6 +3155,7 @@ ACTIONS = {
     "system-update-history": apply_system_update_history,
     "apps-startup-list": apply_apps_startup_list,
     "apps-startup-set": apply_apps_startup_set,
+    "storage-removable-eject": apply_storage_removable_eject,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

@@ -472,6 +472,41 @@ function sessionPropertiesCanSubmit(plan) {
   return plan.action === "properties"
 }
 
+function sessionEjectableRecord(record) {
+  if (!isObject(record)) return false
+  return String(record.kind || "") === "mount"
+    && String(record.mountKind || "") === "removable"
+    && String(record.id || "") !== ""
+}
+
+function sessionEjectPlan(record) {
+  if (!isObject(record)) {
+    return { action: "unavailable", reason: "Select a removable device to eject through this session." }
+  }
+  if (String(record.kind || "") !== "mount") {
+    return { action: "unavailable", reason: "Select a removable device to eject through this session." }
+  }
+  if (String(record.mountKind || "") === "system") {
+    return { action: "unavailable", reason: "System disks cannot be ejected through this session." }
+  }
+  if (String(record.mountKind || "") === "smb") {
+    return { action: "unavailable", reason: "Network locations cannot be ejected through this session." }
+  }
+  if (!sessionEjectableRecord(record)) {
+    return { action: "unavailable", reason: "That device cannot be ejected through this session." }
+  }
+  return {
+    action: "eject",
+    mountId: String(record.id),
+    title: String(record.title || "")
+  }
+}
+
+function sessionEjectCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "eject"
+}
+
 function sessionPropertiesRows(result) {
   if (!isObject(result) || result.ok !== true) return []
   var rows = [
@@ -1389,6 +1424,9 @@ if (typeof module !== "undefined") module.exports = {
   sessionPropertiesPlan: sessionPropertiesPlan,
   sessionPropertiesCanSubmit: sessionPropertiesCanSubmit,
   sessionPropertiesRows: sessionPropertiesRows,
+  sessionEjectableRecord: sessionEjectableRecord,
+  sessionEjectPlan: sessionEjectPlan,
+  sessionEjectCanSubmit: sessionEjectCanSubmit,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,

@@ -38,8 +38,9 @@ Item {
   readonly property bool cutAuthorized: false // leftover Fabric SHELL refuse; session Cut does not consult this pin
   readonly property bool deleteAuthorized: false // leftover Fabric SHELL refuse; session Permanent Delete does not consult this pin
   readonly property bool emptyBinAuthorized: false
+  readonly property bool ejectAuthorized: false // leftover Fabric SHELL refuse; session Eject does not consult this pin
   readonly property bool trashRoute: FilesModel.isTrashRoute(host ? host.currentRoute : "")
-  readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy || sessionArchive.busy || sessionProperties.busy
+  readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy || sessionArchive.busy || sessionProperties.busy || sessionEject.busy
   property string renameDraft: ""
   property var renameRecord: null
   property var stagedCopyRecord: null
@@ -466,6 +467,17 @@ Item {
     if (!sessionArchive.extractArchive(plan)) root.operationMessage = "The session Extract helper is busy."
   }
 
+  function sessionEjectDevice(record) {
+    if (root.operationBusy || root.sessionBusy) return
+    var plan = FilesModel.sessionEjectPlan(record)
+    if (!FilesModel.sessionEjectCanSubmit(plan)) {
+      root.operationMessage = plan.reason || "That device cannot be ejected through this session."
+      return
+    }
+    root.operationMessage = "Ejecting " + String(plan.title || record.title || "this device") + " through this session."
+    if (!sessionEject.ejectDevice(plan)) root.operationMessage = "The session Eject helper is busy."
+  }
+
   function sessionReadProperties(record) {
     var plan = FilesModel.sessionPropertiesPlan(record)
     root.propertiesResult = null
@@ -591,6 +603,12 @@ Item {
         enabled: !root.operationBusy && !root.sessionBusy && root.showRecords
       })
     }
+    if (root.computerRoute || FilesModel.sessionEjectableRecord(root.selectedRecord)) {
+      list.push({
+        key: "eject", label: "Eject", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionEjectableRecord(root.selectedRecord)
+      })
+    }
     list.push({ key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy })
     return list
   }
@@ -619,6 +637,9 @@ Item {
       list.push({ key: "permanently-delete", label: "Permanently delete", enabled: FilesModel.sessionDeletableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     list.push({ key: "refresh", label: "Refresh", enabled: true })
+    if (root.computerRoute || FilesModel.sessionEjectableRecord(root.selectedRecord)) {
+      list.push({ key: "eject", label: "Eject", enabled: FilesModel.sessionEjectableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    }
     list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
@@ -646,6 +667,9 @@ Item {
       list.push({ key: "delete", label: "Delete", enabled: FilesModel.sessionTrashableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "permanently-delete", label: "Permanently delete", enabled: FilesModel.sessionDeletableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
+    if (root.computerRoute || FilesModel.sessionEjectableRecord(root.selectedRecord)) {
+      list.push({ key: "eject", label: "Eject", enabled: FilesModel.sessionEjectableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
+    }
     list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
@@ -663,6 +687,7 @@ Item {
     if (key === "permanently-delete") { root.beginPermanentDelete(root.selectedRecord); return }
     if (key === "restore") { root.sessionRestoreEntry(root.selectedRecord); return }
     if (key === "empty-bin") { emptyBinDialog.open(); return }
+    if (key === "eject") { root.sessionEjectDevice(root.selectedRecord); return }
     if (key === "properties") { root.sessionReadProperties(root.selectedRecord); propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
@@ -707,6 +732,14 @@ Item {
     id: sessionArchive
     onFinished: function(kind, ok, message) {
       root.operationMessage = message
+      if (ok && root.controller) root.controller.refresh()
+    }
+  }
+
+  Shared.FilesSessionEject {
+    id: sessionEject
+    onFinished: function(ok, result) {
+      root.operationMessage = result && result.explanation ? String(result.explanation) : (ok ? "Ejected the removable device through this session." : "The session Eject helper failed.")
       if (ok && root.controller) root.controller.refresh()
     }
   }
@@ -989,7 +1022,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through this session's eject helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
