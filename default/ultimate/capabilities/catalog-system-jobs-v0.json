@@ -6150,10 +6150,10 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Files",
-        "label": "Open removable storage",
-        "path": "Files > Devices"
+        "label": "Mount removable storage",
+        "path": "Files > Devices > Mount"
       },
-      "agentCenterLabel": "Open removable storage",
+      "agentCenterLabel": "Mount removable storage",
       "proofIds": {
         "acceptance": [
           "proof.capability.storage-removable-mount.tree-audit"
@@ -6163,8 +6163,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-mount",
+        "file": "shell/apps/shared/FilesSessionMount.qml",
+        "symbol": "mountVolume",
         "brokerVerb": null
       }
     },

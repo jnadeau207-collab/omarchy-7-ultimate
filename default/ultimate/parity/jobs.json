@@ -1493,7 +1493,7 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Files",
-        "path": "Files > Devices"
+        "path": "Files > Devices > Mount"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Unmount an incomplete or no-longer-needed mount.",
