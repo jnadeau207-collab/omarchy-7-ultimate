@@ -1595,12 +1595,13 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
+        "files.entry.open",
         "files.text.edit"
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Text Editor",
-        "path": "Files > text file"
+        "surface": "Files",
+        "path": "Files > Text"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Preserve file history or a guarded undo artifact.",
