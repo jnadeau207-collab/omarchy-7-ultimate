@@ -312,6 +312,7 @@ MAX_NAME_LENGTH = 128
 MAX_RELATIVE_DEPTH = 16
 MAX_COPY_ENTRIES = 4096
 MAX_ARCHIVE_SOURCES = 16
+MAX_EXTRACT_BYTES = 256 * 1024 * 1024
 
 def files_location_key(location_id: str) -> str:
     prefix = "files.location."
@@ -1550,6 +1551,270 @@ def apply_files_archive_create(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+
+def zip_arcname_segments(name: str) -> tuple[list[str], bool]:
+    if not isinstance(name, str) or not name or "\x00" in name:
+        raise ApplyError("payload.invalid", "The archive holds an unsafe name.")
+    if name.startswith("/") or name.startswith("\\") or "\\" in name:
+        raise ApplyError("payload.invalid", "The archive path is not relative.")
+    if len(name) >= 2 and name[1] == ":":
+        raise ApplyError("payload.invalid", "The archive path is not relative.")
+    is_directory = name.endswith("/")
+    trimmed = name[:-1] if is_directory else name
+    if trimmed == "":
+        raise ApplyError("payload.invalid", "The archive holds an unsafe name.")
+    segments = trimmed.split("/")
+    if len(segments) > MAX_RELATIVE_DEPTH:
+        raise ApplyError("payload.out-of-range", "The archive path is too deep.")
+    for segment in segments:
+        if segment in {"", ".", ".."} or "\x00" in segment:
+            raise ApplyError("payload.invalid", "The archive path holds an unsafe segment.")
+        if len(segment) > MAX_NAME_LENGTH:
+            raise ApplyError("payload.out-of-range", "The archive name exceeds its bound.")
+    return segments, is_directory
+
+
+def zip_member_is_symlink(info: zipfile.ZipInfo) -> bool:
+    mode = info.external_attr >> 16
+    return bool(mode) and stat.S_ISLNK(mode)
+
+
+def zip_member_is_directory(info: zipfile.ZipInfo, flagged_directory: bool) -> bool:
+    if flagged_directory:
+        return True
+    mode = info.external_attr >> 16
+    return bool(mode) and stat.S_ISDIR(mode)
+
+
+def refuse_trash_destination(path: pathlib.Path, home: pathlib.Path) -> None:
+    trash = trash_root(home)
+    try:
+        trash_resolved = trash.resolve()
+    except OSError:
+        trash_resolved = trash
+    try:
+        located = path.resolve(strict=False)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination parent is not present.") from error
+    if located == trash_resolved or trash_resolved in located.parents:
+        raise ApplyError("payload.invalid", "Trash is not an extract destination.")
+
+
+def ensure_extract_dir(parent_fd: int, name: str) -> int:
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        os.mkdir(name, 0o755, dir_fd=parent_fd)
+    except FileExistsError:
+        pass
+    except OSError as error:
+        raise ApplyError("apply.failed", "Extracting the archive reported a failure status.") from error
+    try:
+        return os.open(name, flags, dir_fd=parent_fd)
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.EEXIST} or error.errno == getattr(errno, "ENOTDIR", -1):
+            raise ApplyError("payload.invalid", "Symlink writes are refused.") from error
+        raise ApplyError("apply.failed", "Extracting the archive reported a failure status.") from error
+
+
+def apply_files_archive_extract(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot be extracted.")
+    location_id = payload.get("locationId")
+    files_location_key(location_id)
+    specs = require_archive_entries(payload)
+    if len(specs) != 1:
+        raise ApplyError("payload.invalid", "Extract one zip archive at a time.")
+    home = pathlib.Path.home()
+    spec = specs[0]
+    entry_payload = {
+        "locationId": location_id,
+        "entryRelativePath": spec["entryRelativePath"],
+        "entryId": spec["entryId"],
+    }
+    _, final, relative = resolve_entry_path(entry_payload, home)
+    try:
+        info = final.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(info.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be extracted.")
+    if not stat.S_ISREG(info.st_mode):
+        raise ApplyError("payload.invalid", "Only a regular zip file can be extracted.")
+    if not final.name.lower().endswith(".zip") or final.name.lower() == ".zip":
+        raise ApplyError("payload.invalid", "Only a zip archive can be extracted.")
+    dest_parent = final.parent
+    refuse_trash_destination(dest_parent, home)
+    parent_relative = "/".join(relative.split("/")[:-1])
+    resource_id = bind_files_named_directory_resource(
+        payload, stable_directory_id(location_id, parent_relative)
+    )
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        zip_fd = os.open(final, flags)
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.EEXIST}:
+            raise ApplyError("payload.invalid", "Symlink entries cannot be extracted.") from error
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    created = False
+    dest_dir: pathlib.Path | None = None
+    dest_name = ""
+    try:
+        zip_info = os.fstat(zip_fd)
+        if stat.S_ISLNK(zip_info.st_mode) or not stat.S_ISREG(zip_info.st_mode):
+            raise ApplyError("payload.invalid", "Only a regular zip file can be extracted.")
+        with os.fdopen(zip_fd, "rb") as handle:
+            zip_fd = -1
+            try:
+                zf = zipfile.ZipFile(handle, "r")
+            except zipfile.BadZipFile as error:
+                raise ApplyError("payload.invalid", "The selected file is not a zip archive.") from error
+            with zf:
+                members = zf.infolist()
+                if len(members) > MAX_COPY_ENTRIES:
+                    raise ApplyError("payload.out-of-range", "The archive exceeds its entry bound.")
+                remaining_bytes = MAX_EXTRACT_BYTES
+                planned: list[tuple[zipfile.ZipInfo, list[str], bool]] = []
+                for member in members:
+                    if member.flag_bits & 0x1:
+                        raise ApplyError("payload.invalid", "Encrypted archives cannot be extracted.")
+                    if zip_member_is_symlink(member):
+                        raise ApplyError("payload.invalid", "Symlink writes are refused.")
+                    segments, flagged_directory = zip_arcname_segments(member.filename)
+                    is_directory = zip_member_is_directory(member, flagged_directory)
+                    if not is_directory:
+                        remaining_bytes -= int(member.file_size)
+                        if remaining_bytes < 0:
+                            raise ApplyError(
+                                "payload.out-of-range",
+                                "The archive exceeds its uncompressed bound.",
+                            )
+                    planned.append((member, segments, is_directory))
+                try:
+                    dest_parent_fd = open_nofollow(
+                        dest_parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+                    )
+                except OSError as error:
+                    raise ApplyError("resource.unresolved", "The destination parent is not present.") from error
+                try:
+                    dest_parent_info = os.fstat(dest_parent_fd)
+                    if not stat.S_ISDIR(dest_parent_info.st_mode):
+                        raise ApplyError("resource.unresolved", "The destination parent is not a directory.")
+                    taken = {name.lower() for name in os.listdir(dest_parent_fd)}
+                    stem = archive_stem(final.name, False)
+                    if not stem or stem in {".", ".."} or "/" in stem or "\\" in stem:
+                        raise ApplyError("payload.invalid", "The archive name is not extractable.")
+                    dest_name = next_copy_name(taken, stem)
+                    refuse_trash_destination(dest_parent / dest_name, home)
+                    try:
+                        os.mkdir(dest_name, 0o755, dir_fd=dest_parent_fd)
+                    except FileExistsError as error:
+                        raise ApplyError("apply.exists", "Something already occupies the extract folder.") from error
+                    except OSError as error:
+                        raise ApplyError("apply.failed", "Extracting the archive reported a failure status.") from error
+                    dest_dir = dest_parent / dest_name
+                    created = True
+                    dest_root_fd = os.open(
+                        dest_name,
+                        os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
+                        dir_fd=dest_parent_fd,
+                    )
+                finally:
+                    os.close(dest_parent_fd)
+                try:
+                    remaining = [MAX_COPY_ENTRIES]
+                    budget = [MAX_EXTRACT_BYTES]
+                    for member, segments, is_directory in planned:
+                        if remaining[0] <= 0:
+                            raise ApplyError("payload.out-of-range", "The archive exceeds its entry bound.")
+                        remaining[0] -= 1
+                        current_fd = dest_root_fd
+                        owned: list[int] = []
+                        try:
+                            for index, segment in enumerate(segments):
+                                last = index == len(segments) - 1
+                                if last and not is_directory:
+                                    file_flags = (
+                                        os.O_WRONLY
+                                        | os.O_CREAT
+                                        | os.O_EXCL
+                                        | getattr(os, "O_NOFOLLOW", 0)
+                                    )
+                                    try:
+                                        out_fd = os.open(segment, file_flags, 0o644, dir_fd=current_fd)
+                                    except FileExistsError as error:
+                                        raise ApplyError(
+                                            "apply.exists",
+                                            "Something already occupies an extracted name.",
+                                        ) from error
+                                    except OSError as error:
+                                        if error.errno in {errno.ELOOP, errno.EEXIST}:
+                                            raise ApplyError("payload.invalid", "Symlink writes are refused.") from error
+                                        raise ApplyError(
+                                            "apply.failed",
+                                            "Extracting the archive reported a failure status.",
+                                        ) from error
+                                    try:
+                                        with os.fdopen(out_fd, "wb") as outgoing:
+                                            with zf.open(member, "r") as incoming:
+                                                while True:
+                                                    chunk = incoming.read(65536)
+                                                    if not chunk:
+                                                        break
+                                                    budget[0] -= len(chunk)
+                                                    if budget[0] < 0:
+                                                        raise ApplyError(
+                                                            "payload.out-of-range",
+                                                            "The archive exceeds its uncompressed bound.",
+                                                        )
+                                                    outgoing.write(chunk)
+                                    except ApplyError:
+                                        raise
+                                    except OSError as error:
+                                        raise ApplyError(
+                                            "apply.failed",
+                                            "Extracting the archive reported a failure status.",
+                                        ) from error
+                                else:
+                                    next_fd = ensure_extract_dir(current_fd, segment)
+                                    owned.append(next_fd)
+                                    current_fd = next_fd
+                        finally:
+                            for descriptor in reversed(owned):
+                                os.close(descriptor)
+                finally:
+                    os.close(dest_root_fd)
+    except ApplyError:
+        if zip_fd >= 0:
+            os.close(zip_fd)
+        if created and dest_dir is not None:
+            try:
+                remove_replica(dest_dir)
+            except ApplyError:
+                pass
+        raise
+    except OSError as error:
+        if zip_fd >= 0:
+            os.close(zip_fd)
+        if created and dest_dir is not None:
+            try:
+                remove_replica(dest_dir)
+            except ApplyError:
+                pass
+        raise ApplyError("apply.failed", "Extracting the archive reported a failure status.") from error
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "folderName": dest_name,
+            "created": True,
+            "count": 1,
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
 def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
@@ -2462,6 +2727,7 @@ ACTIONS = {
     "files-entry-move": apply_files_entry_move,
     "files-entry-delete": apply_files_entry_delete,
     "files-archive-create": apply_files_archive_create,
+    "files-archive-extract": apply_files_archive_extract,
     "software-install": apply_software_install,
     "software-remove": apply_software_remove,
     "system-update-status": apply_system_update_status,

@@ -20,10 +20,14 @@ Item {
     return root.run("archive", "files-archive-create", record)
   }
 
+  function extractArchive(record) {
+    return root.run("extract", "files-archive-extract", record)
+  }
+
   function run(kind, action, plan) {
     if (root.busy || proc.running) return false
     if (!plan || typeof plan !== "object" || String(plan.action || "") === "unavailable") {
-      root.finished(kind, false, plan && plan.reason ? String(plan.reason) : "That Compress action is unavailable.")
+      root.finished(kind, false, plan && plan.reason ? String(plan.reason) : (kind === "extract" ? "That Extract action is unavailable." : "That Compress action is unavailable."))
       return false
     }
     var entries = []
@@ -49,8 +53,12 @@ Item {
       return false
     }
     var locationId = String(plan.locationId || entries[0].locationId || "")
+    if (kind === "extract" && entries.length !== 1) {
+      root.finished(kind, false, "Extract one zip archive at a time through this session.")
+      return false
+    }
     if (locationId === "files.location.trash") {
-      root.finished(kind, false, "Trash entries cannot be compressed.")
+      root.finished(kind, false, kind === "extract" ? "Trash entries cannot be extracted." : "Trash entries cannot be compressed.")
       return false
     }
     var payloadEntries = []
@@ -60,7 +68,7 @@ Item {
         return false
       }
       if (entries[e].locationId === "files.location.trash") {
-        root.finished(kind, false, "Trash entries cannot be compressed.")
+        root.finished(kind, false, kind === "extract" ? "Trash entries cannot be extracted." : "Trash entries cannot be compressed.")
         return false
       }
       payloadEntries.push({
@@ -99,21 +107,24 @@ Item {
       root.pendingPayload = ""
     }
     onExited: function(exitCode) {
+      var kind = root.pendingKind
       var raw = String(procStdout.text || "").trim()
       var ok = false
-      var message = "The session Compress helper failed."
+      var message = kind === "extract" ? "The session Extract helper failed." : "The session Compress helper failed."
       try {
         var parsed = JSON.parse(raw)
         ok = parsed && parsed.ok === true && exitCode === 0
         if (parsed && parsed.explanation) message = String(parsed.explanation)
-        else if (ok) {
+        else if (ok && kind === "extract") {
+          var folder = parsed.folderName ? String(parsed.folderName) : "the folder"
+          message = "Extracted to " + folder + " through this session."
+        } else if (ok) {
           var name = parsed.archiveName ? String(parsed.archiveName) : "the archive"
           message = "Created " + name + " through this session."
         }
       } catch (error) {
         ok = false
       }
-      var kind = root.pendingKind
       root.pendingKind = ""
       root.pendingTitle = ""
       root.busy = false
