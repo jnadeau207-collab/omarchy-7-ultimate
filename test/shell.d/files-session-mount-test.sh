@@ -64,7 +64,7 @@ grep -Fq 'mountAuthorized: false' "$files_app" || fail "Files pins mountAuthoriz
 if grep -Eq 'LIVE CONTROL' "$files_app" "$files_session" "$command_bar"; then
   fail "Files Mount must not invent Fabric LIVE CONTROL"
 fi
-if grep -Eqi 'claim=present' "$files_app" "$files_session"; then
+if grep -Eqi 'claim=present' "$files_app" "$files_session" && ! grep -Eqi 'not claim=present|Never claim=present|never claim=present' "$files_app"; then
   fail "Files Mount must not invent claim=present"
 fi
 if grep -Eq 'Process[[:space:]]*\{' "$files_app"; then
@@ -72,8 +72,12 @@ if grep -Eq 'Process[[:space:]]*\{' "$files_app"; then
 fi
 grep -Fq 'sessionMountPlan' "$files_model" || fail "Files model plans session Mount"
 grep -Fq 'sessionMountableRecord' "$files_model" || fail "Files model gates session Mount"
-grep -Fq 'Mount runs through this session' "$files_app" ||
+grep -Eq 'Mount runs through (this session|tip-true FilesSessionMount)' "$files_app" ||
   fail "Files banner names session Mount"
+grep -Fq 'FilesSessionMount.mountVolume' "$files_app" ||
+  fail "Files banner names tip-true mountVolume"
+grep -Fq 'windows-native.14 stays prototype/pending' "$files_app" ||
+  fail "Files banner keeps windows-native.14 prototype/pending"
 grep -Fq 'does not invent a Fabric SHELL LIVE mount writer' "$files_app" ||
   fail "Files banner refuses a Fabric SHELL LIVE mount writer"
 grep -Fq '/usr/bin/udisksctl' "$helper" || fail "session Mount pins udisksctl to an absolute path"
@@ -490,6 +494,25 @@ if mount.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"storage.removable.mount was raised off leftover: {mount.get('provider')}")
 if mount.get("provider", {}).get("id") != "storage.provider":
     raise SystemExit(f"storage.removable.mount provider is {mount.get('provider')}")
+recovery = mount.get("recovery") or {}
+if recovery.get("mode") != "compensating":
+    raise SystemExit(f"storage.removable.mount recovery mode is {recovery}")
+if recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"storage.removable.mount recovery fingerprint invent: {recovery}")
+exp = recovery.get("expectation") or ""
+for needle in (
+    "mountVolume",
+    "storage-removable-mount",
+    "device.busy",
+    "FilesSessionEject.ejectDevice",
+    "storage-removable-eject",
+    "no Fabric durable undo fingerprint invent",
+    "no timed auto-rollback",
+):
+    if needle not in exp:
+        raise SystemExit(f"storage.removable.mount recovery missing {needle!r}: {exp}")
+if "state-fingerprint-guarded" in exp:
+    raise SystemExit(f"storage.removable.mount still invents fingerprint-guarded compensating path: {exp}")
 
 eject = by_id["storage.removable.eject"]
 if eject.get("availability", {}).get("claim") == "present":
@@ -509,6 +532,14 @@ if native14.get("capabilityIds") != ["storage.removable.mount"]:
     raise SystemExit(f"windows-native.14 capabilityIds are {native14.get('capabilityIds')}")
 if native14["humanRoute"].get("path") != "Files > Devices > Mount":
     raise SystemExit(f"windows-native.14 path is {native14.get('humanRoute')}")
+rec14 = native14.get("recoveryExpectation") or ""
+for needle in ("mountVolume", "storage-removable-mount", "device.busy", "no timed auto-rollback"):
+    if needle not in rec14:
+        raise SystemExit(f"windows-native.14 recovery missing {needle!r}: {rec14}")
+if "fingerprint invent" not in rec14.lower() and "no Fabric durable undo fingerprint invent" not in rec14:
+    raise SystemExit(f"windows-native.14 recovery must refuse Fabric fingerprint invent: {rec14}")
+if "state-fingerprint-guarded" in rec14:
+    raise SystemExit(f"windows-native.14 still invents fingerprint-guarded path: {rec14}")
 
 explorer = by_job["parity.explorer-this-pc"]
 if explorer.get("claim") == "present":
@@ -537,17 +568,21 @@ if "storage.removable.mount" not in agent.get("capabilityIds", []):
 if "capability:storage.removable.mount" not in agent.get("surfaceRefs", []):
     raise SystemExit("storage.removable.mount agent surfaceRef is missing")
 
-if "Honesty addendum 2026-09-06 vs Files Devices Mount session plane" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must add a dated Files Devices Mount addendum")
-addendum = gaps.split("Honesty addendum 2026-09-06 vs Files Devices Mount session plane", 1)[1].split("Honesty addendum", 1)[0]
+if "Honesty addendum 2026-09-06 vs Files Devices Mount leftover plane (windows-native.14)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Files Devices Mount leftover-plane addendum")
+addendum = gaps.split("Honesty addendum 2026-09-06 vs Files Devices Mount leftover plane (windows-native.14)", 1)[1].split("Honesty addendum", 1)[0]
 if "CLOSED leftover: Files Devices Mount session UI" in addendum:
     raise SystemExit("fleet-doctrine-gaps must not invent product CLOSE from a bare CLOSED leftover pin")
 if "Close one product hole" in addendum:
     raise SystemExit("fleet-doctrine-gaps must not invent Close one product hole")
 if "session leftover recorded" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must record session leftover honesty")
-if "session-UI leftover only" not in addendum:
-    raise SystemExit("fleet-doctrine-gaps must qualify Mount as session-UI leftover only")
+if "leftover-attach only" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must qualify Mount as leftover-attach only")
+if "FilesSessionMount" not in addendum and "mountVolume" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must name tip-true FilesSessionMount.mountVolume")
+if "Soft leftover-attach ACC" not in addendum and "soft leftover-attach ACC" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must soft leftover-attach ACC windows-native.14")
 if "not product CLOSED" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must refuse product CLOSED invent")
 if "not metal CLOSED" not in addendum:
@@ -558,7 +593,6 @@ if "Cloud mocks do not close windows-native.14" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must refuse closing windows-native.14 from Cloud mocks")
 for required in (
     "metal proof",
-    "eject already session",
     "Files LIVE metal",
     "Win7 visual",
     "Explorer present",
@@ -596,6 +630,10 @@ if "Files > Devices > Mount" not in parity:
     raise SystemExit("PARITY must name Files > Devices > Mount")
 if "session Mount" not in parity and "storage-removable-mount" not in parity:
     raise SystemExit("PARITY must name session Mount without walking Explorer to present")
+if "mountVolume" not in parity or "FilesSessionMount" not in parity:
+    raise SystemExit("PARITY must name tip-true FilesSessionMount.mountVolume")
+if "soft leftover-attaches" not in parity.lower() or "windows-native.14" not in parity:
+    raise SystemExit("PARITY must soft leftover-attach wn.14")
 explorer_row = ""
 for line in parity.splitlines():
     if line.startswith("| Explorer / Computer |"):
@@ -613,17 +651,25 @@ if "Cloud mocks do not close windows-native.14" not in handoff:
     raise SystemExit("HANDOFF must refuse closing windows-native.14 from Cloud mocks")
 if "CLOSED leftover: Files Devices Mount session UI" in handoff:
     raise SystemExit("HANDOFF must not invent product CLOSE from a bare CLOSED leftover pin")
-if "session Mount" not in handoff and "Files Devices Mount session" not in handoff:
+if "session Mount" not in handoff and "Files Devices Mount" not in handoff:
     raise SystemExit("HANDOFF must name session Mount")
+if "FilesSessionMount" not in handoff and "mountVolume" not in handoff:
+    raise SystemExit("HANDOFF must name tip-true FilesSessionMount.mountVolume")
+if "`storage.removable.mount` stays leftover" not in handoff:
+    raise SystemExit("HANDOFF must tip-align storage.removable.mount debt honesty")
+if "windows-native.14 stays prototype/pending" not in handoff.replace("`", ""):
+    raise SystemExit("HANDOFF must keep windows-native.14 prototype/pending")
 if "storage-removable-mount" not in project and "session Mount" not in project:
     raise SystemExit("project-ultimate must name session Mount")
+if "FilesSessionMount" not in project and "mountVolume" not in project:
+    raise SystemExit("project-ultimate must name tip-true FilesSessionMount.mountVolume plane")
 if "session leftover recorded" not in project:
     raise SystemExit("project-ultimate must record session leftover honesty")
 if "not product CLOSED" not in project:
     raise SystemExit("project-ultimate must refuse product CLOSED invent")
 if "storage.removable.mount" not in files_docs:
     raise SystemExit("files-defaults-provider must name storage.removable.mount")
-docs_slice = files_docs.split("storage.removable.mount", 1)[1][:1800]
+docs_slice = files_docs.split("storage.removable.mount", 1)[1][:2400]
 if "does not invent a Fabric" not in docs_slice:
     raise SystemExit("files-defaults-provider must refuse a Fabric mount writer")
 if "USB" not in docs_slice or "optical" not in docs_slice.lower():
@@ -632,6 +678,10 @@ if "device.busy" not in docs_slice:
     raise SystemExit("files-defaults-provider must name device.busy")
 if "session leftover recorded" not in docs_slice:
     raise SystemExit("files-defaults-provider must record session leftover honesty")
+if "leftover-attach only" not in docs_slice and "session-UI leftover only" not in docs_slice:
+    raise SystemExit("files-defaults-provider must qualify Mount leftover-attach honesty")
+if "FilesSessionMount" not in docs_slice and "mountVolume" not in docs_slice:
+    raise SystemExit("files-defaults-provider must name tip-true FilesSessionMount.mountVolume")
 if "not product CLOSED" not in docs_slice:
     raise SystemExit("files-defaults-provider must refuse product CLOSED invent")
 if "Cloud mocks do not close" not in docs_slice:
