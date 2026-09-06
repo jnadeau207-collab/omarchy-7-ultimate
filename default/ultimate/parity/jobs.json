@@ -81,7 +81,7 @@
         "path": "Superbar > Start"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Launching is non-destructive; shutdown requires an explicit visible confirmation path.",
+      "recoveryExpectation": "Launching is non-destructive; Shut down soft leftover-attaches windows-native.40 via tip-true Start.shutdown \u2192 omarchy-system-shutdown (visible Shut down choice is consent; irreversible poweroff; no undo invent).",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.start"
@@ -2180,7 +2180,7 @@
         "path": "Start > Shut down"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Require an explicit visible choice and report cancellation before logout.",
+      "recoveryExpectation": "Apply Shut down from Start through tip-true Start.shutdown \u2192 omarchy-system-shutdown (visible Shut down choice is consent; irreversible poweroff; no undo / no compensating fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.40"

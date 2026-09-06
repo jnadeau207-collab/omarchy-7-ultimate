@@ -6945,7 +6945,7 @@
         }
       },
       "availability": {
-        "human": "present",
+        "human": "partial",
         "agent": "unavailable",
         "claim": "partial"
       },
@@ -6970,7 +6970,7 @@
       },
       "recovery": {
         "mode": "none",
-        "expectation": "No durable mutation is expected.",
+        "expectation": "Start Shut down runs tip-true Start.shutdown \u2192 omarchy-system-shutdown (systemd-run user timer \u2192 systemctl poweroff); irreversible poweroff with no undo / no compensating fingerprint invent; visible Shut down choice is the consent gesture.",
         "stateFingerprintRequired": false
       },
       "redaction": {
