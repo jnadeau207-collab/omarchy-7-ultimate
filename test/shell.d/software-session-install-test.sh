@@ -71,11 +71,11 @@ calls = []
 
 def fake_run(argv, **kwargs):
     calls.append(list(argv))
-    if argv and argv[0] in (sa.OMARCHY_PKG_ADD, "/usr/bin/omarchy-pkg-add", "omarchy-pkg-add"):
+    if argv and argv[0] == sa.OMARCHY_PKG_ADD:
         if "missing-pkg" in argv:
             return Result(returncode=1, stderr="Error: Package 'missing-pkg' did not install")
         return Result(returncode=0, stdout="installed")
-    if argv and argv[0] in (sa.OMARCHY_PKG_DROP, "/usr/bin/omarchy-pkg-drop", "omarchy-pkg-drop"):
+    if argv and argv[0] == sa.OMARCHY_PKG_DROP:
         return Result(returncode=0, stdout="removed")
     raise AssertionError(argv)
 
@@ -91,9 +91,11 @@ calls.clear()
 status, result = run_action(sa.apply_software_install, {"packageId": "software.curated.neovim"})
 check("install neovim succeeds", status == 0 and result.get("ok") is True, str(result))
 check("install reports neovim", result.get("packageRef") == "neovim", str(result))
+check("pkg-add is /usr/bin pinned", sa.OMARCHY_PKG_ADD == "/usr/bin/omarchy-pkg-add", sa.OMARCHY_PKG_ADD)
+check("pkg-drop is /usr/bin pinned", sa.OMARCHY_PKG_DROP == "/usr/bin/omarchy-pkg-drop", sa.OMARCHY_PKG_DROP)
 check(
-    "install uses omarchy-pkg-add",
-    any(call and "neovim" in call and "omarchy-pkg-add" in "".join(call) for call in calls),
+    "install uses /usr/bin/omarchy-pkg-add",
+    any(call and call[0] == "/usr/bin/omarchy-pkg-add" and "neovim" in call for call in calls),
     str(calls),
 )
 

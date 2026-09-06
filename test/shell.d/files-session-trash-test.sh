@@ -39,6 +39,13 @@ grep -Fq 'sessionEmptyBin' "$files_app" || fail "Files Empty Recycle Bin uses th
 grep -Fq 'key: "restore", label: "Restore"' "$files_app" || fail "Files shows a Restore control on Trash"
 grep -Fq 'key: "empty-bin", label: "Empty Recycle Bin"' "$files_app" || fail "Files shows Empty Recycle Bin"
 grep -Fq 'this session' "$files_app" || fail "Files names the session recycle principal"
+grep -Fq 'Delete, Restore, and Empty Recycle Bin run through this session' "$files_app" ||
+  fail "Files banner names session Delete/Restore/Empty LIVE"
+grep -Fq 'Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL' "$files_app" ||
+  fail "Files banner keeps Fabric Restore/Empty unavailable under SHELL"
+if grep -Fq 'Restore UI, Empty Bin LIVE, and Recycle product remain unavailable' "$files_app"; then
+  fail "Files banner must not self-contradict session Restore/Empty as unavailable"
+fi
 if grep -Eq 'operation\.(preflight|start|approve)' "$files_session"; then
   fail "session recycle QML must not mint Fabric durable operations"
 fi
@@ -288,3 +295,27 @@ if manage.get("availability", {}).get("claim") != "partial":
 PY
 
 pass "recycle writers stay leftover partial with visible Files routes"
+
+plan="$ROOT/plans/project-ultimate.md"
+grep -Fq 'session Trash/Restore/Empty (#76)' "$plan" ||
+  fail "project-ultimate Files LIVE column names session Trash/Restore/Empty"
+if grep -Fq 'Restore UI (do not invent Restore LIVE), Empty Bin LIVE' "$plan"; then
+  fail "project-ultimate Files row must not list bare Restore UI / Empty Bin LIVE as if the session plane is missing"
+fi
+grep -Fq 'Fabric Restore LIVE under SHELL' "$plan" ||
+  fail "project-ultimate Files unavailable column names Fabric Restore LIVE under SHELL"
+grep -Fq 'Fabric Empty Bin LIVE under SHELL' "$plan" ||
+  fail "project-ultimate Files unavailable column names Fabric Empty Bin LIVE under SHELL"
+
+pass "project-ultimate Files row names session Trash/Restore/Empty and Fabric leftovers"
+
+docs="$ROOT/docs/files-defaults-provider.md"
+grep -Fq 'current humanRoute is visible `Files > Restore`' "$docs" ||
+  fail "files-defaults-provider names the session-visible Restore route"
+grep -Fq 'current humanRoute is visible `Files > Empty Recycle Bin`' "$docs" ||
+  fail "files-defaults-provider names the session-visible Empty Recycle Bin route"
+if grep -Eq 'dated leftover humanRoute is planned empty\. Session (Restore|Empty)' "$docs"; then
+  fail "files-defaults-provider must not present planned-empty humanRoute as the current recycle route"
+fi
+
+pass "files-defaults-provider recycle humanRoutes are session-visible, not planned empty"

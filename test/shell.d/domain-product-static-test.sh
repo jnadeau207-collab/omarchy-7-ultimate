@@ -235,7 +235,11 @@ grep -Fq 'CHANGES UNAVAILABLE' "$ROOT/shell/apps/ultimate-files/FilesApplication
 grep -Fq 'Restore write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the Restore write plane as not shell-authorizable"
 grep -Fq 'The permanent delete write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the permanent delete write plane as not shell-authorizable"
 grep -Fq 'The empty Recycle Bin write plane exists but is not shell-authorizable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names the empty Recycle Bin write plane as not shell-authorizable"
-grep -Fq 'Restore UI, Empty Bin LIVE, and Recycle product remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Restore UI and Empty Bin LIVE unavailable"
+grep -Fq 'Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner keeps Fabric Restore UI and Empty Bin LIVE unavailable under SHELL"
+if grep -Fq 'Restore UI, Empty Bin LIVE, and Recycle product remain unavailable' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
+  fail "Files mutation-boundary banner must not self-contradict session Restore/Empty as unavailable"
+fi
+grep -Fq 'Delete, Restore, and Empty Recycle Bin run through this session' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" || fail "Files mutation-boundary banner names session Delete/Restore/Empty LIVE"
 grep -Fq 'readonly property bool deleteAuthorized: false' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml" \
   || fail "Files pins deleteAuthorized false; permanent Delete is not LIVE under the shell principal"
 if grep -Eq 'deleteAuthorized:\s*true' "$ROOT/shell/apps/ultimate-files/FilesApplication.qml"; then
