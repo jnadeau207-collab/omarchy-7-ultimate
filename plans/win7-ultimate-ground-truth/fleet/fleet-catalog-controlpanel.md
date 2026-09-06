@@ -78,7 +78,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
-| Network and Sharing Center | Settings → Network; Superbar/QS Network | `parity.network` prototype; `network.inspect`; Settings Wi-Fi radio `network.manage`; join leftover `network.wifi.connect` | `network.provider` |
+| Network and Sharing Center | Settings → Network; Superbar/QS Network | `parity.network` prototype; `network.inspect`; Settings Wi-Fi radio `network.manage`; Settings join `network.wifi.connect` (session NetworkManager; claim=partial; leftover `legacy-direct`; enterprise/VPN/DNS unavailable) | `network.provider` |
 | HomeGroup | **Missing** (no Homegroup product) | No dedicated job; sharing SMB missing | — |
 | Internet Options | **Missing** as Control Panel; browser-owned | No `internet.options.*` | — |
 
