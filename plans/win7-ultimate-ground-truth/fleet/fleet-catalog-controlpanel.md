@@ -93,7 +93,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Display | Settings → Display; Superbar > Quick Settings > Night light | `parity.display` + modern display prototype; `display.inspect`; Settings brightness `display.brightness.set`; leftover `display.night-light.set` (`NightlightService`) visible on Settings Display (primary) and QS leftover tile; no Fabric durable night-light LIVE / claim=present; QS leftover `display.configure` | `display.provider` |
 | Windows Mobility Center | **Missing** (laptop hub) | No row | — |
 | Biometric Devices | Hardware-gated; **Missing** | No row | — |
-| Mouse / Keyboard (main.cpl) | Settings → Input (keyboard layout writer); mouse **Missing** as applet | `parity.language-locale` / `input.keyboard-layout.set` prototype; mouse not catalogued | `input.provider` |
+| Mouse / Keyboard (main.cpl) | Settings → Input (session keyboard layout leftover); mouse **Missing** as applet | `parity.language-locale` / `input.keyboard-layout.set` leftover `legacy-direct` claim=partial; mouse not catalogued | `input.provider` leftover; no Fabric keyboard-layout durable LIVE |
 | Pen and Touch / Tablet PC | Hardware-gated; **Missing** | No row | — |
 
 ### 2.4 Programs

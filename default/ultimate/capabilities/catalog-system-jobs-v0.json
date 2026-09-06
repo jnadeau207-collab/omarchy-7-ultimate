@@ -6637,7 +6637,7 @@
       "provider": {
         "id": "input.provider",
         "version": "v0",
-        "state": "present"
+        "state": "legacy-direct"
       },
       "kind": "writer",
       "effects": [
@@ -6719,8 +6719,8 @@
         ]
       },
       "source": {
-        "file": "shell/apps/ultimate-settings/SettingsApplication.qml",
-        "symbol": "applyKeyboardLayout",
+        "file": "/usr/bin/hyprctl",
+        "symbol": "switchxkblayout",
         "brokerVerb": null
       }
     },

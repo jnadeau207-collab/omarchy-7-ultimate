@@ -3529,6 +3529,11 @@ MONITOR_SCALING_ALLOWED = frozenset({"1", "1.25", "1.6", "2", "3", "4"})
 MONITOR_SCALING_ALLOWED_KEYS = frozenset({"scale"})
 MONITOR_SCALING_SECRET_KEYS = SMB_SECRET_KEYS
 MONITOR_SCALING_REFUSE = "Scale must be one of 1, 1.25, 1.6, 2, 3, or 4."
+KEYBOARD_LAYOUT_ALLOWED_KEYS = frozenset({"layout"})
+KEYBOARD_LAYOUT_SECRET_KEYS = SMB_SECRET_KEYS
+KEYBOARD_LAYOUT_REFUSE = "Layout must be one of the configured keyboard layouts."
+KEYBOARD_LAYOUT_IDENTITY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$")
+UNTYPED_KEYBOARDS = re.compile(r"^(hl-virtual-keyboard|power-button|sleep-button|lid-switch|video-bus)")
 
 
 def monitor_scaling_helper() -> str:
@@ -3662,6 +3667,194 @@ def apply_display_monitor_scale(
     return 0
 
 
+def keyboard_layout_helper() -> str:
+    return HYPRCTL
+
+
+def run_hyprctl(argv: list[str], run: Any, timeout: int = 5) -> Any:
+    if not argv or not str(argv[0]).startswith("/"):
+        raise ApplyError("command.unavailable", "The keyboard layout helper must be an absolute path.")
+    try:
+        return run(argv, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned system command is not installed.") from error
+
+
+def is_typed_keyboard_name(name: Any) -> bool:
+    if not isinstance(name, str) or not name:
+        return False
+    return UNTYPED_KEYBOARDS.match(name) is None
+
+
+def parse_configured_layouts(raw: Any) -> list[str]:
+    if not isinstance(raw, str) or raw == "":
+        return []
+    layouts = [part.strip() for part in raw.split(",")]
+    if not 1 <= len(layouts) <= 8 or len(layouts) != len(set(layouts)):
+        return []
+    if any(not KEYBOARD_LAYOUT_IDENTITY.fullmatch(layout) for layout in layouts):
+        return []
+    return layouts
+
+
+def select_session_keyboard(keyboards: list[Mapping[str, Any]]) -> Mapping[str, Any] | None:
+    typed: list[Mapping[str, Any]] = []
+    for keyboard in keyboards:
+        if not isinstance(keyboard, Mapping):
+            continue
+        if not is_typed_keyboard_name(keyboard.get("name")):
+            continue
+        typed.append(keyboard)
+    if not typed:
+        return None
+    chosen = typed[0]
+    chosen_index = keyboard_active_index(chosen)
+    for keyboard in typed[1:]:
+        index = keyboard_active_index(keyboard)
+        if index > chosen_index:
+            chosen = keyboard
+            chosen_index = index
+    return chosen
+
+
+def keyboard_active_index(keyboard: Mapping[str, Any]) -> int:
+    index = keyboard.get("active_layout_index")
+    if isinstance(index, bool) or not isinstance(index, int) or index < 0:
+        return 0
+    return index
+
+
+def session_keyboard_state(run: Any) -> tuple[str, list[str], str]:
+    helper = keyboard_layout_helper()
+    completed = run_hyprctl([helper, "-j", "devices"], run)
+    if completed.returncode != 0:
+        raise ApplyError("probe.failed", "The input inventory probe reported a failure status.")
+    try:
+        devices = json.loads(getattr(completed, "stdout", "") or "")
+    except json.JSONDecodeError as error:
+        raise ApplyError("probe.invalid", "The input inventory probe returned unreadable output.") from error
+    keyboards = devices.get("keyboards") if isinstance(devices, Mapping) else None
+    if not isinstance(keyboards, list):
+        raise ApplyError("probe.invalid", "The input inventory probe returned no keyboard list.")
+    keyboard = select_session_keyboard(keyboards)
+    if keyboard is None:
+        return "", [], ""
+    layouts = parse_configured_layouts(keyboard.get("layout"))
+    name = str(keyboard.get("name") or "")
+    if not layouts:
+        return name, [], ""
+    index = keyboard_active_index(keyboard)
+    layout = layouts[index] if 0 <= index < len(layouts) else ""
+    return name, layouts, layout
+
+
+def require_session_keyboard_layout(payload: Mapping[str, Any]) -> str:
+    extra = set(payload) - KEYBOARD_LAYOUT_ALLOWED_KEYS
+    if extra & KEYBOARD_LAYOUT_SECRET_KEYS or extra:
+        raise ApplyError(
+            "payload.invalid",
+            "stdin JSON may include layout only; this session leftover refuses extra keys",
+        )
+    raw = payload.get("layout")
+    if not isinstance(raw, str) or not KEYBOARD_LAYOUT_IDENTITY.fullmatch(raw.strip()):
+        raise ApplyError("payload.invalid", KEYBOARD_LAYOUT_REFUSE)
+    return raw.strip()
+
+
+def apply_input_keyboard_layout_status(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        extra = set(payload)
+        if extra & KEYBOARD_LAYOUT_SECRET_KEYS or extra:
+            raise ApplyError(
+                "payload.invalid",
+                "stdin JSON for layout status must be empty; this session leftover refuses extra keys",
+            )
+        _name, layouts, layout = session_keyboard_state(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "layout": "",
+                "layouts": [],
+                "switchable": False,
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    known = layout != "" and layout in layouts
+    json.dump(
+        {
+            "ok": True,
+            "layout": layout,
+            "layouts": layouts,
+            "known": known,
+            "switchable": len(layouts) > 1,
+            "explanation": (
+                "No typed keyboard reported configured layouts through this session."
+                if not layouts
+                else "Typed Hyprland keyboard layout through this session."
+            ),
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_input_keyboard_layout_session(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        requested = require_session_keyboard_layout(payload)
+        name, layouts, _current = session_keyboard_state(run)
+        if len(layouts) < 2 or requested not in layouts or not name:
+            raise ApplyError("payload.invalid", KEYBOARD_LAYOUT_REFUSE)
+        helper = keyboard_layout_helper()
+        completed = run_hyprctl([helper, "switchxkblayout", name, str(layouts.index(requested))], run)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "This session could not apply the typed Hyprland keyboard layout.")
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "layout": "",
+                "layouts": [],
+                "switchable": False,
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "layout": requested,
+            "layouts": layouts,
+            "known": True,
+            "switchable": True,
+            "explanation": "Applied the typed Hyprland keyboard layout through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
 def apply_sharing_smb_connect(
     stdin: Any,
     stdout: Any,
@@ -3728,6 +3921,8 @@ ACTIONS = {
     "storage-removable-mount": apply_storage_removable_mount,
     "display-monitor-scale-status": apply_display_monitor_scale_status,
     "display-monitor-scale": apply_display_monitor_scale,
+    "input-keyboard-layout-status": apply_input_keyboard_layout_status,
+    "input-keyboard-layout": apply_input_keyboard_layout_session,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:

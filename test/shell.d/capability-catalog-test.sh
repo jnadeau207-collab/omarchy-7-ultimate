@@ -598,19 +598,28 @@ if native6["humanRoute"].get("path") != "Settings > Sound":
 layout_set = by_id["input.keyboard-layout.set"]
 if layout_set.get("provider", {}).get("id") != "input.provider":
     raise SystemExit(f"input.keyboard-layout.set provider is {layout_set.get('provider')}")
-if layout_set.get("provider", {}).get("state") != "present":
-    raise SystemExit(f"input.keyboard-layout.set provider state is {layout_set.get('provider')}")
+if layout_set.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"input.keyboard-layout.set was raised off leftover: {layout_set.get('provider')}")
 if layout_set.get("availability", {}).get("claim") == "present":
     raise SystemExit("input.keyboard-layout.set must not claim present")
+if layout_set.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"input.keyboard-layout.set claim is {layout_set.get('availability')}")
+if layout_set.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"input.keyboard-layout.set human availability is {layout_set.get('availability')}")
 if layout_set["humanRoute"].get("path") != "Settings > Input":
     raise SystemExit(f"input.keyboard-layout.set route is {layout_set.get('humanRoute')}")
-if layout_set.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsApplication.qml":
+if layout_set.get("source", {}).get("file") != "/usr/bin/hyprctl":
     raise SystemExit(f"input.keyboard-layout.set source is {layout_set.get('source')}")
-if layout_set.get("source", {}).get("symbol") != "applyKeyboardLayout":
+if layout_set.get("source", {}).get("symbol") != "switchxkblayout":
     raise SystemExit(f"input.keyboard-layout.set source is {layout_set.get('source')}")
 named_layout = f"{layout_set.get('source', {}).get('file') or ''} {layout_set.get('source', {}).get('symbol') or ''}".lower()
 if "keyboardlayout.qml" in named_layout:
     raise SystemExit(f"input.keyboard-layout.set still names the bar widget: {layout_set.get('source')}")
+if "settingsapplication.qml" in named_layout or "settingsinputlayout.qml" in named_layout:
+    raise SystemExit(f"input.keyboard-layout.set must not invent source on Settings QML: {layout_set.get('source')}")
+settings_app_layout = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
+if "SettingsInputLayout" not in settings_app_layout:
+    raise SystemExit("Settings Input does not host the session keyboard-layout card")
 
 wifi_radio = by_id["network.manage"]
 if wifi_radio.get("provider", {}).get("id") != "network.provider":

@@ -110,14 +110,15 @@ grep -Fq 'if (queryState.records[i].brightnessAvailable) return queryState.recor
   fail "Settings offers brightness only for an output that reports a controllable backlight"
 pass "Settings drives brightness.set through the typed operation plane only"
 
-grep -Fq 'provider: "input.provider"' "$application" || fail "Settings sets the layout through input.provider"
-grep -Fq 'action: "keyboard-layout.set"' "$application" || fail "Settings uses the typed keyboard-layout.set action"
-grep -Fq 'if (!(index >= 0 && index < record.layouts.length)) return' "$application" ||
-  fail "Settings refuses a layout index outside the reported list"
-if grep -Fq 'switchxkblayout' "$application"; then
-  fail "Settings assembles a compositor shell string instead of the typed verb"
+grep -Fq 'SettingsComponents.SettingsInputLayout' "$application" ||
+  fail "Settings Input hosts the session keyboard-layout card"
+if grep -Eq 'provider: "input.provider"|action: "keyboard-layout.set"|function applyKeyboardLayout\(' "$application"; then
+  fail "Settings Input must not mint a Fabric keyboard-layout.set writer"
 fi
-pass "Settings drives keyboard-layout.set through the typed operation plane only"
+if grep -Eq 'hyprctl|switchxkblayout|bash -c' "$application"; then
+  fail "Settings application must not assemble a compositor shell string for layout"
+fi
+pass "Settings drives keyboard-layout through the session leftover plane only"
 
 grep -Fq 'provider: "network.provider"' "$application" || fail "Settings switches the radio through network.provider"
 grep -Fq 'action: "wifi.set-enabled"' "$application" || fail "Settings uses the typed wifi.set-enabled action"
@@ -449,7 +450,8 @@ assertEqual(keyboardRecord({ activeIndex: 9, activeKeymap: 'x', layouts: ['us', 
 assertDeepEqual(keyboardRecord({ activeIndex: 0, activeKeymap: 'x', layouts: ['us', 123], switchable: true }).layouts, [], 'a non-string layout name voids the whole list')
 
 const inputQuery = Model.queryForRoute('settings.input.overview')
-assert(inputQuery.coverage.indexOf('keyboard-layout.set') >= 0, 'the input coverage note names the settable verb')
+assert(inputQuery.coverage.indexOf('hyprctl') >= 0, 'the input coverage note names the layout helper')
+assert(inputQuery.coverage.indexOf('does not invent an input.provider keyboard-layout durable writer') >= 0, 'the input coverage note refuses a Fabric layout writer')
 assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility input changes remain unavailable') >= 0, 'the input coverage note still refuses what Settings cannot do')
 
 const displayQuery = Model.queryForRoute('settings.display.overview')
