@@ -60,7 +60,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "input.inspect",
     supportsResource: true,
-    coverage: "Keyboard inventory and layout state are readable from input.inspect. The active layout applies through this session's omarchy-fabric-session-apply input-keyboard-layout helper when a typed keyboard carries more than one configured layout. Settings does not invent an input.provider keyboard-layout durable writer. Fabric input.inspect stays separate. Pointer, repeat rate, and accessibility input changes remain unavailable from Settings. Layout alone is not locale complete. session leftover recorded: Settings Input keyboard layout session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present)."
+    coverage: "Keyboard inventory and layout state are readable from input.inspect. The active layout applies through tip-true SettingsSessionKeyboardLayout.setLayout → input-keyboard-layout (this session's omarchy-fabric-session-apply helper) when a typed keyboard carries more than one configured layout. Settings does not invent an input.provider keyboard-layout durable writer. Fabric input.inspect stays separate. Pointer, repeat rate, and accessibility input changes remain unavailable from Settings. Layout alone is not locale complete. session leftover recorded: Change keyboard layout soft leftover-attaches windows-native.33 to this tip-true Settings > Input plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.33. windows-native.33 stays prototype/pending. Never claim=present."
   },
   {
     routeId: "settings.printers.overview",
@@ -172,7 +172,7 @@ function declaredOpsHonesty(routeId) {
   if (String(routeId || "") === "settings.printers.overview")
     return "Printer inventory, set-default, pause, resume, and test-page use this session's omarchy-fabric-session-apply printer-status / printer-default-set / printer-pause / printer-resume / printer-test-page helpers. Fabric printer.inspect stays separate. Settings does not invent a printers.provider durable writer. Network Add remains OPEN leftover."
   if (String(routeId || "") === "settings.input.overview")
-    return "Layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper. Fabric input.inspect stays separate. Settings does not invent an input.provider keyboard-layout durable writer."
+    return "Layout uses tip-true SettingsSessionKeyboardLayout.setLayout → input-keyboard-layout (this session's omarchy-fabric-session-apply helper). Fabric input.inspect stays separate. Settings does not invent an input.provider keyboard-layout durable writer. soft leftover-attaches windows-native.33 to this tip-true Settings > Input plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.33. windows-native.33 stays prototype/pending. Never claim=present."
   if (String(routeId || "") === "settings.system.overview")
     return "System information uses this session's omarchy-fabric-session-apply system-information-inspect helper. Settings exposes no preflight, approval, or execution control for this domain. Settings does not invent a system-information.provider durable writer. Agent Center bubblewrap system.info.read stays separate."
   if (String(routeId || "") === "settings.apps.overview")
