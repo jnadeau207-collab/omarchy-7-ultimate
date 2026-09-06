@@ -101,7 +101,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
 | Programs and Features | Settings → Apps (read defaults); Software Center **missing** as product | `parity.programs-and-features` missing; `software.*` / packages inspect claim Software Center paths | `packages.provider` plan_only; do not invent `apps.provider` present |
-| Default Programs | Settings → Apps | See **§3** | `defaults.provider` (real); writers are `defaults.protocol.set` (browser and mailto) and partial MIME rows; Default Programs applet still missing |
+| Default Programs | Settings → Default Programs | See **§3** | `defaults.provider` (real); writers are `defaults.protocol.set` (browser and mailto) and partial MIME rows; Default Programs page partial LIVE; Win7 applet parity still open |
 | Desktop Gadgets | N/A (Win7 feature; removed later) | No Omarchy gadget surface | — |
 
 ### 2.5 User Accounts and Family Safety
@@ -153,11 +153,11 @@ Win7 **Default Programs** (`Microsoft.DefaultPrograms`) exposes:
 
 | Win7 sub-job | Omarchy today | Catalog / jobs honesty |
 | --- | --- | --- |
-| Change default browser (protocol http/https) | Settings → Apps drives `defaults.provider` `protocol.set` (typed plane) | `windows-native.19` claim **prototype** (not present); `parity.default-programs` claim **prototype** but `sourceStatus` still **missing**; writer is `defaults.protocol.set` (browser and mailto LIVE); Default Programs applet still missing |
+| Change default browser (protocol http/https) | Settings → Default Programs drives `defaults.provider` `protocol.set` (typed plane; `applyDefaultBrowser`) | `windows-native.19` claim **prototype** / sourceStatus **pending** (not present); soft leftover-attach to tip-true Default Programs browser plane; `parity.default-programs` claim **prototype** / sourceStatus **prototype**; writer is `defaults.protocol.set` (browser and mailto LIVE); Default Programs page partial LIVE; Win7 applet parity still open; AutoPlay/SPAC/`files.associations.set` unavailable |
 | MIME / file associations | Plane: `defaults.mime.set` write plane is reachable (`defaults-mime-set` helper; preflight OK; risk low); `association.inspect` is published for durable apply re-read; Settings MIME UI not a full Default Programs | `files.associations.set` stays missing/planned MIME; File associations parity **missing as product** — partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing — MIME / Default Programs association UI residual OPEN after PR #62 — do **not** invent MIME Default Programs LIVE |
 | AutoPlay | **Missing** | No catalog |
 | SPAD / program access | **Missing** | No catalog |
-| Catalog ID used by jobs | Settings → Apps `defaults.protocol.set` | Writer is `defaults.protocol.set` (browser and mailto LIVE). partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing. Do not invent `apps.provider` present. |
+| Catalog ID used by jobs | Settings → Default Programs `defaults.protocol.set` | Writer is `defaults.protocol.set` (browser and mailto LIVE; humanRoute visible `Settings > Default Programs`; claim=partial). Soft leftover-attach ACC `windows-native.19` stays prototype/pending. partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing. Do not invent `apps.provider` present or claim=present. |
 
 ---
 
@@ -176,7 +176,7 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | 7 | Color Management | Yes | — | — | Gap |
 | 8 | Credential Manager | Yes | — | `parity.credential-manager` missing | Gap |
 | 9 | Date and Time | Yes | Superbar clock | — | Partial chrome |
-| 10 | Default Programs | Yes | Settings → Apps | `parity.default-programs` / `windows-native.19`; `defaults.protocol.set` browser and mailto LIVE; partial MIME rows LIVE | Prototype Default Programs applet still missing |
+| 10 | Default Programs | Yes | Settings → Default Programs | `parity.default-programs` / `windows-native.19`; `defaults.protocol.set` browser and mailto LIVE; soft leftover-attach wn.19 prototype/pending; partial MIME rows LIVE | Default Programs page partial LIVE; Win7 applet parity still open |
 | 11 | Device Manager | Yes | Administration > Device Manager | `parity.device-manager` / `device.inspect` visible; claim missing | Visible inspect; honest-unavailable as Device Manager product |
 | 12 | Devices and Printers | Yes | Settings > Printers + Administration > Printers and scanners + Settings Bluetooth | `parity.devices-printers`; `printer.inspect` visible; claim missing; `printers.manage` partial | Session Printers leftover / visible inspect / partial BT; honest-unavailable as Devices and Printers product; Add OPEN |
 | 13 | Display | Yes | Settings → Display | `parity.display` | Prototype |
