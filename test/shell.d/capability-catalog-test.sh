@@ -250,9 +250,22 @@ locale = by_id["locale.configure"]["humanRoute"]
 if locale.get("status") != "planned" or locale.get("path"):
     raise SystemExit(f"locale.configure invents a Settings page: {locale}")
 
-system_info = by_id["system.info.read"]["humanRoute"]
-if system_info.get("status") != "missing" or system_info.get("path"):
-    raise SystemExit(f"system.info.read invents a System information route: {system_info}")
+system_info_cap = by_id["system.info.read"]
+system_info = system_info_cap["humanRoute"]
+if system_info.get("status") != "visible" or system_info.get("path") != "Settings > System information":
+    raise SystemExit(f"system.info.read route is {system_info}")
+if system_info_cap.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"system.info.read was raised off leftover: {system_info_cap.get('provider')}")
+if system_info_cap.get("availability", {}).get("claim") == "present":
+    raise SystemExit("system.info.read must not claim present")
+if system_info_cap.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"system.info.read claim is {system_info_cap.get('availability')}")
+if system_info_cap.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"system.info.read human availability is {system_info_cap.get('availability')}")
+if system_info_cap.get("source", {}).get("symbol") != "apply_system_information_inspect":
+    raise SystemExit(f"system.info.read source is {system_info_cap.get('source')}")
+if system_info_cap.get("recovery", {}).get("expectation") != "No durable mutation is expected.":
+    raise SystemExit(f"system.info.read recoveryExpectation drifted: {system_info_cap.get('recovery')}")
 accessibility = by_id["accessibility.configure"]["humanRoute"]
 if accessibility.get("status") != "missing" or accessibility.get("path"):
     raise SystemExit(f"accessibility.configure invents an Accessibility route: {accessibility}")
@@ -289,8 +302,20 @@ native9 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.
 if native9["humanRoute"].get("path") != "Start > Downloads; Superbar > Files > Downloads":
     raise SystemExit(f"windows-native.9 still names Superbar Files without Start Downloads: {native9['humanRoute']}")
 native38 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.38")
-if native38["humanRoute"].get("path") != "Settings jump list > System information":
-    raise SystemExit(f"windows-native.38 invents a Start System page: {native38['humanRoute']}")
+if native38.get("claim") == "present":
+    raise SystemExit(f"windows-native.38 was flipped to present: {native38}")
+if native38.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.38 claim is {native38.get('claim')}")
+if native38.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.38 sourceStatus is {native38.get('sourceStatus')}")
+if native38.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.38 proofStatus is {native38.get('proofStatus')}")
+if native38["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"windows-native.38 route is {native38.get('humanRoute')}")
+if native38["humanRoute"].get("path") != "Settings > System information":
+    raise SystemExit(f"windows-native.38 path is {native38.get('humanRoute')}")
+if native38.get("recoveryExpectation") != "Read-only inspection requires no recovery.":
+    raise SystemExit(f"windows-native.38 recoveryExpectation drifted: {native38.get('recoveryExpectation')}")
 if "processes.inspect" in by_id:
     raise SystemExit("processes.inspect remains as a catalog invent")
 for row in readers["capabilities"] + writers["capabilities"]:
@@ -460,7 +485,7 @@ for capability_id, path in admin_readers.items():
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
     "Default Programs", "Update", "Recovery", "Input", "Bluetooth",
-    "Accessibility", "System",
+    "Accessibility", "System", "System information",
 }
 invented_start_prefixes = (
     "Start > Backup and Restore",
@@ -620,6 +645,8 @@ if "settingsapplication.qml" in named_layout or "settingsinputlayout.qml" in nam
 settings_app_layout = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
 if "SettingsInputLayout" not in settings_app_layout:
     raise SystemExit("Settings Input does not host the session keyboard-layout card")
+if "SettingsSystemInformation" not in settings_app_layout:
+    raise SystemExit("Settings System information does not host the session system-information card")
 
 wifi_radio = by_id["network.manage"]
 if wifi_radio.get("provider", {}).get("id") != "network.provider":
@@ -2417,6 +2444,7 @@ inventory = {
     "display.scale.set": "partial",
     "display.brightness.set": "partial",
     "input.keyboard-layout.set": "partial",
+    "system.info.read": "partial",
     "defaults.protocol.set": "partial",
     "defaults.mime.set": "partial",
     "files.directory.create": "partial",

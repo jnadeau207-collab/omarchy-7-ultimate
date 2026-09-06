@@ -1305,6 +1305,12 @@ Item {
               semanticProfile: root.productProfile
               Layout.fillWidth: true
             }
+            SettingsComponents.SettingsSystemInformation {
+              visible: root.currentRoute && root.currentRoute.id === "settings.system.overview"
+              pageActive: visible
+              semanticProfile: root.productProfile
+              Layout.fillWidth: true
+            }
             Rectangle {
               visible: root.currentRoute && root.currentRoute.id === "settings.display.overview" && root.brightnessResource !== null
               Layout.fillWidth: true

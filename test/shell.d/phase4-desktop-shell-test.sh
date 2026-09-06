@@ -621,7 +621,7 @@ assert any(row.get("name") == "Update" for row in settings), settings
 assert any(row.get("name") == "Recovery" for row in settings), settings
 assert any(row.get("name") == "Input" for row in settings), settings
 assert not any(row.get("name") == "Accessibility" for row in settings), settings
-assert not any(row.get("name") == "System information" for row in settings), settings
+assert any(row.get("name") == "System information" for row in settings), settings
 agents = idx.get("org.omarchy.AgentCenter") or []
 assert any(row.get("name") == "Overview" for row in agents), agents
 assert any(row.get("name") == "Tasks & Runs" for row in agents), agents
@@ -654,7 +654,7 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
 grep -Fq 'Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Music;Videos;Recent;Trash;Search;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
   || fail "published Files launcher keeps Home plus Computer, Desktop, Documents, Downloads, Pictures, Music, Videos, Recent, Recycle Bin, and Search"
-grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;DefaultPrograms;Input;Update;Recovery;' \
+grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;DefaultPrograms;Input;Update;Recovery;SystemInformation;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
   || fail "published Settings launcher keeps Settings home plus Default Programs and the inspect-backed pages and publishes no provider-less action"
 grep -Fq 'Actions=Overview;Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
@@ -761,9 +761,8 @@ print('ok - Start open does not touch searchField before the card Loader is acti
 if grep -Fq 'id: "omarchy.start.accessibility"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent an Accessibility destination"
 fi
-if grep -Fq 'id: "omarchy.start.system"' "$ROOT/shell/services/AppSearch.js"; then
-  fail "Start search does not invent a System information destination"
-fi
+grep -Fq 'id: "omarchy.start.system"' "$ROOT/shell/services/AppSearch.js" \
+  || fail "Start search includes Settings System information"
 if grep -Fq 'id: "omarchy.start.files-search"' "$ROOT/shell/services/AppSearch.js"; then
   fail "Start search does not invent an in-app Files Search destination"
 fi

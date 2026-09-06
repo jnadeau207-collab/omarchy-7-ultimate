@@ -123,7 +123,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "system-information.inspect",
     supportsResource: false,
-    coverage: "No code-owned aggregate system-information provider is registered. Settings does not assemble an unofficial substitute from direct commands."
+    coverage: "OS, product, hardware, and root storage are readable through this session's omarchy-fabric-session-apply system-information-inspect helper. Settings does not invent a system-information.provider durable writer. Settings does not invent Fabric durable system.info.read LIVE / claim=present. Agent Center bubblewrap system.info.read stays separate. Encryption, firmware flash, Device Manager, and storage mutation remain unavailable. session leftover recorded: Settings System information session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present)."
   }]
 
 var LIVE_WRITER_ROUTES = [
@@ -159,6 +159,8 @@ function declaredOpsHonesty(routeId) {
     return "Brightness applies through preflight, approval, and the durable coordinator. Night light uses NightlightService / Quick Settings on this session. Scale uses this session's omarchy-hyprland-monitor-scaling helper. Fabric display.inspect stays separate. Settings does not invent a display.provider night-light durable writer. Settings does not invent a display.provider scale durable writer."
   if (String(routeId || "") === "settings.input.overview")
     return "Layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper. Fabric input.inspect stays separate. Settings does not invent an input.provider keyboard-layout durable writer."
+  if (String(routeId || "") === "settings.system.overview")
+    return "System information uses this session's omarchy-fabric-session-apply system-information-inspect helper. Settings exposes no preflight, approval, or execution control for this domain. Settings does not invent a system-information.provider durable writer. Agent Center bubblewrap system.info.read stays separate."
   if (String(routeId || "") === "settings.apps.overview")
     return "Settings runs browser, mailer, and MIME defaults through preflight, approval, and the durable coordinator. Startup applications enable or disable through this session's XDG autostart helper. Fabric defaults.inspect stays readable. Settings does not invent a Fabric apps.startup.disable durable writer. Settings does not invent Task Manager present."
   if (String(routeId || "") === "settings.bluetooth.overview")
@@ -171,7 +173,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Input layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Display night light uses NightlightService on this session, the same plane as Quick Settings \u00b7 Display scaling uses this session's omarchy-hyprland-monitor-scaling helper \u00b7 Input layout uses this session's omarchy-fabric-session-apply input-keyboard-layout helper \u00b7 System information uses this session's omarchy-fabric-session-apply system-information-inspect helper \u00b7 Apps startup uses this session's XDG autostart helper \u00b7 Bluetooth pair and connect use this session's BlueZ adapter \u00b7 Update apply uses this session's update helper \u00b7 Fabric system.update is not LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands \u00b7 Update elevated auth stays on the session helper and never enters Fabric \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1723,6 +1725,118 @@ function sessionScalingAccepted(previous, action) {
   }
 }
 
+
+function sessionSystemInformationIdle() {
+  return {
+    phase: "idle",
+    action: "",
+    available: false,
+    hostname: "",
+    osName: "",
+    osVersion: "",
+    osId: "",
+    kernel: "",
+    architecture: "",
+    productLabel: "",
+    cpuModel: "",
+    memoryLabel: "",
+    storageLabel: "",
+    message: "",
+    code: ""
+  }
+}
+
+function sessionSystemInformationAccepted(previous, action) {
+  var prior = isObject(previous) ? previous : sessionSystemInformationIdle()
+  return {
+    phase: prior.phase,
+    action: String(action || ""),
+    available: prior.available === true,
+    hostname: prior.hostname || "",
+    osName: prior.osName || "",
+    osVersion: prior.osVersion || "",
+    osId: prior.osId || "",
+    kernel: prior.kernel || "",
+    architecture: prior.architecture || "",
+    productLabel: prior.productLabel || "",
+    cpuModel: prior.cpuModel || "",
+    memoryLabel: prior.memoryLabel || "",
+    storageLabel: prior.storageLabel || "",
+    message: prior.message || "",
+    code: prior.code || ""
+  }
+}
+
+function formatSystemInformationMib(value) {
+  if (typeof value !== "number" || !isFinite(value) || value < 0) return ""
+  var gib = value / 1024
+  if (gib >= 10) return String(Math.round(gib)) + " GiB"
+  if (gib >= 1) return (Math.round(gib * 10) / 10).toFixed(1).replace(/\.0$/, "") + " GiB"
+  return String(Math.round(value)) + " MiB"
+}
+
+function formatSystemInformationBytes(value) {
+  if (typeof value !== "number" || !isFinite(value) || value < 0) return ""
+  var gib = value / (1024 * 1024 * 1024)
+  if (gib >= 10) return String(Math.round(gib)) + " GiB"
+  if (gib >= 1) return (Math.round(gib * 10) / 10).toFixed(1).replace(/\.0$/, "") + " GiB"
+  var mib = value / (1024 * 1024)
+  if (mib >= 1) return String(Math.round(mib)) + " MiB"
+  return String(Math.round(value)) + " B"
+}
+
+function sessionSystemInformationProductLabel(product) {
+  var row = isObject(product) ? product : {}
+  var parts = []
+  var vendor = clippedText(row.vendor || "", 120)
+  var name = clippedText(row.name || "", 120)
+  var version = clippedText(row.version || "", 120)
+  if (vendor) parts.push(vendor)
+  if (name && name !== vendor) parts.push(name)
+  if (version && version !== name) parts.push(version)
+  return parts.join(" · ")
+}
+
+function sessionSystemInformationFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var ok = result.ok === true
+  var os = isObject(result.os) ? result.os : {}
+  var product = isObject(result.product) ? result.product : {}
+  var hardware = isObject(result.hardware) ? result.hardware : {}
+  var storage = isObject(result.storage) ? result.storage : {}
+  var memoryTotal = hardware.memoryTotalMib
+  var memoryAvailable = hardware.memoryAvailableMib
+  var memoryLabel = ""
+  if (typeof memoryTotal === "number") {
+    memoryLabel = formatSystemInformationMib(memoryTotal)
+    if (typeof memoryAvailable === "number")
+      memoryLabel = formatSystemInformationMib(memoryAvailable) + " available of " + memoryLabel
+  }
+  var storageLabel = ""
+  if (storage.available === true && typeof storage.totalBytes === "number") {
+    storageLabel = formatSystemInformationBytes(storage.usedBytes) + " used of " + formatSystemInformationBytes(storage.totalBytes)
+    if (typeof storage.freeBytes === "number")
+      storageLabel += " (" + formatSystemInformationBytes(storage.freeBytes) + " free)"
+  }
+  return {
+    phase: ok ? "succeeded" : "failed",
+    action: previous && previous.action || "",
+    available: ok && result.available === true,
+    hostname: clippedText(result.hostname || "", 160),
+    osName: clippedText(os.name || "", 160),
+    osVersion: clippedText(os.version || "", 120),
+    osId: clippedText(os.id || "", 64),
+    kernel: clippedText(os.kernel || "", 120),
+    architecture: clippedText(os.architecture || "", 64),
+    productLabel: sessionSystemInformationProductLabel(product),
+    cpuModel: clippedText(hardware.cpuModel || "", 200),
+    memoryLabel: memoryLabel,
+    storageLabel: storageLabel,
+    message: clippedText(result.explanation || result.message || (ok ? "The session system information helper finished." : "The session system information helper failed."), MAX_DISPLAY_TEXT),
+    code: result.code || ""
+  }
+}
+
 function sessionKeyboardLayoutIdle() {
   return { phase: "idle", action: "", layout: "", layouts: [], known: false, switchable: false, empty: false, message: "", code: "" }
 }
@@ -1933,6 +2047,9 @@ if (typeof module !== "undefined") {
     sessionKeyboardLayoutIdle: sessionKeyboardLayoutIdle,
     sessionKeyboardLayoutAccepted: sessionKeyboardLayoutAccepted,
     sessionKeyboardLayoutCanSubmit: sessionKeyboardLayoutCanSubmit,
-    sessionKeyboardLayoutFinished: sessionKeyboardLayoutFinished
+    sessionKeyboardLayoutFinished: sessionKeyboardLayoutFinished,
+    sessionSystemInformationIdle: sessionSystemInformationIdle,
+    sessionSystemInformationAccepted: sessionSystemInformationAccepted,
+    sessionSystemInformationFinished: sessionSystemInformationFinished
   }
 }

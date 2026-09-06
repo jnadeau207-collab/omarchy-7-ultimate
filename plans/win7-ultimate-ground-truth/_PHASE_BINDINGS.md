@@ -65,7 +65,7 @@
 - **Start:** two-pane; BINDING right-pane order User→Documents→Pictures→Music→Games→Computer→Control Panel→Devices and Printers→Default Programs→Help; power flyout Switch user/Log off/Lock/Restart/Sleep/Hibernate; All Programs **in-pane** with Back; search placeholder “Search programs and files”; orb 54×54 states (`plans/win7-ultimate-ground-truth/02-start-superbar.md`). Omarchy 720×640 / Settings/Agent Center places = documented deltas.
 - **Superbar:** height 40 (Win7) vs product 48; combine modes; Jump List structure; left-click minimize-active; Shift/middle new instance; tray Action Center/Volume/Network/Power/Clock; Show Desktop (`plans/win7-ultimate-ground-truth/02-start-superbar.md`).
 - Desktop icons + context menu order View/Sort/Refresh/Paste/New/Screen resolution/Gadgets/Personalize (`plans/win7-ultimate-ground-truth/03-explorer-dialogs.md`).
-- **Vagueness fix:** Exit ≠ “masterpiece / looks like different OS”; exit = job honesty for `parity.start`, `parity.superbar-taskbar`, `parity.search`, `parity.context-menus`, `parity.event-history`; **forbidden invent:** Superbar→Task Manager present; unpublished Accessibility/System-info jumps; Agent Center claim present while prototype.
+- **Vagueness fix:** Exit ≠ “masterpiece / looks like different OS”; exit = job honesty for `parity.start`, `parity.superbar-taskbar`, `parity.search`, `parity.context-menus`, `parity.event-history`; **forbidden invent:** Superbar→Task Manager present; unpublished Accessibility jumps; System information only as tip-visible Settings > System information session leftover (refuse invent); Agent Center claim present while prototype.
 - Links: `plans/win7-ultimate-ground-truth/02-start-superbar.md`, `plans/win7-ultimate-ground-truth/02-start-superbar.md`, `plans/win7-ultimate-ground-truth/03-explorer-dialogs.md` (desktop), `plans/win7-ultimate-ground-truth/05-interaction-polish.md`
 
 ---
@@ -78,7 +78,7 @@
 - **Per-page matrix required (vagueness fix):** each page lists inspect verbs LIVE vs unavailable operation verbs; hide undrivable controls; consequential state Rule 6.
 - Default Programs = **four links** (Set defaults / Associate / AutoPlay / SPAD) — browser https alone ≠ `parity.default-programs` present; MIME associations separate (`parity.file-associations` missing until UI).
 - Personalization bottom row: Desktop Background · Window Color · Sounds · Screen Saver; wallpaper positions Fill/Fit/Stretch/Tile/Center.
-- Accessibility / System Information: honest missing — **omit** provider-less jump destinations (`windows-native.38`).
+- Accessibility: honest missing — **omit** provider-less jump destinations. System information: session leftover page visible (`windows-native.38` prototype/pending); do not invent Fabric aggregate LIVE / claim=present.
 - Stale fence fix: do not blanket “typed writers remain Phase 5” while some writers LIVE — list domain-by-domain vs `parity.sound|network|power|display|language-locale|default-programs` + `windows-native.6/2/35/3/33/19`.
 - Links: `plans/win7-ultimate-ground-truth/04-control-panel.md`, `plans/win7-ultimate-ground-truth/06-settings-admin-media.md`, `plans/win7-ultimate-ground-truth/05-interaction-polish.md`
 

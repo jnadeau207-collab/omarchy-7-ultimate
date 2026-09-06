@@ -230,6 +230,16 @@ var START_DESTINATIONS = [
     actionId: "Input"
   },
   {
+    id: "omarchy.start.system",
+    name: "System information",
+    genericName: "Settings",
+    comment: "Open Settings System information",
+    keywords: ["system", "about", "hardware", "storage", "firmware", "information", "settings"],
+    icon: "org.omarchy.Settings",
+    desktopId: "org.omarchy.Settings",
+    actionId: "SystemInformation"
+  },
+  {
     id: "omarchy.start.files",
     name: "Files",
     genericName: "File Manager",
