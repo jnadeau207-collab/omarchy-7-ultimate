@@ -415,6 +415,18 @@ def require_files_resource_id(payload: Mapping[str, Any]) -> str:
         raise ApplyError("payload.invalid", "The apply payload names no files resource.")
     return resource_id
 
+
+def bind_files_directory_resource(payload: Mapping[str, Any], location_id: str, parent: str) -> str:
+    expected = stable_directory_id(location_id, parent)
+    resource_id = payload.get("resourceId")
+    if resource_id in (None, ""):
+        return expected
+    if not isinstance(resource_id, str) or not resource_id.startswith("files."):
+        raise ApplyError("payload.invalid", "The apply payload names no files resource.")
+    if resource_id != expected:
+        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    return resource_id
+
 def stable_entry_id(location_id: str, device: int, inode: int, relative: str) -> str:
     material = f"files\0{location_id}\0{device}\0{inode}\0{relative}"
     digest = hashlib.sha256(material.encode("utf-8")).hexdigest()
@@ -501,12 +513,10 @@ def parse_trash_info(text: str) -> str:
 
 def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_files_resource_id(payload)
     home = pathlib.Path.home()
     _, final, relative = resolve_entry_path(payload, home)
     parent = "/".join(relative.split("/")[:-1])
-    if resource_id != stable_directory_id(payload["locationId"], parent):
-        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    resource_id = bind_files_directory_resource(payload, payload["locationId"], parent)
     root = trash_root(home)
     try:
         (root / "files").mkdir(parents=True, exist_ok=True)
@@ -536,13 +546,11 @@ def apply_files_entry_trash(stdin: Any, stdout: Any) -> int:
 
 def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_files_resource_id(payload)
     entry_id = require_entry_id(payload)
     home = pathlib.Path.home()
     _, destination, relative = resolve_entry_slot(payload, home)
     parent = "/".join(relative.split("/")[:-1])
-    if resource_id != stable_directory_id(payload["locationId"], parent):
-        raise ApplyError("payload.invalid", "The apply payload targets another directory than its resource.")
+    resource_id = bind_files_directory_resource(payload, payload["locationId"], parent)
     root = trash_root(home)
     files_dir = root / "files"
     try:
@@ -589,14 +597,12 @@ def apply_files_trash_restore(stdin: Any, stdout: Any) -> int:
 
 def apply_files_trash_manage(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
-    resource_id = require_files_resource_id(payload)
     if payload.get("locationId") != "files.location.trash":
         raise ApplyError("payload.invalid", "Only the Trash location can be emptied.")
     parent = payload.get("parentRelativePath")
     if parent not in (None, ""):
         raise ApplyError("payload.invalid", "Empty Bin only targets the Trash root.")
-    if resource_id != stable_directory_id("files.location.trash", ""):
-        raise ApplyError("payload.invalid", "The apply payload targets another directory than Trash.")
+    resource_id = bind_files_directory_resource(payload, "files.location.trash", "")
     root = trash_root(pathlib.Path.home())
     files_dir = root / "files"
     info_dir = root / "info"
