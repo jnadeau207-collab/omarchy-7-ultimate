@@ -40,7 +40,7 @@ grep -Fq 'soft leftover-attaches windows-native.19' "$settings_app" ||
   fail "Default Programs honesty soft leftover-attaches wn.19"
 grep -Fq 'AutoPlay' "$settings_app" || fail "Default Programs honesty keeps AutoPlay unavailable"
 grep -Fq 'files.associations.set' "$settings_app" || fail "Default Programs honesty keeps files.associations.set unavailable"
-grep -Fq 'Set Program Access and Computer Defaults' "$settings_app" || fail "Default Programs honesty keeps SPAC unavailable"
+grep -Fq 'Set Program Access and Computer Defaults' "$settings_app" || fail "Default Programs honesty keeps SPAD unavailable"
 
 if grep -Eqi 'claim=present' "$settings_app" && ! grep -Eqi 'not claim=present|Never claim=present|never claim=present' "$settings_app"; then
   fail "Default Programs must not invent claim=present"
@@ -54,8 +54,13 @@ fi
 if grep -Eqi 'Empty Bin LIVE' "$settings_app"; then
   fail "Default Programs must not invent Empty Bin LIVE"
 fi
-if grep -Eqi 'AutoPlay LIVE CONTROL|SPAC LIVE CONTROL|files\.associations\.set claim=present' "$settings_app" "$settings_model"; then
-  fail "Default Programs must not invent AutoPlay/SPAC/files.associations.set product-complete"
+if grep -Eqi 'AutoPlay LIVE CONTROL|SPAD LIVE CONTROL|files\.associations\.set claim=present' "$settings_app" "$settings_model"; then
+  fail "Default Programs must not invent AutoPlay/SPAD/files.associations.set product-complete"
+fi
+
+if grep -Eqi 'MIME LIVE on Settings > Apps|partial MIME rows LIVE on Settings > Apps' \
+  "$settings_app" "$settings_model" "$handoff" "$defaults_docs" "$project" "$controlpanel" "$gaps"; then
+  fail "must not invent MIME LIVE on Settings > Apps; tip-true is Settings > Default Programs"
 fi
 if grep -Eqi 'files\.associations\.set product-complete' "$settings_app" "$settings_model" | grep -Eiv 'not invent|Do not invent|stay unavailable|remain unavailable'; then
   fail "Default Programs must not invent files.associations.set product-complete"

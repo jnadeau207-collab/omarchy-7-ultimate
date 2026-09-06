@@ -1030,7 +1030,7 @@ Item {
                   text: root.operationMessage !== "" && root.operationKind === "browser"
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
-                        "Only applications that declare they handle web links are shown. Changes run through defaults.provider protocol.set for http and https as this user, never with elevated privilege. Soft leftover-attach ACC windows-native.19 stays prototype/pending. Do not invent MIME association UI, AutoPlay, SPAC, or files.associations.set product-complete. Never claim=present.")
+                        "Only applications that declare they handle web links are shown. Changes run through defaults.provider protocol.set for http and https as this user, never with elevated privilege. Soft leftover-attach ACC windows-native.19 stays prototype/pending. Do not invent MIME association UI, AutoPlay, SPAD, or files.associations.set product-complete. Never claim=present.")
                   color: Tokens.text.secondary
                   font.family: Tokens.typography.family
                   font.pixelSize: Style.font.bodySmall

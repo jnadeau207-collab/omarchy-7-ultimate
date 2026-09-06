@@ -1436,16 +1436,16 @@ if (root / "test/acceptance.d/leftovers/win7-visual/hdmi.png").is_file() is Fals
     raise SystemExit("Win7 visual leftover hdmi.png is missing")
 if "claims: missing=32, partial=6, plumbing=4, present=0, prototype=40" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
-if "partial MIME rows LIVE on Settings > Apps; Default Programs applet still missing" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE and keep the Default Programs applet missing")
+if "partial MIME rows LIVE on Settings > Default Programs; Default Programs applet still missing" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE on Settings > Default Programs and keep the Default Programs applet missing")
 if "defaults.inspect" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name MIME inspect via defaults.inspect")
 if "ad4a68e1b225" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #62 tip parent for the MIME leftover residual")
 if "MIME / Default Programs association UI residual OPEN after PR #62" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must carry the MIME leftover after PR #62")
-if "humanRoute visible `Settings > Apps`" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must keep defaults.mime.set humanRoute visible Settings > Apps after PR #62")
+if "humanRoute visible `Settings > Default Programs`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep defaults.mime.set humanRoute visible Settings > Default Programs")
 if "c1886b423c11" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must cite the PR #60 tip parent for the Files leftover residual")
 if "OS clipboard residual OPEN" not in gaps:
@@ -1781,7 +1781,7 @@ if "apps.defaults.set" in gt06 or "apps.defaults.set" in gt06_json_text:
     raise SystemExit("06-settings-admin-media still names leftover apps.defaults.set as the live Apps writer")
 if "defaults.protocol.set" not in gt06 or "Default Programs page partial LIVE; Win7 applet parity still open" not in gt06:
     raise SystemExit("06-settings-admin-media does not name defaults.protocol.set with Default Programs page partial LIVE")
-if "partial MIME rows LIVE on Settings > Apps" not in gt06:
+if "partial MIME rows LIVE on Settings > Default Programs" not in gt06:
     raise SystemExit("06-settings-admin-media does not name partial MIME rows LIVE")
 if "files.associations.set" not in gt06 or "missing/planned MIME" not in gt06:
     raise SystemExit("06-settings-admin-media dropped files.associations.set missing/planned MIME")
@@ -1935,7 +1935,7 @@ if "apps.defaults.set" in cp:
     raise SystemExit("fleet-catalog-controlpanel still names leftover apps.defaults.set as the live Apps writer")
 if "defaults.protocol.set" not in cp or "Default Programs page partial LIVE; Win7 applet parity still open" not in cp:
     raise SystemExit("fleet-catalog-controlpanel does not name defaults.protocol.set with Default Programs page partial LIVE")
-if "partial MIME rows LIVE on Settings > Apps" not in cp:
+if "partial MIME rows LIVE on Settings > Default Programs" not in cp:
     raise SystemExit("fleet-catalog-controlpanel does not name partial MIME rows LIVE")
 if "files.associations.set" not in cp or "missing/planned MIME" not in cp:
     raise SystemExit("fleet-catalog-controlpanel dropped files.associations.set missing/planned MIME")
