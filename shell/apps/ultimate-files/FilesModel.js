@@ -544,6 +544,38 @@ function sessionMountCanSubmit(plan) {
   return plan.action === "mount"
 }
 
+function isValidSmbHost(host) {
+  var value = String(host || "").trim()
+  if (value === "" || /[@/\\:\s]/.test(value)) return false
+  return /^(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?|(?:\d{1,3}\.){3}\d{1,3})$/.test(value)
+}
+
+function isValidSmbShare(share) {
+  var value = String(share || "").trim()
+  if (value === "" || value.indexOf("..") >= 0 || /[/\\]/.test(value)) return false
+  return /^[A-Za-z0-9][A-Za-z0-9._$-]{0,79}$/.test(value)
+}
+
+function sessionSmbPlan(host, share) {
+  var nextHost = String(host || "").trim()
+  var nextShare = String(share || "").trim()
+  if (nextHost === "" || nextShare === "") {
+    return { action: "unavailable", reason: "Enter a host and share to connect through this session." }
+  }
+  if (!isValidSmbHost(nextHost)) {
+    return { action: "unavailable", reason: "That host cannot be used through this session." }
+  }
+  if (!isValidSmbShare(nextShare)) {
+    return { action: "unavailable", reason: "That share cannot be used through this session." }
+  }
+  return { action: "connect", host: nextHost, share: nextShare }
+}
+
+function sessionSmbCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "connect" && String(plan.host || "") !== "" && String(plan.share || "") !== ""
+}
+
 function sessionVolumeRecord(volume, index) {
   if (!isObject(volume)) return null
   var volumeId = String(volume.volumeId || volume.id || "")
@@ -1517,6 +1549,8 @@ if (typeof module !== "undefined") module.exports = {
   sessionMountableRecord: sessionMountableRecord,
   sessionMountPlan: sessionMountPlan,
   sessionMountCanSubmit: sessionMountCanSubmit,
+  sessionSmbPlan: sessionSmbPlan,
+  sessionSmbCanSubmit: sessionSmbCanSubmit,
   sessionVolumeRecord: sessionVolumeRecord,
   mergeSessionVolumes: mergeSessionVolumes,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,

@@ -94,6 +94,39 @@ MOUNT_ALREADY_MARKERS = (
 )
 MOUNT_BUSY_MARKERS = EJECT_BUSY_MARKERS
 MOUNT_AUTH_MARKERS = EJECT_AUTH_MARKERS
+SMB_ALLOWED_KEYS = frozenset({"host", "share"})
+SMB_SECRET_KEYS = frozenset({"password", "passwd", "secret", "user", "username", "domain", "credentials"})
+SMB_HOST_RE = re.compile(
+    r"^(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?|(?:\d{1,3}\.){3}\d{1,3})$"
+)
+SMB_SHARE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._$-]{0,79}$")
+SMB_ALREADY_MARKERS = (
+    "already mounted",
+    "is already mounted",
+    "already mounted at",
+    "location is already mounted",
+)
+SMB_AUTH_MARKERS = UPDATE_AUTH_MARKERS + (
+    "password",
+    "authentication required",
+    "access denied",
+    "login failed",
+    "logon failed",
+    "unauthorized",
+    "permission denied",
+    "credentials",
+)
+SMB_UNRESOLVED_MARKERS = (
+    "not found",
+    "no such",
+    "failed to resolve",
+    "name or service not known",
+    "could not resolve",
+    "host is down",
+    "connection refused",
+    "network is unreachable",
+    "no route to host",
+)
 
 class ApplyError(Exception):
     def __init__(self, code: str, explanation: str) -> None:
@@ -3439,6 +3472,89 @@ def apply_storage_removable_mount(
     return 0
 
 
+def require_smb_target(payload: Mapping[str, Any]) -> tuple[str, str]:
+    extra = set(payload) - SMB_ALLOWED_KEYS
+    if extra & SMB_SECRET_KEYS or extra:
+        raise ApplyError(
+            "payload.invalid",
+            "stdin JSON may include host and share only; this session leftover refuses credentials",
+        )
+    host_raw = payload.get("host")
+    share_raw = payload.get("share")
+    if host_raw is None or share_raw is None:
+        raise ApplyError("payload.invalid", "host and share are required")
+    if not isinstance(host_raw, str) or not isinstance(share_raw, str):
+        raise ApplyError("payload.invalid", "host and share must be strings")
+    host = host_raw.strip()
+    share = share_raw.strip()
+    if host == "" or share == "":
+        raise ApplyError("payload.invalid", "host and share are required")
+    if (
+        not SMB_HOST_RE.fullmatch(host)
+        or any(marker in host for marker in ("@", "/", "\\", ":", " "))
+    ):
+        raise ApplyError("payload.invalid", "host must be a hostname or IPv4 without userinfo")
+    if not SMB_SHARE_RE.fullmatch(share) or "/" in share or "\\" in share or ".." in share:
+        raise ApplyError("payload.invalid", "share must be a single share name")
+    return host, share
+
+
+def smb_guest_uri(host: str, share: str) -> str:
+    return f"smb://{urllib.parse.quote(host, safe='.-')}/{urllib.parse.quote(share, safe='._$-')}"
+
+
+def classify_smb_connect_failure(completed: Any) -> ApplyError:
+    text = command_detail(completed).lower()
+    if any(marker in text for marker in SMB_AUTH_MARKERS):
+        return ApplyError(
+            "share.auth-required",
+            "That share requires credentials; this session leftover is guest or public only.",
+        )
+    if any(marker in text for marker in SMB_UNRESOLVED_MARKERS):
+        return ApplyError("resource.unresolved", "That host or share could not be resolved through this session.")
+    return ApplyError("share.connect-failed", "Connecting the guest SMB share reported a failure status.")
+
+
+def connect_smb_guest(uri: str, run: Any) -> str:
+    completed = run_eject_helper([GIO, "mount", "--anonymous", uri], run, 30)
+    if completed.returncode == 0:
+        return "mounted"
+    text = command_detail(completed).lower()
+    if any(marker in text for marker in SMB_ALREADY_MARKERS):
+        return "already"
+    raise classify_smb_connect_failure(completed)
+
+
+def apply_sharing_smb_connect(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        host, share = require_smb_target(payload)
+        uri = smb_guest_uri(host, share)
+        method = connect_smb_guest(uri, run)
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "host": host,
+            "share": share,
+            "connected": True,
+            "method": method,
+            "scope": "smb-guest",
+            "explanation": "Connected the guest SMB share through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
@@ -3469,6 +3585,7 @@ ACTIONS = {
     "system-update-history": apply_system_update_history,
     "apps-startup-list": apply_apps_startup_list,
     "apps-startup-set": apply_apps_startup_set,
+    "sharing-smb-connect": apply_sharing_smb_connect,
     "storage-removable-eject": apply_storage_removable_eject,
     "storage-removable-list": apply_storage_removable_list,
     "storage-removable-mount": apply_storage_removable_mount,
