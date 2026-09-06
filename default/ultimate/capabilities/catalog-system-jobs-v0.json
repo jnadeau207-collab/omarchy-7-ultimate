@@ -819,9 +819,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Connect to Wi-Fi",
-        "path": "Superbar > Quick Settings > Wi-Fi"
+        "path": "Settings > Network"
       },
       "agentCenterLabel": "Connect to Wi-Fi",
       "proofIds": {
@@ -833,8 +833,8 @@
         ]
       },
       "source": {
-        "file": "shell/plugins/panels/network/Panel.qml",
-        "symbol": "NetworkPanel.connect",
+        "file": "shell/apps/ultimate-settings/SettingsWifiJoin.qml",
+        "symbol": "joinNetwork",
         "brokerVerb": null
       }
     },

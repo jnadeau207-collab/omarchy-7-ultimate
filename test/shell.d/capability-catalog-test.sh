@@ -237,7 +237,7 @@ writer_routes = {
     "bluetooth.audio.pair": ("Quick Settings", "Superbar > Quick Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
     "display.night-light.set": ("Quick Settings", "Superbar > Quick Settings > Night light"),
-    "network.wifi.connect": ("Quick Settings", "Superbar > Quick Settings > Wi-Fi"),
+    "network.wifi.connect": ("Settings", "Settings > Network"),
     "power.profile.set": ("Quick Settings", "Superbar > Quick Settings > Power"),
 }
 for capability_id, (surface, path) in writer_routes.items():
@@ -599,8 +599,14 @@ named_wifi = f"{wifi_radio.get('source', {}).get('file') or ''} {wifi_radio.get(
 if "panel.qml" in named_wifi:
     raise SystemExit(f"network.manage still names the QS network panel: {wifi_radio.get('source')}")
 wifi_connect = by_id["network.wifi.connect"]
-if wifi_connect["humanRoute"].get("surface") != "Quick Settings" or wifi_connect["humanRoute"].get("path") != "Superbar > Quick Settings > Wi-Fi":
-    raise SystemExit(f"network.wifi.connect invents a Settings join-network route: {wifi_connect.get('humanRoute')}")
+if wifi_connect["humanRoute"].get("surface") != "Settings" or wifi_connect["humanRoute"].get("path") != "Settings > Network":
+    raise SystemExit(f"network.wifi.connect route is {wifi_connect.get('humanRoute')}")
+if wifi_connect["humanRoute"].get("label") != "Connect to Wi-Fi":
+    raise SystemExit(f"network.wifi.connect label is {wifi_connect.get('humanRoute')}")
+if wifi_connect.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsWifiJoin.qml":
+    raise SystemExit(f"network.wifi.connect source is {wifi_connect.get('source')}")
+if wifi_connect.get("source", {}).get("symbol") != "joinNetwork":
+    raise SystemExit(f"network.wifi.connect source is {wifi_connect.get('source')}")
 if wifi_connect.get("availability", {}).get("claim") == "present":
     raise SystemExit("network.wifi.connect must not claim present")
 if wifi_connect.get("provider", {}).get("state") != "legacy-direct":
@@ -610,8 +616,10 @@ if native2.get("claim") == "present":
     raise SystemExit(f"windows-native.2 was flipped to present: {native2}")
 if native2.get("capabilityIds") != ["network.wifi.connect"]:
     raise SystemExit(f"windows-native.2 capabilityIds are {native2.get('capabilityIds')}")
-if "Settings" in str(native2["humanRoute"].get("path") or ""):
-    raise SystemExit(f"windows-native.2 invents Settings Connect Wi-Fi: {native2['humanRoute']}")
+if native2["humanRoute"].get("path") != "Settings > Network":
+    raise SystemExit(f"windows-native.2 route is {native2['humanRoute']}")
+if native2.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.2 sourceStatus is {native2.get('sourceStatus')}")
 
 if "display.brightness.set" not in by_id:
     raise SystemExit("absent live brightness writer invent: display.brightness.set missing from catalog")
