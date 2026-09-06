@@ -186,7 +186,7 @@ if "| `windows-native.40` | prototype/pending | visible: Start > Shut down | **S
     raise SystemExit("fleet-doctrine-gaps still has tip-false wn.40 invent OK if Start power works")
 if "windows-native.40 stays prototype/pending" not in gaps.replace("`", ""):
     raise SystemExit("fleet-doctrine-gaps must keep windows-native.40 prototype/pending")
-if "claims: missing=30, partial=6, plumbing=4, present=0, prototype=42" not in gaps:
+if "claims: missing=29, partial=6, plumbing=4, present=0, prototype=43" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims after wn.40 soft leftover-attach")
 
 required_handoff = [

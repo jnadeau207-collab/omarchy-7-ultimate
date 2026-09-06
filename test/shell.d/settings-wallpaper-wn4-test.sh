@@ -186,7 +186,7 @@ if "| `windows-native.4` | prototype/pending | visible: Personalization > Backgr
     raise SystemExit("fleet-doctrine-gaps still points wn.4 at Personalization > Background")
 if "windows-native.4 stays prototype/pending" not in gaps.replace("`", ""):
     raise SystemExit("fleet-doctrine-gaps must keep windows-native.4 prototype/pending")
-if "claims: missing=30, partial=6, plumbing=4, present=0, prototype=42" not in gaps:
+if "claims: missing=29, partial=6, plumbing=4, present=0, prototype=43" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims after wn.4 soft leftover-attach")
 
 required_handoff = [

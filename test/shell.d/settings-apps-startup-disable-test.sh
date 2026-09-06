@@ -69,7 +69,7 @@ grep -Fq 'settings.apps.overview' "$settings_app" || fail "Settings still owns t
 grep -Fq 'this session' "$settings_card" || fail "Settings Apps startup names the session principal"
 grep -Fq 'XDG' "$settings_card" || fail "Settings Apps startup names the XDG autostart plane"
 grep -Fq 'Fabric' "$settings_card" || fail "Settings Apps startup keeps Fabric inspect honest"
-if grep -Eqi 'claim=present' "$settings_card" "$settings_app"; then
+if grep -Eqi 'claim=present' "$settings_card" "$settings_app" && ! grep -Eqi 'not claim=present|Never claim=present|never claim=present' "$settings_card" "$settings_app"; then
   fail "Settings Apps startup must not invent claim=present"
 fi
 if grep -Eqi 'Task Manager Startup|present as Task Manager|Task Manager is present' "$settings_card" "$settings_app"; then
@@ -348,9 +348,15 @@ assert(apps.coverage.indexOf('defaults.inspect') >= 0, 'apps coverage keeps Fabr
 assert(apps.coverage.indexOf('does not invent a Fabric apps.startup.disable durable writer') >= 0, 'apps coverage refuses a Fabric startup writer')
 assert(apps.coverage.indexOf('does not invent Task Manager present') >= 0, 'apps coverage refuses Task Manager present')
 assert(apps.coverage.indexOf('Settings cannot enable, disable, or remove startup applications') < 0, 'apps coverage no longer refuses startup mutation')
+assert(apps.coverage.indexOf('soft leftover-attaches windows-native.27') >= 0, 'apps coverage soft leftover-attaches wn.27')
+assert(apps.coverage.indexOf('windows-native.27 stays prototype/pending') >= 0, 'apps coverage keeps wn.27 prototype/pending')
+assert(apps.coverage.indexOf('SettingsSessionStartup.setEnabled') >= 0, 'apps coverage names tip-true setEnabled')
+assert(apps.coverage.indexOf('apps-startup-set') >= 0, 'apps coverage names apps-startup-set')
+assert(apps.coverage.indexOf('not claim=present') >= 0, 'apps coverage refuses claim=present')
 assert(Model.declaredOpsHonesty('settings.apps.overview').indexOf('XDG autostart') >= 0, 'apps declared ops name the XDG autostart plane')
 assert(Model.declaredOpsHonesty('settings.apps.overview').indexOf('durable coordinator') >= 0, 'apps declared ops keep browser/MIME on the durable coordinator')
 assert(Model.declaredOpsHonesty('settings.apps.overview').indexOf('does not invent a Fabric apps.startup.disable durable writer') >= 0, 'apps declared ops do not invent a Fabric startup writer')
+assert(Model.declaredOpsHonesty('settings.apps.overview').indexOf('soft leftover-attaches windows-native.27') >= 0, 'apps declared ops soft leftover-attach wn.27')
 assert(Model.authorityFooter().indexOf('XDG autostart') >= 0, 'authority footer names XDG autostart')
 JS
 
@@ -418,7 +424,7 @@ if parity_task["humanRoute"].get("path"):
 native27 = by_job["windows-native.27"]
 if native27.get("claim") == "present":
     raise SystemExit("windows-native.27 must not claim present")
-if native27.get("claim") != "missing":
+if native27.get("claim") != "prototype":
     raise SystemExit(f"windows-native.27 claim is {native27.get('claim')}")
 if native27.get("sourceStatus") != "pending":
     raise SystemExit(f"windows-native.27 sourceStatus is {native27.get('sourceStatus')}")
@@ -446,32 +452,42 @@ agent = by_debt["missing.agent.routes"]
 if "apps.startup.disable" not in agent.get("capabilityIds", []):
     raise SystemExit("apps.startup.disable left missing.agent.routes")
 
-if "Honesty addendum 2026-09-06 vs Settings Apps startup disable" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Apps startup disable addendum")
-addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings Apps startup disable", 1)[1].split("Honesty addendum", 1)[0]
-if "CLOSED leftover: Settings Apps startup disable UI" not in addendum:
-    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as Settings Apps startup disable UI")
+if "Honesty addendum 2026-09-06 vs Settings Apps startup disable leftover plane (windows-native.27)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Apps startup disable leftover-attach addendum")
+addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings Apps startup disable leftover plane (windows-native.27)", 1)[1].split("Honesty addendum", 1)[0]
+if "CLOSED leftover: Settings Apps startup disable UI" in addendum:
+    raise SystemExit("fleet-doctrine-gaps must not invent CLOSED leftover for soft leftover-attach ACC wn.27")
+if "leftover-attach only" not in addendum and "not product CLOSED" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must record soft leftover-attach only (not product CLOSED)")
 for required in (
+    "not product CLOSED",
+    "not metal CLOSED",
+    "not claim=present",
     "Task Manager present",
     "End Task LIVE",
     "Settings Power LIVE",
+    "Empty Bin LIVE",
     "Files LIVE metal",
     "Win7 visual",
     "Software Center present",
     "Update present",
+    "setEnabled",
+    "apps-startup-set",
 ):
     if required not in addendum:
-        raise SystemExit(f"fleet-doctrine-gaps startup addendum dropped OPEN leftover: {required}")
+        raise SystemExit(f"fleet-doctrine-gaps startup addendum dropped required: {required}")
 if "Do not invent claim=present" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must refuse claim=present invent")
-if "Cloud EXIT 0 is not metal leftover CLOSED" not in addendum:
+if "Cloud EXIT 0 is not metal leftover CLOSED" not in addendum and "Cloud EXIT 0 as metal leftover CLOSED" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must refuse Cloud EXIT 0 as metal leftover CLOSED")
-if "XDG" not in addendum or "this session" not in addendum:
+if "XDG" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must name the session XDG autostart plane")
 if "Do not invent Task Manager present" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must refuse Task Manager present invent")
 if "windows-native.27" not in addendum:
-    raise SystemExit("fleet-doctrine-gaps must keep windows-native.27 pending")
+    raise SystemExit("fleet-doctrine-gaps must keep windows-native.27")
+if "prototype/pending" not in addendum:
+    raise SystemExit("fleet-doctrine-gaps must keep windows-native.27 prototype/pending")
 if "Settings > Apps" not in addendum:
     raise SystemExit("fleet-doctrine-gaps must name the Settings Apps host")
 if "terminationAuthorized=false" not in addendum and "terminationAuthorized stays false" not in addendum:
@@ -486,16 +502,40 @@ if "does not invent Task Manager present" not in parity:
     raise SystemExit("PARITY must refuse Task Manager present invent")
 if "Settings > Apps" not in parity and "Settings → Apps" not in parity:
     raise SystemExit("PARITY must name the Settings Apps startup host")
+if "soft leftover-attaches `windows-native.27`" not in parity and "soft leftover-attaches windows-native.27" not in parity:
+    raise SystemExit("PARITY must soft leftover-attach wn.27")
+if "windows-native.27` stays prototype/pending" not in parity and "windows-native.27 stays prototype/pending" not in parity:
+    raise SystemExit("PARITY must keep wn.27 prototype/pending")
 if "XDG autostart" not in settings_api:
     raise SystemExit("settings-service-api must name the XDG autostart plane")
 if "apps.startup.disable" not in settings_api:
     raise SystemExit("settings-service-api must name apps.startup.disable")
 if "windows-native.27" not in settings_api:
-    raise SystemExit("settings-service-api must keep windows-native.27 pending")
+    raise SystemExit("settings-service-api must keep windows-native.27")
+if "prototype/pending" not in settings_api:
+    raise SystemExit("settings-service-api must keep windows-native.27 prototype/pending")
 if "does not invent Task Manager present" not in settings_api:
     raise SystemExit("settings-service-api must refuse Task Manager present")
 if "Fabric apps.startup.disable durable writer" not in settings_api and "does not invent a Fabric" not in settings_api:
     raise SystemExit("settings-service-api must refuse a Fabric startup writer")
+# tip-align recovery on catalog + job
+startup_recovery = startup.get("recovery") or {}
+if startup_recovery.get("mode") != "undo":
+    raise SystemExit(f"apps.startup.disable recovery mode is {startup_recovery}")
+if startup_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"apps.startup.disable recovery fingerprint invent: {startup_recovery}")
+startup_exp = startup_recovery.get("expectation") or ""
+for needle in ("setEnabled", "apps-startup-set", "autostart", "no Fabric durable undo fingerprint invent"):
+    if needle not in startup_exp:
+        raise SystemExit(f"apps.startup.disable recovery missing {needle!r}: {startup_exp}")
+rec27 = native27.get("recoveryExpectation") or ""
+for needle in ("setEnabled", "apps-startup-set", "autostart"):
+    if needle not in rec27:
+        raise SystemExit(f"windows-native.27 recovery missing {needle!r}: {rec27}")
+if "| `windows-native.27` | prototype/pending | visible: Settings > Apps |" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must list wn.27 as prototype/pending")
+if "claims: missing=29, partial=6, plumbing=4, present=0, prototype=43" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims after wn.27 soft leftover-attach")
 PY
 
 pass "apps.startup.disable stays leftover partial with a visible Settings Apps route"
