@@ -234,6 +234,7 @@ for capability_id, (surface, path) in inspect_routes.items():
 
 writer_routes = {
     "audio.output.manage": ("Settings", "Settings > Sound; Superbar > Quick Settings > Sound"),
+    "printers.manage": ("Settings", "Settings > Printers"),
     "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
     "display.night-light.set": ("Settings", "Settings > Display; Superbar > Quick Settings > Night light"),
@@ -484,7 +485,7 @@ for capability_id, path in admin_readers.items():
 
 allowed_settings_pages = {
     "Personalization", "Network", "Sound", "Display", "Power", "Apps",
-    "Default Programs", "Update", "Recovery", "Input", "Bluetooth",
+    "Default Programs", "Update", "Recovery", "Input", "Printers", "Bluetooth",
     "Accessibility", "System", "System information",
 }
 invented_start_prefixes = (
@@ -596,6 +597,42 @@ if native19.get("claim") == "present":
 if native19.get("capabilityIds") != ["defaults.protocol.set"]:
     raise SystemExit(f"windows-native.19 capabilityIds are {native19.get('capabilityIds')}")
 
+
+printers_manage = by_id["printers.manage"]
+if printers_manage.get("availability", {}).get("claim") == "present":
+    raise SystemExit("printers.manage must not claim present")
+if printers_manage.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"printers.manage claim is {printers_manage.get('availability')}")
+if printers_manage.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"printers.manage human availability is {printers_manage.get('availability')}")
+if printers_manage.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"printers.manage was raised off leftover: {printers_manage.get('provider')}")
+if printers_manage.get("humanRoute", {}).get("path") != "Settings > Printers":
+    raise SystemExit(f"printers.manage route is {printers_manage.get('humanRoute')}")
+if printers_manage.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+    raise SystemExit(f"printers.manage source is {printers_manage.get('source')}")
+if printers_manage.get("source", {}).get("symbol") != "apply_printer_default_set":
+    raise SystemExit(f"printers.manage source is {printers_manage.get('source')}")
+if "SettingsPrinters.qml" in str(printers_manage.get("source", {}).get("file") or ""):
+    raise SystemExit("printers.manage must not invent source on SettingsPrinters.qml")
+native32 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.32")
+if native32.get("claim") == "present":
+    raise SystemExit(f"windows-native.32 was flipped to present: {native32}")
+if native32.get("claim") != "prototype" or native32.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.32 must stay prototype/pending: {native32}")
+if native32.get("humanRoute", {}).get("path") != "Settings > Printers":
+    raise SystemExit(f"windows-native.32 humanRoute drifted: {native32.get('humanRoute')}")
+native32_recovery = str(native32.get("recoveryExpectation") or "")
+if "Cancel setup" in native32_recovery or "newly added printer" in native32_recovery.lower():
+    raise SystemExit(f"windows-native.32 recoveryExpectation still invents Add-setup cancel/remove: {native32_recovery}")
+if "Settings > Printers" not in native32_recovery or "no Add-setup" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recoveryExpectation not tip-true session leftover: {native32_recovery}")
+devices_printers = next(job for job in jobs["jobs"] if job["id"] == "parity.devices-printers")
+devices_recovery = str(devices_printers.get("recoveryExpectation") or "")
+if "cancellable setup" in devices_recovery.lower() or "compensating removal" in devices_recovery.lower():
+    raise SystemExit(f"parity.devices-printers recoveryExpectation still invents Add-setup: {devices_recovery}")
+if "no Add-setup" not in devices_recovery:
+    raise SystemExit(f"parity.devices-printers recoveryExpectation dropped no Add-setup refuse: {devices_recovery}")
 
 output_manage = by_id["audio.output.manage"]
 if output_manage.get("availability", {}).get("claim") == "present":

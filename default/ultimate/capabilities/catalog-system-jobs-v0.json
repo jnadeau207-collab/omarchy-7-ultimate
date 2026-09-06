@@ -1029,11 +1029,11 @@
       "id": "printers.manage",
       "version": "v0",
       "provider": {
-        "id": "printers.provider",
+        "id": "printer.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "legacy-direct"
       },
-      "kind": "long-running",
+      "kind": "writer",
       "effects": [
         "mutating",
         "privileged"
@@ -1062,9 +1062,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "printers.resource"
@@ -1099,12 +1099,12 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "missing",
+        "status": "visible",
         "surface": "Settings",
-        "label": "Devices and Printers",
-        "path": ""
+        "label": "Printer inventory, set default, pause/resume/test page; Add stays OPEN",
+        "path": "Settings > Printers"
       },
-      "agentCenterLabel": "Devices and Printers",
+      "agentCenterLabel": "Manage printers",
       "proofIds": {
         "acceptance": [
           "proof.capability.printers-manage.tree-audit"
@@ -1114,8 +1114,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:printers.manage",
+        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
+        "symbol": "apply_printer_default_set",
         "brokerVerb": null
       }
     },

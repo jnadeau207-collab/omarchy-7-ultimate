@@ -51,7 +51,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "printer.inspect",
     supportsResource: true,
-    coverage: "Printer and queue inventory is readable from printer.inspect. Adding a printer and cancelling a job remain unavailable."
+    coverage: "Printer and queue inventory is readable from printer.inspect. Settings > Printers hosts the session inventory/set-default/queue leftover; Network Add and cancelling a job remain unavailable."
   },
   {
     routeId: "administration.backup.overview",

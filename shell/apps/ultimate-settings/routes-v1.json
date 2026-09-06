@@ -169,6 +169,31 @@
       }
     },
     {
+      "id": "settings.printers.overview",
+      "section": "Devices",
+      "title": "Printers",
+      "description": "Printer inventory, default printer, and bounded queue controls.",
+      "keywords": [
+        "printer",
+        "printers",
+        "print",
+        "cups",
+        "queue",
+        "devices"
+      ],
+      "providerId": "printer.provider",
+      "deepLink": {
+        "host": "printers",
+        "path": "overview"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
       "id": "settings.personalization.overview",
       "section": "Personal",
       "title": "Personalization",

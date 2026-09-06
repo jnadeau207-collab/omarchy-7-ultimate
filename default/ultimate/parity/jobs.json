@@ -222,7 +222,7 @@
         "path": ""
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Printer changes require cancellable setup and compensating removal.",
+      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers; Network Add / driver wizard remains OPEN leftover (session inventory/queue only — no Add-setup cancel/remove recovery).",
       "proofStatus": "tree-audit",
       "proofIds": [
         "parity.tree-audit.devices-printers"
@@ -1962,17 +1962,17 @@
       "kind": "windows-native-task",
       "sourceLabel": "Add a printer",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "printers.manage"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": ""
+        "path": "Settings > Printers"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Cancel setup safely or remove the newly added printer.",
+      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers (session inventory/set-default/pause/resume/test-page plane applies immediately; Network Add / driver wizard remains OPEN leftover — no Add-setup cancel/remove recovery).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.32"

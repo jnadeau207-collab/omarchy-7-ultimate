@@ -11,9 +11,9 @@ const Model = requireFromRoot('shell/apps/ultimate-settings/SettingsModel.js')
 const routes = JSON.parse(fs.readFileSync(path.join(root, 'shell/apps/ultimate-settings/routes-v1.json'), 'utf8'))
 const domainRoutes = routes.routes.filter(route => route.id !== Model.OVERVIEW_ROUTE)
 
-assertEqual(routes.routes.length, 14, 'Settings exposes home plus thirteen product pages')
-assertEqual(Model.ROUTE_QUERIES.length, 13, 'Settings closed query map covers all thirteen product pages')
-assertEqual(new Set(Model.ROUTE_QUERIES.map(query => query.routeId)).size, 13, 'Settings query map has no duplicate route')
+assertEqual(routes.routes.length, 15, 'Settings exposes home plus fourteen product pages')
+assertEqual(Model.ROUTE_QUERIES.length, 14, 'Settings closed query map covers all fourteen product pages')
+assertEqual(new Set(Model.ROUTE_QUERIES.map(query => query.routeId)).size, 14, 'Settings query map has no duplicate route')
 assertDeepEqual(
   domainRoutes.map(route => route.id),
   Model.ROUTE_QUERIES.map(query => query.routeId),
@@ -109,11 +109,12 @@ const liveWriterRoutes = [
   'settings.bluetooth.overview',
   'settings.display.overview',
   'settings.input.overview',
+  'settings.printers.overview',
   'settings.apps.overview',
   'settings.apps.default-programs',
   'settings.update.overview'
 ]
-assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the eight live writer routes')
+assertDeepEqual(Model.LIVE_WRITER_ROUTES, liveWriterRoutes, 'Settings names the nine live writer routes')
 assertEqual(Model.isDefaultsWriterRoute('settings.apps.overview'), true, 'Apps is a defaults writer route')
 assertEqual(Model.isDefaultsWriterRoute('settings.apps.default-programs'), true, 'Default Programs is a defaults writer route')
 assertEqual(Model.isDefaultsWriterRoute('settings.audio.overview'), false, 'Sound is not a defaults writer route')
@@ -136,6 +137,10 @@ for (const routeId of liveWriterRoutes) {
     assert(Model.declaredOpsHonesty(routeId).includes('input-keyboard-layout'), `${routeId} declared ops name the session layout verb`)
     assert(Model.declaredOpsHonesty(routeId).includes('does not invent an input.provider keyboard-layout durable writer'), `${routeId} declared ops refuse a Fabric layout writer`)
     assert(!Model.declaredOpsHonesty(routeId).includes('durable coordinator'), `${routeId} declared ops do not invent a Fabric layout writer`)
+  } else if (routeId === 'settings.printers.overview') {
+    assert(Model.declaredOpsHonesty(routeId).includes('printer-default-set'), `${routeId} declared ops name the session printer verbs`)
+    assert(Model.declaredOpsHonesty(routeId).includes('does not invent a printers.provider durable writer'), `${routeId} declared ops refuse a Fabric printers writer`)
+    assert(!Model.declaredOpsHonesty(routeId).includes('durable coordinator'), `${routeId} declared ops do not invent a Fabric printers writer`)
   } else {
     assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
   }
@@ -323,7 +328,7 @@ const productionLike = {
   ].includes(entry.manifest.provider))
 }
 const cards = Model.catalogCards(productionLike.providers)
-assertEqual(cards.length, 13, 'overview always represents all Settings pages including Default Programs')
+assertEqual(cards.length, 14, 'overview always represents all Settings pages including Default Programs')
 assertEqual(cards.filter(card => card.status === 'not registered').length, 3, 'overview exposes every intentionally missing provider')
 assert(cards.every(card => card.detail.length <= Model.MAX_DISPLAY_TEXT), 'overview details obey the display text bound')
 

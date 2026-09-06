@@ -86,7 +86,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 
 | Win7 item | Omarchy surface | Catalog / jobs | Provider |
 | --- | --- | --- | --- |
-| Devices and Printers | Administration > Printers and scanners (visible inspect); Bluetooth in Settings | `parity.devices-printers` missing/prototype; `printer.inspect` visible; claim missing; honest-unavailable as Devices and Printers product; `printers.manage` / add stays planned/unavailable | `printer.provider` / `bluetooth.provider` |
+| Devices and Printers | Settings > Printers (session inventory/set-default/queue); Administration > Printers and scanners (visible inspect); Bluetooth in Settings | `parity.devices-printers` missing/prototype; `printer.inspect` visible; claim missing; honest-unavailable as Devices and Printers product; `printers.manage` leftover-direct / claim=partial visible `Settings > Printers`; Network Add stays OPEN leftover | `printer.provider` / `bluetooth.provider` / session_apply |
 | Device Manager | Administration > Device Manager (visible inspect) | `parity.device-manager` missing; `device.inspect` visible; claim missing; honest-unavailable as Device Manager product; no driver mutation | `device.provider` |
 | AutoPlay | **Missing** | No catalog row | — |
 | Sound | Settings → Sound; Superbar/QS | `parity.sound` prototype; `audio.inspect`; Settings volume `audio.volume.set`; session mute/default soft leftover-attach `audio.output.manage` leftover-direct claim=partial | `audio.provider` / session-apply |
@@ -178,7 +178,7 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | 9 | Date and Time | Yes | Superbar clock | — | Partial chrome |
 | 10 | Default Programs | Yes | Settings → Apps | `parity.default-programs` / `windows-native.19`; `defaults.protocol.set` browser and mailto LIVE; partial MIME rows LIVE | Prototype Default Programs applet still missing |
 | 11 | Device Manager | Yes | Administration > Device Manager | `parity.device-manager` / `device.inspect` visible; claim missing | Visible inspect; honest-unavailable as Device Manager product |
-| 12 | Devices and Printers | Yes | Administration > Printers and scanners + Settings Bluetooth | `parity.devices-printers`; `printer.inspect` visible; claim missing | Visible inspect / partial BT; honest-unavailable as Devices and Printers product |
+| 12 | Devices and Printers | Yes | Settings > Printers + Administration > Printers and scanners + Settings Bluetooth | `parity.devices-printers`; `printer.inspect` visible; claim missing; `printers.manage` partial | Session Printers leftover / visible inspect / partial BT; honest-unavailable as Devices and Printers product; Add OPEN |
 | 13 | Display | Yes | Settings → Display | `parity.display` | Prototype |
 | 14 | Ease of Access Center | Yes | Settings Accessibility missing | `parity.accessibility` | Honest missing |
 | 15 | Folder Options | Yes | — | — | Gap |
@@ -264,6 +264,7 @@ Catalog humanRoutes already published **visible**. Residual = product MMC / muta
 | `administration.devices.overview` | Device Manager | `device.inspect` visible on `Administration > Device Manager`; claim missing; honest-unavailable as Device Manager product |
 | `administration.storage.overview` | Disk Management (partial) | `storage.inspect` visible on `Administration > Storage`; claim missing; honest-unavailable as Disk Management product |
 | `administration.printers.overview` | Devices and Printers | `printer.inspect` visible on `Administration > Printers and scanners`; claim missing; honest-unavailable as Devices and Printers product |
+| `settings.printers.overview` | Devices and Printers | session leftover `printers.manage` visible on `Settings > Printers` (inventory/set-default/queue); Network Add OPEN; claim partial; not Devices and Printers product |
 | `administration.backup.overview` | Backup and Restore | `backup.inspect` visible on `Administration > Backup`; claim missing; honest-unavailable as Backup and Restore product; `backup.manage` planned/unavailable |
 | `administration.schedule.overview` | Task Scheduler | `schedule.inspect` visible on `Administration > Scheduled tasks`; claim missing; honest-unavailable as Task Scheduler product |
 | `administration.troubleshoot.overview` | Troubleshooting | `diagnostics.inspect` visible on `Administration > Troubleshooting`; claim missing; honest-unavailable as Troubleshooting product |

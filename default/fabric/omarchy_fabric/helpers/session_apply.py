@@ -61,6 +61,12 @@ UPDATE_AUTH_MARKERS = (
 UDISKSCTL = "/usr/bin/udisksctl"
 LSBLK = "/usr/bin/lsblk"
 GIO = "/usr/bin/gio"
+LPSTAT = "/usr/bin/lpstat"
+LPOPTIONS = "/usr/bin/lpoptions"
+LP = "/usr/bin/lp"
+CUPSDISABLE = "/usr/sbin/cupsdisable"
+CUPSENABLE = "/usr/sbin/cupsenable"
+CUPS_TESTPRINT = "/usr/share/cups/data/testprint"
 MAX_MOUNTINFO_BYTES = 262144
 FILES_MOUNT_ID_PREFIX = "files.mount."
 FILES_VOLUME_ID_PREFIX = "files.volume."
@@ -4341,6 +4347,476 @@ def apply_sharing_smb_connect(
     return 0
 
 
+PRINTER_SECRET_KEYS = SMB_SECRET_KEYS
+PRINTER_STATUS_ALLOWED_KEYS = frozenset()
+PRINTER_RESOURCE_ALLOWED_KEYS = frozenset({"resourceId"})
+PRINTER_NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+PRINTER_ID_RE = re.compile(r"^printer\.[0-9a-f]{24}$")
+PRINTER_EMPTY_MESSAGES = frozenset({"lpstat: No destinations added.", "lpstat: No destinations."})
+PRINTER_DEFAULT_REFUSE = "Default printer must name one tip-true printer identity from this session inventory."
+PRINTER_PAUSE_REFUSE = "Pause must name one tip-true printer identity from this session inventory."
+PRINTER_RESUME_REFUSE = "Resume must name one tip-true printer identity from this session inventory."
+PRINTER_TEST_REFUSE = "Test page must name one tip-true printer identity from this session inventory."
+PRINTER_LABEL_LIMIT = 128
+PRINTER_ENDPOINT_LIMIT = 253
+
+
+def printer_lpstat() -> str:
+    return LPSTAT
+
+
+def printer_lpoptions() -> str:
+    return LPOPTIONS
+
+
+def printer_lp() -> str:
+    return LP
+
+
+def printer_cupsdisable() -> str:
+    return CUPSDISABLE
+
+
+def printer_cupsenable() -> str:
+    return CUPSENABLE
+
+
+def printer_testprint_path() -> str:
+    return CUPS_TESTPRINT
+
+
+def run_printer_argv(argv: list[str], run: Any, timeout: int = 8) -> Any:
+    if not argv or not str(argv[0]).startswith("/"):
+        raise ApplyError("command.unavailable", "The printer helper must be an absolute path.")
+    try:
+        return run(argv, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned system command is not installed.") from error
+
+
+def stable_printer_id(name: str) -> str:
+    return "printer." + hashlib.sha256(name.encode("utf-8")).hexdigest()[:24]
+
+
+def clip_printer_label(value: Any, limit: int = PRINTER_LABEL_LIMIT) -> str:
+    text = " ".join(str(value or "").replace("\x00", " ").split())
+    if not text:
+        return "Printer"
+    if len(text) <= limit:
+        return text
+    if limit <= 1:
+        return text[:limit]
+    return text[: limit - 1] + "…"
+
+
+def safe_printer_endpoint(uri: str) -> tuple[str, str]:
+    parsed = urllib.parse.urlsplit(uri)
+    if parsed.username is not None or parsed.password is not None:
+        raise ApplyError("probe.invalid", "printer URI contains credentials")
+    scheme = (parsed.scheme or "").lower()
+    if scheme in {"ipp", "ipps", "http", "https", "socket", "lpd"}:
+        if not parsed.hostname:
+            raise ApplyError("probe.invalid", "network printer URI lacks a host")
+        return "network", parsed.hostname[:PRINTER_ENDPOINT_LIMIT]
+    if scheme in {"usb", "serial", "parallel", "file"}:
+        return "local", scheme
+    return "unknown", (scheme[:32] or "unknown")
+
+
+def parse_lpstat_v(text: str) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for line in str(text or "").splitlines():
+        raw = line.strip()
+        if not raw:
+            continue
+        prefix = "device for "
+        if not raw.startswith(prefix) or ": " not in raw:
+            raise ApplyError("probe.invalid", "printer row is invalid")
+        name, uri = raw[len(prefix):].split(": ", 1)
+        if not PRINTER_NAME_RE.fullmatch(name):
+            raise ApplyError("probe.invalid", "printer name is invalid")
+        connection, endpoint = safe_printer_endpoint(uri)
+        resource_id = stable_printer_id(name)
+        if resource_id in seen:
+            raise ApplyError("probe.invalid", "printer identity is duplicated")
+        seen.add(resource_id)
+        records.append(
+            {
+                "resourceId": resource_id,
+                "label": clip_printer_label(name),
+                "name": name,
+                "connection": connection,
+                "endpoint": endpoint,
+                "accepting": None,
+                "default": False,
+            }
+        )
+    if len(records) > 32:
+        raise ApplyError("probe.invalid", "The printer inventory probe returned too many printers.")
+    return records
+
+
+def parse_lpstat_default(text: str) -> str:
+    raw = str(text or "").strip()
+    if not raw or raw.lower().startswith("no system default destination"):
+        return ""
+    prefix = "system default destination:"
+    if not raw.lower().startswith(prefix):
+        raise ApplyError("probe.invalid", "The default printer probe returned unreadable output.")
+    name = raw.split(":", 1)[1].strip()
+    if not name:
+        return ""
+    if not PRINTER_NAME_RE.fullmatch(name):
+        raise ApplyError("probe.invalid", "The default printer identity is malformed.")
+    return name
+
+
+def parse_lpstat_accepting(text: str) -> dict[str, bool]:
+    accepting: dict[str, bool] = {}
+    for line in str(text or "").splitlines():
+        raw = line.strip()
+        if not raw:
+            continue
+        if " not accepting requests" in raw:
+            name = raw.split(" not accepting requests", 1)[0].strip()
+            flag = False
+        elif " accepting requests" in raw:
+            name = raw.split(" accepting requests", 1)[0].strip()
+            flag = True
+        else:
+            continue
+        if not PRINTER_NAME_RE.fullmatch(name):
+            raise ApplyError("probe.invalid", "printer accepting name is invalid")
+        accepting[name] = flag
+    return accepting
+
+
+def run_lpstat(args: list[str], run: Any) -> Any:
+    helper = printer_lpstat()
+    return run_printer_argv([helper, *args], run)
+
+
+def session_printer_records(run: Any = subprocess.run) -> tuple[list[dict[str, Any]], str]:
+    listed = run_lpstat(["-v"], run)
+    stderr = str(getattr(listed, "stderr", "") or "").strip()
+    stdout = str(getattr(listed, "stdout", "") or "")
+    if listed.returncode not in {0, 1}:
+        raise ApplyError("probe.failed", "The printer inventory probe reported a failure status.")
+    if listed.returncode == 1:
+        if stdout.strip() or stderr not in PRINTER_EMPTY_MESSAGES:
+            raise ApplyError("probe.failed", "The printer inventory probe reported a failure status.")
+        records: list[dict[str, Any]] = []
+    else:
+        records = parse_lpstat_v(stdout)
+    defaulted = run_lpstat(["-d"], run)
+    if defaulted.returncode not in {0, 1}:
+        raise ApplyError("probe.failed", "The default printer probe reported a failure status.")
+    default_name = ""
+    if defaulted.returncode == 0:
+        default_name = parse_lpstat_default(getattr(defaulted, "stdout", "") or "")
+    elif str(getattr(defaulted, "stderr", "") or "").strip() not in PRINTER_EMPTY_MESSAGES and str(
+        getattr(defaulted, "stdout", "") or ""
+    ).strip():
+        default_name = parse_lpstat_default(getattr(defaulted, "stdout", "") or "")
+    accepted = run_lpstat(["-a"], run)
+    accepting_map: dict[str, bool] = {}
+    if accepted.returncode == 0:
+        accepting_map = parse_lpstat_accepting(getattr(accepted, "stdout", "") or "")
+    elif accepted.returncode == 1:
+        stderr_a = str(getattr(accepted, "stderr", "") or "").strip()
+        if stderr_a not in PRINTER_EMPTY_MESSAGES and str(getattr(accepted, "stdout", "") or "").strip():
+            raise ApplyError("probe.failed", "The printer accepting probe reported a failure status.")
+    else:
+        raise ApplyError("probe.failed", "The printer accepting probe reported a failure status.")
+    default_resource_id = ""
+    for record in records:
+        name = str(record["name"])
+        if name in accepting_map:
+            record["accepting"] = accepting_map[name]
+        if default_name and name == default_name:
+            record["default"] = True
+            default_resource_id = str(record["resourceId"])
+    if default_name and default_resource_id == "":
+        raise ApplyError("probe.invalid", "The default printer is absent from the printer inventory.")
+    return records, default_resource_id
+
+
+def public_printers(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "resourceId": record["resourceId"],
+            "label": record["label"],
+            "connection": record["connection"],
+            "endpoint": record["endpoint"],
+            "accepting": record["accepting"],
+            "default": record["default"],
+        }
+        for record in records
+    ]
+
+
+def require_session_printer_payload(payload: Mapping[str, Any], allowed: frozenset[str], refuse: str) -> str:
+    extra = set(payload) - allowed
+    if extra & PRINTER_SECRET_KEYS or extra:
+        raise ApplyError(
+            "payload.invalid",
+            "stdin JSON may include only the admitted printer keys; this session leftover refuses extra keys",
+        )
+    resource_id = payload.get("resourceId")
+    if not isinstance(resource_id, str) or not PRINTER_ID_RE.fullmatch(resource_id):
+        raise ApplyError("payload.invalid", refuse)
+    return resource_id
+
+
+def bind_session_printer(resource_id: str, records: list[dict[str, Any]], refuse: str) -> dict[str, Any]:
+    match = [record for record in records if record["resourceId"] == resource_id]
+    if len(match) != 1:
+        raise ApplyError("payload.invalid", refuse)
+    name = str(match[0]["name"])
+    if not PRINTER_NAME_RE.fullmatch(name):
+        raise ApplyError("payload.invalid", refuse)
+    return match[0]
+
+
+def apply_printer_status(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        extra = set(payload)
+        if extra & PRINTER_SECRET_KEYS or extra:
+            raise ApplyError(
+                "payload.invalid",
+                "stdin JSON for printer status must be empty; this session leftover refuses extra keys",
+            )
+        records, default_resource_id = session_printer_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "printers": [],
+                "defaultResourceId": "",
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    known = bool(records)
+    json.dump(
+        {
+            "ok": True,
+            "printers": public_printers(records),
+            "defaultResourceId": default_resource_id,
+            "known": known,
+            "explanation": (
+                "No printers reported through this session."
+                if not records
+                else "Typed printers through this session."
+            ),
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_printer_default_set(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        resource_id = require_session_printer_payload(payload, PRINTER_RESOURCE_ALLOWED_KEYS, PRINTER_DEFAULT_REFUSE)
+        records, _default = session_printer_records(run)
+        bound = bind_session_printer(resource_id, records, PRINTER_DEFAULT_REFUSE)
+        name = str(bound["name"])
+        completed = run_printer_argv([printer_lpoptions(), "-d", name], run)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "This session could not set the default printer.")
+        refreshed, default_resource_id = session_printer_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "printers": [],
+                "defaultResourceId": "",
+                "resourceId": "",
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "printers": public_printers(refreshed),
+            "defaultResourceId": default_resource_id,
+            "known": True,
+            "explanation": "Applied the default printer through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_printer_pause(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        resource_id = require_session_printer_payload(payload, PRINTER_RESOURCE_ALLOWED_KEYS, PRINTER_PAUSE_REFUSE)
+        records, default_resource_id = session_printer_records(run)
+        bound = bind_session_printer(resource_id, records, PRINTER_PAUSE_REFUSE)
+        if bound.get("accepting") is False:
+            raise ApplyError("payload.invalid", "printer is already paused")
+        name = str(bound["name"])
+        completed = run_printer_argv([printer_cupsdisable(), name], run)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "This session could not pause the printer queue.")
+        refreshed, default_resource_id = session_printer_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "printers": [],
+                "defaultResourceId": "",
+                "resourceId": "",
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "action": "pause",
+            "printers": public_printers(refreshed),
+            "defaultResourceId": default_resource_id,
+            "known": True,
+            "explanation": "Paused the printer queue through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_printer_resume(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        resource_id = require_session_printer_payload(payload, PRINTER_RESOURCE_ALLOWED_KEYS, PRINTER_RESUME_REFUSE)
+        records, default_resource_id = session_printer_records(run)
+        bound = bind_session_printer(resource_id, records, PRINTER_RESUME_REFUSE)
+        if bound.get("accepting") is True:
+            raise ApplyError("payload.invalid", "printer is already accepting jobs")
+        name = str(bound["name"])
+        completed = run_printer_argv([printer_cupsenable(), name], run)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "This session could not resume the printer queue.")
+        refreshed, default_resource_id = session_printer_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "printers": [],
+                "defaultResourceId": "",
+                "resourceId": "",
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "action": "resume",
+            "printers": public_printers(refreshed),
+            "defaultResourceId": default_resource_id,
+            "known": True,
+            "explanation": "Resumed the printer queue through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+def apply_printer_test_page(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        resource_id = require_session_printer_payload(payload, PRINTER_RESOURCE_ALLOWED_KEYS, PRINTER_TEST_REFUSE)
+        records, default_resource_id = session_printer_records(run)
+        bound = bind_session_printer(resource_id, records, PRINTER_TEST_REFUSE)
+        name = str(bound["name"])
+        testprint = printer_testprint_path()
+        if not pathlib.Path(testprint).is_file():
+            raise ApplyError("command.unavailable", "The code-owned CUPS test page file is not installed.")
+        completed = run_printer_argv([printer_lp(), "-d", name, testprint], run)
+        if completed.returncode != 0:
+            raise ApplyError("apply.failed", "This session could not submit the printer test page.")
+        refreshed, default_resource_id = session_printer_records(run)
+    except ApplyError as error:
+        json.dump(
+            {
+                "ok": False,
+                "code": error.code,
+                "explanation": error.explanation,
+                "known": False,
+                "printers": [],
+                "defaultResourceId": "",
+                "resourceId": "",
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "action": "test-page",
+            "printers": public_printers(refreshed),
+            "defaultResourceId": default_resource_id,
+            "known": True,
+            "explanation": "Submitted the printer test page through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
+
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
@@ -4383,6 +4859,11 @@ ACTIONS = {
     "audio-output-status": apply_audio_output_status,
     "audio-output-mute-set": apply_audio_output_mute_set,
     "audio-output-default-set": apply_audio_output_default_set,
+    "printer-status": apply_printer_status,
+    "printer-default-set": apply_printer_default_set,
+    "printer-pause": apply_printer_pause,
+    "printer-resume": apply_printer_resume,
+    "printer-test-page": apply_printer_test_page,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
