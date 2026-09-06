@@ -274,6 +274,6 @@ if "claim=partial" not in docs:
 if "OPEN leftover" not in docs:
     raise SystemExit("administration-recovery-providers must keep End Task OPEN leftover")
 PY
-pass "catalog and honesty keep process CPU leftover-direct without claim=present"
+pass "catalog and honesty keep process.inspect provider.state=present claim/human=partial without claim=present"
 
 pass "administration process CPU wn.26 leftover plane locked"
