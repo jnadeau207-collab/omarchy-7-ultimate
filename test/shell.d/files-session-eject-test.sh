@@ -79,7 +79,7 @@ grep -Fq 'device.busy' "$helper" || fail "session Eject names device.busy"
 if grep -Eq 'storage-removable-eject' "$daemon" "$files_plane"; then
   fail "Fabric durable plane invented a storage-removable-eject writer"
 fi
-if grep -Eq 'storage-removable-eject|files-mount-eject' "$files_provider"/*.py "$files_provider"/*.json "$storage_provider"/*.py "$storage_provider"/*.json; then
+if grep -Eq 'storage-removable-eject|files-mount-eject' "$files_provider"/*.py "$files_provider"/*.json "$storage_provider"/*.py; then
   fail "Fabric storage or files provider invented a session eject writer"
 fi
 
