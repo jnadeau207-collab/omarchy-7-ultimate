@@ -4849,9 +4849,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Quick Settings",
+        "surface": "Settings",
         "label": "Pair Bluetooth headphones",
-        "path": "Superbar > Quick Settings > Bluetooth"
+        "path": "Settings > Bluetooth"
       },
       "agentCenterLabel": "Pair Bluetooth headphones",
       "proofIds": {
@@ -4863,8 +4863,8 @@
         ]
       },
       "source": {
-        "file": "shell/plugins/panels/bluetooth/Panel.qml",
-        "symbol": "BluetoothPanel.connectDevice",
+        "file": "shell/apps/ultimate-settings/SettingsBluetoothPair.qml",
+        "symbol": "pairOrConnect",
         "brokerVerb": null
       }
     },

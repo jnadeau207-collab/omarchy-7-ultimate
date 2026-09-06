@@ -234,7 +234,7 @@ for capability_id, (surface, path) in inspect_routes.items():
 
 writer_routes = {
     "audio.output.manage": ("Quick Settings", "Superbar > Quick Settings > Sound"),
-    "bluetooth.audio.pair": ("Quick Settings", "Superbar > Quick Settings > Bluetooth"),
+    "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
     "display.night-light.set": ("Quick Settings", "Superbar > Quick Settings > Night light"),
     "network.wifi.connect": ("Settings", "Settings > Network"),
@@ -620,6 +620,32 @@ if native2["humanRoute"].get("path") != "Settings > Network":
     raise SystemExit(f"windows-native.2 route is {native2['humanRoute']}")
 if native2.get("sourceStatus") != "pending":
     raise SystemExit(f"windows-native.2 sourceStatus is {native2.get('sourceStatus')}")
+
+bt_pair = by_id["bluetooth.audio.pair"]
+if bt_pair["humanRoute"].get("surface") != "Settings" or bt_pair["humanRoute"].get("path") != "Settings > Bluetooth":
+    raise SystemExit(f"bluetooth.audio.pair route is {bt_pair.get('humanRoute')}")
+if bt_pair["humanRoute"].get("label") != "Pair Bluetooth headphones":
+    raise SystemExit(f"bluetooth.audio.pair label is {bt_pair.get('humanRoute')}")
+if bt_pair.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsBluetoothPair.qml":
+    raise SystemExit(f"bluetooth.audio.pair source is {bt_pair.get('source')}")
+if bt_pair.get("source", {}).get("symbol") != "pairOrConnect":
+    raise SystemExit(f"bluetooth.audio.pair source is {bt_pair.get('source')}")
+if bt_pair.get("availability", {}).get("claim") == "present":
+    raise SystemExit("bluetooth.audio.pair must not claim present")
+if bt_pair.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"bluetooth.audio.pair was raised off leftover: {bt_pair.get('provider')}")
+named_bt = f"{bt_pair.get('source', {}).get('file') or ''} {bt_pair.get('source', {}).get('symbol') or ''}".lower()
+if "panel.qml" in named_bt:
+    raise SystemExit(f"bluetooth.audio.pair still names the QS bluetooth panel: {bt_pair.get('source')}")
+native5 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.5")
+if native5.get("claim") == "present":
+    raise SystemExit(f"windows-native.5 was flipped to present: {native5}")
+if native5.get("capabilityIds") != ["bluetooth.audio.pair"]:
+    raise SystemExit(f"windows-native.5 capabilityIds are {native5.get('capabilityIds')}")
+if native5["humanRoute"].get("path") != "Settings > Bluetooth":
+    raise SystemExit(f"windows-native.5 route is {native5['humanRoute']}")
+if native5.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.5 sourceStatus is {native5.get('sourceStatus')}")
 
 if "display.brightness.set" not in by_id:
     raise SystemExit("absent live brightness writer invent: display.brightness.set missing from catalog")
