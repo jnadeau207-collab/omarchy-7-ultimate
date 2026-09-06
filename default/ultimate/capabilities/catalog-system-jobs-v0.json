@@ -2249,7 +2249,7 @@
       "provider": {
         "id": "update.provider",
         "version": "v0",
-        "state": "provider-missing"
+        "state": "legacy-direct"
       },
       "kind": "reader",
       "effects": [],
@@ -2277,9 +2277,9 @@
         }
       },
       "availability": {
-        "human": "missing",
+        "human": "partial",
         "agent": "unavailable",
-        "claim": "missing"
+        "claim": "partial"
       },
       "resourceScopes": [
         "update.resource"
@@ -2314,10 +2314,10 @@
         "policy": "Never persist credentials or private content; record normalized resource identity and redacted arguments only."
       },
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
         "label": "View update history",
-        "path": ""
+        "path": "Settings > Update"
       },
       "agentCenterLabel": "View update history",
       "proofIds": {
@@ -2329,8 +2329,8 @@
         ]
       },
       "source": {
-        "file": "plans/project-ultimate.md",
-        "symbol": "planned:update.history.read",
+        "file": "shell/apps/ultimate-settings/SettingsUpdateHistory.qml",
+        "symbol": "readHistory",
         "brokerVerb": null
       }
     },

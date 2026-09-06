@@ -105,7 +105,7 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "update.inspect",
     supportsResource: false,
-    coverage: "Update availability and lifecycle state are readable. Install uses this session's update helper; elevated auth never enters Fabric. Fabric system.update stays inspect-only / not LIVE. History, restart, and reboot writers remain unavailable from Settings. Update is not present as product."
+    coverage: "Update availability and lifecycle state are readable. Install uses this session's update helper; elevated auth never enters Fabric. Fabric system.update stays inspect-only / not LIVE. History is readable from this session's update log. Restart and reboot writers remain unavailable from Settings. Update is not present as product."
   },
   {
     routeId: "settings.recovery.overview",
@@ -1474,6 +1474,29 @@ function sessionUpdateFinished(previous, helperResult) {
   }
 }
 
+function sessionUpdateHistoryIdle() {
+  return { phase: "idle", available: false, empty: true, entries: [], failures: [], message: "", code: "", rebootRequired: false, restartRequired: [] }
+}
+
+function sessionUpdateHistoryFinished(previous, helperResult) {
+  var result = isObject(helperResult) ? helperResult : {}
+  var ok = result.ok === true
+  var entries = Array.isArray(result.entries) ? result.entries.slice(0, MAX_VISIBLE_RECORDS) : []
+  var failures = Array.isArray(result.failures) ? result.failures.slice(0, MAX_VISIBLE_FIELDS) : []
+  var restartRequired = Array.isArray(result.restartRequired) ? result.restartRequired.slice(0, MAX_VISIBLE_FIELDS) : []
+  return {
+    phase: ok ? "succeeded" : "failed",
+    available: result.available === true,
+    empty: result.empty === true || entries.length === 0,
+    entries: entries,
+    failures: failures,
+    rebootRequired: result.rebootRequired === true,
+    restartRequired: restartRequired,
+    message: clippedText(result.explanation || result.message || (ok ? "The session update history helper finished." : "The session update history helper failed."), MAX_DISPLAY_TEXT),
+    code: result.code || ""
+  }
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     CATALOG_METHOD: CATALOG_METHOD,
@@ -1547,6 +1570,8 @@ if (typeof module !== "undefined") {
     sessionUpdatePlan: sessionUpdatePlan,
     sessionUpdateCanSubmit: sessionUpdateCanSubmit,
     sessionUpdateAccepted: sessionUpdateAccepted,
-    sessionUpdateFinished: sessionUpdateFinished
+    sessionUpdateFinished: sessionUpdateFinished,
+    sessionUpdateHistoryIdle: sessionUpdateHistoryIdle,
+    sessionUpdateHistoryFinished: sessionUpdateHistoryFinished
   }
 }
