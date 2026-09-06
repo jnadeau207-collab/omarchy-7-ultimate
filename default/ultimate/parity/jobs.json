@@ -429,7 +429,8 @@
       "capabilityIds": [
         "display.brightness.set",
         "display.configure",
-        "display.night-light.set"
+        "display.night-light.set",
+        "display.scale.set"
       ],
       "humanRoute": {
         "status": "visible",
@@ -1014,7 +1015,8 @@
       "claim": "prototype",
       "capabilityIds": [
         "display.configure",
-        "display.night-light.set"
+        "display.night-light.set",
+        "display.scale.set"
       ],
       "humanRoute": {
         "status": "visible",
@@ -1200,12 +1202,12 @@
       "sourceStatus": "pending",
       "claim": "prototype",
       "capabilityIds": [
-        "display.configure"
+        "display.scale.set"
       ],
       "humanRoute": {
         "status": "visible",
-        "surface": "Monitor panel",
-        "path": "Superbar > Display"
+        "surface": "Settings",
+        "path": "Settings > Display"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Automatically roll back a timed display change unless kept.",
