@@ -10,6 +10,7 @@ Item {
   property var productProfile: null
   property var actions: []
   property string viewMode: "details"
+  property string sessionBadge: "SESSION CONTROL"
 
   signal actionTriggered(string key)
   signal viewModeRequested(string mode)
@@ -100,6 +101,22 @@ Item {
         Accessible.onPressAction: if (commandItem.usable) root.actionTriggered(String(modelData.key))
       }
     }
+  }
+
+  Text {
+    id: sessionBadgeLabel
+    visible: root.sessionBadge !== ""
+    anchors.right: viewButton.left
+    anchors.rightMargin: 8
+    anchors.verticalCenter: parent.verticalCenter
+    text: root.sessionBadge
+    textFormat: Text.PlainText
+    color: Aero.navHeaderText
+    font.family: Aero.fontFamily
+    font.pixelSize: 10
+    font.bold: true
+    Accessible.role: Accessible.StaticText
+    Accessible.name: root.sessionBadge
   }
 
   Item {

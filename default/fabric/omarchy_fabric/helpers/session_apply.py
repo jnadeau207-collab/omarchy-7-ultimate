@@ -17,6 +17,7 @@ import stat
 import subprocess
 import sys
 import urllib.parse
+import zipfile
 from typing import Any, Mapping
 
 from .trash_info import parse_trash_info_path, trash_info_document
@@ -310,6 +311,7 @@ FILES_WRITABLE_KEYS = frozenset({"home", "desktop", "documents", "downloads", "p
 MAX_NAME_LENGTH = 128
 MAX_RELATIVE_DEPTH = 16
 MAX_COPY_ENTRIES = 4096
+MAX_ARCHIVE_SOURCES = 16
 
 def files_location_key(location_id: str) -> str:
     prefix = "files.location."
@@ -1336,6 +1338,218 @@ def apply_files_entry_delete(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+
+def require_archive_entries(payload: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    raw = payload.get("entries")
+    if raw is None:
+        entry_id = payload.get("entryId")
+        relative = payload.get("entryRelativePath")
+        if not isinstance(entry_id, str) or not isinstance(relative, str) or not relative:
+            raise ApplyError("payload.invalid", "The apply payload names no archive entries.")
+        return [{"entryId": entry_id, "entryRelativePath": relative}]
+    if not isinstance(raw, list) or not raw:
+        raise ApplyError("payload.invalid", "The apply payload names no archive entries.")
+    if len(raw) > MAX_ARCHIVE_SOURCES:
+        raise ApplyError("payload.out-of-range", "The archive selection exceeds its bound.")
+    entries: list[Mapping[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, Mapping):
+            raise ApplyError("payload.invalid", "The apply payload names no archive entries.")
+        entry_id = item.get("entryId")
+        relative = item.get("entryRelativePath")
+        if not isinstance(entry_id, str) or not isinstance(relative, str) or not relative:
+            raise ApplyError("payload.invalid", "The apply payload names no archive entries.")
+        entries.append({"entryId": entry_id, "entryRelativePath": relative})
+    return entries
+
+
+def archive_stem(name: str, is_directory: bool) -> str:
+    if is_directory:
+        return name
+    dot = name.rfind(".")
+    if dot > 0:
+        return name[:dot]
+    return name
+
+
+def open_nofollow(path: pathlib.Path, flags: int) -> int:
+    return os.open(path, flags | getattr(os, "O_NOFOLLOW", 0))
+
+
+def add_path_to_zip(
+    zf: zipfile.ZipFile,
+    source: pathlib.Path,
+    arcname: str,
+    remaining_depth: int,
+    remaining_entries: list[int],
+) -> None:
+    if remaining_depth <= 0:
+        raise ApplyError("payload.out-of-range", "The entry path is too deep.")
+    if remaining_entries[0] <= 0:
+        raise ApplyError("payload.out-of-range", "The archive exceeds its entry bound.")
+    remaining_entries[0] -= 1
+    try:
+        preview = source.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if stat.S_ISLNK(preview.st_mode):
+        raise ApplyError("payload.invalid", "Symlink entries cannot be compressed.")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(source, flags)
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.EEXIST} or error.errno == getattr(errno, "ENOTDIR", -1):
+            raise ApplyError("payload.invalid", "Symlink entries cannot be compressed.") from error
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    owned = True
+    try:
+        info = os.fstat(descriptor)
+        if stat.S_ISLNK(info.st_mode):
+            raise ApplyError("payload.invalid", "Symlink entries cannot be compressed.")
+        if stat.S_ISREG(info.st_mode):
+            incoming = os.fdopen(descriptor, "rb")
+            owned = False
+            try:
+                member = zipfile.ZipInfo(filename=arcname.replace("\\", "/"))
+                member.compress_type = zipfile.ZIP_DEFLATED
+                with zf.open(member, "w") as outgoing:
+                    shutil.copyfileobj(incoming, outgoing)
+            finally:
+                incoming.close()
+            return
+        if not stat.S_ISDIR(info.st_mode):
+            raise ApplyError("payload.invalid", "Only regular files and directories can be compressed.")
+        try:
+            names = os.listdir(descriptor)
+        except OSError as error:
+            raise ApplyError("apply.failed", "Reading a directory for the archive reported a failure status.") from error
+    finally:
+        if owned:
+            os.close(descriptor)
+    directory_name = arcname.replace("\\", "/").rstrip("/") + "/"
+    if directory_name not in {"/", "./"}:
+        zf.writestr(directory_name, b"")
+    for name in sorted(names):
+        if name in {".", ".."} or "/" in name or "\\" in name or "\x00" in name:
+            raise ApplyError("payload.invalid", "The directory holds an unsafe name.")
+        add_path_to_zip(
+            zf,
+            source / name,
+            f"{arcname.rstrip('/')}/{name}",
+            remaining_depth - 1,
+            remaining_entries,
+        )
+
+
+def apply_files_archive_create(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot be compressed.")
+    location_id = payload.get("locationId")
+    files_location_key(location_id)
+    specs = require_archive_entries(payload)
+    home = pathlib.Path.home()
+    resolved: list[tuple[pathlib.Path, str, os.stat_result]] = []
+    parents: set[str] = set()
+    for spec in specs:
+        entry_payload = {
+            "locationId": location_id,
+            "entryRelativePath": spec["entryRelativePath"],
+            "entryId": spec["entryId"],
+        }
+        _, final, relative = resolve_entry_path(entry_payload, home)
+        try:
+            info = final.lstat()
+        except OSError as error:
+            raise ApplyError("resource.unresolved", "The entry is not present.") from error
+        if stat.S_ISLNK(info.st_mode):
+            raise ApplyError("payload.invalid", "Symlink entries cannot be compressed.")
+        if not stat.S_ISREG(info.st_mode) and not stat.S_ISDIR(info.st_mode):
+            raise ApplyError("payload.invalid", "Only regular files and directories can be compressed.")
+        parents.add("/".join(relative.split("/")[:-1]))
+        resolved.append((final, relative, info))
+    if len(parents) != 1:
+        raise ApplyError("payload.invalid", "Archive entries must share one parent directory.")
+    parent_relative = next(iter(parents))
+    resource_id = bind_files_named_directory_resource(
+        payload, stable_directory_id(location_id, parent_relative)
+    )
+    dest_parent = resolved[0][0].parent
+    try:
+        dest_parent_fd = open_nofollow(
+            dest_parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+        )
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination parent is not present.") from error
+    try:
+        dest_info = os.fstat(dest_parent_fd)
+        if not stat.S_ISDIR(dest_info.st_mode):
+            raise ApplyError("resource.unresolved", "The destination parent is not a directory.")
+        taken = {name.lower() for name in os.listdir(dest_parent_fd)}
+    except ApplyError:
+        raise
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The destination parent is not present.") from error
+    finally:
+        os.close(dest_parent_fd)
+    if len(resolved) == 1:
+        proposed = f"{archive_stem(resolved[0][0].name, stat.S_ISDIR(resolved[0][2].st_mode))}.zip"
+    else:
+        proposed = "Archive.zip"
+    dest_name = next_copy_name(taken, proposed)
+    destination = dest_parent / dest_name
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        dest_fd = os.open(destination, flags, 0o644)
+    except FileExistsError as error:
+        raise ApplyError("apply.exists", "Something already occupies the archive name.") from error
+    except OSError as error:
+        raise ApplyError("apply.failed", "Creating the archive reported a failure status.") from error
+    created = False
+    try:
+        with os.fdopen(dest_fd, "wb") as handle:
+            with zipfile.ZipFile(handle, "w") as zf:
+                remaining = [MAX_COPY_ENTRIES]
+                for final, _relative, _info in resolved:
+                    add_path_to_zip(
+                        zf,
+                        final,
+                        final.name,
+                        MAX_RELATIVE_DEPTH,
+                        remaining,
+                    )
+        created = True
+    except ApplyError:
+        try:
+            destination.unlink()
+        except OSError:
+            pass
+        raise
+    except OSError as error:
+        try:
+            destination.unlink()
+        except OSError:
+            pass
+        raise ApplyError("apply.failed", "Creating the archive reported a failure status.") from error
+    if not created:
+        try:
+            destination.unlink()
+        except OSError:
+            pass
+        raise ApplyError("apply.failed", "Creating the archive reported a failure status.")
+    json.dump(
+        {
+            "ok": True,
+            "resourceId": resource_id,
+            "archiveName": dest_name,
+            "created": True,
+            "count": len(resolved),
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
 def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
@@ -2247,6 +2461,7 @@ ACTIONS = {
     "files-clipboard-paste": apply_files_clipboard_paste,
     "files-entry-move": apply_files_entry_move,
     "files-entry-delete": apply_files_entry_delete,
+    "files-archive-create": apply_files_archive_create,
     "software-install": apply_software_install,
     "software-remove": apply_software_remove,
     "system-update-status": apply_system_update_status,
