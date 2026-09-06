@@ -150,6 +150,7 @@ assert(destNames.indexOf('Bluetooth & devices') >= 0, 'destinations include Blue
 assert(destNames.indexOf('Power & battery') >= 0, 'destinations include Power')
 assert(destNames.indexOf('Personalization') >= 0, 'destinations include Personalization')
 assert(destNames.indexOf('Apps') >= 0, 'destinations include Apps')
+assert(destNames.indexOf('Default Programs') >= 0, 'destinations include Default Programs')
 assert(destNames.indexOf('Update') >= 0, 'destinations include Update')
 assert(destNames.indexOf('Recovery') >= 0, 'destinations include Recovery')
 assert(destNames.indexOf('Input') >= 0, 'destinations include Input')

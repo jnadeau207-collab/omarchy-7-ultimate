@@ -737,6 +737,8 @@ grep -Fq 'function searchDestinations' "$ROOT/shell/services/AppSearch.js" \
   || fail "Start search injects Settings and place destinations"
 grep -Fq 'id: "omarchy.start.apps"' "$ROOT/shell/services/AppSearch.js" \
   || fail "Start search includes Settings Apps"
+grep -Fq 'id: "omarchy.start.default-programs"' "$ROOT/shell/services/AppSearch.js" \
+  || fail "Start search includes Settings Default Programs"
 grep -Fq 'id: "omarchy.start.update"' "$ROOT/shell/services/AppSearch.js" \
   || fail "Start search includes Settings Update"
 grep -Fq 'id: "omarchy.start.recovery"' "$ROOT/shell/services/AppSearch.js" \
