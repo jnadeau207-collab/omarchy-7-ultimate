@@ -1150,6 +1150,10 @@ if "Automatically roll back a timed display change unless kept." in native3_reco
     raise SystemExit("windows-native.3 still invents timed auto-rollback/keep")
 if "no timed auto-rollback" not in native3_recovery:
     raise SystemExit(f"windows-native.3 recoveryExpectation dropped no timed auto-rollback: {native3_recovery}")
+if "setScale" not in native3_recovery or "display-monitor-scale" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recovery is not tip-aligned to setScale plane: {native3_recovery}")
+if "fingerprint invent" not in native3_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recovery must refuse Fabric fingerprint invent: {native3_recovery}")
 scale_set = by_id["display.scale.set"]
 if scale_set["humanRoute"].get("status") != "visible":
     raise SystemExit(f"display.scale.set underclaims a visible Settings Display host: {scale_set.get('humanRoute')}")
@@ -1163,13 +1167,31 @@ if scale_set.get("availability", {}).get("human") != "partial":
     raise SystemExit(f"display.scale.set human availability is {scale_set.get('availability')}")
 if scale_set.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"display.scale.set was raised off leftover: {scale_set.get('provider')}")
-if scale_set.get("source", {}).get("file") != "bin/omarchy-hyprland-monitor-scaling":
+if scale_set.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionScaling.qml":
+    raise SystemExit(f"display.scale.set source is {scale_set.get('source')}")
+if scale_set.get("source", {}).get("symbol") != "setScale":
     raise SystemExit(f"display.scale.set source is {scale_set.get('source')}")
 if "SettingsDisplayScaling.qml" in str(scale_set.get("source", {}).get("file") or ""):
     raise SystemExit("display.scale.set must not invent source on SettingsDisplayScaling.qml")
+scale_recovery = scale_set.get("recovery") or {}
+if scale_recovery.get("mode") != "undo":
+    raise SystemExit(f"display.scale.set recovery mode is {scale_recovery}")
+if scale_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"display.scale.set recovery fingerprint invent: {scale_recovery}")
+scale_exp = scale_recovery.get("expectation") or ""
+for needle in ("setScale", "display-monitor-scale", "omarchy-hyprland-monitor-scaling", "no Fabric durable undo fingerprint invent", "no timed auto-rollback"):
+    if needle not in scale_exp:
+        raise SystemExit(f"display.scale.set recovery missing {needle!r}: {scale_exp}")
 settings_app_scale = (root / "shell/apps/ultimate-settings/SettingsApplication.qml").read_text(encoding="utf-8")
 if "SettingsDisplayScaling" not in settings_app_scale:
     raise SystemExit("Settings Display does not host the session scaling card")
+settings_scale_coverage = (root / "shell/apps/ultimate-settings/SettingsModel.js").read_text(encoding="utf-8")
+if "soft leftover-attaches windows-native.3" not in settings_scale_coverage.lower():
+    raise SystemExit("Settings Display coverage must soft leftover-attach windows-native.3")
+if "windows-native.3 stays prototype/pending" not in settings_scale_coverage:
+    raise SystemExit("Settings Display coverage must keep windows-native.3 prototype/pending")
+if "SettingsSessionScaling.setScale" not in settings_scale_coverage:
+    raise SystemExit("Settings Display coverage must name tip-true setScale")
 parity_display = next(job for job in jobs["jobs"] if job["id"] == "parity.display")
 if parity_display.get("claim") == "present":
     raise SystemExit(f"parity.display was flipped to present: {parity_display}")
@@ -1600,6 +1622,10 @@ if "CLOSED leftover: Update history UI" in gaps:
     raise SystemExit("fleet-doctrine-gaps must not invent CLOSED leftover: Update history UI")
 if "Honesty addendum 2026-09-06 vs Settings Display night-light leftover plane (windows-native.34)" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display night-light leftover plane addendum")
+if "Honesty addendum 2026-09-06 vs Settings Display scaling leftover plane (windows-native.3)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display scaling leftover plane addendum")
+if "soft leftover-attach acc" not in gaps.lower() or "windows-native.3" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must soft leftover-attach ACC windows-native.3")
 if "Honesty addendum 2026-09-06 vs Settings System information leftover plane (windows-native.38)" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings System information leftover plane addendum")
 if "soft leftover-attach acc" not in gaps.lower() or "windows-native.38" not in gaps:

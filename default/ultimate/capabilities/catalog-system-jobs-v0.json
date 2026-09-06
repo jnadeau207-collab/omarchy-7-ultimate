@@ -4364,8 +4364,8 @@
       },
       "recovery": {
         "mode": "undo",
-        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "expectation": "Restore the prior focused-monitor scale from Settings > Display through tip-true SettingsSessionScaling.setScale \u2192 display-monitor-scale (omarchy-hyprland-monitor-scaling whitelist 1 / 1.25 / 1.6 / 2 / 3 / 4; no Fabric durable undo fingerprint invent; no timed auto-rollback).",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [
@@ -4391,8 +4391,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-hyprland-monitor-scaling",
-        "symbol": "omarchy-hyprland-monitor-scaling",
+        "file": "shell/apps/shared/SettingsSessionScaling.qml",
+        "symbol": "setScale",
         "brokerVerb": null
       }
     },

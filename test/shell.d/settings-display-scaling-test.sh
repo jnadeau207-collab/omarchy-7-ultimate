@@ -75,7 +75,9 @@ grep -Fq 'settings.display.overview' "$settings_app" || fail "Settings still own
 grep -Fq 'this session' "$settings_card" || fail "Settings Display scaling names the session principal"
 grep -Fq 'omarchy-hyprland-monitor-scaling' "$settings_card" || fail "Settings Display scaling names the absolute helper"
 grep -Fq 'session leftover recorded' "$settings_card" || fail "Settings Display scaling records a session leftover"
-grep -Fq 'session-UI leftover only' "$settings_card" || fail "Settings Display scaling names session-UI leftover only"
+grep -Fiq 'soft leftover-attaches windows-native.3' "$settings_card" || fail "Settings Display scaling soft leftover-attaches wn.3"
+grep -Fq 'windows-native.3 stays prototype/pending' "$settings_card" || fail "Settings Display scaling keeps wn.3 prototype/pending"
+grep -Fq 'SettingsSessionScaling.setScale' "$settings_card" || fail "Settings Display scaling names tip-true setScale"
 grep -Fq 'not product CLOSED' "$settings_card" || fail "Settings Display scaling refuses product CLOSED"
 grep -Fq 'not metal CLOSED' "$settings_card" || fail "Settings Display scaling refuses metal CLOSED"
 grep -Fq 'not claim=present' "$settings_card" || fail "Settings Display scaling refuses claim=present"
@@ -96,6 +98,9 @@ if grep -Eqi 'Settings Power LIVE' "$settings_card"; then
 fi
 grep -Fq 'sessionScaling' "$settings_model" || fail "Settings model normalizes session scaling outcomes"
 grep -Fq 'omarchy-hyprland-monitor-scaling' "$settings_model" || fail "Settings coverage names the scaling helper"
+grep -Fq 'SettingsSessionScaling.setScale' "$settings_model" || fail "Settings coverage names tip-true setScale"
+grep -Fiq 'soft leftover-attaches windows-native.3' "$settings_model" || fail "Settings coverage soft leftover-attaches wn.3"
+grep -Fq 'windows-native.3 stays prototype/pending' "$settings_model" || fail "Settings coverage keeps wn.3 prototype/pending"
 grep -Fq 'does not invent a display.provider scale durable writer' "$settings_model" ||
   fail "Settings coverage refuses a Fabric scale writer"
 if grep -Eqi 'scale.set|display.provider scale durable LIVE' "$display_provider" "$display_manifest"; then
@@ -152,12 +157,17 @@ const display = Model.queryForRoute('settings.display.overview')
 assert(display.coverage.indexOf('omarchy-hyprland-monitor-scaling') >= 0, 'display coverage names the scaling helper')
 assert(display.coverage.indexOf('does not invent a display.provider scale durable writer') >= 0, 'display coverage refuses a Fabric scale writer')
 assert(display.coverage.indexOf('session leftover recorded') >= 0, 'display coverage records a session leftover')
+assert(display.coverage.indexOf('soft leftover-attaches windows-native.3') >= 0, 'display coverage soft leftover-attaches wn.3')
+assert(display.coverage.indexOf('windows-native.3 stays prototype/pending') >= 0, 'display coverage keeps wn.3 prototype/pending')
+assert(display.coverage.indexOf('SettingsSessionScaling.setScale') >= 0, 'display coverage names tip-true setScale')
 assert(display.coverage.indexOf('not product CLOSED') >= 0, 'display coverage refuses product CLOSED')
 assert(display.coverage.indexOf('not metal CLOSED') >= 0, 'display coverage refuses metal CLOSED')
 assert(display.coverage.indexOf('not claim=present') >= 0, 'display coverage refuses claim=present')
 assert(display.coverage.indexOf('Resolution, arrangement, and HDR remain unavailable') >= 0, 'display coverage still refuses HDR and arrangement')
 assert(display.coverage.indexOf('not modern display complete') >= 0, 'display coverage refuses modern-display complete')
 assert(Model.declaredOpsHonesty('settings.display.overview').indexOf('omarchy-hyprland-monitor-scaling') >= 0, 'display declared ops name the scaling helper')
+assert(Model.declaredOpsHonesty('settings.display.overview').indexOf('SettingsSessionScaling.setScale') >= 0, 'display declared ops name tip-true setScale')
+assert(Model.declaredOpsHonesty('settings.display.overview').indexOf('soft leftover-attaches windows-native.3') >= 0, 'display declared ops soft leftover-attach wn.3')
 assert(Model.declaredOpsHonesty('settings.display.overview').indexOf('does not invent a display.provider scale durable writer') >= 0, 'display declared ops refuse a Fabric scale writer')
 assert(Model.authorityFooter().indexOf('omarchy-hyprland-monitor-scaling') >= 0, 'authority footer names the scaling helper')
 JS
@@ -225,7 +235,8 @@ if "display-monitor-scale-status" not in sa.ACTIONS:
     failures.append("session apply ACTIONS omitted display-monitor-scale-status")
 
 helper = sa.monitor_scaling_helper()
-check("helper prefers OMARCHY_PATH", helper == "/workspace/bin/omarchy-hyprland-monitor-scaling", helper)
+expected_helper = str(pathlib.Path(os.environ["OMARCHY_PATH"]) / "bin" / "omarchy-hyprland-monitor-scaling")
+check("helper prefers OMARCHY_PATH", helper == expected_helper, helper)
 check("helper is absolute", helper.startswith("/"), helper)
 
 status, result = run_set({})
@@ -326,12 +337,21 @@ if route.get("path") != "Settings > Display":
     raise SystemExit(f"display.scale.set path is {route}")
 if "Settings > Display" not in str(route.get("path") or ""):
     raise SystemExit(f"display.scale.set underclaims the Settings Display host: {route}")
-if scale.get("source", {}).get("file") != "bin/omarchy-hyprland-monitor-scaling":
+if scale.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionScaling.qml":
     raise SystemExit(f"display.scale.set source is {scale.get('source')}")
-if scale.get("source", {}).get("symbol") != "omarchy-hyprland-monitor-scaling":
+if scale.get("source", {}).get("symbol") != "setScale":
     raise SystemExit(f"display.scale.set source is {scale.get('source')}")
 if "SettingsDisplayScaling.qml" in str(scale.get("source", {}).get("file") or ""):
     raise SystemExit("display.scale.set must not invent source on SettingsDisplayScaling.qml")
+recovery = scale.get("recovery") or {}
+if recovery.get("mode") != "undo":
+    raise SystemExit(f"display.scale.set recovery mode is {recovery}")
+if recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"display.scale.set recovery fingerprint invent: {recovery}")
+exp = recovery.get("expectation") or ""
+for needle in ("setScale", "display-monitor-scale", "omarchy-hyprland-monitor-scaling", "no Fabric durable undo fingerprint invent", "no timed auto-rollback"):
+    if needle not in exp:
+        raise SystemExit(f"display.scale.set recovery missing {needle!r}: {exp}")
 if scale.get("availability", {}).get("claim") == "present":
     raise SystemExit("display.scale.set must not claim present")
 if scale.get("availability", {}).get("claim") != "partial":
@@ -395,6 +415,10 @@ if "no timed auto-rollback" not in native3_recovery:
     raise SystemExit(f"windows-native.3 recoveryExpectation dropped no timed auto-rollback: {native3_recovery}")
 if "Settings > Display" not in native3_recovery:
     raise SystemExit(f"windows-native.3 recoveryExpectation dropped Settings > Display: {native3_recovery}")
+if "setScale" not in native3_recovery or "display-monitor-scale" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recovery is not tip-aligned to setScale plane: {native3_recovery}")
+if "fingerprint invent" not in native3_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native3_recovery:
+    raise SystemExit(f"windows-native.3 recovery must refuse Fabric fingerprint invent: {native3_recovery}")
 
 by_debt = {entry["id"]: entry for entry in debt["entries"]}
 legacy = by_debt["legacy.domain.direct-providers"]
@@ -406,14 +430,13 @@ agent = by_debt["missing.agent.routes"]
 if "display.scale.set" not in agent.get("capabilityIds", []):
     raise SystemExit("display.scale.set left missing.agent.routes")
 
-if "Honesty addendum 2026-09-06 vs Settings Display scaling" not in gaps:
-    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display scaling addendum")
-addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings Display scaling", 1)[1].split("Honesty addendum", 1)[0]
+if "Honesty addendum 2026-09-06 vs Settings Display scaling leftover plane (windows-native.3)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Settings Display scaling leftover plane addendum")
+addendum = gaps.split("Honesty addendum 2026-09-06 vs Settings Display scaling leftover plane (windows-native.3)", 1)[1].split("Honesty addendum", 1)[0]
 if "CLOSED leftover:" in addendum:
     raise SystemExit("fleet-doctrine-gaps must not use bare CLOSED leftover invent for scaling")
 for required in (
     "session leftover recorded",
-    "session-UI leftover only",
     "not product CLOSED",
     "not metal CLOSED",
     "not claim=present",
@@ -422,10 +445,15 @@ for required in (
     "legacy-direct",
     "omarchy-hyprland-monitor-scaling",
     "display-monitor-scale",
+    "SettingsSessionScaling",
+    "setScale",
+    "Soft leftover-attach ACC",
     "Cloud EXIT 0 is not metal leftover CLOSED",
     "Cloud mocks do not close windows-native.3",
     "windows-native.3",
     "Settings Power LIVE",
+    "Empty Bin LIVE",
+    "End Task LIVE",
     "HDR",
 ):
     if required not in addendum:
@@ -450,6 +478,10 @@ if "windows-native.3` stays prototype/pending" not in parity and "windows-native
     raise SystemExit("PARITY Display row must keep windows-native.3 pending")
 if "Cloud mocks do not close windows-native.3" not in parity:
     raise SystemExit("PARITY Display row must refuse Cloud mocks closing windows-native.3")
+if "soft leftover-attaches" not in parity.lower() or "windows-native.3" not in parity:
+    raise SystemExit("PARITY must soft leftover-attach wn.3")
+if "SettingsSessionScaling.setScale" not in parity and "setScale" not in parity:
+    raise SystemExit("PARITY must name tip-true SettingsSessionScaling.setScale")
 if "display.scale.set" not in settings_api:
     raise SystemExit("settings-service-api must name display.scale.set")
 if "windows-native.3" not in settings_api:
