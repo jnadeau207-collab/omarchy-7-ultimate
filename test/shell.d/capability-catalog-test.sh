@@ -1919,8 +1919,31 @@ if "files.entry.open" not in (parity_explorer.get("capabilityIds") or []):
 native17 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.17")
 if native17.get("claim") == "present":
     raise SystemExit(f"windows-native.17 was flipped to present: {native17}")
+if native17.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.17 claim is {native17.get('claim')}")
+if native17.get("sourceStatus") != "pending":
+    raise SystemExit(f"windows-native.17 sourceStatus is {native17.get('sourceStatus')}")
 if "files.entry.open" not in (native17.get("capabilityIds") or []):
     raise SystemExit("windows-native.17 does not name files.entry.open")
+if "files.document.open" not in (native17.get("capabilityIds") or []):
+    raise SystemExit("windows-native.17 does not name files.document.open")
+if native17.get("humanRoute", {}).get("path") != "Files > PDF":
+    raise SystemExit(f"windows-native.17 path is {native17.get('humanRoute')}")
+document_open = by_id["files.document.open"]
+if document_open.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"files.document.open was raised off leftover: {document_open.get('provider')}")
+if document_open.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"files.document.open claim is {document_open.get('availability')}")
+if document_open.get("availability", {}).get("claim") == "present":
+    raise SystemExit("files.document.open invents claim=present")
+if document_open.get("humanRoute", {}).get("path") != "Files > PDF":
+    raise SystemExit(f"files.document.open path is {document_open.get('humanRoute')}")
+if document_open.get("source", {}).get("file") != "shell/apps/ultimate-files/FilesApplication.qml":
+    raise SystemExit(f"files.document.open source is {document_open.get('source')}")
+if document_open.get("source", {}).get("symbol") != "openEntry":
+    raise SystemExit(f"files.document.open source is {document_open.get('source')}")
+if "nautilus" in str(document_open.get("source") or "").lower():
+    raise SystemExit(f"files.document.open still names Nautilus: {document_open.get('source')}")
 native10 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.10")
 if native10.get("claim") == "present":
     raise SystemExit(f"windows-native.10 was flipped to present: {native10}")

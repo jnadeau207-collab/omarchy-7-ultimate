@@ -67,6 +67,14 @@ status, result = run(payload)
 check("a regular file launches xdg-open", status == 0 and result.get("ok") and result.get("launched"), json.dumps(result))
 check("xdg-open receives the resolved path", opened == [str(target)], str(opened))
 
+pdf = home / "Documents" / "brief.pdf"
+pdf.write_bytes(b"%PDF-1.4 leftover-open")
+pdf_payload = entry_payload("files.location.documents", "brief.pdf", pdf)
+before_pdf = len(opened)
+status, result = run(pdf_payload)
+check("a PDF launches xdg-open through entry.open", status == 0 and result.get("ok") and result.get("launched"), json.dumps(result))
+check("xdg-open receives the PDF path", opened[before_pdf:] == [str(pdf)], str(opened[before_pdf:]))
+
 drifted = dict(payload)
 drifted["entryId"] = "files.entry." + "0" * 64
 status, result = run(drifted)
