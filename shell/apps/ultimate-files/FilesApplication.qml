@@ -39,12 +39,15 @@ Item {
   readonly property bool deleteAuthorized: false // leftover Fabric SHELL refuse; session Permanent Delete does not consult this pin
   readonly property bool emptyBinAuthorized: false
   readonly property bool trashRoute: FilesModel.isTrashRoute(host ? host.currentRoute : "")
-  readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy || sessionArchive.busy
+  readonly property bool sessionBusy: sessionTrash.busy || sessionMutate.busy || sessionArchive.busy || sessionProperties.busy
   property string renameDraft: ""
   property var renameRecord: null
   property var stagedCopyRecord: null
   property var stagedCutRecord: null
   property var pendingDeleteRecord: null
+  property string propertiesPhase: "empty"
+  property string propertiesMessage: ""
+  property var propertiesResult: null
 
   property var history: []
   property int historyIndex: -1
@@ -463,6 +466,22 @@ Item {
     if (!sessionArchive.extractArchive(plan)) root.operationMessage = "The session Extract helper is busy."
   }
 
+  function sessionReadProperties(record) {
+    var plan = FilesModel.sessionPropertiesPlan(record)
+    root.propertiesResult = null
+    if (!FilesModel.sessionPropertiesCanSubmit(plan)) {
+      root.propertiesPhase = record ? "failed" : "empty"
+      root.propertiesMessage = plan.reason || "Select a file or folder to view Properties through this session."
+      return
+    }
+    root.propertiesPhase = "loading"
+    root.propertiesMessage = "Reading Properties through this session."
+    if (!sessionProperties.readProperties(plan)) {
+      root.propertiesPhase = "failed"
+      root.propertiesMessage = "The session Properties helper is busy."
+    }
+  }
+
   function createFolder(name) {
     if (!host || operationBusy || !createVisible) return
     var refusal = FilesModel.createNameRefusal(name)
@@ -572,7 +591,7 @@ Item {
         enabled: !root.operationBusy && !root.sessionBusy && root.showRecords
       })
     }
-    if (root.selectedRecord !== null) list.push({ key: "properties", label: "Properties", dropdown: false, enabled: true })
+    list.push({ key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy })
     return list
   }
 
@@ -600,7 +619,7 @@ Item {
       list.push({ key: "permanently-delete", label: "Permanently delete", enabled: FilesModel.sessionDeletableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
     list.push({ key: "refresh", label: "Refresh", enabled: true })
-    list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
+    list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
 
@@ -627,7 +646,7 @@ Item {
       list.push({ key: "delete", label: "Delete", enabled: FilesModel.sessionTrashableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "permanently-delete", label: "Permanently delete", enabled: FilesModel.sessionDeletableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
-    list.push({ key: "properties", label: "Properties", enabled: root.selectedRecord !== null })
+    list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
 
@@ -644,7 +663,7 @@ Item {
     if (key === "permanently-delete") { root.beginPermanentDelete(root.selectedRecord); return }
     if (key === "restore") { root.sessionRestoreEntry(root.selectedRecord); return }
     if (key === "empty-bin") { emptyBinDialog.open(); return }
-    if (key === "properties") { propertiesDialog.open(); return }
+    if (key === "properties") { root.sessionReadProperties(root.selectedRecord); propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
   }
@@ -689,6 +708,21 @@ Item {
     onFinished: function(kind, ok, message) {
       root.operationMessage = message
       if (ok && root.controller) root.controller.refresh()
+    }
+  }
+
+  Shared.FilesSessionProperties {
+    id: sessionProperties
+    onFinished: function(ok, result) {
+      if (ok) {
+        root.propertiesPhase = "ready"
+        root.propertiesResult = result
+        root.propertiesMessage = ""
+        return
+      }
+      root.propertiesPhase = "failed"
+      root.propertiesResult = null
+      root.propertiesMessage = result && result.explanation ? String(result.explanation) : "The session Properties helper failed."
     }
   }
 
@@ -955,7 +989,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
+    boundary: "File contents are never read. New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path. Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -1340,8 +1374,8 @@ Item {
   Controls.Popup {
     id: propertiesDialog
     anchors.centerIn: Controls.Overlay.overlay
-    width: Math.min(400, root.width - 40)
-    height: Math.min(420, root.height - 40)
+    width: Math.min(420, root.width - 40)
+    height: Math.min(460, root.height - 40)
     modal: true
     padding: 0
 
@@ -1352,6 +1386,8 @@ Item {
     }
 
     contentItem: Item {
+      Accessible.role: Accessible.Dialog
+      Accessible.name: "Properties"
 
       Rectangle {
         id: propertiesTabs
@@ -1386,6 +1422,17 @@ Item {
           }
         }
 
+        Text {
+          anchors.right: parent.right
+          anchors.rightMargin: 10
+          anchors.verticalCenter: parent.verticalCenter
+          text: "SESSION CONTROL · READ-ONLY"
+          textFormat: Text.PlainText
+          color: Aero.textSecondary
+          font.family: Aero.fontFamily
+          font.pixelSize: 10
+        }
+
         Rectangle {
           width: parent.width
           height: 1
@@ -1394,22 +1441,71 @@ Item {
         }
       }
 
-      Loader {
+      Column {
+        id: propertiesBody
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: propertiesTabs.bottom
-        anchors.margins: 10
-        active: propertiesDialog.visible && root.selectedRecord !== null
+        anchors.bottom: propertiesButtons.top
+        anchors.margins: 12
+        spacing: 8
 
-        sourceComponent: Files.FilesRecordCard {
-          record: root.selectedRecord
-          selected: false
-          trashable: false
-          trashBusy: root.operationBusy
+        Text {
+          width: parent.width
+          visible: root.propertiesPhase !== "ready"
+          text: root.propertiesPhase === "loading"
+            ? "Reading Properties through this session."
+            : (root.propertiesMessage !== "" ? root.propertiesMessage : "Select a file or folder to view Properties through this session.")
+          textFormat: Text.PlainText
+          wrapMode: Text.WordWrap
+          color: root.propertiesPhase === "failed" ? Aero.errorBorder : Aero.textSecondary
+          font.family: Aero.fontFamily
+          font.pixelSize: 12
+        }
+
+        Repeater {
+          model: root.propertiesPhase === "ready" ? FilesModel.sessionPropertiesRows(root.propertiesResult) : []
+
+          delegate: Row {
+            required property var modelData
+            width: propertiesBody.width
+            spacing: 10
+
+            Text {
+              width: 110
+              text: modelData.label
+              textFormat: Text.PlainText
+              wrapMode: Text.WordWrap
+              color: Aero.textSecondary
+              font.family: Aero.fontFamily
+              font.pixelSize: 12
+            }
+
+            Text {
+              width: parent.width - 120
+              text: modelData.value
+              textFormat: Text.PlainText
+              wrapMode: Text.WrapAnywhere
+              color: Aero.textPrimary
+              font.family: Aero.fontFamily
+              font.pixelSize: 12
+            }
+          }
+        }
+
+        Text {
+          width: parent.width
+          text: "Read-only. Files does not invent a Fabric SHELL LIVE Properties writer."
+          textFormat: Text.PlainText
+          wrapMode: Text.WordWrap
+          color: Aero.textDisabled
+          font.family: Aero.fontFamily
+          font.pixelSize: 11
         }
       }
 
       Row {
+        id: propertiesButtons
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 10

@@ -313,6 +313,7 @@ MAX_RELATIVE_DEPTH = 16
 MAX_COPY_ENTRIES = 4096
 MAX_ARCHIVE_SOURCES = 16
 MAX_EXTRACT_BYTES = 256 * 1024 * 1024
+MAX_PROPERTIES_PATH = 4096
 
 def files_location_key(location_id: str) -> str:
     prefix = "files.location."
@@ -1815,6 +1816,128 @@ def apply_files_archive_extract(stdin: Any, stdout: Any) -> int:
     stdout.write("\n")
     return 0
 
+
+def require_properties_entry(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    raw = payload.get("entries")
+    if raw is None:
+        entry_id = payload.get("entryId")
+        relative = payload.get("entryRelativePath")
+        if not isinstance(entry_id, str) or not isinstance(relative, str) or not relative:
+            raise ApplyError("payload.invalid", "The apply payload names no entry.")
+        return {"entryId": entry_id, "entryRelativePath": relative}
+    if not isinstance(raw, list) or len(raw) != 1:
+        raise ApplyError("payload.invalid", "Read Properties for one entry at a time.")
+    item = raw[0]
+    if not isinstance(item, Mapping):
+        raise ApplyError("payload.invalid", "The apply payload names no entry.")
+    entry_id = item.get("entryId")
+    relative = item.get("entryRelativePath")
+    if not isinstance(entry_id, str) or not isinstance(relative, str) or not relative:
+        raise ApplyError("payload.invalid", "The apply payload names no entry.")
+    return {"entryId": entry_id, "entryRelativePath": relative}
+
+
+def refuse_trash_read(path: pathlib.Path, home: pathlib.Path) -> None:
+    trash = trash_root(home)
+    try:
+        trash_resolved = trash.resolve()
+    except OSError:
+        trash_resolved = trash
+    try:
+        located = path.resolve(strict=False)
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    if located == trash_resolved or trash_resolved in located.parents:
+        raise ApplyError("payload.invalid", "Trash entries cannot show session Properties.")
+
+
+def apply_files_entry_properties(stdin: Any, stdout: Any) -> int:
+    payload = read_payload(stdin)
+    if payload.get("locationId") == "files.location.trash":
+        raise ApplyError("payload.invalid", "Trash entries cannot show session Properties.")
+    location_id = payload.get("locationId")
+    files_location_key(location_id)
+    spec = require_properties_entry(payload)
+    home = pathlib.Path.home()
+    entry_payload = {
+        "locationId": location_id,
+        "entryRelativePath": spec["entryRelativePath"],
+        "entryId": spec["entryId"],
+    }
+    _, final, relative = resolve_entry_path(entry_payload, home)
+    refuse_trash_read(final, home)
+    try:
+        preview = final.lstat()
+    except OSError as error:
+        raise ApplyError("resource.unresolved", "The entry is not present.") from error
+    parent_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        parent_fd = os.open(final.parent, parent_flags)
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.EEXIST}:
+            raise ApplyError("payload.invalid", "Symlink follow is refused.") from error
+        raise ApplyError("resource.unresolved", "The entry parent is not present.") from error
+    fd = -1
+    try:
+        if stat.S_ISLNK(preview.st_mode):
+            info = os.stat(final.name, dir_fd=parent_fd, follow_symlinks=False)
+            if not stat.S_ISLNK(info.st_mode):
+                raise ApplyError("payload.invalid", "Symlink follow is refused.")
+            kind = "symlink"
+            size_bytes = None
+        elif stat.S_ISREG(preview.st_mode):
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+            try:
+                fd = os.open(final.name, flags, dir_fd=parent_fd)
+            except OSError as error:
+                if error.errno in {errno.ELOOP, errno.EEXIST}:
+                    raise ApplyError("payload.invalid", "Symlink follow is refused.") from error
+                raise ApplyError("resource.unresolved", "The entry is not present.") from error
+            info = os.fstat(fd)
+            if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+                raise ApplyError("payload.invalid", "Symlink follow is refused.")
+            kind = "file"
+            size_bytes = int(info.st_size)
+        elif stat.S_ISDIR(preview.st_mode):
+            flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+            try:
+                fd = os.open(final.name, flags, dir_fd=parent_fd)
+            except OSError as error:
+                if error.errno in {errno.ELOOP, errno.EEXIST}:
+                    raise ApplyError("payload.invalid", "Symlink follow is refused.") from error
+                raise ApplyError("resource.unresolved", "The entry is not present.") from error
+            info = os.fstat(fd)
+            if not stat.S_ISDIR(info.st_mode):
+                raise ApplyError("payload.invalid", "Symlink follow is refused.")
+            kind = "directory"
+            size_bytes = None
+        else:
+            raise ApplyError("payload.invalid", "That entry kind cannot show session Properties.")
+    finally:
+        if fd >= 0:
+            os.close(fd)
+        os.close(parent_fd)
+    location_path = str(final.parent)
+    if len(location_path) > MAX_PROPERTIES_PATH:
+        raise ApplyError("payload.out-of-range", "The location path exceeds its bound.")
+    modified_ms = min(info.st_mtime_ns // 1_000_000, 9007199254740991)
+    json.dump(
+        {
+            "ok": True,
+            "name": final.name,
+            "kind": kind,
+            "sizeBytes": size_bytes,
+            "modifiedMs": modified_ms,
+            "locationPath": location_path,
+            "entryRelativePath": relative,
+            "locationId": location_id,
+            "explanation": "Read Properties through this session.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
 def apply_files_directory_create(stdin: Any, stdout: Any) -> int:
     payload = read_payload(stdin)
     resource_id = payload.get("resourceId")
@@ -2728,6 +2851,7 @@ ACTIONS = {
     "files-entry-delete": apply_files_entry_delete,
     "files-archive-create": apply_files_archive_create,
     "files-archive-extract": apply_files_archive_extract,
+    "files-entry-properties": apply_files_entry_properties,
     "software-install": apply_software_install,
     "software-remove": apply_software_remove,
     "system-update-status": apply_system_update_status,

@@ -426,6 +426,66 @@ function sessionExtractCanSubmit(plan) {
   return plan.action === "extract"
 }
 
+var SESSION_PROPERTIES_LOCATIONS = [
+  "files.location.home", "files.location.desktop", "files.location.documents",
+  "files.location.downloads", "files.location.pictures"
+]
+
+function sessionPropertiesReadableLocation(locationId) {
+  return SESSION_PROPERTIES_LOCATIONS.indexOf(String(locationId || "")) >= 0
+}
+
+function sessionPropertiesReadableRecord(record) {
+  if (!isObject(record)) return false
+  var kind = String(record.entryKind || "")
+  return String(record.kind || "") === "entry"
+    && (kind === "file" || kind === "directory" || kind === "symlink")
+    && sessionPropertiesReadableLocation(record.locationId)
+    && String(record.id || "") !== ""
+    && String(record.relativePath || "") !== ""
+}
+
+function sessionPropertiesPlan(record) {
+  if (!isObject(record)) {
+    return { action: "unavailable", reason: "Select a file or folder to view Properties through this session." }
+  }
+  if (String(record.kind || "") !== "entry") {
+    return { action: "unavailable", reason: "Select a file or folder to view Properties through this session." }
+  }
+  if (String(record.locationId || "") === "files.location.trash") {
+    return { action: "unavailable", reason: "Trash entries cannot show session Properties." }
+  }
+  if (!sessionPropertiesReadableRecord(record)) {
+    return { action: "unavailable", reason: "That item cannot show session Properties through this session." }
+  }
+  return {
+    action: "properties",
+    locationId: String(record.locationId),
+    entryRelativePath: String(record.relativePath),
+    entryId: String(record.id),
+    title: String(record.title || "")
+  }
+}
+
+function sessionPropertiesCanSubmit(plan) {
+  if (!isObject(plan)) return false
+  return plan.action === "properties"
+}
+
+function sessionPropertiesRows(result) {
+  if (!isObject(result) || result.ok !== true) return []
+  var rows = [
+    { label: "Name", value: String(result.name || "") },
+    { label: "Type", value: typeLabelFor(result.name, result.kind, "") }
+  ]
+  if (result.kind === "file" && result.sizeBytes !== null && result.sizeBytes !== undefined) {
+    rows.push({ label: "Size", value: formatSize(result.sizeBytes) })
+  }
+  rows.push({ label: "Date modified", value: formatModified(result.modifiedMs) })
+  rows.push({ label: "Location", value: String(result.locationPath || "") })
+  return rows
+}
+
 function encodeFileUri(absolutePath) {
   var value = String(absolutePath || "")
   if (!value.startsWith("/") || value.indexOf("\x00") >= 0) return ""
@@ -1325,6 +1385,10 @@ if (typeof module !== "undefined") module.exports = {
   sessionArchiveCanSubmit: sessionArchiveCanSubmit,
   sessionExtractableRecord: sessionExtractableRecord, sessionExtractPlan: sessionExtractPlan,
   sessionExtractCanSubmit: sessionExtractCanSubmit,
+  sessionPropertiesReadableRecord: sessionPropertiesReadableRecord,
+  sessionPropertiesPlan: sessionPropertiesPlan,
+  sessionPropertiesCanSubmit: sessionPropertiesCanSubmit,
+  sessionPropertiesRows: sessionPropertiesRows,
   typeLabelFor: typeLabelFor, formatSize: formatSize, formatModified: formatModified,
   explorerEntries: explorerEntries, explorerLocations: explorerLocations, explorerMounts: explorerMounts,
   sortedEntries: sortedEntries, breadcrumbFor: breadcrumbFor, childRelativePath: childRelativePath,
