@@ -6519,9 +6519,9 @@
       },
       "humanRoute": {
         "status": "visible",
-        "surface": "Text Editor",
+        "surface": "Files",
         "label": "Edit a text file",
-        "path": "Files > text file"
+        "path": "Files > Text"
       },
       "agentCenterLabel": "Edit a text file",
       "proofIds": {
@@ -6533,8 +6533,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-text-edit",
+        "file": "shell/apps/ultimate-files/FilesApplication.qml",
+        "symbol": "openEntry",
         "brokerVerb": null
       }
     },
