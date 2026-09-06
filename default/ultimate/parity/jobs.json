@@ -1210,7 +1210,7 @@
         "path": "Settings > Display"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the prior focused-monitor scale from Settings > Display (session plane applies immediately; no timed auto-rollback).",
+      "recoveryExpectation": "Restore the prior focused-monitor scale from Settings > Display through tip-true SettingsSessionScaling.setScale \u2192 display-monitor-scale (omarchy-hyprland-monitor-scaling whitelist; session plane applies immediately; no timed auto-rollback; no Fabric durable undo fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.3"
