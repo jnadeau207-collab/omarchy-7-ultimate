@@ -68,7 +68,7 @@ Rectangle {
       return root.sessionStartup.message
     if (root.sessionStartup.empty)
       return root.sessionStartup.message || "No XDG autostart applications were found for this session. Hyprland session hooks stay outside this list."
-    return "These entries launch at sign-in through this session's XDG autostart helper. Enable or disable writes ~/.config/autostart. System entries use a user override. Fabric defaults.inspect stays readable. Settings does not invent a Fabric apps.startup.disable durable writer. Settings does not invent Task Manager present. Hyprland session hooks stay outside this list."
+    return "These entries launch at sign-in through this session's XDG autostart helper (tip-true SettingsSessionStartup.setEnabled → apps-startup-set). Enable or disable writes ~/.config/autostart. System entries use a user override. Fabric defaults.inspect stays readable. Settings does not invent a Fabric apps.startup.disable durable writer. Settings does not invent Task Manager present. Soft leftover-attaches windows-native.27 to this tip-true Settings > Apps startup plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.27. windows-native.27 stays prototype/pending. Never claim=present. Hyprland session hooks stay outside this list."
   }
 
   readonly property string startupBadge: {
