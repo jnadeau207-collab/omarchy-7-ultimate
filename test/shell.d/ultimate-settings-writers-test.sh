@@ -450,7 +450,7 @@ assertEqual(keyboardRecord({ activeIndex: 9, activeKeymap: 'x', layouts: ['us', 
 assertDeepEqual(keyboardRecord({ activeIndex: 0, activeKeymap: 'x', layouts: ['us', 123], switchable: true }).layouts, [], 'a non-string layout name voids the whole list')
 
 const inputQuery = Model.queryForRoute('settings.input.overview')
-assert(inputQuery.coverage.indexOf('hyprctl') >= 0, 'the input coverage note names the layout helper')
+assert(inputQuery.coverage.indexOf('input-keyboard-layout') >= 0, 'the input coverage note names the session layout verb')
 assert(inputQuery.coverage.indexOf('does not invent an input.provider keyboard-layout durable writer') >= 0, 'the input coverage note refuses a Fabric layout writer')
 assert(inputQuery.coverage.indexOf('Pointer, repeat rate, and accessibility input changes remain unavailable') >= 0, 'the input coverage note still refuses what Settings cannot do')
 

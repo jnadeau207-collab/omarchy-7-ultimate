@@ -608,9 +608,9 @@ if layout_set.get("availability", {}).get("human") != "partial":
     raise SystemExit(f"input.keyboard-layout.set human availability is {layout_set.get('availability')}")
 if layout_set["humanRoute"].get("path") != "Settings > Input":
     raise SystemExit(f"input.keyboard-layout.set route is {layout_set.get('humanRoute')}")
-if layout_set.get("source", {}).get("file") != "/usr/bin/hyprctl":
+if layout_set.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
     raise SystemExit(f"input.keyboard-layout.set source is {layout_set.get('source')}")
-if layout_set.get("source", {}).get("symbol") != "switchxkblayout":
+if layout_set.get("source", {}).get("symbol") != "apply_input_keyboard_layout_session":
     raise SystemExit(f"input.keyboard-layout.set source is {layout_set.get('source')}")
 named_layout = f"{layout_set.get('source', {}).get('file') or ''} {layout_set.get('source', {}).get('symbol') or ''}".lower()
 if "keyboardlayout.qml" in named_layout:

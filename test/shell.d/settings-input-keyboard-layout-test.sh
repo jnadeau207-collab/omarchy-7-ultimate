@@ -63,8 +63,11 @@ fi
 if grep -Eq 'provider: "input.provider"|action: "keyboard-layout.set"' "$settings_session" "$settings_card"; then
   fail "Settings Input keyboard-layout must not invent a Fabric layout writer"
 fi
-if grep -Eq 'hyprctl|bash -c|switchxkblayout' "$settings_session" "$settings_card"; then
-  fail "Settings Input keyboard-layout must use the session apply verb instead of a parallel hyprctl writer"
+if grep -Eq 'hyprctl|bash -c|switchxkblayout' "$settings_session"; then
+  fail "session keyboard-layout QML must use the session apply verb instead of a parallel hyprctl writer"
+fi
+if grep -Eq 'command:[[:space:]]*\[.*hyprctl|["'\'']hyprctl["'\'']' "$settings_card"; then
+  fail "Input keyboard-layout card must not spawn hyprctl directly"
 fi
 if grep -Eq 'localectl' "$settings_session" "$settings_card"; then
   fail "Settings Input keyboard-layout must not invent a localectl writer"
@@ -82,8 +85,11 @@ grep -Fq 'not claim=present' "$settings_card" || fail "Settings Input keyboard-l
 if grep -Eq 'CLOSED leftover:' "$settings_card"; then
   fail "Settings Input keyboard-layout must not use bare CLOSED leftover invent"
 fi
-if grep -Eqi 'is locale complete|Close one product hole|full locale' "$settings_card" "$settings_app"; then
+if grep -Eqi 'is locale complete|Close one product hole' "$settings_card" "$settings_app"; then
   fail "Settings Input keyboard-layout must not invent present or locale complete"
+fi
+if grep -Eqi 'full locale complete|locale product-complete' "$settings_card" "$settings_app"; then
+  fail "Settings Input keyboard-layout must not invent locale product-complete"
 fi
 if grep -Eqi 'claim=present' "$settings_card" "$settings_app" && ! grep -Eqi 'not claim=present' "$settings_card"; then
   fail "Settings Input keyboard-layout must not invent claim=present"
@@ -98,7 +104,7 @@ if grep -Fq 'function applyKeyboardLayout(' "$settings_app"; then
   fail "Settings application must not keep a Fabric applyKeyboardLayout writer"
 fi
 grep -Fq 'sessionKeyboardLayout' "$settings_model" || fail "Settings model normalizes session keyboard-layout outcomes"
-grep -Fq 'hyprctl' "$settings_model" || fail "Settings coverage names the layout helper"
+grep -Fq 'input-keyboard-layout' "$settings_model" || fail "Settings coverage names the session layout verb"
 grep -Fq 'does not invent a input.provider keyboard-layout durable writer' "$settings_model" ||
   grep -Fq 'does not invent an input.provider keyboard-layout durable writer' "$settings_model" ||
   fail "Settings coverage refuses a Fabric layout writer"
@@ -182,7 +188,7 @@ assertEqual(single.known, true, 'single-layout status is known')
 assertEqual(single.switchable, false, 'single-layout status is not switchable')
 
 const input = Model.queryForRoute('settings.input.overview')
-assert(input.coverage.indexOf('hyprctl') >= 0, 'input coverage names the layout helper')
+assert(input.coverage.indexOf('input-keyboard-layout') >= 0, 'input coverage names the session layout verb')
 assert(input.coverage.indexOf('does not invent an input.provider keyboard-layout durable writer') >= 0 ||
   input.coverage.indexOf('does not invent a input.provider keyboard-layout durable writer') >= 0,
   'input coverage refuses a Fabric layout writer')
@@ -192,9 +198,9 @@ assert(input.coverage.indexOf('not metal CLOSED') >= 0, 'input coverage refuses 
 assert(input.coverage.indexOf('not claim=present') >= 0, 'input coverage refuses claim=present')
 assert(input.coverage.indexOf('Pointer, repeat rate, and accessibility input changes remain unavailable') >= 0, 'input coverage still refuses pointer and locale')
 assert(input.coverage.indexOf('not locale complete') >= 0 || input.coverage.indexOf('full locale') >= 0, 'input coverage refuses locale complete')
-assert(Model.declaredOpsHonesty('settings.input.overview').indexOf('hyprctl') >= 0, 'input declared ops name the layout helper')
+assert(Model.declaredOpsHonesty('settings.input.overview').indexOf('input-keyboard-layout') >= 0, 'input declared ops name the session layout verb')
 assert(Model.declaredOpsHonesty('settings.input.overview').indexOf('does not invent') >= 0, 'input declared ops refuse a Fabric layout writer')
-assert(Model.authorityFooter().indexOf('hyprctl') >= 0, 'authority footer names the layout helper')
+assert(Model.authorityFooter().indexOf('input-keyboard-layout') >= 0, 'authority footer names the session layout verb')
 JS
 
 pass "Settings model maps session keyboard-layout outcomes and refuses a Fabric invent"
@@ -379,9 +385,9 @@ if route.get("path") != "Settings > Input":
     raise SystemExit(f"input.keyboard-layout.set path is {route}")
 if "Settings > Input" not in str(route.get("path") or ""):
     raise SystemExit(f"input.keyboard-layout.set underclaims the Settings Input host: {route}")
-if layout.get("source", {}).get("file") != "/usr/bin/hyprctl":
+if layout.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
     raise SystemExit(f"input.keyboard-layout.set source is {layout.get('source')}")
-if layout.get("source", {}).get("symbol") != "switchxkblayout":
+if layout.get("source", {}).get("symbol") != "apply_input_keyboard_layout_session":
     raise SystemExit(f"input.keyboard-layout.set source is {layout.get('source')}")
 if "SettingsInputLayout.qml" in str(layout.get("source", {}).get("file") or ""):
     raise SystemExit("input.keyboard-layout.set must not invent source on SettingsInputLayout.qml")

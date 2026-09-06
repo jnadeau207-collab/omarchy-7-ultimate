@@ -132,6 +132,10 @@ for (const routeId of liveWriterRoutes) {
     assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
     assert(Model.declaredOpsHonesty(routeId).includes('NightlightService'), `${routeId} declared ops name the NightlightService plane`)
     assert(Model.declaredOpsHonesty(routeId).includes('does not invent a display.provider night-light durable writer'), `${routeId} declared ops refuse a Fabric night-light writer`)
+  } else if (routeId === 'settings.input.overview') {
+    assert(Model.declaredOpsHonesty(routeId).includes('input-keyboard-layout'), `${routeId} declared ops name the session layout verb`)
+    assert(Model.declaredOpsHonesty(routeId).includes('does not invent an input.provider keyboard-layout durable writer'), `${routeId} declared ops refuse a Fabric layout writer`)
+    assert(!Model.declaredOpsHonesty(routeId).includes('durable coordinator'), `${routeId} declared ops do not invent a Fabric layout writer`)
   } else {
     assert(Model.declaredOpsHonesty(routeId).includes('preflight, approval, and the durable coordinator'), `${routeId} declared ops name the live writer path`)
   }

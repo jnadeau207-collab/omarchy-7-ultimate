@@ -73,7 +73,7 @@ Rectangle {
       return "This session's typed keyboard reports one configured layout. Settings shows that layout and does not invent a second layout or a locale/region writer."
     if (root.sessionLayout.phase === "succeeded")
       return root.sessionLayout.message
-    return "Keyboard layout uses this session's /usr/bin/hyprctl switchxkblayout helper through omarchy-fabric-session-apply. Only configured layout identities are accepted. session leftover recorded: Settings Input keyboard layout session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present). Settings does not invent an input.provider keyboard-layout durable writer. Fabric input.inspect stays separate. Pointer, repeat rate, IME, and full locale/region remain unavailable. Layout alone is not locale complete. Cloud EXIT 0 is not metal leftover CLOSED. windows-native.33 stays pending."
+    return "Keyboard layout uses this session's /usr/bin/hyprctl helper through omarchy-fabric-session-apply. Only configured layout identities are accepted. session leftover recorded: Settings Input keyboard layout session-UI leftover only (not product CLOSED / not metal CLOSED / not claim=present). Settings does not invent an input.provider keyboard-layout durable writer. Fabric input.inspect stays separate. Pointer, repeat rate, IME, and full locale/region remain unavailable. Layout alone is not locale complete. Cloud EXIT 0 is not metal leftover CLOSED. windows-native.33 stays pending."
   }
 
   readonly property string layoutBadge: {

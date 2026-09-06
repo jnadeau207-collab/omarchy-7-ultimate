@@ -6719,8 +6719,8 @@
         ]
       },
       "source": {
-        "file": "/usr/bin/hyprctl",
-        "symbol": "switchxkblayout",
+        "file": "default/fabric/omarchy_fabric/helpers/session_apply.py",
+        "symbol": "apply_input_keyboard_layout_session",
         "brokerVerb": null
       }
     },
