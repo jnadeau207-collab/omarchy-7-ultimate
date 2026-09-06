@@ -6599,8 +6599,8 @@
       },
       "recovery": {
         "mode": "undo",
-        "expectation": "Provide a state-fingerprint-guarded undo path and report partial or unknown change honestly.",
-        "stateFingerprintRequired": true
+        "expectation": "Re-enable (or re-disable) from Settings > Apps through tip-true SettingsSessionStartup.setEnabled \u2192 apps-startup-set (writes ~/.config/autostart user override; no Fabric durable undo fingerprint invent).",
+        "stateFingerprintRequired": false
       },
       "redaction": {
         "fields": [

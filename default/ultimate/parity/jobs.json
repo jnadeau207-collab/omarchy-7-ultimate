@@ -1832,7 +1832,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Disable a startup application",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "apps.startup.disable"
       ],
@@ -1842,7 +1842,7 @@
         "path": "Settings > Apps"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the previous startup state.",
+      "recoveryExpectation": "Apply enable/disable from Settings > Apps through tip-true setEnabled \u2192 apps-startup-set (writes ~/.config/autostart; re-toggle via the same setEnabled plane; no Fabric durable undo fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.27"

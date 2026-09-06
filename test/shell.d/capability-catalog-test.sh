@@ -457,7 +457,7 @@ if startup_cap.get("source", {}).get("symbol") != "setEnabled":
 native27 = next(job for job in jobs_lock["jobs"] if job["id"] == "windows-native.27")
 if native27.get("claim") == "present":
     raise SystemExit(f"windows-native.27 was flipped to present: {native27}")
-if native27.get("claim") != "missing":
+if native27.get("claim") != "prototype":
     raise SystemExit(f"windows-native.27 claim is {native27.get('claim')}")
 if native27.get("sourceStatus") != "pending" or native27.get("proofStatus") != "pending":
     raise SystemExit(f"windows-native.27 left pending: {native27}")
@@ -465,6 +465,20 @@ if native27["humanRoute"].get("status") != "visible" or native27["humanRoute"].g
     raise SystemExit(f"windows-native.27 underclaims Settings Apps: {native27['humanRoute']}")
 if "Task Manager" in str(native27["humanRoute"].get("surface") or "") or "Task Manager" in str(native27["humanRoute"].get("path") or ""):
     raise SystemExit(f"windows-native.27 invents a Task Manager Startup page: {native27['humanRoute']}")
+native27_recovery = native27.get("recoveryExpectation") or ""
+if "setEnabled" not in native27_recovery or "apps-startup-set" not in native27_recovery:
+    raise SystemExit(f"windows-native.27 recovery is not tip-aligned to setEnabled plane: {native27_recovery}")
+if "fingerprint invent" not in native27_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native27_recovery:
+    raise SystemExit(f"windows-native.27 recovery must refuse Fabric fingerprint invent: {native27_recovery}")
+startup_recovery = startup_cap.get("recovery") or {}
+if startup_recovery.get("mode") != "undo":
+    raise SystemExit(f"apps.startup.disable recovery mode is {startup_recovery}")
+if startup_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"apps.startup.disable recovery fingerprint invent: {startup_recovery}")
+startup_exp = startup_recovery.get("expectation") or ""
+for needle in ("setEnabled", "apps-startup-set", "autostart", "no Fabric durable undo fingerprint invent"):
+    if needle not in startup_exp:
+        raise SystemExit(f"apps.startup.disable recovery missing {needle!r}: {startup_exp}")
 resources = by_id["resources.inspect"]["humanRoute"]
 if resources.get("status") != "missing" or resources.get("path"):
     raise SystemExit(f"resources.inspect invents a Resource Monitor destination: {resources}")
@@ -1531,7 +1545,7 @@ if win7_leftover.get("emptyBinAuthorized") is not False:
     raise SystemExit("Win7 visual leftover.json must keep emptyBinAuthorized false")
 if (root / "test/acceptance.d/leftovers/win7-visual/hdmi.png").is_file() is False:
     raise SystemExit("Win7 visual leftover hdmi.png is missing")
-if "claims: missing=30, partial=6, plumbing=4, present=0, prototype=42" not in gaps:
+if "claims: missing=29, partial=6, plumbing=4, present=0, prototype=43" not in gaps:
     raise SystemExit("fleet-doctrine-gaps job header must match jobs.json claims")
 if "partial MIME rows LIVE on Settings > Default Programs; Default Programs applet still missing" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name partial MIME rows LIVE on Settings > Default Programs and keep the Default Programs applet missing")
