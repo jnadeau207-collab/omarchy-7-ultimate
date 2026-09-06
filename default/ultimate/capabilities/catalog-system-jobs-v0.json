@@ -6919,7 +6919,7 @@
       "kind": "writer",
       "effects": [
         "mutating",
-        "logout"
+        "irreversible"
       ],
       "schemas": {
         "input": {
@@ -6945,7 +6945,7 @@
         }
       },
       "availability": {
-        "human": "present",
+        "human": "partial",
         "agent": "unavailable",
         "claim": "partial"
       },
@@ -6965,12 +6965,12 @@
         "scope": "power.resource"
       },
       "cancellation": {
-        "mode": "before-apply",
-        "limit": "Cancellation is accepted before the state mutation begins."
+        "mode": "uncancellable",
+        "limit": "Visible Shut down consent schedules irreversible poweroff; no cancellation window after apply begins."
       },
       "recovery": {
         "mode": "none",
-        "expectation": "No durable mutation is expected.",
+        "expectation": "Start Shut down runs tip-true shutdown \u2192 omarchy-system-shutdown (systemd-run user timer \u2192 systemctl poweroff); irreversible poweroff with no undo / no compensating fingerprint invent; visible Shut down choice is the consent gesture.",
         "stateFingerprintRequired": false
       },
       "redaction": {
@@ -6998,7 +6998,7 @@
       },
       "source": {
         "file": "shell/plugins/ultimate-start/Start.qml",
-        "symbol": "Start.shutdown",
+        "symbol": "shutdown",
         "brokerVerb": null
       }
     }

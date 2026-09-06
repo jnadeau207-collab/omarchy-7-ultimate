@@ -120,7 +120,7 @@ Sources: Microsoft Learn Control Panel canonical names (Vista/7 family), Win7 Ad
 | --- | --- | --- | --- |
 | Personalization | Settings → Personalization | `parity.personalization` prototype; `desktop.wallpaper.set` leftover partial soft leftover-attach ACC `windows-native.4` via `ImagePicker.applyEmbedded` → `omarchy-theme-bg-set` (visible Settings > Personalization; never claim=present); theme caps | image picker / theme packs; `windows-native.4` prototype/pending |
 | Display (dup) | Settings → Display | See Hardware | `display.provider` |
-| Taskbar and Start Menu | Superbar + Start (chrome, not CP applet) | `parity.superbar-taskbar` / `parity.start` prototype | shell plugins |
+| Taskbar and Start Menu | Superbar + Start (chrome, not CP applet) | `parity.superbar-taskbar` / `parity.start` prototype; `power.shutdown` leftover partial soft leftover-attach ACC `windows-native.40` via `shutdown` → `omarchy-system-shutdown` (visible Start > Shut down; never claim=present) | shell plugins; `windows-native.40` prototype/pending |
 | Ease of Access Center | Settings Accessibility (**honest missing** page / empty path) | `parity.accessibility` missing; `accessibility.configure` missing | No `accessibility.provider` |
 | Folder Options | **Missing** as applet; Files has partial behaviors | No `folder.options.*` | — |
 | Fonts | **Missing** | No row | — |
@@ -209,7 +209,7 @@ Complete Win7-family applet set relevant to **Ultimate client** (excluding Serve
 | 40 | Sync Center | Yes | — | — | Gap |
 | 41 | System | Yes | System information session page leftover | `system.info.read` leftover partial | Gap |
 | 42 | Tablet PC Settings | HW | — | — | Gap / HW |
-| 43 | Taskbar and Start Menu | Yes | Superbar + Start | `parity.superbar-taskbar` / `parity.start` | Prototype |
+| 43 | Taskbar and Start Menu | Yes | Superbar + Start | `parity.superbar-taskbar` / `parity.start`; soft leftover-attach wn.40 Shut down via `shutdown` | Prototype/pending wn.40; never claim=present |
 | 44 | Troubleshooting | Yes | Administration > Troubleshooting | `diagnostics.inspect` visible; claim missing | Visible inspect; honest-unavailable as Troubleshooting product |
 | 45 | User Accounts | Yes | Administration > User accounts | `parity.user-accounts`; `account.inspect` visible; claim missing | Visible inspect; honest-unavailable as User Accounts product |
 | 46 | Windows Anytime Upgrade | Ultimate | N/A (SKU) | — | N/A |

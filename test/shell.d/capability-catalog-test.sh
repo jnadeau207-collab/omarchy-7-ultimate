@@ -757,6 +757,61 @@ if "Capture the previous wallpaper" in person_recovery or "guarded undo" in pers
 if "no prior-wallpaper undo invent" not in person_recovery:
     raise SystemExit(f"parity.personalization recoveryExpectation dropped set-only refuse: {person_recovery}")
 
+shutdown_cap = by_id["power.shutdown"]
+if shutdown_cap.get("availability", {}).get("claim") == "present":
+    raise SystemExit("power.shutdown must not claim present")
+if shutdown_cap.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"power.shutdown claim is {shutdown_cap.get('availability')}")
+if shutdown_cap.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"power.shutdown human must stay partial (not OS-present): {shutdown_cap.get('availability')}")
+if shutdown_cap.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"power.shutdown provider state is {shutdown_cap.get('provider')}")
+if shutdown_cap.get("source", {}).get("symbol") != "shutdown":
+    raise SystemExit(f"power.shutdown source symbol drifted: {shutdown_cap.get('source')}")
+if "logout" in (shutdown_cap.get("effects") or []):
+    raise SystemExit(f"power.shutdown effects still invent logout: {shutdown_cap.get('effects')}")
+if shutdown_cap.get("effects") != ["mutating", "irreversible"]:
+    raise SystemExit(f"power.shutdown effects must tip-align poweroff plane: {shutdown_cap.get('effects')}")
+shutdown_cancel = shutdown_cap.get("cancellation") or {}
+if shutdown_cancel.get("mode") == "before-apply":
+    raise SystemExit(f"power.shutdown cancellation still invents before-apply: {shutdown_cancel}")
+if shutdown_cancel.get("mode") != "uncancellable":
+    raise SystemExit(f"power.shutdown cancellation must be uncancellable: {shutdown_cancel}")
+if shutdown_cap.get("humanRoute", {}).get("path") != "Start > Shut down":
+    raise SystemExit(f"power.shutdown route is {shutdown_cap.get('humanRoute')}")
+shutdown_recovery = shutdown_cap.get("recovery") or {}
+if shutdown_recovery.get("mode") != "none" or shutdown_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"power.shutdown recovery must be tip-true mode=none: {shutdown_recovery}")
+shutdown_expectation = str(shutdown_recovery.get("expectation") or "")
+if "shutdown" not in shutdown_expectation or "omarchy-system-shutdown" not in shutdown_expectation:
+    raise SystemExit(f"power.shutdown recoveryExpectation missing tip-true shutdown path: {shutdown_expectation}")
+if "Start.shutdown" in shutdown_expectation:
+    raise SystemExit(f"power.shutdown recoveryExpectation still invents Start.shutdown: {shutdown_expectation}")
+if "No durable mutation is expected." in shutdown_expectation:
+    raise SystemExit("power.shutdown recovery still invents No durable mutation is expected")
+if "irreversible poweroff" not in shutdown_expectation or "no compensating fingerprint invent" not in shutdown_expectation:
+    raise SystemExit(f"power.shutdown recoveryExpectation dropped irreversible refuse: {shutdown_expectation}")
+native40 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.40")
+if native40.get("sourceStatus") != "pending" or native40.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.40 must stay prototype/pending: {native40}")
+if native40.get("humanRoute", {}).get("path") != "Start > Shut down":
+    raise SystemExit(f"windows-native.40 underclaims Start Shut down: {native40.get('humanRoute')}")
+native40_recovery = str(native40.get("recoveryExpectation") or "")
+if native40_recovery != "Apply Shut down from Start through tip-true shutdown → omarchy-system-shutdown (visible Shut down choice is consent; irreversible poweroff; no undo / no compensating fingerprint invent).":
+    raise SystemExit(f"windows-native.40 recoveryExpectation drifted: {native40_recovery}")
+if "Require an explicit visible choice and report cancellation before logout." in native40_recovery:
+    raise SystemExit(f"windows-native.40 recoveryExpectation still invents tip-false confirmation: {native40_recovery}")
+if "Start.shutdown" in native40_recovery:
+    raise SystemExit(f"windows-native.40 recoveryExpectation still invents Start.shutdown: {native40_recovery}")
+parity_start = next(job for job in jobs["jobs"] if job["id"] == "parity.start")
+if parity_start.get("claim") != "prototype":
+    raise SystemExit(f"parity.start must stay prototype: {parity_start}")
+start_recovery = str(parity_start.get("recoveryExpectation") or "")
+if "windows-native.40" not in start_recovery or "shutdown" not in start_recovery:
+    raise SystemExit(f"parity.start recoveryExpectation missing wn.40 soft leftover-attach: {start_recovery}")
+if "Start.shutdown" in start_recovery:
+    raise SystemExit(f"parity.start recoveryExpectation still invents Start.shutdown: {start_recovery}")
+
 
 volume_set = by_id["audio.volume.set"]
 if volume_set.get("provider", {}).get("id") != "audio.provider":
@@ -1392,6 +1447,18 @@ if "SOURCE LOCK (not pixel proof)" not in explorer_chrome:
     raise SystemExit("ultimate-explorer-chrome-test must name hex-grep as SOURCE LOCK (not pixel proof)")
 if "not pixel proof" not in explorer_chrome:
     raise SystemExit("ultimate-explorer-chrome-test still treats hex-grep as pixel proof")
+
+
+if "Honesty addendum 2026-09-06 vs Start Shut down leftover plane (windows-native.40)" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated wn.40 Start Shut down leftover addendum")
+if "| `windows-native.40` | prototype/pending | visible: Start > Shut down |" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must soft leftover-attach wn.40 to Start > Shut down")
+if "OK if Start power works." in gaps:
+    raise SystemExit("fleet-doctrine-gaps still has tip-false wn.40 invent OK if Start power works")
+if "shutdown" not in gaps or "omarchy-system-shutdown" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name tip-true shutdown → omarchy-system-shutdown for wn.40")
+if "Start.shutdown" in gaps:
+    raise SystemExit("fleet-doctrine-gaps still invents Start.shutdown symbol")
 
 if "Honesty addendum 2026-09-06 vs Settings Default Programs browser leftover plane (windows-native.19)" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated wn.19 Default Programs browser leftover addendum")
