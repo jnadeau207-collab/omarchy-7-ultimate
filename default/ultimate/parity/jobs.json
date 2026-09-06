@@ -1884,7 +1884,7 @@
       "kind": "windows-native-task",
       "sourceLabel": "Inspect update history",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "update.history.read"
       ],
