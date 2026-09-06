@@ -137,7 +137,7 @@ Jobs in `jobs.json`: **82** (claims: missing=35, partial=6, plumbing=4, present=
 | `windows-native.2` | prototype/pending | visible: Settings > Network | **Connect Wi-Fi.** Connect to Wi-Fi from Network UI with mouse. | Claiming present without metal join proof; inventing enterprise/VPN. |
 | `windows-native.3` | prototype/pending | visible: Superbar > Display | **Set display scaling to 125%.** Set display scaling to 125% from Display UI. | Claiming scaling present without control. |
 | `windows-native.4` | prototype/pending | visible: Personalization > Background | **Change the wallpaper.** Change wallpaper from Personalization. | Equating any background change API without UI. |
-| `windows-native.5` | prototype/pending | visible: Superbar > Bluetooth | **Pair Bluetooth headphones.** Pair Bluetooth headphones from Bluetooth UI. | Claiming from inspect-only. |
+| `windows-native.5` | prototype/pending | visible: Settings > Bluetooth | **Pair Bluetooth headphones.** Pair Bluetooth headphones from Bluetooth UI. | Claiming present without metal pair proof; inventing PIN-entry/audio routing. |
 | `windows-native.6` | prototype/pending | visible: Superbar > Sound | **Adjust output volume.** Adjust output volume from Sound UI/Superbar. | OK if volume writer+UI; not full Sound job. |
 | `windows-native.7` | missing/pending | planned: Software Center | **Install Firefox or Chrome.** Install Firefox or Chrome from Software surface without terminal. | Inventing install from package plane. |
 | `windows-native.8` | missing/pending | planned: Software Center | **Install Steam.** Install Steam from Software/Compatibility without terminal. | Inventing Steam install. |
@@ -223,6 +223,7 @@ Before a phase plan or handoff may say **present**, **LIVE CONTROL**, **automate
   | Settings Sound volume (`output-volume.set`) | `audio.volume.set` | partial |
   | Settings Network Wi-Fi radio (`wifi.set-enabled`) | `network.manage` | partial |
   | Settings Network Wi-Fi join (session NetworkManager; passphrase never enters Fabric) | `network.wifi.connect` | partial |
+  | Settings Bluetooth pair/connect (session BlueZ; pairing secrets never enter Fabric) | `bluetooth.audio.pair` | partial |
   | Settings Power inspect | `power.inspect` | partial |
   | Settings Power profile (`profile.set`) write plane, not Settings LIVE; Superbar QS leftover unverified on metal — metal FAIL on tip `20484de6` (KEEP OPEN) | `power.profile.set` | partial |
   | Settings Display brightness (`brightness.set`) | `display.brightness.set` | partial |
