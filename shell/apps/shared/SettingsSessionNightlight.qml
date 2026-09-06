@@ -9,7 +9,7 @@ Item {
 
   readonly property string helper: {
     var base = Quickshell.env("OMARCHY_PATH")
-    return base ? base + "/bin/omarchy-shell" : "omarchy-shell"
+    return (base ? base : "/usr") + "/bin/omarchy-shell"
   }
   property bool busy: false
   property string pendingKind: ""

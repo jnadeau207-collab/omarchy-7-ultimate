@@ -26,6 +26,11 @@ display_manifest="$ROOT/default/fabric/omarchy_fabric/providers/display/manifest
 [[ -f $settings_card ]] || fail "Settings ships a Display night-light card"
 
 grep -Fq 'omarchy-shell' "$settings_session" || fail "session night-light QML calls omarchy-shell"
+grep -Fq 'OMARCHY_PATH' "$settings_session" || fail "session night-light QML prefers OMARCHY_PATH for omarchy-shell"
+grep -Fq '/bin/omarchy-shell' "$settings_session" || fail "session night-light QML spawns omarchy-shell from an absolute bin path"
+if grep -Eq 'return "omarchy-shell"|: "omarchy-shell"' "$settings_session"; then
+  fail "session night-light QML must not spawn a bare omarchy-shell PATH name"
+fi
 grep -Fq 'nightlight' "$settings_session" || fail "session night-light QML targets NightlightService IPC"
 grep -Fq 'function readStatus(' "$settings_session" || fail "session night-light QML exposes readStatus"
 grep -Fq 'function setEnabled(' "$settings_session" || fail "session night-light QML exposes setEnabled"
