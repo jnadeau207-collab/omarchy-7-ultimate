@@ -1091,6 +1091,10 @@ if "OPEN leftovers: Fabric LIVE under SHELL" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Fabric LIVE under SHELL as an OPEN leftover")
 if "Recycle Bin is not product-complete" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Recycle Bin is not product-complete OPEN")
+if "Honesty addendum 2026-09-06 vs Files Cut/Move session plane" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must add a dated Files Cut/Move session leftover addendum")
+if "CLOSED leftover: session Cut/Move + permanent Delete UI" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name CLOSED leftover as session Cut/Move + permanent Delete UI")
 if "Honesty addendum 2026-09-06 vs Settings Update apply" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Settings Update apply leftover addendum")
 if "Fabric system.update stays inspect-only" not in gaps:
@@ -1835,13 +1839,13 @@ if entry_move.get("consent", {}).get("mode") != "high-risk":
     raise SystemExit(f"files.entry.move consent is not consequential: {entry_move.get('consent')}")
 if entry_move.get("effects") != ["mutating"]:
     raise SystemExit(f"files.entry.move effects are {entry_move.get('effects')}")
-if entry_move["humanRoute"].get("status") != "planned":
-    raise SystemExit(f"files.entry.move invents a Cut LIVE route: {entry_move.get('humanRoute')}")
-if entry_move["humanRoute"].get("path"):
-    raise SystemExit(f"files.entry.move invents a Cut LIVE path: {entry_move.get('humanRoute')}")
-if entry_move.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if entry_move["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"files.entry.move underclaims the session Cut route: {entry_move.get('humanRoute')}")
+if entry_move["humanRoute"].get("path") != "Files > Cut":
+    raise SystemExit(f"files.entry.move path is {entry_move.get('humanRoute')}")
+if entry_move.get("source", {}).get("file") != "shell/apps/shared/FilesSessionMutate.qml":
     raise SystemExit(f"files.entry.move source is {entry_move.get('source')}")
-if entry_move.get("source", {}).get("symbol") != "apply_files_entry_move":
+if entry_move.get("source", {}).get("symbol") != "moveRecord":
     raise SystemExit(f"files.entry.move source is {entry_move.get('source')}")
 named_move = f"{entry_move.get('source', {}).get('file') or ''} {entry_move.get('source', {}).get('symbol') or ''}".lower()
 if "nautilus" in named_move:
@@ -1867,13 +1871,13 @@ if entry_delete.get("consent", {}).get("mode") != "high-risk":
     raise SystemExit(f"files.entry.delete consent is not consequential: {entry_delete.get('consent')}")
 if entry_delete.get("effects") != ["mutating"]:
     raise SystemExit(f"files.entry.delete effects are {entry_delete.get('effects')}")
-if entry_delete["humanRoute"].get("status") != "planned":
-    raise SystemExit(f"files.entry.delete invents a Delete LIVE route: {entry_delete.get('humanRoute')}")
-if entry_delete["humanRoute"].get("path"):
-    raise SystemExit(f"files.entry.delete invents a Delete LIVE path: {entry_delete.get('humanRoute')}")
-if entry_delete.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if entry_delete["humanRoute"].get("status") != "visible":
+    raise SystemExit(f"files.entry.delete underclaims the session Permanently delete route: {entry_delete.get('humanRoute')}")
+if entry_delete["humanRoute"].get("path") != "Files > Permanently delete":
+    raise SystemExit(f"files.entry.delete path is {entry_delete.get('humanRoute')}")
+if entry_delete.get("source", {}).get("file") != "shell/apps/shared/FilesSessionMutate.qml":
     raise SystemExit(f"files.entry.delete source is {entry_delete.get('source')}")
-if entry_delete.get("source", {}).get("symbol") != "apply_files_entry_delete":
+if entry_delete.get("source", {}).get("symbol") != "deleteRecord":
     raise SystemExit(f"files.entry.delete source is {entry_delete.get('source')}")
 named_delete = f"{entry_delete.get('source', {}).get('file') or ''} {entry_delete.get('source', {}).get('symbol') or ''}".lower()
 if "nautilus" in named_delete:
@@ -2075,6 +2079,10 @@ if "Honesty addendum 2026-09-06 vs Files Recycle session plane" not in writers_h
     raise SystemExit("HANDOFF_WRITERS must add the Files Recycle session leftover addendum")
 if "CLOSED leftover: session Trash/Restore/Empty UI" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name CLOSED leftover as session Trash/Restore/Empty UI")
+if "Honesty addendum 2026-09-06 vs Files Cut/Move session plane" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must add the Files Cut/Move session leftover addendum")
+if "CLOSED leftover: session Cut/Move + permanent Delete UI" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name CLOSED leftover as session Cut/Move + permanent Delete UI")
 if "Honesty addendum 2026-09-05 vs Recycle desktop place" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must add the Recycle desktop place addendum")
 if "Recycle Bin.desktop" not in writers_handoff:
