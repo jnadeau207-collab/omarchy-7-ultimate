@@ -29,6 +29,10 @@ grep -Fq '"system-update-history": apply_system_update_history' "$helper" ||
   fail "session apply owns system-update-history"
 grep -Fq 'system-update-history' "$settings_session" || fail "session update QML calls system-update-history"
 grep -Fq 'function readHistory(' "$settings_session" || fail "session update QML exposes readHistory"
+grep -Fq 'function refreshHistory(' "$settings_card" || fail "Update history card chrome exposes refreshHistory"
+if grep -Fq 'function readHistory(' "$settings_card"; then
+  fail "Update history card must not invent a local readHistory"
+fi
 grep -Fq 'omarchy-fabric-session-apply' "$settings_session" ||
   fail "session history QML uses the session apply helper"
 if grep -Eq 'operation\.(preflight|start|approve)|requestFabric' "$settings_session" "$settings_card"; then
@@ -228,12 +232,14 @@ if route.get("status") != "visible" or route.get("surface") != "Settings":
     raise SystemExit(f"update.history.read route is {route}")
 if route.get("path") not in {"Settings > Update", "Start > Settings > Update"}:
     raise SystemExit(f"update.history.read path is {route}")
-if route.get("label") != "View update history":
+if route.get("label") != "Update history":
     raise SystemExit(f"update.history.read label is {route}")
-if history.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsUpdateHistory.qml":
+if history.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionUpdate.qml":
     raise SystemExit(f"update.history.read source is {history.get('source')}")
 if history.get("source", {}).get("symbol") != "readHistory":
     raise SystemExit(f"update.history.read source is {history.get('source')}")
+if "SettingsUpdateHistory.qml" in str(history.get("source", {}).get("file") or ""):
+    raise SystemExit("update.history.read must not invent source on SettingsUpdateHistory.qml")
 if history.get("availability", {}).get("claim") == "present":
     raise SystemExit("update.history.read must not claim present")
 if history.get("availability", {}).get("claim") != "partial":

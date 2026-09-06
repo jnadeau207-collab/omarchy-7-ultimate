@@ -2316,10 +2316,10 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Settings",
-        "label": "View update history",
+        "label": "Update history",
         "path": "Settings > Update"
       },
-      "agentCenterLabel": "View update history",
+      "agentCenterLabel": "Update history",
       "proofIds": {
         "acceptance": [
           "proof.capability.update-history-read.tree-audit"
@@ -2329,7 +2329,7 @@
         ]
       },
       "source": {
-        "file": "shell/apps/ultimate-settings/SettingsUpdateHistory.qml",
+        "file": "shell/apps/shared/SettingsSessionUpdate.qml",
         "symbol": "readHistory",
         "brokerVerb": null
       }

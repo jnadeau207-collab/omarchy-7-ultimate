@@ -717,12 +717,15 @@ if update_history["humanRoute"].get("surface") != "Settings" or update_history["
     raise SystemExit(f"update.history.read route is {update_history.get('humanRoute')}")
 if update_history["humanRoute"].get("status") != "visible":
     raise SystemExit(f"update.history.read route status is {update_history.get('humanRoute')}")
-if update_history["humanRoute"].get("label") != "View update history":
+if update_history["humanRoute"].get("label") != "Update history":
     raise SystemExit(f"update.history.read label is {update_history.get('humanRoute')}")
-if update_history.get("source", {}).get("file") != "shell/apps/ultimate-settings/SettingsUpdateHistory.qml":
+if update_history.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionUpdate.qml":
     raise SystemExit(f"update.history.read source is {update_history.get('source')}")
 if update_history.get("source", {}).get("symbol") != "readHistory":
     raise SystemExit(f"update.history.read source is {update_history.get('source')}")
+named_history = f"{update_history.get('source', {}).get('file') or ''} {update_history.get('source', {}).get('symbol') or ''}"
+if "SettingsUpdateHistory.qml" in named_history:
+    raise SystemExit("update.history.read must not invent source on SettingsUpdateHistory.qml")
 if update_history.get("availability", {}).get("claim") == "present":
     raise SystemExit("update.history.read must not claim present")
 if update_history.get("availability", {}).get("human") != "partial":
