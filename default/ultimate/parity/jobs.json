@@ -2024,7 +2024,7 @@
         "path": "Settings > Display"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the prior color-temperature schedule.",
+      "recoveryExpectation": "Toggle night light from Settings > Display through tip-true SettingsSessionNightlight.setEnabled \u2192 NightlightService (re-toggle; no Fabric durable undo fingerprint invent).",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.34"
