@@ -80,7 +80,7 @@ const agent = JSON.parse(fs.readFileSync(path.join(root, 'shell/apps/ultimate-ag
 
 const settingsValidation = protocol.validateCatalog(settings, 'settings', 'org.omarchy.Settings')
 assert(settingsValidation.ok, 'QML-side protocol accepts the canonical Settings catalog')
-assertEqual(settings.routes.length, 13, 'Settings catalog spans home and all twelve provider domains')
+assertEqual(settings.routes.length, 14, 'Settings catalog spans home, twelve provider domains, and Default Programs')
 const appsRoute = settings.routes.find(route => route.id === 'settings.apps.overview')
 assertEqual(appsRoute.providerId, 'defaults.provider', 'Settings Apps binds to the registered defaults provider')
 
@@ -221,8 +221,11 @@ import sys
 
 catalog = json.load(open(sys.argv[1], encoding="utf-8"))
 apps = [route for route in catalog["routes"] if route["id"] == "settings.apps.overview"]
+defaults = [route for route in catalog["routes"] if route["id"] == "settings.apps.default-programs"]
 assert len(apps) == 1
+assert len(defaults) == 1
 assert apps[0]["providerId"] == "defaults.provider"
+assert defaults[0]["providerId"] == "defaults.provider"
 assert all(route["providerId"] != "apps.provider" for route in catalog["routes"])
 PY
 pass "Settings Apps route binds to the registered defaults provider"

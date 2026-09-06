@@ -78,7 +78,16 @@ var ROUTE_QUERIES = [
     action: "inspect",
     capability: "defaults.inspect",
     supportsResource: true,
-    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set for the http and https schemes. The default email application applies through defaults.provider protocol.set for the mailto scheme. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings."
+    coverage: "Default applications and associations are readable through defaults.inspect, including MIME inventory. The default browser applies through defaults.provider protocol.set for the http and https schemes. The default email application applies through defaults.provider protocol.set for the mailto scheme. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. Startup applications are readable through defaults.inspect. Settings cannot enable, disable, or remove startup applications. Background application inventory remains unavailable from Settings. Default Programs is the dedicated protocol and MIME page."
+  },
+  {
+    routeId: "settings.apps.default-programs",
+    title: "Default Programs",
+    providerId: "defaults.provider",
+    action: "inspect",
+    capability: "defaults.inspect",
+    supportsResource: true,
+    coverage: "Default Programs page partial LIVE. The default browser applies through defaults.provider protocol.set for http and https. The default email application applies through defaults.provider protocol.set for mailto. MIME defaults apply through defaults.provider mime.set for writable associations with more than one installed candidate. AutoPlay, Set Program Access and Computer Defaults, and files.associations.set remain unavailable. This is not the Win7 Default Programs applet. Win7 applet parity still open."
   },
   {
     routeId: "settings.accessibility.overview",
@@ -122,8 +131,14 @@ var LIVE_WRITER_ROUTES = [
   "settings.network.overview",
   "settings.display.overview",
   "settings.input.overview",
-  "settings.apps.overview"
+  "settings.apps.overview",
+  "settings.apps.default-programs"
 ]
+
+function isDefaultsWriterRoute(routeId) {
+  var id = String(routeId || "")
+  return id === "settings.apps.overview" || id === "settings.apps.default-programs"
+}
 
 function routeHasLiveWriter(routeId) {
   return LIVE_WRITER_ROUTES.indexOf(String(routeId || "")) >= 0
@@ -144,7 +159,7 @@ function declaredOpsHonesty(routeId) {
 }
 
 function authorityFooter() {
-  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, and Apps default email are LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
+  return "Typed writers run through preflight, approval, and the durable coordinator as this user \u00b7 Sound volume, Network Wi-Fi radio, Display brightness, Input layout, Apps default browser, Apps default email, and Default Programs protocol and MIME associations are LIVE \u00b7 Power profile stays inspect-only because polkit cannot authorize the fabric daemon under app.slice \u00b7 other domains stay inspect-only \u00b7 no direct commands or elevated privilege \u00b7 Open pages re-read when shown and after local writers; out-of-band changes while this window stays focused need F5 or Retry, with no live hardware-key subscription"
 }
 
 function operationIdempotencyToken(value) {
@@ -1314,6 +1329,7 @@ if (typeof module !== "undefined") {
     provenance: provenance,
     hostedPanel: hostedPanel,
     LIVE_WRITER_ROUTES: LIVE_WRITER_ROUTES,
+    isDefaultsWriterRoute: isDefaultsWriterRoute,
     routeHasLiveWriter: routeHasLiveWriter,
     coverageBadge: coverageBadge,
     coverageTone: coverageTone,

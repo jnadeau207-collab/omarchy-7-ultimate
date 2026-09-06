@@ -654,9 +654,9 @@ chmod +x "$ROOT/bin/omarchy-launch-files"
 grep -Fq 'Actions=Home;ThisPC;Desktop;Documents;Downloads;Pictures;Music;Videos;Recent;Trash;Search;' \
   "$HOME/.local/share/applications/org.omarchy.Files.desktop" \
   || fail "published Files launcher keeps Home plus Computer, Desktop, Documents, Downloads, Pictures, Music, Videos, Recent, Recycle Bin, and Search"
-grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;Input;Update;Recovery;' \
+grep -Fq 'Actions=Home;Display;Sound;Network;Bluetooth;Power;Personalization;Apps;DefaultPrograms;Input;Update;Recovery;' \
   "$HOME/.local/share/applications/org.omarchy.Settings.desktop" \
-  || fail "published Settings launcher keeps Settings home plus the inspect-backed pages and publishes no provider-less action"
+  || fail "published Settings launcher keeps Settings home plus Default Programs and the inspect-backed pages and publishes no provider-less action"
 grep -Fq 'Actions=Overview;Tasks;Approvals;Automations;Activity;History;Context;Usage;Permissions;Providers;Artifacts;Troubleshooting;' \
   "$HOME/.local/share/applications/org.omarchy.AgentCenter.desktop" \
   || fail "published Agent Center launcher keeps Overview on the jump list"

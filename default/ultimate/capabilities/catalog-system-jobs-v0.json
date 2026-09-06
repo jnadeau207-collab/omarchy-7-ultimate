@@ -1379,8 +1379,8 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Settings",
-        "label": "Default apps",
-        "path": "Settings > Apps"
+        "label": "Default Programs",
+        "path": "Settings > Default Programs"
       },
       "agentCenterLabel": "Default apps",
       "proofIds": {
@@ -1472,8 +1472,8 @@
       "humanRoute": {
         "status": "visible",
         "surface": "Settings",
-        "label": "Default apps",
-        "path": "Settings > Apps"
+        "label": "Default Programs",
+        "path": "Settings > Default Programs"
       },
       "agentCenterLabel": "Choose file associations",
       "proofIds": {

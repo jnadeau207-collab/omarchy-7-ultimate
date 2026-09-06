@@ -213,6 +213,31 @@
       }
     },
     {
+      "id": "settings.apps.default-programs",
+      "section": "Personal",
+      "title": "Default Programs",
+      "description": "Set the default browser, default email, and writable MIME associations.",
+      "keywords": [
+        "default programs",
+        "defaults",
+        "browser",
+        "mailto",
+        "mime",
+        "associations"
+      ],
+      "providerId": "defaults.provider",
+      "deepLink": {
+        "host": "apps",
+        "path": "default-programs"
+      },
+      "argumentSchema": {
+        "resourceId": {
+          "type": "opaque-id",
+          "optional": true
+        }
+      }
+    },
+    {
       "id": "settings.accessibility.overview",
       "section": "Personal",
       "title": "Accessibility",

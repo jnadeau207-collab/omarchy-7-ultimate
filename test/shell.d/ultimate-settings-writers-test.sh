@@ -144,8 +144,12 @@ grep -Fq 'if (!row || row.defaultAppId === appId) return' "$application" ||
   fail "Settings refuses a MIME default that is already set"
 grep -Fq 'if (!supported) return' "$application" ||
   fail "Settings refuses a MIME application the row does not list as a candidate"
-grep -Eq 'currentRoute\.id !== "settings\.apps\.overview"\) return$' "$application" ||
-  fail "Settings offers MIME defaults only on the Apps overview route"
+grep -Fq 'SettingsModel.isDefaultsWriterRoute' "$application" ||
+  fail "Settings offers MIME defaults on Apps and Default Programs writer routes"
+grep -Fq 'id: defaultProgramsHonesty' "$application" ||
+  fail "Settings shows a Default Programs honesty card"
+grep -Fq 'settings.apps.default-programs' "$ROOT/shell/apps/ultimate-settings/routes-v1.json" ||
+  fail "Settings catalog registers the Default Programs route"
 grep -Fq 'id: mailerColumn' "$application" || fail "Settings shows a Default email application card"
 grep -Fq 'function applyDefaultMailer(appId)' "$application" || fail "Settings wires the mailer writer"
 grep -Fq 'id: startupColumn' "$application" || fail "Settings shows a Startup applications card"
@@ -245,6 +249,13 @@ assertEqual(Model.mailerAssociation('nope'), null, 'non-array records offer no m
 assertEqual(Model.normalizeAssociation({ id: 'defaults.association.c', kind: 'protocol', key: 'https', status: 'configured', defaultAppId: null, writable: false, candidateAppIds: [] }, 0).writable, false, 'a read-only association reports itself read-only')
 
 const appsQuery = Model.queryForRoute('settings.apps.overview')
+const defaultProgramsQuery = Model.queryForRoute('settings.apps.default-programs')
+assert(defaultProgramsQuery, 'Default Programs has a closed provider query')
+assertEqual(defaultProgramsQuery.providerId, 'defaults.provider', 'Default Programs reads defaults.provider')
+assertEqual(defaultProgramsQuery.action, 'inspect', 'Default Programs inspects associations before apply')
+assert(defaultProgramsQuery.coverage.indexOf('Default Programs page partial LIVE') >= 0, 'Default Programs coverage names partial LIVE')
+assert(defaultProgramsQuery.coverage.indexOf('Win7 applet parity still open') >= 0, 'Default Programs coverage keeps Win7 applet parity open')
+assert(defaultProgramsQuery.coverage.indexOf('files.associations.set remain unavailable') >= 0, 'Default Programs coverage refuses files.associations.set')
 assert(appsQuery.coverage.indexOf('protocol.set') >= 0, 'the apps coverage note names the settable verb')
 assert(appsQuery.coverage.indexOf('defaults.inspect') >= 0, 'the apps coverage note names MIME inspect inventory')
 assert(appsQuery.coverage.indexOf('MIME defaults apply through defaults.provider mime.set') >= 0, 'the apps coverage note names the live MIME verb')
