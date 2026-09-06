@@ -91,6 +91,21 @@ if doc.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"files.document.open was raised off leftover: {doc.get('provider')}")
 if doc.get("provider", {}).get("id") != "files.provider":
     raise SystemExit(f"files.document.open provider is {doc.get('provider')}")
+if doc.get("kind") != "writer":
+    raise SystemExit(f"files.document.open kind dual-truth (want writer/launch): {doc.get('kind')}")
+if doc.get("effects") != ["launch"]:
+    raise SystemExit(f"files.document.open effects dual-truth (want launch): {doc.get('effects')}")
+if doc.get("consent", {}).get("mode") != "implicit":
+    raise SystemExit(f"files.document.open consent dual-truth: {doc.get('consent')}")
+if doc.get("idempotency", {}).get("mode") != "non-idempotent":
+    raise SystemExit(f"files.document.open idempotency dual-truth: {doc.get('idempotency')}")
+if doc.get("cancellation", {}).get("mode") != "before-apply":
+    raise SystemExit(f"files.document.open cancellation dual-truth: {doc.get('cancellation')}")
+rec = (doc.get("recovery") or {}).get("expectation") or ""
+if "openEntry" not in rec or "xdg-open" not in rec or "read-only" in rec.lower():
+    raise SystemExit(f"files.document.open recoveryExpectation dual-truth: {doc.get('recovery')}")
+if doc.get("schemas", {}).get("preflight", {}).get("$ref", "").endswith("notApplicable"):
+    raise SystemExit(f"files.document.open preflight still reader invent: {doc.get('schemas')}")
 
 entry_open = by_id["files.entry.open"]
 if entry_open.get("provider", {}).get("state") != "present":
@@ -121,6 +136,11 @@ if native17["humanRoute"].get("path") != "Files > PDF":
     raise SystemExit(f"windows-native.17 path is {native17.get('humanRoute')}")
 if native17["humanRoute"].get("status") != "visible":
     raise SystemExit(f"windows-native.17 route is {native17.get('humanRoute')}")
+wn17_rec = native17.get("recoveryExpectation") or ""
+if "Read-only open requires no recovery." in wn17_rec:
+    raise SystemExit(f"windows-native.17 still invents read-only recovery: {wn17_rec}")
+if "openEntry" not in wn17_rec or "xdg-open" not in wn17_rec:
+    raise SystemExit(f"windows-native.17 recoveryExpectation not tip-true: {wn17_rec}")
 
 explorer = by_job["parity.explorer-this-pc"]
 if explorer.get("claim") == "present":
@@ -208,6 +228,18 @@ if "session leftover recorded" not in handoff:
     raise SystemExit("HANDOFF must record session leftover honesty")
 if "Cloud mocks do not close windows-native.17" not in handoff:
     raise SystemExit("HANDOFF must refuse closing windows-native.17 from Cloud mocks")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in handoff or "effects=`launch`" not in handoff:
+    raise SystemExit("HANDOFF must tip-align files.document.open writer/launch (not reader invent)")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in gaps or "effects=`launch`" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must tip-align files.document.open writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in parity or "effects=`launch`" not in parity:
+    raise SystemExit("PARITY must tip-align files.document.open writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in project or "effects=`launch`" not in project:
+    raise SystemExit("project-ultimate must tip-align files.document.open writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in files_docs or "effects=`launch`" not in files_docs:
+    raise SystemExit("files-defaults-provider must tip-align files.document.open writer/launch")
+if "Catalog tip-align 2026-09-06 MUST_FIX" not in controlpanel or "effects=`launch`" not in controlpanel:
+    raise SystemExit("fleet-catalog-controlpanel must tip-align files.document.open writer/launch")
 if "not product CLOSED" not in handoff:
     raise SystemExit("HANDOFF must refuse product CLOSED invent")
 if "Files › PDF" not in handoff and "Files > PDF" not in handoff:

@@ -6362,8 +6362,10 @@
         "version": "v0",
         "state": "legacy-direct"
       },
-      "kind": "reader",
-      "effects": [],
+      "kind": "writer",
+      "effects": [
+        "launch"
+      ],
       "schemas": {
         "input": {
           "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/genericInput"
@@ -6378,7 +6380,7 @@
           "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationError"
         },
         "preflight": {
-          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
+          "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/operationPreflight"
         },
         "progress": {
           "$ref": "urn:omarchy:ultimate:capability-schema:contract-types-v0#/$defs/notApplicable"
@@ -6396,24 +6398,24 @@
         "files.resource"
       ],
       "consent": {
-        "mode": "none",
-        "policy": "Reading current state does not require mutation consent."
+        "mode": "implicit",
+        "policy": "The visible gesture or a scoped operation grant supplies consent."
       },
       "idempotency": {
-        "mode": "read",
+        "mode": "non-idempotent",
         "keyRequired": false
       },
       "concurrency": {
-        "mode": "parallel",
+        "mode": "resource-serialized",
         "scope": "files.resource"
       },
       "cancellation": {
-        "mode": "not-applicable",
-        "limit": "No mutation is started."
+        "mode": "before-apply",
+        "limit": "Cancellation is accepted before the launch begins."
       },
       "recovery": {
         "mode": "none",
-        "expectation": "No durable mutation is expected.",
+        "expectation": "Open a PDF through tip-true openEntry \u2192 files-entry-open \u2192 /usr/bin/xdg-open with the default/associated viewer; launch does not mutate Files inventory and has no undo.",
         "stateFingerprintRequired": false
       },
       "redaction": {
