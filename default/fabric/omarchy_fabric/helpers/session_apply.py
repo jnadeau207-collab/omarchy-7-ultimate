@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import errno
+import fcntl
 import hashlib
 import io
 import json
@@ -40,6 +41,22 @@ OMARCHY_PKG_ADD = "omarchy-pkg-add"
 OMARCHY_PKG_DROP = "omarchy-pkg-drop"
 SOFTWARE_PACKAGE_ID = re.compile(r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$")
 SOFTWARE_COMMAND_TIMEOUT_SECONDS = 900
+OMARCHY_VERSION_CHANNEL = "omarchy-version-channel"
+OMARCHY_UPDATE = "omarchy-update"
+OMARCHY_UPDATE_AVAILABLE = "omarchy-update-available"
+OMARCHY_UPDATE_FREE_SPACE = "omarchy-update-requires-free-space"
+UPDATE_COMMAND_TIMEOUT_SECONDS = 900
+UPDATE_CHANNELS = frozenset({"stable", "candidate", "rc", "edge"})
+UPDATE_AUTH_MARKERS = (
+    "sudo:",
+    "a password is required",
+    "authentication",
+    "not authorized",
+    "polkit",
+    "authorization required",
+    "incorrect password",
+    "sorry, try again",
+)
 
 class ApplyError(Exception):
     def __init__(self, code: str, explanation: str) -> None:
@@ -1566,6 +1583,159 @@ def apply_software_install(stdin: Any, stdout: Any, run: Any = subprocess.run) -
 def apply_software_remove(stdin: Any, stdout: Any, run: Any = subprocess.run) -> int:
     return apply_software_mutation(stdin, stdout, OMARCHY_PKG_DROP, "Removed {package_ref}.", run)
 
+def update_lock_path() -> pathlib.Path:
+    runtime = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+    return pathlib.Path(runtime) / "omarchy-update.lock"
+
+def default_update_lock_held() -> bool:
+    try:
+        fd = os.open(update_lock_path(), os.O_RDWR)
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return False
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        return False
+    except OSError:
+        return True
+    finally:
+        os.close(fd)
+
+def run_update_helper(argv: list[str], run: Any, timeout: int) -> Any:
+    try:
+        return run(argv, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as error:
+        raise ApplyError("command.unavailable", "The code-owned system command is not installed.") from error
+
+def probe_update_channel(run: Any) -> str:
+    completed = run_update_helper([OMARCHY_VERSION_CHANNEL], run, 30)
+    if completed.returncode != 0:
+        raise ApplyError("command.failed", "The channel probe reported a failure status.")
+    for line in completed.stdout.splitlines():
+        token = line.strip().lower()
+        if token:
+            return token
+    raise ApplyError("command.failed", "The channel probe named no channel.")
+
+def require_update_channel(payload: Mapping[str, Any]) -> str:
+    channel = payload.get("channel")
+    if not isinstance(channel, str) or not channel.strip():
+        raise ApplyError("payload.invalid", "The apply payload names no update channel.")
+    token = channel.strip().lower()
+    if token not in UPDATE_CHANNELS:
+        raise ApplyError("payload.invalid", "The requested channel is not a code-owned update channel.")
+    return token
+
+def refuse_channel_mismatch(requested: str, active: str) -> None:
+    if requested != active:
+        raise ApplyError(
+            "update.channel-mismatch",
+            "The requested channel is not the channel this machine tracks.",
+        )
+
+def probe_update_available(run: Any) -> tuple[bool, list[str]]:
+    completed = run_update_helper([OMARCHY_UPDATE_AVAILABLE], run, 60)
+    lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+    if completed.returncode == 0:
+        return True, lines
+    return False, lines
+
+def probe_update_disk(run: Any) -> tuple[bool, str]:
+    completed = run_update_helper([OMARCHY_UPDATE_FREE_SPACE], run, 15)
+    if completed.returncode == 0:
+        return True, ""
+    detail = (completed.stdout or completed.stderr or "").strip()[:480]
+    return False, detail or "This machine does not have enough free disk space to update safely."
+
+def classify_update_failure(completed: Any) -> ApplyError:
+    detail = (completed.stderr or completed.stdout or "").strip()[:480]
+    text = detail.lower()
+    if any(marker in text for marker in UPDATE_AUTH_MARKERS):
+        return ApplyError("update.auth-denied", detail or "This session could not authorize the update.")
+    if "already running" in text:
+        return ApplyError("update.lock-held", detail or "An Omarchy update is already running.")
+    if "10 gib" in text or "free to safely update" in text:
+        return ApplyError("update.disk-space", detail or "This machine does not have enough free disk space to update safely.")
+    return ApplyError("command.failed", detail or "The session update helper reported a failure.")
+
+def apply_system_update_status(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+    lock_held: Any = None,
+) -> int:
+    try:
+        read_payload(stdin)
+        channel = probe_update_channel(run)
+        available, lines = probe_update_available(run)
+        held = lock_held() if callable(lock_held) else default_update_lock_held()
+        disk_ok, disk_detail = probe_update_disk(run)
+        if held:
+            explanation = "An Omarchy update is already running."
+        elif not disk_ok:
+            explanation = disk_detail
+        elif available:
+            explanation = f"Updates are available on {channel}."
+        else:
+            explanation = f"Omarchy is up to date on {channel}."
+        json.dump(
+            {
+                "ok": True,
+                "channel": channel,
+                "available": available,
+                "availableLines": lines,
+                "lockHeld": held,
+                "diskOk": disk_ok,
+                "explanation": explanation,
+            },
+            stdout,
+        )
+        stdout.write("\n")
+        return 0
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+
+def apply_system_update(
+    stdin: Any,
+    stdout: Any,
+    run: Any = subprocess.run,
+    lock_held: Any = None,
+) -> int:
+    try:
+        payload = read_payload(stdin)
+        requested = require_update_channel(payload)
+        active = probe_update_channel(run)
+        refuse_channel_mismatch(requested, active)
+        if lock_held() if callable(lock_held) else default_update_lock_held():
+            raise ApplyError("update.lock-held", "An Omarchy update is already running.")
+        disk_ok, disk_detail = probe_update_disk(run)
+        if not disk_ok:
+            raise ApplyError("update.disk-space", disk_detail)
+        available, _lines = probe_update_available(run)
+        if not available:
+            raise ApplyError("update.none-available", "No system updates are available.")
+        completed = run_update_helper([OMARCHY_UPDATE, "-y"], run, UPDATE_COMMAND_TIMEOUT_SECONDS)
+        if completed.returncode != 0:
+            raise classify_update_failure(completed)
+    except ApplyError as error:
+        json.dump({"ok": False, "code": error.code, "explanation": error.explanation}, stdout)
+        stdout.write("\n")
+        return 1
+    json.dump(
+        {
+            "ok": True,
+            "channel": requested,
+            "explanation": f"Installed system updates on {requested}.",
+        },
+        stdout,
+    )
+    stdout.write("\n")
+    return 0
+
 ACTIONS = {
     "audio-output-volume-set": apply_audio_output_volume,
     "display-brightness-set": apply_display_brightness,
@@ -1588,6 +1758,8 @@ ACTIONS = {
     "files-entry-delete": apply_files_entry_delete,
     "software-install": apply_software_install,
     "software-remove": apply_software_remove,
+    "system-update-status": apply_system_update_status,
+    "system-update": apply_system_update,
 }
 
 def main(argv: list[str], stdin: Any = None, stdout: Any = None) -> int:
