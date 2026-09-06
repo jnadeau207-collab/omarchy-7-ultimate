@@ -1962,14 +1962,14 @@
       "kind": "windows-native-task",
       "sourceLabel": "Add a printer",
       "sourceStatus": "pending",
-      "claim": "missing",
+      "claim": "prototype",
       "capabilityIds": [
         "printers.manage"
       ],
       "humanRoute": {
-        "status": "planned",
+        "status": "visible",
         "surface": "Settings",
-        "path": ""
+        "path": "Settings > Printers"
       },
       "agentAvailability": "unavailable",
       "recoveryExpectation": "Cancel setup safely or remove the newly added printer.",
