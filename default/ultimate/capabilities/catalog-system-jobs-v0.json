@@ -6256,8 +6256,8 @@
         ]
       },
       "source": {
-        "file": "bin/omarchy-launch-nautilus",
-        "symbol": "nautilus-eject",
+        "file": "shell/apps/shared/FilesSessionEject.qml",
+        "symbol": "ejectDevice",
         "brokerVerb": null
       }
     },
