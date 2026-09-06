@@ -234,6 +234,7 @@ for capability_id, (surface, path) in inspect_routes.items():
 
 writer_routes = {
     "audio.output.manage": ("Settings", "Settings > Sound; Superbar > Quick Settings > Sound"),
+    "troubleshooting.audio.run": ("Settings", "Settings > Sound"),
     "printers.manage": ("Settings", "Settings > Printers"),
     "bluetooth.audio.pair": ("Settings", "Settings > Bluetooth"),
     "display.configure": ("Quick Settings", "Superbar > Quick Settings > Display"),
@@ -671,6 +672,30 @@ if "Panel.qml" in str(output_manage.get("source", {}).get("file") or ""):
     raise SystemExit(f"audio.output.manage still names the QS panel only: {output_manage.get('source')}")
 if "SettingsSound.qml" in str(output_manage.get("source", {}).get("file") or ""):
     raise SystemExit("audio.output.manage must not invent source on SettingsSound.qml")
+
+troubleshoot_audio = by_id["troubleshooting.audio.run"]
+if troubleshoot_audio.get("availability", {}).get("claim") == "present":
+    raise SystemExit("troubleshooting.audio.run must not claim present")
+if troubleshoot_audio.get("availability", {}).get("claim") != "partial":
+    raise SystemExit(f"troubleshooting.audio.run claim is {troubleshoot_audio.get('availability')}")
+if troubleshoot_audio.get("availability", {}).get("human") != "partial":
+    raise SystemExit(f"troubleshooting.audio.run human availability is {troubleshoot_audio.get('availability')}")
+if troubleshoot_audio.get("provider", {}).get("state") != "legacy-direct":
+    raise SystemExit(f"troubleshooting.audio.run was raised off leftover: {troubleshoot_audio.get('provider')}")
+if troubleshoot_audio.get("humanRoute", {}).get("status") != "visible":
+    raise SystemExit(f"troubleshooting.audio.run route is {troubleshoot_audio.get('humanRoute')}")
+if troubleshoot_audio.get("humanRoute", {}).get("path") != "Settings > Sound":
+    raise SystemExit(f"troubleshooting.audio.run path is {troubleshoot_audio.get('humanRoute')}")
+if troubleshoot_audio.get("source", {}).get("symbol") != "apply_audio_troubleshoot_restart":
+    raise SystemExit(f"troubleshooting.audio.run source is {troubleshoot_audio.get('source')}")
+if "SettingsSound.qml" in str(troubleshoot_audio.get("source", {}).get("file") or ""):
+    raise SystemExit("troubleshooting.audio.run must not invent source on SettingsSound.qml")
+jobs_wn39 = json.loads(Path(root, "default", "ultimate", "parity", "jobs.json").read_text(encoding="utf-8"))
+native39 = next(job for job in jobs_wn39["jobs"] if job["id"] == "windows-native.39")
+if native39.get("sourceStatus") != "pending" or native39.get("claim") != "prototype":
+    raise SystemExit(f"windows-native.39 must stay prototype/pending: {native39}")
+if native39.get("humanRoute", {}).get("path") != "Settings > Sound":
+    raise SystemExit(f"windows-native.39 underclaims Settings Sound: {native39.get('humanRoute')}")
 
 volume_set = by_id["audio.volume.set"]
 if volume_set.get("provider", {}).get("id") != "audio.provider":

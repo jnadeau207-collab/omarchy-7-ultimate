@@ -185,7 +185,7 @@ assert(audio.coverage.indexOf('not claim=present') >= 0, 'audio coverage refuses
 assert(audio.coverage.indexOf('windows-native.6 stays pending') >= 0, 'audio coverage keeps wn.6 pending')
 assert(Model.declaredOpsHonesty('settings.audio.overview').indexOf('audio-output-mute-set') >= 0, 'audio declared ops name mute')
 assert(Model.declaredOpsHonesty('settings.audio.overview').indexOf('does not invent') >= 0, 'audio declared ops refuse Fabric invent')
-assert(Model.authorityFooter().indexOf('Sound mute and default output') >= 0, 'authority footer names session Sound')
+assert(Model.authorityFooter().indexOf('Sound mute, default output, and audio troubleshoot restart') >= 0, 'authority footer names session Sound')
 JS
 
 pass "Settings model maps session Sound outcomes and refuses a Fabric invent"
