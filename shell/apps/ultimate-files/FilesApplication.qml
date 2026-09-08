@@ -595,10 +595,10 @@ Item {
   function commandActions() {
     if (root.trashRoute) {
       return [
-        { key: "organize", label: "Organize", dropdown: true, enabled: true },
-        { key: "restore", label: "Restore", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord) },
-        { key: "empty-bin", label: "Empty Recycle Bin", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && root.showRecords },
-        { key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy }
+        { key: "organize", label: "Organize", dropdown: true, commandButton: true, enabled: true },
+        { key: "restore", label: "Restore", dropdown: false, commandButton: true, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord) },
+        { key: "empty-bin", label: "Empty Recycle Bin", dropdown: false, commandButton: true, enabled: !root.operationBusy && !root.sessionBusy && root.showRecords },
+        { key: "properties", label: "Properties", dropdown: false, commandButton: true, enabled: !sessionProperties.busy }
       ]
     }
     var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
