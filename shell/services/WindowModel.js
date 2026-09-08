@@ -105,6 +105,26 @@ function frameRect(box, win) {
   }
 }
 
+function paintedOverhang(win) {
+  var inset = chromiumFrameInset(win)
+  if (inset > 0) return { left: inset, top: inset, right: inset, bottom: inset }
+  var bar = hyprbarsSnapInset(win)
+  if (bar > 0) return { left: 0, top: bar, right: 0, bottom: 0 }
+  return { left: 0, top: 0, right: 0, bottom: 0 }
+}
+
+function paintedFrame(box, win) {
+  var over = paintedOverhang(win)
+  if (!box || !box.width || !box.height) return box
+  return {
+    x: Number(box.x) - over.left,
+    y: Number(box.y) - over.top,
+    width: Number(box.width) + over.left + over.right,
+    height: Number(box.height) + over.top + over.bottom,
+    monitor: box.monitor
+  }
+}
+
 function parseClientsSnapshot(text, exitCode) {
   if (Number(exitCode) !== 0) return null
   var raw = String(text || "").trim()
@@ -608,22 +628,31 @@ function usableRect(monitor) {
   return area
 }
 
-function clampCompositorBox(rect, monitor) {
+function clampCompositorBox(rect, monitor, win) {
   var area = usableRect(monitor)
+  var over = paintedOverhang(win)
+  var inner = {
+    x: area.x + over.left,
+    y: area.y + over.top,
+    width: area.width - over.left - over.right,
+    height: area.height - over.top - over.bottom
+  }
+  if (inner.width < 1) inner.width = 1
+  if (inner.height < 1) inner.height = 1
   var width = Math.max(1, Number(rect && rect.width) || 1)
   var height = Math.max(1, Number(rect && rect.height) || 1)
-  if (area.width > 0 && width > area.width) width = Math.max(1, area.width)
-  if (area.height > 0 && height > area.height) height = Math.max(1, area.height)
+  if (inner.width > 0 && width > inner.width) width = Math.max(1, inner.width)
+  if (inner.height > 0 && height > inner.height) height = Math.max(1, inner.height)
   var x = Number(rect && rect.x)
   var y = Number(rect && rect.y)
-  if (isNaN(x)) x = area.x
-  if (isNaN(y)) y = area.y
-  if (x < area.x) x = area.x
-  if (y < area.y) y = area.y
-  if (x + width > area.x + area.width) x = area.x + Math.max(0, area.width - width)
-  if (y + height > area.y + area.height) y = area.y + Math.max(0, area.height - height)
-  if (x < area.x) x = area.x
-  if (y < area.y) y = area.y
+  if (isNaN(x)) x = inner.x
+  if (isNaN(y)) y = inner.y
+  if (x < inner.x) x = inner.x
+  if (y < inner.y) y = inner.y
+  if (x + width > inner.x + inner.width) x = inner.x + Math.max(0, inner.width - width)
+  if (y + height > inner.y + inner.height) y = inner.y + Math.max(0, inner.height - height)
+  if (x < inner.x) x = inner.x
+  if (y < inner.y) y = inner.y
   return {
     x: x,
     y: y,
@@ -805,6 +834,8 @@ if (typeof module !== "undefined") {
     chromiumFrameInset: chromiumFrameInset,
     frameBox: frameBox,
     frameRect: frameRect,
+    paintedOverhang: paintedOverhang,
+    paintedFrame: paintedFrame,
     parseClientsSnapshot: parseClientsSnapshot,
     hyprbarsSnapInset: hyprbarsSnapInset,
     windowMatchesPin: windowMatchesPin,

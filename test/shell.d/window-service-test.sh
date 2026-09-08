@@ -312,10 +312,12 @@ grep -Fq 'restoreFloatRetryTimer' "$ws" \
   || fail "float restore retries after CSD configure can move chrome off-screen"
 grep -Fq 'WindowModel.clampRect(bounds, geom, root._hyprbarsInset(target))' "$ws" \
   || fail "_applyRect clamps so restore cannot place chrome above the monitor"
-grep -Fq 'WindowModel.clampCompositorBox(bounds, geom)' "$ws" \
+grep -Fq 'WindowModel.clampCompositorBox(bounds, geom, root._frameWin(target))' "$ws" \
   || fail "_applyRect clamps the compositor box after frameBox and before move"
-grep -Fq 'WindowModel.clampCompositorBox(rect, geom)' "$ws" \
-  || fail "_applyMaximizedRect clamps the compositor box after frameBox and before move"
+grep -Fq 'WindowModel.clampCompositorBox(rect, geom, root._frameWin(target))' "$ws" \
+  || fail "_applyMaximizedRect and snap clamp the compositor box after frameBox and before move"
+grep -Fq 'function _frameWin' "$ws" \
+  || fail "dispatch clamp must know the painted frame class"
 grep -Fq 'function _clampRemembered' "$ws" \
   || fail "remembered restore origins are not persisted outside the usable rect"
 grep -Fq 'function usableRect' "$ROOT/shell/services/WindowModel.js" \
@@ -648,6 +650,26 @@ assert(clampedBox.y >= usable.y, 'compositor box origin y stays inside the usabl
 assert(clampedBox.x + clampedBox.width <= usable.x + usable.width, 'compositor far x stays inside the usable rect')
 assert(clampedBox.y + clampedBox.height <= usable.y + usable.height, 'compositor far y stays inside the usable rect including the Superbar')
 assert(chromeMax.y < usable.y, 'frameBox still expands Chromium above the wanted rect before the dispatch clamp')
+const chromeWin = { class: 'google-chrome' }
+const dispatched = m.clampCompositorBox(chromeMax, bare, chromeWin)
+const painted = m.paintedFrame(dispatched, chromeWin)
+assert(dispatched.x >= usable.x, 'dispatched chrome box origin x stays inside usableRect')
+assert(dispatched.y >= usable.y, 'dispatched chrome box origin y stays inside usableRect')
+assert(dispatched.x + dispatched.width <= usable.x + usable.width, 'dispatched chrome box far x stays inside usableRect')
+assert(dispatched.y + dispatched.height <= usable.y + usable.height, 'dispatched chrome box far y stays inside usableRect including the Superbar')
+assert(painted.x >= usable.x, 'painted chrome frame origin x stays inside usableRect')
+assert(painted.y >= usable.y, 'painted chrome frame origin y stays inside usableRect')
+assert(painted.x + painted.width <= usable.x + usable.width, 'painted chrome frame far x stays inside usableRect')
+assert(painted.y + painted.height <= usable.y + usable.height, 'painted chrome frame far y stays inside usableRect including the Superbar')
+assert(painted.x < dispatched.x && painted.y < dispatched.y, 'Chromium painted frame still overhangs the dispatched box')
+const ssdWin = { class: 'foot' }
+const ssdBox = m.clampCompositorBox(m.snapRect(bare, 'max', m.hyprbarsSnapInset(ssdWin)), bare, ssdWin)
+const ssdPaint = m.paintedFrame(ssdBox, ssdWin)
+assert(ssdBox.x >= usable.x && ssdBox.y >= usable.y, 'dispatched SSD box origin stays inside usableRect')
+assert(ssdBox.x + ssdBox.width <= usable.x + usable.width, 'dispatched SSD box far x stays inside usableRect')
+assert(ssdBox.y + ssdBox.height <= usable.y + usable.height, 'dispatched SSD box far y stays inside usableRect including the Superbar')
+assert(ssdPaint.y >= usable.y, 'hyprbars caption stays inside usableRect')
+assert(ssdPaint.y + ssdPaint.height <= usable.y + usable.height, 'hyprbars painted frame stays above the Superbar')
 const remembered = m.clampCompositorBox({ x: 40, y: -479, width: 880, height: 560 }, bare)
 assert(remembered.y >= usable.y, 'a remembered off-screen origin is not persisted outside the usable rect')
 const stored = m.parsePlacements(m.serializePlacements({ foot: { x: 48, y: 48, width: 880, height: 560 } }))
@@ -702,3 +724,16 @@ m.setCsdClientsJson(csdJson)
 assertEqual(m.usesWaylandCsd({ class: 'org.gnome.Nautilus' }), true, 'restored JSON still matches Files')
 assertEqual(m.usesWaylandCsd({ class: 'zenity' }), false, 'zenity stays off the JSON CSD list')
 JS
+
+python3 - << PY
+import json
+from pathlib import Path
+leftover = json.loads(Path("$ROOT/test/acceptance.d/leftovers/win7-visual/leftover.json").read_text(encoding="utf-8"))
+if leftover.get("win7VisualLeftover") != "OPEN":
+    raise SystemExit("win7VisualLeftover must stay OPEN")
+still = (leftover.get("statusAfterPr112") or {}).get("stillOpen") or []
+if "ghost-perimeter" not in still:
+    raise SystemExit("ghost-perimeter must stay OPEN")
+print("ghost-perimeter stays OPEN")
+PY
+pass "dispatched box and painted frame stay inside usableRect; ghost-perimeter stays OPEN"

@@ -841,7 +841,7 @@ QtObject {
     var geom = root._monitorGeom(target)
     if (!geom.width || !geom.height) return false
     var rect = root._frameBox(target, WindowModel.snapRect(geom, "max", root._hyprbarsInset(target)))
-    rect = WindowModel.clampCompositorBox(rect, geom)
+    rect = WindowModel.clampCompositorBox(rect, geom, root._frameWin(target))
     var win = root._luaWindow(target)
     root._setPlacedKind(target, "max")
     root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + win + " })")
@@ -1240,9 +1240,13 @@ QtObject {
     root._applyRect(target, bounds)
   }
 
-  function _frameBox(target, rect) {
+  function _frameWin(target) {
     var cls = root._clientClass(target)
-    return WindowModel.frameBox(rect, { class: cls, appId: cls })
+    return { class: cls, appId: cls }
+  }
+
+  function _frameBox(target, rect) {
+    return WindowModel.frameBox(rect, root._frameWin(target))
   }
 
   function _applyRect(target, bounds) {
@@ -1262,7 +1266,7 @@ QtObject {
     if (geom && geom.width) bounds = WindowModel.clampRect(bounds, geom, root._hyprbarsInset(target))
     var logical = { x: Number(bounds.x), y: Number(bounds.y), width: Number(bounds.width), height: Number(bounds.height) }
     bounds = root._frameBox(target, bounds)
-    bounds = WindowModel.clampCompositorBox(bounds, geom)
+    bounds = WindowModel.clampCompositorBox(bounds, geom, root._frameWin(target))
     var win = root._luaWindow(target)
     root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + win + " })")
     if (root._placedKind[target] === "max") root._setPlacedKind(target, "float")
@@ -1484,7 +1488,7 @@ QtObject {
     root._rememberNormal(target)
 
     var rect = root._frameBox(target, WindowModel.snapRect(geom, direction, root._hyprbarsInset(target)))
-    rect = WindowModel.clampCompositorBox(rect, geom)
+    rect = WindowModel.clampCompositorBox(rect, geom, root._frameWin(target))
     var win = root._luaWindow(target)
     root._setPlacedKind(target, direction)
     root._dispatchLua("hl.dsp.window.float({ action = \"enable\", " + win + " })")
