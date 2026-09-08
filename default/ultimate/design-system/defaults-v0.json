@@ -14,19 +14,21 @@
   },
   "chromeProfiles": {
     "dark": {
-      "glass": "#1c1c1e",
-      "glassAlpha": 0.62,
-      "menuAlpha": 0.88,
-      "text": "#eeeeee",
-      "glow": "#e8943a",
-      "start": "#9cbc0d",
-      "edge": "#55ffffff",
-      "closeBackground": "#c42b1c",
+      "glass": "#74b8fc",
+      "glassAlpha": 0.4196078431372549,
+      "menu": "#e8ecf0",
+      "menuAlpha": 1.0,
+      "menuSelection": "#cfe2ef",
+      "text": "#20262c",
+      "glow": "#3a76a8",
+      "start": "#55875c",
+      "edge": "#3320262c",
+      "closeBackground": "#b85750",
       "closeForeground": "#ffffff",
-      "maximizeBackground": "#c8c8c8",
-      "maximizeForeground": "#1a1a1a",
-      "minimizeBackground": "#c8c8c8",
-      "minimizeForeground": "#1a1a1a"
+      "maximizeBackground": "#e8ecf0",
+      "maximizeForeground": "#20262c",
+      "minimizeBackground": "#e8ecf0",
+      "minimizeForeground": "#20262c"
     },
     "light": {
       "glass": "#e8ecf0",
@@ -83,7 +85,7 @@
     "touch": 44
   },
   "captionMetricsPx": {
-    "height": 32,
+    "height": 30,
     "buttonSize": 22,
     "buttonPadding": 8,
     "horizontalPadding": 12

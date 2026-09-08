@@ -99,17 +99,17 @@ for payload in (dark, light):
     assert payload["motion"]["fastMs"] == 100
     assert payload["motion"]["normalMs"] == 200
     assert payload["components"]["taskbarHeight"] == 48
-    assert payload["components"]["captionHeight"] == 32
+    assert payload["components"]["captionHeight"] == 30
     assert payload["accessibility"]["largeText"] is False
     assert payload["accessibility"]["textScale"] == 1.0
     assert payload["accessibility"]["contrast"]["primaryText"] >= 4.5
 
 assert dark["chrome"] == {
-    "glass": "#9e1c1c1e", "menu": "#e01c1c1e", "hover": "#1affffff", "active": "#29ffffff",
-    "pressed": "#38ffffff", "glow": "#e8943a", "start": "#9cbc0d", "edge": "#55ffffff",
+    "glass": "#6b74b8fc", "menu": "#e8ecf0", "hover": "#cfe2ef", "active": "#29ffffff",
+    "pressed": "#38ffffff", "glow": "#3a76a8", "start": "#55875c", "edge": "#3320262c",
 }
-assert dark["caption"]["close"] == {"background": "#c42b1c", "foreground": "#ffffff"}
-assert dark["caption"]["maximize"] == {"background": "#c8c8c8", "foreground": "#1a1a1a"}
+assert dark["caption"]["close"] == {"background": "#b85750", "foreground": "#ffffff"}
+assert dark["caption"]["maximize"] == {"background": "#e8ecf0", "foreground": "#20262c"}
 assert light["chrome"]["glass"] == "#c7e8ecf0"
 assert light["caption"]["close"] == {"background": "#b85750", "foreground": "#ffffff"}
 assert light["caption"]["maximize"] == {"background": "#5c6873", "foreground": "#ffffff"}

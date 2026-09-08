@@ -312,6 +312,19 @@ grep -Fq 'restoreFloatRetryTimer' "$ws" \
   || fail "float restore retries after CSD configure can move chrome off-screen"
 grep -Fq 'WindowModel.clampRect(bounds, geom, root._hyprbarsInset(target))' "$ws" \
   || fail "_applyRect clamps so restore cannot place chrome above the monitor"
+grep -Fq 'WindowModel.clampCompositorBox(bounds, geom)' "$ws" \
+  || fail "_applyRect clamps the compositor box after frameBox and before move"
+grep -Fq 'WindowModel.clampCompositorBox(rect, geom)' "$ws" \
+  || fail "_applyMaximizedRect clamps the compositor box after frameBox and before move"
+grep -Fq 'function _clampRemembered' "$ws" \
+  || fail "remembered restore origins are not persisted outside the usable rect"
+grep -Fq 'function usableRect' "$ROOT/shell/services/WindowModel.js" \
+  || fail "usable rect does not trust reserved.bottom alone"
+grep -Fq 'SUPERBAR_RESERVE = 48' "$ROOT/shell/services/WindowModel.js" \
+  || fail "usable rect reserves Superbar 48 when reserved.bottom is 0"
+if grep -Fq 'csd ? 0 : 32' "$ws"; then
+  fail "hydrate restore must not keep the 32px caption inset"
+fi
 grep -Fq 'prevFs === 1 && fs === 0' "$ws" \
   || fail "CSD unmaximize must restore the remembered float, not Hyprland's last-floating box"
 grep -Fq 'function toggleShowDesktop' "$ws" || fail "WindowService exposes toggleShowDesktop"
@@ -431,14 +444,14 @@ assertEqual(m.windowAppId({ class: 'foot' }), 'foot', 'windowAppId reads Hyprlan
 assert(m.isLockSurface({ class: 'org.omarchy.screensaver' }), 'screensaver class is a lock surface')
 assert(m.isLockSurface({ initialClass: 'org.omarchy.screensaver', class: 'foot' }), 'screensaver initialClass is a lock surface even if class looks like foot')
 assert(!m.isLockSurface({ class: 'foot' }), 'ordinary foot is not a lock surface')
-assertEqual(m.hyprbarsSnapInset({ class: 'foot' }), 32, 'SSD clients reserve hyprbars height')
+assertEqual(m.hyprbarsSnapInset({ class: 'foot' }), 30, 'SSD clients reserve the 30px caption')
 assertEqual(m.hyprbarsSnapInset({ class: 'chromium' }), 0, 'Chromium CSD does not reserve hyprbars')
 assertEqual(m.hyprbarsSnapInset({ class: 'google-chrome' }), 0, 'Google Chrome CSD does not reserve hyprbars')
 assertEqual(m.hyprbarsSnapInset({ class: 'cursor' }), 0, 'Cursor CSD does not reserve hyprbars')
 assertEqual(m.hyprbarsSnapInset({ class: 'chrome-www.youtube.com__-Default' }), 0, 'YouTube PWAs keep Chromium CSD inset 0')
 assertEqual(m.hyprbarsSnapInset({ class: 'chrome-app.zoom.us__wc_home-Default' }), 0, 'Zoom PWAs keep Chromium CSD inset 0')
 assertEqual(m.hyprbarsSnapInset({ class: 'xyz-app.zoom.us__wc_home' }), 0, 'Zoom PWA class without chrome- still insets 0')
-assertEqual(m.hyprbarsSnapInset({ class: 'zoom' }), 32, 'native Zoom client keeps hyprbars inset')
+assertEqual(m.hyprbarsSnapInset({ class: 'zoom' }), 30, 'native Zoom client keeps the 30px caption')
 assertEqual(m.usesWaylandCsd({ class: 'zenity' }), false, 'zenity is not the Zen browser')
 assertEqual(m.usesWaylandCsd({ class: 'org.gnome.Nautilus' }), true, 'Nautilus uses GTK CSD')
 assertEqual(m.usesWaylandCsd({ class: 'Nautilus' }), true, 'Files class Nautilus uses GTK CSD')
@@ -549,27 +562,27 @@ const right = m.snapRect(mon, 'r')
 assertEqual(right.x, 960, 'snap right starts at the midpoint')
 assertEqual(right.width, 960, 'snap right takes the remaining half')
 assertEqual(right.height, 1040, 'snap right height respects the bottom reserved edge')
-const leftBar = m.snapRect(mon, 'l', 32)
-assertEqual(leftBar.y, 32, 'desktop snap leaves 32px for hyprbars above the client box')
-assertEqual(leftBar.height, 1008, 'desktop snap height is work area minus hyprbars')
-const tl = m.snapRect(mon, 'tl', 32)
+const leftBar = m.snapRect(mon, 'l', 30)
+assertEqual(leftBar.y, 30, 'desktop snap leaves 30px for the restored caption')
+assertEqual(leftBar.height, 1010, 'desktop snap height is work area minus the 30px caption')
+const tl = m.snapRect(mon, 'tl', 30)
 assertEqual(tl.x, 0, 'top-left quarter starts at work-area x')
-assertEqual(tl.y, 32, 'top-left quarter sits under hyprbars')
+assertEqual(tl.y, 30, 'top-left quarter sits under the 30px caption')
 assertEqual(tl.width, 960, 'top-left quarter is half width')
-assertEqual(tl.height, 504, 'top-left quarter is half of the titled work height')
-const br = m.snapRect(mon, 'br', 32)
+assertEqual(tl.height, 505, 'top-left quarter is half of the titled work height')
+const br = m.snapRect(mon, 'br', 30)
 assertEqual(br.x, 960, 'bottom-right quarter starts at the midpoint')
-assertEqual(br.y, 32 + 504, 'bottom-right quarter sits under the top quarter')
-assertEqual(br.height, 504, 'bottom-right quarter consumes the remaining titled height')
-const maxSsd = m.snapRect(mon, 'max', 32)
+assertEqual(br.y, 30 + 505, 'bottom-right quarter sits under the top quarter')
+assertEqual(br.height, 505, 'bottom-right quarter consumes the remaining titled height')
+const maxSsd = m.snapRect(mon, 'max', 30)
 assertEqual(maxSsd.x, 0, 'maximize starts at the work-area x')
-assertEqual(maxSsd.y, 32, 'maximize sits under hyprbars for SSD clients')
+assertEqual(maxSsd.y, 30, 'maximize sits under the 30px caption for SSD clients')
 assertEqual(maxSsd.width, 1920, 'maximize spans the full work-area width')
-assertEqual(maxSsd.height, 1008, 'maximize height is work area minus hyprbars')
+assertEqual(maxSsd.height, 1010, 'maximize height is work area minus the 30px caption')
 const maxCsd = m.snapRect(mon, 'max', 0)
 assertEqual(maxCsd.height, 1040, 'CSD maximize uses the full work-area height')
-assertEqual(m.snapKind({ x: 0, y: 32, width: 960, height: 1008 }, mon, 8, 32), 'l', 'full left half is kind l')
-assertEqual(m.snapKind(tl, mon, 8, 32), 'tl', 'top-left rect is kind tl')
+assertEqual(m.snapKind({ x: 0, y: 30, width: 960, height: 1010 }, mon, 8, 30), 'l', 'full left half is kind l')
+assertEqual(m.snapKind(tl, mon, 8, 30), 'tl', 'top-left rect is kind tl')
 assertEqual(m.nextSnap('float', 'l'), 'l', 'Win+Left from float is left half')
 assertEqual(m.nextSnap('float', 'u'), 'max', 'Win+Up from float is maximize')
 assertEqual(m.nextSnap('l', 'u'), 'tl', 'Win+Up from left half is top-left')
@@ -582,9 +595,9 @@ assertEqual(m.aeroZone({ x: 400, y: 0 }, mon), 'max', 'cursor on the top edge is
 assertEqual(m.aeroZone({ x: 400, y: 200 }, mon), '', 'interior cursor does not snap')
 assertEqual(m.aeroZone({ x: 960, y: 540 }, mon), '', 'cursor in the middle of a maximized window does not snap')
 const saved = m.captureLayout([
-  { address: '0x1', appId: 'foot', title: 'left', x: 0, y: 32, width: 960, height: 1008, fullscreen: 0 },
-  { address: '0x2', appId: 'foot', title: 'right', x: 960, y: 32, width: 960, height: 1008, fullscreen: 0 }
-], mon, 32)
+  { address: '0x1', appId: 'foot', title: 'left', x: 0, y: 30, width: 960, height: 1010, fullscreen: 0 },
+  { address: '0x2', appId: 'foot', title: 'right', x: 960, y: 30, width: 960, height: 1010, fullscreen: 0 }
+], mon, 30)
 assertEqual(saved.windows.length, 2, 'captureLayout records both windows')
 assertEqual(saved.windows[0].kind, 'l', 'left half is saved as kind l')
 assertEqual(saved.windows[1].kind, 'r', 'right half is saved as kind r')
@@ -622,8 +635,21 @@ assert(clamped.x >= area.x, 'clamp keeps x on the monitor')
 const offscreenChrome = m.clampRect({ x: 534, y: -479, width: 1252, height: 1000 }, mon)
 assert(offscreenChrome.y >= area.y, 'clamp pulls title chrome back onto the work area')
 assert(offscreenChrome.x >= area.x, 'clamp keeps a restored float on the monitor x')
-const offscreenSsd = m.clampRect({ x: 40, y: -40, width: 880, height: 560 }, mon, 32)
-assert(offscreenSsd.y >= area.y + 32, 'SSD clamp keeps hyprbars caption on the work area')
+const offscreenSsd = m.clampRect({ x: 40, y: -40, width: 880, height: 560 }, mon, 30)
+assert(offscreenSsd.y >= area.y + 30, 'SSD clamp keeps the 30px caption on the work area')
+const bare = { width: 1920, height: 1080, reserved: [0, 0, 0, 0], x: 0, y: 0 }
+const usable = m.usableRect(bare)
+assertEqual(usable.y, 0, 'usable origin stays at the monitor origin')
+assertEqual(usable.height, 1080 - 48, 'usable rect subtracts Superbar 48 when reserved.bottom is 0')
+const chromeMax = m.frameBox(m.snapRect(bare, 'max', 0), { class: 'google-chrome' })
+const clampedBox = m.clampCompositorBox(chromeMax, bare)
+assert(clampedBox.x >= usable.x, 'compositor box origin x stays inside the usable rect')
+assert(clampedBox.y >= usable.y, 'compositor box origin y stays inside the usable rect')
+assert(clampedBox.x + clampedBox.width <= usable.x + usable.width, 'compositor far x stays inside the usable rect')
+assert(clampedBox.y + clampedBox.height <= usable.y + usable.height, 'compositor far y stays inside the usable rect including the Superbar')
+assert(chromeMax.y < usable.y, 'frameBox still expands Chromium above the wanted rect before the dispatch clamp')
+const remembered = m.clampCompositorBox({ x: 40, y: -479, width: 880, height: 560 }, bare)
+assert(remembered.y >= usable.y, 'a remembered off-screen origin is not persisted outside the usable rect')
 const stored = m.parsePlacements(m.serializePlacements({ foot: { x: 48, y: 48, width: 880, height: 560 } }))
 assertEqual(stored.foot.width, 880, 'placements round-trip through JSON')
 const storedKind = m.parsePlacements(m.serializePlacements({ foot: { x: 48, y: 48, width: 880, height: 560, kind: 'max' } }))
@@ -632,8 +658,8 @@ assertEqual(m.placementKind({ kind: 'l' }), 'l', 'placementKind keeps snap kinds
 assertEqual(m.placementKind({}), 'float', 'placementKind defaults to float')
 const snapped = { x: 0, y: 0, width: 960, height: 1040 }
 assert(m.isSnapped(snapped, mon, 8), '960x1040 at origin is the left snap')
-const snappedBar = { x: 0, y: 32, width: 960, height: 1008 }
-assert(m.isSnapped(snappedBar, mon, 8, 32), '960x1008 at y=32 is the desktop left snap')
+const snappedBar = { x: 0, y: 30, width: 960, height: 1010 }
+assert(m.isSnapped(snappedBar, mon, 8, 30), '960x1010 at y=30 is the desktop left snap')
 assert(!m.isSnapped(floated, mon, 8), 'default float must not count as snapped')
 assert(m.coversWorkArea({ x: 0, y: 0, width: 1920, height: 1040 }, mon), 'full work area is covering')
 assert(!m.coversWorkArea(floated, mon), 'default float is not covering')

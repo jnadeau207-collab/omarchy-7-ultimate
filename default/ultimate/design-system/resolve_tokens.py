@@ -642,7 +642,11 @@ def build_payload(
     profile = defaults["chromeProfiles"][mode]
     interaction = defaults["chromeInteraction"]
     glass = with_alpha(profile["glass"], require_float(profile["glassAlpha"], "glassAlpha", 0, 1))
-    menu = with_alpha(profile["glass"], require_float(profile["menuAlpha"], "menuAlpha", 0, 1))
+    menu_source = profile["menu"] if isinstance(profile.get("menu"), str) and profile.get("menu") else profile["glass"]
+    menu = with_alpha(menu_source, require_float(profile["menuAlpha"], "menuAlpha", 0, 1))
+    hover = with_alpha(interaction["color"], require_float(interaction["hoverAlpha"], "hoverAlpha", 0, 1))
+    if isinstance(profile.get("menuSelection"), str) and profile.get("menuSelection"):
+        hover = canonical_color(profile["menuSelection"], "chrome.hover")
     caption_metrics = defaults["captionMetricsPx"]
     components.update({
         "captionHeight": require_int(caption_metrics["height"], "captionMetricsPx.height", 1, 4096),
@@ -715,7 +719,7 @@ def build_payload(
         "chrome": {
             "glass": glass,
             "menu": menu,
-            "hover": with_alpha(interaction["color"], require_float(interaction["hoverAlpha"], "hoverAlpha", 0, 1)),
+            "hover": hover,
             "active": with_alpha(interaction["color"], require_float(interaction["activeAlpha"], "activeAlpha", 0, 1)),
             "pressed": with_alpha(interaction["color"], require_float(interaction["pressedAlpha"], "pressedAlpha", 0, 1)),
             "glow": canonical_color(profile["glow"], "chrome.glow"),
@@ -873,6 +877,7 @@ def legacy_chrome_adapter(payload: dict[str, Any]) -> dict[str, str]:
         "glassGreen": str(green),
         "glassBlue": str(blue),
         "glassAlphaPct": str(q_round(alpha / 255 * 100)),
+        "captionGlassHex": opaque_color(payload["chrome"]["glass"]),
         "hyprbarsTextHex": opaque_color(payload["caption"]["text"]),
         "chromeGlowHex": opaque_color(payload["chrome"]["glow"]),
         "chromeStartHex": opaque_color(payload["chrome"]["start"]),

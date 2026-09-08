@@ -64,7 +64,7 @@ function usesWaylandCsd(win) {
 }
 
 function hyprbarsSnapInset(win) {
-  return usesWaylandCsd(win) ? 0 : 32
+  return usesWaylandCsd(win) ? 0 : 30
 }
 
 var CHROMIUM_FRAME_INSET = 12
@@ -590,12 +590,47 @@ function cascadeRect(monitor, index, options) {
   var n = Math.max(0, Number(index) || 0)
   var x = base.x + step * (n % 12)
   var y = base.y + step * (n % 12)
-  var titleBar = (options && options.csd) ? 0 : 32
+  var titleBar = (options && options.csd) ? 0 : 30
   if (x + base.width > area.x + area.width) x = area.x + Math.max(24, area.width - base.width - 24)
   if (y + base.height > area.y + area.height) y = area.y + titleBar + Math.max(24, area.height - titleBar - base.height - 24)
   if (y < area.y + titleBar) y = area.y + titleBar
   if (x < area.x) x = area.x
   return { x: x, y: y, width: base.width, height: base.height }
+}
+
+var SUPERBAR_RESERVE = 48
+
+function usableRect(monitor) {
+  var area = workArea(monitor)
+  var reserved = reservedLTRB(monitor && monitor.reserved)
+  if (reserved.bottom <= 0 && area.height > SUPERBAR_RESERVE)
+    area.height = Math.max(1, area.height - SUPERBAR_RESERVE)
+  return area
+}
+
+function clampCompositorBox(rect, monitor) {
+  var area = usableRect(monitor)
+  var width = Math.max(1, Number(rect && rect.width) || 1)
+  var height = Math.max(1, Number(rect && rect.height) || 1)
+  if (area.width > 0 && width > area.width) width = Math.max(1, area.width)
+  if (area.height > 0 && height > area.height) height = Math.max(1, area.height)
+  var x = Number(rect && rect.x)
+  var y = Number(rect && rect.y)
+  if (isNaN(x)) x = area.x
+  if (isNaN(y)) y = area.y
+  if (x < area.x) x = area.x
+  if (y < area.y) y = area.y
+  if (x + width > area.x + area.width) x = area.x + Math.max(0, area.width - width)
+  if (y + height > area.y + area.height) y = area.y + Math.max(0, area.height - height)
+  if (x < area.x) x = area.x
+  if (y < area.y) y = area.y
+  return {
+    x: x,
+    y: y,
+    width: width,
+    height: height,
+    monitor: rect && rect.monitor != null ? rect.monitor : (monitor && monitor.name ? String(monitor.name) : "")
+  }
 }
 
 function clampRect(rect, monitor, titleBar) {
@@ -788,6 +823,8 @@ if (typeof module !== "undefined") {
     startToggleAction: startToggleAction,
     reservedLTRB: reservedLTRB,
     workArea: workArea,
+    usableRect: usableRect,
+    clampCompositorBox: clampCompositorBox,
     snapRect: snapRect,
     snapSides: snapSides,
     snapKind: snapKind,

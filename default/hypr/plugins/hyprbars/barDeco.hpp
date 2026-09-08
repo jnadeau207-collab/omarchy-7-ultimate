@@ -119,6 +119,8 @@ class CHyprBar : public IHyprWindowDecoration {
     // store hover state for buttons as a bitfield
     unsigned int m_iButtonHoverState = 0;
     int          m_hoverArmIndex     = -1;
+    int          m_captionPressIndex = -1;
+    int          m_captionHotIndex   = -1;
     bool         m_hoverFired        = false;
     Time::steady_tp m_hoverArmedAt   = Time::steadyNow();
 

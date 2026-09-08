@@ -518,18 +518,20 @@ if grep -E '^[^/]*Tokens.surface.glass' "$ROOT/shell/plugins/ultimate-taskbar/Ta
 fi
 grep -Fq 'readonly property color chromeBar: Tokens.chrome.glass' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar fills from the resolved chrome glass token"
-python3 - "$ROOT" <<'GLASS' || fail "Superbar glass is graphite with alpha, not opaque charcoal"
+python3 - "$ROOT" <<'GLASS' || fail "default chrome glass is the documented factory sample #74B8FC at alpha 0x6B"
 import json, sys
 from pathlib import Path
 tokens = json.loads(Path(sys.argv[1], "default/ultimate/chrome-tokens.json").read_text(encoding="utf-8"))
 red, green, blue = (int(tokens[k]) for k in ("glassRed", "glassGreen", "glassBlue"))
 alpha = int(tokens["glassAlphaPct"])
-if not 0 < alpha < 100:
-    raise SystemExit(f"glass alpha {alpha} is opaque")
-if max(red, green, blue) > 64:
-    raise SystemExit(f"glass rgb ({red},{green},{blue}) is not graphite")
-if max(red, green, blue) - min(red, green, blue) > 8:
-    raise SystemExit(f"glass rgb ({red},{green},{blue}) is tinted, not neutral")
+if (red, green, blue) != (116, 184, 252):
+    raise SystemExit(f"glass rgb ({red},{green},{blue}) is not factory #74B8FC")
+if alpha != 42:
+    raise SystemExit(f"glassAlphaPct {alpha} is not 0x6B")
+if tokens.get("captionGlassHex", "").lower() != "#74b8fc":
+    raise SystemExit("captionGlassHex is not the factory sample")
+if tokens.get("captionGlassHex", "").lower() == "#4580c4":
+    raise SystemExit("default glass must not lock Explorer #4580c4")
 GLASS
 [[ -f $ROOT/default/ultimate/chrome-tokens.json ]] || fail "chrome tokens exist as the Superbar/hyprbars palette"
 [[ -f $ROOT/default/ultimate/chrome-tokens-light.json ]] || fail "light chrome tokens exist so light theme can move caption chrome"
@@ -539,14 +541,26 @@ grep -Fq 'chrome-tokens-v0.json' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars caption chrome reads chrome-tokens-v0.json"
 grep -Fq 'bar_color = chrome_aero_rgba' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "hyprbars bar_color comes from chrome tokens, not a private rgba"
-grep -Fq 'tokens.captionGlassHex' "$ROOT/default/hypr/desktop-windows.lua" \n  || fail "the Aero caption reads its colourization from the chrome token adapter"
-grep -Fq 'local AERO_DEFAULT_GLASS = "4580c4"' "$ROOT/default/hypr/desktop-windows.lua" \n  || fail "the Aero caption falls back to the measured Windows 7 Sky colourization"
-grep -Fq 'captionCloseBgHex' "$ROOT/default/hypr/desktop-windows.lua" \
-  || fail "hyprbars close button color comes from chrome tokens"
-grep -Fq 'captionMaxBgHex' "$ROOT/default/hypr/desktop-windows.lua" \
-  || fail "hyprbars maximize button color comes from chrome tokens"
-grep -Fq 'captionMinBgHex' "$ROOT/default/hypr/desktop-windows.lua" \
-  || fail "hyprbars minimize button color comes from chrome tokens"
+grep -Fq 'tokens.captionGlassHex' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "the Aero caption reads its colourization from the chrome token adapter"
+grep -Fq 'local AERO_FACTORY_GLASS = "74B8FC"' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "the Aero caption falls back to the documented factory sample #74B8FC"
+grep -Fq 'local AERO_FACTORY_ALPHA = 0x6B' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "the Aero caption alpha is the documented factory sample 0x6B"
+grep -Fq 'hover_bg_color = chrome_hex_rgb(chrome, "captionCloseBgHex")' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "hyprbars close red comes from chrome tokens on hover only"
+grep -Fq 'damageOnButtonHover();' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp" \
+  || fail "caption hover redraws so close red can appear on the live button"
+grep -Fq 'm_captionHotIndex' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp" \
+  || fail "caption hover tracks the live button so close red is not stuck on a single hovered flag"
+if grep -Fq 'if (g_pGlobalState->config.iconOnHover->value())' "$ROOT/default/hypr/plugins/hyprbars/barDeco.cpp"; then
+  fail "close hover must redraw even when icon_on_hover is false"
+fi
+grep -Fq 'bg_color = "rgba(00000000)"' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "idle caption buttons are glass glyphs, not filled chips"
+if grep -Fq 'bg_color = "rgba(d54f36e0)"' "$ROOT/default/hypr/desktop-windows.lua"; then
+  fail "close must not stay always-red"
+fi
 if grep -Fq 'bg_color = "rgb(c42b1c)"' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "hyprbars close must not hardcode rgb(c42b1c); that blocks light theme"
 fi
@@ -581,8 +595,12 @@ if light_level <= dark_level:
     raise SystemExit(f"light glass {light_level} is not lighter than dark {dark_level}")
 if light_level < 160:
     raise SystemExit(f"light glass {light_level} is not a light surface")
-if light["hyprbarsTextHex"] == dark["hyprbarsTextHex"]:
-    raise SystemExit("light caption text repeats the dark value")
+if light == dark:
+    raise SystemExit("light chrome projection is a copy of dark")
+if light.get("_mode") == dark.get("_mode"):
+    raise SystemExit("light chrome projection keeps the dark mode")
+if light["captionMaxBgHex"] == dark["captionMaxBgHex"] and light["glassRed"] == dark["glassRed"]:
+    raise SystemExit("light caption chrome repeats the dark glass and buttons")
 LIGHT
 grep -Fq 'function applyChromeTokens' "$ROOT/shell/plugins/ultimate-taskbar/Taskbar.qml" \
   || fail "Superbar applies chrome tokens after FileView loads"
