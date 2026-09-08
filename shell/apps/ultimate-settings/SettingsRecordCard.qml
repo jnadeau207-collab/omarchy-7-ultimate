@@ -4,6 +4,7 @@ import qs.Commons
 import qs.Ui as Ui
 
 import "SettingsModel.js" as SettingsModel
+import "../ultimate-files/ExplorerTheme.js" as Aero
 
 Rectangle {
   id: root
@@ -14,10 +15,9 @@ Rectangle {
 
   Layout.fillWidth: true
   implicitHeight: content.implicitHeight + Style.space(28)
-  radius: Tokens.radius.medium
-  color: Tokens.surface.raised
-  border.color: selected ? Tokens.accent.primary
-    : Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+  radius: 0
+  color: Aero.contentFill
+  border.color: selected ? Aero.selectionBorder : Aero.headerBorder
   border.width: selected || Tokens.accessibility.highContrast ? 2 : 1
   Accessible.role: Accessible.Pane
   Accessible.name: String(record.label || record.id || "") !== ""
@@ -43,8 +43,8 @@ Rectangle {
         Text {
           textFormat: Text.PlainText
           text: String(root.record.label || root.record.id || Semantics.text(root.semanticProfile, "Unnamed resource"))
-          color: Tokens.text.primary
-          font.family: Tokens.typography.family
+          color: Aero.textPrimary
+          font.family: Aero.fontFamily
           font.pixelSize: Style.font.title
           font.bold: true
           wrapMode: Text.WrapAnywhere
@@ -56,8 +56,8 @@ Rectangle {
         Text {
           textFormat: Text.PlainText
           text: String(root.record.subtitle || root.record.kind || Semantics.text(root.semanticProfile, "Provider resource"))
-          color: Tokens.text.secondary
-          font.family: Tokens.typography.family
+          color: Aero.textSecondary
+          font.family: Aero.fontFamily
           font.pixelSize: Style.font.bodySmall
           wrapMode: Text.WrapAnywhere
           maximumLineCount: 3
@@ -76,8 +76,8 @@ Rectangle {
     Text {
       textFormat: Text.PlainText
       text: String(root.record.kind || "provider-resource") + " \u00b7 " + String(root.record.id || "")
-      color: Tokens.text.disabled
-      font.family: Tokens.typography.family
+      color: Aero.textDisabled
+      font.family: Aero.fontFamily
       font.pixelSize: Style.font.caption
       wrapMode: Text.WrapAnywhere
       maximumLineCount: 3
@@ -90,8 +90,8 @@ Rectangle {
       Layout.fillWidth: true
       implicitHeight: detailsColumn.implicitHeight + Style.space(16)
       radius: Tokens.radius.small
-      color: Tokens.surface.base
-      border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+      color: Aero.navFill
+      border.color: Aero.navBorder
       border.width: Tokens.accessibility.highContrast ? 2 : 1
       Accessible.role: Accessible.StaticText
       Accessible.name: Semantics.text(root.semanticProfile, "Current") + " " +
@@ -116,8 +116,8 @@ Rectangle {
             Text {
               textFormat: Text.PlainText
               text: modelData.label
-              color: Tokens.text.disabled
-              font.family: Tokens.typography.family
+              color: Aero.textDisabled
+              font.family: Aero.fontFamily
               font.pixelSize: Style.font.caption
               font.bold: true
               wrapMode: Text.WordWrap
@@ -129,8 +129,8 @@ Rectangle {
             Text {
               textFormat: Text.PlainText
               text: modelData.value
-              color: Tokens.text.secondary
-              font.family: Tokens.typography.family
+              color: Aero.textSecondary
+              font.family: Aero.fontFamily
               font.pixelSize: Style.font.bodySmall
               wrapMode: Text.WrapAnywhere
               maximumLineCount: 5

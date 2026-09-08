@@ -2,6 +2,8 @@ import QtQuick
 import Quickshell
 import qs.Commons
 
+import "../apps/ultimate-files/ExplorerTheme.js" as Aero
+
 Item {
   id: root
 
@@ -13,7 +15,7 @@ Item {
     property color foreground: Tokens.text.primary
     property color barForeground: Tokens.text.primary
     property color urgent: Tokens.state.danger
-    property string fontFamily: Tokens.typography.family
+    property string fontFamily: Aero.fontFamily
     property string position: "bottom"
     property var shell: null
   }
@@ -42,7 +44,7 @@ Item {
     textFormat: Text.PlainText
     wrapMode: Text.WordWrap
     color: Tokens.state.danger
-    font.family: Tokens.typography.family
+    font.family: Aero.fontFamily
     font.pixelSize: Style.font.body
     text: Semantics.text(root.semanticProfile, "This Settings page failed to load the live panel.")
   }
