@@ -26,6 +26,9 @@ Each surface needs: exact colors or token refs, px sizes, hit targets, L/R-click
 
 **Computer tile capacity (source only):** Computer drive capacity bar moved 168×11 → 120×8 (cheat sheet `pixelCheatSheet96Dpi.capacityBarApprox` 60-120 × 6-8). Capacity bar only. Drive tile 292×62 and icon 44 are unchanged. Visual leftover stays OPEN. Not pixel proof. Not metal CLOSED. Not product CLOSED. Product REJECTED. Explorer client (command bar / details pane), Settings, caption chrome, and the PNG baseline are untouched.
 
+**Visual status after PR #114, #115, and #116 (work tip `4e60727e`):** Record what landed after #112. Still not pixel proof. Leftover stays OPEN. #114 Explorer commandHeight 36, detailsHeight 54. selectionWash OPEN. #115 Settings light category host, breadcrumb, search. Cards and monospace fallback gone. Settings card shell still named OPEN. #116 Computer capacity bar 120×8. Tile 292×62 and icon 44 unchanged. Computer tile metrics still named OPEN. `win7VisualLeftover` stays OPEN. Do not set win7VisualLeftover CLOSED. Not product CLOSED. Product REJECTED.
+
+
 
 - [~] SSD caption bar (hyprbars) — height/buttons/colors exist as Omarchy freeze; Win7 Aero formulas in research
 - [ ] Caption button glyphs (min/max/restore/close) — normal/hot/pressed/disabled inactive

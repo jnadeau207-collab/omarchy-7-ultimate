@@ -1663,6 +1663,18 @@ if "Not metal CLOSED" not in gaps or "Not product CLOSED" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must refuse metal CLOSED and product CLOSED for PR #112 chrome")
 if "Do not invent Files LIVE metal CLOSED" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must refuse Files LIVE metal CLOSED invent")
+if "Honesty addendum 2026-09-08 vs Win7 visual status after PR #114, #115, and #116" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must record PR #114 #115 #116 visual status without closing the leftover")
+if "#114 Explorer commandHeight 36, detailsHeight 54. selectionWash OPEN." not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must record #114 Explorer commandHeight 36 and detailsHeight 54 with selectionWash OPEN")
+if "#115 Settings light category host, breadcrumb, search. Cards and monospace fallback gone. Settings card shell still named OPEN." not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must record #115 Settings host and keep Settings card shell OPEN")
+if "#116 Computer capacity bar 120×8. Tile 292×62 and icon 44 unchanged. Computer tile metrics still named OPEN." not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must record #116 capacity bar and keep Computer tile metrics OPEN")
+if "Do not set win7VisualLeftover CLOSED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must refuse closing win7VisualLeftover after #114 #115 #116")
+if "Not product CLOSED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep product not CLOSED after #114 #115 #116")
 if "Honesty addendum 2026-09-06 vs Files Recycle session plane" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must add a dated Files Recycle session leftover addendum")
 if "CLOSED leftover: session Trash/Restore/Empty UI" not in gaps:
@@ -1722,6 +1734,23 @@ if "factory glass #74B8FC @ 0x6B" not in (status_after.get("landed") or []):
     raise SystemExit("Win7 visual leftover.json must name factory glass as landed source chrome only")
 if "visual leftover 5/5 surfaces" not in (status_after.get("stillOpen") or []):
     raise SystemExit("Win7 visual leftover.json must keep visual leftover 5/5 surfaces open")
+status_after_114 = win7_leftover.get("statusAfterPr114116") or {}
+if status_after_114.get("win7VisualLeftover") != "OPEN":
+    raise SystemExit("Win7 visual leftover.json statusAfterPr114116 must stay OPEN")
+if status_after_114.get("pixelProof") is not False or status_after_114.get("productClosed") is not False:
+    raise SystemExit("Win7 visual leftover.json statusAfterPr114116 must stay not pixel proof and not product CLOSED")
+if "#114 Explorer commandHeight 36, detailsHeight 54. selectionWash OPEN." not in (status_after_114.get("landed") or []):
+    raise SystemExit("Win7 visual leftover.json must record #114 Explorer commandHeight 36 and detailsHeight 54 with selectionWash OPEN")
+if "#115 Settings light category host, breadcrumb, search. Cards and monospace fallback gone. Settings card shell still named OPEN." not in (status_after_114.get("landed") or []):
+    raise SystemExit("Win7 visual leftover.json must record #115 Settings host and keep Settings card shell OPEN")
+if "#116 Computer capacity bar 120×8. Tile 292×62 and icon 44 unchanged. Computer tile metrics still named OPEN." not in (status_after_114.get("landed") or []):
+    raise SystemExit("Win7 visual leftover.json must record #116 capacity bar and keep Computer tile metrics OPEN")
+if "selectionWash" not in (status_after_114.get("stillOpen") or []):
+    raise SystemExit("Win7 visual leftover.json must keep selectionWash OPEN after #114")
+if "Settings card shell" not in (status_after_114.get("stillOpen") or []):
+    raise SystemExit("Win7 visual leftover.json must keep Settings card shell named OPEN")
+if "Computer tile metrics" not in (status_after_114.get("stillOpen") or []):
+    raise SystemExit("Win7 visual leftover.json must keep Computer tile metrics named OPEN")
 if win7_leftover.get("hexGrepIsNotPixelProof") is not True:
     raise SystemExit("Win7 visual leftover.json must name hex-grep as not pixel proof")
 if win7_leftover.get("filesLiveMetal") != "OPEN":
@@ -2914,6 +2943,16 @@ if "visual leftover 5/5 surfaces" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep visual leftover 5/5 surfaces open")
 if "`win7VisualLeftover` stays OPEN" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep win7VisualLeftover OPEN after PR #112")
+if "Honesty addendum 2026-09-08 vs Win7 visual status after PR #114, #115, and #116" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must record PR #114 #115 #116 visual status without closing the leftover")
+if "#114 Explorer commandHeight 36, detailsHeight 54. selectionWash OPEN." not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must record #114 Explorer commandHeight 36 and detailsHeight 54 with selectionWash OPEN")
+if "#115 Settings light category host, breadcrumb, search. Cards and monospace fallback gone. Settings card shell still named OPEN." not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must record #115 Settings host and keep Settings card shell OPEN")
+if "#116 Computer capacity bar 120×8. Tile 292×62 and icon 44 unchanged. Computer tile metrics still named OPEN." not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must record #116 capacity bar and keep Computer tile metrics OPEN")
+if "Do not set win7VisualLeftover CLOSED" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must refuse closing win7VisualLeftover after #114 #115 #116")
 if "Do not invent Files LIVE metal CLOSED" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must refuse Files LIVE metal CLOSED invent")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
