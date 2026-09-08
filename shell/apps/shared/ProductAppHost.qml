@@ -12,6 +12,7 @@ ShellRoot {
   required property string applicationId
   required property string appId
   required property string displayName
+  property string placeTitle: ""
   required property string ipcTarget
   required property string routeCatalogPath
   required property string fabricIdentity
@@ -218,7 +219,7 @@ ShellRoot {
   FloatingWindow {
     id: appWindow
     reloadableId: root.applicationId + ".window"
-    title: root.displayName
+    title: root.placeTitle !== "" ? root.placeTitle : root.displayName
     visible: true
     implicitWidth: 1100
     implicitHeight: 720
