@@ -162,8 +162,8 @@ FocusScope {
                   anchors.left: driveName.left
                   anchors.top: driveName.bottom
                   anchors.topMargin: 5
-                  width: 168
-                  height: 11
+                  width: 120
+                  height: 8
                   color: Aero.driveBarTrack
                   border.width: 1
                   border.color: "#a0a5ab"

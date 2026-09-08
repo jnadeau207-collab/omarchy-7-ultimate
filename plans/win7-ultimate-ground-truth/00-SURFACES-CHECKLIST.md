@@ -24,6 +24,8 @@ Each surface needs: exact colors or token refs, px sizes, hit targets, L/R-click
 
 **Settings card shell (source chrome only):** the Settings host no longer uses `Tokens.surface` cards, a 196-320 navigation pane, or `Tokens.typography.family` (monospace body fallback) as the default visible shell. Breadcrumb and search reuse existing Explorer client token names (`Aero.contentFill`, `Aero.fieldFill`, `Aero.fontFamily`, `Aero.commandTop`, `Aero.navHeaderText`, `Aero.linkText`) already in `ExplorerTheme.js`. No new hex. Not pixel proof. Not metal CLOSED. Not product CLOSED. `win7VisualLeftover` stays OPEN. Product REJECTED. Explorer rewrite, Computer tile metrics, caption chrome, and the PNG baseline are untouched.
 
+**Computer tile capacity (source only):** Computer drive capacity bar moved 168×11 → 120×8 (cheat sheet `pixelCheatSheet96Dpi.capacityBarApprox` 60-120 × 6-8). Capacity bar only. Drive tile 292×62 and icon 44 are unchanged. Visual leftover stays OPEN. Not pixel proof. Not metal CLOSED. Not product CLOSED. Product REJECTED. Explorer client (command bar / details pane), Settings, caption chrome, and the PNG baseline are untouched.
+
 
 - [~] SSD caption bar (hyprbars) — height/buttons/colors exist as Omarchy freeze; Win7 Aero formulas in research
 - [ ] Caption button glyphs (min/max/restore/close) — normal/hot/pressed/disabled inactive

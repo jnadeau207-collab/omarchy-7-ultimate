@@ -33,7 +33,7 @@ Still open:
 - visual leftover 5/5 surfaces
 - Explorer client sizes vs cheat sheet: command bar 36 and details pane 54 are inside documented ranges 36-40 and 54-72 (source metrics only). selectionWash remains OPEN. Other Explorer client sizes are not claimed closed. Visual leftover stays OPEN.
 - Settings card shell: source chrome only (light category host reuses existing Explorer client token names; not pixel proof; leftover stays OPEN)
-- Computer tile metrics
+- Computer tile metrics: capacity bar 120×8 is inside documented 60-120 × 6-8 (source metric only). Drive tile 292×62 and icon 44 unchanged. Computer visual leftover stays OPEN. Not pixel proof. Not metal CLOSED. Not product CLOSED.
 - caption button live bounds not proven on metal
 - ghost-perimeter
 - image diff (metal off)
