@@ -41,6 +41,11 @@ Still open:
 The 2026-09-05 HDMI grim on `0c543905` is a dated sample, not a re-proof of #112. Shipped SSD `bar_height` / caption height is **30**; the older hyprbars 32 inset line is not the current ship pin. Ghost-perimeter stays open until metal `outside_pixels` proof. Do not set `win7VisualLeftover` to CLOSED.
 
 
+
+## 0.1 Tip status after PR #114, #115, and #116 (not a close)
+
+Work tip `4e60727ea2af6ff8e493706db22ba486e7b13385`. Record what landed after #112. Still not pixel proof. Leftover stays OPEN. #114 Explorer commandHeight 36, detailsHeight 54. selectionWash OPEN. #115 Settings light category host, breadcrumb, search. Cards and monospace fallback gone. Settings card shell still named OPEN. #116 Computer capacity bar 120×8. Tile 292×62 and icon 44 unchanged. Computer tile metrics still named OPEN. `win7VisualLeftover` stays OPEN. Do not set win7VisualLeftover CLOSED. Not product CLOSED. Product REJECTED.
+
 ---
 
 ## 1. What “match Win7” means for chrome

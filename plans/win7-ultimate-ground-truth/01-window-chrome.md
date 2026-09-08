@@ -401,6 +401,8 @@ Landed in source:
 
 Still open: visual leftover 5/5 surfaces; Explorer client sizes vs cheat sheet; Settings card shell; Computer tile metrics; caption button live bounds not proven on metal; ghost-perimeter; image diff (metal off).
 
+Later source-only moves after #112 (not a close of this section, not pixel proof): #114 Explorer commandHeight 36, detailsHeight 54. selectionWash OPEN. #115 Settings light category host, breadcrumb, search. Cards and monospace fallback gone. Settings card shell still named OPEN. #116 Computer capacity bar 120×8. Tile 292×62 and icon 44 unchanged. Computer tile metrics still named OPEN. Work tip `4e60727ea2af6ff8e493706db22ba486e7b13385`. `win7VisualLeftover` stays OPEN. Do not set win7VisualLeftover CLOSED. Not product CLOSED. Product REJECTED.
+
 | Token | Tip value after #112 | Note |
 |-------|----------------------|------|
 | `captionGlassHex` / glass RGB | `#74b8fc` / 116,184,252 | Factory sample `#74B8FC` @ `0x6B`. Not a grim close. |

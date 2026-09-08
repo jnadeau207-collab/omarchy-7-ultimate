@@ -35,6 +35,30 @@
       "image diff (metal off)"
     ]
   },
+  "statusAfterPr114116": {
+    "workTip": "4e60727ea2af6ff8e493706db22ba486e7b13385",
+    "prs": [
+      114,
+      115,
+      116
+    ],
+    "win7VisualLeftover": "OPEN",
+    "pixelProof": false,
+    "productClosed": false,
+    "note": "Source-only record of what landed after #112. Still not pixel proof. This leftover.json grim remains the 2026-09-05 HDMI sample on 0c543905 and is not a re-proof of #114, #115, or #116. Does not close win7VisualLeftover. Not product CLOSED.",
+    "landed": [
+      "#114 Explorer commandHeight 36, detailsHeight 54. selectionWash OPEN.",
+      "#115 Settings light category host, breadcrumb, search. Cards and monospace fallback gone. Settings card shell still named OPEN.",
+      "#116 Computer capacity bar 120×8. Tile 292×62 and icon 44 unchanged. Computer tile metrics still named OPEN."
+    ],
+    "stillOpen": [
+      "win7VisualLeftover",
+      "selectionWash",
+      "Settings card shell",
+      "Computer tile metrics",
+      "visual leftover 5/5 surfaces"
+    ]
+  },
   "hexGrepIsNotPixelProof": true,
   "cloudExit0IsNotMetalLeftover": true,
   "filesLiveMetal": "OPEN",
@@ -70,7 +94,7 @@
         136
       ],
       "distanceToE6ecf5": 180.2720166858961,
-      "note": "Source tokens match #ffffff/#e6ecf5/#aaddfa. Grim shows a pale selected Documents nav row and omarchy-files-live-e9dda27c70b8 content row. That is not a closed pixel proof against the measured wash. Surface stays OPEN after PR #112."
+      "note": "Source tokens match #ffffff/#e6ecf5/#aaddfa. Grim shows a pale selected Documents nav row and omarchy-files-live-e9dda27c70b8 content row. That is not a closed pixel proof against the measured wash. Surface stays OPEN after PR #112. selectionWash OPEN after #114."
     },
     "superbarStackUnderline": {
       "status": "OPEN",
