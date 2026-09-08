@@ -20,6 +20,10 @@ struct SHyprButton {
     std::string          icon     = "";
     std::string          hoverCmd = "";
     SP<Render::ITexture> iconTex;
+    bool                 hasHoverBg = false;
+    CHyprColor           hoverBg    = CHyprColor(0, 0, 0, 0);
+    bool                 hasHoverFg = false;
+    CHyprColor           hoverFg    = CHyprColor(0, 0, 0, 0);
 };
 
 inline float buttonWidthOf(const SHyprButton& button) {

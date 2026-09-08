@@ -216,7 +216,7 @@ QtObject {
         var looksMax = area.width && Math.abs(Number(prev.width) - area.width) <= 16 && Number(prev.height) >= area.height - 48
         if (!looksMax) {
           var normals = root._copyMap(root._normalBounds)
-          normals[addr] = { x: Number(prev.x), y: Number(prev.y), width: Number(prev.width), height: Number(prev.height) }
+          normals[addr] = root._clampRemembered(addr, { x: Number(prev.x), y: Number(prev.y), width: Number(prev.width), height: Number(prev.height) })
           root._normalBounds = normals
         }
       }
@@ -272,7 +272,7 @@ QtObject {
     if (!key || !rect || !rect.width) return
     if (rect.fullscreen || rect.minimized) return
     var geom = root._geomForRect(rect)
-    if (geom && geom.width && (WindowModel.isSnapped(rect, geom, 8, 32) || WindowModel.isSnapped(rect, geom, 8, 0)))
+    if (geom && geom.width && (WindowModel.isSnapped(rect, geom, 8, 30) || WindowModel.isSnapped(rect, geom, 8, 0)))
       return
     if (geom && WindowModel.coversWorkArea(rect, geom))
       return
@@ -479,7 +479,7 @@ QtObject {
         }
       }
       var area = WindowModel.workArea(geom)
-      if (remembered && geom && geom.width && (WindowModel.isSnapped(remembered, geom, 8, 32) || WindowModel.isSnapped(remembered, geom, 8, 0) || WindowModel.coversWorkArea(remembered, geom)))
+      if (remembered && geom && geom.width && (WindowModel.isSnapped(remembered, geom, 8, 30) || WindowModel.isSnapped(remembered, geom, 8, 0) || WindowModel.coversWorkArea(remembered, geom)))
         remembered = null
       if (remembered && area && area.width && Number(remembered.x) < area.x - 4 && Number(remembered.y) < area.y - 4)
         remembered = null
@@ -489,7 +489,7 @@ QtObject {
         continue
       }
       if (remembered)
-        root._applyRect(addr, WindowModel.clampRect(remembered, geom, csd ? 0 : 32))
+        root._applyRect(addr, WindowModel.clampRect(remembered, geom, csd ? 0 : 30))
       else {
         root._applyRect(addr, WindowModel.cascadeRect(geom, root._cascadeIndex, { csd: csd }))
         root._cascadeIndex++
@@ -841,6 +841,7 @@ QtObject {
     var geom = root._monitorGeom(target)
     if (!geom.width || !geom.height) return false
     var rect = root._frameBox(target, WindowModel.snapRect(geom, "max", root._hyprbarsInset(target)))
+    rect = WindowModel.clampCompositorBox(rect, geom)
     var win = root._luaWindow(target)
     root._setPlacedKind(target, "max")
     root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + win + " })")
@@ -966,13 +967,25 @@ QtObject {
     previewCapture.running = true
   }
 
+
+  function _clampRemembered(address, rect) {
+    var geom = root._monitorGeom(address)
+    if (!geom || !geom.width || !rect) return rect
+    var area = WindowModel.usableRect(geom)
+    if (Number(rect.x) >= area.x && Number(rect.y) >= area.y &&
+        Number(rect.x) + Number(rect.width) <= area.x + area.width &&
+        Number(rect.y) + Number(rect.height) <= area.y + area.height)
+      return { x: Number(rect.x), y: Number(rect.y), width: Number(rect.width), height: Number(rect.height) }
+    return WindowModel.clampCompositorBox(rect, geom)
+  }
+
   function _rememberNormal(address) {
     var rec = root._clientRect(address)
     if (!rec || rec.fullscreen || rec.minimized) return
     var geom = root._monitorGeom(address)
     if (geom.width && (WindowModel.isSnapped(rec, geom, 8, root._hyprbarsInset(address)) || WindowModel.coversWorkArea(rec, geom))) return
     var next = root._copyMap(root._normalBounds)
-    next[address] = { x: rec.x, y: rec.y, width: rec.width, height: rec.height }
+    next[address] = root._clampRemembered(address, { x: rec.x, y: rec.y, width: rec.width, height: rec.height })
     root._normalBounds = next
   }
 
@@ -1249,6 +1262,7 @@ QtObject {
     if (geom && geom.width) bounds = WindowModel.clampRect(bounds, geom, root._hyprbarsInset(target))
     var logical = { x: Number(bounds.x), y: Number(bounds.y), width: Number(bounds.width), height: Number(bounds.height) }
     bounds = root._frameBox(target, bounds)
+    bounds = WindowModel.clampCompositorBox(bounds, geom)
     var win = root._luaWindow(target)
     root._dispatchLua("hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"unset\", layout_aware = false, " + win + " })")
     if (root._placedKind[target] === "max") root._setPlacedKind(target, "float")
@@ -1470,6 +1484,7 @@ QtObject {
     root._rememberNormal(target)
 
     var rect = root._frameBox(target, WindowModel.snapRect(geom, direction, root._hyprbarsInset(target)))
+    rect = WindowModel.clampCompositorBox(rect, geom)
     var win = root._luaWindow(target)
     root._setPlacedKind(target, direction)
     root._dispatchLua("hl.dsp.window.float({ action = \"enable\", " + win + " })")

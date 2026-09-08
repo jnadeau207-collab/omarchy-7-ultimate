@@ -126,7 +126,8 @@ local function load_chrome_tokens()
   local required = {
     "glassRed", "glassGreen", "glassBlue", "glassAlphaPct", "hyprbarsTextHex",
     "captionCloseBgHex", "captionCloseFgHex", "captionMaxBgHex", "captionMaxFgHex",
-    "captionMinBgHex", "captionMinFgHex", "borderActiveHex", "borderInactiveHex",
+    "captionMinBgHex", "captionMinFgHex", "captionButtonSize", "captionButtonPadding",
+    "captionHorizontalPadding", "captionHeight", "borderActiveHex", "borderInactiveHex",
   }
   for _, key in ipairs(required) do
     if not tokens[key] or tokens[key] == "" then
@@ -143,23 +144,20 @@ local function load_chrome_tokens()
   if not alpha or alpha < 0 or alpha > 100 then
     return nil, "resolved chrome token adapter has invalid glassAlphaPct"
   end
+  for _, key in ipairs({ "captionButtonSize", "captionButtonPadding", "captionHorizontalPadding", "captionHeight" }) do
+    local value = tonumber(tokens[key])
+    if not value or value < 0 or value > 4096 or value % 1 ~= 0 then
+      return nil, "resolved chrome token adapter has invalid " .. key
+    end
+  end
+  if tonumber(tokens.captionButtonSize) < 1 or tonumber(tokens.captionHeight) < 1 then
+    return nil, "resolved chrome token adapter has invalid caption button bounds"
+  end
   return tokens, nil
 end
 
-local AERO_ALPHA_PCT = 42
-
-local AERO_DEFAULT_GLASS = "4580c4"
-local AERO_COLOR_BALANCE = 0.10
-
-local function aero_balanced(hex)
-  local r = tonumber(hex:sub(1, 2), 16)
-  local g = tonumber(hex:sub(3, 4), 16)
-  local b = tonumber(hex:sub(5, 6), 16)
-  local function lift(value)
-    return math.floor(value + (255 - value) * AERO_COLOR_BALANCE + 0.5)
-  end
-  return string.format("%02x%02x%02x", lift(r), lift(g), lift(b))
-end
+local AERO_FACTORY_GLASS = "74B8FC"
+local AERO_FACTORY_ALPHA = 0x6B
 
 local function aero_glass_hex(tokens)
   local hex = tokens.captionGlassHex
@@ -169,22 +167,35 @@ local function aero_glass_hex(tokens)
       return hex:sub(1, 6)
     end
   end
-  return AERO_DEFAULT_GLASS
+  if tokens.glassRed and tokens.glassGreen and tokens.glassBlue then
+    local r = tonumber(tokens.glassRed)
+    local g = tonumber(tokens.glassGreen)
+    local b = tonumber(tokens.glassBlue)
+    if r and g and b then
+      return string.format("%02x%02x%02x", r, g, b)
+    end
+  end
+  return AERO_FACTORY_GLASS
+end
+
+local function aero_alpha_byte(tokens)
+  local pct = tonumber(tokens.glassAlphaPct)
+  if not pct then
+    return AERO_FACTORY_ALPHA
+  end
+  local a = math.floor(pct * 255 / 100 + 0.5)
+  if a < 0 then a = 0 end
+  if a > 255 then a = 255 end
+  return a
 end
 
 local function chrome_aero_rgba(tokens)
-  local a = math.floor(AERO_ALPHA_PCT * 255 / 100 + 0.5)
-  return string.format("rgba(%s%02x)", aero_balanced(aero_glass_hex(tokens)), a)
+  return string.format("rgba(%s%02x)", aero_glass_hex(tokens), aero_alpha_byte(tokens))
 end
 
 local function chrome_aero_alpha_rgba(tokens, alpha_pct)
   local a = math.floor(alpha_pct * 255 / 100 + 0.5)
-  return string.format("rgba(%s%02x)", aero_balanced(aero_glass_hex(tokens)), a)
-end
-
-local function chrome_aero_text(tokens)
-  local _ = tokens
-  return "rgb(000000)"
+  return string.format("rgba(%s%02x)", aero_glass_hex(tokens), a)
 end
 
 local function chrome_hex_rgb(tokens, key)
@@ -194,6 +205,18 @@ local function chrome_hex_rgb(tokens, key)
     error("resolved chrome token adapter has invalid " .. key)
   end
   return string.format("rgb(%s)", hex:sub(1, 6))
+end
+
+local function chrome_aero_text(tokens)
+  return chrome_hex_rgb(tokens, "hyprbarsTextHex")
+end
+
+local function caption_button_px(tokens)
+  local value = tonumber(tokens.captionButtonSize)
+  if not value or value < 1 or value % 1 ~= 0 then
+    error("resolved chrome token adapter has invalid captionButtonSize")
+  end
+  return value
 end
 
 local function require_chrome_tokens()
@@ -235,8 +258,8 @@ local function apply_desktop_look()
     },
     group = {
       col = {
-        border_active = chrome_hex_rgb(chrome, "borderActiveHex"),
-        border_inactive = chrome_hex_rgb(chrome, "borderInactiveHex"),
+        border_active = chrome_aero_alpha_rgba(chrome, 58),
+        border_inactive = chrome_aero_alpha_rgba(chrome, 34),
       },
     },
     decoration = {
@@ -398,32 +421,33 @@ local function add_hyprbars_buttons()
   end
 
   local chrome = require_chrome_tokens()
-  local sig = (chrome.captionCloseBgHex or "") .. (chrome.captionMaxBgHex or "") .. (chrome.glassRed or "")
+  local button_px = caption_button_px(chrome)
+  local sig = (chrome.captionCloseBgHex or "") .. (chrome.captionMaxBgHex or "") .. (chrome.glassRed or "") .. ":" .. tostring(button_px)
   if _G.omarchy_hyprbars_buttons == sig then
     return
   end
+  -- Hit boxes follow the live caption button bound. Do not keep a cluster width.
   plugin.hyprbars.add_button({
-    bg_color = "rgba(d54f36e0)",
-    fg_color = chrome_hex_rgb(chrome, "captionCloseFgHex"),
-    size = 21,
-    width = 45,
+    bg_color = "rgba(00000000)",
+    fg_color = chrome_aero_text(chrome),
+    hover_bg_color = chrome_hex_rgb(chrome, "captionCloseBgHex"),
+    hover_fg_color = chrome_hex_rgb(chrome, "captionCloseFgHex"),
+    size = button_px,
     icon = "×",
     action = "omarchy-shell window close 0x{:x}",
   })
   plugin.hyprbars.add_button({
-    bg_color = "rgba(ffffff33)",
+    bg_color = "rgba(00000000)",
     fg_color = chrome_aero_text(chrome),
-    size = 21,
-    width = 29,
+    size = button_px,
     icon = "□",
     action = "omarchy-shell window toggleMaximize 0x{:x}",
     hover_action = "omarchy-shell window snapChooser 0x{:x}",
   })
   plugin.hyprbars.add_button({
-    bg_color = "rgba(ffffff33)",
+    bg_color = "rgba(00000000)",
     fg_color = chrome_aero_text(chrome),
-    size = 21,
-    width = 29,
+    size = button_px,
     icon = "–",
     action = "omarchy-shell window minimize 0x{:x}",
   })

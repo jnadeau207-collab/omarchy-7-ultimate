@@ -199,6 +199,34 @@ int newLuaButton(lua_State* L) {
             button.hoverCmd = lua_tostring(L, -1);
     }
 
+    {
+        Hyprutils::Utils::CScopeGuard x([L] { lua_pop(L, 1); });
+
+        lua_getfield(L, 1, "hover_bg_color");
+        if (!lua_isnil(L, -1)) {
+            Config::Lua::CLuaConfigColor parser(0);
+            auto                         err = parser.parse(L);
+            if (err.errorCode != Config::Lua::PARSE_ERROR_OK)
+                return Config::Lua::Bindings::Internal::configError(L, "add_button: failed to parse hover_bg_color");
+            button.hoverBg    = parser.parsed();
+            button.hasHoverBg = true;
+        }
+    }
+
+    {
+        Hyprutils::Utils::CScopeGuard x([L] { lua_pop(L, 1); });
+
+        lua_getfield(L, 1, "hover_fg_color");
+        if (!lua_isnil(L, -1)) {
+            Config::Lua::CLuaConfigColor parser(0);
+            auto                         err = parser.parse(L);
+            if (err.errorCode != Config::Lua::PARSE_ERROR_OK)
+                return Config::Lua::Bindings::Internal::configError(L, "add_button: failed to parse hover_fg_color");
+            button.hoverFg    = parser.parsed();
+            button.hasHoverFg = true;
+        }
+    }
+
     g_pGlobalState->buttons.push_back(std::move(button));
 
     for (auto& b : g_pGlobalState->bars) {

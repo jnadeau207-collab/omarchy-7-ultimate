@@ -245,8 +245,13 @@ grep -Fq 'active_border = chrome_aero_alpha_rgba(chrome, 58)' "$ROOT/default/hyp
   fail "desktop mode reads the active border from the resolved chrome adapter"
 grep -Fq 'inactive_border = chrome_aero_alpha_rgba(chrome, 34)' "$ROOT/default/hypr/desktop-windows.lua" ||
   fail "desktop mode reads the inactive border from the resolved chrome adapter"
-grep -Fq 'border_active = chrome_hex_rgb(chrome, "borderActiveHex")' "$ROOT/default/hypr/desktop-windows.lua" ||
+grep -Fq 'border_active = chrome_aero_alpha_rgba(chrome, 58)' "$ROOT/default/hypr/desktop-windows.lua" ||
   fail "desktop mode reads group borders from the resolved chrome adapter"
+grep -Fq 'border_inactive = chrome_aero_alpha_rgba(chrome, 34)' "$ROOT/default/hypr/desktop-windows.lua" ||
+  fail "desktop mode reads inactive group borders from the resolved chrome adapter"
+if grep -Fq 'border_active = chrome_hex_rgb(chrome, "borderActiveHex")' "$ROOT/default/hypr/desktop-windows.lua"; then
+  fail "desktop mode must not paint charcoal borderActiveHex as visible chrome"
+fi
 if grep -nE '(active|inactive)_border\s*=\s*"?rgba?\(' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "desktop mode must not hard-code a border colour beside the chrome adapter"
 fi

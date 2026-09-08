@@ -7,6 +7,7 @@
   "glassGreen": "236",
   "glassBlue": "240",
   "glassAlphaPct": "78",
+  "captionGlassHex": "#e8ecf0",
   "hyprbarsTextHex": "#20262c",
   "chromeGlowHex": "#3a76a8",
   "chromeStartHex": "#55875c",
@@ -17,6 +18,10 @@
   "captionMaxFgHex": "#ffffff",
   "captionMinBgHex": "#5c6873",
   "captionMinFgHex": "#ffffff",
+  "captionHeight": "30",
+  "captionButtonSize": "22",
+  "captionButtonPadding": "8",
+  "captionHorizontalPadding": "12",
   "borderActiveHex": "#b4b7ba",
   "borderInactiveHex": "#d4d7da"
 }
