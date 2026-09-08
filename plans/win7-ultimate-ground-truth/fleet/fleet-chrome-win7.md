@@ -14,6 +14,33 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 **Scope:** Captions, CSD exclusion, Chromium overhang, ghost-perimeter damage. Not Start/Superbar IA (other fleet packs).
 **Doctrine:** PRODUCT_DOCTRINE “Not Aero” refuses ads/telemetry/clone-as-product, **not** vague chrome. Desktop Mode must match Win7 Ultimate **mouse grammar, hit targets, and one-row caption jobs**. Literal Aero glass texture is optional; sizes and interactions are not.
 
+## 0. Tip status after PR #112 (not a close)
+
+Work tip `aa10f1e2773ff6ad9312e6db4579b6e2e0934113` (PR #112) landed **source chrome only**. This is not pixel proof, not hex-grep proof, not metal CLOSED, and not product CLOSED. `win7VisualLeftover` stays **OPEN**. Product **REJECTED**.
+
+Landed (tip-true):
+
+- post-frameBox clamp (maximize and float restore, superbar 48, remembered origin)
+- factory glass #74B8FC @ 0x6B
+- caption height 30
+- idle caption glyphs
+- close red hover/press only
+- menus opaque light #e8ecf0 / selection #cfe2ef / menuAlpha 1.0 on dark and light
+- fake 45/29 cluster widths removed
+
+Still open:
+
+- visual leftover 5/5 surfaces
+- Explorer client sizes vs cheat sheet
+- Settings card shell
+- Computer tile metrics
+- caption button live bounds not proven on metal
+- ghost-perimeter
+- image diff (metal off)
+
+The 2026-09-05 HDMI grim on `0c543905` is a dated sample, not a re-proof of #112. Shipped SSD `bar_height` / caption height is **30**; the older hyprbars 32 inset line is not the current ship pin. Ghost-perimeter stays open until metal `outside_pixels` proof. Do not set `win7VisualLeftover` to CLOSED.
+
+
 ---
 
 ## 1. What “match Win7” means for chrome
@@ -131,7 +158,7 @@ Win7 Aero also separates **logical** window rects from **visible** glass/shadow 
 | Item | Status as of Chrome reviews through 2026-09-01 |
 |---|---|
 | Compensation path (inset, snap/max, caption aims, WaylandWindowDecorations on) | **FROZEN** — any churn needs full real-Chrome metal proof |
-| Ghost-perimeter | **STILL OPEN** carry-forward after geometry churn (ee6321a KEEP-WITH-FIX): no `outside_pixels=0` / damage-ring grim in later packs; grim-less markdown ≠ metal eyes |
+| Ghost-perimeter | **STILL OPEN** after PR #112 (`aa10f1e`): no `outside_pixels=0` / damage-ring grim; grim-less markdown ≠ metal eyes. #112 did not close this. |
 | Damage-ring margin used in prior metal proof | Current window **+ 20 px** perimeter; require `outside_pixels=0` on settled frames |
 
 Required metal proof after any freeze-touching change (from chrome damage handoff): centered real Google Chrome; both rounded top corners; full close glyph; direct motion; drag; snap; maximize/restore; repeated cycles; absolute-pointer title-bar drag.
@@ -142,7 +169,7 @@ Required metal proof after any freeze-touching change (from chrome damage handof
 
 | Verb | Must equal | Must not equal |
 |---|---|---|
-| Maximize | Work-area rect (`monitors.reserved` LTRB), SSD inset by hyprbars 32, CSD via `frameBox` | Exclusive Hyprland fullscreen (F11 / `fullscreen` 2) |
+| Maximize | Work-area rect (`monitors.reserved` LTRB). After PR #112 the ship pin is post-frameBox clamp of the compositor box (maximize and float restore, superbar 48, remembered origin) and caption/bar_height **30**, not the older hyprbars 32 inset. CSD still via `frameBox`. Not pixel proof. | Exclusive Hyprland fullscreen (F11 / `fullscreen` 2) |
 | Half snap L/R | Visible frame against work-area half | Compositor box ignoring 12 px Chromium inset |
 | Remember placement | Skip snapped / `coversWorkArea` / off-work-area CSD boxes | Persist maximized or overhang boxes as float |
 
@@ -204,7 +231,7 @@ Harness: `window_is_maximized` / `geometry_is_maximized` judge **coverage**, not
 - `HANDOFF_ULTIMATE_RECONCILIATION_CHROME_DAMAGE_2026-08-27.md` — overhang / ghost-perimeter / freeze rule.
 - `default/ultimate/csd-clients.json`, `config/chromium-flags.conf`, `default/ultimate/start-chrome.json`.
 - Pointer proofs: `test/acceptance.d/hyprbars-pointer-proof.py`, `test/acceptance.d/csd-caption-pointer-proof.py`, `test/acceptance.d/windows-native-test.sh`.
-- Chrome adversarial lock: freeze held through post-ee6321a tips; **ghost-perimeter still open** until metal `outside_pixels` proof after geometry churn.
+- Chrome adversarial lock: freeze held through post-ee6321a tips; **ghost-perimeter still open** after PR #112 until metal `outside_pixels` proof. Caption button live bounds are not proven on metal. Image diff is metal off. `win7VisualLeftover` stays OPEN.
 
 ---
 

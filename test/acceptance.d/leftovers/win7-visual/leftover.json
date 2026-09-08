@@ -8,6 +8,33 @@
     "refresh": 60.0
   },
   "win7VisualLeftover": "OPEN",
+  "statusAfterPr112": {
+    "workTip": "aa10f1e2773ff6ad9312e6db4579b6e2e0934113",
+    "pr": 112,
+    "win7VisualLeftover": "OPEN",
+    "hexGrepIsNotPixelProof": true,
+    "metalClosed": false,
+    "productClosed": false,
+    "note": "This leftover.json grim is the 2026-09-05 HDMI sample on 0c543905. It is not a re-proof of PR #112. Source token changes are not pixel proof and do not close win7VisualLeftover.",
+    "landed": [
+      "post-frameBox clamp (maximize and float restore, superbar 48, remembered origin)",
+      "factory glass #74B8FC @ 0x6B",
+      "caption height 30",
+      "idle caption glyphs",
+      "close red hover/press only",
+      "menus opaque light #e8ecf0 / selection #cfe2ef / menuAlpha 1.0 on dark and light",
+      "fake 45/29 cluster widths removed"
+    ],
+    "stillOpen": [
+      "visual leftover 5/5 surfaces",
+      "Explorer client sizes vs cheat sheet",
+      "Settings card shell",
+      "Computer tile metrics",
+      "caption button live bounds not proven on metal",
+      "ghost-perimeter",
+      "image diff (metal off)"
+    ]
+  },
   "hexGrepIsNotPixelProof": true,
   "cloudExit0IsNotMetalLeftover": true,
   "filesLiveMetal": "OPEN",
@@ -21,7 +48,7 @@
       "status": "OPEN",
       "windowTitle": "Files",
       "ocr": "",
-      "note": "Win7 Explorer caption is blank. hyprbars bar_text_align=center. Empty windowTitle fell back to quickshell and is not a fix."
+      "note": "Win7 Explorer caption is blank. hyprbars bar_text_align=center. Empty windowTitle fell back to quickshell and is not a fix. Dated grim on 0c543905. Surface stays OPEN after PR #112; this file is not a re-proof."
     },
     "aeroGlassAlpha": {
       "status": "OPEN",
@@ -33,7 +60,7 @@
         101
       ],
       "distanceTo4580c4": 106.7379969832674,
-      "note": "Reference glass is #4580c4 at 0.6 opacity. Token aeroAlpha is 0.42. Hex-grep is not this leftover."
+      "note": "Dated grim on 0c543905: reference glass #4580c4 at 0.6; token aeroAlpha at that sample was 0.42. Not current factory glass. PR #112 shipped source factory glass #74B8FC @ 0x6B. Hex-grep is not this leftover and is not pixel proof. Surface stays OPEN."
     },
     "selectionWash": {
       "status": "OPEN",
@@ -43,16 +70,16 @@
         136
       ],
       "distanceToE6ecf5": 180.2720166858961,
-      "note": "Source tokens match #ffffff/#e6ecf5/#aaddfa. Grim shows a pale selected Documents nav row and omarchy-files-live-e9dda27c70b8 content row. That is not a closed pixel proof against the measured wash."
+      "note": "Source tokens match #ffffff/#e6ecf5/#aaddfa. Grim shows a pale selected Documents nav row and omarchy-files-live-e9dda27c70b8 content row. That is not a closed pixel proof against the measured wash. Surface stays OPEN after PR #112."
     },
     "superbarStackUnderline": {
       "status": "OPEN",
-      "note": "TaskButton.qml still paints a chromeGlow underline for running apps. Win7 running idiom is a bordered glass tile, not an underline. Grim Superbar shows workspace indices 1-5 rather than stacked running tiles."
+      "note": "TaskButton.qml still paints a chromeGlow underline for running apps. Win7 running idiom is a bordered glass tile, not an underline. Grim Superbar shows workspace indices 1-5 rather than stacked running tiles. Surface stays OPEN after PR #112."
     },
     "badgePainting": {
       "status": "OPEN",
       "redBadgeHits": 0,
-      "note": "TaskButton has no badgeCount (source lock). Notification Center BarWidget still paints a count Badge. Grim tray cluster shows a numeric badge."
+      "note": "TaskButton has no badgeCount (source lock). Notification Center BarWidget still paints a count Badge. Grim tray cluster shows a numeric badge. Surface stays OPEN after PR #112."
     }
   },
   "grims": {

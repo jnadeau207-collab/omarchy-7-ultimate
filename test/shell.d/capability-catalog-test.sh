@@ -1649,6 +1649,18 @@ if "Win7 visual leftover OPEN" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Win7 visual leftover OPEN")
 if "hex-grep is not pixel proof" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must name hex-grep as not pixel proof")
+if "Honesty addendum 2026-09-08 vs Win7 visual status after PR #112" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must record PR #112 visual status without closing the leftover")
+if "factory glass #74B8FC @ 0x6B" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must name factory glass #74B8FC @ 0x6B as source chrome only")
+if "visual leftover 5/5 surfaces" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep visual leftover 5/5 surfaces open")
+if "caption button live bounds not proven on metal" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep caption button live bounds unproven on metal")
+if "`win7VisualLeftover` stays OPEN" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must keep win7VisualLeftover OPEN after PR #112")
+if "Not metal CLOSED" not in gaps or "Not product CLOSED" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must refuse metal CLOSED and product CLOSED for PR #112 chrome")
 if "Do not invent Files LIVE metal CLOSED" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must refuse Files LIVE metal CLOSED invent")
 if "Honesty addendum 2026-09-06 vs Files Recycle session plane" not in gaps:
@@ -1701,6 +1713,15 @@ if not win7_leftover_path.is_file():
 win7_leftover = json.loads(win7_leftover_path.read_text(encoding="utf-8"))
 if win7_leftover.get("win7VisualLeftover") != "OPEN":
     raise SystemExit("Win7 visual leftover.json must stay OPEN")
+status_after = win7_leftover.get("statusAfterPr112") or {}
+if status_after.get("win7VisualLeftover") != "OPEN":
+    raise SystemExit("Win7 visual leftover.json statusAfterPr112 must stay OPEN")
+if status_after.get("metalClosed") is not False or status_after.get("productClosed") is not False:
+    raise SystemExit("Win7 visual leftover.json must refuse metal CLOSED and product CLOSED")
+if "factory glass #74B8FC @ 0x6B" not in (status_after.get("landed") or []):
+    raise SystemExit("Win7 visual leftover.json must name factory glass as landed source chrome only")
+if "visual leftover 5/5 surfaces" not in (status_after.get("stillOpen") or []):
+    raise SystemExit("Win7 visual leftover.json must keep visual leftover 5/5 surfaces open")
 if win7_leftover.get("hexGrepIsNotPixelProof") is not True:
     raise SystemExit("Win7 visual leftover.json must name hex-grep as not pixel proof")
 if win7_leftover.get("filesLiveMetal") != "OPEN":
@@ -2885,6 +2906,14 @@ if "Win7 visual leftover OPEN" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must keep Win7 visual leftover OPEN")
 if "hex-grep is not pixel proof" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must name hex-grep as not pixel proof")
+if "Honesty addendum 2026-09-08 vs Win7 visual status after PR #112" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must record PR #112 visual status without closing the leftover")
+if "factory glass #74B8FC @ 0x6B" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must name factory glass #74B8FC @ 0x6B as source chrome only")
+if "visual leftover 5/5 surfaces" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep visual leftover 5/5 surfaces open")
+if "`win7VisualLeftover` stays OPEN" not in writers_handoff:
+    raise SystemExit("HANDOFF_WRITERS must keep win7VisualLeftover OPEN after PR #112")
 if "Do not invent Files LIVE metal CLOSED" not in writers_handoff:
     raise SystemExit("HANDOFF_WRITERS must refuse Files LIVE metal CLOSED invent")
 explorer_status, explorer_notes = parity_notes("Explorer / Computer")
