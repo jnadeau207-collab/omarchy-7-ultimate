@@ -31,7 +31,7 @@ Landed (tip-true):
 Still open:
 
 - visual leftover 5/5 surfaces
-- Explorer client sizes vs cheat sheet
+- Explorer client sizes vs cheat sheet: command bar 36 and details pane 54 are inside documented ranges 36-40 and 54-72 (source metrics only). selectionWash remains OPEN. Other Explorer client sizes are not claimed closed. Visual leftover stays OPEN.
 - Settings card shell
 - Computer tile metrics
 - caption button live bounds not proven on metal
