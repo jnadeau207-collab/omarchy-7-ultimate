@@ -112,9 +112,9 @@ var errorBorder = "#e0a3a3"
 
 var rowHeight = 18
 var headerHeight = 22
-var commandHeight = 30
+var commandHeight = 36
 var addressHeight = 40
-var detailsHeight = 52
+var detailsHeight = 54
 var tileWidth = 104
 var tileHeight = 94
 var largeIcon = 48
