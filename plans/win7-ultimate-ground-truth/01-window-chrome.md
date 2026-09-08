@@ -385,16 +385,31 @@ Raymond Chen: maximized window rectangle is **larger than the screen** so border
 - Close hover is **red atlas glow**; min/max are **neutral glass**.
 - Borders **8 px**; caption **30 px** restored; buttons **29 / 27 / 49 × 20**.
 
-### 9.2 Current Omarchy tokens (NOT Win7 truth)
+### 9.2 Current Omarchy tokens (NOT Win7 truth, NOT pixel proof)
 
-From `/workspace/w7-specs/docs/chrome-tokens.json` (dark adapter — illustrative only):
+Tip-true source tokens after PR #112 (`aa10f1e2773ff6ad9312e6db4579b6e2e0934113`), from `default/ultimate/chrome-tokens.json` / `default/ultimate/design-system/defaults-v0.json`. Hex-grep of these files is not pixel proof. `win7VisualLeftover` stays OPEN. Not metal CLOSED. Not product CLOSED.
 
-| Token | Example value | Note |
-|-------|---------------|------|
-| `glassRed/Green/Blue` | 28/28/30 | Dark glass — **not** Aero sky blue |
-| `hyprbarsTextHex` | `#eeeeee` | Light text — **opposite** of Win7 dark caption text |
-| `captionCloseBgHex` | `#c42b1c` | Product close chrome |
-| `chromeGlowHex` | `#e8943a` | Omarchy accent — **not** DWM colorization |
+Landed in source:
+
+- post-frameBox clamp (maximize and float restore, superbar 48, remembered origin)
+- factory glass #74B8FC @ 0x6B (`glassRed/Green/Blue` 116/184/252, `glassAlphaPct` 42, `captionGlassHex` `#74b8fc`) — not Explorer `#4580c4`, not dark glass `#1c1c1e`
+- caption height 30 (`captionHeight` / hyprbars `bar_height`)
+- idle caption glyphs
+- close red hover/press only
+- menus opaque light #e8ecf0 / selection #cfe2ef / menuAlpha 1.0 on dark and light
+- fake 45/29 cluster widths removed
+
+Still open: visual leftover 5/5 surfaces; Explorer client sizes vs cheat sheet; Settings card shell; Computer tile metrics; caption button live bounds not proven on metal; ghost-perimeter; image diff (metal off).
+
+| Token | Tip value after #112 | Note |
+|-------|----------------------|------|
+| `captionGlassHex` / glass RGB | `#74b8fc` / 116,184,252 | Factory sample `#74B8FC` @ `0x6B`. Not a grim close. |
+| `glassAlphaPct` | `42` | `0x6B` / 255. Not Explorer 0.6 glass proof. |
+| `captionHeight` | `30` | Aligns to hyprbars `bar_height`. Live button bounds not proven on metal. |
+| `menu` / `menuSelection` / `menuAlpha` | `#e8ecf0` / `#cfe2ef` / `1.0` | Opaque light on dark and light. Not a menu pixel proof. |
+| `hyprbarsTextHex` | `#20262c` | Dark caption text in the adapter. Not a centered-title grim close. |
+
+The older illustrative row (dark glass 28/28/30, `#eeeeee` caption text, idle close `#c42b1c`) is **not** the current default adapter. Do not read this table as visual leftover CLOSED.
 
 **Parity work** must map hyprbars SSD layout/metrics to §1–§5 first; token colors are a separate Personalize/theme layer and must not redefine Win7 geometry.
 

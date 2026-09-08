@@ -108,3 +108,7 @@ hyprctl plugin list
 ```
 
 Before declaring a release candidate, compare `git rev-parse HEAD` and `git status --short --branch` in all three local and all three metal checkouts, compare GitHub refs with `git ls-remote`, and record package/ISO BOM plus the post-restart plugin inode in this handoff.
+
+## Visual status after PR #112 (not a close of this handoff)
+
+This file remains the 2026-08-27 chrome-damage resume. It is not a re-proof of later tips. Work tip `aa10f1e2773ff6ad9312e6db4579b6e2e0934113` (PR #112) landed source chrome only: post-frameBox clamp (maximize and float restore, superbar 48, remembered origin); factory glass #74B8FC @ 0x6B; caption height 30; idle caption glyphs; close red hover/press only; menus opaque light #e8ecf0 / selection #cfe2ef / menuAlpha 1.0 on dark and light; fake 45/29 cluster widths removed. Still open: visual leftover 5/5 surfaces; Explorer client sizes vs cheat sheet; Settings card shell; Computer tile metrics; caption button live bounds not proven on metal; ghost-perimeter; image diff (metal off). `win7VisualLeftover` stays OPEN. hex-grep is not pixel proof. Ghost-perimeter stays open. Not metal CLOSED. Not product CLOSED. Product REJECTED.

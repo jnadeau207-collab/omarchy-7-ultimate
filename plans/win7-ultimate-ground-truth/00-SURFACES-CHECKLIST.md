@@ -18,6 +18,9 @@ Each surface needs: exact colors or token refs, px sizes, hit targets, L/R-click
 
 ## A. Window chrome / Aero
 
+**Tip status after PR #112 (`aa10f1e`):** source chrome landed post-frameBox clamp (maximize and float restore, superbar 48, remembered origin), factory glass #74B8FC @ 0x6B, caption height 30, idle caption glyphs, close red hover/press only, menus opaque light #e8ecf0 / selection #cfe2ef / menuAlpha 1.0 on dark and light, and removed fake 45/29 cluster widths. Checks below stay open. Still open: visual leftover 5/5 surfaces; Explorer client sizes vs cheat sheet; Settings card shell; Computer tile metrics; caption button live bounds not proven on metal; ghost-perimeter; image diff (metal off). `win7VisualLeftover` stays OPEN. Not pixel proof. Not metal CLOSED. Not product CLOSED. Product REJECTED.
+
+
 - [~] SSD caption bar (hyprbars) — height/buttons/colors exist as Omarchy freeze; Win7 Aero formulas in research
 - [ ] Caption button glyphs (min/max/restore/close) — normal/hot/pressed/disabled inactive
 - [ ] Active vs inactive frame gradients / glass / border highlight
