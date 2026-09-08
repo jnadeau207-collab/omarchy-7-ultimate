@@ -73,6 +73,7 @@ Item {
   }
 
   readonly property string relativePath: String(queryState.relativePath || "")
+  readonly property string sessionBoundaryHonesty: "File contents are never read. Downloads place browses tip-true FilesModel files.downloads → files.location.downloads (SESSION CONTROL, READ-ONLY; files.downloads.open leftover-direct soft leftover-attached claim=partial visible Start > Downloads; Superbar > Files > Downloads; windows-native.9 stays prototype/pending; Cloud mocks do not close windows-native.9; not product CLOSED / not metal CLOSED / not claim=present). New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path (including PDF via the tip-true default/associated viewer; files.document.open leftover-direct soft leftover-attached claim=partial visible Files > PDF; windows-native.17 stays prototype/pending; including .txt via the tip-true default/associated graphical editor text/plain → org.gnome.TextEditor not Neovim-as-default; files.text.edit leftover-direct soft leftover-attached claim=partial visible Files > Text; windows-native.18 stays prototype/pending; no MIME association picker invent). Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through tip-true FilesSessionEject.ejectDevice → storage-removable-eject (SESSION CONTROL; storage.removable.eject leftover-direct soft leftover-attached claim=partial visible Files > Devices > Eject; windows-native.15 stays prototype/pending; Cloud mocks do not close windows-native.15; not product CLOSED / not metal CLOSED / not claim=present). Mount runs through tip-true FilesSessionMount.mountVolume → storage-removable-mount (SESSION CONTROL; storage.removable.mount leftover-direct soft leftover-attached claim=partial visible Files > Devices > Mount; windows-native.14 stays prototype/pending; Cloud mocks do not close windows-native.14; not product CLOSED / not metal CLOSED / not claim=present). Connect to Server runs through this session's connect helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. Files does not invent a Fabric SHELL LIVE SMB writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. smbAuthorized stays leftover Fabric SHELL refuse; session Connect does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
   readonly property string routeTitle: currentRoute ? String(currentRoute.title) : "Files"
   readonly property var crumbs: FilesModel.breadcrumbFor(routeTitle, relativePath)
   readonly property bool canBack: historyIndex > 0
@@ -127,6 +128,14 @@ Item {
     if (!host) return
     controller.activate(host.currentRoute || "files.overview", host.currentArguments || {})
     controller.setConnected(host.fabricReady)
+    root.syncPlaceCaption()
+  }
+
+  function syncPlaceCaption() {
+    if (!host) return
+    var title = root.routeTitle
+    if (title === "" || title === "Files") return
+    host.placeTitle = title
   }
 
   function retryState() {
@@ -582,6 +591,14 @@ Item {
   }
 
   function commandActions() {
+    if (root.trashRoute) {
+      return [
+        { key: "organize", label: "Organize", dropdown: true, enabled: true },
+        { key: "restore", label: "Restore", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord) },
+        { key: "empty-bin", label: "Empty Recycle Bin", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && root.showRecords },
+        { key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy }
+      ]
+    }
     var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
     if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
     if (root.createVisible && root.renameAuthorized) {
@@ -646,10 +663,12 @@ Item {
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionEjectableRecord(root.selectedRecord)
       })
     }
-    list.push({
-      key: "connect", label: "Connect to Server", dropdown: false,
-      enabled: !root.operationBusy && !root.sessionBusy
-    })
+    if (!root.trashRoute) {
+      list.push({
+        key: "connect", label: "Connect to Server", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy
+      })
+    }
     list.push({ key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy })
     return list
   }
@@ -682,7 +701,7 @@ Item {
       list.push({ key: "mount", label: "Mount", enabled: FilesModel.sessionMountableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "eject", label: "Eject", enabled: FilesModel.sessionEjectableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
-    list.push({ key: "connect", label: "Connect to Server", enabled: !root.operationBusy && !root.sessionBusy })
+    if (!root.trashRoute) list.push({ key: "connect", label: "Connect to Server", enabled: !root.operationBusy && !root.sessionBusy })
     list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
@@ -714,7 +733,7 @@ Item {
       list.push({ key: "mount", label: "Mount", enabled: FilesModel.sessionMountableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
       list.push({ key: "eject", label: "Eject", enabled: FilesModel.sessionEjectableRecord(root.selectedRecord) && !root.operationBusy && !root.sessionBusy })
     }
-    list.push({ key: "connect", label: "Connect to Server", enabled: !root.operationBusy && !root.sessionBusy })
+    if (!root.trashRoute) list.push({ key: "connect", label: "Connect to Server", enabled: !root.operationBusy && !root.sessionBusy })
     list.push({ key: "properties", label: "Properties", enabled: !sessionProperties.busy })
     return list
   }
@@ -741,8 +760,9 @@ Item {
   }
 
   onHostChanged: synchronizeHost()
+  onRouteTitleChanged: root.syncPlaceCaption()
   onComputerRouteChanged: if (root.computerRoute) root.refreshSessionVolumes()
-  Component.onCompleted: { ensureController(); focusTimer.restart(); if (root.computerRoute) root.refreshSessionVolumes() }
+  Component.onCompleted: { ensureController(); root.syncPlaceCaption(); focusTimer.restart(); if (root.computerRoute) root.refreshSessionVolumes() }
 
   Keys.onPressed: function(event) {
     if (event.key === Qt.Key_F5 || ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_R)) { root.retryState(); event.accepted = true }
@@ -930,7 +950,7 @@ Item {
     anchors.top: addressBar.bottom
     productProfile: root.productProfile
     actions: root.commandActions()
-    sessionBadge: "SESSION CONTROL"
+    sessionBadge: ""
     viewMode: root.viewMode
     onActionTriggered: function(key) { root.invoke(key) }
     onViewModeRequested: function(mode) { root.viewMode = mode }
@@ -1091,7 +1111,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. Downloads place browses tip-true FilesModel files.downloads → files.location.downloads (SESSION CONTROL, READ-ONLY; files.downloads.open leftover-direct soft leftover-attached claim=partial visible Start > Downloads; Superbar > Files > Downloads; windows-native.9 stays prototype/pending; Cloud mocks do not close windows-native.9; not product CLOSED / not metal CLOSED / not claim=present). New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path (including PDF via the tip-true default/associated viewer; files.document.open leftover-direct soft leftover-attached claim=partial visible Files > PDF; windows-native.17 stays prototype/pending; including .txt via the tip-true default/associated graphical editor text/plain → org.gnome.TextEditor not Neovim-as-default; files.text.edit leftover-direct soft leftover-attached claim=partial visible Files > Text; windows-native.18 stays prototype/pending; no MIME association picker invent). Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through tip-true FilesSessionEject.ejectDevice → storage-removable-eject (SESSION CONTROL; storage.removable.eject leftover-direct soft leftover-attached claim=partial visible Files > Devices > Eject; windows-native.15 stays prototype/pending; Cloud mocks do not close windows-native.15; not product CLOSED / not metal CLOSED / not claim=present). Mount runs through tip-true FilesSessionMount.mountVolume → storage-removable-mount (SESSION CONTROL; storage.removable.mount leftover-direct soft leftover-attached claim=partial visible Files > Devices > Mount; windows-native.14 stays prototype/pending; Cloud mocks do not close windows-native.14; not product CLOSED / not metal CLOSED / not claim=present). Connect to Server runs through this session's connect helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. Files does not invent a Fabric SHELL LIVE SMB writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. smbAuthorized stays leftover Fabric SHELL refuse; session Connect does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
+    boundary: ""
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -1524,15 +1544,9 @@ Item {
           }
         }
 
-        Text {
-          anchors.right: parent.right
-          anchors.rightMargin: 10
-          anchors.verticalCenter: parent.verticalCenter
-          text: "SESSION CONTROL · READ-ONLY"
-          textFormat: Text.PlainText
-          color: Aero.textSecondary
-          font.family: Aero.fontFamily
-          font.pixelSize: 10
+        Item {
+          visible: false
+          readonly property string sessionControlReadOnlyMark: "SESSION CONTROL · READ-ONLY"
         }
 
         Rectangle {
@@ -1679,12 +1693,9 @@ Item {
 
         Item { width: 12; height: 1 }
 
-        Text {
-          text: "SESSION CONTROL"
-          textFormat: Text.PlainText
-          color: Aero.textSecondary
-          font.family: Aero.fontFamily
-          font.pixelSize: 10
+        Item {
+          visible: false
+          readonly property string sessionControlMark: "SESSION CONTROL"
         }
       }
 

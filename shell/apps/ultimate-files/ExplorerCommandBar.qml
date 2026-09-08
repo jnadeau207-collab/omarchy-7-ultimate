@@ -10,7 +10,8 @@ Item {
   property var productProfile: null
   property var actions: []
   property string viewMode: "details"
-  property string sessionBadge: "SESSION CONTROL"
+  readonly property string sessionControlMark: "SESSION CONTROL"
+  property string sessionBadge: ""
 
   signal actionTriggered(string key)
   signal viewModeRequested(string mode)
@@ -105,18 +106,18 @@ Item {
 
   Text {
     id: sessionBadgeLabel
-    visible: root.sessionBadge !== ""
+    visible: false
     anchors.right: viewButton.left
     anchors.rightMargin: 8
     anchors.verticalCenter: parent.verticalCenter
-    text: root.sessionBadge
+    text: ""
     textFormat: Text.PlainText
     color: Aero.navHeaderText
     font.family: Aero.fontFamily
     font.pixelSize: 10
     font.bold: true
     Accessible.role: Accessible.StaticText
-    Accessible.name: root.sessionBadge
+    Accessible.name: ""
   }
 
   Item {

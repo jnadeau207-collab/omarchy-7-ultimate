@@ -38,12 +38,14 @@ Rectangle {
       list.push({ key: "libraries.pictures", depth: 1, label: "Pictures", icon: "directory", routeId: "files.pictures", group: false })
       list.push({ key: "libraries.videos", depth: 1, label: "Videos", icon: "directory", routeId: "files.videos", group: false })
     }
-    list.push({ key: "home", depth: 0, label: root.accountName, icon: "directory", routeId: "files.overview", group: false })
     list.push({ key: "computer", depth: 0, label: "Computer", icon: "computer", routeId: "files.this-pc", group: true })
     if (root.expanded.computer) {
       var seen = Array.isArray(root.mounts) ? root.mounts : []
       for (var i = 0; i < seen.length; i++) {
-        list.push({ key: "computer." + seen[i].id, depth: 1, label: seen[i].title, icon: "drive", routeId: "", group: false })
+        var label = String(seen[i].title || "")
+        var id = String(seen[i].id || "")
+        if (label.toLowerCase() === "fabric" || id.toLowerCase() === "fabric") continue
+        list.push({ key: "computer." + seen[i].id, depth: 1, label: label, icon: "drive", routeId: "", group: false })
       }
     }
     list.push({ key: "network", depth: 0, label: "Network", icon: "network", routeId: "files.network", group: false })

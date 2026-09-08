@@ -14,7 +14,8 @@ Rectangle {
   property string folderPath: ""
   property bool truncated: false
 
-  implicitHeight: Math.max(Aero.detailsHeight, boundaryBanner.visible ? boundaryBanner.implicitHeight + 8 : 0)
+  readonly property bool paintBoundaryDump: false
+  implicitHeight: Aero.detailsHeight
 
   gradient: Gradient {
     GradientStop { position: 0; color: Aero.detailsTop }
@@ -117,7 +118,7 @@ Rectangle {
 
   Text {
     id: boundaryBanner
-    visible: root.record === null && root.boundary !== ""
+    visible: root.paintBoundaryDump && root.record === null && root.boundary !== "" && root.boundary.indexOf("File contents are never read") !== 0
     anchors.left: identity.right
     anchors.leftMargin: 24
     anchors.right: parent.right
@@ -135,5 +136,5 @@ Rectangle {
 
   Accessible.role: Accessible.StaticText
   Accessible.name: root.record ? root.record.title : root.locationLabel
-  Accessible.description: root.record === null ? root.boundary : ""
+  Accessible.description: ""
 }
