@@ -55,15 +55,19 @@ Item {
         height: 22
 
         readonly property bool usable: modelData.enabled !== false
+        readonly property bool commandButton: modelData.dropdown === true || modelData.commandButton === true
 
         Rectangle {
-          id: commandDropdownFrame
+          id: commandButtonFrame
           anchors.fill: parent
           radius: 3
-          visible: modelData.dropdown === true && !(commandHover.hovered && commandItem.usable)
+          visible: commandItem.commandButton && !(commandHover.hovered && commandItem.usable)
           border.width: 1
           border.color: Aero.commandBorder
-          color: "transparent"
+          gradient: Gradient {
+            GradientStop { position: 0; color: Aero.commandTop }
+            GradientStop { position: 1; color: Aero.commandBottom }
+          }
         }
 
         Rectangle {

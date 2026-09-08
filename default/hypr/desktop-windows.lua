@@ -232,7 +232,7 @@ for _, class_pat in ipairs(load_csd_patterns()) do
   o.window(class_pat, { float = true, ["hyprbars:no_bar"] = true, no_shadow = true, no_blur = true, border_size = 0, rounding = 0, size = { 1200, 740 } })
 end
 
-o.window("org.omarchy.Files", { ["hyprbars:no_bar"] = false })
+o.window("org.omarchy.Files", { ["hyprbars:no_bar"] = false, ["hyprbars:bar_color"] = string.format("rgba(%s%02x)", AERO_FACTORY_GLASS, AERO_FACTORY_ALPHA), ["hyprbars:title_color"] = "rgb(20262c)" })
 
 o.window("org.omarchy.screensaver", { float = true, fullscreen = true, ["hyprbars:no_bar"] = true })
 
