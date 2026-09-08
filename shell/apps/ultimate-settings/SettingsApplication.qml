@@ -7,6 +7,7 @@ import qs.apps.shared as Shared
 import "." as SettingsComponents
 
 import "SettingsModel.js" as SettingsModel
+import "../ultimate-files/ExplorerTheme.js" as Aero
 
 Item {
   id: root
@@ -19,7 +20,26 @@ Item {
   readonly property var currentRoute: host ? host.routeById(host.currentRoute) : null
   readonly property var hostedSpec: SettingsModel.hostedPanel(host ? host.currentRoute : "")
   readonly property bool hostedPage: hostedSpec !== null
-  readonly property var visibleRoutes: filteredRoutes(navigation.query)
+  readonly property var visibleRoutes: filteredRoutes(settingsQuery)
+  property string settingsQuery: ""
+  readonly property string bodyFontFamily: Aero.fontFamily
+  readonly property color shellFill: Aero.contentFill
+  readonly property color shellCardFill: Aero.contentFill
+  readonly property color shellCardBorder: Aero.headerBorder
+  readonly property color shellTextPrimary: Aero.textPrimary
+  readonly property color shellTextSecondary: Aero.textSecondary
+  readonly property color shellTextDisabled: Aero.textDisabled
+  readonly property var settingsCrumbs: {
+    var crumbs = [{ label: "Control Panel", routeId: SettingsModel.OVERVIEW_ROUTE }]
+    var route = root.currentRoute
+    if (!route || String(route.id || "") === SettingsModel.OVERVIEW_ROUTE)
+      return crumbs
+    var section = String(route.section || "")
+    if (section !== "" && section !== "Home")
+      crumbs.push({ label: section, routeId: "" })
+    crumbs.push({ label: String(route.title || "Settings"), routeId: String(route.id || "") })
+    return crumbs
+  }
   readonly property bool queryBusy: queryState.phase === "catalog-loading" || queryState.phase === "loading"
   readonly property bool overviewVisible: queryState.phase === "overview"
   readonly property bool canRetry: !queryBusy && [
@@ -439,10 +459,10 @@ Item {
 
   function statusBorderColor() {
     if (queryState.phase === "failed" || queryState.phase === "denied" || queryState.phase === "contract-mismatch")
-      return Tokens.state.danger
+      return Aero.errorBorder
     if (queryState.phase === "ready" || queryState.phase === "empty" || queryState.phase === "overview")
-      return Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
-    return Tokens.state.warning
+      return Aero.headerBorder
+    return Aero.warningBorder
   }
 
   onHostChanged: synchronizeHost()
@@ -507,30 +527,34 @@ Item {
     }
   }
 
-  RowLayout {
+  Rectangle {
+    id: settingsShell
     anchors.fill: parent
-    spacing: 0
+    color: root.shellFill
 
-    Shared.ApplicationNavigation {
-      id: navigation
-      title: "Settings"
-      semanticProfile: root.productProfile
-      routes: root.visibleRoutes
-      currentRoute: root.host ? root.host.currentRoute : ""
-      Layout.preferredWidth: root.width < 900 ? 210 : root.width > 1450 ? 300 : 260
-      Layout.minimumWidth: 196
-      Layout.maximumWidth: 320
-      Layout.fillHeight: true
-      onRouteActivated: function(routeId) { root.host.navigate(routeId, {}) }
-    }
+    ColumnLayout {
+      anchors.fill: parent
+      spacing: 0
 
-    Item {
-      Layout.fillWidth: true
-      Layout.fillHeight: true
+      SettingsComponents.SettingsHostChrome {
+        id: hostChrome
+        Layout.fillWidth: true
+        productProfile: root.productProfile
+        crumbs: root.settingsCrumbs
+        searchText: root.settingsQuery
+        onSearchChanged: function(text) { root.settingsQuery = text }
+        onCrumbActivated: function(routeId) {
+          if (routeId !== "" && root.host) root.host.navigate(routeId, {})
+        }
+      }
 
       ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: root.width < 900 ? Style.space(14) : Style.space(20)
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.leftMargin: root.width < 900 ? Style.space(14) : Style.space(20)
+        Layout.rightMargin: root.width < 900 ? Style.space(14) : Style.space(20)
+        Layout.topMargin: Style.space(12)
+        Layout.bottomMargin: Style.space(8)
         spacing: Style.space(14)
 
         Shared.FabricStatusBanner {
@@ -550,8 +574,8 @@ Item {
             Text {
               textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, root.currentRoute ? root.currentRoute.title : "Settings")
-              color: Tokens.text.primary
-              font.family: Tokens.typography.family
+              color: root.shellTextPrimary
+              font.family: root.bodyFontFamily
               font.pixelSize: Style.font.heading
               font.bold: true
               wrapMode: Text.WordWrap
@@ -565,8 +589,8 @@ Item {
               text: Semantics.text(root.productProfile, root.hostedPage && root.hostedSpec
                 ? root.hostedSpec.honesty
                 : (root.currentRoute ? root.currentRoute.description : "The requested route is unavailable."))
-              color: Tokens.text.secondary
-              font.family: Tokens.typography.family
+              color: root.shellTextSecondary
+              font.family: root.bodyFontFamily
               font.pixelSize: Style.font.body
               wrapMode: Text.WordWrap
               maximumLineCount: 4
@@ -580,6 +604,63 @@ Item {
             tone: root.hostedPage ? "info" : SettingsModel.phaseTone(root.queryState)
             semanticProfile: root.productProfile
             Layout.alignment: Qt.AlignTop
+          }
+        }
+
+        ColumnLayout {
+          visible: root.settingsQuery !== "" || !root.currentRoute || String(root.currentRoute.id || "") === SettingsModel.OVERVIEW_ROUTE
+          Layout.fillWidth: true
+          spacing: Style.space(8)
+          Accessible.role: Accessible.Pane
+          Accessible.name: Semantics.text(root.productProfile, "Control Panel categories")
+
+          Repeater {
+            model: root.visibleRoutes
+
+            delegate: ColumnLayout {
+              required property var modelData
+              required property int index
+
+              Layout.fillWidth: true
+              spacing: Style.space(2)
+              visible: String(modelData.id || "") !== SettingsModel.OVERVIEW_ROUTE
+
+              readonly property bool beginsSection: index === 0 ||
+                root.visibleRoutes[index - 1].section !== modelData.section
+
+              Text {
+                visible: parent.beginsSection
+                textFormat: Text.PlainText
+                text: Semantics.text(root.productProfile, String(modelData.section || ""))
+                color: Aero.navHeaderText
+                font.family: root.bodyFontFamily
+                font.pixelSize: Style.font.title
+                font.bold: true
+                Layout.fillWidth: true
+                Layout.topMargin: parent.index === 0 ? 0 : Style.space(8)
+              }
+
+              Text {
+                textFormat: Text.PlainText
+                text: Semantics.text(root.productProfile, String(modelData.title || ""))
+                color: Aero.linkText
+                font.family: root.bodyFontFamily
+                font.pixelSize: Style.font.body
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+
+                HoverHandler { id: categoryHover }
+                TapHandler {
+                  onSingleTapped: {
+                    if (root.host) root.host.navigate(modelData.id, {})
+                  }
+                }
+
+                Accessible.role: Accessible.Button
+                Accessible.name: Semantics.text(root.productProfile, String(modelData.title || "Settings"))
+                Accessible.description: Semantics.text(root.productProfile, String(modelData.description || ""))
+              }
+            }
           }
         }
 
@@ -608,7 +689,7 @@ Item {
               Layout.fillWidth: true
               implicitHeight: statusColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.large
-              color: Tokens.surface.base
+              color: root.shellFill
               border.color: root.statusBorderColor()
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: root.queryState.phase === "failed" || root.queryState.phase === "denied" ||
@@ -629,8 +710,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, SettingsModel.stateTitle(root.queryState))
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     wrapMode: Text.WordWrap
@@ -655,8 +736,8 @@ Item {
                 Text {
                   textFormat: Text.PlainText
                   text: Semantics.text(root.productProfile, SettingsModel.stateExplanation(root.queryState))
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.body
                   wrapMode: Text.WordWrap
                   maximumLineCount: 7
@@ -677,8 +758,8 @@ Item {
                   textFormat: Text.PlainText
                   visible: root.domainVisible
                   text: SettingsModel.provenance(root.queryState)
-                  color: Tokens.text.disabled
-                  font.family: Tokens.typography.family
+                  color: root.shellTextDisabled
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.Wrap
                   maximumLineCount: 4
@@ -690,8 +771,8 @@ Item {
                   textFormat: Text.PlainText
                   visible: root.queryState.selectedResourceId !== ""
                   text: Semantics.text(root.productProfile, "Exact resource") + ": " + SettingsModel.clippedText(root.queryState.selectedResourceId, 180)
-                  color: Tokens.text.disabled
-                  font.family: Tokens.typography.family
+                  color: root.shellTextDisabled
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.Wrap
                   maximumLineCount: 3
@@ -703,8 +784,8 @@ Item {
                   textFormat: Text.PlainText
                   visible: root.queryState.error && root.queryState.error.detail
                   text: Semantics.text(root.productProfile, "Detail") + ": " + SettingsModel.clippedText(root.queryState.error ? root.queryState.error.detail : "", 480)
-                  color: Tokens.text.disabled
-                  font.family: Tokens.typography.family
+                  color: root.shellTextDisabled
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.Wrap
                   maximumLineCount: 4
@@ -721,7 +802,7 @@ Item {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "RECOVERY PATHS")
                     color: Tokens.state.warning
-                    font.family: Tokens.typography.family
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.caption
                     font.bold: true
                     Layout.fillWidth: true
@@ -735,8 +816,8 @@ Item {
                       required property var modelData
 
                       text: "\u2022 " + SettingsModel.clippedText(modelData, 320)
-                      color: Tokens.text.secondary
-                      font.family: Tokens.typography.family
+                      color: root.shellTextSecondary
+                      font.family: root.bodyFontFamily
                       font.pixelSize: Style.font.bodySmall
                       wrapMode: Text.Wrap
                       maximumLineCount: 3
@@ -764,8 +845,8 @@ Item {
                   Layout.fillWidth: true
                   implicitHeight: overviewCardColumn.implicitHeight + Style.space(24)
                   radius: Tokens.radius.medium
-                  color: Tokens.surface.raised
-                  border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+                  color: root.shellCardFill
+                  border.color: root.shellCardBorder
                   border.width: Tokens.accessibility.highContrast ? 2 : 1
                   Accessible.role: Accessible.Pane
                   Accessible.name: Semantics.text(root.productProfile, modelData.title) + ". " + Semantics.text(root.productProfile, modelData.status)
@@ -784,8 +865,8 @@ Item {
                       Text {
                         textFormat: Text.PlainText
                         text: Semantics.text(root.productProfile, modelData.title)
-                        color: Tokens.text.primary
-                        font.family: Tokens.typography.family
+                        color: root.shellTextPrimary
+                        font.family: root.bodyFontFamily
                         font.pixelSize: Style.font.title
                         font.bold: true
                         wrapMode: Text.WordWrap
@@ -805,8 +886,8 @@ Item {
                     Text {
                       textFormat: Text.PlainText
                       text: Semantics.text(root.productProfile, modelData.detail)
-                      color: Tokens.text.secondary
-                      font.family: Tokens.typography.family
+                      color: root.shellTextSecondary
+                      font.family: root.bodyFontFamily
                       font.pixelSize: Style.font.bodySmall
                       wrapMode: Text.WordWrap
                       maximumLineCount: 5
@@ -817,8 +898,8 @@ Item {
                     Text {
                       textFormat: Text.PlainText
                       text: modelData.providerId
-                      color: Tokens.text.disabled
-                      font.family: Tokens.typography.family
+                      color: root.shellTextDisabled
+                      font.family: root.bodyFontFamily
                       font.pixelSize: Style.font.caption
                       wrapMode: Text.Wrap
                       maximumLineCount: 2
@@ -847,8 +928,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: volumeColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Output volume")
@@ -868,8 +949,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Output volume")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -898,8 +979,8 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Changes run through the durable operation service as this user, never with elevated privilege.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -919,8 +1000,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: defaultProgramsHonesty.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Default Programs")
@@ -940,8 +1021,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Default Programs")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -958,8 +1039,8 @@ Item {
                   textFormat: Text.PlainText
                   text: Semantics.text(root.productProfile,
                     "Set the default browser (http+https), default email, and writable MIME associations through defaults.provider protocol.set / mime.set. session leftover recorded: Change the default browser soft leftover-attaches windows-native.19 to this tip-true Settings > Default Programs browser plane (not product CLOSED / not metal CLOSED / not claim=present). Soft Ship park: leftover-attach before citing suite EXIT 0 as metal; Cloud mocks do not close windows-native.19. This is not the Win7 Default Programs applet. AutoPlay, Set Program Access and Computer Defaults, and files.associations.set stay unavailable. Win7 applet parity still open. windows-native.19 stays prototype/pending. Cloud EXIT 0 is not metal leftover CLOSED.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -972,8 +1053,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: browserColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Default browser")
@@ -993,8 +1074,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Default browser")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -1031,8 +1112,8 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Only applications that declare they handle web links are shown. Changes run through defaults.provider protocol.set for http and https as this user, never with elevated privilege. Soft leftover-attach ACC windows-native.19 stays prototype/pending. Do not invent MIME association UI, AutoPlay, SPAD, or files.associations.set product-complete. Never claim=present.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -1044,8 +1125,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: mailerColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Default email application")
@@ -1065,8 +1146,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Default email application")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -1103,8 +1184,8 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Only applications that declare they handle email links are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -1116,8 +1197,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: mimeColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Default applications")
@@ -1137,8 +1218,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Default applications")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -1164,8 +1245,8 @@ Item {
                       text: row.defaultAppId !== ""
                         ? row.key + " opens with " + root.mimeLabel(row.key, row.defaultAppId)
                         : row.key + " has no default application"
-                      color: Tokens.text.primary
-                      font.family: Tokens.typography.family
+                      color: root.shellTextPrimary
+                      font.family: root.bodyFontFamily
                       font.pixelSize: Style.font.body
                       Layout.fillWidth: true
                     }
@@ -1196,8 +1277,8 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Only applications that declare they handle each type are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -1216,8 +1297,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: radioColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Wi-Fi")
@@ -1237,8 +1318,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Wi-Fi")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -1270,8 +1351,8 @@ Item {
                     : root.radioBlocked
                       ? Semantics.text(root.productProfile, "A hardware switch or airplane mode is holding this radio off. Settings cannot turn it back on.")
                       : Semantics.text(root.productProfile, "Changes run through the durable operation service as this user, never with elevated privilege.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -1330,8 +1411,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: brightnessColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Display brightness")
@@ -1352,8 +1433,8 @@ Item {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile,
                       root.brightnessResource ? "Brightness — " + root.brightnessResource.label : "Brightness")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -1382,8 +1463,8 @@ Item {
                     ? root.operationMessage
                     : Semantics.text(root.productProfile,
                         "Only outputs that expose a controllable backlight are shown. Changes run through the durable operation service as this user, never with elevated privilege.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -1408,8 +1489,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: profileColumn.implicitHeight + Style.space(28)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Power profile")
@@ -1429,8 +1510,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Power profile")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -1474,8 +1555,8 @@ Item {
                     : Semantics.text(root.productProfile,
                         "The active profile is " + root.profileLabel(root.activePowerProfile) +
                         ". Profile mutation is unavailable: the fabric daemon runs under app.slice without a login session scope, so polkit allow_active cannot authorize org.freedesktop.UPower.PowerProfiles.switch-profile.")
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.Wrap
                   Layout.fillWidth: true
@@ -1488,8 +1569,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: coverageColumn.implicitHeight + Style.space(24)
               radius: Tokens.radius.medium
-              color: Tokens.surface.raised
-              border.color: Tokens.accessibility.highContrast ? Tokens.border.strong : Tokens.border.subtle
+              color: root.shellCardFill
+              border.color: root.shellCardBorder
               border.width: Tokens.accessibility.highContrast ? 2 : 1
               Accessible.role: Accessible.Pane
               Accessible.name: Semantics.text(root.productProfile, "Settings coverage")
@@ -1508,8 +1589,8 @@ Item {
                   Text {
                     textFormat: Text.PlainText
                     text: Semantics.text(root.productProfile, "Coverage")
-                    color: Tokens.text.primary
-                    font.family: Tokens.typography.family
+                    color: root.shellTextPrimary
+                    font.family: root.bodyFontFamily
                     font.pixelSize: Style.font.title
                     font.bold: true
                     Layout.fillWidth: true
@@ -1526,8 +1607,8 @@ Item {
                 Text {
                   textFormat: Text.PlainText
                   text: root.queryState.query ? Semantics.text(root.productProfile, root.queryState.query.coverage) : ""
-                  color: Tokens.text.secondary
-                  font.family: Tokens.typography.family
+                  color: root.shellTextSecondary
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.bodySmall
                   wrapMode: Text.WordWrap
                   maximumLineCount: 16
@@ -1540,8 +1621,8 @@ Item {
                   text: Semantics.text(root.productProfile, "Declared provider operations") + ": " +
                     root.queryState.operationActions.join(", ") + ". " +
                     Semantics.text(root.productProfile, SettingsModel.declaredOpsHonesty(root.currentRoute ? root.currentRoute.id : ""))
-                  color: Tokens.text.disabled
-                  font.family: Tokens.typography.family
+                  color: root.shellTextDisabled
+                  font.family: root.bodyFontFamily
                   font.pixelSize: Style.font.caption
                   wrapMode: Text.Wrap
                   maximumLineCount: 12
@@ -1587,8 +1668,8 @@ Item {
               Layout.fillWidth: true
               implicitHeight: clippedNotice.implicitHeight + Style.space(20)
               radius: Tokens.radius.medium
-              color: Tokens.surface.base
-              border.color: Tokens.state.warning
+              color: root.shellFill
+              border.color: Aero.warningBorder
               border.width: 1
               Accessible.role: Accessible.AlertMessage
               Accessible.name: clippedNotice.text
@@ -1602,8 +1683,8 @@ Item {
                   Semantics.text(root.productProfile, " records. ") +
                   root.queryState.totalRecords +
                   Semantics.text(root.productProfile, " records were reported; use an exact resource deep link for a narrower view.")
-                color: Tokens.text.secondary
-                font.family: Tokens.typography.family
+                color: root.shellTextSecondary
+                font.family: root.bodyFontFamily
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.WordWrap
               }
@@ -1613,8 +1694,8 @@ Item {
               visible: !root.queryBusy
               textFormat: Text.PlainText
               text: Semantics.text(root.productProfile, SettingsModel.authorityFooter())
-              color: Tokens.text.disabled
-              font.family: Tokens.typography.family
+              color: root.shellTextDisabled
+              font.family: root.bodyFontFamily
               font.pixelSize: Style.font.caption
               horizontalAlignment: Text.AlignHCenter
               wrapMode: Text.WordWrap
