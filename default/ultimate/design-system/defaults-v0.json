@@ -33,7 +33,9 @@
     "light": {
       "glass": "#e8ecf0",
       "glassAlpha": 0.78,
-      "menuAlpha": 0.88,
+      "menu": "#e8ecf0",
+      "menuAlpha": 1.0,
+      "menuSelection": "#cfe2ef",
       "text": "#20262c",
       "glow": "#3a76a8",
       "start": "#55875c",

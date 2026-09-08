@@ -558,6 +558,13 @@ if grep -Fq 'if (g_pGlobalState->config.iconOnHover->value())' "$ROOT/default/hy
 fi
 grep -Fq 'bg_color = "rgba(00000000)"' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "idle caption buttons are glass glyphs, not filled chips"
+grep -Fq 'local button_px = caption_button_px(chrome)' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "hyprbars caption hit boxes use the live caption button bound"
+grep -Fq 'size = button_px' "$ROOT/default/hypr/desktop-windows.lua" \
+  || fail "hyprbars caption buttons size to the live caption button bound"
+if grep -Eq 'width = 45|width = 29' "$ROOT/default/hypr/desktop-windows.lua"; then
+  fail "hyprbars must not keep the fake 45/29 caption cluster hit boxes"
+fi
 if grep -Fq 'bg_color = "rgba(d54f36e0)"' "$ROOT/default/hypr/desktop-windows.lua"; then
   fail "close must not stay always-red"
 fi

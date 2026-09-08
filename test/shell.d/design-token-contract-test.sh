@@ -111,6 +111,8 @@ assert dark["chrome"] == {
 assert dark["caption"]["close"] == {"background": "#b85750", "foreground": "#ffffff"}
 assert dark["caption"]["maximize"] == {"background": "#e8ecf0", "foreground": "#20262c"}
 assert light["chrome"]["glass"] == "#c7e8ecf0"
+assert light["chrome"]["menu"] == "#e8ecf0"
+assert light["chrome"]["hover"] == "#cfe2ef"
 assert light["caption"]["close"] == {"background": "#b85750", "foreground": "#ffffff"}
 assert light["caption"]["maximize"] == {"background": "#5c6873", "foreground": "#ffffff"}
 assert schema["properties"]["schemaVersion"]["const"] == "omarchy.design-tokens.v0"

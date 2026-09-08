@@ -126,7 +126,8 @@ local function load_chrome_tokens()
   local required = {
     "glassRed", "glassGreen", "glassBlue", "glassAlphaPct", "hyprbarsTextHex",
     "captionCloseBgHex", "captionCloseFgHex", "captionMaxBgHex", "captionMaxFgHex",
-    "captionMinBgHex", "captionMinFgHex", "borderActiveHex", "borderInactiveHex",
+    "captionMinBgHex", "captionMinFgHex", "captionButtonSize", "captionButtonPadding",
+    "captionHorizontalPadding", "captionHeight", "borderActiveHex", "borderInactiveHex",
   }
   for _, key in ipairs(required) do
     if not tokens[key] or tokens[key] == "" then
@@ -142,6 +143,15 @@ local function load_chrome_tokens()
   local alpha = tonumber(tokens.glassAlphaPct)
   if not alpha or alpha < 0 or alpha > 100 then
     return nil, "resolved chrome token adapter has invalid glassAlphaPct"
+  end
+  for _, key in ipairs({ "captionButtonSize", "captionButtonPadding", "captionHorizontalPadding", "captionHeight" }) do
+    local value = tonumber(tokens[key])
+    if not value or value < 0 or value > 4096 or value % 1 ~= 0 then
+      return nil, "resolved chrome token adapter has invalid " .. key
+    end
+  end
+  if tonumber(tokens.captionButtonSize) < 1 or tonumber(tokens.captionHeight) < 1 then
+    return nil, "resolved chrome token adapter has invalid caption button bounds"
   end
   return tokens, nil
 end
@@ -199,6 +209,14 @@ end
 
 local function chrome_aero_text(tokens)
   return chrome_hex_rgb(tokens, "hyprbarsTextHex")
+end
+
+local function caption_button_px(tokens)
+  local value = tonumber(tokens.captionButtonSize)
+  if not value or value < 1 or value % 1 ~= 0 then
+    error("resolved chrome token adapter has invalid captionButtonSize")
+  end
+  return value
 end
 
 local function require_chrome_tokens()
@@ -403,25 +421,25 @@ local function add_hyprbars_buttons()
   end
 
   local chrome = require_chrome_tokens()
-  local sig = (chrome.captionCloseBgHex or "") .. (chrome.captionMaxBgHex or "") .. (chrome.glassRed or "")
+  local button_px = caption_button_px(chrome)
+  local sig = (chrome.captionCloseBgHex or "") .. (chrome.captionMaxBgHex or "") .. (chrome.glassRed or "") .. ":" .. tostring(button_px)
   if _G.omarchy_hyprbars_buttons == sig then
     return
   end
+  -- Hit boxes follow the live caption button bound. Do not keep a cluster width.
   plugin.hyprbars.add_button({
     bg_color = "rgba(00000000)",
     fg_color = chrome_aero_text(chrome),
     hover_bg_color = chrome_hex_rgb(chrome, "captionCloseBgHex"),
     hover_fg_color = chrome_hex_rgb(chrome, "captionCloseFgHex"),
-    size = 21,
-    width = 45,
+    size = button_px,
     icon = "×",
     action = "omarchy-shell window close 0x{:x}",
   })
   plugin.hyprbars.add_button({
     bg_color = "rgba(00000000)",
     fg_color = chrome_aero_text(chrome),
-    size = 21,
-    width = 29,
+    size = button_px,
     icon = "□",
     action = "omarchy-shell window toggleMaximize 0x{:x}",
     hover_action = "omarchy-shell window snapChooser 0x{:x}",
@@ -429,8 +447,7 @@ local function add_hyprbars_buttons()
   plugin.hyprbars.add_button({
     bg_color = "rgba(00000000)",
     fg_color = chrome_aero_text(chrome),
-    size = 21,
-    width = 29,
+    size = button_px,
     icon = "–",
     action = "omarchy-shell window minimize 0x{:x}",
   })

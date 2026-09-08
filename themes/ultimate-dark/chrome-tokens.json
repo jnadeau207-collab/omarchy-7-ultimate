@@ -18,6 +18,10 @@
   "captionMaxFgHex": "#20262c",
   "captionMinBgHex": "#e8ecf0",
   "captionMinFgHex": "#20262c",
+  "captionHeight": "30",
+  "captionButtonSize": "22",
+  "captionButtonPadding": "8",
+  "captionHorizontalPadding": "12",
   "borderActiveHex": "#51565a",
   "borderInactiveHex": "#32363b"
 }

@@ -888,6 +888,10 @@ def legacy_chrome_adapter(payload: dict[str, Any]) -> dict[str, str]:
         "captionMaxFgHex": opaque_color(payload["caption"]["maximize"]["foreground"]),
         "captionMinBgHex": opaque_color(payload["caption"]["minimize"]["background"]),
         "captionMinFgHex": opaque_color(payload["caption"]["minimize"]["foreground"]),
+        "captionHeight": str(payload["components"]["captionHeight"]),
+        "captionButtonSize": str(payload["components"]["captionButtonSize"]),
+        "captionButtonPadding": str(payload["components"]["captionButtonPadding"]),
+        "captionHorizontalPadding": str(payload["components"]["captionHorizontalPadding"]),
         "borderActiveHex": compositor_hex(payload["border"]["strong"], payload["surface"]["canvas"]),
         "borderInactiveHex": compositor_hex(payload["border"]["subtle"], payload["surface"]["canvas"]),
     }

@@ -191,7 +191,7 @@ QtObject {
 
   readonly property QtObject chrome: QtObject {
     property color glass: root.colorValue("chrome.glass", Util.alpha(Color.background, 0.62))
-    property color menu: root.colorValue("chrome.menu", Util.alpha(Color.background, 0.88))
+    property color menu: root.colorValue("chrome.menu", Util.alpha(Color.background, 1.0))
     property color hover: root.colorValue("chrome.hover", Util.alpha(Color.foreground, 0.10))
     property color active: root.colorValue("chrome.active", Util.alpha(Color.foreground, 0.16))
     property color pressed: root.colorValue("chrome.pressed", Util.alpha(Color.foreground, 0.22))
