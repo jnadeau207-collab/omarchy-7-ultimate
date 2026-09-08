@@ -57,6 +57,16 @@ Item {
         readonly property bool usable: modelData.enabled !== false
 
         Rectangle {
+          id: commandDropdownFrame
+          anchors.fill: parent
+          radius: 3
+          visible: modelData.dropdown === true && !(commandHover.hovered && commandItem.usable)
+          border.width: 1
+          border.color: Aero.commandBorder
+          color: "transparent"
+        }
+
+        Rectangle {
           anchors.fill: parent
           radius: 3
           visible: commandHover.hovered && commandItem.usable
@@ -80,15 +90,35 @@ Item {
           font.pixelSize: 12
         }
 
-        Text {
+        Canvas {
+          id: commandDropdownChevron
           visible: modelData.dropdown === true
+          width: 7
+          height: 4
           anchors.left: commandLabel.right
-          anchors.leftMargin: 4
+          anchors.leftMargin: 6
           anchors.verticalCenter: parent.verticalCenter
-          text: "▾"
-          color: commandItem.usable ? Aero.textSecondary : Aero.textDisabled
-          font.family: Aero.fontFamily
-          font.pixelSize: 10
+          antialiasing: true
+
+          Connections {
+            target: commandItem
+            function onUsableChanged() { commandDropdownChevron.requestPaint() }
+          }
+
+          Component.onCompleted: requestPaint()
+
+          onPaint: {
+            var ctx = getContext("2d")
+            ctx.reset()
+            ctx.clearRect(0, 0, width, height)
+            ctx.fillStyle = commandItem.usable ? Aero.textSecondary : Aero.textDisabled
+            ctx.beginPath()
+            ctx.moveTo(0, 0)
+            ctx.lineTo(width, 0)
+            ctx.lineTo(width / 2, height)
+            ctx.closePath()
+            ctx.fill()
+          }
         }
 
         HoverHandler { id: commandHover; enabled: commandItem.usable }
