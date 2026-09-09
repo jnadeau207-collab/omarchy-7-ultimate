@@ -4,6 +4,17 @@ var aeroColorization = "#4580c4"
 var aeroBalance = 0.10
 var aeroAlpha = 0.42
 
+var captionGlass = "#74b8fc"
+var captionGlassAlpha = 0.42
+var captionText = "#20262c"
+var captionCloseBg = "#b85750"
+var captionCloseFg = "#ffffff"
+var captionButtonFace = "#e8ecf0"
+var captionHeightPx = 30
+var captionButtonPx = 22
+var captionButtonPad = 8
+var captionTextPad = 12
+
 var glassTop = "#eef3fa"
 var glassBottom = "#dde6f2"
 var glassEdge = "#c3d2e4"

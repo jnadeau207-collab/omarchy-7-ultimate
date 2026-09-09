@@ -27,14 +27,11 @@ Item {
 
   implicitHeight: Aero.addressHeight
 
-  readonly property color glass: {
-    var base = Qt.color(Aero.aeroColorization)
-    return Qt.rgba(
-      base.r + (1 - base.r) * Aero.aeroBalance,
-      base.g + (1 - base.g) * Aero.aeroBalance,
-      base.b + (1 - base.b) * Aero.aeroBalance,
-      Aero.aeroAlpha)
-  }
+  readonly property color glass: Qt.rgba(
+    Qt.color(Aero.captionGlass).r,
+    Qt.color(Aero.captionGlass).g,
+    Qt.color(Aero.captionGlass).b,
+    Aero.captionGlassAlpha)
 
   Rectangle {
     anchors.fill: parent
@@ -47,8 +44,8 @@ Item {
     direction: "back"
     enabled: root.canBack
     productProfile: root.productProfile
-    width: 24
-    height: 24
+    width: 28
+    height: 28
     anchors.left: parent.left
     anchors.leftMargin: 8
     anchors.verticalCenter: parent.verticalCenter

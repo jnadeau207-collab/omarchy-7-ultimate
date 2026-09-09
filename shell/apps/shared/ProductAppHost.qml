@@ -63,6 +63,19 @@ ShellRoot {
   readonly property string fabricPrincipalEndpoint: fabricPrincipal && fabricPrincipal.endpoint ? String(fabricPrincipal.endpoint) : ""
   readonly property var window: appWindow
 
+  function closeSurface() {
+    appWindow.close()
+  }
+
+  function minimizeSurface() {
+    appWindow.minimized = true
+  }
+
+  function toggleMaximizeSurface() {
+    var maximized = appWindow.visibility === Window.Maximized
+    appWindow.visibility = maximized ? Window.Windowed : Window.Maximized
+  }
+
   signal routeActivated(string routeId, var arguments, var context)
   signal surfaceBecameActive()
   signal fabricConnectionReady(var hello)
