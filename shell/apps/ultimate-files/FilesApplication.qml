@@ -75,8 +75,8 @@ Item {
   readonly property string relativePath: String(queryState.relativePath || "")
   readonly property string sessionBoundaryHonesty: "File contents are never read. Downloads place browses tip-true FilesModel files.downloads → files.location.downloads (SESSION CONTROL, READ-ONLY; files.downloads.open leftover-direct soft leftover-attached claim=partial visible Start > Downloads; Superbar > Files > Downloads; windows-native.9 stays prototype/pending; Cloud mocks do not close windows-native.9; not product CLOSED / not metal CLOSED / not claim=present). New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path (including PDF via the tip-true default/associated viewer; files.document.open leftover-direct soft leftover-attached claim=partial visible Files > PDF; windows-native.17 stays prototype/pending; including .txt via the tip-true default/associated graphical editor text/plain → org.gnome.TextEditor not Neovim-as-default; files.text.edit leftover-direct soft leftover-attached claim=partial visible Files > Text; windows-native.18 stays prototype/pending; no MIME association picker invent). Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through tip-true FilesSessionEject.ejectDevice → storage-removable-eject (SESSION CONTROL; storage.removable.eject leftover-direct soft leftover-attached claim=partial visible Files > Devices > Eject; windows-native.15 stays prototype/pending; Cloud mocks do not close windows-native.15; not product CLOSED / not metal CLOSED / not claim=present). Mount runs through tip-true FilesSessionMount.mountVolume → storage-removable-mount (SESSION CONTROL; storage.removable.mount leftover-direct soft leftover-attached claim=partial visible Files > Devices > Mount; windows-native.14 stays prototype/pending; Cloud mocks do not close windows-native.14; not product CLOSED / not metal CLOSED / not claim=present). Connect to Server runs through this session's connect helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. Files does not invent a Fabric SHELL LIVE SMB writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. smbAuthorized stays leftover Fabric SHELL refuse; session Connect does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
   readonly property string routeTitle: currentRoute ? String(currentRoute.title) : "Files"
-  readonly property bool paintsOwnTitleBar: false
-  readonly property string sharedCaptionPath: "hyprbars"
+  readonly property bool paintsOwnTitleBar: true
+  readonly property string sharedCaptionPath: "files-glass"
   readonly property var crumbs: FilesModel.breadcrumbFor(routeTitle, relativePath)
   readonly property bool canBack: historyIndex > 0
   readonly property bool canForward: historyIndex >= 0 && historyIndex < history.length - 1
@@ -595,10 +595,10 @@ Item {
   function commandActions() {
     if (root.trashRoute) {
       return [
-        { key: "organize", label: "Organize", dropdown: true, commandButton: true, enabled: true },
-        { key: "restore", label: "Restore", dropdown: false, commandButton: true, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord) },
-        { key: "empty-bin", label: "Empty Recycle Bin", dropdown: false, commandButton: true, enabled: !root.operationBusy && !root.sessionBusy && root.showRecords },
-        { key: "properties", label: "Properties", dropdown: false, commandButton: true, enabled: !sessionProperties.busy }
+        { key: "organize", label: "Organize", dropdown: true, icon: "organize", enabled: true },
+        { key: "restore", label: "Restore", dropdown: false, icon: "restore", enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord) },
+        { key: "empty-bin", label: "Empty Recycle Bin", dropdown: false, icon: "trash", enabled: !root.operationBusy && !root.sessionBusy && root.showRecords },
+        { key: "properties", label: "Properties", dropdown: false, icon: "file", enabled: !sessionProperties.busy }
       ]
     }
     var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
@@ -913,11 +913,23 @@ Item {
     }
   }
 
+  Files.ExplorerGlassCaption {
+    id: captionBar
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    productProfile: root.productProfile
+    title: root.routeTitle
+    onCloseRequested: if (root.host) root.host.closeSurface()
+    onMinimizeRequested: if (root.host) root.host.minimizeSurface()
+    onMaximizeRequested: if (root.host) root.host.toggleMaximizeSurface()
+  }
+
   Files.ExplorerAddressBar {
     id: addressBar
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.top: parent.top
+    anchors.top: captionBar.bottom
     productProfile: root.productProfile
     crumbs: root.crumbs
     locationIcon: root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"
@@ -1124,7 +1136,7 @@ Item {
   Controls.Popup {
     id: organizeMenu
     x: 6
-    y: addressBar.height + commandBar.height
+    y: captionBar.height + addressBar.height + commandBar.height
     width: 168
     padding: 1
 
