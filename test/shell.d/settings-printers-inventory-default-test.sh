@@ -84,7 +84,7 @@ grep -Fq 'settings.printers.overview' "$settings_routes" || fail "Settings route
 grep -Fq 'this session' "$settings_card" || fail "Settings Printers names the session principal"
 grep -Fq '/usr/bin/lpstat' "$settings_card" || fail "Settings Printers names absolute lpstat"
 grep -Fq 'session leftover recorded' "$settings_card" || fail "Settings Printers records a session leftover"
-grep -Fq 'session-UI leftover only' "$settings_card" || fail "Settings Printers names session-UI leftover only"
+grep -Eq 'session-UI leftover only|leftover-attach only' "$settings_card" || fail "Settings Printers names session leftover-attach honesty"
 grep -Fq 'not product CLOSED' "$settings_card" || fail "Settings Printers refuses product CLOSED"
 grep -Fq 'not metal CLOSED' "$settings_card" || fail "Settings Printers refuses metal CLOSED"
 grep -Fq 'not claim=present' "$settings_card" || fail "Settings Printers refuses claim=present"
@@ -185,7 +185,9 @@ assert(page.coverage.indexOf('session leftover recorded') >= 0, 'printers covera
 assert(page.coverage.indexOf('not product CLOSED') >= 0, 'printers coverage refuses product CLOSED')
 assert(page.coverage.indexOf('not metal CLOSED') >= 0, 'printers coverage refuses metal CLOSED')
 assert(page.coverage.indexOf('not claim=present') >= 0, 'printers coverage refuses claim=present')
-assert(page.coverage.indexOf('windows-native.32 stays pending') >= 0, 'printers coverage keeps wn.32 pending')
+assert(page.coverage.indexOf('windows-native.32 stays prototype/pending') >= 0 || page.coverage.indexOf('windows-native.32 stays pending') >= 0, 'printers coverage keeps wn.32 pending')
+assert(page.coverage.indexOf('SettingsSessionPrinters.setDefault') >= 0 || page.coverage.indexOf('setDefault') >= 0, 'printers coverage names tip-true setDefault')
+assert(page.coverage.indexOf('soft leftover-attach ACC windows-native.32') >= 0 || page.coverage.toLowerCase().indexOf('soft leftover-attach') >= 0, 'printers coverage soft leftover-attaches wn.32')
 assert(Model.declaredOpsHonesty('settings.printers.overview').indexOf('printer-default-set') >= 0, 'printers declared ops name default')
 assert(Model.declaredOpsHonesty('settings.printers.overview').indexOf('does not invent') >= 0, 'printers declared ops refuse Fabric invent')
 assert(Model.authorityFooter().indexOf('Printers inventory and queue controls') >= 0, 'authority footer names session Printers')
@@ -408,12 +410,23 @@ if route.get("status") != "visible" or route.get("surface") != "Settings":
     raise SystemExit(f"printers.manage route is {route}")
 if route.get("path") != "Settings > Printers":
     raise SystemExit(f"printers.manage path is {route}")
-if manage.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if manage.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionPrinters.qml":
     raise SystemExit(f"printers.manage source is {manage.get('source')}")
-if manage.get("source", {}).get("symbol") != "apply_printer_default_set":
+if manage.get("source", {}).get("symbol") != "setDefault":
     raise SystemExit(f"printers.manage source is {manage.get('source')}")
-if "SettingsPrinters.qml" in str(manage.get("source", {}).get("file") or ""):
-    raise SystemExit("printers.manage must not invent source on SettingsPrinters.qml")
+if "SettingsPrinters.qml" in str(manage.get("source", {}).get("file") or "") and "SettingsSessionPrinters.qml" not in str(manage.get("source", {}).get("file") or ""):
+    raise SystemExit("printers.manage must not invent source on SettingsPrinters.qml page host")
+recovery = manage.get("recovery") or {}
+if recovery.get("mode") != "compensating":
+    raise SystemExit(f"printers.manage recovery mode is {recovery}")
+if recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"printers.manage recovery fingerprint invent: {recovery}")
+exp = recovery.get("expectation") or ""
+for needle in ("setDefault", "printer-default-set", "resumeQueue", "printer-resume", "no Fabric durable undo fingerprint invent", "no timed auto-rollback"):
+    if needle not in exp:
+        raise SystemExit(f"printers.manage recovery missing {needle!r}: {exp}")
+if "state-fingerprint-guarded" in exp:
+    raise SystemExit(f"printers.manage still invents fingerprint-guarded compensating path: {exp}")
 if manage.get("availability", {}).get("claim") == "present":
     raise SystemExit("printers.manage must not claim present")
 if manage.get("availability", {}).get("claim") != "partial":
@@ -436,6 +449,14 @@ if "Cancel setup" in native32_recovery or "remove the newly added" in native32_r
     raise SystemExit(f"windows-native.32 recoveryExpectation still invents Add-setup cancel/remove: {native32_recovery}")
 if "Settings > Printers" not in native32_recovery:
     raise SystemExit(f"windows-native.32 recoveryExpectation dropped Settings > Printers session plane: {native32_recovery}")
+if "setDefault" not in native32_recovery or "printer-default-set" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recovery is not tip-aligned to setDefault plane: {native32_recovery}")
+if "resumeQueue" not in native32_recovery or "printer-resume" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recovery is not tip-aligned to resumeQueue plane: {native32_recovery}")
+if "fingerprint invent" not in native32_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recovery must refuse Fabric fingerprint invent: {native32_recovery}")
+if "no timed auto-rollback" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recovery must refuse timed auto-rollback: {native32_recovery}")
 if "OPEN leftover" not in native32_recovery and "Network Add" not in native32_recovery:
     raise SystemExit(f"windows-native.32 recoveryExpectation dropped Add OPEN leftover: {native32_recovery}")
 if "no Add-setup" not in native32_recovery:
@@ -456,12 +477,22 @@ if "claim=present" in parity and "not claim=present" not in parity:
     raise SystemExit("parity must not invent claim=present for Printers")
 if "printer-default-set" not in settings_api or "printer-status" not in settings_api:
     raise SystemExit("settings-service-api must name session Printers verbs")
+if "SettingsSessionPrinters" not in settings_api and "setDefault" not in settings_api:
+    raise SystemExit("settings-service-api must name tip-true SettingsSessionPrinters plane")
 if "not product CLOSED" not in settings_api or "not metal CLOSED" not in settings_api:
     raise SystemExit("settings-service-api must refuse product/metal CLOSED for Printers leftover")
 if "printer-default-set" not in handoff or "windows-native.32" not in handoff:
     raise SystemExit("handoff must record session Printers leftover")
+if "SettingsSessionPrinters.setDefault" not in handoff and "SettingsSessionPrinters" not in handoff:
+    raise SystemExit("handoff must tip-align SettingsSessionPrinters.setDefault")
 if "printers.manage" not in gaps or "windows-native.32" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep printers.manage / wn.32 honesty")
+if "SettingsSessionPrinters" not in gaps and "setDefault" not in gaps:
+    raise SystemExit("fleet-doctrine-gaps must tip-align SettingsSessionPrinters")
+if "soft leftover-attaches" not in parity.lower() or "windows-native.32" not in parity:
+    raise SystemExit("parity must soft leftover-attach wn.32")
+if "SettingsSessionPrinters" not in parity and "setDefault" not in parity:
+    raise SystemExit("parity must name tip-true SettingsSessionPrinters")
 if "OPEN leftover" not in gaps and "Network Add" not in gaps:
     raise SystemExit("fleet-doctrine-gaps must keep Network Add OPEN")
 debt_blob = json.dumps(debt)

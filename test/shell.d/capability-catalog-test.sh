@@ -745,17 +745,30 @@ if printers_manage.get("provider", {}).get("state") != "legacy-direct":
     raise SystemExit(f"printers.manage was raised off leftover: {printers_manage.get('provider')}")
 if printers_manage.get("humanRoute", {}).get("path") != "Settings > Printers":
     raise SystemExit(f"printers.manage route is {printers_manage.get('humanRoute')}")
-if printers_manage.get("source", {}).get("file") != "default/fabric/omarchy_fabric/helpers/session_apply.py":
+if printers_manage.get("source", {}).get("file") != "shell/apps/shared/SettingsSessionPrinters.qml":
     raise SystemExit(f"printers.manage source is {printers_manage.get('source')}")
-if printers_manage.get("source", {}).get("symbol") != "apply_printer_default_set":
+if printers_manage.get("source", {}).get("symbol") != "setDefault":
     raise SystemExit(f"printers.manage source is {printers_manage.get('source')}")
-if "SettingsPrinters.qml" in str(printers_manage.get("source", {}).get("file") or ""):
-    raise SystemExit("printers.manage must not invent source on SettingsPrinters.qml")
+if "SettingsPrinters.qml" in str(printers_manage.get("source", {}).get("file") or "") and "SettingsSessionPrinters.qml" not in str(printers_manage.get("source", {}).get("file") or ""):
+    raise SystemExit("printers.manage must not invent source on SettingsPrinters.qml page host")
+printers_recovery = printers_manage.get("recovery") or {}
+if printers_recovery.get("mode") != "compensating":
+    raise SystemExit(f"printers.manage recovery mode is {printers_recovery}")
+if printers_recovery.get("stateFingerprintRequired") is not False:
+    raise SystemExit(f"printers.manage recovery fingerprint invent: {printers_recovery}")
+printers_exp = printers_recovery.get("expectation") or ""
+for needle in ("setDefault", "printer-default-set", "resumeQueue", "printer-resume", "no Fabric durable undo fingerprint invent", "no timed auto-rollback"):
+    if needle not in printers_exp:
+        raise SystemExit(f"printers.manage recovery missing {needle!r}: {printers_exp}")
+if "state-fingerprint-guarded" in printers_exp:
+    raise SystemExit(f"printers.manage still invents fingerprint-guarded compensating path: {printers_exp}")
 native32 = next(job for job in jobs["jobs"] if job["id"] == "windows-native.32")
 if native32.get("claim") == "present":
     raise SystemExit(f"windows-native.32 was flipped to present: {native32}")
 if native32.get("claim") != "prototype" or native32.get("sourceStatus") != "pending":
     raise SystemExit(f"windows-native.32 must stay prototype/pending: {native32}")
+if native32.get("proofStatus") != "pending":
+    raise SystemExit(f"windows-native.32 proofStatus drifted: {native32}")
 if native32.get("humanRoute", {}).get("path") != "Settings > Printers":
     raise SystemExit(f"windows-native.32 humanRoute drifted: {native32.get('humanRoute')}")
 native32_recovery = str(native32.get("recoveryExpectation") or "")
@@ -763,6 +776,15 @@ if "Cancel setup" in native32_recovery or "newly added printer" in native32_reco
     raise SystemExit(f"windows-native.32 recoveryExpectation still invents Add-setup cancel/remove: {native32_recovery}")
 if "Settings > Printers" not in native32_recovery or "no Add-setup" not in native32_recovery:
     raise SystemExit(f"windows-native.32 recoveryExpectation not tip-true session leftover: {native32_recovery}")
+if "setDefault" not in native32_recovery or "printer-default-set" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recovery is not tip-aligned to setDefault plane: {native32_recovery}")
+if "fingerprint invent" not in native32_recovery.lower() and "no Fabric durable undo fingerprint invent" not in native32_recovery:
+    raise SystemExit(f"windows-native.32 recovery must refuse Fabric fingerprint invent: {native32_recovery}")
+settings_printers = (root / "shell/apps/ultimate-settings/SettingsPrinters.qml").read_text(encoding="utf-8")
+if "soft leftover-attach" not in settings_printers.lower() or "windows-native.32" not in settings_printers:
+    raise SystemExit("SettingsPrinters must soft leftover-attach windows-native.32")
+if "SettingsSessionPrinters.setDefault" not in settings_printers and "setDefault" not in settings_printers:
+    raise SystemExit("SettingsPrinters must name tip-true setDefault")
 devices_printers = next(job for job in jobs["jobs"] if job["id"] == "parity.devices-printers")
 devices_recovery = str(devices_printers.get("recoveryExpectation") or "")
 if "cancellable setup" in devices_recovery.lower() or "compensating removal" in devices_recovery.lower():

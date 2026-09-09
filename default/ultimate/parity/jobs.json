@@ -1972,7 +1972,7 @@
         "path": "Settings > Printers"
       },
       "agentAvailability": "unavailable",
-      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers (session inventory/set-default/pause/resume/test-page plane applies immediately; Network Add / driver wizard remains OPEN leftover \u2014 no Add-setup cancel/remove recovery).",
+      "recoveryExpectation": "Restore the prior default printer or resume a paused queue from Settings > Printers via tip-true SettingsSessionPrinters.setDefault \u2192 printer-default-set / SettingsSessionPrinters.resumeQueue \u2192 printer-resume (no Fabric durable undo fingerprint invent; no timed auto-rollback). Network Add / driver wizard remains OPEN leftover \u2014 no Add-setup cancel/remove recovery.",
       "proofStatus": "pending",
       "proofIds": [
         "windows-native.pending.32"
