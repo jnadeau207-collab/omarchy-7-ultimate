@@ -121,3 +121,18 @@ var largeIcon = 48
 var smallIcon = 16
 
 var fontFamily = "Selawik"
+
+// Reused from default/ultimate/chrome-tokens.json. Not sampled from shots.
+// captionGlassHex / hyprbarsTextHex / captionClose* / captionHeight.
+// Factory glass, not chrome-tokens-light captionGlassHex (steel).
+var captionGlass = "#74b8fc"
+var captionText = "#20262c"
+var captionCloseBg = "#b85750"
+var captionCloseFg = "#ffffff"
+var captionButtonFace = "#e8ecf0"
+var captionHeightPx = 30
+var captionButtonPx = 22
+var captionButtonPad = 8
+var captionTextPad = 12
+var captionGlassAlpha = 0.42
+

@@ -31,7 +31,7 @@ Rectangle {
       list.push({ key: "favorites.downloads", depth: 1, label: "Downloads", icon: "directory", routeId: "files.downloads", group: false })
       list.push({ key: "favorites.recent", depth: 1, label: "Recent Places", icon: "directory", routeId: "files.recent", group: false })
     }
-    list.push({ key: "libraries", depth: 0, label: "Libraries", icon: "libraries", routeId: "", group: true })
+    list.push({ key: "libraries", depth: 0, label: "Libraries", icon: "libraries", routeId: "files.overview", group: true })
     if (root.expanded.libraries) {
       list.push({ key: "libraries.documents", depth: 1, label: "Documents", icon: "directory", routeId: "files.documents", group: false })
       list.push({ key: "libraries.music", depth: 1, label: "Music", icon: "directory", routeId: "files.music", group: false })

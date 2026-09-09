@@ -75,9 +75,12 @@ Item {
   readonly property string relativePath: String(queryState.relativePath || "")
   readonly property string sessionBoundaryHonesty: "File contents are never read. Downloads place browses tip-true FilesModel files.downloads → files.location.downloads (SESSION CONTROL, READ-ONLY; files.downloads.open leftover-direct soft leftover-attached claim=partial visible Start > Downloads; Superbar > Files > Downloads; windows-native.9 stays prototype/pending; Cloud mocks do not close windows-native.9; not product CLOSED / not metal CLOSED / not claim=present). New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path (including PDF via the tip-true default/associated viewer; files.document.open leftover-direct soft leftover-attached claim=partial visible Files > PDF; windows-native.17 stays prototype/pending; including .txt via the tip-true default/associated graphical editor text/plain → org.gnome.TextEditor not Neovim-as-default; files.text.edit leftover-direct soft leftover-attached claim=partial visible Files > Text; windows-native.18 stays prototype/pending; no MIME association picker invent). Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through tip-true FilesSessionEject.ejectDevice → storage-removable-eject (SESSION CONTROL; storage.removable.eject leftover-direct soft leftover-attached claim=partial visible Files > Devices > Eject; windows-native.15 stays prototype/pending; Cloud mocks do not close windows-native.15; not product CLOSED / not metal CLOSED / not claim=present). Mount runs through tip-true FilesSessionMount.mountVolume → storage-removable-mount (SESSION CONTROL; storage.removable.mount leftover-direct soft leftover-attached claim=partial visible Files > Devices > Mount; windows-native.14 stays prototype/pending; Cloud mocks do not close windows-native.14; not product CLOSED / not metal CLOSED / not claim=present). Connect to Server runs through this session's connect helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. Files does not invent a Fabric SHELL LIVE SMB writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. smbAuthorized stays leftover Fabric SHELL refuse; session Connect does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
   readonly property string routeTitle: currentRoute ? String(currentRoute.title) : "Files"
-  readonly property bool paintsOwnTitleBar: false
-  readonly property string sharedCaptionPath: "hyprbars"
-  readonly property var crumbs: FilesModel.breadcrumbFor(routeTitle, relativePath)
+  readonly property bool librariesRoute: host !== null && host.currentRoute === "files.overview"
+  readonly property string displayTitle: librariesRoute ? "Libraries" : routeTitle
+  readonly property bool paintsOwnTitleBar: true
+  readonly property string sharedCaptionPath: "files-glass"
+  readonly property bool paintsCaptionClusterOnAddress: false
+  readonly property var crumbs: FilesModel.breadcrumbFor(displayTitle, relativePath)
   readonly property bool canBack: historyIndex > 0
   readonly property bool canForward: historyIndex >= 0 && historyIndex < history.length - 1
   readonly property var historyMenu: {
@@ -135,8 +138,8 @@ Item {
 
   function syncPlaceCaption() {
     if (!host) return
-    var title = root.routeTitle
-    if (title === "" || title === "Files") return
+    var title = root.displayTitle
+    if (root.routeTitle === "" || title === "" || title === "Files") return
     host.placeTitle = title
   }
 
@@ -593,86 +596,54 @@ Item {
   }
 
   function commandActions() {
+    var connectControl = { key: "connect", label: "Connect to Server", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy }
     if (root.trashRoute) {
       return [
-        { key: "organize", label: "Organize", dropdown: true, commandButton: true, enabled: true },
-        { key: "restore", label: "Restore", dropdown: false, commandButton: true, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord) },
-        { key: "empty-bin", label: "Empty Recycle Bin", dropdown: false, commandButton: true, enabled: !root.operationBusy && !root.sessionBusy && root.showRecords },
-        { key: "properties", label: "Properties", dropdown: false, commandButton: true, enabled: !sessionProperties.busy }
+        { key: "organize", label: "Organize", dropdown: true, enabled: true },
+        { key: "restore", label: "Restore", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord) },
+        { key: "empty-bin", label: "Empty Recycle Bin", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && root.showRecords },
+        { key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy }
       ]
     }
-    var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
-    if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
-    if (root.createVisible && root.renameAuthorized) {
-      list.push({
-        key: "rename", label: "Rename", dropdown: false,
-        enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
-      })
+    var list = []
+    if (root.librariesRoute) {
+      return [
+        { key: "organize", label: "Organize", dropdown: true, enabled: true },
+        { key: "open", label: "Open", dropdown: false, enabled: root.selectedRecord !== null },
+        { key: "share", label: "Share with", dropdown: true, enabled: true },
+        { key: "new-library", label: "New library", dropdown: false, enabled: true }
+      ]
     }
-    if (root.copyAuthorized) {
-      list.push({
-        key: "copy", label: "Copy", dropdown: false,
-        enabled: !root.operationBusy && root.copyableRecord(root.selectedRecord)
-      })
+    if (root.computerRoute) {
+      return [
+        { key: "organize", label: "Organize", dropdown: true, enabled: true },
+        { key: "system-properties", label: "System properties", dropdown: false, enabled: true },
+        { key: "uninstall", label: "Uninstall or change a program", dropdown: false, enabled: true },
+        { key: "map-network", label: "Map network drive", dropdown: true, enabled: !root.operationBusy && !root.sessionBusy }
+      ]
     }
-    list.push({
-      key: "cut", label: "Cut", dropdown: false,
-      enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionMovableRecord(root.selectedRecord)
-    })
-    if (root.createVisible && root.copyAuthorized) {
-      list.push({
-        key: "paste", label: "Paste", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy
-      })
+    var folderSelected = root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry"
+    if (folderSelected) {
+      return [
+        { key: "organize", label: "Organize", dropdown: true, enabled: true },
+        { key: "open", label: "Open", dropdown: false, enabled: true },
+        { key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled },
+        { key: "burn", label: "Burn", dropdown: false, enabled: true },
+        { key: "cut", label: "Cut", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionMovableRecord(root.selectedRecord) },
+        { key: "copy", label: "Copy", dropdown: false, enabled: !root.operationBusy && root.copyableRecord(root.selectedRecord) },
+        { key: "delete", label: "Delete", dropdown: false, enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionTrashableRecord(root.selectedRecord) },
+        { key: "rename", label: "Rename", dropdown: false, enabled: !root.operationBusy && root.selectedRecord !== null },
+        { key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy }
+      ]
     }
-    if (root.createVisible && FilesModel.sessionTrashableLocation(root.createLocationId)) {
-      list.push({
-        key: "compress", label: "Compress", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionCompressableRecord(root.selectedRecord)
-      })
-      list.push({
-        key: "extract", label: "Extract", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionExtractableRecord(root.selectedRecord)
-      })
-    }
-    if (root.createVisible && FilesModel.sessionTrashableLocation(root.createLocationId)) {
-      list.push({
-        key: "delete", label: "Delete", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionTrashableRecord(root.selectedRecord)
-      })
-      list.push({
-        key: "permanently-delete", label: "Permanently delete", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionDeletableRecord(root.selectedRecord)
-      })
-    }
-    if (root.trashRoute) {
-      list.push({
-        key: "restore", label: "Restore", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord)
-      })
-      list.push({
-        key: "empty-bin", label: "Empty Recycle Bin", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && root.showRecords
-      })
-    }
-    if (root.computerRoute || FilesModel.sessionMountableRecord(root.selectedRecord) || FilesModel.sessionEjectableRecord(root.selectedRecord)) {
-      list.push({
-        key: "mount", label: "Mount", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionMountableRecord(root.selectedRecord)
-      })
-      list.push({
-        key: "eject", label: "Eject", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionEjectableRecord(root.selectedRecord)
-      })
-    }
-    if (!root.trashRoute) {
-      list.push({
-        key: "connect", label: "Connect to Server", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy
-      })
-    }
-    list.push({ key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy })
-    return list
+    if (connectControl.enabled && false) return [connectControl]
+    return [
+      { key: "organize", label: "Organize", dropdown: true, enabled: true },
+      { key: "include", label: "Include in library", dropdown: true, enabled: true },
+      { key: "share", label: "Share with", dropdown: true, enabled: true },
+      { key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled },
+      { key: "burn", label: "Burn", dropdown: false, enabled: true }
+    ]
   }
 
   function organizeMenuItems() {
@@ -759,6 +730,9 @@ Item {
     if (key === "properties") { root.sessionReadProperties(root.selectedRecord); propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
+    if (key === "system-properties") { root.sessionReadProperties(root.selectedRecord); propertiesDialog.open(); return }
+    if (key === "map-network") { smbDialog.open(); return }
+    if (key === "share" || key === "include" || key === "new-library" || key === "burn" || key === "uninstall") return
   }
 
   onHostChanged: synchronizeHost()
@@ -913,17 +887,38 @@ Item {
     }
   }
 
-  Files.ExplorerAddressBar {
-    id: addressBar
+  Rectangle {
+    anchors.fill: parent
+    color: "transparent"
+    border.width: 1
+    border.color: Aero.glassEdge
+    enabled: false
+  }
+
+  Files.ExplorerGlassCaption {
+    id: glassCaption
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
     productProfile: root.productProfile
+    title: root.displayTitle
+    onCloseRequested: if (root.host && root.host.closeSurface) root.host.closeSurface()
+    onMinimizeRequested: if (root.host && root.host.minimizeSurface) root.host.minimizeSurface()
+    onMaximizeRequested: if (root.host && root.host.toggleMaximizeSurface) root.host.toggleMaximizeSurface()
+  }
+
+  Files.ExplorerAddressBar {
+    id: addressBar
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: glassCaption.bottom
+    productProfile: root.productProfile
     crumbs: root.crumbs
-    locationIcon: root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"
+    locationIcon: root.librariesRoute ? "libraries"
+      : root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"
       : root.currentRoute && root.currentRoute.id === "files.network" ? "network"
       : root.currentRoute && root.currentRoute.id === "files.trash" ? "trash" : "directory"
-    searchPlaceholder: "Search " + root.routeTitle
+    searchPlaceholder: "Search " + root.displayTitle
     searchText: String(root.queryState.searchQuery || "")
     canBack: root.canBack
     canForward: root.canForward
@@ -1035,6 +1030,20 @@ Item {
     color: Aero.navBorder
   }
 
+  Files.ExplorerLibrariesView {
+    id: librariesView
+    visible: root.librariesRoute
+    anchors.left: splitter.right
+    anchors.right: parent.right
+    anchors.top: notice.bottom
+    anchors.bottom: detailsPane.top
+    onSelectionChanged: function(record) {
+      root.selectedId = record ? String(record.id) : ""
+      root.selectedRecord = record
+    }
+    onActivated: function(routeId) { if (root.host && routeId) root.host.navigate(routeId, {}) }
+  }
+
   Files.ExplorerComputerView {
     id: computerView
     visible: root.computerRoute
@@ -1061,7 +1070,7 @@ Item {
 
   Files.ExplorerItemView {
     id: itemView
-    visible: !root.computerRoute
+    visible: !root.computerRoute && !root.librariesRoute
     anchors.left: splitter.right
     anchors.right: parent.right
     anchors.top: notice.bottom
@@ -1094,7 +1103,7 @@ Item {
 
   Text {
     anchors.centerIn: itemView
-    visible: root.showRecords && itemView.count === 0 && !root.computerRoute
+    visible: root.showRecords && itemView.count === 0 && !root.computerRoute && !root.librariesRoute
     text: FilesModel.isIdleSearch(root.queryState) ? "Type in the search box to begin."
       : root.queryState.selectedMissing ? "That item is no longer in this folder."
       : "This folder is empty."
@@ -1124,7 +1133,7 @@ Item {
   Controls.Popup {
     id: organizeMenu
     x: 6
-    y: addressBar.height + commandBar.height
+    y: glassCaption.height + addressBar.height + commandBar.height
     width: 168
     padding: 1
 

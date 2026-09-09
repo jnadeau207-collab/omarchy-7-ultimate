@@ -3,6 +3,7 @@ import QtQuick.Controls as Controls
 import qs.Commons
 
 import "ExplorerTheme.js" as Aero
+import "." as Files
 
 Item {
   id: root
@@ -51,23 +52,37 @@ Item {
       delegate: Item {
         id: commandItem
         required property var modelData
-        width: commandLabel.implicitWidth + (modelData.dropdown ? 26 : 16)
-        height: 22
+        visible: modelData.label !== "Connect to Server"
+        width: commandLabel.implicitWidth + 28 + (modelData.dropdown ? 14 : 4)
+        height: 26
 
         readonly property bool usable: modelData.enabled !== false
-        readonly property bool commandButton: modelData.dropdown === true || modelData.commandButton === true
+        readonly property bool commandButton: false
 
         Rectangle {
           id: commandButtonFrame
           anchors.fill: parent
           radius: 3
-          visible: commandItem.commandButton && !(commandHover.hovered && commandItem.usable)
+          visible: false
           border.width: 1
           border.color: Aero.commandBorder
           gradient: Gradient {
             GradientStop { position: 0; color: Aero.commandTop }
             GradientStop { position: 1; color: Aero.commandBottom }
           }
+        }
+
+        Files.ExplorerIcon {
+          id: commandIcon
+          width: Aero.smallIcon
+          height: Aero.smallIcon
+          kind: modelData.key === "map-network" ? "network"
+            : modelData.key === "system-properties" ? "computer"
+            : modelData.key === "new-library" || modelData.key === "include" ? "libraries"
+            : "directory"
+          anchors.left: parent.left
+          anchors.leftMargin: 4
+          anchors.verticalCenter: parent.verticalCenter
         }
 
         Rectangle {
@@ -84,8 +99,8 @@ Item {
 
         Text {
           id: commandLabel
-          anchors.left: parent.left
-          anchors.leftMargin: 8
+          anchors.left: commandIcon.right
+          anchors.leftMargin: 6
           anchors.verticalCenter: parent.verticalCenter
           text: Semantics.text(root.productProfile, modelData.label)
           textFormat: Text.PlainText
