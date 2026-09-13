@@ -733,8 +733,16 @@ Item {
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
     if (key === "map-drive") { smbDialog.open(); return }
-    if (key === "control-panel" || key === "system-properties" || key === "uninstall") {
-      if (root.host && root.host.launchApp) root.host.launchApp("org.omarchy.Settings")
+    if (key === "control-panel") {
+      Util.execDetached(["omarchy-launch-settings", "--source", "desktop"])
+      return
+    }
+    if (key === "system-properties") {
+      Util.execDetached(["omarchy-launch-settings", "settings.system.overview"])
+      return
+    }
+    if (key === "uninstall") {
+      Util.execDetached(["omarchy-launch-settings", "settings.apps.overview"])
       return
     }
     if (key === "include-library" || key === "share-with" || key === "burn" || key === "arrange-by" || key === "play-all" || key === "slide-show")
@@ -904,7 +912,6 @@ Item {
     anchors.leftMargin: 6
     anchors.rightMargin: 6
     anchors.top: parent.top
-    anchors.topMargin: 30
     productProfile: root.productProfile
     crumbs: root.crumbs
     locationIcon: root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"

@@ -236,8 +236,6 @@ o.window("org.omarchy.screensaver", { float = true, fullscreen = true, ["hyprbar
 
 o.window({ tag = "default-opacity" }, { opacity = "1 1" })
 o.window(".*", { opacity = "1 1" })
-o.window("org.omarchy.Files", { ["hyprbars:no_bar"] = true, border_size = 0, rounding = 0 })
-o.window("org.omarchy.Settings", { ["hyprbars:no_bar"] = true, border_size = 0, rounding = 0 })
 
 local function apply_desktop_look()
   local chrome = require_chrome_tokens()

@@ -2,6 +2,7 @@ import QtQuick
 import qs.Commons
 
 import "../ultimate-files/ExplorerTheme.js" as Aero
+import "../ultimate-files" as ExplorerBits
 
 Item {
   id: root
@@ -138,41 +139,13 @@ Item {
         width: parent.columns === 2 ? (parent.width - parent.columnSpacing) / 2 : parent.width
         height: categoryColumn.implicitHeight
 
-        Canvas {
+        ExplorerBits.ExplorerIcon {
           id: categoryIcon
           width: 48
           height: 48
+          kind: String(modelData.icon || "computer")
           anchors.left: parent.left
           anchors.top: parent.top
-          antialiasing: true
-          onPaint: {
-            var ctx = getContext("2d")
-            ctx.reset()
-            var kind = String(modelData.icon || "")
-            var grad = ctx.createLinearGradient(0, 0, 0, height)
-            if (kind === "shield") { grad.addColorStop(0, "#6db3ee"); grad.addColorStop(1, "#1f5fa8") }
-            else if (kind === "network") { grad.addColorStop(0, "#dff0fb"); grad.addColorStop(1, "#7fb8e4") }
-            else if (kind === "hardware") { grad.addColorStop(0, "#f6f8fa"); grad.addColorStop(1, "#c9d2db") }
-            else if (kind === "programs") { grad.addColorStop(0, "#f4f7fb"); grad.addColorStop(1, "#9db3c6") }
-            else if (kind === "users") { grad.addColorStop(0, "#d7e8f8"); grad.addColorStop(1, "#6ea0d0") }
-            else if (kind === "appearance") { grad.addColorStop(0, "#e9eef4"); grad.addColorStop(1, "#b9c5d2") }
-            else if (kind === "clock") { grad.addColorStop(0, "#ffffff"); grad.addColorStop(1, "#d5dde6") }
-            else { grad.addColorStop(0, "#cfe4f7"); grad.addColorStop(1, "#8bb8de") }
-            ctx.beginPath()
-            if (kind === "shield") {
-              ctx.moveTo(10, 4)
-              ctx.lineTo(38, 4)
-              ctx.lineTo(38, 26)
-              ctx.quadraticCurveTo(24, 46, 10, 26)
-              ctx.closePath()
-            } else {
-              ctx.arc(24, 24, 18, 0, Math.PI * 2)
-            }
-            ctx.fillStyle = grad
-            ctx.fill()
-            ctx.strokeStyle = Aero.driveOutline
-            ctx.stroke()
-          }
         }
 
         Column {
