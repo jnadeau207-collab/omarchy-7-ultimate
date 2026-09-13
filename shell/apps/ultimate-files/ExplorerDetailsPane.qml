@@ -18,6 +18,7 @@ Rectangle {
 
   gradient: Gradient {
     GradientStop { position: 0; color: Aero.detailsTop }
+    GradientStop { position: 0.45; color: Aero.detailsMid }
     GradientStop { position: 1; color: Aero.detailsBottom }
   }
 
@@ -39,8 +40,8 @@ Rectangle {
 
   Files.ExplorerIcon {
     id: preview
-    width: 32
-    height: 32
+    width: 48
+    height: 48
     kind: root.record ? (root.record.entryKind || "file") : "directory"
     extension: root.record ? FilesModel.extensionOf(root.record.title) : ""
     dimmed: root.record ? root.record.hidden === true : false

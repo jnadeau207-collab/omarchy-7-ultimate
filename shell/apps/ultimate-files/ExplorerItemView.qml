@@ -15,6 +15,8 @@ FocusScope {
   property string sortColumn: "name"
   property bool sortAscending: true
   property string selectedId: ""
+  property string libraryTitle: ""
+  property string libraryIncludes: ""
 
   signal activated(var record)
   signal selectionChanged(var record)
@@ -73,6 +75,36 @@ FocusScope {
   Column {
     anchors.fill: parent
     visible: root.mode === "details"
+
+    Item {
+      id: libraryBanner
+      width: parent.width
+      height: visible ? Aero.libraryBannerHeight : 0
+      visible: root.libraryTitle !== ""
+
+      Text {
+        anchors.left: parent.left
+        anchors.leftMargin: 10
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.libraryTitle
+        textFormat: Text.PlainText
+        color: Aero.headingText
+        font.family: Aero.fontFamily
+        font.pixelSize: Aero.headingSize
+      }
+
+      Text {
+        visible: root.libraryIncludes !== ""
+        anchors.right: parent.right
+        anchors.rightMargin: 12
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.libraryIncludes
+        textFormat: Text.PlainText
+        color: Aero.linkText
+        font.family: Aero.fontFamily
+        font.pixelSize: Aero.fontSize
+      }
+    }
 
     Item {
       id: header
@@ -210,7 +242,7 @@ FocusScope {
 
     Controls.ScrollView {
       width: parent.width
-      height: parent.height - header.height
+      height: parent.height - header.height - libraryBanner.height
       clip: true
       Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
 
@@ -350,16 +382,16 @@ FocusScope {
 
   Controls.ScrollView {
     anchors.fill: parent
-    visible: root.mode === "icons" || root.mode === "list"
+    visible: root.mode === "icons" || root.mode === "list" || root.mode === "tiles"
     clip: true
     Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
 
     GridView {
       id: iconGrid
       model: root.items
-      cellWidth: root.mode === "icons" ? Aero.tileWidth : Math.max(160, Math.floor(width / Math.max(1, Math.floor(width / 220))))
-      cellHeight: root.mode === "icons" ? Aero.tileHeight : Aero.rowHeight
-      flow: root.mode === "icons" ? GridView.FlowLeftToRight : GridView.FlowTopToBottom
+      cellWidth: root.mode === "icons" ? Aero.tileWidth : root.mode === "tiles" ? 220 : Math.max(160, Math.floor(width / Math.max(1, Math.floor(width / 220))))
+      cellHeight: root.mode === "icons" ? Aero.tileHeight : root.mode === "tiles" ? 52 : Aero.rowHeight
+      flow: root.mode === "icons" || root.mode === "tiles" ? GridView.FlowLeftToRight : GridView.FlowTopToBottom
       boundsBehavior: Flickable.StopAtBounds
       readonly property int columnCount: Math.max(1, Math.floor(width / cellWidth))
 
@@ -372,6 +404,7 @@ FocusScope {
 
         readonly property bool chosen: modelData.id === root.selectedId
         readonly property bool iconMode: root.mode === "icons"
+        readonly property bool tileMode: root.mode === "tiles"
 
         Rectangle {
           anchors.fill: parent
@@ -394,7 +427,7 @@ FocusScope {
 
         Files.ExplorerIcon {
           id: tileIcon
-          width: tile.iconMode ? Aero.largeIcon : Aero.smallIcon
+          width: tile.iconMode ? Aero.largeIcon : (tile.tileMode ? 48 : Aero.smallIcon)
           height: width
           kind: tile.modelData.entryKind || "file"
           extension: FilesModel.extensionOf(tile.modelData.title)

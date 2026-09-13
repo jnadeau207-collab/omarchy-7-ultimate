@@ -47,8 +47,8 @@ tile = re.search(
 )
 if not tile:
     raise SystemExit("drive tile width/height missing")
-if (int(tile.group(1)), int(tile.group(2))) != (292, 62):
-    raise SystemExit(f"drive tile changed from 292x62 to {tile.group(1)}x{tile.group(2)}")
+if (int(tile.group(1)), int(tile.group(2))) != (292, 70):
+    raise SystemExit(f"drive tile changed from 292x70 to {tile.group(1)}x{tile.group(2)}")
 
 icon = re.search(
     r"id:\s*driveIcon\b.*?width:\s*(\d+)\s*\n\s*height:\s*(\d+)\s*$",
@@ -57,8 +57,8 @@ icon = re.search(
 )
 if not icon:
     raise SystemExit("drive icon width/height missing")
-if (int(icon.group(1)), int(icon.group(2))) != (44, 44):
-    raise SystemExit(f"drive icon changed from 44x44 to {icon.group(1)}x{icon.group(2)}")
+if (int(icon.group(1)), int(icon.group(2))) != (48, 48):
+    raise SystemExit(f"drive icon changed from 48x48 to {icon.group(1)}x{icon.group(2)}")
 
 if leftover.get("win7VisualLeftover") != "OPEN":
     raise SystemExit("win7VisualLeftover must stay OPEN")
@@ -82,11 +82,11 @@ grep -Fq 'height: 8' "$computer" \
   || fail "capacity bar height is the documented in-range 8"
 grep -Fq 'width: 292' "$computer" \
   || fail "drive tile width stays 292"
-grep -Fq 'height: 62' "$computer" \
-  || fail "drive tile height stays 62"
-grep -Fq 'width: 44' "$computer" \
-  || fail "drive icon stays 44"
+grep -Fq 'height: 70' "$computer" \
+  || fail "drive tile height is 70 for a 48px Win7 Computer icon"
+grep -Fq 'width: 48' "$computer" \
+  || fail "drive icon is Win7 medium 48"
 
 pass "Computer capacity bar is inside cheat-sheet 60-120 x 6-8 (source metric only, not pixel proof)"
-pass "drive tile 292x62 and icon 44 unchanged"
+pass "drive tile 292x70 and icon 48 match Win7 Computer Tiles view (source metric only)"
 pass "win7VisualLeftover stays OPEN (not CLOSED, not metal CLOSED, not product CLOSED)"

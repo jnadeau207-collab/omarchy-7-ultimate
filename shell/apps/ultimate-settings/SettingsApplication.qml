@@ -542,29 +542,55 @@ Item {
         productProfile: root.productProfile
         crumbs: root.settingsCrumbs
         searchText: root.settingsQuery
+        canBack: root.host && root.host.currentRoute && String(root.host.currentRoute) !== SettingsModel.OVERVIEW_ROUTE
         onSearchChanged: function(text) { root.settingsQuery = text }
         onCrumbActivated: function(routeId) {
           if (routeId !== "" && root.host) root.host.navigate(routeId, {})
+        }
+        onBackRequested: {
+          if (root.host) root.host.navigate(SettingsModel.OVERVIEW_ROUTE, {})
+        }
+      }
+
+      Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: Aero.commandHeight
+        gradient: Gradient {
+          GradientStop { position: 0; color: Aero.commandTop }
+          GradientStop { position: 0.45; color: Aero.commandMid }
+          GradientStop { position: 1; color: Aero.commandBottom }
+        }
+
+        Rectangle {
+          width: parent.width
+          height: 1
+          y: parent.height - 1
+          color: Aero.commandBorder
         }
       }
 
       ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.leftMargin: root.width < 900 ? Style.space(14) : Style.space(20)
-        Layout.rightMargin: root.width < 900 ? Style.space(14) : Style.space(20)
-        Layout.topMargin: Style.space(12)
-        Layout.bottomMargin: Style.space(8)
-        spacing: Style.space(14)
+        Layout.leftMargin: 0
+        Layout.rightMargin: 0
+        Layout.topMargin: 0
+        Layout.bottomMargin: 0
+        spacing: 0
 
         Shared.FabricStatusBanner {
+          visible: !root.overviewVisible
           host: root.host
           semanticProfile: root.productProfile
           Layout.fillWidth: true
         }
 
         RowLayout {
+          visible: !root.overviewVisible
           Layout.fillWidth: true
+          Layout.leftMargin: Style.space(16)
+          Layout.rightMargin: Style.space(16)
+          Layout.topMargin: Style.space(10)
           spacing: Style.space(10)
 
           ColumnLayout {
@@ -600,6 +626,7 @@ Item {
           }
 
           Ui.Badge {
+            visible: !root.overviewVisible
             text: root.hostedPage ? "LIVE PANEL" : SettingsModel.phaseBadge(root.queryState)
             tone: root.hostedPage ? "info" : SettingsModel.phaseTone(root.queryState)
             semanticProfile: root.productProfile
@@ -607,9 +634,67 @@ Item {
           }
         }
 
-        ColumnLayout {
-          visible: root.settingsQuery !== "" || !root.currentRoute || String(root.currentRoute.id || "") === SettingsModel.OVERVIEW_ROUTE
+        RowLayout {
+          visible: root.overviewVisible && root.settingsQuery === ""
           Layout.fillWidth: true
+          Layout.fillHeight: true
+          spacing: 0
+
+          Rectangle {
+            Layout.preferredWidth: Aero.navPaneWidth
+            Layout.fillHeight: true
+            color: Aero.navFill
+
+            Rectangle {
+              width: 1
+              height: parent.height
+              anchors.right: parent.right
+              color: Aero.navBorder
+            }
+
+            Column {
+              anchors.fill: parent
+              anchors.margins: 10
+              spacing: 6
+
+              Text {
+                text: Semantics.text(root.productProfile, "Control Panel")
+                textFormat: Text.PlainText
+                color: Aero.headingText
+                font.family: Aero.fontFamily
+                font.pixelSize: 14
+              }
+
+              Text {
+                text: Semantics.text(root.productProfile, "Control Panel Home")
+                textFormat: Text.PlainText
+                color: Aero.textPrimary
+                font.family: Aero.fontFamily
+                font.pixelSize: Aero.fontSize
+                font.underline: true
+              }
+            }
+          }
+
+          SettingsComponents.ControlPanelHome {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
+            Layout.topMargin: 10
+            Layout.bottomMargin: 10
+            productProfile: root.productProfile
+            onCategoryActivated: function(routeId) {
+              if (root.host) root.host.navigate(routeId, {})
+            }
+          }
+        }
+
+        ColumnLayout {
+          visible: root.settingsQuery !== ""
+          Layout.fillWidth: true
+          Layout.leftMargin: Style.space(16)
+          Layout.rightMargin: Style.space(16)
           spacing: Style.space(8)
           Accessible.role: Accessible.Pane
           Accessible.name: Semantics.text(root.productProfile, "Control Panel categories")
@@ -674,7 +759,7 @@ Item {
 
         Controls.ScrollView {
           id: contentScroll
-          visible: !root.hostedPage
+          visible: !root.hostedPage && !root.overviewVisible
           Layout.fillWidth: true
           Layout.fillHeight: true
           contentWidth: availableWidth
@@ -830,7 +915,7 @@ Item {
             }
 
             GridLayout {
-              visible: root.overviewVisible
+              visible: false
               Layout.fillWidth: true
               columns: root.overviewColumns
               columnSpacing: Style.space(10)

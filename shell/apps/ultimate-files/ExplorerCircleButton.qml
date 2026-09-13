@@ -12,8 +12,8 @@ Item {
 
   signal triggered()
 
-  implicitWidth: 24
-  implicitHeight: 24
+  implicitWidth: direction === "back" ? Aero.backDiameter : Aero.forwardDiameter
+  implicitHeight: implicitWidth
 
   Canvas {
     id: face

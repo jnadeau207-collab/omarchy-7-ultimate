@@ -59,6 +59,29 @@
       "visual leftover 5/5 surfaces"
     ]
   },
+  "statusAfterExplorerWin7Chrome": {
+    "win7VisualLeftover": "OPEN",
+    "pixelProof": false,
+    "productClosed": false,
+    "metalClosed": false,
+    "note": "Explorer client chrome rebuilt to Win7 Ultimate anatomy: command band Organize/location verbs + Views/Preview/Help, glass address row, Favorites/Libraries/Homegroup/Computer/Network nav, Computer Tiles 292x70/48px, Control Panel category home. Honesty leftover text is not painted on the details pane. Metal off. This is not grim pixel proof and does not close win7VisualLeftover.",
+    "landed": [
+      "Explorer command bar paints Win7 Folder Band verbs; Views/Preview/Help trailing",
+      "SESSION CONTROL badge not painted",
+      "details pane leftover essay not painted",
+      "nav pane Favorites, Libraries, Homegroup, Computer, Network",
+      "Computer tile 292x70 icon 48 capacity 120x8",
+      "Control Panel category view eight groups"
+    ],
+    "stillOpen": [
+      "win7VisualLeftover",
+      "selectionWash",
+      "Settings card shell",
+      "Computer tile metrics",
+      "caption chrome on metal",
+      "image diff (metal off)"
+    ]
+  },
   "hexGrepIsNotPixelProof": true,
   "cloudExit0IsNotMetalLeftover": true,
   "filesLiveMetal": "OPEN",

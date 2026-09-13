@@ -403,6 +403,104 @@ Canvas {
     }
   }
 
+  function paintUsers(ctx, w, h) {
+    var cx = w / 2
+    var cy = h * 0.38
+    var r = Math.min(w, h) * 0.16
+    ctx.beginPath()
+    ctx.arc(cx - r * 1.1, cy, r, 0, Math.PI * 2)
+    ctx.arc(cx + r * 1.1, cy, r, 0, Math.PI * 2)
+    ctx.fillStyle = vertical(ctx, 0, 0, w, h, "#d7e8f8", "#6ea0d0")
+    ctx.fill()
+    ctx.strokeStyle = "#3d6f9c"
+    ctx.lineWidth = Math.max(1, w / 36)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.ellipse(cx - r * 2.2, cy + r * 1.4, r * 1.8, r * 1.2)
+    ctx.ellipse(cx + r * 0.4, cy + r * 1.4, r * 1.8, r * 1.2)
+    ctx.fill()
+    ctx.stroke()
+  }
+
+  function paintShield(ctx, w, h) {
+    var x = w * 0.22
+    var y = h * 0.10
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(w * 0.78, y)
+    ctx.lineTo(w * 0.78, h * 0.52)
+    ctx.quadraticCurveTo(w * 0.50, h * 0.92, w * 0.22, h * 0.52)
+    ctx.closePath()
+    ctx.fillStyle = vertical(ctx, x, y, w * 0.56, h * 0.78, "#6db3ee", "#1f5fa8")
+    ctx.fill()
+    ctx.strokeStyle = "#163e6c"
+    ctx.lineWidth = Math.max(1, w / 32)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(w * 0.34, h * 0.48)
+    ctx.lineTo(w * 0.46, h * 0.62)
+    ctx.lineTo(w * 0.68, h * 0.34)
+    ctx.strokeStyle = "#ffffff"
+    ctx.lineWidth = Math.max(1.5, w / 18)
+    ctx.stroke()
+  }
+
+  function paintPrograms(ctx, w, h) {
+    roundedPath(ctx, w * 0.16, h * 0.16, w * 0.68, h * 0.52, Math.max(1, w * 0.04))
+    ctx.fillStyle = vertical(ctx, 0, 0, w, h, "#f4f7fb", "#9db3c6")
+    ctx.fill()
+    ctx.strokeStyle = "#6f7d8a"
+    ctx.lineWidth = Math.max(1, w / 32)
+    ctx.stroke()
+    ctx.fillStyle = "#3f89c9"
+    ctx.fillRect(w * 0.22, h * 0.28, w * 0.56, h * 0.30)
+    ctx.fillStyle = "#c45c5c"
+    ctx.beginPath()
+    ctx.arc(w * 0.72, h * 0.74, w * 0.12, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  function paintClock(ctx, w, h) {
+    var cx = w / 2
+    var cy = h / 2
+    var r = Math.min(w, h) * 0.38
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, 0, Math.PI * 2)
+    ctx.fillStyle = vertical(ctx, cx - r, cy - r, r * 2, r * 2, "#ffffff", "#d5dde6")
+    ctx.fill()
+    ctx.strokeStyle = "#5a6b7b"
+    ctx.lineWidth = Math.max(1, w / 28)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(cx, cy)
+    ctx.lineTo(cx, cy - r * 0.55)
+    ctx.moveTo(cx, cy)
+    ctx.lineTo(cx + r * 0.38, cy + r * 0.10)
+    ctx.strokeStyle = "#1f3b5b"
+    ctx.lineWidth = Math.max(1, w / 36)
+    ctx.stroke()
+  }
+
+  function paintEase(ctx, w, h) {
+    ctx.beginPath()
+    ctx.arc(w * 0.50, h * 0.22, w * 0.12, 0, Math.PI * 2)
+    ctx.fillStyle = "#3d6f9c"
+    ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(w * 0.50, h * 0.36)
+    ctx.lineTo(w * 0.50, h * 0.62)
+    ctx.moveTo(w * 0.32, h * 0.46)
+    ctx.lineTo(w * 0.68, h * 0.46)
+    ctx.moveTo(w * 0.50, h * 0.62)
+    ctx.lineTo(w * 0.34, h * 0.86)
+    ctx.moveTo(w * 0.50, h * 0.62)
+    ctx.lineTo(w * 0.66, h * 0.86)
+    ctx.strokeStyle = "#3d6f9c"
+    ctx.lineWidth = Math.max(1.5, w / 16)
+    ctx.lineCap = "round"
+    ctx.stroke()
+  }
+
   function paintSearch(ctx, w, h) {
     var r = Math.min(w, h) * 0.28
     var cx = w * 0.44
@@ -437,6 +535,13 @@ Canvas {
     else if (kind === "libraries") paintLibrary(ctx, width, height)
     else if (kind === "trash") paintTrash(ctx, width, height)
     else if (kind === "search") paintSearch(ctx, width, height)
+    else if (kind === "users" || kind === "homegroup") paintUsers(ctx, width, height)
+    else if (kind === "shield" || kind === "security") paintShield(ctx, width, height)
+    else if (kind === "programs") paintPrograms(ctx, width, height)
+    else if (kind === "appearance") paintMonitor(ctx, width, height)
+    else if (kind === "clock") paintClock(ctx, width, height)
+    else if (kind === "ease") paintEase(ctx, width, height)
+    else if (kind === "hardware") paintDrive(ctx, width, height)
     else paintSheet(ctx, width, height)
   }
 }

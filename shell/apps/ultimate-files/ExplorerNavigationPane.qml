@@ -10,11 +10,12 @@ Rectangle {
   property string accountName: "Home"
   property string currentRoute: ""
   property var mounts: []
-  property var expanded: ({ favorites: true, libraries: true, computer: true })
+  property var expanded: ({ favorites: true, libraries: true, homegroup: false, computer: true })
 
   signal routeActivated(string routeId)
 
   color: Aero.navFill
+  implicitWidth: Aero.navPaneWidth
 
   function toggle(key) {
     var next = {}
@@ -38,7 +39,10 @@ Rectangle {
       list.push({ key: "libraries.pictures", depth: 1, label: "Pictures", icon: "directory", routeId: "files.pictures", group: false })
       list.push({ key: "libraries.videos", depth: 1, label: "Videos", icon: "directory", routeId: "files.videos", group: false })
     }
-    list.push({ key: "home", depth: 0, label: root.accountName, icon: "directory", routeId: "files.overview", group: false })
+    list.push({ key: "homegroup", depth: 0, label: "Homegroup", icon: "users", routeId: "files.network", group: true })
+    if (root.expanded.homegroup) {
+      list.push({ key: "homegroup.empty", depth: 1, label: "Create a homegroup", icon: "users", routeId: "", group: false })
+    }
     list.push({ key: "computer", depth: 0, label: "Computer", icon: "computer", routeId: "files.this-pc", group: true })
     if (root.expanded.computer) {
       var seen = Array.isArray(root.mounts) ? root.mounts : []
@@ -47,13 +51,12 @@ Rectangle {
       }
     }
     list.push({ key: "network", depth: 0, label: "Network", icon: "network", routeId: "files.network", group: false })
-    list.push({ key: "recycle", depth: 0, label: "Recycle Bin", icon: "trash", routeId: "files.trash", group: false })
     return list
   }
 
   Controls.ScrollView {
     anchors.fill: parent
-    anchors.topMargin: 6
+    anchors.topMargin: 4
     clip: true
     Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
 
@@ -68,25 +71,31 @@ Rectangle {
           id: row
           required property var modelData
           width: root.width
-          height: 21
+          height: 22
 
           readonly property bool selected: modelData.routeId !== "" && modelData.routeId === root.currentRoute
           readonly property bool actionable: modelData.routeId !== "" || modelData.group
 
           Rectangle {
             anchors.fill: parent
+            anchors.leftMargin: 2
+            anchors.rightMargin: 2
             radius: 3
             visible: row.selected || hover.hovered
             border.width: 1
-            border.color: row.selected ? (hover.hovered ? Aero.hoverSelectedBorder : Aero.selectionBorder) : Aero.hoverBorder
+            border.color: row.selected ? Aero.selectionBorder : Aero.hoverBorder
             gradient: Gradient {
               GradientStop {
                 position: 0
-                color: row.selected ? (hover.hovered ? Aero.hoverSelectedTop : Aero.selectionTop) : Aero.hoverTop
+                color: row.selected ? Aero.selectionTop : Aero.hoverTop
+              }
+              GradientStop {
+                position: 0.9
+                color: row.selected ? Aero.selectionBottom : Aero.hoverMid
               }
               GradientStop {
                 position: 1
-                color: row.selected ? (hover.hovered ? Aero.hoverSelectedBottom : Aero.selectionBottom) : Aero.hoverBottom
+                color: row.selected ? Aero.selectionBottom : Aero.hoverBottom
               }
             }
           }
@@ -94,11 +103,11 @@ Rectangle {
           Canvas {
             id: expander
             visible: row.modelData.group
-            width: 11
-            height: 11
+            width: 9
+            height: 9
             anchors.verticalCenter: parent.verticalCenter
-            x: 6 + row.modelData.depth * 16
-            antialiasing: true
+            x: 8 + row.modelData.depth * 16
+            antialiasing: false
             readonly property bool open: root.expanded[row.modelData.key] === true
             onOpenChanged: requestPaint()
 
@@ -106,22 +115,27 @@ Rectangle {
               var ctx = getContext("2d")
               ctx.reset()
               ctx.clearRect(0, 0, width, height)
+              var grad = ctx.createLinearGradient(0, 0, 0, height)
+              grad.addColorStop(0, "#f2f2f2")
+              grad.addColorStop(0.45, "#ebebeb")
+              grad.addColorStop(1, "#cfcfcf")
+              ctx.fillStyle = grad
+              ctx.fillRect(0.5, 0.5, width - 1, height - 1)
+              ctx.strokeStyle = Aero.navExpanderBox
+              ctx.strokeRect(0.5, 0.5, width - 1, height - 1)
+              ctx.fillStyle = "#4b63a7"
               ctx.beginPath()
               if (open) {
-                ctx.moveTo(1.5, 3.5)
-                ctx.lineTo(9.5, 3.5)
-                ctx.lineTo(5.5, 8.5)
+                ctx.moveTo(2, 3.5)
+                ctx.lineTo(7, 3.5)
+                ctx.lineTo(4.5, 6.5)
               } else {
-                ctx.moveTo(3.5, 1.5)
-                ctx.lineTo(8.5, 5.5)
-                ctx.lineTo(3.5, 9.5)
+                ctx.moveTo(3.5, 2)
+                ctx.lineTo(6.5, 4.5)
+                ctx.lineTo(3.5, 7)
               }
               ctx.closePath()
-              ctx.fillStyle = open ? "#5a6b7b" : "#ffffff"
               ctx.fill()
-              ctx.strokeStyle = "#71889c"
-              ctx.lineWidth = 1
-              ctx.stroke()
             }
           }
 
@@ -131,12 +145,12 @@ Rectangle {
             height: 16
             kind: row.modelData.icon
             anchors.verticalCenter: parent.verticalCenter
-            x: 20 + row.modelData.depth * 16
+            x: 22 + row.modelData.depth * 16
           }
 
           Text {
             anchors.left: glyph.right
-            anchors.leftMargin: 5
+            anchors.leftMargin: 4
             anchors.right: parent.right
             anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
@@ -145,7 +159,7 @@ Rectangle {
             elide: Text.ElideRight
             color: row.modelData.group ? Aero.navHeaderText : Aero.navItemText
             font.family: Aero.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Aero.fontSize
             font.weight: Font.Normal
           }
 

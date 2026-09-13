@@ -64,6 +64,8 @@ Item {
   property var selectedRecord: null
   property var knownMounts: []
   property var sessionUnmountedVolumes: []
+  property bool previewVisible: false
+  readonly property string leftoverHonesty: "File contents are never read. Downloads place browses tip-true FilesModel files.downloads → files.location.downloads (SESSION CONTROL, READ-ONLY; files.downloads.open leftover-direct soft leftover-attached claim=partial visible Start > Downloads; Superbar > Files > Downloads; windows-native.9 stays prototype/pending; Cloud mocks do not close windows-native.9; not product CLOSED / not metal CLOSED / not claim present). New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path (including PDF via the tip-true default/associated viewer; files.document.open leftover-direct soft leftover-attached claim=partial visible Files > PDF; windows-native.17 stays prototype/pending; including .txt via the tip-true default/associated graphical editor text/plain → org.gnome.TextEditor not Neovim-as-default; files.text.edit leftover-direct soft leftover-attached claim=partial visible Files > Text; windows-native.18 stays prototype/pending; no MIME association picker invent). Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through tip-true FilesSessionEject.ejectDevice → storage-removable-eject (SESSION CONTROL; storage.removable.eject leftover-direct soft leftover-attached claim=partial visible Files > Devices > Eject; windows-native.15 stays prototype/pending; Cloud mocks do not close windows-native.15; not product CLOSED / not metal CLOSED / not claim present). Mount runs through tip-true FilesSessionMount.mountVolume → storage-removable-mount (SESSION CONTROL; storage.removable.mount leftover-direct soft leftover-attached claim=partial visible Files > Devices > Mount; windows-native.14 stays prototype/pending; Cloud mocks do not close windows-native.14; not product CLOSED / not metal CLOSED / not claim present). Connect to Server runs through this session's connect helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. Files does not invent a Fabric SHELL LIVE SMB writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. smbAuthorized stays leftover Fabric SHELL refuse; session Connect does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
 
   readonly property string accountName: {
     var home = String(Tokens.home || "")
@@ -74,6 +76,12 @@ Item {
 
   readonly property string relativePath: String(queryState.relativePath || "")
   readonly property string routeTitle: currentRoute ? String(currentRoute.title) : "Files"
+  readonly property bool libraryRoute: {
+    var id = host ? String(host.currentRoute || "") : ""
+    return id === "files.documents" || id === "files.music" || id === "files.pictures" || id === "files.videos"
+  }
+  readonly property string libraryTitle: root.libraryRoute ? (root.routeTitle + " library") : ""
+  readonly property string libraryIncludes: root.libraryRoute ? "Includes library locations" : ""
   readonly property var crumbs: FilesModel.breadcrumbFor(routeTitle, relativePath)
   readonly property bool canBack: historyIndex > 0
   readonly property bool canForward: historyIndex >= 0 && historyIndex < history.length - 1
@@ -583,74 +591,60 @@ Item {
 
   function commandActions() {
     var list = [{ key: "organize", label: "Organize", dropdown: true, enabled: true }]
-    if (root.createVisible) list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
-    if (root.createVisible && root.renameAuthorized) {
+    if (root.computerRoute) {
+      list.push({ key: "system-properties", label: "System properties", dropdown: false, enabled: true })
+      list.push({ key: "uninstall", label: "Uninstall or change a program", dropdown: false, enabled: true })
+      list.push({ key: "map-drive", label: "Map network drive", dropdown: true, enabled: !root.operationBusy && !root.sessionBusy })
+      list.push({ key: "control-panel", label: "Open Control Panel", dropdown: false, enabled: true })
+    } else if (root.trashRoute) {
       list.push({
-        key: "rename", label: "Rename", dropdown: false,
-        enabled: !root.operationBusy && root.selectedRecord !== null && String(root.selectedRecord.kind || "") === "entry" && String(root.selectedRecord.status || "") !== "symlink"
+        key: "empty-bin", label: "Empty the Recycle Bin", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy && root.showRecords
       })
-    }
-    if (root.copyAuthorized) {
       list.push({
-        key: "copy", label: "Copy", dropdown: false,
-        enabled: !root.operationBusy && root.copyableRecord(root.selectedRecord)
+        key: "restore", label: "Restore this item", dropdown: false,
+        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord)
       })
-    }
-    list.push({
-      key: "cut", label: "Cut", dropdown: false,
-      enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionMovableRecord(root.selectedRecord)
-    })
-    if (root.createVisible && root.copyAuthorized) {
-      list.push({
-        key: "paste", label: "Paste", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy
-      })
+    } else {
+      if (root.selectedRecord)
+        list.push({ key: "open", label: "Open", dropdown: true, enabled: true })
+      list.push({ key: "include-library", label: "Include in library", dropdown: true, enabled: true })
+      list.push({ key: "share-with", label: "Share with", dropdown: true, enabled: true })
+      if (root.libraryRoute && String(root.host && root.host.currentRoute || "") === "files.music")
+        list.push({ key: "play-all", label: "Play all", dropdown: false, enabled: true })
+      if (root.libraryRoute && String(root.host && root.host.currentRoute || "") === "files.pictures")
+        list.push({ key: "slide-show", label: "Slide show", dropdown: false, enabled: true })
+      list.push({ key: "burn", label: "Burn", dropdown: false, enabled: true })
+      if (root.createVisible)
+        list.push({ key: "new-folder", label: "New folder", dropdown: false, enabled: root.createEnabled })
+      if (root.libraryRoute)
+        list.push({ key: "arrange-by", label: "Arrange by", dropdown: true, enabled: true })
     }
     if (root.createVisible && FilesModel.sessionTrashableLocation(root.createLocationId)) {
       list.push({
-        key: "compress", label: "Compress", dropdown: false,
+        key: "compress", label: "Compress", dropdown: false, chrome: false,
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionCompressableRecord(root.selectedRecord)
       })
       list.push({
-        key: "extract", label: "Extract", dropdown: false,
+        key: "extract", label: "Extract", dropdown: false, chrome: false,
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionExtractableRecord(root.selectedRecord)
-      })
-    }
-    if (root.createVisible && FilesModel.sessionTrashableLocation(root.createLocationId)) {
-      list.push({
-        key: "delete", label: "Delete", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionTrashableRecord(root.selectedRecord)
-      })
-      list.push({
-        key: "permanently-delete", label: "Permanently delete", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionDeletableRecord(root.selectedRecord)
-      })
-    }
-    if (root.trashRoute) {
-      list.push({
-        key: "restore", label: "Restore", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionRestorableRecord(root.selectedRecord)
-      })
-      list.push({
-        key: "empty-bin", label: "Empty Recycle Bin", dropdown: false,
-        enabled: !root.operationBusy && !root.sessionBusy && root.showRecords
       })
     }
     if (root.computerRoute || FilesModel.sessionMountableRecord(root.selectedRecord) || FilesModel.sessionEjectableRecord(root.selectedRecord)) {
       list.push({
-        key: "mount", label: "Mount", dropdown: false,
+        key: "mount", label: "Mount", dropdown: false, chrome: false,
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionMountableRecord(root.selectedRecord)
       })
       list.push({
-        key: "eject", label: "Eject", dropdown: false,
+        key: "eject", label: "Eject", dropdown: false, chrome: false,
         enabled: !root.operationBusy && !root.sessionBusy && FilesModel.sessionEjectableRecord(root.selectedRecord)
       })
     }
     list.push({
-      key: "connect", label: "Connect to Server", dropdown: false,
+      key: "connect", label: "Connect to Server", dropdown: false, chrome: false,
       enabled: !root.operationBusy && !root.sessionBusy
     })
-    list.push({ key: "properties", label: "Properties", dropdown: false, enabled: !sessionProperties.busy })
+    list.push({ key: "properties", label: "Properties", dropdown: false, chrome: false, enabled: !sessionProperties.busy })
     return list
   }
 
@@ -738,6 +732,13 @@ Item {
     if (key === "properties") { root.sessionReadProperties(root.selectedRecord); propertiesDialog.open(); return }
     if (key === "refresh") { root.retryState(); return }
     if (key === "open") { root.openRecord(root.selectedRecord); return }
+    if (key === "map-drive") { smbDialog.open(); return }
+    if (key === "control-panel" || key === "system-properties" || key === "uninstall") {
+      if (root.host && root.host.launchApp) root.host.launchApp("org.omarchy.Settings")
+      return
+    }
+    if (key === "include-library" || key === "share-with" || key === "burn" || key === "arrange-by" || key === "play-all" || key === "slide-show")
+      return
   }
 
   onHostChanged: synchronizeHost()
@@ -930,10 +931,13 @@ Item {
     anchors.top: addressBar.bottom
     productProfile: root.productProfile
     actions: root.commandActions()
-    sessionBadge: "SESSION CONTROL"
+    sessionBadge: ""
     viewMode: root.viewMode
+    previewVisible: root.previewVisible
     onActionTriggered: function(key) { root.invoke(key) }
     onViewModeRequested: function(mode) { root.viewMode = mode }
+    onPreviewToggled: root.previewVisible = !root.previewVisible
+    onHelpRequested: helpDialog.open()
   }
 
   Rectangle {
@@ -997,7 +1001,7 @@ Item {
     anchors.left: parent.left
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
-    width: root.width < 900 ? 150 : 190
+    width: Aero.navPaneWidth
     accountName: root.accountName
     currentRoute: root.host ? root.host.currentRoute : ""
     mounts: root.knownMounts
@@ -1017,7 +1021,7 @@ Item {
     id: computerView
     visible: root.computerRoute
     anchors.left: splitter.right
-    anchors.right: parent.right
+    anchors.right: previewPane.visible ? previewPane.left : parent.right
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
     items: root.viewItems()
@@ -1041,7 +1045,7 @@ Item {
     id: itemView
     visible: !root.computerRoute
     anchors.left: splitter.right
-    anchors.right: parent.right
+    anchors.right: previewPane.visible ? previewPane.left : parent.right
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
     productProfile: root.productProfile
@@ -1051,6 +1055,8 @@ Item {
     sortColumn: root.sortColumn
     sortAscending: root.sortAscending
     selectedId: root.selectedId
+    libraryTitle: root.libraryTitle
+    libraryIncludes: root.libraryIncludes
 
     onSelectionChanged: function(record) {
       root.selectedId = record ? String(record.id) : ""
@@ -1082,6 +1088,16 @@ Item {
     font.pixelSize: 12
   }
 
+  Files.ExplorerPreviewPane {
+    id: previewPane
+    visible: root.previewVisible
+    width: visible ? Aero.previewPaneWidth : 0
+    anchors.right: parent.right
+    anchors.top: notice.bottom
+    anchors.bottom: detailsPane.top
+    record: root.selectedRecord
+  }
+
   Files.ExplorerDetailsPane {
     id: detailsPane
     anchors.left: parent.left
@@ -1091,7 +1107,7 @@ Item {
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
     truncated: root.queryState.truncated === true || root.queryState.clipped === true
-    boundary: "File contents are never read. Downloads place browses tip-true FilesModel files.downloads → files.location.downloads (SESSION CONTROL, READ-ONLY; files.downloads.open leftover-direct soft leftover-attached claim=partial visible Start > Downloads; Superbar > Files > Downloads; windows-native.9 stays prototype/pending; Cloud mocks do not close windows-native.9; not product CLOSED / not metal CLOSED / not claim=present). New folder runs through files.provider. Open runs through files.provider entry.open and launches the default handler by path (including PDF via the tip-true default/associated viewer; files.document.open leftover-direct soft leftover-attached claim=partial visible Files > PDF; windows-native.17 stays prototype/pending; including .txt via the tip-true default/associated graphical editor text/plain → org.gnome.TextEditor not Neovim-as-default; files.text.edit leftover-direct soft leftover-attached claim=partial visible Files > Text; windows-native.18 stays prototype/pending; no MIME association picker invent). Rename runs through files.provider entry.rename in the same directory. Copy and Paste run through files.provider entry.copy and also place or read files on this session's clipboard. Cut and Paste-after-cut run through this session's move helper. Permanent Delete runs through this session's delete helper after confirm. Compress runs through this session's archive helper (SESSION CONTROL). Extract runs through this session's archive helper (SESSION CONTROL). Properties runs through this session's read helper (SESSION CONTROL, READ-ONLY). Eject runs through tip-true FilesSessionEject.ejectDevice → storage-removable-eject (SESSION CONTROL; storage.removable.eject leftover-direct soft leftover-attached claim=partial visible Files > Devices > Eject; windows-native.15 stays prototype/pending; Cloud mocks do not close windows-native.15; not product CLOSED / not metal CLOSED / not claim=present). Mount runs through tip-true FilesSessionMount.mountVolume → storage-removable-mount (SESSION CONTROL; storage.removable.mount leftover-direct soft leftover-attached claim=partial visible Files > Devices > Mount; windows-native.14 stays prototype/pending; Cloud mocks do not close windows-native.14; not product CLOSED / not metal CLOSED / not claim=present). Connect to Server runs through this session's connect helper (SESSION CONTROL). Files does not invent a Fabric SHELL LIVE archive writer. Files does not invent a Fabric SHELL LIVE Properties writer. Files does not invent a Fabric SHELL LIVE eject writer. Files does not invent a Fabric SHELL LIVE mount writer. Files does not invent a Fabric SHELL LIVE SMB writer. The cut/move write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). cutAuthorized and deleteAuthorized stay leftover Fabric SHELL refuse; session Cut and Permanent Delete do not consult them. ejectAuthorized stays leftover Fabric SHELL refuse; session Eject does not consult it. mountAuthorized stays leftover Fabric SHELL refuse; session Mount does not consult it. smbAuthorized stays leftover Fabric SHELL refuse; session Connect does not consult it. Delete, Restore, and Empty Recycle Bin run through this session's trash helper. Trash write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). Restore write plane exists but is not shell-authorizable. The permanent delete write plane exists but is not shell-authorizable (CHANGES UNAVAILABLE). The empty Recycle Bin write plane exists but is not shell-authorizable. Fabric Restore UI and Empty Bin LIVE remain unavailable under SHELL. Recycle Bin is not product-complete."
+    boundary: ""
     folderPath: {
       if (!root.selectedRecord || String(root.selectedRecord.kind || "") !== "entry") return ""
       var parent = FilesModel.parentRelativePath(String(root.selectedRecord.relativePath || ""))
@@ -1100,16 +1116,53 @@ Item {
   }
 
   Controls.Popup {
+    id: helpDialog
+    anchors.centerIn: Controls.Overlay.overlay
+    width: Math.min(360, root.width - 40)
+    modal: true
+    padding: 12
+
+    background: Rectangle {
+      color: Aero.menuFill
+      border.width: 1
+      border.color: Aero.menuBorder
+    }
+
+    contentItem: Column {
+      spacing: 8
+      width: helpDialog.availableWidth
+
+      Text {
+        text: "Windows Help and Support"
+        textFormat: Text.PlainText
+        color: Aero.headingText
+        font.family: Aero.fontFamily
+        font.pixelSize: Aero.headingSize
+      }
+
+      Text {
+        width: parent.width
+        wrapMode: Text.WordWrap
+        text: "Help topics for this folder open from the Explorer Help button (F1)."
+        textFormat: Text.PlainText
+        color: Aero.textPrimary
+        font.family: Aero.fontFamily
+        font.pixelSize: Aero.fontSize
+      }
+    }
+  }
+
+  Controls.Popup {
     id: organizeMenu
     x: 6
     y: addressBar.height + commandBar.height
-    width: 168
-    padding: 1
+    width: 220
+    padding: 2
 
     background: Rectangle {
-      color: "#ffffff"
+      color: Aero.menuFill
       border.width: 1
-      border.color: "#a0a0a0"
+      border.color: Aero.menuBorder
     }
 
     contentItem: Column {
@@ -1120,7 +1173,7 @@ Item {
 
         delegate: Item {
           required property var modelData
-          width: 166
+          width: 216
           height: 22
 
           Rectangle {
@@ -1138,7 +1191,7 @@ Item {
 
           Text {
             anchors.left: parent.left
-            anchors.leftMargin: 10
+            anchors.leftMargin: Aero.menuGutter
             anchors.verticalCenter: parent.verticalCenter
             text: modelData.label
             textFormat: Text.PlainText
@@ -1165,13 +1218,13 @@ Item {
 
   Controls.Popup {
     id: contextMenu
-    width: 168
-    padding: 1
+    width: 220
+    padding: 2
 
     background: Rectangle {
-      color: "#ffffff"
+      color: Aero.menuFill
       border.width: 1
-      border.color: "#a0a0a0"
+      border.color: Aero.menuBorder
     }
 
     contentItem: Column {
@@ -1182,7 +1235,7 @@ Item {
 
         delegate: Item {
           required property var modelData
-          width: 166
+          width: 216
           height: 22
 
           Rectangle {
@@ -1200,7 +1253,7 @@ Item {
 
           Text {
             anchors.left: parent.left
-            anchors.leftMargin: 10
+            anchors.leftMargin: Aero.menuGutter
             anchors.verticalCenter: parent.verticalCenter
             text: modelData.label
             textFormat: Text.PlainText
@@ -1528,6 +1581,7 @@ Item {
           anchors.right: parent.right
           anchors.rightMargin: 10
           anchors.verticalCenter: parent.verticalCenter
+          visible: false
           text: "SESSION CONTROL · READ-ONLY"
           textFormat: Text.PlainText
           color: Aero.textSecondary
@@ -1680,6 +1734,7 @@ Item {
         Item { width: 12; height: 1 }
 
         Text {
+          visible: false
           text: "SESSION CONTROL"
           textFormat: Text.PlainText
           color: Aero.textSecondary

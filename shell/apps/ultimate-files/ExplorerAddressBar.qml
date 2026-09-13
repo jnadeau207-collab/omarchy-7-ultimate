@@ -41,16 +41,46 @@ Item {
     color: root.glass
   }
 
+  Rectangle {
+    anchors.fill: parent
+    gradient: Gradient {
+      orientation: Gradient.Horizontal
+      GradientStop { position: 0.0; color: Aero.glassSheenLeft }
+      GradientStop { position: 0.5; color: Aero.glassSheenMid }
+      GradientStop { position: 1.0; color: Aero.glassSheenRight }
+    }
+  }
+
+  Rectangle {
+    width: parent.width
+    height: 1
+    y: parent.height - 1
+    color: Aero.glassEdge
+    opacity: 0.55
+  }
+
+  Rectangle {
+    id: circleRecess
+    anchors.left: parent.left
+    anchors.leftMargin: 6
+    anchors.verticalCenter: parent.verticalCenter
+    width: backButton.width + forwardButton.width + 10
+    height: Math.max(backButton.height, forwardButton.height) + 4
+    radius: height / 2
+    color: "#22000000"
+    border.width: 1
+    border.color: "#33000000"
+  }
 
   Files.ExplorerCircleButton {
     id: backButton
     direction: "back"
     enabled: root.canBack
     productProfile: root.productProfile
-    width: 24
-    height: 24
-    anchors.left: parent.left
-    anchors.leftMargin: 8
+    width: Aero.backDiameter
+    height: Aero.backDiameter
+    anchors.left: circleRecess.left
+    anchors.leftMargin: 3
     anchors.verticalCenter: parent.verticalCenter
     onTriggered: root.backRequested()
   }
@@ -60,10 +90,10 @@ Item {
     direction: "forward"
     enabled: root.canForward
     productProfile: root.productProfile
-    width: 24
-    height: 24
+    width: Aero.forwardDiameter
+    height: Aero.forwardDiameter
     anchors.left: backButton.right
-    anchors.leftMargin: 2
+    anchors.leftMargin: 1
     anchors.verticalCenter: parent.verticalCenter
     onTriggered: root.forwardRequested()
   }
@@ -72,7 +102,7 @@ Item {
     id: historyChevron
     width: 14
     height: 24
-    anchors.left: forwardButton.right
+    anchors.left: circleRecess.right
     anchors.leftMargin: 2
     anchors.verticalCenter: parent.verticalCenter
     enabled: root.historyMenu.length > 0
@@ -174,7 +204,7 @@ Item {
     anchors.left: historyChevron.right
     anchors.leftMargin: 10
     anchors.verticalCenter: parent.verticalCenter
-    width: Math.max(160, parent.width - forwardButton.width - backButton.width - historyChevron.width - searchField.width - 64)
+    width: Math.max(160, parent.width - circleRecess.width - historyChevron.width - searchField.width - 36)
     height: 22
     color: Aero.fieldFill
     border.width: 1
@@ -313,8 +343,8 @@ Item {
     anchors.right: parent.right
     anchors.rightMargin: 8
     anchors.verticalCenter: parent.verticalCenter
-    width: Math.max(187, Math.min(240, parent.width * 0.24))
-    height: 24
+    width: Math.max(Aero.searchMinWidth, Math.min(240, parent.width * 0.24))
+    height: 22
     radius: 2
     color: Aero.fieldFill
     border.width: 1

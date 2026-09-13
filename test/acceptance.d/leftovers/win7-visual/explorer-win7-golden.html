@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Windows 7 Ultimate Explorer — visual golden</title>
+<link rel="stylesheet" href="https://unpkg.com/7.css"/>
+<style>
+  :root {
+    --segoe: 9pt Selawik, "Segoe UI", "SegoeUI", sans-serif;
+    --heading: #003399;
+    --link: #0066cc;
+    --cmd-top: #f8fafd;
+    --cmd-mid: #f1f5fa;
+    --cmd-bot: #e4ebf3;
+    --cmd-bd: #b9c7d6;
+  }
+  body {
+    margin: 24px;
+    font: var(--segoe);
+    background: #1b4f8a url("data:image/svg+xml,") ;
+    background: linear-gradient(#3a6ea5, #1b4f8a);
+    color: #000;
+  }
+  h1 { color: #fff; text-shadow: 0 0 8px #0008; font: 16pt Selawik, "Segoe UI", sans-serif; }
+  .stage { display: flex; flex-direction: column; gap: 28px; }
+  .explorer.window.glass { width: 880px; height: 560px; }
+  .explorer.window.glass.is-bright .window-body { margin: 0 6px 6px; background: #fff; display: flex; flex-direction: column; height: calc(100% - 36px); }
+  .nav-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 8px 6px;
+    min-height: 32px;
+  }
+  .circle {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 1px solid #6e9cc4;
+    background: linear-gradient(#f6fbff, #b9d9f2);
+    display: grid; place-items: center;
+    color: #0b4c86; font-size: 12px;
+  }
+  .circle.fwd { width: 22px; height: 22px; opacity: 0.55; }
+  .address {
+    flex: 1; height: 22px; background: #fff; border: 1px solid #abadb3;
+    display: flex; align-items: center; padding: 0 4px; gap: 4px;
+  }
+  .search {
+    width: 187px; height: 22px; background: #fff; border: 1px solid #abadb3;
+    border-radius: 2px; color: #7a7a7a; font-style: italic; padding: 0 6px;
+  }
+  .command {
+    height: 36px;
+    background: linear-gradient(var(--cmd-top) 45%, var(--cmd-mid) 45%, var(--cmd-bot));
+    border-bottom: 1px solid var(--cmd-bd);
+    display: flex; align-items: center; padding: 0 4px;
+    gap: 2px;
+  }
+  .command button {
+    border: 1px solid transparent; background: none; font: var(--segoe);
+    height: 22px; padding: 0 8px; border-radius: 3px;
+  }
+  .command button:hover {
+    border-color: #3c7fb1;
+    background: linear-gradient(#eaf6fd 45%, #bee6fd 45%, #a7d9f5);
+  }
+  .command .push { margin-left: auto; }
+  .body { display: flex; flex: 1; min-height: 0; }
+  .nav {
+    width: 200px; background: #fff; border-right: 1px solid #d6dde5;
+    padding: 6px 0; font: var(--segoe);
+  }
+  .nav .row { display: flex; align-items: center; height: 22px; padding: 0 8px; gap: 4px; }
+  .nav .row.sel {
+    margin: 0 2px; border: 1px solid #aaddfa; border-radius: 3px;
+    background: linear-gradient(#fff, #e6ecf5cc 90%, #fff);
+  }
+  .nav .hdr { color: var(--heading); }
+  .content { flex: 1; background: #fff; overflow: auto; }
+  .lib-banner {
+    height: 36px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px; color: var(--heading); font-size: 15px;
+  }
+  .lib-banner a { color: var(--link); font-size: 12px; }
+  table.listview { width: 100%; }
+  .details {
+    height: 54px;
+    background: linear-gradient(#eef3f9 45%, #e6edf5 45%, #dce5ef);
+    border-top: 1px solid #b9c7d6;
+    display: flex; align-items: center; gap: 10px; padding: 0 10px;
+  }
+  .drive {
+    width: 292px; height: 70px; display: flex; align-items: center; gap: 8px;
+    padding: 0 8px; margin: 2px;
+  }
+  .drive:hover, .drive.sel {
+    border: 1px solid #aaddfa; border-radius: 3px;
+    background: linear-gradient(#fff, #e6ecf5);
+  }
+  .bar { width: 120px; height: 8px; background: #e6eaee; border: 1px solid #8a949e; }
+  .bar > i { display: block; height: 100%; background: linear-gradient(#63b0ec, #3a8adf); }
+  .group { color: var(--heading); display: flex; align-items: center; gap: 8px; padding: 8px 12px 4px; }
+  .group:after { content: ""; flex: 1; height: 1px; background: #d7d7d7; }
+  .cp { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; padding: 8px 0; }
+  .cp h2 { color: var(--heading); font-size: 14px; font-weight: 400; margin: 0; }
+  .cp a { color: var(--link); display: block; text-decoration: none; font-size: 12px; }
+  .page-h { font-size: 16px; color: var(--heading); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<h1>Windows 7 Ultimate Explorer goldens (96 DPI)</h1>
+<div class="stage">
+
+<div class="window glass active explorer">
+  <div class="title-bar">
+    <div class="title-bar-text"></div>
+    <div class="title-bar-controls">
+      <button aria-label="Minimize"></button>
+      <button aria-label="Maximize"></button>
+      <button aria-label="Close"></button>
+    </div>
+  </div>
+  <div class="window-body">
+    <div class="nav-row">
+      <div class="circle">◀</div>
+      <div class="circle fwd">▶</div>
+      <div class="address">📁 ▸ Libraries ▸ Documents ▸</div>
+      <input class="search" value="" placeholder="Search Documents"/>
+    </div>
+    <div class="command">
+      <button>Organize ▾</button>
+      <button>Include in library ▾</button>
+      <button>Share with ▾</button>
+      <button>Burn</button>
+      <button>New folder</button>
+      <button>Arrange by ▾</button>
+      <span class="push"></span>
+      <button>☰ ▾</button>
+      <button>▣</button>
+      <button>?</button>
+    </div>
+    <div class="body">
+      <div class="nav">
+        <div class="row hdr">▾ ⭐ Favorites</div>
+        <div class="row">Desktop</div>
+        <div class="row">Downloads</div>
+        <div class="row">Recent Places</div>
+        <div class="row hdr">▾ 📚 Libraries</div>
+        <div class="row sel">Documents</div>
+        <div class="row">Music</div>
+        <div class="row">Pictures</div>
+        <div class="row">Videos</div>
+        <div class="row hdr">▸ Homegroup</div>
+        <div class="row hdr">▾ 🖥️ Computer</div>
+        <div class="row">Local Disk (C:)</div>
+        <div class="row">Network</div>
+      </div>
+      <div class="content">
+        <div class="lib-banner">Documents library <a>Includes 2 library locations</a></div>
+        <table class="listview">
+          <thead><tr><th>Name</th><th>Date modified</th><th>Type</th><th>Size</th></tr></thead>
+          <tbody>
+            <tr><td>Budget.xlsx</td><td>9/12/2026 4:06 PM</td><td>Microsoft Excel Worksheet</td><td>28 KB</td></tr>
+            <tr><td>Notes</td><td>9/10/2026 11:02 AM</td><td>File folder</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="details">
+      <div style="width:48px;height:48px;background:#ffe9a0;border:1px solid #a67c1f"></div>
+      <div>
+        <strong>Documents</strong><br/>
+        File folder<br/>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="window glass active explorer">
+  <div class="title-bar">
+    <div class="title-bar-text"></div>
+    <div class="title-bar-controls">
+      <button aria-label="Minimize"></button>
+      <button aria-label="Maximize"></button>
+      <button aria-label="Close"></button>
+    </div>
+  </div>
+  <div class="window-body">
+    <div class="nav-row">
+      <div class="circle">◀</div>
+      <div class="circle fwd">▶</div>
+      <div class="address">🖥️ ▸ Computer ▸</div>
+      <input class="search" placeholder="Search Computer"/>
+    </div>
+    <div class="command">
+      <button>Organize ▾</button>
+      <button>System properties</button>
+      <button>Uninstall or change a program</button>
+      <button>Map network drive ▾</button>
+      <button>Open Control Panel</button>
+      <span class="push"></span>
+      <button>☰ ▾</button>
+      <button>▣</button>
+      <button>?</button>
+    </div>
+    <div class="body">
+      <div class="nav">
+        <div class="row hdr">▾ Favorites</div>
+        <div class="row hdr">▾ Libraries</div>
+        <div class="row hdr">▸ Homegroup</div>
+        <div class="row hdr sel">▾ Computer</div>
+        <div class="row">Local Disk (C:)</div>
+        <div class="row">Network</div>
+      </div>
+      <div class="content">
+        <div class="group">Hard Disk Drives (1)</div>
+        <div class="drive sel">
+          <div style="width:48px;height:48px;background:#c9d2db;border:1px solid #8a949e;border-radius:4px"></div>
+          <div>
+            Local Disk (C:)<br/>
+            <div class="bar"><i style="width:62%"></i></div>
+            90.6 GB free of 232 GB
+          </div>
+        </div>
+        <div class="group">Devices with Removable Storage (1)</div>
+        <div class="drive">
+          <div style="width:48px;height:48px;background:#c9d2db;border:1px solid #8a949e;border-radius:4px"></div>
+          <div>DVD RW Drive (D:)</div>
+        </div>
+      </div>
+    </div>
+    <div class="details">
+      <div style="width:48px;height:48px;background:#c9d2db;border:1px solid #8a949e"></div>
+      <div><strong>Local Disk (C:)</strong><br/>Local Disk</div>
+    </div>
+  </div>
+</div>
+
+<div class="window glass active explorer">
+  <div class="title-bar">
+    <div class="title-bar-text"></div>
+    <div class="title-bar-controls">
+      <button aria-label="Minimize"></button>
+      <button aria-label="Maximize"></button>
+      <button aria-label="Close"></button>
+    </div>
+  </div>
+  <div class="window-body">
+    <div class="nav-row">
+      <div class="circle">◀</div>
+      <div class="circle fwd">▶</div>
+      <div class="address">Control Panel</div>
+      <input class="search" placeholder="Search Control Panel"/>
+    </div>
+    <div class="command"></div>
+    <div class="body">
+      <div class="nav">
+        <div class="row hdr">Control Panel</div>
+        <div class="row sel">Control Panel Home</div>
+      </div>
+      <div class="content" style="padding:10px 16px">
+        <div class="page-h">Adjust your computer's settings <span style="font-size:12px;color:#000">View by: Category ▾</span></div>
+        <div class="cp">
+          <div><h2>System and Security</h2><a>Review your computer's status</a><a>Back up your computer</a><a>Find and fix problems</a></div>
+          <div><h2>Network and Internet</h2><a>View network status and tasks</a><a>Connect to a network</a></div>
+          <div><h2>Hardware and Sound</h2><a>View devices and printers</a><a>Add a device</a></div>
+          <div><h2>Programs</h2><a>Uninstall a program</a><a>Change default programs</a></div>
+          <div><h2>User Accounts and Family Safety</h2><a>Add or remove user accounts</a></div>
+          <div><h2>Appearance and Personalization</h2><a>Change the theme</a><a>Change desktop background</a></div>
+          <div><h2>Clock, Language, and Region</h2><a>Change keyboards or other input methods</a></div>
+          <div><h2>Ease of Access</h2><a>Let Windows suggest settings</a><a>Optimize visual display</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

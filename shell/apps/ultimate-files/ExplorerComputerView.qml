@@ -48,7 +48,7 @@ FocusScope {
     Column {
       width: root.width
       spacing: 0
-      topPadding: 10
+      topPadding: 8
       bottomPadding: 14
 
       Repeater {
@@ -66,7 +66,7 @@ FocusScope {
 
           Item {
             width: parent.width
-            height: 26
+            height: 24
 
             Text {
               id: groupLabel
@@ -75,9 +75,9 @@ FocusScope {
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.title + " (" + modelData.drives.length + ")"
               textFormat: Text.PlainText
-              color: Aero.navHeaderText
+              color: Aero.headingText
               font.family: Aero.fontFamily
-              font.pixelSize: 12
+              font.pixelSize: Aero.fontSize
             }
 
             Rectangle {
@@ -93,10 +93,10 @@ FocusScope {
 
           Flow {
             width: parent.width
-            leftPadding: 10
-            rightPadding: 10
-            bottomPadding: 8
-            spacing: 4
+            leftPadding: 8
+            rightPadding: 8
+            bottomPadding: 10
+            spacing: 2
 
             Repeater {
               model: modelData.drives
@@ -105,7 +105,7 @@ FocusScope {
                 id: drive
                 required property var modelData
                 width: 292
-                height: 62
+                height: 70
 
                 readonly property bool chosen: modelData.id === root.selectedId
                 readonly property real used: modelData.usedFraction === undefined ? -1 : modelData.usedFraction
@@ -117,23 +117,27 @@ FocusScope {
                   radius: 3
                   visible: drive.chosen || driveHover.hovered
                   border.width: 1
-                  border.color: drive.chosen ? (driveHover.hovered ? Aero.hoverSelectedBorder : Aero.selectionBorder) : Aero.hoverBorder
+                  border.color: drive.chosen ? Aero.selectionBorder : Aero.hoverBorder
                   gradient: Gradient {
                     GradientStop {
                       position: 0
-                      color: drive.chosen ? (driveHover.hovered ? Aero.hoverSelectedTop : Aero.selectionTop) : Aero.hoverTop
+                      color: drive.chosen ? Aero.selectionTop : Aero.hoverTop
+                    }
+                    GradientStop {
+                      position: 0.9
+                      color: drive.chosen ? Aero.selectionBottom : Aero.hoverMid
                     }
                     GradientStop {
                       position: 1
-                      color: drive.chosen ? (driveHover.hovered ? Aero.hoverSelectedBottom : Aero.selectionBottom) : Aero.hoverBottom
+                      color: drive.chosen ? Aero.selectionBottom : Aero.hoverBottom
                     }
                   }
                 }
 
                 Files.ExplorerIcon {
                   id: driveIcon
-                  width: 44
-                  height: 44
+                  width: 48
+                  height: 48
                   kind: drive.modelData.mountKind === "smb" ? "network" : "drive"
                   anchors.left: parent.left
                   anchors.leftMargin: 8
@@ -147,13 +151,13 @@ FocusScope {
                   anchors.right: parent.right
                   anchors.rightMargin: 10
                   anchors.top: parent.top
-                  anchors.topMargin: 9
+                  anchors.topMargin: 8
                   text: drive.modelData.title
                   textFormat: Text.PlainText
                   elide: Text.ElideRight
                   color: Aero.textPrimary
                   font.family: Aero.fontFamily
-                  font.pixelSize: 12
+                  font.pixelSize: Aero.fontSize
                 }
 
                 Rectangle {
@@ -161,12 +165,12 @@ FocusScope {
                   visible: drive.used >= 0
                   anchors.left: driveName.left
                   anchors.top: driveName.bottom
-                  anchors.topMargin: 5
+                  anchors.topMargin: 4
                   width: 120
                   height: 8
                   color: Aero.driveBarTrack
                   border.width: 1
-                  border.color: "#a0a5ab"
+                  border.color: Aero.driveOutline
 
                   Rectangle {
                     anchors.left: parent.left
@@ -175,7 +179,7 @@ FocusScope {
                     anchors.margins: 1
                     width: Math.max(0, Math.round((parent.width - 2) * Math.max(0, drive.used)))
                     gradient: Gradient {
-                      GradientStop { position: 0; color: drive.low ? "#e8756b" : "#63b0ec" }
+                      GradientStop { position: 0; color: drive.low ? "#e8756b" : Aero.driveBarFillTop }
                       GradientStop { position: 1; color: drive.low ? Aero.driveBarFull : Aero.driveBarFill }
                     }
                   }
@@ -187,7 +191,7 @@ FocusScope {
                   anchors.right: parent.right
                   anchors.rightMargin: 10
                   anchors.top: capacityTrack.visible ? capacityTrack.bottom : driveName.bottom
-                  anchors.topMargin: 4
+                  anchors.topMargin: 3
                   text: drive.modelData.capacityText || ""
                   textFormat: Text.PlainText
                   elide: Text.ElideRight
