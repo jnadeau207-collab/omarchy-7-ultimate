@@ -533,10 +533,19 @@ Item {
     Qt.color(Aero.aeroColorization).b,
     Aero.aeroAlpha)
 
+  Shared.AeroWindowChrome {
+    anchors.fill: parent
+    host: root.host
+  }
+
   Rectangle {
     id: settingsShell
     anchors.fill: parent
-    color: root.aeroGlass
+    anchors.leftMargin: 6
+    anchors.rightMargin: 6
+    anchors.bottomMargin: 6
+    anchors.topMargin: 30
+    color: "transparent"
 
     ColumnLayout {
       anchors.fill: parent

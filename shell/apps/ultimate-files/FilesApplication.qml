@@ -892,22 +892,19 @@ Item {
     }
   }
 
-  readonly property color aeroGlass: Qt.rgba(
-    Qt.color(Aero.aeroColorization).r,
-    Qt.color(Aero.aeroColorization).g,
-    Qt.color(Aero.aeroColorization).b,
-    Aero.aeroAlpha)
-
-  Rectangle {
+  Shared.AeroWindowChrome {
     anchors.fill: parent
-    color: root.aeroGlass
+    host: root.host
   }
 
   Files.ExplorerAddressBar {
     id: addressBar
     anchors.left: parent.left
     anchors.right: parent.right
+    anchors.leftMargin: 6
+    anchors.rightMargin: 6
     anchors.top: parent.top
+    anchors.topMargin: 30
     productProfile: root.productProfile
     crumbs: root.crumbs
     locationIcon: root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"
@@ -931,6 +928,8 @@ Item {
     id: commandBar
     anchors.left: parent.left
     anchors.right: parent.right
+    anchors.leftMargin: 6
+    anchors.rightMargin: 6
     anchors.top: addressBar.bottom
     productProfile: root.productProfile
     actions: root.commandActions()
@@ -947,6 +946,8 @@ Item {
     id: notice
     anchors.left: parent.left
     anchors.right: parent.right
+    anchors.leftMargin: 6
+    anchors.rightMargin: 6
     anchors.top: commandBar.bottom
     height: visible ? 26 : 0
     visible: root.faulted || root.operationMessage !== ""
@@ -1003,14 +1004,19 @@ Item {
     id: clientWell
     anchors.left: parent.left
     anchors.right: parent.right
+    anchors.leftMargin: 6
+    anchors.rightMargin: 6
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
     color: Aero.contentFill
+    border.width: 1
+    border.color: Qt.rgba(0, 0, 0, 0.70)
   }
 
   Files.ExplorerNavigationPane {
     id: navigationPane
     anchors.left: parent.left
+    anchors.leftMargin: 6
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
     width: Aero.navPaneWidth
@@ -1034,6 +1040,7 @@ Item {
     visible: root.computerRoute
     anchors.left: splitter.right
     anchors.right: previewPane.visible ? previewPane.left : parent.right
+    anchors.rightMargin: previewPane.visible ? 0 : 6
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
     items: root.viewItems()
@@ -1058,6 +1065,7 @@ Item {
     visible: !root.computerRoute
     anchors.left: splitter.right
     anchors.right: previewPane.visible ? previewPane.left : parent.right
+    anchors.rightMargin: previewPane.visible ? 0 : 6
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
     productProfile: root.productProfile
@@ -1105,6 +1113,7 @@ Item {
     visible: root.previewVisible
     width: visible ? Aero.previewPaneWidth : 0
     anchors.right: parent.right
+    anchors.rightMargin: 6
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
     record: root.selectedRecord
@@ -1114,7 +1123,10 @@ Item {
     id: detailsPane
     anchors.left: parent.left
     anchors.right: parent.right
+    anchors.leftMargin: 6
+    anchors.rightMargin: 6
     anchors.bottom: parent.bottom
+    anchors.bottomMargin: 6
     record: root.selectedRecord
     itemCount: root.computerRoute ? computerView.count : itemView.count
     locationLabel: root.routeTitle
