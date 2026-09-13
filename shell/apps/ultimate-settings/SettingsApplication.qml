@@ -527,10 +527,16 @@ Item {
     }
   }
 
+  readonly property color aeroGlass: Qt.rgba(
+    Qt.color(Aero.aeroColorization).r,
+    Qt.color(Aero.aeroColorization).g,
+    Qt.color(Aero.aeroColorization).b,
+    Aero.aeroAlpha)
+
   Rectangle {
     id: settingsShell
     anchors.fill: parent
-    color: root.shellFill
+    color: root.aeroGlass
 
     ColumnLayout {
       anchors.fill: parent
@@ -555,27 +561,24 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: Aero.commandHeight
-        gradient: Gradient {
-          GradientStop { position: 0; color: Aero.commandTop }
-          GradientStop { position: 0.45; color: Aero.commandMid }
-          GradientStop { position: 1; color: Aero.commandBottom }
-        }
+        color: "transparent"
 
         Rectangle {
           width: parent.width
           height: 1
           y: parent.height - 1
-          color: Aero.commandBorder
+          color: Aero.commandHighlight
+          opacity: 0.25
         }
       }
 
-      ColumnLayout {
+      Rectangle {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.leftMargin: 0
-        Layout.rightMargin: 0
-        Layout.topMargin: 0
-        Layout.bottomMargin: 0
+        color: Aero.contentFill
+
+      ColumnLayout {
+        anchors.fill: parent
         spacing: 0
 
         Shared.FabricStatusBanner {
@@ -1790,6 +1793,7 @@ Item {
             }
           }
         }
+      }
       }
     }
   }

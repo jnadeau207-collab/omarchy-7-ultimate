@@ -12,6 +12,7 @@ Shared.ProductAppHost {
   applicationId: "settings"
   appId: "org.omarchy.Settings"
   displayName: "Settings"
+  windowTitle: ""
   ipcTarget: "omarchy.settings"
   routeCatalogPath: "apps/ultimate-settings/routes-v1.json"
   fabricIdentity: "omarchy-settings"

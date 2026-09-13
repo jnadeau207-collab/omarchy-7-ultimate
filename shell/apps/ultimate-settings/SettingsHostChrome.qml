@@ -28,30 +28,6 @@ Item {
   readonly property color navFill: Aero.navFill
   readonly property color navEdge: Aero.navBorder
 
-  readonly property color glass: {
-    var base = Qt.color(Aero.aeroColorization)
-    return Qt.rgba(
-      base.r + (1 - base.r) * Aero.aeroBalance,
-      base.g + (1 - base.g) * Aero.aeroBalance,
-      base.b + (1 - base.b) * Aero.aeroBalance,
-      Aero.aeroAlpha)
-  }
-
-  Rectangle {
-    anchors.fill: parent
-    color: root.glass
-  }
-
-  Rectangle {
-    anchors.fill: parent
-    gradient: Gradient {
-      orientation: Gradient.Horizontal
-      GradientStop { position: 0.0; color: Aero.glassSheenLeft }
-      GradientStop { position: 0.5; color: Aero.glassSheenMid }
-      GradientStop { position: 1.0; color: Aero.glassSheenRight }
-    }
-  }
-
   Canvas {
     id: backFace
     width: Aero.backDiameter

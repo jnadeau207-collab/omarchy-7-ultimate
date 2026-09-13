@@ -15,17 +15,13 @@ Rectangle {
   property bool truncated: false
 
   implicitHeight: Math.max(Aero.detailsHeight, boundaryBanner.visible ? boundaryBanner.implicitHeight + 8 : 0)
-
-  gradient: Gradient {
-    GradientStop { position: 0; color: Aero.detailsTop }
-    GradientStop { position: 0.45; color: Aero.detailsMid }
-    GradientStop { position: 1; color: Aero.detailsBottom }
-  }
+  color: "transparent"
 
   Rectangle {
     width: parent.width
     height: 1
-    color: Aero.detailsBorder
+    color: Aero.commandHighlight
+    opacity: 0.25
   }
 
   function pairs() {

@@ -31,25 +31,11 @@ Item {
   }
 
   Rectangle {
-    anchors.fill: parent
-    gradient: Gradient {
-      GradientStop { position: 0; color: Aero.commandTop }
-      GradientStop { position: 0.45; color: Aero.commandMid }
-      GradientStop { position: 1; color: Aero.commandBottom }
-    }
-  }
-
-  Rectangle {
-    width: parent.width
-    height: 1
-    color: Aero.commandHighlight
-  }
-
-  Rectangle {
     width: parent.width
     height: 1
     y: parent.height - 1
-    color: Aero.commandBorder
+    color: Aero.commandHighlight
+    opacity: 0.25
   }
 
   Row {

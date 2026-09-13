@@ -892,6 +892,17 @@ Item {
     }
   }
 
+  readonly property color aeroGlass: Qt.rgba(
+    Qt.color(Aero.aeroColorization).r,
+    Qt.color(Aero.aeroColorization).g,
+    Qt.color(Aero.aeroColorization).b,
+    Aero.aeroAlpha)
+
+  Rectangle {
+    anchors.fill: parent
+    color: root.aeroGlass
+  }
+
   Files.ExplorerAddressBar {
     id: addressBar
     anchors.left: parent.left
@@ -914,14 +925,6 @@ Item {
     onCrumbActivated: function(path) { root.openPath(path) }
     onRefreshRequested: root.retryState()
     onSearchAccepted: function(text) { root.runSearch(text) }
-  }
-
-  Rectangle {
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: addressBar.bottom
-    anchors.bottom: parent.bottom
-    color: Aero.contentFill
   }
 
   Files.ExplorerCommandBar {
@@ -994,6 +997,15 @@ Item {
 
     Accessible.role: Accessible.AlertMessage
     Accessible.name: notice.visible ? Semantics.text(root.productProfile, FilesModel.stateTitle(root.queryState)) : ""
+  }
+
+  Rectangle {
+    id: clientWell
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: notice.bottom
+    anchors.bottom: detailsPane.top
+    color: Aero.contentFill
   }
 
   Files.ExplorerNavigationPane {
