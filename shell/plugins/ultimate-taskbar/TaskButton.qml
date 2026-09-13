@@ -60,7 +60,7 @@ Item {
     for (i = 0; i < windows.length; i++) windowService.close(windows[i].address)
   }
 
-  implicitWidth: 40
+  implicitWidth: 36
   implicitHeight: parent ? parent.height : 40
 
   function activate() {

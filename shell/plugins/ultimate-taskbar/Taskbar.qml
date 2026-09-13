@@ -348,6 +348,7 @@ Item {
             bar: root
             hostWindow: barWindow
             Layout.preferredWidth: 40
+            Layout.maximumWidth: 40
             Layout.fillHeight: true
           }
 
@@ -357,7 +358,8 @@ Item {
               bar: root
               hostWindow: barWindow
               group: modelData
-              Layout.preferredWidth: 40
+              Layout.preferredWidth: 36
+              Layout.maximumWidth: 36
               Layout.fillHeight: true
             }
           }
