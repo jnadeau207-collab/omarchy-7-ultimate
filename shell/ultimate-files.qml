@@ -13,7 +13,6 @@ Shared.ProductAppHost {
   appId: "org.omarchy.Files"
   displayName: "Files"
   windowTitle: ""
-  frameless: true
   ipcTarget: "omarchy.files"
   routeCatalogPath: "apps/ultimate-files/routes-v1.json"
   fabricIdentity: "omarchy-files"

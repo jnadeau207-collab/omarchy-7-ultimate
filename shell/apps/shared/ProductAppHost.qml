@@ -13,7 +13,6 @@ ShellRoot {
   required property string appId
   required property string displayName
   property string windowTitle: displayName
-  property bool frameless: false
   required property string ipcTarget
   required property string routeCatalogPath
   required property string fabricIdentity
@@ -221,7 +220,6 @@ ShellRoot {
     id: appWindow
     reloadableId: root.applicationId + ".window"
     title: root.windowTitle === "" ? " " : root.windowTitle
-    flags: root.frameless ? Qt.FramelessWindowHint : 0
     visible: true
     implicitWidth: 1100
     implicitHeight: 720

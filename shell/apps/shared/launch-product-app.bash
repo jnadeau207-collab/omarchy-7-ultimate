@@ -252,9 +252,15 @@ launch_product_app() {
     fi
   fi
 
+  local extra_env=()
+  if [[ $application == files || $application == settings ]]; then
+    extra_env+=(--setenv=QT_WAYLAND_DISABLE_WINDOWDECORATION=1)
+  fi
+
   if systemd-run --user --quiet --collect --unit="$unit_name" \
     --property=Type=exec --property=Restart=no \
     --setenv=QS_DISABLE_FILE_WATCHER=1 --setenv=QS_NO_RELOAD_POPUP=1 \
+    "${extra_env[@]}" \
     quickshell -n -p "$entrypoint"; then
     start_failed=false
   else
