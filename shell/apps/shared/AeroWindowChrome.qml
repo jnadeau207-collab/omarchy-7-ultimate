@@ -67,13 +67,13 @@ Item {
       ctx.rotate(54 * Math.PI / 180)
       var span = Math.sqrt(w * w + h * h)
       var i
-      for (i = -span; i < span; i += 10) {
+      for (i = -span; i < span; i += 12) {
         var t = (i + span) / (span * 2)
-        var wave = 0.5 + 0.5 * Math.sin(t * Math.PI * 14)
-        ctx.fillStyle = "rgba(255,255,255," + (0.018 + 0.028 * wave) + ")"
-        ctx.fillRect(-span, i, span * 2, 3)
-        ctx.fillStyle = "rgba(0,0,0," + (0.010 + 0.012 * (1.0 - wave)) + ")"
-        ctx.fillRect(-span, i + 4, span * 2, 1)
+        var wave = 0.5 + 0.5 * Math.sin(t * Math.PI * 11)
+        ctx.fillStyle = "rgba(255,255,255," + (0.010 + 0.016 * wave) + ")"
+        ctx.fillRect(-span, i, span * 2, 2)
+        ctx.fillStyle = "rgba(0,0,0," + (0.006 + 0.007 * (1.0 - wave)) + ")"
+        ctx.fillRect(-span, i + 3, span * 2, 1)
       }
       ctx.restore()
 
