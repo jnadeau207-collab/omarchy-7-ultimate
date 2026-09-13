@@ -125,31 +125,22 @@ Item {
     anchors.fill: parent
     anchors.margins: 0
     radius: 0
-    visible: root.running || root.active || mouse.containsMouse || mouse.pressed || (bar && bar.highContrast)
-    color: mouse.pressed ? Qt.rgba(1, 1, 1, 0.28)
-      : (root.active || mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.20)
-      : Qt.rgba(1, 1, 1, 0.10))
-    border.width: 1
-    border.color: bar && bar.highContrast ? Tokens.border.strong : Qt.rgba(1, 1, 1, 0.40)
-
-    Rectangle {
-      anchors.centerIn: parent
-      width: 34
-      height: 34
-      radius: 3
-      color: Qt.rgba(0, 0, 0, 0.40)
-      z: 0
-    }
+    visible: true
+    color: mouse.pressed ? Qt.rgba(0, 0, 0, 0.55)
+      : (root.active || mouse.containsMouse ? Qt.rgba(0, 0, 0, 0.45)
+      : (root.running ? Qt.rgba(0, 0, 0, 0.38) : "transparent"))
+    border.width: root.running || root.active || mouse.containsMouse ? 1 : 0
+    border.color: Qt.rgba(1, 1, 1, 0.45)
 
     Image {
       id: icon
       anchors.centerIn: parent
-      width: 32
-      height: 32
+      width: 28
+      height: 28
       z: 1
       fillMode: Image.PreserveAspectFit
-      sourceSize.width: 32 * Screen.devicePixelRatio
-      sourceSize.height: 32 * Screen.devicePixelRatio
+      sourceSize.width: 56 * Screen.devicePixelRatio
+      sourceSize.height: 56 * Screen.devicePixelRatio
       source: root.appLibrary ? root.appLibrary.iconSource(root.iconName) : ""
       visible: status === Image.Ready
     }
