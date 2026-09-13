@@ -8,32 +8,101 @@ Item {
   property int frame: 6
   property int captionHeight: 30
 
-  Rectangle {
+  Canvas {
+    id: glassPaint
     anchors.fill: parent
-    radius: 6
-    color: Qt.rgba(0.16, 0.38, 0.65, 0.50)
-    border.width: 1
-    border.color: Qt.rgba(0, 0, 0, 0.70)
-  }
+    antialiasing: true
+    renderTarget: Canvas.FramebufferObject
 
-  Rectangle {
-    anchors.fill: parent
-    anchors.margins: 1
-    radius: 5
-    color: "transparent"
-    border.width: 1
-    border.color: Qt.rgba(1, 1, 1, 0.22)
-  }
+    onWidthChanged: requestPaint()
+    onHeightChanged: requestPaint()
+    Component.onCompleted: requestPaint()
 
-  Rectangle {
-    anchors.fill: parent
-    radius: 6
-    opacity: 0.18
-    gradient: Gradient {
-      orientation: Gradient.Horizontal
-      GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.28) }
-      GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.08) }
-      GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.16) }
+    onPaint: {
+      var ctx = getContext("2d")
+      var w = width
+      var h = height
+      if (w < 2 || h < 2)
+        return
+      ctx.reset()
+      ctx.clearRect(0, 0, w, h)
+      ctx.beginPath()
+      var r = 6
+      ctx.moveTo(r, 0)
+      ctx.lineTo(w - r, 0)
+      ctx.quadraticCurveTo(w, 0, w, r)
+      ctx.lineTo(w, h - r)
+      ctx.quadraticCurveTo(w, h, w - r, h)
+      ctx.lineTo(r, h)
+      ctx.quadraticCurveTo(0, h, 0, h - r)
+      ctx.lineTo(0, r)
+      ctx.quadraticCurveTo(0, 0, r, 0)
+      ctx.closePath()
+      ctx.clip()
+
+      ctx.fillStyle = "rgba(69, 128, 196, 0.64)"
+      ctx.fillRect(0, 0, w, h)
+
+      var across = ctx.createLinearGradient(0, 0, w, 0)
+      across.addColorStop(0.0, "rgba(255,255,255,0.40)")
+      across.addColorStop(0.5, "rgba(0,0,0,0.10)")
+      across.addColorStop(1.0, "rgba(255,255,255,0.20)")
+      ctx.fillStyle = across
+      ctx.fillRect(0, 0, w, h)
+
+      var specL = ctx.createLinearGradient(0, 0, 110, 110)
+      specL.addColorStop(0.0, "rgba(255,255,255,0.38)")
+      specL.addColorStop(0.72, "rgba(255,255,255,0.00)")
+      ctx.fillStyle = specL
+      ctx.fillRect(0, 0, w, h)
+
+      var specR = ctx.createLinearGradient(w, 0, w - 110, 110)
+      specR.addColorStop(0.0, "rgba(255,255,255,0.38)")
+      specR.addColorStop(0.72, "rgba(255,255,255,0.00)")
+      ctx.fillStyle = specR
+      ctx.fillRect(0, 0, w, h)
+
+      ctx.save()
+      ctx.translate(w * 0.5, h * 0.5)
+      ctx.rotate(54 * Math.PI / 180)
+      var span = Math.sqrt(w * w + h * h)
+      var i
+      for (i = -span; i < span; i += 10) {
+        var t = (i + span) / (span * 2)
+        var wave = 0.5 + 0.5 * Math.sin(t * Math.PI * 14)
+        ctx.fillStyle = "rgba(255,255,255," + (0.018 + 0.028 * wave) + ")"
+        ctx.fillRect(-span, i, span * 2, 3)
+        ctx.fillStyle = "rgba(0,0,0," + (0.010 + 0.012 * (1.0 - wave)) + ")"
+        ctx.fillRect(-span, i + 4, span * 2, 1)
+      }
+      ctx.restore()
+
+      ctx.lineWidth = 1
+      ctx.strokeStyle = "rgba(0,0,0,0.70)"
+      ctx.beginPath()
+      ctx.moveTo(r, 0.5)
+      ctx.lineTo(w - r, 0.5)
+      ctx.quadraticCurveTo(w - 0.5, 0.5, w - 0.5, r)
+      ctx.lineTo(w - 0.5, h - r)
+      ctx.quadraticCurveTo(w - 0.5, h - 0.5, w - r, h - 0.5)
+      ctx.lineTo(r, h - 0.5)
+      ctx.quadraticCurveTo(0.5, h - 0.5, 0.5, h - r)
+      ctx.lineTo(0.5, r)
+      ctx.quadraticCurveTo(0.5, 0.5, r, 0.5)
+      ctx.stroke()
+
+      ctx.strokeStyle = "rgba(255,255,255,0.35)"
+      ctx.beginPath()
+      ctx.moveTo(r, 1.5)
+      ctx.lineTo(w - r, 1.5)
+      ctx.quadraticCurveTo(w - 1.5, 1.5, w - 1.5, r)
+      ctx.lineTo(w - 1.5, h - r)
+      ctx.quadraticCurveTo(w - 1.5, h - 1.5, w - r, h - 1.5)
+      ctx.lineTo(r, h - 1.5)
+      ctx.quadraticCurveTo(1.5, h - 1.5, 1.5, h - r)
+      ctx.lineTo(1.5, r)
+      ctx.quadraticCurveTo(1.5, 1.5, r, 1.5)
+      ctx.stroke()
     }
   }
 

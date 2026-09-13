@@ -569,20 +569,6 @@ Item {
 
       Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: Aero.commandHeight
-        color: "transparent"
-
-        Rectangle {
-          width: parent.width
-          height: 1
-          y: parent.height - 1
-          color: Aero.commandHighlight
-          opacity: 0.25
-        }
-      }
-
-      Rectangle {
-        Layout.fillWidth: true
         Layout.fillHeight: true
         color: Aero.contentFill
         layer.enabled: true
