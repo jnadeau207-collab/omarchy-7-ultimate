@@ -40,41 +40,42 @@ Item {
       ctx.closePath()
       ctx.clip()
 
-      ctx.fillStyle = "rgba(69, 128, 196, 0.64)"
+      ctx.fillStyle = "rgba(69, 128, 196, 0.66)"
       ctx.fillRect(0, 0, w, h)
 
       var across = ctx.createLinearGradient(0, 0, w, 0)
-      across.addColorStop(0.0, "rgba(255,255,255,0.40)")
-      across.addColorStop(0.5, "rgba(0,0,0,0.10)")
-      across.addColorStop(1.0, "rgba(255,255,255,0.20)")
+      across.addColorStop(0.0, "rgba(255,255,255,0.14)")
+      across.addColorStop(0.5, "rgba(0,0,0,0.06)")
+      across.addColorStop(1.0, "rgba(255,255,255,0.10)")
       ctx.fillStyle = across
       ctx.fillRect(0, 0, w, h)
 
-      var specL = ctx.createLinearGradient(0, 0, 110, 110)
-      specL.addColorStop(0.0, "rgba(255,255,255,0.38)")
-      specL.addColorStop(0.72, "rgba(255,255,255,0.00)")
+      ctx.save()
+      ctx.beginPath()
+      ctx.moveTo(0, 0)
+      ctx.lineTo(100, 0)
+      ctx.lineTo(0, 100)
+      ctx.closePath()
+      ctx.clip()
+      var specL = ctx.createLinearGradient(0, 0, 70, 70)
+      specL.addColorStop(0.0, "rgba(255,255,255,0.22)")
+      specL.addColorStop(1.0, "rgba(255,255,255,0.00)")
       ctx.fillStyle = specL
-      ctx.fillRect(0, 0, w, h)
-
-      var specR = ctx.createLinearGradient(w, 0, w - 110, 110)
-      specR.addColorStop(0.0, "rgba(255,255,255,0.38)")
-      specR.addColorStop(0.72, "rgba(255,255,255,0.00)")
-      ctx.fillStyle = specR
-      ctx.fillRect(0, 0, w, h)
+      ctx.fillRect(0, 0, 100, 100)
+      ctx.restore()
 
       ctx.save()
-      ctx.translate(w * 0.5, h * 0.5)
-      ctx.rotate(54 * Math.PI / 180)
-      var span = Math.sqrt(w * w + h * h)
-      var i
-      for (i = -span; i < span; i += 12) {
-        var t = (i + span) / (span * 2)
-        var wave = 0.5 + 0.5 * Math.sin(t * Math.PI * 11)
-        ctx.fillStyle = "rgba(255,255,255," + (0.010 + 0.016 * wave) + ")"
-        ctx.fillRect(-span, i, span * 2, 2)
-        ctx.fillStyle = "rgba(0,0,0," + (0.006 + 0.007 * (1.0 - wave)) + ")"
-        ctx.fillRect(-span, i + 3, span * 2, 1)
-      }
+      ctx.beginPath()
+      ctx.moveTo(w, 0)
+      ctx.lineTo(w - 100, 0)
+      ctx.lineTo(w, 100)
+      ctx.closePath()
+      ctx.clip()
+      var specR = ctx.createLinearGradient(w, 0, w - 70, 70)
+      specR.addColorStop(0.0, "rgba(255,255,255,0.22)")
+      specR.addColorStop(1.0, "rgba(255,255,255,0.00)")
+      ctx.fillStyle = specR
+      ctx.fillRect(w - 100, 0, 100, 100)
       ctx.restore()
 
       ctx.lineWidth = 1
