@@ -30,47 +30,20 @@ Item {
     radius: 24
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    color: mouse.pressed ? "#0a2438"
-      : root.startOpen ? "#1a5a8c"
-      : mouse.containsMouse ? "#1c4e78"
-      : "#12344f"
+    color: mouse.pressed ? "#0d2433"
+      : root.startOpen ? "#1a4a66"
+      : mouse.containsMouse ? "#173e58"
+      : "#122a3c"
     border.width: 1
-    border.color: mouse.containsMouse || root.startOpen ? "#c8e6f4" : "#80a8c0"
+    border.color: Qt.rgba(1, 1, 1, mouse.containsMouse || root.startOpen ? 0.45 : 0.22)
 
     Rectangle {
-      width: 22
-      height: 12
-      x: 10
-      y: 7
-      radius: 6
-      color: "#99ffffff"
-    }
-
-    Rectangle {
-      width: 10
-      height: 6
-      x: 14
-      y: 9
-      radius: 3
-      color: "#ccffffff"
-    }
-
-    Grid {
-      anchors.centerIn: parent
-      anchors.verticalCenterOffset: 4
-      columns: 2
-      rows: 2
-      rowSpacing: 2
-      columnSpacing: 2
-      Repeater {
-        model: ["#f35325", "#81bc06", "#05a6f0", "#ffba08"]
-        Rectangle {
-          width: 8
-          height: 8
-          radius: 1
-          color: modelData
-        }
-      }
+      width: 18
+      height: 10
+      x: 12
+      y: 8
+      radius: 5
+      color: Qt.rgba(1, 1, 1, 0.28)
     }
   }
 

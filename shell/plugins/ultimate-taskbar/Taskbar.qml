@@ -50,7 +50,7 @@ Item {
   readonly property int chromeEdgeWidth: highContrast ? 2 : 1
   property color background: chromeBar
 
-  readonly property real barOpacity: 0.72
+  readonly property real barOpacity: 0.78
 
   function barStop(hex) {
     var stop = Qt.color(hex)
@@ -309,18 +309,12 @@ Item {
 
           Rectangle {
             anchors.fill: parent
-            color: "#0a1218"
-          }
-
-          Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: 18
             gradient: Gradient {
-              GradientStop { position: 0.00; color: "#8ccfe4f4" }
-              GradientStop { position: 0.40; color: "#3388b8d0" }
-              GradientStop { position: 1.00; color: "#00000000" }
+              GradientStop { position: 0.000; color: root.barStop("#001520") }
+              GradientStop { position: 0.186; color: root.barStop("#002a3d") }
+              GradientStop { position: 0.494; color: root.barStop("#00344a") }
+              GradientStop { position: 0.670; color: root.barStop("#002a3d") }
+              GradientStop { position: 1.000; color: root.barStop("#001018") }
             }
           }
 
@@ -329,15 +323,7 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             height: 1
-            color: "#d2eaf4"
-          }
-
-          Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            y: 17
-            height: 1
-            color: "#66000000"
+            color: Qt.rgba(1, 1, 1, 0.28)
           }
         }
 
