@@ -11,7 +11,7 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: 6
-    color: Qt.rgba(0.271, 0.502, 0.769, 0.88)
+    color: Qt.rgba(0.16, 0.38, 0.65, 0.50)
     border.width: 1
     border.color: Qt.rgba(0, 0, 0, 0.70)
   }
@@ -22,27 +22,19 @@ Item {
     radius: 5
     color: "transparent"
     border.width: 1
-    border.color: Qt.rgba(1, 1, 1, 0.55)
+    border.color: Qt.rgba(1, 1, 1, 0.22)
   }
 
   Rectangle {
     anchors.fill: parent
     radius: 6
-    opacity: 0.45
+    opacity: 0.18
     gradient: Gradient {
       orientation: Gradient.Horizontal
-      GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.40) }
-      GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.10) }
-      GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.20) }
+      GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.28) }
+      GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.08) }
+      GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.16) }
     }
-  }
-
-  Rectangle {
-    x: 2
-    y: 11
-    width: parent.width - 4
-    height: 2
-    color: Qt.rgba(1, 1, 1, 0.70)
   }
 
   Rectangle {
