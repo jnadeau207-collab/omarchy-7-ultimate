@@ -4,7 +4,7 @@ import qs.Commons
 Item {
   id: root
   property var bar: null
-  implicitWidth: 14
+  implicitWidth: 8
   implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
   Accessible.name: bar && bar.chromeText ? bar.chromeText("Show desktop") : "Show desktop"
@@ -20,9 +20,16 @@ Item {
 
   Rectangle {
     anchors.fill: parent
-    color: mouse.containsMouse ? bar.chromeGlow : (bar && bar.highContrast ? Tokens.border.strong : Tokens.chrome.edge)
-    border.color: bar && bar.highContrast ? Tokens.border.strong : Tokens.border.subtle
-    border.width: bar && bar.highContrast ? 2 : 1
+    color: mouse.containsMouse ? "#66d2eaf4" : "#22000000"
+    border.width: 0
+  }
+
+  Rectangle {
+    anchors.left: parent.left
+    anchors.top: parent.top
+    anchors.bottom: parent.bottom
+    width: 1
+    color: mouse.containsMouse ? "#d2eaf4" : "#80ffffff"
   }
 
   MouseArea {

@@ -277,9 +277,9 @@ Item {
         screen: modelData
         visible: !remapGuard.remapping && !root.barHidden
         exclusionMode: root.barHidden ? ExclusionMode.Ignore : ExclusionMode.Normal
-        exclusiveZone: root.barHidden ? 0 : implicitHeight
+        exclusiveZone: root.barHidden ? 0 : root.barSize
         color: "transparent"
-        implicitHeight: root.barSize
+        implicitHeight: root.barSize + 8
         implicitWidth: 0
         surfaceFormat.opaque: false
         WlrLayershell.namespace: "omarchy-taskbar"
@@ -299,36 +299,56 @@ Item {
           }
         }
 
-        Rectangle {
-          anchors.fill: parent
-          z: -1
-          gradient: Gradient {
-            GradientStop { position: 0.000; color: root.barStop("#000000") }
-            GradientStop { position: 0.186; color: root.barStop("#001520") }
-            GradientStop { position: 0.494; color: root.barStop("#001b29") }
-            GradientStop { position: 0.670; color: root.barStop("#001f2e") }
-            GradientStop { position: 1.000; color: root.barStop("#000000") }
+        Item {
+          id: glassBar
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.bottom: parent.bottom
+          height: root.barSize
+          z: 0
+
+          Rectangle {
+            anchors.fill: parent
+            color: "#0a1218"
+          }
+
+          Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 18
+            gradient: Gradient {
+              GradientStop { position: 0.00; color: "#8ccfe4f4" }
+              GradientStop { position: 0.40; color: "#3388b8d0" }
+              GradientStop { position: 1.00; color: "#00000000" }
+            }
+          }
+
+          Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 1
+            color: "#d2eaf4"
+          }
+
+          Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            y: 17
+            height: 1
+            color: "#66000000"
           }
         }
 
         Rectangle {
-          anchors.top: parent.top
+          anchors.top: glassBar.top
           anchors.left: parent.left
           anchors.right: parent.right
           height: root.chromeEdgeWidth
           z: 2
+          visible: root.highContrast
           color: root.chromeEdge
-        }
-
-        Rectangle {
-          anchors.top: parent.top
-          anchors.topMargin: root.chromeEdgeWidth
-          anchors.left: parent.left
-          anchors.right: parent.right
-          height: 1
-          z: 2
-          visible: !root.highContrast
-          color: Qt.rgba(1, 1, 1, 0.16)
         }
 
         ScreenMoveRemap {
@@ -337,23 +357,26 @@ Item {
         }
 
         RowLayout {
-          anchors.fill: parent
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.bottom: parent.bottom
+          height: root.barSize
           spacing: 0
           LayoutMirroring.enabled: root.rtl
           LayoutMirroring.childrenInherit: true
 
-          StartButton {
-            bar: root
-            hostWindow: barWindow
-            Layout.preferredWidth: 56
+          Item {
+            Layout.preferredWidth: 54
             Layout.fillHeight: true
           }
 
           TaskView {
             bar: root
             hostWindow: barWindow
-            Layout.preferredWidth: 44
+            Layout.preferredWidth: 0
+            Layout.maximumWidth: 0
             Layout.fillHeight: true
+            visible: false
           }
 
           Repeater {
@@ -362,7 +385,7 @@ Item {
               bar: root
               hostWindow: barWindow
               group: modelData
-              Layout.preferredWidth: 56
+              Layout.preferredWidth: 54
               Layout.fillHeight: true
             }
           }
@@ -377,9 +400,19 @@ Item {
 
           ShowDesktop {
             bar: root
-            Layout.preferredWidth: 14
+            Layout.preferredWidth: 8
             Layout.fillHeight: true
           }
+        }
+
+        StartButton {
+          bar: root
+          hostWindow: barWindow
+          width: 54
+          height: parent.height
+          anchors.left: parent.left
+          anchors.top: parent.top
+          z: 3
         }
 
         PopupWindow {
