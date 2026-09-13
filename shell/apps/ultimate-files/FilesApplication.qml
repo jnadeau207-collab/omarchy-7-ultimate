@@ -1008,9 +1008,10 @@ Item {
     anchors.rightMargin: 6
     anchors.top: notice.bottom
     anchors.bottom: detailsPane.top
-    color: Aero.contentFill
+    color: "#ffffff"
     border.width: 1
     border.color: Qt.rgba(0, 0, 0, 0.70)
+    layer.enabled: true
   }
 
   Files.ExplorerNavigationPane {

@@ -11,7 +11,7 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: 6
-    color: Qt.rgba(0.271, 0.502, 0.769, 0.72)
+    color: Qt.rgba(0.271, 0.502, 0.769, 0.88)
     border.width: 1
     border.color: Qt.rgba(0, 0, 0, 0.70)
   }

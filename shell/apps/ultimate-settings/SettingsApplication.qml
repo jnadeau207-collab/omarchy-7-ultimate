@@ -585,6 +585,7 @@ Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
         color: Aero.contentFill
+        layer.enabled: true
 
       ColumnLayout {
         anchors.fill: parent
