@@ -219,7 +219,7 @@ ShellRoot {
   FloatingWindow {
     id: appWindow
     reloadableId: root.applicationId + ".window"
-    title: root.windowTitle
+    title: root.windowTitle === "" ? " " : root.windowTitle
     visible: true
     implicitWidth: 1100
     implicitHeight: 720
