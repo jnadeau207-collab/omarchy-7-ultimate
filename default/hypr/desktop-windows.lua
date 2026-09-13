@@ -278,6 +278,7 @@ local function apply_desktop_look()
         size = 8,
         passes = 2,
         popups = true,
+        ignore_opacity = true,
         vibrancy = 0,
         noise = 0,
       },
@@ -319,8 +320,8 @@ end
 apply_desktop_look()
 _G.omarchy_apply_desktop_look = apply_desktop_look
 
-hl.layer_rule({ match = { namespace = "omarchy-taskbar" }, blur = true, ignore_alpha = 0 })
-hl.layer_rule({ match = { namespace = "omarchy-start" }, blur = true, ignore_alpha = 0 })
+hl.layer_rule({ match = { namespace = "omarchy-taskbar" }, blur = true, ignore_alpha = 0.8 })
+hl.layer_rule({ match = { namespace = "omarchy-start" }, blur = true, ignore_alpha = 0.8 })
 
 pcall(function()
   hl.permission("/usr/lib/hyprland-plugins/hyprbars.so", "plugin", "allow")
