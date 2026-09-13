@@ -8,7 +8,7 @@ Item {
   property var hostWindow: null
   readonly property bool startOpen: !!(bar && bar.shell && typeof bar.shell.isPluginOpen === "function"
     && bar.shell.isPluginOpen("omarchy.ultimate-start"))
-  implicitWidth: 56
+  implicitWidth: 40
   implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
   Accessible.name: bar && bar.chromeText ? bar.chromeText("Start") : "Start"
@@ -25,10 +25,8 @@ Item {
 
   Rectangle {
     id: orb
-    anchors.centerIn: parent
-    width: 40
-    height: 40
-    radius: 20
+    anchors.fill: parent
+    radius: width / 2
     color: mouse.pressed ? bar.chromePressed
       : root.startOpen ? bar.chromeStart
       : mouse.containsMouse ? bar.chromeHover

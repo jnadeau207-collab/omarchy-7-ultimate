@@ -347,7 +347,7 @@ Item {
           StartButton {
             bar: root
             hostWindow: barWindow
-            Layout.preferredWidth: 56
+            Layout.preferredWidth: 40
             Layout.fillHeight: true
           }
 
