@@ -12,6 +12,8 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 **Scope:** Windows 7 Ultimate (retail US English) ground truth for:
 Start menu, Superbar/taskbar, Jump Lists, notification area (tray), Show Desktop / Aero Peek strip, Explorer command bar.
 **Authority:** Win7 Ultimate muscle-memory / IA / interaction grammar for Omarchy Desktop Mode binding specs. Not an Omarchy implementation status report.
+
+**AERO LOCK:** Superbar 40px dark glass; Explorer/Settings `AeroWindowChrome.qml` is the OS window standard (`plans/AERO_LOCK.md`). `win7VisualLeftover` stays OPEN.
 **Locale:** Labels below are **en-US** as shipped on Windows 7 Ultimate. Other languages use the same IA with localized strings.
 **Sources:** Microsoft Learn / MSDN taskbar & Jump List APIs; Win7 Taskbar and Start Menu Properties UI; Explorer `CommandStore` / FolderTypes task strings; contemporary Win7 how-tos that quote stock verbs. Flag any contested label as `(verify on metal)`.
 

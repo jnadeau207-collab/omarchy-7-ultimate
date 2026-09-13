@@ -98,7 +98,7 @@ for payload in (dark, light):
     assert payload["density"] == {"mode": "comfortable", "scale": 1.0}
     assert payload["motion"]["fastMs"] == 100
     assert payload["motion"]["normalMs"] == 200
-    assert payload["components"]["taskbarHeight"] == 48
+    assert payload["components"]["taskbarHeight"] == 40
     assert payload["components"]["captionHeight"] == 30
     assert payload["accessibility"]["largeText"] is False
     assert payload["accessibility"]["textScale"] == 1.0

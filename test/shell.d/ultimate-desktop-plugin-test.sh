@@ -59,7 +59,7 @@ grep -Fq 'margins.bottom: root.barHeight' "$ROOT/shell/plugins/ultimate-start/St
   || fail "Start card sits above the Superbar exclusive zone"
 start_chrome=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["cardWidth"], json.load(open(sys.argv[1]))["cardHeight"], json.load(open(sys.argv[1]))["barHeight"], json.load(open(sys.argv[1]))["cardLeftMargin"])' "$ROOT/default/ultimate/start-chrome.json") \
   || fail "start-chrome.json is valid JSON"
-[[ $start_chrome == "720 640 48 8" ]] || fail "start-chrome.json names the Start card and Superbar size" "$start_chrome"
+[[ $start_chrome == "720 640 40 8" ]] || fail "start-chrome.json names the Start card and Superbar size" "$start_chrome"
 grep -Fq 'start-chrome.json' "$ROOT/default/hypr/desktop-windows.lua" \
   || fail "Start click-through reads the same start-chrome.json as Start.qml"
 grep -Fq 'start_chrome.cardWidth' "$ROOT/default/hypr/desktop-windows.lua" \

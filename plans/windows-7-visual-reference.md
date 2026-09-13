@@ -107,9 +107,9 @@ Hover is a **cyan glow**, `0 0 7px 3px #5dc4f0`, over `radial-gradient(circle at
 | Caption bar and buttons | vendored `default/hypr/plugins/hyprbars/` — `barDeco.cpp` renders, `main.cpp` registers config and buttons, `globals.hpp` holds `SHyprButton` |
 | Caption colour source | `chrome-tokens-v0.json` adapter → `chrome_aero_*` helpers in `desktop-windows.lua` |
 
-**Known gaps as of this writing:** the caption glass is neutral-grey rather than blue; the bright band is approximated with stacked bands instead of one hard-edged highlight at 40%; the buttons are separate rounded rects rather than a hanging bordered group; the close button carries no radial end-shading; hover has no glow; Explorer still draws a centred title.
+**AERO LOCK:** Files and Settings do **not** use hyprbars. They paint `AeroWindowChrome.qml` (`#4580c4` @ 0.66, 6px frame, hanging 29+29+48 cluster, blank caption). That is the OS standard. Other apps still on hyprbars must be brought to that same frame. See `plans/AERO_LOCK.md`. Leftover stays OPEN.
 
-The plugin is vendored precisely so these can be fixed in C++. Adding a config key and a render pass to `barDeco.cpp` is the expected way to close them. Never hot-reload the plugin to test (program invariant 5): rebuild, then restart the compositor.
+**Known gaps as of this writing:** hyprbars SSD on remaining apps is still a separate rounded-rect cluster rather than this hanging group; hover glow and close radial shading are incomplete on hyprbars; Superbar was 48px with a glow underline (Win7 is 40px bordered glass tiles). Explorer CSD glass is locked, not pixel-CLOSED.
 
 ## 2. Superbar (taskbar)
 
@@ -161,7 +161,9 @@ Right-click on a taskbar button opens a **jump list**: a dark translucent panel 
 | Tray cluster | `shell/plugins/ultimate-taskbar/TrayCluster.qml` |
 | Jump lists | `shell/services/AppSearch.js` supplies desktop actions; the taskbar renders them |
 
-**Known gaps:** count badges are gone from task buttons (notification counts stay in NotificationLogic); multi-window groups paint a stacked tile edge; peek captures live grim thumbnails for mapped windows; jump lists and context menus can overlap; left-click interactions are unreliable; the Start orb is a flat tile rather than a sphere overhanging the bar; hover does not sample icon colour.
+**AERO LOCK:** Superbar is dark Win7 glass at **40px**, not caption-colorized. Running buttons are bordered glass tiles. See `plans/AERO_LOCK.md`.
+
+**Known gaps:** Start orb is still a flat tile rather than a 54×54 overhanging sphere; hover does not sample icon colour; Notification Center still paints a count badge; jump lists are light menus not dark glass; Task View is extra vs Win7; leftover stays OPEN.
 
 ## 3. Start menu
 

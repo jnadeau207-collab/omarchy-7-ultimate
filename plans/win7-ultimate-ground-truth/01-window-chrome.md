@@ -10,6 +10,8 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 
 # 01 — Windows 7 Ultimate Aero Window Chrome (Ground Truth)
 
+**AERO LOCK:** The Files/Settings implementation in `shell/apps/shared/AeroWindowChrome.qml` is the OS standard. See `plans/AERO_LOCK.md`. Do not restore hyprbars as that caption. `win7VisualLeftover` stays OPEN.
+
 **Product:** Omarchy Project Ultimate  
 **Scope:** System-drawn SSD window frame (caption, borders, caption buttons, shadows, interactions) matching **Windows 7 Ultimate + Aero Glass** muscle memory **exactly**.  
 **DPI baseline:** 96 DPI (100% scaling), primary monitor. Scale all px linearly with DPI unless noted.  

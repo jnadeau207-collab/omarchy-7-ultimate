@@ -13,6 +13,8 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 **Generated for:** Phase 5 Settings / Phase 6 Files / Phase 9 Administration implementers
 **Authority:** docs/project-ultimate.md Phase 5, 6, 9, docs/WINDOWS_7_ULTIMATE_PARITY.md
 
+**AERO LOCK:** Control Panel uses the same `AeroWindowChrome.qml` frame as Explorer (`plans/AERO_LOCK.md`). `win7VisualLeftover` stays OPEN.
+
 > Synthesized from `04-CONTROL-PANEL.json` + fleet-catalog when MD writer stalled. Prefer JSON for machine fields.
 
 ## Citations

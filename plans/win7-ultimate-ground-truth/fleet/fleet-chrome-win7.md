@@ -12,7 +12,7 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 **Author:** Review Chrome (adversarial chrome freeze lane).
 **Date:** 2026-09-02.
 **Scope:** Captions, CSD exclusion, Chromium overhang, ghost-perimeter damage. Not Start/Superbar IA (other fleet packs).
-**Doctrine:** PRODUCT_DOCTRINE “Not Aero” refuses ads/telemetry/clone-as-product, **not** vague chrome. Desktop Mode must match Win7 Ultimate **mouse grammar, hit targets, and one-row caption jobs**. Literal Aero glass texture is optional; sizes and interactions are not.
+**Doctrine:** PRODUCT_DOCTRINE “Not Aero” refuses ads/telemetry/forced accounts, **not** vague chrome. **AERO LOCK:** Files/Settings `AeroWindowChrome.qml` is the OS visual standard (`plans/AERO_LOCK.md`). Superbar is dark 40px Win7 glass, not caption-colorized. `win7VisualLeftover` stays OPEN.
 
 ## 0. Tip status after PR #112 (not a close)
 

@@ -4,7 +4,9 @@ Job completeness for Project Ultimate. Names are **jobs**, not a requirement to 
 
 This matrix is the product bar. `WINDOWS_NATIVE_ACCEPTANCE.md` is the forty-task smoke test (necessary, not sufficient; six numbered rows automated, plus unnumbered harness proofs). `AGENT_NATIVE_ACCEPTANCE.md` is the same jobs on the agent path.
 
-Status (tree audited at `1334ba30` on 2026-08-26; metal windowing baseline HDMI-A-1 1920×1080):
+**AERO LOCK:** Files/Settings `AeroWindowChrome.qml` is the OS visual standard (`plans/AERO_LOCK.md`, SHA `528cc0f4`). Superbar is dark 40px Win7 glass. `win7VisualLeftover` stays OPEN. Product REJECTED.
+
+Status (tree audited at `1334ba30` on 2026-08-26; metal windowing baseline HDMI-A-1 1920×1080; Aero lock 2026-09-12):
 
 - `missing` — no product surface for the job
 - `plumbing` — Omarchy/system machinery exists; no consumer mouse path that hides the plumbing

@@ -10,6 +10,8 @@ caption_binding_lock: "visual restored top NC = 30; SM_CYCAPTION=22 metric only 
 
 **Authority:** PRODUCT_DOCTRINE.md (wins conflicts) → `plans/project-ultimate.md` → `WINDOWS_7_ULTIMATE_PARITY.md` → **`plans/win7-ultimate-ground-truth/` full packs**.
 
+**AERO LOCK:** `plans/AERO_LOCK.md` — Files/Settings `AeroWindowChrome.qml` is the OS visual standard. Superbar 40px dark glass. `win7VisualLeftover` stays OPEN.
+
 Digests are gone. The numbered `0N-*.md` + `.json` twins and `fleet/` packs are the corpus.
 
 **Caption BINDING LOCK:** visual restored top NC = **30** = `SM_CYFRAME(4)+SM_CYCAPTION(22)+SM_CXPADDEDBORDER(4)`. `SM_CYCAPTION` **22** is metric band only.

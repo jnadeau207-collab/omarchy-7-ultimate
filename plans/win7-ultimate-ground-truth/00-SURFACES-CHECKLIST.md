@@ -18,6 +18,8 @@ Each surface needs: exact colors or token refs, px sizes, hit targets, L/R-click
 
 ## A. Window chrome / Aero
 
+**AERO LOCK (2026-09-12, SHA `528cc0f4`):** Files/Settings paint `AeroWindowChrome.qml`. That is the OS standard. Superbar 40px dark glass. `win7VisualLeftover` stays OPEN. See `plans/AERO_LOCK.md`.
+
 **Tip status after PR #112 (`aa10f1e`):** source chrome landed post-frameBox clamp (maximize and float restore, superbar 48, remembered origin), factory glass #74B8FC @ 0x6B, caption height 30, idle caption glyphs, close red hover/press only, menus opaque light #e8ecf0 / selection #cfe2ef / menuAlpha 1.0 on dark and light, and removed fake 45/29 cluster widths. Checks below stay open. Still open: visual leftover 5/5 surfaces; Explorer client sizes vs cheat sheet; Settings card shell; Computer tile metrics; caption button live bounds not proven on metal; ghost-perimeter; image diff (metal off). `win7VisualLeftover` stays OPEN. Not pixel proof. Not metal CLOSED. Not product CLOSED. Product REJECTED.
 
 **Explorer client metrics (source only):** command bar height moved 30 → 36 (cheat sheet `pixelCheatSheet96Dpi.commandBarHeightPx` 36-40) and details pane height moved 52 → 54 (cheat sheet `detailsPaneDefaultHeightPx` 54-72). Those two heights moved into documented ranges only. selectionWash remains OPEN. Visual leftover stays OPEN. Not hex-grep proof. Not metal CLOSED. Not product CLOSED. Product REJECTED. That explorer-metrics change left Settings card shell, Computer tile metrics, caption chrome, and the PNG baseline untouched.

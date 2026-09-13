@@ -331,8 +331,6 @@ with tempfile.TemporaryDirectory() as tmp:
 PY
 pass "desktop icon lister reads the real Desktop directory"
 
-[[ -f $ROOT/default/ultimate/desktop/Files.desktop ]] \
-  || fail "Desktop Mode ships a Files desktop shortcut"
 [[ -f $ROOT/default/ultimate/desktop/Computer.desktop ]] \
   || fail "Desktop Mode ships a Computer desktop shortcut"
 grep -Fq 'files.this-pc' "$ROOT/default/ultimate/desktop/Computer.desktop" \

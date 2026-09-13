@@ -322,7 +322,7 @@ QtObject {
     property int searchableDropdownWidth: Math.round(root.numberValue("components.searchableDropdownWidth", Style.spacing.searchableDropdownWidth))
     property int numberFieldWidth: Math.round(root.numberValue("components.numberFieldWidth", Style.spacing.numberFieldWidth))
     property int searchablePopupMinHeight: Math.round(root.numberValue("components.searchablePopupMinHeight", Style.spacing.searchablePopupMinHeight))
-    property int taskbarHeight: Math.round(root.numberValue("components.taskbarHeight", Math.max(48, Style.bar.sizeHorizontal + 22)))
+    property int taskbarHeight: Math.round(root.numberValue("components.taskbarHeight", 40))
     property int captionHeight: Math.round(root.numberValue("components.captionHeight", 30))
     property int captionButtonSize: Math.round(root.numberValue("components.captionButtonSize", 22))
     property int captionButtonPadding: Math.round(root.numberValue("components.captionButtonPadding", 8))

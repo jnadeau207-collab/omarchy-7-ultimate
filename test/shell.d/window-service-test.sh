@@ -320,8 +320,8 @@ grep -Fq 'function _clampRemembered' "$ws" \
   || fail "remembered restore origins are not persisted outside the usable rect"
 grep -Fq 'function usableRect' "$ROOT/shell/services/WindowModel.js" \
   || fail "usable rect does not trust reserved.bottom alone"
-grep -Fq 'SUPERBAR_RESERVE = 48' "$ROOT/shell/services/WindowModel.js" \
-  || fail "usable rect reserves Superbar 48 when reserved.bottom is 0"
+grep -Fq 'SUPERBAR_RESERVE = 40' "$ROOT/shell/services/WindowModel.js" \
+  || fail "usable rect reserves Superbar 40 when reserved.bottom is 0"
 if grep -Fq 'csd ? 0 : 32' "$ws"; then
   fail "hydrate restore must not keep the 32px caption inset"
 fi
@@ -640,7 +640,7 @@ assert(offscreenSsd.y >= area.y + 30, 'SSD clamp keeps the 30px caption on the w
 const bare = { width: 1920, height: 1080, reserved: [0, 0, 0, 0], x: 0, y: 0 }
 const usable = m.usableRect(bare)
 assertEqual(usable.y, 0, 'usable origin stays at the monitor origin')
-assertEqual(usable.height, 1080 - 48, 'usable rect subtracts Superbar 48 when reserved.bottom is 0')
+assertEqual(usable.height, 1080 - 40, 'usable rect subtracts Superbar 40 when reserved.bottom is 0')
 const chromeMax = m.frameBox(m.snapRect(bare, 'max', 0), { class: 'google-chrome' })
 const clampedBox = m.clampCompositorBox(chromeMax, bare)
 assert(clampedBox.x >= usable.x, 'compositor box origin x stays inside the usable rect')

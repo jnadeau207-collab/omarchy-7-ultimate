@@ -6,7 +6,7 @@
 
 **Not:** Windows-like Omarchy with AI tools.
 
-Not a Windows clone. Not an Aero theme. Not "Arch for Windows users." Not a nicer Omarchy with a taskbar and a chat panel.
+Not a Windows clone of ads, telemetry, or forced accounts. **Aero glass as locked in `plans/AERO_LOCK.md` is the OS visual standard** because that is what Windows 7 Ultimate looks like. Every product window is made compatible with Files/Settings `AeroWindowChrome.qml`. “Not a clone” is not permission to skip Superbar, Explorer, or Control Panel anatomy.
 
 The objective:
 

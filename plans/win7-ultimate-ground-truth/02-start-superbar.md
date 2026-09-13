@@ -12,6 +12,8 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 **Not:** Windows 10/11 Start, Classic Shell approximations, or third-party multi-monitor taskbars.  
 **Goal:** Implementers never guess Start or taskbar behavior.
 
+**AERO LOCK:** Superbar is **dark** Win7 glass at **40px** @ 96 DPI, not caption-colorized (`#4580c4` is window glass only). Running apps are bordered glass tiles, not glow underlines. Window chrome standard is `plans/AERO_LOCK.md`. `win7VisualLeftover` stays OPEN.
+
 ---
 
 ## Sources (cite by id)

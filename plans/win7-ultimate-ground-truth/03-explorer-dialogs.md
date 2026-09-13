@@ -10,7 +10,9 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 
 **Scope:** Windows 7 Ultimate (Aero, command bar — **not** Win8/10/11 ribbon).  
 **Audience:** Omarchy Project Ultimate Files app implementers.  
-**Success criterion:** Match Win7 Explorer without guessing structure, chrome, menus, or interaction rules.  
+**Success criterion:** Match Win7 Explorer without guessing structure, chrome, menus, or interaction rules.
+
+**AERO LOCK:** Explorer window chrome is `AeroWindowChrome.qml` (`plans/AERO_LOCK.md`). That frame is the OS standard. `win7VisualLeftover` stays OPEN.  
 **Companion:** `03-EXPLORER-DIALOGS.json` (machine-readable twin).
 
 ---

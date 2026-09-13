@@ -598,7 +598,7 @@ function cascadeRect(monitor, index, options) {
   return { x: x, y: y, width: base.width, height: base.height }
 }
 
-var SUPERBAR_RESERVE = 48
+var SUPERBAR_RESERVE = 40
 
 function usableRect(monitor) {
   var area = workArea(monitor)

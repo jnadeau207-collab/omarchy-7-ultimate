@@ -637,7 +637,7 @@ def build_payload(
     }
     bar_height_base = require_float(shell.get("bar.size-horizontal", 26), "bar.size-horizontal", 1, 4096)
     bar_height = max(1, q_round(bar_height_base * bar_scale))
-    components["taskbarHeight"] = max(48, bar_height + 22)
+    components["taskbarHeight"] = 40
 
     profile = defaults["chromeProfiles"][mode]
     interaction = defaults["chromeInteraction"]

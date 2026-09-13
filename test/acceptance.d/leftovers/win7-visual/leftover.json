@@ -8,6 +8,19 @@
     "refresh": 60.0
   },
   "win7VisualLeftover": "OPEN",
+  "aeroLock": {
+    "sha": "528cc0f4",
+    "win7VisualLeftover": "OPEN",
+    "pixelProof": false,
+    "metalClosed": false,
+    "productClosed": false,
+    "standard": "AeroWindowChrome.qml on Files/Settings is the OS visual standard. #4580c4 @ 0.66, hanging 29+29+48 caption, hyprbars:no_bar, QT_WAYLAND_DISABLE_WINDOWDECORATION. Superbar is dark Win7 glass at 40px, not caption-colorized. See plans/AERO_LOCK.md. Do not restore hyprbars as Explorer caption.",
+    "stillOpen": [
+      "win7VisualLeftover",
+      "image diff vs Win7 Ultimate screenshot",
+      "remaining apps still on hyprbars SSD"
+    ]
+  },
   "statusAfterPr112": {
     "workTip": "aa10f1e2773ff6ad9312e6db4579b6e2e0934113",
     "pr": 112,

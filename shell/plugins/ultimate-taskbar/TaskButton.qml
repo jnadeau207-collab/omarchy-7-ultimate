@@ -60,8 +60,8 @@ Item {
     for (i = 0; i < windows.length; i++) windowService.close(windows[i].address)
   }
 
-  implicitWidth: 56
-  implicitHeight: parent ? parent.height : 48
+  implicitWidth: 54
+  implicitHeight: parent ? parent.height : 40
 
   function activate() {
     var startWasOpen = !!(root.bar && root.bar.shell && typeof root.bar.shell.isPluginOpen === "function"
@@ -110,13 +110,13 @@ Item {
   Rectangle {
     id: stackedEdge
     anchors.fill: parent
-    anchors.margins: 3
-    anchors.leftMargin: 6
-    anchors.bottomMargin: 6
-    radius: Tokens.radius.medium
+    anchors.margins: 2
+    anchors.leftMargin: 5
+    anchors.bottomMargin: 5
+    radius: 2
     visible: root.windows.length > 1
     color: "transparent"
-    border.color: root.active ? bar.chromeGlow : Tokens.border.subtle
+    border.color: Qt.rgba(1, 1, 1, 0.28)
     border.width: 1
   }
 
@@ -124,36 +124,25 @@ Item {
     id: tile
     anchors.fill: parent
     anchors.margins: 3
-    radius: Tokens.radius.medium
-    color: mouse.pressed ? bar.chromePressed
-      : mouse.containsMouse ? bar.chromeHover
-      : root.active ? bar.chromeActive
-      : root.running ? bar.chromeHover
+    radius: 2
+    color: mouse.pressed ? Qt.rgba(1, 1, 1, 0.28)
+      : mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22)
+      : root.active ? Qt.rgba(1, 1, 1, 0.18)
+      : root.running ? Qt.rgba(1, 1, 1, 0.12)
       : "transparent"
-    border.color: root.active ? bar.chromeGlow : (root.running || (bar && bar.highContrast) ? (bar && bar.highContrast ? Tokens.border.strong : Tokens.border.subtle) : "transparent")
-    border.width: root.running || root.active || (bar && bar.highContrast) ? (bar && bar.highContrast ? 2 : 1) : 0
-
-    Rectangle {
-      visible: root.running
-      anchors.bottom: parent.bottom
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.leftMargin: 6
-      anchors.rightMargin: 6
-      anchors.bottomMargin: 3
-      height: root.active ? (bar && bar.highContrast ? 4 : 3) : (bar && bar.highContrast ? 3 : 2)
-      radius: 1
-      color: bar.chromeGlow
-    }
+    border.color: root.running || root.active || mouse.containsMouse || (bar && bar.highContrast)
+      ? (bar && bar.highContrast ? Tokens.border.strong : Qt.rgba(1, 1, 1, 0.38))
+      : "transparent"
+    border.width: root.running || root.active || mouse.containsMouse || (bar && bar.highContrast) ? (bar && bar.highContrast ? 2 : 1) : 0
 
     Image {
       id: icon
       anchors.centerIn: parent
-      width: 36
-      height: 36
+      width: 32
+      height: 32
       fillMode: Image.PreserveAspectFit
-      sourceSize.width: 36 * Screen.devicePixelRatio
-      sourceSize.height: 36 * Screen.devicePixelRatio
+      sourceSize.width: 32 * Screen.devicePixelRatio
+      sourceSize.height: 32 * Screen.devicePixelRatio
       source: root.appLibrary ? root.appLibrary.iconSource(root.iconName) : ""
       visible: status === Image.Ready
     }

@@ -12,6 +12,8 @@ Source tip: `686c66c0105e` (`PRODUCT_DOCTRINE.md`, `WINDOWS_7_ULTIMATE_PARITY.md
 
 ## 0. Purpose
 
+**AERO LOCK:** `plans/AERO_LOCK.md` — Files/Settings Aero CSD is the OS visual standard. Superbar 40px dark glass. `win7VisualLeftover` stays OPEN.
+
 Phase plans keep inviting invent (LIVE CONTROL, present claims, mutation UI) when requirements are named as product nouns (“Settings”, “Task Manager”, “MIME defaults”) instead of **observable Win7-Ultimate behaviors**. This map ties doctrine rules and each parity/forty-task job to a precise behavioral requirement and names the invent failure mode so fleets cannot greenwash plane wiring or partial writers into OS-present claims. Product remains **REJECTED**; do not merge `work`→`main` as the OS.
 
 ## 1. Non-negotiable doctrine rules (PRODUCT_DOCTRINE)

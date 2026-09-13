@@ -31,6 +31,8 @@ Keep `4ea1dcf3` through `c1ae994f`. Those SHAs stay. Do not amend them. Do not s
 
 The product call is still **REJECTED**. Do not merge `work` into `main` as the OS.
 
+**AERO LOCK (2026-09-12, SHA `528cc0f4`):** Files/Settings in-process Aero CSD (`shell/apps/shared/AeroWindowChrome.qml`, `#4580c4` @ 0.66, hanging 29+29+48 caption, `hyprbars:no_bar`) is the visual standard for the entire OS. Superbar is dark Win7 glass at 40px, not caption-colorized. See `plans/AERO_LOCK.md`. Do not put hyprbars back on Explorer. `win7VisualLeftover` stays OPEN.
+
 ## W0 product-windowing (2026-08-23 metal)
 
 Windowing Gate W0 is **architecture GO** (Hyprland stays) and now **product-windowing GO** on HDMI-A-1 1920×1080. That is not an OS go.
@@ -84,7 +86,7 @@ Agent Center belongs in Desktop Mode as native as Start. `omarchy.agents` (usage
 
 ## What this product is not
 
-Not a Windows clone. Not Aero. Not “Arch for Windows users.” Not a nicer Omarchy theme. Not Omarchy-with-a-chat-panel. Upstream Omarchy is a keyboard-first tiling distro on purpose. This fork keeps that plumbing and replaces the default product experience.
+Not a Windows clone of ads, telemetry, or forced accounts. Aero as locked in `plans/AERO_LOCK.md` is the OS visual standard because that is what Windows 7 looks like. Not “Arch for Windows users.” Not a nicer Omarchy theme. Not Omarchy-with-a-chat-panel. Upstream Omarchy is a keyboard-first tiling distro on purpose. This fork keeps that plumbing and replaces the default product experience.
 
 “Not a clone” refuses Windows ads, telemetry, and forced accounts. It does not license shipping a Linux developer box. Desktop Mode is Windows 7 Ultimate’s information architecture: Start, Superbar, files, Chrome, install apps, games, settings, printers, Wi-Fi — with a mouse — and an agent fabric under those same jobs. The terminal is an application. Power User Mode is where Linux tools stay first class.
 

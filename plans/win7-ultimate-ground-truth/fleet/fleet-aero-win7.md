@@ -12,7 +12,7 @@ caption_binding_lock: "visual restored top NC = 30 = SM_CYFRAME(4)+SM_CYCAPTION(
 **Scope:** Caption geometry, glass, caption buttons, Snap / Shake / Peek, system menu  
 **SKU:** Windows 7 **Ultimate** (full Aero Glass + Peek + Shake; Home Basic lacks glass; Starter is not the Ultimate bar)  
 **Baseline:** 96 DPI, default Aero theme, DWM composition on, English LTR, top-level overlapped window with `WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME`  
-**Authority note (Omarchy):** Document Win7 Ultimate ground truth. Omarchy may approximate glass rendering, but **sizes, hit targets, menus, and Snap/Shake/Peek grammar must match**.
+**Authority note (Omarchy):** Document Win7 Ultimate ground truth. **AERO LOCK:** Files/Settings `AeroWindowChrome.qml` is the OS visual standard (`plans/AERO_LOCK.md`). Superbar is dark 40px Win7 glass. `win7VisualLeftover` stays OPEN.
 
 ---
 

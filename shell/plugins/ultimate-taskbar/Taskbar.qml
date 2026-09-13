@@ -50,7 +50,7 @@ Item {
   readonly property int chromeEdgeWidth: highContrast ? 2 : 1
   property color background: chromeBar
 
-  readonly property real barOpacity: 0.86
+  readonly property real barOpacity: 0.72
 
   function barStop(hex) {
     var stop = Qt.color(hex)
