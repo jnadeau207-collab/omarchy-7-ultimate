@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Ui
 import "../../services/WindowModel.js" as WindowModel
+import "../../apps/shared" as Shared
 
 Item {
   id: root
@@ -307,19 +308,10 @@ Item {
           height: root.barSize
           z: 0
 
-          Rectangle {
+          Shared.AeroGlassFill {
             anchors.fill: parent
-            color: Qt.rgba(69 / 255, 128 / 255, 196 / 255, 0.66)
-          }
-
-          Rectangle {
-            anchors.fill: parent
-            gradient: Gradient {
-              orientation: Gradient.Horizontal
-              GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.14) }
-              GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.06) }
-              GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.10) }
-            }
+            radius: 0
+            drawBorder: false
           }
 
           Rectangle {
@@ -362,7 +354,9 @@ Item {
           TaskView {
             bar: root
             hostWindow: barWindow
-            Layout.preferredWidth: 44
+            visible: false
+            Layout.preferredWidth: 0
+            Layout.maximumWidth: 0
             Layout.fillHeight: true
           }
 
