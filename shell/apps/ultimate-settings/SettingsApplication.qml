@@ -544,6 +544,7 @@ Item {
     anchors.leftMargin: 6
     anchors.rightMargin: 6
     anchors.bottomMargin: 6
+    anchors.topMargin: 30
     color: "transparent"
 
     ColumnLayout {

@@ -912,6 +912,7 @@ Item {
     anchors.leftMargin: 6
     anchors.rightMargin: 6
     anchors.top: parent.top
+    anchors.topMargin: 30
     productProfile: root.productProfile
     crumbs: root.crumbs
     locationIcon: root.currentRoute && root.currentRoute.id === "files.this-pc" ? "computer"
