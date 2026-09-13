@@ -8,7 +8,7 @@ Item {
   property var hostWindow: null
   readonly property bool startOpen: !!(bar && bar.shell && typeof bar.shell.isPluginOpen === "function"
     && bar.shell.isPluginOpen("omarchy.ultimate-start"))
-  implicitWidth: 56
+  implicitWidth: 48
   implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
   Accessible.name: bar && bar.chromeText ? bar.chromeText("Start") : "Start"

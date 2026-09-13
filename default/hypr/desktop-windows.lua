@@ -319,8 +319,8 @@ end
 apply_desktop_look()
 _G.omarchy_apply_desktop_look = apply_desktop_look
 
-hl.layer_rule({ match = { namespace = "omarchy-taskbar" }, blur = true, ignore_alpha = 1 })
-hl.layer_rule({ match = { namespace = "omarchy-start" }, blur = true, ignore_alpha = 1 })
+hl.layer_rule({ match = { namespace = "omarchy-taskbar" }, blur = true, ignore_alpha = 0 })
+hl.layer_rule({ match = { namespace = "omarchy-start" }, blur = true, ignore_alpha = 0 })
 
 pcall(function()
   hl.permission("/usr/lib/hyprland-plugins/hyprbars.so", "plugin", "allow")

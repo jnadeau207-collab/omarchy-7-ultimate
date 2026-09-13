@@ -60,7 +60,7 @@ Item {
     for (i = 0; i < windows.length; i++) windowService.close(windows[i].address)
   }
 
-  implicitWidth: 48
+  implicitWidth: 40
   implicitHeight: parent ? parent.height : 40
 
   function activate() {
@@ -123,8 +123,8 @@ Item {
   Rectangle {
     id: tile
     anchors.fill: parent
-    anchors.margins: 1
-    radius: 2
+    anchors.margins: 0
+    radius: 0
     visible: root.running || root.active || mouse.containsMouse || mouse.pressed || (bar && bar.highContrast)
     border.width: bar && bar.highContrast ? 2 : 1
     border.color: bar && bar.highContrast ? Tokens.border.strong : Qt.rgba(1, 1, 1, 0.55)

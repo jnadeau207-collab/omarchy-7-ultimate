@@ -347,16 +347,7 @@ Item {
           StartButton {
             bar: root
             hostWindow: barWindow
-            Layout.preferredWidth: 56
-            Layout.fillHeight: true
-          }
-
-          TaskView {
-            bar: root
-            hostWindow: barWindow
-            visible: false
-            Layout.preferredWidth: 0
-            Layout.maximumWidth: 0
+            Layout.preferredWidth: 48
             Layout.fillHeight: true
           }
 
@@ -366,7 +357,7 @@ Item {
               bar: root
               hostWindow: barWindow
               group: modelData
-              Layout.preferredWidth: 48
+              Layout.preferredWidth: 40
               Layout.fillHeight: true
             }
           }
@@ -384,6 +375,14 @@ Item {
             Layout.preferredWidth: 10
             Layout.fillHeight: true
           }
+        }
+
+        TaskView {
+          bar: root
+          hostWindow: barWindow
+          visible: false
+          width: 0
+          height: 0
         }
 
         PopupWindow {
