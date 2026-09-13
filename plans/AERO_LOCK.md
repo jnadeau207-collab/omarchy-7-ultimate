@@ -16,7 +16,7 @@ Windows 7 Ultimate Aero, as painted on Files and Settings, is the visual standar
 | Compositor | `hyprbars:no_bar` on `org.omarchy.Files` and `org.omarchy.Settings`; `QT_WAYLAND_DISABLE_WINDOWDECORATION=1` |
 | Move | xdg `startSystemMove` on the 30px caption hit-strip (same CSD move Chromium uses) |
 | Min / max / close | Existing `omarchy-shell window {minimize,toggleMaximize,close} active` |
-| Superbar | Dark glass, **not** caption-colorized. Win7 height **40px** @ 96 DPI. Running = bordered glass tile, not a glow underline. |
+| Superbar | **Same Aero glass as Explorer** (`#4580c4` @ 0.66). Height **40px** @ 96 DPI. Running = bordered glass tile, not a glow underline. Not a black strip. |
 
 ## What this is not
 

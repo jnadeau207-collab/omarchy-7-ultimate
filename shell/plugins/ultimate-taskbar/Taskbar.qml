@@ -309,12 +309,16 @@ Item {
 
           Rectangle {
             anchors.fill: parent
+            color: Qt.rgba(69 / 255, 128 / 255, 196 / 255, 0.66)
+          }
+
+          Rectangle {
+            anchors.fill: parent
             gradient: Gradient {
-              GradientStop { position: 0.000; color: root.barStop("#001520") }
-              GradientStop { position: 0.186; color: root.barStop("#002a3d") }
-              GradientStop { position: 0.494; color: root.barStop("#00344a") }
-              GradientStop { position: 0.670; color: root.barStop("#002a3d") }
-              GradientStop { position: 1.000; color: root.barStop("#001018") }
+              orientation: Gradient.Horizontal
+              GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.14) }
+              GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.06) }
+              GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.10) }
             }
           }
 
@@ -323,7 +327,7 @@ Item {
             anchors.right: parent.right
             anchors.top: parent.top
             height: 1
-            color: Qt.rgba(1, 1, 1, 0.28)
+            color: Qt.rgba(1, 1, 1, 0.35)
           }
         }
 
