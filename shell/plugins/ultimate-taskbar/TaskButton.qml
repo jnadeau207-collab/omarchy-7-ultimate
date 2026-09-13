@@ -126,22 +126,19 @@ Item {
     anchors.margins: 0
     radius: 0
     visible: root.running || root.active || mouse.containsMouse || mouse.pressed || (bar && bar.highContrast)
-    border.width: bar && bar.highContrast ? 2 : 1
-    border.color: bar && bar.highContrast ? Tokens.border.strong : Qt.rgba(1, 1, 1, 0.55)
-    gradient: Gradient {
-      GradientStop { position: 0.00; color: mouse.pressed ? "#8ce5e5e5" : (root.active || mouse.containsMouse ? "#7de5e5e5" : "#7de5e5e5") }
-      GradientStop { position: 0.21; color: mouse.pressed ? "#75d0d0d0" : (root.active || mouse.containsMouse ? "#75e5e5e5" : "#75e5e5e5") }
-      GradientStop { position: 1.00; color: mouse.pressed ? "#99c8c8c8" : (root.active || mouse.containsMouse ? "#b3f2f2f2" : "#70f2f2f2") }
-    }
+    color: mouse.pressed ? Qt.rgba(1, 1, 1, 0.28)
+      : (root.active || mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.20)
+      : Qt.rgba(1, 1, 1, 0.10))
+    border.width: 1
+    border.color: bar && bar.highContrast ? Tokens.border.strong : Qt.rgba(1, 1, 1, 0.40)
 
     Rectangle {
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.top: parent.top
-      anchors.leftMargin: 1
-      anchors.rightMargin: 1
-      height: 1
-      color: "#99ffffff"
+      anchors.centerIn: parent
+      width: 34
+      height: 34
+      radius: 3
+      color: Qt.rgba(0, 0, 0, 0.40)
+      z: 0
     }
 
     Image {
@@ -149,6 +146,7 @@ Item {
       anchors.centerIn: parent
       width: 32
       height: 32
+      z: 1
       fillMode: Image.PreserveAspectFit
       sourceSize.width: 32 * Screen.devicePixelRatio
       sourceSize.height: 32 * Screen.devicePixelRatio

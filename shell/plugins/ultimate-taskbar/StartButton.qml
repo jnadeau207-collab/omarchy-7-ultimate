@@ -29,33 +29,34 @@ Item {
     width: 40
     height: 40
     radius: 20
-    color: mouse.pressed ? bar.chromePressed
-      : root.startOpen ? bar.chromeStart
-      : mouse.containsMouse ? bar.chromeHover
-      : Tokens.chrome.glass
-    border.color: root.startOpen ? bar.chromeGlow : (bar ? bar.chromeEdge : Tokens.chrome.edge)
-    border.width: root.startOpen || (bar && bar.highContrast) ? 2 : 1
+    color: mouse.pressed ? "#081820"
+      : root.startOpen ? "#16324c"
+      : mouse.containsMouse ? "#122a40"
+      : "#0c2236"
+    border.color: Qt.rgba(1, 1, 1, mouse.containsMouse || root.startOpen ? 0.55 : 0.35)
+    border.width: 1
 
     Rectangle {
-      anchors.fill: parent
-      anchors.margins: 2
-      radius: width / 2
-      color: "transparent"
-      border.width: (bar && bar.highContrast) ? 2 : 1
-      border.color: Qt.rgba(Tokens.chrome.glow.r, Tokens.chrome.glow.g, Tokens.chrome.glow.b, root.startOpen || (bar && bar.highContrast) ? 0.55 : 0.18)
+      width: 16
+      height: 8
+      x: 10
+      y: 6
+      radius: 4
+      color: Qt.rgba(1, 1, 1, 0.22)
     }
 
     Grid {
       anchors.centerIn: parent
+      anchors.verticalCenterOffset: 2
       columns: 2
       rows: 2
-      rowSpacing: 2
-      columnSpacing: 2
+      rowSpacing: 3
+      columnSpacing: 3
       Repeater {
         model: [Tokens.caption.close.background, Tokens.caption.maximize.background, Tokens.state.info, Tokens.state.success]
         Rectangle {
-          width: 8
-          height: 8
+          width: 11
+          height: 11
           radius: 1
           color: modelData
         }
