@@ -60,7 +60,7 @@ Item {
     for (i = 0; i < windows.length; i++) windowService.close(windows[i].address)
   }
 
-  implicitWidth: 54
+  implicitWidth: 48
   implicitHeight: parent ? parent.height : 40
 
   function activate() {
@@ -110,9 +110,9 @@ Item {
   Rectangle {
     id: stackedEdge
     anchors.fill: parent
-    anchors.margins: 2
-    anchors.leftMargin: 5
-    anchors.bottomMargin: 5
+    anchors.margins: 1
+    anchors.leftMargin: 3
+    anchors.bottomMargin: 3
     radius: 2
     visible: root.windows.length > 1
     color: "transparent"
@@ -123,7 +123,7 @@ Item {
   Rectangle {
     id: tile
     anchors.fill: parent
-    anchors.margins: 3
+    anchors.margins: 1
     radius: 2
     visible: root.running || root.active || mouse.containsMouse || mouse.pressed || (bar && bar.highContrast)
     border.width: bar && bar.highContrast ? 2 : 1

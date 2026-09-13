@@ -277,9 +277,9 @@ Item {
         screen: modelData
         visible: !remapGuard.remapping && !root.barHidden
         exclusionMode: root.barHidden ? ExclusionMode.Ignore : ExclusionMode.Normal
-        exclusiveZone: root.barHidden ? 0 : root.barSize
+        exclusiveZone: root.barHidden ? 0 : implicitHeight
         color: "transparent"
-        implicitHeight: root.barSize + 8
+        implicitHeight: root.barSize
         implicitWidth: 0
         surfaceFormat.opaque: false
         WlrLayershell.namespace: "omarchy-taskbar"
@@ -343,26 +343,23 @@ Item {
         }
 
         RowLayout {
-          anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.bottom: parent.bottom
-          height: root.barSize
+          anchors.fill: parent
           spacing: 0
           LayoutMirroring.enabled: root.rtl
           LayoutMirroring.childrenInherit: true
 
-          Item {
-            Layout.preferredWidth: 54
+          StartButton {
+            bar: root
+            hostWindow: barWindow
+            Layout.preferredWidth: 56
             Layout.fillHeight: true
           }
 
           TaskView {
             bar: root
             hostWindow: barWindow
-            Layout.preferredWidth: 0
-            Layout.maximumWidth: 0
+            Layout.preferredWidth: 44
             Layout.fillHeight: true
-            visible: false
           }
 
           Repeater {
@@ -371,7 +368,7 @@ Item {
               bar: root
               hostWindow: barWindow
               group: modelData
-              Layout.preferredWidth: 54
+              Layout.preferredWidth: 48
               Layout.fillHeight: true
             }
           }
@@ -386,19 +383,9 @@ Item {
 
           ShowDesktop {
             bar: root
-            Layout.preferredWidth: 8
+            Layout.preferredWidth: 10
             Layout.fillHeight: true
           }
-        }
-
-        StartButton {
-          bar: root
-          hostWindow: barWindow
-          width: 54
-          height: parent.height
-          anchors.left: parent.left
-          anchors.top: parent.top
-          z: 3
         }
 
         PopupWindow {

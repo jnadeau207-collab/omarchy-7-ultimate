@@ -8,8 +8,8 @@ Item {
   property var hostWindow: null
   readonly property bool startOpen: !!(bar && bar.shell && typeof bar.shell.isPluginOpen === "function"
     && bar.shell.isPluginOpen("omarchy.ultimate-start"))
-  implicitWidth: 54
-  implicitHeight: parent ? parent.height : 48
+  implicitWidth: 56
+  implicitHeight: parent ? parent.height : 40
   Accessible.role: Accessible.Button
   Accessible.name: bar && bar.chromeText ? bar.chromeText("Start") : "Start"
   Accessible.description: bar && bar.chromeText ? bar.chromeText("Open the Start menu") : "Open the Start menu"
@@ -25,25 +25,41 @@ Item {
 
   Rectangle {
     id: orb
-    width: 48
-    height: 48
-    radius: 24
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: parent.top
-    color: mouse.pressed ? "#0d2433"
-      : root.startOpen ? "#1a4a66"
-      : mouse.containsMouse ? "#173e58"
-      : "#122a3c"
-    border.width: 1
-    border.color: Qt.rgba(1, 1, 1, mouse.containsMouse || root.startOpen ? 0.45 : 0.22)
+    anchors.centerIn: parent
+    width: 40
+    height: 40
+    radius: 20
+    color: mouse.pressed ? bar.chromePressed
+      : root.startOpen ? bar.chromeStart
+      : mouse.containsMouse ? bar.chromeHover
+      : Tokens.chrome.glass
+    border.color: root.startOpen ? bar.chromeGlow : (bar ? bar.chromeEdge : Tokens.chrome.edge)
+    border.width: root.startOpen || (bar && bar.highContrast) ? 2 : 1
 
     Rectangle {
-      width: 18
-      height: 10
-      x: 12
-      y: 8
-      radius: 5
-      color: Qt.rgba(1, 1, 1, 0.28)
+      anchors.fill: parent
+      anchors.margins: 2
+      radius: width / 2
+      color: "transparent"
+      border.width: (bar && bar.highContrast) ? 2 : 1
+      border.color: Qt.rgba(Tokens.chrome.glow.r, Tokens.chrome.glow.g, Tokens.chrome.glow.b, root.startOpen || (bar && bar.highContrast) ? 0.55 : 0.18)
+    }
+
+    Grid {
+      anchors.centerIn: parent
+      columns: 2
+      rows: 2
+      rowSpacing: 2
+      columnSpacing: 2
+      Repeater {
+        model: [Tokens.caption.close.background, Tokens.caption.maximize.background, Tokens.state.info, Tokens.state.success]
+        Rectangle {
+          width: 8
+          height: 8
+          radius: 1
+          color: modelData
+        }
+      }
     }
   }
 
